@@ -12,6 +12,8 @@ navigation:
 
 Part of the [Quantum Foundry](../multiblocks/quantum-foundry.md).
 
+The Foundry's floor, and the base of other multiblocks.
+
 ## Recipes
 
 <RecipesFor id="quantimium:quantum_foundry_plinth" />

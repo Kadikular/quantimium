@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-Two-tall capsule on a 3×3 cradle with four module slots. Holds one body: swap from an empty pod into any of your doubles (FE by distance, flat 1M across dimensions); the body you leave stays. Rescue module + Anchor = death save, spending that Sophon.
+Holds one of your body doubles. Swap into any of your doubles from an empty pod, and back.
 
 ## Recipes
 

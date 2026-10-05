@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_emitter" scale="2" />
 
-A shard in a mount (Foundry, Medium): the Decoherence Lance's light, in its recipe.
-
 > *In game:* A shard of Anomalite set in a mount. The light of a Decoherence Lance.
 
 A shard of Anomalite set in a mount: the light of a <ItemLink id="quantimium:decoherence_lance" />, built into it for

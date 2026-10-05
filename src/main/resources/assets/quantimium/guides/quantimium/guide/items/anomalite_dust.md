@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_dust" scale="2" />
 
-Crumbles from an immature crystal. Reprocessed 1:1 into Anomalite Shards by the Foundry (100 ticks, 25 flux, Medium band).
+What a crystal broken too early leaves. The Foundry turns it back into shards.
 
 ## Recipes
 

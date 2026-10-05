@@ -12,6 +12,8 @@ navigation:
 
 Part of the [Quantum Foundry](../multiblocks/quantum-foundry.md).
 
+Sits on an Attunement Pillar and holds what the arm has drawn.
+
 ## Recipes
 
 <RecipesFor id="quantimium:quantum_foundry_attunement_tank" />

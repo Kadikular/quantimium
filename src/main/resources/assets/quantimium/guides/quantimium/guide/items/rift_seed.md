@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:rift_seed" scale="2" />
 
-Fragments, Anomalite and an eye of ender (Mid). Plants a wild stage 1 rift where anomaly is Medium+ (fizzles elsewhere), opens a held one on a Rift Anchor, lights the Stabilised Portal.
-
 > *In game:* A wound waiting to open. Plant it where anomaly runs Medium or higher, or on a Rift Anchor. Lights a Stabilised Portal.
 
 A wound waiting to open, and the way to a rift when the world won't give you one.

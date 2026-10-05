@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:basic_decoherence_matrix" scale="2" />
 
-Ender Eye held in four Quantimium Traces; core component of the Basic Quantum Crafter.
+The heart of the Basic Quantum Crafter.
 
 ## Recipes
 

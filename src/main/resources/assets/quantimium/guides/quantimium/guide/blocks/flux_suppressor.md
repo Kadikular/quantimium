@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:flux_suppressor" scale="2" />
 
-Early: holds flux, and only flux, under a ceiling (Low / Medium / High / Clear) across the 3×3, up to 1,500 flux/s at 40 FE/t: firebreaks, starving rifts, quiet zones. No fragments.
-
 Holds **flux**, and only flux, under a ceiling in every chunk of the 3×3 round it. It's the one block
 that throws flux away, and it's for the places you don't want any:
 

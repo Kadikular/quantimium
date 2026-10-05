@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:harvest_laser" scale="2" />
 
-Fires through a Rift Lens (anywhere between) at a full-grown Anomalite crystal up to 6 blocks out, head-on or side-on; faces the player when placed; mites capped at 4 within 32 blocks; through a Rift Lens and a hall's glass it draws Veil Thread from a held Veiled instead: 15 s at 60 FE/t, then it shatters for 3 shards and the host regrows it. The tear leaks 15 anomaly a crystal and sometimes a mite (none contained). Both sides see the azure beam into the tear; the mirror also sees it reach the crystal.
-
 Harvests Anomalite crystals from the real world. It fires through a <ItemLink id="quantimium:rift_lens" />, and the
 beam tears a small hole in the world there; through the hole, on the mirror's side, it reaches the
 crystal behind the lens and takes it apart a stage at a time.

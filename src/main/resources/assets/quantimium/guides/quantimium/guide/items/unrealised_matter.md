@@ -12,11 +12,9 @@ item_ids:
 
 <ItemImage id="quantimium:unrealised_matter" scale="2" />
 
-Unresolved loot; glitch name. Collapses into any of the pack's ores by rarity, rarer in a hotter field.
-
 > *In game:* Maybe an Observation Chamber could help?
 
-Ore that hasn't decided what it is. Mined from <ItemLink id="quantimium:unrealised_ore" />, it becomes real in an
+Mined from <ItemLink id="quantimium:unrealised_ore" />, it becomes real in an
 <ItemLink id="quantimium:observation_chamber" /> or a <ItemLink id="quantimium:quantum_observation_chamber" />.
 
 ## What it collapses into

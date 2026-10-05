@@ -10,8 +10,8 @@ itself, assembled into wiki/build/docs/ and then built by MkDocs into wiki/build
 Run inside the docs virtualenv (see wiki/README.md), which has MkDocs Material and Pillow.
 
 What is generated, so it can never drift from the mod:
-  * a page per block and item, with its icon (rendered from the real model), name, description and
-    status (from CONTENT.md), every recipe that makes it and every recipe that uses it;
+  * a page per block and item, with its icon (rendered from the real model), name and description
+    (from wiki/data/descriptions.yml), every recipe that makes it and every recipe that uses it;
   * recipe grids for crafting and Quantum Foundry recipes;
   * a constants reference, read out of the Java source;
   * the mechanics coverage report, from [[mechanic:...]] markers in pages and `covers:` comments in
@@ -56,6 +56,7 @@ DATA = os.path.join(RES, "data", "quantimium")
 JAVA = os.path.join(ROOT, "src", "main", "java")
 
 sys.path.insert(0, os.path.join(ROOT, "tools"))
+import yaml  # noqa: E402  (MkDocs brings it)
 from PIL import Image, ImageDraw  # noqa: E402
 
 import block_preview  # noqa: E402
@@ -87,17 +88,10 @@ def catalogue_entries(names: Dict[str, str]) -> Tuple[List[str], List[str]]:
 
 
 def content_rows() -> Dict[str, Tuple[str, str]]:
-    """id → (description, status) from CONTENT.md's tables."""
-    rows: Dict[str, Tuple[str, str]] = {}
-    with open(os.path.join(ROOT, "CONTENT.md")) as handle:
-        for line in handle:
-            cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) < 4 or not cells[1].startswith("`"):
-                continue
-            ids = re.findall(r"`([a-z0-9_]+)`", cells[1])
-            for block_id in ids:
-                rows.setdefault(block_id, (cells[2], cells[3]))
-    return rows
+    """id → (description, "") from wiki/data/descriptions.yml: one or two sentences for players."""
+    with open(os.path.join(ROOT, "wiki", "data", "descriptions.yml")) as handle:
+        data = yaml.safe_load(handle) or {}
+    return {name: (str(text).strip(), "") for name, text in data.items()}
 
 
 def recipes() -> List[dict]:
@@ -332,6 +326,9 @@ class Site:
         self.names = lang()
         self.blocks, self.items = catalogue_entries(self.names)
         self.rows = content_rows()
+        missing = [n for n in self.blocks + self.items if n not in self.rows]
+        if missing:
+            error("no description in wiki/data/descriptions.yml for: " + ", ".join(missing))
         self.recipes = recipes()
         self.constants = constants()
         self.mechanics: Dict[str, List[str]] = {}   # id → pages that document it
@@ -507,17 +504,11 @@ def overlay(site: Site, kind: str, name: str, here: str) -> str:
         return expand(site, handle.read(), here)
 
 
-def status_badge(status: str) -> str:
-    plain = re.sub(r"[*`]", "", status)
-    word = plain.split()[0].lower() if plain else "unknown"
-    return f'<span class="qstatus qstatus-{html.escape(word)}">{html.escape(plain)}</span>'
-
-
 def catalogue_page(site: Site, kind: str, name: str) -> None:
     here = f"{kind}/{name}.md"
     resource = f"quantimium:{name}"
     title = site.display(resource)
-    description, status = site.rows.get(name, ("", ""))
+    description, _ = site.rows.get(name, ("", ""))
     icon = icon_path(resource)
     lines = [f"# {title}", ""]
     info = [f'<div class="qinfo">']
@@ -528,13 +519,12 @@ def catalogue_page(site: Site, kind: str, name: str) -> None:
     info.append(f"<tr><th>Type</th><td>{'Block' if kind == 'blocks' else 'Item'}</td></tr>")
     if name in INTERNAL:
         info.append("<tr><th>Obtainable</th><td>No (placed by the game)</td></tr>")
-    if status:
-        info.append(f"<tr><th>Status</th><td>{status_badge(status)}</td></tr>")
     info.append("</table></div>")
     lines.append("\n".join(info))
     lines.append("")
     tooltip = site.names.get(f"item.quantimium.{name}.tooltip")
-    if description:
+    # A hand-written page says it better; the one-line description is for pages without one.
+    if description and not os.path.exists(os.path.join(PAGES, kind, name + ".md")):
         lines += [re.sub(r"\*\*", "**", description), ""]
     if tooltip:
         lines += [f"> *In game:* {tooltip}", ""]

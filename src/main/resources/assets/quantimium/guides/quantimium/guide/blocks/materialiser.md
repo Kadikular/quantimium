@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:materialiser" scale="2" />
 
-Makes Unrealised Matter into the ore you choose, its whole history applied; capped by band (commons at Medium … rares from Critical, very rare never), for Trace (1.2× a roll's value), flux from its chunk and FE.
+Makes Unrealised Matter into the ore you choose, at a price in Traces, flux and power. A hotter field lets it choose rarer ores.
 
 ## Recipes
 

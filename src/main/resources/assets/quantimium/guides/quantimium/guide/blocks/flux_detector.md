@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:flux_detector" scale="2" />
 
-This-chunk flux/anomaly as redstone + comparator; right-click cycles Flux / Anomaly / Both.
+Turns the flux or anomaly of its chunk into a redstone signal.
 
 ## Recipes
 

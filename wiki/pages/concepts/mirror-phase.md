@@ -1,8 +1,5 @@
 # The mirror phase
 
-!!! note "Stub"
-    The essentials. Details of tears, flora and mites will follow.
-
 The mirror is a grey, quiet copy of the world, laid over it. Players who **phase** into it still
 walk on the same terrain, but they cannot touch the real world: they cannot break or place blocks,
 use things, or hurt anything real. What lives there can hurt them.

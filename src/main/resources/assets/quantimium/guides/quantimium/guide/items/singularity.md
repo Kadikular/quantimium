@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:singularity" scale="2" />
 
-A Tesseract collapsed in an empty Fold Chamber of 9 or more every way; seated in a Horizon Core it holds that Reactor's whole horizon, and carries it when taken out. "It's safe, I promise."
+A Tesseract collapsed into a black hole. Seated in a Horizon Core, it holds everything the Reactor holds.
 
 > *In game:* It's safe, I promise.
 

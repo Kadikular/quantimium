@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_cell" scale="2" />
 
-A prism of Anomalite shards sealed in glass (Foundry, Medium). What a Decoherence Projector burns: about one Cell per Veiled fight, less for mites and rifts; used up whole.
-
 > *In game:* A prism of Anomalite shards, sealed in glass: it turns ordinary light into light that reaches the mirror, and cracks as it does. A Decoherence Projector burns it.
 
 A prism of Anomalite shards sealed in glass: it turns ordinary light into light that reaches into

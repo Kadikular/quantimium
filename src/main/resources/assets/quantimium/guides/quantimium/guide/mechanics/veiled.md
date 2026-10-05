@@ -282,4 +282,4 @@ an aggravated Veiled loads as wandering.
 | Unravel | It is driven off | Phased players |
 | Contained | A hall closes on it | Everyone |
 
-All are placeholder sounds: repitched vanilla enderman and beacon files.
+They are vanilla's enderman and beacon sounds, re-pitched, until the Veiled has sounds of its own.

@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:rift_lens" scale="2" />
 
-The stone ring a Harvest Laser fires through; holds a small tear open while it does. Grows struts to solid faces and same-way lenses beside it; turns to a laser's line; a wrench turns it. Seats onto hall glass with a collar when right against it.
-
 A stone ring for a <ItemLink id="quantimium:harvest_laser" /> to fire through. On its own it does nothing. With a laser
 firing through it, a small tear opens in its middle, the lens lights up, and the laser's beam
 reaches through it to the crystal on the other side. Everyone can see the tear, from either side of

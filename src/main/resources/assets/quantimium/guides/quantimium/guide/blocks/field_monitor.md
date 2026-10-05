@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:field_monitor" scale="2" />
 
-Watches the 9×9 chunks round it: a map screen, and an alarm (redstone, comparator counts chunks) for overloaded containment or uncontained Medium+ / High+ anomaly. No power.
-
 Watches the field in the 9×9 chunks round it and raises the alarm. No power needed.
 
 Its screen shows a map of those chunks, north up, with its own outlined:

@@ -267,7 +267,8 @@ class Guide:
         whole = PART_OF.get(name)
         if whole:
             lines += [f"Part of the [{self.title_of(whole)}](../{whole}).", ""]
-        if description:
+        # A hand-written page says it better; the one-line description is for pages without one.
+        if description and not os.path.exists(os.path.join(PAGES, kind, name + ".md")):
             lines += [self.convert(description, here), ""]
         tooltip = self.site.names.get(f"item.quantimium.{name}.tooltip")
         if tooltip:

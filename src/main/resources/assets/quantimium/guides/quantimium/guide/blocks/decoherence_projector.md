@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:decoherence_projector" scale="2" />
 
-The Lance's beam on a pedestal: holds a beam on the Veiled, mites or rift anchors within 16 blocks. 8 FE/t watching, 120 FE/t beaming. Real world sees it light up; only the mirror sees the beam. Beside a hall it is a Veiled trap.
-
 The Lance's beam on a pedestal. Every half-second it picks the most pressing target within
 16 blocks in clear sight of its orb: the
 [Veiled](../mechanics/veiled.md) first, then mirror mites

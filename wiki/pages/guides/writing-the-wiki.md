@@ -30,8 +30,8 @@ a world loads: look for `Compiling` and any errors after it in `run/logs/latest.
 ## What is generated
 
 - **A page for every block and item**, from the language file. Its icon is rendered from the real
-  model; its description and status come from `CONTENT.md`; its recipes, and the recipes that use it,
-  come from the recipe files.
+  model; its description comes from `wiki/data/descriptions.yml` (one or two plain sentences, and the
+  build fails if one is missing); its recipes, and the recipes that use it, come from the recipe files.
 - **The [Constants](../reference/constants.md) page**: every numeric constant in the Java source.
 - **The [Mechanics coverage](../reference/coverage.md) page**: see below.
 

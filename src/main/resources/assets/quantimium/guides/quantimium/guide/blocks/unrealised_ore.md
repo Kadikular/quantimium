@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:unrealised_ore" scale="2" />
 
-World ore with client facade; dig → Matter (Fortune); silk → block.
+Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the ore.
 
 ## Recipes
 

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_lattice" scale="2" />
 
-Compacted 2×2 Anomalite Shards; used in Budding Anomalite. Magenta–violet placeholder art.
+Four Anomalite Shards packed together, for sturdier parts.
 
 ## Recipes
 

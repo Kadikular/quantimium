@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:quantum_exciter" scale="2" />
 
-Burns FE at 10× flux efficiency; holds Medium (proportional, aiming at 400); emits into the 3×3.
+Turns power into flux, to warm the field around it.
 
 ## Recipes
 

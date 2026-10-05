@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:flux_meter" scale="2" />
 
-This chunk’s flux + anomaly on the action bar; on machines also shows FE/t.
-
 > *In game:* Reports the field where you stand
 
 Reads the field. Use it in the air for the chunk you stand in, or on a block for that block's chunk:

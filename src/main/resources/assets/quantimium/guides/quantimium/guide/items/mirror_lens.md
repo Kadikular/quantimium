@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:mirror_lens" scale="2" />
 
-Head-slot goggles: the field made visible (plumes, motes, feeders and drains) and the Veiled's true body, faint; it notices.
-
 > *In game:* Worn, it lets the mirror show through: the field, and what lives in it
 
 Goggles that let a slice of the mirror into the real world. Wear them in the head slot and the

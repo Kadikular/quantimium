@@ -1,4 +1,4 @@
-Ore that hasn't decided what it is. Mined from [[block:unrealised_ore]], it becomes real in an
+Mined from [[block:unrealised_ore]], it becomes real in an
 [[block:observation_chamber]] or a [[block:quantum_observation_chamber]].
 
 ## What it collapses into

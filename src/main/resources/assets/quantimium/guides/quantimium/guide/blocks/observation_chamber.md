@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:observation_chamber" scale="2" />
 
-Redstone-pulse collapse of Matter → loot + Trace chance.
-
 ![The Observation Chamber's screen](../assets/gui/observation_chamber.png)
 
 ## Recipes

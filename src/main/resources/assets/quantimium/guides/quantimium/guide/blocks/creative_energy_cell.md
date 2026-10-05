@@ -12,6 +12,8 @@ item_ids:
 
 <ItemImage id="quantimium:creative_energy_cell" scale="2" />
 
+Creative only. An endless supply of power for the blocks next to it.
+
 ## Recipes
 
 <RecipesFor id="quantimium:creative_energy_cell" />

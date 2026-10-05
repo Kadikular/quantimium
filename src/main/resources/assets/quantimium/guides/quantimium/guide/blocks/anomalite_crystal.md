@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_crystal" scale="2" />
 
-High+ uncontained anomaly parasite; grows on powered blocks, drains bounded % FE/t, recedes under containment.
+Grows on machines in an uncontained anomalous field, draining their power. Only the mirror can see it.
 
 ## Recipes
 

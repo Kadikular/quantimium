@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-Pad with four pylons: stand on it for 30 s with a Totem, 4 Anomaly Fragments and 16 Matter to fold a Sophon of yourself. Four Sophons per player.
+One of the four pylons at the corners of an Unfolding Array.
 
 ## Recipes
 

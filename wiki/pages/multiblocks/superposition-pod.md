@@ -230,7 +230,3 @@ Placeholders until the crafting overhaul:
 - **Tether:** a Tesseract in leads, cornered with echo shards.
 - **Unfolding Array:** a Semi-stable Tesseract and Anomaly Fragments over a respawn anchor in crying obsidian.
 - **Array Pylon:** prismarine crystals on Quantimium Trace on obsidian.
-
-## Still to come
-
-Nothing more planned for now.

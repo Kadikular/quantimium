@@ -12,6 +12,8 @@ navigation:
 
 Part of the [Quantum Foundry](../multiblocks/quantum-foundry.md).
 
+Draws on the local field for the Foundry. One stands at the end of each arm.
+
 ## Recipes
 
 <RecipesFor id="quantimium:quantum_foundry_pillar" />

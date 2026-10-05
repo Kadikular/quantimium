@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomaly_siphon" scale="2" />
 
-Keeps anomaly at or below a ceiling band (Low/Medium/High); proportional anomaly-only pull, fragments.
+Keeps anomaly at or below a ceiling you choose, across a wider area, and yields Anomaly Fragments.
 
 ## Recipes
 

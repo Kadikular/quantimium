@@ -266,7 +266,7 @@
   "item.quantimium.anomalite_emitter": "Anomalite Emitter",
   "item.quantimium.anomalite_emitter.tooltip": "A shard of Anomalite set in a mount. The light of a Decoherence Lance.",
   "item.quantimium.anomaly_fragment": "Anomaly Fragments",
-  "item.quantimium.anomaly_fragment.tooltip": "Scavenged by a Flux Suppressor; surplus voids if the output is full",
+  "item.quantimium.anomaly_fragment.tooltip": "Drawn off by Anomaly Siphons as they hold anomaly down",
   "gui.quantimium.containment.load": "Load here: %s%%",
   "gui.quantimium.energy.contained": "Contained: no anomaly tax or leak here",
   "block.quantimium.zeno_field_controller": "Zeno Field Controller",

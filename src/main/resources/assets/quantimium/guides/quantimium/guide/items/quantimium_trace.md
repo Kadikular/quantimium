@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:quantimium_trace" scale="2" />
 
-Collapse byproduct; early feedstock.
+The residue of measuring something into existence, left behind by Observation Chambers. Most of Quantimium is built from it.
 
 ## Recipes
 

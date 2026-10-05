@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:field_regulator" scale="2" />
 
-Late mid: both setpoints in one block at 80% of the FE.
+A Flux Maintainer and an Anomaly Siphon in one block, for less power.
 
 ## Recipes
 

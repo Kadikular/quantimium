@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:basic_anomaly_siphon" scale="2" />
 
-Early: holds anomaly at the top of Low (80) across the 3×3 of a small workshop (about 1–5k FE/t); up to 500 anomaly/s and 40 FE/t, in proportion to what it takes; the first source of Anomaly Fragments. Replaced Anomaly Containment.
-
 The first answer to anomaly, and the first source of <ItemLink id="quantimium:anomaly_fragment" />s. It holds anomaly in
 every chunk of the 3×3 round it at the top of Low (80), pulling anomaly and only anomaly, so the flux
 you made stays. It's the early, fixed form of the [Anomaly Siphon](../machines/field-control.md):

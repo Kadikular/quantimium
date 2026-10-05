@@ -1,13 +1,15 @@
 # Getting started
 
-!!! note "Stub"
-    An outline of the early game. It will grow into a full walkthrough.
+The first hour of Quantimium, from the first strange ore to your first crafter.
 
 ## 1. Unrealised Ore
 
 Some ore in the world is not quite real. [[block:unrealised_ore]] looks like ordinary stone or
 deepslate ore until you mine it, and it drops [[item:unrealised_matter]]: loot that has not yet
-decided what it is.
+decided what it is. Fortune gives more; Silk Touch keeps the ore itself.
+
+With [GuideME](https://modrinth.com/mod/guideme) installed, a Book and one Unrealised Matter make the
+**Quantimium Field Guide**: this wiki, in the game.
 
 ## 2. Observing it
 
@@ -38,4 +40,5 @@ The [[block:quantum_crafter]] and [[block:quantum_simulator]] take over your cra
 crystals start growing on your machines once anomaly runs High, and they are both a hazard and a
 resource. Then come the [Quantum Foundry](../multiblocks/quantum-foundry.md), the
 [mirror](../concepts/mirror-phase.md), [rifts](../mechanics/flux-rifts.md), and
-[the Veiled](../mechanics/veiled.md).
+[the Veiled](../mechanics/veiled.md). At the end of it all stands the
+[Quantimium Reactor](../multiblocks/reactor.md).

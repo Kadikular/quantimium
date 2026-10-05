@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:budding_anomalite" scale="2" />
 
-Powered no-UI host; grows Anomalite Crystals in the mirror regardless of flux/anomaly; 40 FE/t while a face has room.
+Grows Anomalite Crystals in the mirror while powered, whatever the field.
 
 ## Recipes
 

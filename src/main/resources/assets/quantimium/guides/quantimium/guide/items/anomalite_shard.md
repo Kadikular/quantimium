@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_shard" scale="2" />
 
-Plain / Fortune harvest of a full crystal; 2×2 → Lattice.
+What a full-grown Anomalite Crystal breaks into.
 
 ## Recipes
 

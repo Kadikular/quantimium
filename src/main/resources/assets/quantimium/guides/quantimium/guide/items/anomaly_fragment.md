@@ -12,9 +12,9 @@ item_ids:
 
 <ItemImage id="quantimium:anomaly_fragment" scale="2" />
 
-Suppressor byproduct; mid/late crafting resource. Surplus voids if output is full.
+Drawn off by Anomaly Siphons as they hold anomaly down. A common ingredient in mid-game machines.
 
-> *In game:* Scavenged by a Flux Suppressor; surplus voids if the output is full
+> *In game:* Drawn off by Anomaly Siphons as they hold anomaly down
 
 ## Recipes
 

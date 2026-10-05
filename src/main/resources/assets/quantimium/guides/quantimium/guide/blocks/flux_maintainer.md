@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:flux_maintainer" scale="2" />
 
-Holds flux at or above a floor band (Medium/High/Critical) with pure flux at the Exciter's yield; proportional, counting flux still easing in.
+Keeps the flux around it at or above a floor you choose.
 
 ## Recipes
 

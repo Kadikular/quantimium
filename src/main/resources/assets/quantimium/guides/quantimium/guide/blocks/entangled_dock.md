@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:entangled_dock" scale="2" />
 
-Superposes an FE item: it stays with the player and charges from the dock anywhere (dock chunk loaded); decoheres at Critical anomaly.
-
 A pedestal that holds an item in two places at once. Use it with anything that holds FE, a
 <ItemLink id="quantimium:decoherence_lance" /> or another mod's tool or battery, and the item is **entangled** with it: it
 stays in your hand, and a copy of it turns over the dock's cradle inside a small tesseract cell.

@@ -24,12 +24,6 @@
 .qinfo th { white-space: nowrap; }
 @media (max-width: 700px) { .qinfo { float: none; margin: 0 0 1em; max-width: none; } }
 
-/* Status badges, from CONTENT.md. */
-.qstatus { font-weight: 600; }
-.qstatus-done { color: #4caf73; }
-.qstatus-partial { color: #e0a526; }
-.qstatus-planned, .qstatus-internal { color: var(--md-default-fg-color--light); }
-
 /* Recipes: inventory slots. */
 .qrecipe { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0.6em 0; }
 .qgrid { display: grid; gap: 2px; }

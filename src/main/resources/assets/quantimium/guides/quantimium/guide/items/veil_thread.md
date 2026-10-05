@@ -12,8 +12,6 @@ item_ids:
 
 <ItemImage id="quantimium:veil_thread" scale="2" />
 
-Drawn out of a Veiled held in a Containment Hall by a Harvest Laser firing through a Rift Lens and the hall's glass: one per 3 minutes at 120 FE/t, one laser per hall. For upgrades and capstones; no uses yet.
-
 > *In game:* A strand of the Veiled itself, drawn out through the mirror while it is held
 
 A strand of the Veiled itself. A <ItemLink id="quantimium:harvest_laser" /> draws one out of a Veiled held in an

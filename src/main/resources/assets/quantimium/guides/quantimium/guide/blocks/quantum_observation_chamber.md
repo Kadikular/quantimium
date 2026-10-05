@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:quantum_observation_chamber" scale="2" />
 
-Mid-tier chamber: collapses Matter on its own for FE (4 per half second), side configs with auto push/pull, flux emit.
+The powered Observation Chamber. It works through Matter on its own and connects to pipes on every side.
 
 ## Recipes
 
