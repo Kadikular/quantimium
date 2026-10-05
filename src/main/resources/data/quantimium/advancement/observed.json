@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:not_what_you_expected",
+  "display": {
+    "icon": {
+      "id": "quantimium:quantimium_trace",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.observed.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.observed.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_quantimium_trace": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:quantimium_trace"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_quantimium_trace"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

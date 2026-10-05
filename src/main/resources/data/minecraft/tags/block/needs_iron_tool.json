@@ -1,0 +1,10 @@
+{
+  "values": [
+    "quantimium:rift_anchor",
+    "quantimium:rift_stabiliser",
+    {
+      "id": "quantimium:me_superposition_crafter",
+      "required": false
+    }
+  ]
+}

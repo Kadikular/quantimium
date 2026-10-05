@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:unfolded",
+  "display": {
+    "icon": {
+      "id": "quantimium:sophon",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.fourfold.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.fourfold.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "four_doubles": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "four_doubles"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

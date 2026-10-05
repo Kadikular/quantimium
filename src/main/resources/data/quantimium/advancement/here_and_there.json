@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:unfolded",
+  "display": {
+    "icon": {
+      "id": "quantimium:superposition_pod",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.here_and_there.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.here_and_there.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "swapped": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "swapped"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

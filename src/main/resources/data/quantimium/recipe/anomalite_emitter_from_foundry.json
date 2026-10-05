@@ -1,0 +1,30 @@
+{
+  "type": "quantimium:quantum_foundry",
+  "ingredients": [
+    {
+      "ingredient": "quantimium:anomalite_lattice"
+    },
+    {
+      "ingredient": "quantimium:anomalite_shard",
+      "count": 2
+    },
+    {
+      "ingredient": "quantimium:quantimium_trace",
+      "count": 4
+    },
+    {
+      "ingredient": "#c:ingots/copper",
+      "count": 2
+    }
+  ],
+  "minimum_pillars": 1,
+  "minimum_flux_band": "medium",
+  "duration": 200,
+  "fe_per_tick": 80,
+  "flux_cost": 60.0,
+  "anomaly": 5.0,
+  "result": {
+    "id": "quantimium:anomalite_emitter",
+    "count": 1
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "recipe_types": [
+    "energizedpower:metal_press"
+  ],
+  "catalysts": [
+    "energizedpower:metal_press"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "pressMold",
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "non_consumed_items": [
+    "energizedpower:gear_press_mold",
+    "energizedpower:raw_gear_press_mold",
+    "energizedpower:hardened_gear_press_mold",
+    "energizedpower:advanced_gear_press_mold",
+    "energizedpower:elite_gear_press_mold",
+    "energizedpower:rod_press_mold",
+    "energizedpower:raw_rod_press_mold",
+    "energizedpower:hardened_rod_press_mold",
+    "energizedpower:advanced_rod_press_mold",
+    "energizedpower:elite_rod_press_mold",
+    "energizedpower:wire_press_mold",
+    "energizedpower:raw_wire_press_mold",
+    "energizedpower:hardened_wire_press_mold",
+    "energizedpower:advanced_wire_press_mold",
+    "energizedpower:elite_wire_press_mold"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

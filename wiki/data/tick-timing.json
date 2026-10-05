@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-04",
+  "java": "25.0.4.1",
+  "os": "Linux amd64",
+  "cores": 20,
+  "warmupTicks": 2000,
+  "sampleTicks": 1000,
+  "results": [
+    {
+      "id": "zeno.alone_r1",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 1",
+      "state": "Accelerating",
+      "medianMicros": 1.2,
+      "p90Micros": 4.0,
+      "meanMicros": 2.5,
+      "budgetMicros": 10.0,
+      "samples": 1000
+    },
+    {
+      "id": "simulator.furnace_8x",
+      "group": "Quantum Simulator",
+      "description": "A furnace at 8x smelting raw iron, fed and emptied every tick",
+      "state": "Working",
+      "medianMicros": 3.5,
+      "p90Micros": 6.2,
+      "meanMicros": 5.6,
+      "budgetMicros": 20.0,
+      "samples": 1000
+    },
+    {
+      "id": "reactor.idle",
+      "group": "Quantimium Reactor",
+      "description": "Three rings, five workstations and a base\u0027s worth of stock; nothing changing",
+      "state": "true active, 755 counted, mass 28160",
+      "medianMicros": 0.2,
+      "p90Micros": 0.4,
+      "meanMicros": 1.0,
+      "budgetMicros": 20.0,
+      "samples": 1000
+    },
+    {
+      "id": "reactor.streaming",
+      "group": "Quantimium Reactor",
+      "description": "As idle, with a stack of cobblestone arriving every tick and a recount every second",
+      "state": "true active, 755 counted, mass 220224",
+      "medianMicros": 0.2,
+      "p90Micros": 3.3,
+      "meanMicros": 2.6,
+      "budgetMicros": 40.0,
+      "samples": 1000
+    },
+    {
+      "id": "zeno.nested_64x_r1",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 1, in a simulator at 8x in another at 8x",
+      "state": "Working",
+      "medianMicros": 4.2,
+      "p90Micros": 7.4,
+      "meanMicros": 5.0,
+      "budgetMicros": 30.0,
+      "samples": 1000
+    },
+    {
+      "id": "zeno.nested_64x_farm",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 4, over a grown 9x9 wheat farm and three sugar cane, in a simulator at 8x in another at 8x",
+      "state": "Working",
+      "medianMicros": 7.5,
+      "p90Micros": 11.5,
+      "meanMicros": 8.6,
+      "budgetMicros": 60.0,
+      "samples": 1000
+    },
+    {
+      "id": "zeno.alone_r8",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 8",
+      "state": "Accelerating",
+      "medianMicros": 1.7,
+      "p90Micros": 2.4,
+      "meanMicros": 2.0,
+      "budgetMicros": 20.0,
+      "samples": 1000
+    },
+    {
+      "id": "zeno.nested_64x_r8",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 8, in a simulator at 8x in another at 8x",
+      "state": "Working",
+      "medianMicros": 7.9,
+      "p90Micros": 11.5,
+      "meanMicros": 8.7,
+      "budgetMicros": 200.0,
+      "samples": 1000
+    },
+    {
+      "id": "zeno.alone_farm",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 4, over a grown 9x9 wheat farm and three sugar cane",
+      "state": "Accelerating",
+      "medianMicros": 0.7,
+      "p90Micros": 1.4,
+      "meanMicros": 1.0,
+      "budgetMicros": 20.0,
+      "samples": 1000
+    },
+    {
+      "id": "simulator.idle",
+      "group": "Quantum Simulator",
+      "description": "A simulator with nothing engaged",
+      "state": "Offline",
+      "medianMicros": 0.2,
+      "p90Micros": 0.3,
+      "meanMicros": 0.3,
+      "budgetMicros": 10.0,
+      "samples": 1000
+    },
+    {
+      "id": "zeno.simulated_8x",
+      "group": "Zeno Field Controller",
+      "description": "Accelerating 16x, radius 1, in a simulator at 8x",
+      "state": "Working",
+      "medianMicros": 2.7,
+      "p90Micros": 4.0,
+      "meanMicros": 3.3,
+      "budgetMicros": 30.0,
+      "samples": 1000
+    }
+  ]
+}

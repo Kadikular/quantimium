@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:anomalite_lattice"
+  ],
+  "result": {
+    "count": 4,
+    "id": "quantimium:anomalite_shard"
+  }
+}

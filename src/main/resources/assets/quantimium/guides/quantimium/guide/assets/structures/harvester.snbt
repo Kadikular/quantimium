@@ -1,0 +1,19 @@
+{
+    DataVersion: 4790,
+    size: [5, 1, 1],
+    data: [
+        {pos: [0, 0, 0], state: "quantimium:harvest_laser{active:true,facing:east}", nbt: {Crystal: 3, Drawing: 0b, Energy: 48200, Holding: 1859199696352382920L, Output: {Items: [], Size: 2}, Progress: 30, Ring: 2, components: {}, id: "quantimium:harvest_laser_be"}},
+        {pos: [1, 0, 0], state: "minecraft:air"},
+        {pos: [2, 0, 0], state: "quantimium:rift_lens{axis:x,down:false,east:false,negative:none,north:false,open:true,positive:none,south:false,up:false,west:false}"},
+        {pos: [3, 0, 0], state: "quantimium:anomalite_crystal{age:3,facing:west}", nbt: {components: {}, id: "quantimium:anomalite_crystal_be"}},
+        {pos: [4, 0, 0], state: "quantimium:budding_anomalite{active:false}", nbt: {Energy: 0, GrowProgress: 0, components: {}, id: "quantimium:budding_anomalite_be"}}
+    ],
+    entities: [],
+    palette: [
+        "minecraft:air",
+        "quantimium:rift_lens{axis:x,down:false,east:false,negative:none,north:false,open:true,positive:none,south:false,up:false,west:false}",
+        "quantimium:harvest_laser{active:true,facing:east}",
+        "quantimium:anomalite_crystal{age:3,facing:west}",
+        "quantimium:budding_anomalite{active:false}"
+    ]
+}

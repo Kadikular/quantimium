@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "mode=flux,facing=north,powered=false": { "model": "quantimium:block/flux_detector" },
+    "mode=flux,facing=south,powered=false": { "model": "quantimium:block/flux_detector", "y": 180 },
+    "mode=flux,facing=west,powered=false": { "model": "quantimium:block/flux_detector", "y": 270 },
+    "mode=flux,facing=east,powered=false": { "model": "quantimium:block/flux_detector", "y": 90 },
+    "mode=flux,facing=north,powered=true": { "model": "quantimium:block/flux_detector_active" },
+    "mode=flux,facing=south,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 180 },
+    "mode=flux,facing=west,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 270 },
+    "mode=flux,facing=east,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 90 },
+    "mode=anomaly,facing=north,powered=false": { "model": "quantimium:block/flux_detector" },
+    "mode=anomaly,facing=south,powered=false": { "model": "quantimium:block/flux_detector", "y": 180 },
+    "mode=anomaly,facing=west,powered=false": { "model": "quantimium:block/flux_detector", "y": 270 },
+    "mode=anomaly,facing=east,powered=false": { "model": "quantimium:block/flux_detector", "y": 90 },
+    "mode=anomaly,facing=north,powered=true": { "model": "quantimium:block/flux_detector_active" },
+    "mode=anomaly,facing=south,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 180 },
+    "mode=anomaly,facing=west,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 270 },
+    "mode=anomaly,facing=east,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 90 },
+    "mode=both,facing=north,powered=false": { "model": "quantimium:block/flux_detector" },
+    "mode=both,facing=south,powered=false": { "model": "quantimium:block/flux_detector", "y": 180 },
+    "mode=both,facing=west,powered=false": { "model": "quantimium:block/flux_detector", "y": 270 },
+    "mode=both,facing=east,powered=false": { "model": "quantimium:block/flux_detector", "y": 90 },
+    "mode=both,facing=north,powered=true": { "model": "quantimium:block/flux_detector_active" },
+    "mode=both,facing=south,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 180 },
+    "mode=both,facing=west,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 270 },
+    "mode=both,facing=east,powered=true": { "model": "quantimium:block/flux_detector_active", "y": 90 }
+  }
+}

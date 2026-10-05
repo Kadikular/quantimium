@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": "quantimium:quantum_foundry_plinth",
+    "G": "quantimium:quantum_attuned_glass",
+    "F": "quantimium:anomaly_fragment"
+  },
+  "pattern": [
+    "PGP",
+    "GFG",
+    "PGP"
+  ],
+  "result": {
+    "id": "quantimium:fold_pylon",
+    "count": 2
+  }
+}

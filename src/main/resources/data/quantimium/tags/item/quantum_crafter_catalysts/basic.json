@@ -1,0 +1,47 @@
+{
+  "values": [
+    "minecraft:crafting_table",
+    "minecraft:furnace",
+    "minecraft:blast_furnace",
+    "minecraft:smoker",
+    "minecraft:stonecutter",
+    "minecraft:campfire",
+    "minecraft:soul_campfire",
+    {
+      "id": "ironfurnaces:copper_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:iron_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:silver_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:gold_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:diamond_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:emerald_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:obsidian_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:crystal_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:netherite_furnace",
+      "required": false
+    }
+  ]
+}

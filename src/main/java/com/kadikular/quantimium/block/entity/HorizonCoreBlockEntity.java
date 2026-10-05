@@ -1,0 +1,590 @@
+package com.kadikular.quantimium.block.entity;
+
+import com.kadikular.quantimium.block.QuantumFoundryStructure;
+import com.kadikular.quantimium.init.ModBlockEntities;
+import com.kadikular.quantimium.Config;
+import com.kadikular.quantimium.flux.FluxBand;
+import com.kadikular.quantimium.flux.QuantumFlux;
+import com.kadikular.quantimium.reactor.ReactorCounter;
+import com.kadikular.quantimium.reactor.ReactorLedger;
+import com.kadikular.quantimium.reactor.ReactorPlanner;
+import com.kadikular.quantimium.reactor.ReactorRecipes;
+import com.kadikular.quantimium.reactor.ReactorStructure;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import com.kadikular.quantimium.menu.HorizonCoreMenu;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+/**
+ * The Quantimium Reactor's controller and its horizon: a {@link ReactorLedger} of everything put in,
+ * and the rings that hold it.
+ *
+ * <p>Each Ring Emitter pair drives one ring, and each ring quadruples how much the horizon holds
+ * ({@link #BASE_CAPACITY} for one). The emitters draw {@link #EMITTER_FE_PER_TICK} each from the
+ * core's buffer, fed through Energy ports. Without that power the reactor goes quiet: it takes
+ * nothing in and makes nothing, but keeps everything it holds. In this first version nothing it holds
+ * is ever at risk; a full horizon simply refuses more.
+ *
+ * <p>It looks its reactor over every second: the plinth, the emitters, the ports (which it tells where
+ * it is) and the Catalyst Bays.
+ */
+public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider {
+
+    public static final long BASE_CAPACITY = 1_000_000L;
+    public static final int EMITTER_FE_PER_TICK = 1_000;
+    public static final int ENERGY_CAPACITY = 20_000_000;
+    public static final int MAX_RECEIVE = 500_000;
+    private static final int CHECK_TICKS = 20;
+
+    private final ReactorLedger ledger = new ReactorLedger();
+    private final QuantumEnergyStorage energy = new QuantumEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0) {
+        @Override
+        protected void onReceived() {
+            setChanged();
+        }
+    };
+
+    private ReactorStructure.Layout layout = new ReactorStructure.Layout(0, List.of(), List.of(), List.of(),
+            Component.translatable("message.quantimium.reactor.unchecked"));
+    /** Parts lit last time, so the ones that drop out can be darkened. */
+    private final Set<BlockPos> lit = new HashSet<>();
+    private boolean powered;
+    /** Whether a Singularity is seated in the cage. The ledger is the Singularity's: it leaves with it. */
+    private boolean seated;
+    private ReactorRecipes recipes = ReactorRecipes.NONE;
+    /** Bumped whenever the ledger changes, so an open screen knows to fetch the stock again. */
+    private int ledgerVersion;
+
+    /** At most one recount a second, and only when the stock or the catalysts have changed. */
+    private static final int RECOUNT_TICKS = 20;
+    private ReactorCounter.Counts counts = ReactorCounter.Counts.EMPTY;
+    @Nullable
+    private java.util.concurrent.CompletableFuture<ReactorCounter.Counts> recount;
+    private int countedVersion = -1;
+    @Nullable
+    private ReactorRecipes countedRecipes;
+    /** Far enough back that the first recount can start at once, without overflowing the subtraction. */
+    private long lastRecount = -RECOUNT_TICKS;
+
+    /** Synced for the horizon's look: the client never sees the ledger itself. */
+    private long syncedMass;
+    private int syncedRings;
+    private boolean syncedActive;
+    private List<BlockPos> syncedBays = List.of();
+    /** Each ring's emitter pair, in ring order: two positions a ring. */
+    private List<BlockPos> syncedEmitters = List.of();
+    /** When the last craft ran, and which bays' catalysts it used, in order: the moons flare for it. */
+    private long flashTime = Long.MIN_VALUE;
+    private List<Integer> flashBays = List.of();
+
+    public HorizonCoreBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.HORIZON_CORE_BE.get(), pos, state);
+    }
+
+    public ReactorLedger getLedger() {
+        return ledger;
+    }
+
+    public QuantumEnergyStorage getEnergyStorage() {
+        return energy;
+    }
+
+    public ReactorStructure.Layout getLayout() {
+        return layout;
+    }
+
+    public boolean isFormed() {
+        return layout.formed();
+    }
+
+    /** Formed and its rings powered: taking in and making. */
+    public boolean isActive() {
+        return layout.formed() && powered;
+    }
+
+    public int rings() {
+        return layout.formed() ? layout.rings() : 0;
+    }
+
+    /** How many items the horizon holds with its rings: ×4 a ring. */
+    public long capacity() {
+        int rings = rings();
+        return rings == 0 ? 0 : BASE_CAPACITY << (2 * (rings - 1));
+    }
+
+    public long room() {
+        return Math.max(0, capacity() - ledger.mass());
+    }
+
+    public boolean accepts() {
+        return isActive() && room() > 0;
+    }
+
+    /** Adds what an Input port took. Called on the transaction's commit, so it always fits. */
+    public void take(ItemResource item, int amount) {
+        long fits = Math.min(amount, room());
+        if (fits <= 0) return;
+        ledger.add(item, fits);
+        ledgerVersion++;
+        setChanged();
+    }
+
+    public int ledgerVersion() {
+        return ledgerVersion;
+    }
+
+    public boolean isUsableBy(Player player) {
+        return level != null && level.getBlockEntity(worldPosition) == this
+                && player.distanceToSqr(worldPosition.getCenter()) <= 64.0;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.quantimium.horizon_core");
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        return new HorizonCoreMenu(containerId, playerInventory, this, data);
+    }
+
+    private final ContainerData data = new ContainerData() {
+        @Override
+        public int get(int index) {
+            return switch (index) {
+                case 0 -> energy.getEnergyStored() & 0xFFFF;
+                case 1 -> energy.getEnergyStored() >>> 16;
+                case 2 -> energy.getMaxEnergyStored() & 0xFFFF;
+                case 3 -> energy.getMaxEnergyStored() >>> 16;
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int index, int value) {}
+
+        @Override
+        public int getCount() {
+            return HorizonCoreMenu.DATA_COUNT;
+        }
+    };
+
+    /** Clients' view of the horizon. */
+    public long syncedMass() {
+        return syncedMass;
+    }
+
+    public int syncedRings() {
+        return syncedRings;
+    }
+
+    public boolean syncedActive() {
+        return syncedActive;
+    }
+
+    public List<BlockPos> syncedBays() {
+        return syncedBays;
+    }
+
+    public List<BlockPos> syncedEmitters() {
+        return syncedEmitters;
+    }
+
+    public long flashTime() {
+        return flashTime;
+    }
+
+    public List<Integer> flashBays() {
+        return flashBays;
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, HorizonCoreBlockEntity core) {
+        if (!(level instanceof ServerLevel server)) return;
+        if (level.getGameTime() % CHECK_TICKS == 0) core.revalidate(server);
+        core.recount(server);
+        core.payUpkeep();
+        core.syncLook();
+    }
+
+    private void payUpkeep() {
+        int upkeep = rings() * 2 * EMITTER_FE_PER_TICK;
+        boolean was = powered;
+        powered = upkeep > 0 && energy.getEnergyStored() >= upkeep;
+        if (powered) energy.consume(upkeep);
+        if (was != powered) setChanged();
+    }
+
+    public boolean isSeated() {
+        return seated;
+    }
+
+    /**
+     * Seats {@code singularity} in the empty cage, and with it everything it holds. Takes one from the
+     * stack; false when a Singularity is already seated.
+     */
+    public boolean seat(ItemStack singularity) {
+        if (seated || !singularity.is(com.kadikular.quantimium.init.ModItems.SINGULARITY.get())) return false;
+        List<ReactorLedger.Entry> held = singularity.get(com.kadikular.quantimium.init.ModDataComponents.HORIZON_LEDGER.get());
+        ledger.load(held == null ? List.of() : held);
+        ledgerVersion++;
+        seated = true;
+        singularity.shrink(1);
+        afterSeating();
+        return true;
+    }
+
+    /** Takes the Singularity out, everything the horizon held inside it; empty when none is seated. */
+    public ItemStack unseat() {
+        ItemStack singularity = release();
+        if (!singularity.isEmpty()) afterSeating();
+        return singularity;
+    }
+
+    /** The Singularity and everything in it, out of the cage, without touching the world. */
+    private ItemStack release() {
+        if (!seated) return ItemStack.EMPTY;
+        ItemStack singularity = new ItemStack(com.kadikular.quantimium.init.ModItems.SINGULARITY.get());
+        if (!ledger.isEmpty()) {
+            singularity.set(com.kadikular.quantimium.init.ModDataComponents.HORIZON_LEDGER.get(), ledger.entries());
+        }
+        ledger.load(List.of());
+        ledgerVersion++;
+        seated = false;
+        return singularity;
+    }
+
+    private void afterSeating() {
+        setChanged();
+        if (level instanceof ServerLevel server) {
+            BlockState state = getBlockState();
+            if (state.hasProperty(com.kadikular.quantimium.block.HorizonCoreBlock.SEATED)
+                    && state.getValue(com.kadikular.quantimium.block.HorizonCoreBlock.SEATED) != seated) {
+                server.setBlock(worldPosition, state.setValue(com.kadikular.quantimium.block.HorizonCoreBlock.SEATED, seated),
+                        Block.UPDATE_CLIENTS);
+            }
+            revalidate(server);
+        }
+    }
+
+    /** Broken, the core lets its Singularity go, with everything it held. */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level != null && seated) {
+            net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), release());
+        }
+        // The reactor goes dark and its ports forget it; the core's own block is already going.
+        if (level instanceof ServerLevel server) {
+            for (BlockPos part : lit) {
+                if (!part.equals(pos)) setFormed(server, part, false);
+            }
+            for (BlockPos port : layout.ports()) {
+                if (server.getBlockEntity(port) instanceof ReactorPortBlockEntity entity) entity.link(null);
+            }
+            lit.clear();
+        }
+    }
+
+    /** Reads the structure, tells its ports where it is and lights its parts. */
+    public void revalidate(ServerLevel server) {
+        ReactorStructure.Layout next = seated ? ReactorStructure.read(server, worldPosition)
+                : new ReactorStructure.Layout(0, List.of(), List.of(), List.of(),
+                        Component.translatable("message.quantimium.reactor.no_singularity"));
+        Set<BlockPos> nowLit = new HashSet<>(next.formed() ? next.parts() : List.of());
+        for (BlockPos pos : lit) {
+            if (!nowLit.contains(pos)) setFormed(server, pos, false);
+        }
+        for (BlockPos pos : nowLit) setFormed(server, pos, true);
+        setFormed(server, worldPosition, next.formed());
+        for (BlockPos pos : layout.ports()) {
+            if (!next.ports().contains(pos) && server.getBlockEntity(pos) instanceof ReactorPortBlockEntity port) {
+                port.link(null);
+            }
+        }
+        for (BlockPos pos : next.ports()) {
+            if (server.getBlockEntity(pos) instanceof ReactorPortBlockEntity port) port.link(worldPosition);
+        }
+        lit.clear();
+        lit.addAll(nowLit);
+        layout = next;
+        refreshRecipes(server);
+    }
+
+    /** Rebuilds what the catalysts can make, only when a catalyst has changed. */
+    private void refreshRecipes(ServerLevel server) {
+        List<ItemStack> catalysts = new ArrayList<>();
+        for (BlockPos bay : layout.bays()) {
+            if (server.getBlockEntity(bay) instanceof CatalystBayBlockEntity entity) catalysts.add(entity.getCatalyst());
+        }
+        if (!recipes.builtFrom(catalysts)) recipes = ReactorRecipes.build(server, catalysts);
+        // Unrealised Matter held can be observed into what it could be, with no catalyst.
+        java.util.Set<ItemResource> matter = new java.util.HashSet<>();
+        for (ItemResource item : ledger.view().keySet()) {
+            if (item.is(com.kadikular.quantimium.init.ModItems.UNREALISED_MATTER.get())) matter.add(item);
+        }
+        recipes = recipes.withMatter(server, worldPosition, matter);
+    }
+
+    public ReactorRecipes getRecipes() {
+        return recipes;
+    }
+
+    /** What it could make of what it holds, as last counted: the screen's and the Materialiser Port's list. */
+    public ReactorCounter.Counts getCounts() {
+        return counts;
+    }
+
+    /** Counts on the spot, on this thread: for tests, which can't wait on wall-clock time. */
+    public ReactorCounter.Counts recountNow() {
+        counts = isFormed() ? ReactorCounter.count(recipes.graph(), ledger.snapshot()) : ReactorCounter.Counts.EMPTY;
+        countedVersion = ledgerVersion;
+        countedRecipes = recipes;
+        return counts;
+    }
+
+    /**
+     * Starts a recount off the server thread when the stock or the catalysts have changed, at most
+     * once a second, and picks up a finished one. A result finished after the stock moved again is
+     * still kept, being newer than the last; the next recount follows.
+     */
+    private void recount(ServerLevel server) {
+        if (recount != null) {
+            if (!recount.isDone()) return;
+            try {
+                counts = recount.join();
+            } catch (RuntimeException e) {
+                com.kadikular.quantimium.Quantimium.LOGGER.warn("A Horizon Core at {} failed to count what it can make",
+                        worldPosition, e);
+            }
+            recount = null;
+        }
+        boolean stale = countedVersion != ledgerVersion || countedRecipes != recipes;
+        if (!stale || server.getGameTime() - lastRecount < RECOUNT_TICKS) return;
+        lastRecount = server.getGameTime();
+        countedVersion = ledgerVersion;
+        countedRecipes = recipes;
+        if (!isFormed()) {
+            counts = ReactorCounter.Counts.EMPTY;
+            return;
+        }
+        ReactorRecipes graphOf = recipes;
+        java.util.Map<ItemResource, Long> stock = ledger.snapshot();
+        recount = java.util.concurrent.CompletableFuture.supplyAsync(
+                () -> ReactorCounter.count(graphOf.graph(), stock), ReactorCounter.EXECUTOR);
+    }
+
+    /**
+     * Makes {@code count} of {@code target} from what the horizon holds, through its catalysts, and
+     * sends it to the Output ports; whatever they have no room for stays in the horizon. All at once
+     * or not at all: the whole tree is planned, the energy checked, and only then is anything used.
+     */
+    public ReactorPlanner.Result request(ItemResource target, long count) {
+        if (!(level instanceof ServerLevel server)) return refused("message.quantimium.reactor.offline");
+        if (!isActive()) return refused("message.quantimium.reactor.offline");
+        refreshRecipes(server);
+        ReactorPlanner.Result result = ReactorPlanner.plan(recipes, ledger.snapshot(), target, count);
+        if (!result.planned()) return result;
+        ReactorPlanner.Plan plan = result.plan();
+
+        long fe = feFor(plan);
+        if (energy.getEnergyStored() < fe) {
+            return new ReactorPlanner.Result(null, Component.translatable("message.quantimium.reactor.no_power",
+                    String.format(Locale.ROOT, "%,d", fe)));
+        }
+        // Whatever the ports can't take goes back in; the horizon must have room for it.
+        List<ReactorPortBlockEntity> outputs = outputPorts(server);
+        long deliverable = 0;
+        ItemStack sample = target.toStack(1);
+        for (ReactorPortBlockEntity port : outputs) deliverable += port.roomFor(sample);
+        long kept = Math.max(0, count - deliverable);
+        long consumed = 0;
+        for (long amount : plan.consumed().values()) consumed += amount;
+        long left = 0;
+        for (long amount : plan.leftovers().values()) left += amount;
+        if (ledger.mass() - consumed + left + kept > capacity()) return refused("message.quantimium.reactor.full");
+
+        spend(server, plan, fe);
+        long toSend = count;
+        for (ReactorPortBlockEntity port : outputs) {
+            while (toSend > 0) {
+                int batch = (int) Math.min(toSend, sample.getMaxStackSize());
+                ItemStack rest = port.deliver(target.toStack(batch));
+                toSend -= batch - rest.getCount();
+                if (!rest.isEmpty()) break;
+            }
+        }
+        if (toSend > 0) ledger.add(target, toSend);
+        return result;
+    }
+
+    /** What the Reactor charges for {@code plan}: its energy at the Singularity tax. */
+    public static long feFor(ReactorPlanner.Plan plan) {
+        return (long) Math.ceil(plan.energy() * Config.crafterTaxFraction(FluxBand.SINGULARITY));
+    }
+
+    /** Plans {@code count} of {@code item} from {@code stock}, which may differ from the ledger. Changes nothing. */
+    public ReactorPlanner.Result plan(java.util.Map<ItemResource, Long> stock, ItemResource item, long count) {
+        if (!isActive()) return refused("message.quantimium.reactor.offline");
+        return ReactorPlanner.plan(recipes, stock, item, count);
+    }
+
+    /**
+     * Carries out {@code plan} whose result has gone elsewhere: takes its inputs, keeps its leftovers,
+     * pays {@code fe}, and lights the moons that worked. The caller has checked it still fits.
+     */
+    public void spend(ServerLevel server, ReactorPlanner.Plan plan, long fe) {
+        plan.consumed().forEach(ledger::remove);
+        plan.leftovers().forEach(ledger::add);
+        ledgerVersion++;
+        energy.consume(fe);
+        if (fe > 0) QuantumFlux.emitFromEnergy(server, worldPosition, fe);
+        if (!plan.steps().isEmpty()) {
+            flashTime = server.getGameTime();
+            List<Integer> used = new ArrayList<>();
+            for (ReactorPlanner.Step step : plan.steps()) {
+                if (step.bay() != ReactorRecipes.NO_BAY) used.add(step.bay());
+            }
+            flashBays = List.copyOf(used);
+            server.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        setChanged();
+    }
+
+    private static ReactorPlanner.Result refused(String key) {
+        return new ReactorPlanner.Result(null, Component.translatable(key));
+    }
+
+    private List<ReactorPortBlockEntity> outputPorts(ServerLevel server) {
+        List<ReactorPortBlockEntity> ports = new ArrayList<>();
+        for (BlockPos pos : layout.ports()) {
+            if (server.getBlockEntity(pos) instanceof ReactorPortBlockEntity port
+                    && port.kind() == com.kadikular.quantimium.block.ReactorPortBlock.Kind.OUTPUT) {
+                ports.add(port);
+            }
+        }
+        return ports;
+    }
+
+    private static void setFormed(ServerLevel server, BlockPos pos, boolean formed) {
+        BlockState state = server.getBlockState(pos);
+        if (state.hasProperty(QuantumFoundryStructure.FORMED) && state.getValue(QuantumFoundryStructure.FORMED) != formed) {
+            server.setBlock(pos, state.setValue(QuantumFoundryStructure.FORMED, formed), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    /** Sends the look to clients when it has changed enough to see. */
+    private void syncLook() {
+        long mass = ledger.mass();
+        boolean active = isActive();
+        boolean massMoved = mass != syncedMass && (syncedMass == 0 || Math.abs(mass - syncedMass) * 100 > syncedMass
+                || level.getGameTime() % 100 == 0);
+        List<BlockPos> bays = layout.formed() ? layout.bays() : List.of();
+        List<BlockPos> emitters = layout.formed() ? layout.emitters() : List.of();
+        if (!massMoved && rings() == syncedRings && active == syncedActive && bays.equals(syncedBays)
+                && emitters.equals(syncedEmitters)) {
+            return;
+        }
+        syncedEmitters = List.copyOf(emitters);
+        syncedMass = mass;
+        syncedRings = rings();
+        syncedActive = active;
+        syncedBays = List.copyOf(bays);
+        setChanged();
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    @Override
+    protected void saveAdditional(ValueOutput out) {
+        super.saveAdditional(out);
+        out.store("Ledger", ReactorLedger.CODEC, ledger.entries());
+        out.putInt("Energy", energy.getEnergyStored());
+        out.putBoolean("Powered", powered);
+        out.putBoolean("Seated", seated);
+        out.store("Lit", BlockPos.CODEC.listOf(), List.copyOf(lit));
+        saveLook(out);
+    }
+
+    private void saveLook(ValueOutput out) {
+        out.putLong("Mass", syncedMass);
+        out.putInt("Rings", syncedRings);
+        out.putBoolean("Active", syncedActive);
+    }
+
+    @Override
+    protected void loadAdditional(ValueInput in) {
+        super.loadAdditional(in);
+        in.read("Ledger", ReactorLedger.CODEC).ifPresent(ledger::load);
+        energy.setEnergy(in.getIntOr("Energy", 0));
+        powered = in.getBooleanOr("Powered", false);
+        // A core from before Singularities were seated held its ledger itself: count it as seated.
+        seated = in.getBooleanOr("Seated", !ledger.isEmpty() || in.getBooleanOr("Powered", false));
+        lit.clear();
+        in.read("Lit", BlockPos.CODEC.listOf()).ifPresent(lit::addAll);
+        syncedMass = in.getLongOr("Mass", 0L);
+        syncedRings = in.getIntOr("Rings", 0);
+        syncedActive = in.getBooleanOr("Active", false);
+    }
+
+    /** Only the look: the ledger stays on the server. */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        tag.putLong("Mass", syncedMass);
+        tag.putInt("Rings", syncedRings);
+        tag.putBoolean("Active", syncedActive);
+        tag.putLongArray("Bays", syncedBays.stream().mapToLong(BlockPos::asLong).toArray());
+        tag.putLongArray("Emitters", syncedEmitters.stream().mapToLong(BlockPos::asLong).toArray());
+        tag.putLong("Flash", flashTime);
+        tag.putIntArray("Used", flashBays.stream().mapToInt(Integer::intValue).toArray());
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(ValueInput input) {
+        CompoundTag tag = com.kadikular.quantimium.util.NbtCompat.read(input);
+        syncedMass = tag.getLongOr("Mass", 0L);
+        syncedRings = tag.getIntOr("Rings", 0);
+        syncedActive = tag.getBooleanOr("Active", false);
+        syncedBays = tag.getLongArray("Bays").map(longs -> java.util.Arrays.stream(longs).mapToObj(BlockPos::of).toList())
+                .orElse(List.of());
+        syncedEmitters = tag.getLongArray("Emitters").map(longs -> java.util.Arrays.stream(longs).mapToObj(BlockPos::of).toList())
+                .orElse(List.of());
+        flashTime = tag.getLongOr("Flash", Long.MIN_VALUE);
+        flashBays = tag.getIntArray("Used").map(ints -> java.util.Arrays.stream(ints).boxed().toList()).orElse(List.of());
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection connection, ValueInput input) {
+        handleUpdateTag(input);
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FSF",
+    "DBD",
+    "FSF"
+  ],
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "S": "quantimium:anomalite_shard",
+    "D": "minecraft:polished_deepslate",
+    "B": "quantimium:basic_quantum_crafter"
+  },
+  "result": {
+    "id": "quantimium:quantum_crafter",
+    "count": 1
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": "minecraft:observer",
+    "S": "minecraft:smooth_stone",
+    "Q": "#c:gems/amethyst"
+  },
+  "pattern": [
+    "SQS",
+    "QOQ",
+    "SQS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:observation_chamber"
+  }
+}

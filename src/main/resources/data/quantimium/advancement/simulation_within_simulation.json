@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:it_thinks_its_running",
+  "display": {
+    "icon": {
+      "id": "quantimium:quantum_simulator",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.simulation_within_simulation.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.simulation_within_simulation.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "nested_simulation": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "nested_simulation"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

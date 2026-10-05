@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FGF",
+    "LML",
+    "FDF"
+  ],
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "G": "quantimium:quantum_attuned_glass",
+    "L": "quantimium:anomalite_lattice",
+    "M": "quantimium:basic_decoherence_matrix",
+    "D": "minecraft:polished_deepslate"
+  },
+  "result": {
+    "id": "quantimium:quantum_simulator",
+    "count": 1
+  }
+}

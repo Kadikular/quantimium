@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "quantimium:quantum_attuned_glass",
+    "S": "quantimium:anomalite_shard",
+    "P": "quantimium:reactor_plinth"
+  },
+  "pattern": [
+    "GSG",
+    "G G",
+    "PPP"
+  ],
+  "result": {
+    "id": "quantimium:catalyst_bay",
+    "count": 1
+  }
+}

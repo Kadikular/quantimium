@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "quantimium:block/pod_recovery_module_top",
+    "side": "quantimium:block/pod_recovery_module_side",
+    "bottom": "quantimium:block/pod_recovery_module_side_off"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "S": "quantimium:anomalite_shard",
+    "D": "minecraft:polished_deepslate"
+  },
+  "pattern": [
+    "DFD",
+    "S S",
+    "DFD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:rift_lens"
+  }
+}

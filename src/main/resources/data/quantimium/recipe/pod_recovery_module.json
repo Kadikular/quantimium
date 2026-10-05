@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "C": "minecraft:recovery_compass",
+    "E": "#c:ender_pearls",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FCF",
+    "EPE",
+    "FCF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_recovery_module"
+  }
+}

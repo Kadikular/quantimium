@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "#c:ingots/iron",
+    "Q": "quantimium:quantimium_trace",
+    "L": "#c:gems/lapis",
+    "A": "#c:gems/amethyst"
+  },
+  "pattern": [
+    "ILI",
+    "AQA",
+    "ILI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:flux_suppressor"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:every_machine_at_once",
+  "display": {
+    "icon": {
+      "id": "quantimium:zeno_field_controller",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.a_watched_pot.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.a_watched_pot.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_zeno_field_controller": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:zeno_field_controller"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_zeno_field_controller"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

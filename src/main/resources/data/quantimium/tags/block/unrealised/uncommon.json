@@ -1,0 +1,65 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:ores/gold",
+      "required": false
+    },
+    {
+      "id": "#c:ores/redstone",
+      "required": false
+    },
+    {
+      "id": "#c:ores/lapis",
+      "required": false
+    },
+    {
+      "id": "#c:ores/quartz",
+      "required": false
+    },
+    {
+      "id": "#c:ores/silver",
+      "required": false
+    },
+    {
+      "id": "#c:ores/nickel",
+      "required": false
+    },
+    {
+      "id": "#c:ores/antimony",
+      "required": false
+    },
+    {
+      "id": "#c:ores/osmium",
+      "required": false
+    },
+    {
+      "id": "#c:ores/certus_quartz",
+      "required": false
+    },
+    {
+      "id": "#c:ores/sulfur",
+      "required": false
+    },
+    {
+      "id": "#c:ores/fluorite",
+      "required": false
+    },
+    {
+      "id": "#c:ores/apatite",
+      "required": false
+    },
+    {
+      "id": "#c:ores/monazite",
+      "required": false
+    },
+    {
+      "id": "#c:ores/cinnabar",
+      "required": false
+    },
+    {
+      "id": "#c:ores/niter",
+      "required": false
+    }
+  ]
+}

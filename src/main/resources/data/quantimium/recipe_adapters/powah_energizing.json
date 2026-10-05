@@ -1,0 +1,21 @@
+{
+  "recipe_types": [
+    "powah:energizing"
+  ],
+  "catalysts": [
+    "powah:energizing_orb"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "ingredients"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 4000,
+    "field": "energy",
+    "scale": 0.1
+  }
+}

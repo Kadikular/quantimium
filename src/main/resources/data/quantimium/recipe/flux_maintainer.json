@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "minecraft:polished_deepslate",
+    "G": "minecraft:glowstone",
+    "X": "quantimium:quantum_exciter",
+    "R": "#c:storage_blocks/redstone",
+    "F": "quantimium:anomaly_fragment"
+  },
+  "pattern": [
+    "DGD",
+    "FXF",
+    "DRD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:flux_maintainer"
+  }
+}

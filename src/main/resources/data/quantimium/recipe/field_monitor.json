@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": "#c:glass_panes",
+    "D": "quantimium:flux_detector",
+    "Q": "quantimium:quantimium_trace",
+    "R": "#c:dusts/redstone",
+    "S": "minecraft:polished_deepslate"
+  },
+  "pattern": [
+    "GGG",
+    "QDQ",
+    "SRS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:field_monitor"
+  }
+}

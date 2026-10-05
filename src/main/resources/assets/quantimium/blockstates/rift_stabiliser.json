@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "beaming=false": {
+      "model": "quantimium:block/rift_stabiliser"
+    },
+    "beaming=true": {
+      "model": "quantimium:block/rift_stabiliser"
+    }
+  }
+}

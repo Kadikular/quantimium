@@ -1,0 +1,21 @@
+{
+  "__comment": "Multipart so the glass shell and the crystal cluster can use different render types.",
+  "multipart": [
+    {
+      "when": {"formed": "false"},
+      "apply": {"model": "quantimium:block/quantum_foundry_attunement_tank_shell"}
+    },
+    {
+      "when": {"formed": "false"},
+      "apply": {"model": "quantimium:block/quantum_foundry_attunement_tank_crystals"}
+    },
+    {
+      "when": {"formed": "true"},
+      "apply": {"model": "quantimium:block/quantum_foundry_attunement_tank_shell_active"}
+    },
+    {
+      "when": {"formed": "true"},
+      "apply": {"model": "quantimium:block/quantum_foundry_attunement_tank_crystals_active"}
+    }
+  ]
+}

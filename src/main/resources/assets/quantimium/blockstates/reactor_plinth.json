@@ -1,0 +1,490 @@
+{
+ "variants": {
+  "formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0000_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0000"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0001_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0001"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0002_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0002"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0010_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0010"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0011_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0011"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0012_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0012"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0020_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0020"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0021_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0021"
+  },
+  "formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0022_lit"
+  },
+  "formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0022"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0100_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0100"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0101_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0101"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0102_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0102"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0110_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0110"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0111_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0111"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0112_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0112"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0120_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0120"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0121_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0121"
+  },
+  "formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0122_lit"
+  },
+  "formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0122"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0200_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0200"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0201_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0201"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0202_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0202"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0210_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0210"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0211_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0211"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0212_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0212"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0220_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0220"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0221_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0221"
+  },
+  "formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0222_lit"
+  },
+  "formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0222"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1000_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1000"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1001_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1001"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1002_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1002"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1010_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1010"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1011_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1011"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1012_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1012"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1020_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1020"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1021_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1021"
+  },
+  "formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1022_lit"
+  },
+  "formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1022"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1100_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1100"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1101_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1101"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1102_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1102"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1110_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1110"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1111_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1111"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1112_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1112"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1120_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1120"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1121_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1121"
+  },
+  "formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1122_lit"
+  },
+  "formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1122"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1200_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1200"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1201_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1201"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1202_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1202"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1210_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1210"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1211_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1211"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1212_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1212"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1220_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1220"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1221_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1221"
+  },
+  "formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1222_lit"
+  },
+  "formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1222"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2000_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2000"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2001_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2001"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2002_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2002"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2010_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2010"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2011_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2011"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2012_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2012"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2020_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2020"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2021_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2021"
+  },
+  "formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2022_lit"
+  },
+  "formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2022"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2100_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2100"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2101_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2101"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2102_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2102"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2110_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2110"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2111_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2111"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2112_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2112"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2120_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2120"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2121_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2121"
+  },
+  "formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2122_lit"
+  },
+  "formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2122"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2200_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2200"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2201_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2201"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2202_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2202"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2210_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2210"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2211_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2211"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2212_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2212"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2220_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2220"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2221_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2221"
+  },
+  "formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2222_lit"
+  },
+  "formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2222"
+  }
+ }
+}

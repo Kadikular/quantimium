@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=true": {
+      "model": "quantimium:block/pod_cradle"
+    },
+    "formed=false": {
+      "model": "quantimium:block/pod_cradle_off"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:what_is_this_place",
+  "display": {
+    "icon": {
+      "id": "minecraft:endermite_spawn_egg",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.these_locals_arent_friendly.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.these_locals_arent_friendly.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "mite_hit": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "mite_hit"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

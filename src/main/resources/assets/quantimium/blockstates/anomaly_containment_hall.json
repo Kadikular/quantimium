@@ -1,0 +1,11 @@
+{
+  "__comment": "Lit by active rather than formed: a built hall with no power should look dead.",
+  "variants": {
+    "active=false": {
+      "model": "quantimium:block/anomaly_containment_hall"
+    },
+    "active=true": {
+      "model": "quantimium:block/anomaly_containment_hall_active"
+    }
+  }
+}

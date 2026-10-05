@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": "#c:ingots/copper",
+    "Q": "quantimium:quantimium_trace",
+    "R": "#c:dusts/redstone"
+  },
+  "pattern": [
+    "CQC",
+    "RRR"
+  ],
+  "result": {
+    "id": "quantimium:quantum_foundry_conduit",
+    "count": 4
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "axis": "z",
+        "open": "false"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "open": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_open"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "open": "false"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "open": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_open",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "open": "false"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "open": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_open",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_strut_down"
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_strut_up"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_strut_north"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_strut_south"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_strut_west"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_strut_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "positive": "glass"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_seat_glass"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "negative": "glass"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_seat_glass",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "positive": "glass"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_seat_glass",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "negative": "glass"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_seat_glass",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "positive": "glass"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_seat_glass",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "negative": "glass"
+      },
+      "apply": {
+        "model": "quantimium:block/rift_lens_seat_glass",
+        "x": 270
+      }
+    }
+  ]
+}

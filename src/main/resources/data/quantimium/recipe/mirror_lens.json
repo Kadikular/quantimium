@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "L": "#c:leathers",
+    "G": "quantimium:quantum_attuned_glass",
+    "A": "quantimium:anomalite_shard"
+  },
+  "pattern": [
+    "LLL",
+    "GAG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:mirror_lens"
+  }
+}

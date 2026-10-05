@@ -1,0 +1,196 @@
+{
+  "variants": {
+    "north=false,east=false,south=false,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c0"
+    },
+    "north=true,east=false,south=false,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c1"
+    },
+    "north=false,east=true,south=false,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c2"
+    },
+    "north=true,east=true,south=false,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c3"
+    },
+    "north=false,east=false,south=true,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c4"
+    },
+    "north=true,east=false,south=true,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c5"
+    },
+    "north=false,east=true,south=true,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c6"
+    },
+    "north=true,east=true,south=true,west=false,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c7"
+    },
+    "north=false,east=false,south=false,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c8"
+    },
+    "north=true,east=false,south=false,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c9"
+    },
+    "north=false,east=true,south=false,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c10"
+    },
+    "north=true,east=true,south=false,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c11"
+    },
+    "north=false,east=false,south=true,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c12"
+    },
+    "north=true,east=false,south=true,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c13"
+    },
+    "north=false,east=true,south=true,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c14"
+    },
+    "north=true,east=true,south=true,west=true,up=false,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c15"
+    },
+    "north=false,east=false,south=false,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c16"
+    },
+    "north=true,east=false,south=false,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c17"
+    },
+    "north=false,east=true,south=false,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c18"
+    },
+    "north=true,east=true,south=false,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c19"
+    },
+    "north=false,east=false,south=true,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c20"
+    },
+    "north=true,east=false,south=true,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c21"
+    },
+    "north=false,east=true,south=true,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c22"
+    },
+    "north=true,east=true,south=true,west=false,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c23"
+    },
+    "north=false,east=false,south=false,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c24"
+    },
+    "north=true,east=false,south=false,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c25"
+    },
+    "north=false,east=true,south=false,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c26"
+    },
+    "north=true,east=true,south=false,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c27"
+    },
+    "north=false,east=false,south=true,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c28"
+    },
+    "north=true,east=false,south=true,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c29"
+    },
+    "north=false,east=true,south=true,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c30"
+    },
+    "north=true,east=true,south=true,west=true,up=true,down=false": {
+      "model": "quantimium:block/stabilised_portal_frame/c31"
+    },
+    "north=false,east=false,south=false,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c32"
+    },
+    "north=true,east=false,south=false,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c33"
+    },
+    "north=false,east=true,south=false,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c34"
+    },
+    "north=true,east=true,south=false,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c35"
+    },
+    "north=false,east=false,south=true,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c36"
+    },
+    "north=true,east=false,south=true,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c37"
+    },
+    "north=false,east=true,south=true,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c38"
+    },
+    "north=true,east=true,south=true,west=false,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c39"
+    },
+    "north=false,east=false,south=false,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c40"
+    },
+    "north=true,east=false,south=false,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c41"
+    },
+    "north=false,east=true,south=false,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c42"
+    },
+    "north=true,east=true,south=false,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c43"
+    },
+    "north=false,east=false,south=true,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c44"
+    },
+    "north=true,east=false,south=true,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c45"
+    },
+    "north=false,east=true,south=true,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c46"
+    },
+    "north=true,east=true,south=true,west=true,up=false,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c47"
+    },
+    "north=false,east=false,south=false,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c48"
+    },
+    "north=true,east=false,south=false,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c49"
+    },
+    "north=false,east=true,south=false,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c50"
+    },
+    "north=true,east=true,south=false,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c51"
+    },
+    "north=false,east=false,south=true,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c52"
+    },
+    "north=true,east=false,south=true,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c53"
+    },
+    "north=false,east=true,south=true,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c54"
+    },
+    "north=true,east=true,south=true,west=false,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c55"
+    },
+    "north=false,east=false,south=false,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c56"
+    },
+    "north=true,east=false,south=false,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c57"
+    },
+    "north=false,east=true,south=false,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c58"
+    },
+    "north=true,east=true,south=false,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c59"
+    },
+    "north=false,east=false,south=true,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c60"
+    },
+    "north=true,east=false,south=true,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c61"
+    },
+    "north=false,east=true,south=true,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c62"
+    },
+    "north=true,east=true,south=true,west=true,up=true,down=true": {
+      "model": "quantimium:block/stabilised_portal_frame/c63"
+    }
+  }
+}

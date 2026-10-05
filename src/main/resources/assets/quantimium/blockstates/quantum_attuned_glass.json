@@ -1,0 +1,38 @@
+{
+  "__comment": "Formed panes drop vanilla's painted border. A wall centre omits the face pointed at the cell; a corner spends the same rotation on placing its pillar instead.",
+  "variants": {
+    "formed=false": {
+      "model": "quantimium:block/quantum_attuned_glass"
+    },
+    "formed=true,corner=false,open_face=north": {
+      "model": "quantimium:block/quantum_attuned_glass_formed"
+    },
+    "formed=true,corner=false,open_face=east": {
+      "model": "quantimium:block/quantum_attuned_glass_formed",
+      "y": 90
+    },
+    "formed=true,corner=false,open_face=south": {
+      "model": "quantimium:block/quantum_attuned_glass_formed",
+      "y": 180
+    },
+    "formed=true,corner=false,open_face=west": {
+      "model": "quantimium:block/quantum_attuned_glass_formed",
+      "y": 270
+    },
+    "formed=true,corner=true,open_face=north": {
+      "model": "quantimium:block/quantum_attuned_glass_corner"
+    },
+    "formed=true,corner=true,open_face=east": {
+      "model": "quantimium:block/quantum_attuned_glass_corner",
+      "y": 90
+    },
+    "formed=true,corner=true,open_face=south": {
+      "model": "quantimium:block/quantum_attuned_glass_corner",
+      "y": 180
+    },
+    "formed=true,corner=true,open_face=west": {
+      "model": "quantimium:block/quantum_attuned_glass_corner",
+      "y": 270
+    }
+  }
+}

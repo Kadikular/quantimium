@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:unfolded",
+  "display": {
+    "icon": {
+      "id": "quantimium:tether",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.out_of_body.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.out_of_body.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "tethered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "tethered"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

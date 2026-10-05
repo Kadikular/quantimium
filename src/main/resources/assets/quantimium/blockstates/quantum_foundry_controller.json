@@ -1,0 +1,7 @@
+{
+  "__comment": "Facing only maps GUI sockets to arms, so the model is never rotated and the plinth circuit stays aligned.",
+  "variants": {
+    "formed=false": {"model": "quantimium:block/quantum_foundry_controller"},
+    "formed=true": {"model": "quantimium:block/quantum_foundry_controller_active"}
+  }
+}

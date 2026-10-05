@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "quantimium:block/flux_maintainer",
+    "top": "quantimium:block/machine_bottom_mid",
+    "bottom": "quantimium:block/machine_bottom_mid"
+  }
+}

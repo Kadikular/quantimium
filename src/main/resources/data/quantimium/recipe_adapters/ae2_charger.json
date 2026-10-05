@@ -1,0 +1,12 @@
+{
+  "recipe_types": [
+    "ae2:charger"
+  ],
+  "input_mode": "field",
+  "input_field": "ingredient",
+  "output_mode": "result_item",
+  "skip_empty_ingredients": true,
+  "energy": {
+    "flat": 1600
+  }
+}

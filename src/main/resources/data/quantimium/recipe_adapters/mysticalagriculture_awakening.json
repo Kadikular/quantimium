@@ -1,0 +1,21 @@
+{
+  "recipe_types": [
+    "mysticalagriculture:awakening"
+  ],
+  "catalysts": [
+    "mysticalagriculture:awakening_altar"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input",
+    "ingredients",
+    "essences"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "result"
+  ],
+  "energy": {
+    "flat": 8000
+  }
+}

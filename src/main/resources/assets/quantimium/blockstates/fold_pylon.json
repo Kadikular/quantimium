@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "quantimium:block/fold_pylon"
+    },
+    "formed=true": {
+      "model": "quantimium:block/fold_pylon_active"
+    }
+  }
+}

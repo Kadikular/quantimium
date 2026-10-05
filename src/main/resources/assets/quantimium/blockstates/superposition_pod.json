@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=south,formed=true,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower"
+    },
+    "facing=west,formed=true,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower",
+      "y": 90
+    },
+    "facing=north,formed=true,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower",
+      "y": 180
+    },
+    "facing=east,formed=true,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower",
+      "y": 270
+    },
+    "facing=south,formed=false,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower_off"
+    },
+    "facing=west,formed=false,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower_off",
+      "y": 90
+    },
+    "facing=north,formed=false,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower_off",
+      "y": 180
+    },
+    "facing=east,formed=false,half=lower": {
+      "model": "quantimium:block/superposition_pod_lower_off",
+      "y": 270
+    },
+    "facing=south,formed=true,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper"
+    },
+    "facing=west,formed=true,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper",
+      "y": 90
+    },
+    "facing=north,formed=true,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper",
+      "y": 180
+    },
+    "facing=east,formed=true,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper",
+      "y": 270
+    },
+    "facing=south,formed=false,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper_off"
+    },
+    "facing=west,formed=false,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper_off",
+      "y": 90
+    },
+    "facing=north,formed=false,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper_off",
+      "y": 180
+    },
+    "facing=east,formed=false,half=upper": {
+      "model": "quantimium:block/superposition_pod_upper_off",
+      "y": 270
+    }
+  }
+}

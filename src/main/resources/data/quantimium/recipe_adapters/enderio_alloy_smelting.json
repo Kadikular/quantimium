@@ -1,0 +1,23 @@
+{
+  "recipe_types": [
+    "enderio:alloy_smelting"
+  ],
+  "catalysts": [
+    "enderio:alloy_smelter"
+  ],
+  "catalyst_also": [
+    "minecraft:smelting"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 2000,
+    "field": "energy"
+  }
+}

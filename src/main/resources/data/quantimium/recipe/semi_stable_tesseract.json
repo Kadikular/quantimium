@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": "#c:ender_pearls",
+    "Q": "quantimium:quantimium_trace"
+  },
+  "pattern": [
+    " Q ",
+    "QEQ",
+    " Q "
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:semi_stable_tesseract"
+  }
+}

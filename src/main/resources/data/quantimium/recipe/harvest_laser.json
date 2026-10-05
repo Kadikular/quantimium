@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "E": "quantimium:anomalite_emitter",
+    "L": "quantimium:anomalite_lattice",
+    "T": "quantimium:quantimium_trace",
+    "G": "#c:glass_blocks",
+    "D": "minecraft:polished_deepslate"
+  },
+  "pattern": [
+    "DED",
+    "GLG",
+    "DTD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:harvest_laser"
+  }
+}

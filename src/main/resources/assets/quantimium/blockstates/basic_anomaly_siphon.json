@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "quantimium:block/basic_anomaly_siphon"
+    },
+    "active=true": {
+      "model": "quantimium:block/basic_anomaly_siphon_active"
+    }
+  }
+}

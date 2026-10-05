@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "enderio:sag_milling"
+  ],
+  "catalysts": [
+    "enderio:sag_mill"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "outputs"
+  ],
+  "energy": {
+    "flat": 2400,
+    "field": "energy"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "minecraft:polished_deepslate",
+    "F": "quantimium:anomaly_fragment",
+    "S": "quantimium:basic_anomaly_siphon",
+    "R": "#c:storage_blocks/redstone"
+  },
+  "pattern": [
+    "DFD",
+    "FSF",
+    "DRD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:anomaly_siphon"
+  }
+}

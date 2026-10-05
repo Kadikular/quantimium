@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "E": "#c:ender_pearls",
+    "S": "quantimium:semi_stable_tesseract",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FEF",
+    "SPS",
+    "FEF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_relay_module"
+  }
+}

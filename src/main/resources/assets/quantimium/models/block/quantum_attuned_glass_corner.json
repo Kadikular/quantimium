@@ -1,0 +1,35 @@
+{
+  "__comment": "Formed corner pane: the shell cube plus a 4px pillar in the corner nearest the cell. The rotation comes from OPEN_FACE, see ContainmentHallStructure.cornerFace.",
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "all": "quantimium:block/quantum_attuned_glass_formed",
+    "pillar": "quantimium:block/quantum_attuned_glass_pillar",
+    "particle": "quantimium:block/quantum_attuned_glass_formed"
+  },
+  "elements": [
+    {
+      "__comment": "North face omitted as in the plain formed model.",
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": { "texture": "#all", "cullface": "down" },
+        "up": { "texture": "#all", "cullface": "up" },
+        "east": { "texture": "#all", "cullface": "east" },
+        "south": { "texture": "#all", "cullface": "south" },
+        "west": { "texture": "#all", "cullface": "west" }
+      }
+    },
+    {
+      "__comment": "No up/down faces: the courses stack into one column, and cullface cannot help here because glass does not occlude. Both open ends butt against a plinth.",
+      "from": [0, 0, 0],
+      "to": [4, 16, 4],
+      "faces": {
+        "north": { "texture": "#pillar" },
+        "east": { "texture": "#pillar" },
+        "south": { "texture": "#pillar" },
+        "west": { "texture": "#pillar" }
+      }
+    }
+  ]
+}

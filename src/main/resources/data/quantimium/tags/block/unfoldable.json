@@ -1,0 +1,12 @@
+{
+  "values": [
+    "quantimium:fold_pylon",
+    "quantimium:fold_rail",
+    "quantimium:fold_core",
+    "quantimium:quantum_containment",
+    {
+      "id": "minecraft:reinforced_deepslate",
+      "required": false
+    }
+  ]
+}

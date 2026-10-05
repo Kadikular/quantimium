@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "energizedpower:crusher",
+    "energizedpower:pulverizer",
+    "energizedpower:sawmill",
+    "energizedpower:compressor"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output",
+    "secondaryOutput"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

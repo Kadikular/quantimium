@@ -1,0 +1,29 @@
+{
+  "model": {
+    "type": "quantimium:animated",
+    "model": {
+      "type": "minecraft:select",
+      "property": "minecraft:display_context",
+      "cases": [
+        {
+          "when": "gui",
+          "model": {
+            "type": "minecraft:special",
+            "base": "quantimium:item/tesseract",
+            "model": {
+              "type": "quantimium:tesseract",
+              "gui": true
+            }
+          }
+        }
+      ],
+      "fallback": {
+        "type": "minecraft:special",
+        "base": "quantimium:item/tesseract",
+        "model": {
+          "type": "quantimium:tesseract"
+        }
+      }
+    }
+  }
+}

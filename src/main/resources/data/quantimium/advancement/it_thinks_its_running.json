@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:every_machine_at_once",
+  "display": {
+    "icon": {
+      "id": "quantimium:quantum_simulator",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.it_thinks_its_running.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.it_thinks_its_running.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_quantum_simulator": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:quantum_simulator"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_quantum_simulator"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

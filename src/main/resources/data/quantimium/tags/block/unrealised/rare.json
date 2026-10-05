@@ -1,0 +1,41 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:ores/diamond",
+      "required": false
+    },
+    {
+      "id": "#c:ores/emerald",
+      "required": false
+    },
+    {
+      "id": "#c:ores/platinum",
+      "required": false
+    },
+    {
+      "id": "#c:ores/uranium",
+      "required": false
+    },
+    {
+      "id": "#c:ores/titanium",
+      "required": false
+    },
+    {
+      "id": "#c:ores/tungsten",
+      "required": false
+    },
+    {
+      "id": "#c:ores/cobalt",
+      "required": false
+    },
+    {
+      "id": "#c:ores/ruby",
+      "required": false
+    },
+    {
+      "id": "#c:ores/sapphire",
+      "required": false
+    }
+  ]
+}

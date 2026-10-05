@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": "minecraft:ender_eye",
+    "Q": "quantimium:quantimium_trace"
+  },
+  "pattern": [
+    " Q ",
+    "QEQ",
+    " Q "
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:basic_decoherence_matrix"
+  }
+}

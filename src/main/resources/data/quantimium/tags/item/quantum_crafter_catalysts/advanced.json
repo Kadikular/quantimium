@@ -1,0 +1,296 @@
+{
+  "values": [
+    {
+      "id": "ae2:charger",
+      "required": false
+    },
+    {
+      "id": "ae2:inscriber",
+      "required": false
+    },
+    {
+      "id": "hostilenetworks:loot_fabricator",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:bronze_compressor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:bronze_cutting_machine",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:bronze_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:bronze_macerator",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:bronze_mixer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_compressor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_cutting_machine",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_macerator",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_mixer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_packer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_unpacker",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_wiremill",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_compressor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_cutting_machine",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_macerator",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_mixer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_packer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_unpacker",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_wiremill",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:assembler",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:centrifuge",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:chemical_reactor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:distillery",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electrolyzer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:polarizer",
+      "required": false
+    },
+    {
+      "id": "mekanism:enrichment_chamber",
+      "required": false
+    },
+    {
+      "id": "mekanism:crusher",
+      "required": false
+    },
+    {
+      "id": "mekanism:energized_smelter",
+      "required": false
+    },
+    {
+      "id": "mekanism:combiner",
+      "required": false
+    },
+    {
+      "id": "mekanism:basic_enriching_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:advanced_enriching_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:elite_enriching_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:ultimate_enriching_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:basic_crushing_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:advanced_crushing_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:elite_crushing_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:ultimate_crushing_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:basic_smelting_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:advanced_smelting_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:elite_smelting_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:ultimate_smelting_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:basic_combining_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:advanced_combining_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:elite_combining_factory",
+      "required": false
+    },
+    {
+      "id": "mekanism:ultimate_combining_factory",
+      "required": false
+    },
+    {
+      "id": "enderio:alloy_smelter",
+      "required": false
+    },
+    {
+      "id": "enderio:sag_mill",
+      "required": false
+    },
+    {
+      "id": "energizedpower:crusher",
+      "required": false
+    },
+    {
+      "id": "energizedpower:advanced_crusher",
+      "required": false
+    },
+    {
+      "id": "energizedpower:pulverizer",
+      "required": false
+    },
+    {
+      "id": "energizedpower:advanced_pulverizer",
+      "required": false
+    },
+    {
+      "id": "energizedpower:sawmill",
+      "required": false
+    },
+    {
+      "id": "energizedpower:compressor",
+      "required": false
+    },
+    {
+      "id": "energizedpower:alloy_furnace",
+      "required": false
+    },
+    {
+      "id": "energizedpower:induction_smelter",
+      "required": false
+    },
+    {
+      "id": "energizedpower:metal_press",
+      "required": false
+    },
+    {
+      "id": "energizedpower:charger",
+      "required": false
+    },
+    {
+      "id": "energizedpower:advanced_charger",
+      "required": false
+    },
+    {
+      "id": "energizedpower:powered_furnace",
+      "required": false
+    },
+    {
+      "id": "energizedpower:advanced_powered_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:allthemodium_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:vibranium_furnace",
+      "required": false
+    },
+    {
+      "id": "ironfurnaces:unobtainium_furnace",
+      "required": false
+    },
+    {
+      "id": "productivebees:centrifuge",
+      "required": false
+    },
+    {
+      "id": "productivebees:powered_centrifuge",
+      "required": false
+    },
+    {
+      "id": "productivebees:heated_centrifuge",
+      "required": false
+    },
+    {
+      "id": "mysticalagriculture:seed_reprocessor",
+      "required": false
+    },
+    {
+      "id": "powah:energizing_orb",
+      "required": false
+    }
+  ]
+}

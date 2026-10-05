@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "V": "quantimium:veil_thread",
+    "E": "quantimium:anomalite_emitter",
+    "P": "quantimium:reactor_plinth"
+  },
+  "pattern": [
+    " V ",
+    "VEV",
+    " P "
+  ],
+  "result": {
+    "id": "quantimium:ring_emitter",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "minecraft:polished_deepslate",
+    "P": "minecraft:packed_ice",
+    "C": "minecraft:clock",
+    "S": "quantimium:anomalite_shard"
+  },
+  "pattern": [
+    "DPD",
+    "CSC",
+    "DPD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:zeno_field_controller"
+  }
+}

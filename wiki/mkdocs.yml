@@ -1,0 +1,90 @@
+site_name: Quantimium Wiki
+site_description: Machines, multiblocks and the mirror world of the Quantimium mod.
+docs_dir: build/docs
+site_dir: build/site
+# Plain .html links, so the built site also works opened straight from disk.
+use_directory_urls: false
+site_url: https://kadikular.github.io/quantimium/
+repo_url: https://github.com/Kadikular/quantimium
+edit_uri: ""
+# Every block and item has a page; the catalogue indexes link them, so they stay out of the side nav.
+not_in_nav: |
+  blocks/*.md
+  items/*.md
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tooltips
+  icon:
+    logo: material/cube-outline
+
+extra_css:
+  - stylesheets/quantimium.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started: guides/getting-started.md
+  - For pack makers: guides/pack-makers.md
+  - Concepts:
+      - Flux and anomaly: concepts/flux-and-anomaly.md
+      - The mirror phase: concepts/mirror-phase.md
+      - Machine tiers: concepts/tiers.md
+      - Side configuration: concepts/side-configuration.md
+      - Partner mods: concepts/partner-mods.md
+  - Mechanics:
+      - The Veiled: mechanics/veiled.md
+      - Flux rifts: mechanics/flux-rifts.md
+  - Machines:
+      - Quantum Crafter: machines/quantum-crafter.md
+      - Quantum Simulator: machines/quantum-simulator.md
+      - Quantum Observation Chamber: machines/quantum-observation-chamber.md
+      - Field control: machines/field-control.md
+      - Tesseract Stabilizer: machines/tesseract-stabilizer.md
+      - Zeno Field Controller: machines/zeno-field-controller.md
+      - ME Superposition Crafter: machines/me-superposition-crafter.md
+  - Multiblocks:
+      - Quantum Foundry: multiblocks/quantum-foundry.md
+      - Anomaly Containment Hall: multiblocks/containment-hall.md
+      - Stabilised rift: multiblocks/stabilised-rift.md
+      - Fold Chamber: multiblocks/fold-chamber.md
+      - Superposition Pod: multiblocks/superposition-pod.md
+      - Quantimium Reactor: multiblocks/reactor.md
+  - Blocks: blocks/index.md
+  - Items: items/index.md
+  - Reference:
+      - Mechanics coverage: reference/coverage.md
+      - Tick timing: reference/tick-timing.md
+      - Constants: reference/constants.md
+      - Writing the wiki: guides/writing-the-wiki.md

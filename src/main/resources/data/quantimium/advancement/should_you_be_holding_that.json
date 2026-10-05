@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:root",
+  "display": {
+    "icon": {
+      "id": "quantimium:singularity",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.should_you_be_holding_that.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.should_you_be_holding_that.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "held_a_horizon": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "held_a_horizon"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

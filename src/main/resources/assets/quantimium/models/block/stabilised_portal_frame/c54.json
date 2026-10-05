@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "north": "quantimium:block/stabilised_portal_frame_13",
+    "south": "quantimium:block/stabilised_portal_frame_7",
+    "west": "quantimium:block/stabilised_portal_frame_7",
+    "east": "quantimium:block/stabilised_portal_frame_13",
+    "up": "quantimium:block/stabilised_portal_frame_6",
+    "down": "quantimium:block/stabilised_portal_frame_3",
+    "particle": "quantimium:block/stabilised_portal_frame_0"
+  }
+}

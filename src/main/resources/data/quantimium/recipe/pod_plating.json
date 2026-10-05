@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": "#c:obsidians",
+    "T": "quantimium:quantimium_trace"
+  },
+  "pattern": [
+    "OTO",
+    "OTO"
+  ],
+  "result": {
+    "count": 4,
+    "id": "quantimium:pod_plating"
+  }
+}

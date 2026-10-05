@@ -1,0 +1,19 @@
+{
+  "recipe_types": [
+    "mysticalagriculture:reprocessor"
+  ],
+  "catalysts": [
+    "mysticalagriculture:seed_reprocessor"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "result"
+  ],
+  "energy": {
+    "flat": 1000
+  }
+}

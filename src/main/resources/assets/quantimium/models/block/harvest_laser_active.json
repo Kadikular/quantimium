@@ -1,0 +1,10 @@
+{
+  "parent": "quantimium:block/harvest_laser_template",
+  "textures": {
+    "side": "quantimium:block/harvest_laser_side_active",
+    "lens": "quantimium:block/harvest_laser_lens_active",
+    "top": "quantimium:block/harvest_laser_top",
+    "inner": "quantimium:block/harvest_laser_inner",
+    "bottom": "quantimium:block/machine_bottom_mid"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:every_machine_at_once",
+  "display": {
+    "icon": {
+      "id": "quantimium:quantum_foundry_controller",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.forged_in_the_field.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.forged_in_the_field.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_quantum_foundry_controller": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:quantum_foundry_controller"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_quantum_foundry_controller"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

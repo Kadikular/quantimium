@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FLF",
+    "SES",
+    "FLF"
+  ],
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "L": "quantimium:anomalite_lattice",
+    "S": "quantimium:anomalite_shard",
+    "E": "minecraft:ender_eye"
+  },
+  "result": {
+    "id": "quantimium:rift_seed",
+    "count": 1
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "enderio:slicing"
+  ],
+  "catalysts": [
+    "enderio:slice_and_splice"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 20000,
+    "field": "energy"
+  }
+}

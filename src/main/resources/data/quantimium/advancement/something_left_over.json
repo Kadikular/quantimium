@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:coherent",
+  "display": {
+    "icon": {
+      "id": "quantimium:anomaly_fragment",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.something_left_over.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.something_left_over.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_anomaly_fragment": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:anomaly_fragment"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_anomaly_fragment"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

@@ -1,0 +1,56 @@
+{
+  "variants": {
+    "active=false,facing=up": {
+      "model": "quantimium:block/decoherence_projector"
+    },
+    "active=true,facing=up": {
+      "model": "quantimium:block/decoherence_projector_active"
+    },
+    "active=false,facing=down": {
+      "model": "quantimium:block/decoherence_projector",
+      "x": 180
+    },
+    "active=true,facing=down": {
+      "model": "quantimium:block/decoherence_projector_active",
+      "x": 180
+    },
+    "active=false,facing=north": {
+      "model": "quantimium:block/decoherence_projector",
+      "x": 90
+    },
+    "active=true,facing=north": {
+      "model": "quantimium:block/decoherence_projector_active",
+      "x": 90
+    },
+    "active=false,facing=south": {
+      "model": "quantimium:block/decoherence_projector",
+      "x": 90,
+      "y": 180
+    },
+    "active=true,facing=south": {
+      "model": "quantimium:block/decoherence_projector_active",
+      "x": 90,
+      "y": 180
+    },
+    "active=false,facing=west": {
+      "model": "quantimium:block/decoherence_projector",
+      "x": 90,
+      "y": 270
+    },
+    "active=true,facing=west": {
+      "model": "quantimium:block/decoherence_projector_active",
+      "x": 90,
+      "y": 270
+    },
+    "active=false,facing=east": {
+      "model": "quantimium:block/decoherence_projector",
+      "x": 90,
+      "y": 90
+    },
+    "active=true,facing=east": {
+      "model": "quantimium:block/decoherence_projector_active",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

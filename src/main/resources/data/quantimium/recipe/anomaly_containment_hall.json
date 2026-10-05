@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "quantimium:basic_anomaly_siphon",
+    "G": "quantimium:quantum_attuned_glass",
+    "L": "quantimium:anomalite_lattice",
+    "R": "quantimium:rift_residue"
+  },
+  "pattern": [
+    "LGL",
+    "GCG",
+    "LRL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:anomaly_containment_hall"
+  }
+}

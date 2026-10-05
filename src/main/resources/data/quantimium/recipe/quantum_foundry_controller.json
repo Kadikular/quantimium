@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "quantimium:anomalite_lattice",
+    "C": "#c:ingots/copper",
+    "E": "minecraft:ender_eye",
+    "R": "quantimium:rift_residue"
+  },
+  "pattern": [
+    "ACA",
+    "RER",
+    "ACA"
+  ],
+  "result": {
+    "id": "quantimium:quantum_foundry_controller",
+    "count": 1
+  }
+}

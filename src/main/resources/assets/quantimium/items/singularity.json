@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "quantimium:animated",
+    "model": {
+      "type": "minecraft:special",
+      "base": "quantimium:item/tesseract",
+      "model": {
+        "type": "quantimium:singularity"
+      }
+    }
+  }
+}

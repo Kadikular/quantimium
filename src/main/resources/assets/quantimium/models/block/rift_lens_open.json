@@ -1,0 +1,7 @@
+{
+  "parent": "quantimium:block/rift_lens_template",
+  "textures": {
+    "face": "quantimium:block/rift_lens_open",
+    "side": "quantimium:block/rift_lens_side"
+  }
+}

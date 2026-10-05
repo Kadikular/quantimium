@@ -1,0 +1,21 @@
+{
+  "recipe_types": [
+    "energizedpower:alloy_furnace"
+  ],
+  "catalysts": [
+    "energizedpower:alloy_furnace",
+    "energizedpower:induction_smelter"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output",
+    "secondaryOutput"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

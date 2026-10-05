@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:ores/netherite_scrap",
+      "required": false
+    },
+    {
+      "id": "#c:ores/iridium",
+      "required": false
+    }
+  ]
+}

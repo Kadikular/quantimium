@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": "quantimium:anomalite_shard",
+    "G": "#c:glass_blocks"
+  },
+  "pattern": [
+    " A ",
+    "AGA",
+    " A "
+  ],
+  "result": {
+    "id": "quantimium:quantum_attuned_glass",
+    "count": 2
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "quantimium:block/unrealised_ore"
+    }
+  }
+}

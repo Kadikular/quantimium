@@ -1,0 +1,33 @@
+{
+  "__comment": "Floor rail running along the block's z axis; the blockstate rotates it for x arms.",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "#top"
+  },
+  "elements": [
+    {
+      "from": [3, 0, 0],
+      "to": [13, 3, 16],
+      "faces": {
+        "up": {"uv": [0, 0, 16, 16], "texture": "#top"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#side"},
+        "north": {"uv": [0, 0, 16, 4], "texture": "#side"},
+        "south": {"uv": [0, 0, 16, 4], "texture": "#side"},
+        "west": {"uv": [0, 0, 16, 4], "texture": "#side"},
+        "east": {"uv": [0, 0, 16, 4], "texture": "#side"}
+      }
+    },
+    {
+      "from": [6, 3, 0],
+      "to": [10, 4, 16],
+      "faces": {
+        "up": {"uv": [6, 0, 10, 16], "texture": "#top"},
+        "north": {"uv": [0, 0, 4, 1], "texture": "#side"},
+        "south": {"uv": [0, 0, 4, 1], "texture": "#side"},
+        "west": {"uv": [0, 0, 16, 1], "texture": "#side"},
+        "east": {"uv": [0, 0, 16, 1], "texture": "#side"}
+      }
+    }
+  ]
+}

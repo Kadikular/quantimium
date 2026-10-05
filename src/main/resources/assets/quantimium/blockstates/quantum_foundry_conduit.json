@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "axis=z,formed=false": {"model": "quantimium:block/quantum_foundry_conduit"},
+    "axis=z,formed=true": {"model": "quantimium:block/quantum_foundry_conduit_active"},
+    "axis=x,formed=false": {"model": "quantimium:block/quantum_foundry_conduit", "y": 90},
+    "axis=x,formed=true": {"model": "quantimium:block/quantum_foundry_conduit_active", "y": 90}
+  }
+}

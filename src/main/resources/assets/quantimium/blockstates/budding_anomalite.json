@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "active=false": { "model": "quantimium:block/budding_anomalite" },
+    "active=true": { "model": "quantimium:block/budding_anomalite_active" }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "__comment": "Formed edge of a ground 3x3 plinth ring. North is the one face anyone sees; the blockstate turns it outward.",
+  "parent": "minecraft:block/block",
+  "textures": {
+    "top": "quantimium:block/quantum_foundry_plinth_top_edge_active",
+    "inner": "quantimium:block/quantum_foundry_plinth_side_active",
+    "bottom": "quantimium:block/quantum_foundry_base",
+    "particle": "quantimium:block/quantum_foundry_plinth_top_edge_active",
+    "outer": "quantimium:block/quantum_foundry_plinth_side_edge_active"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#bottom",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#outer",
+          "cullface": "north"
+        },
+        "east": {
+          "texture": "#inner",
+          "cullface": "east"
+        },
+        "south": {
+          "texture": "#inner",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#inner",
+          "cullface": "west"
+        }
+      }
+    }
+  ]
+}

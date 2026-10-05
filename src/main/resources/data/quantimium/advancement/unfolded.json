@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:observed",
+  "display": {
+    "icon": {
+      "id": "quantimium:unfolding_array",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.unfolded.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.unfolded.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "made_sophon": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "made_sophon"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

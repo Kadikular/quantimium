@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "S": "quantimium:anomalite_emitter",
+    "T": "quantimium:quantimium_trace",
+    "M": "quantimium:basic_decoherence_matrix",
+    "I": "#c:ingots/iron"
+  },
+  "pattern": [
+    " TS",
+    " MT",
+    "I  "
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:decoherence_lance"
+  }
+}

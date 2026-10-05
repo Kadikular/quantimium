@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "T": "quantimium:quantimium_trace",
+    "G": "quantimium:quantum_attuned_glass",
+    "L": "quantimium:anomalite_lattice",
+    "O": "#c:obsidians",
+    "R": "quantimium:rift_residue"
+  },
+  "pattern": [
+    "TRT",
+    "GLG",
+    "OOO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:rift_stabiliser"
+  }
+}

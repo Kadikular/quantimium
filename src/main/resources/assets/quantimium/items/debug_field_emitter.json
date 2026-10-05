@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "quantimium:item/debug_field_emitter"
+  }
+}

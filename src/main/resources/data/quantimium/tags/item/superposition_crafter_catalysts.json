@@ -1,0 +1,22 @@
+{
+  "values": [
+    "minecraft:furnace",
+    "minecraft:blast_furnace",
+    "minecraft:smoker",
+    "minecraft:campfire",
+    "minecraft:soul_campfire",
+    "quantimium:folded_tesseract",
+    {
+      "id": "#quantimium:quantum_crafter_catalysts/advanced",
+      "required": false
+    },
+    {
+      "id": "#quantimium:quantum_crafter_catalysts/industrial",
+      "required": false
+    },
+    {
+      "id": "#quantimium:quantum_crafter_catalysts/singularity",
+      "required": false
+    }
+  ]
+}

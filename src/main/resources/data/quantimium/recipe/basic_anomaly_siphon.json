@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "#c:ingots/iron",
+    "Q": "quantimium:quantimium_trace",
+    "A": "#c:gems/amethyst",
+    "C": "#c:ingots/copper"
+  },
+  "pattern": [
+    "ICI",
+    "AQA",
+    "ICI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:basic_anomaly_siphon"
+  }
+}

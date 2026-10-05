@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "alert=false": {
+      "model": "quantimium:block/field_monitor"
+    },
+    "alert=true": {
+      "model": "quantimium:block/field_monitor_alert"
+    }
+  }
+}

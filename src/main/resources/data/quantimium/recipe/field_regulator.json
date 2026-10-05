@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "L": "quantimium:tesseract",
+    "M": "quantimium:flux_maintainer",
+    "S": "quantimium:anomaly_siphon",
+    "N": "minecraft:nether_star"
+  },
+  "pattern": [
+    "FLF",
+    "MNS",
+    "FLF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:field_regulator"
+  }
+}

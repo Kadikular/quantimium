@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "E": "minecraft:echo_shard",
+    "L": "minecraft:lead",
+    "F": "quantimium:anomaly_fragment",
+    "S": "quantimium:semi_stable_tesseract"
+  },
+  "pattern": [
+    "EFE",
+    "LSL",
+    "EFE"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:tether"
+  }
+}

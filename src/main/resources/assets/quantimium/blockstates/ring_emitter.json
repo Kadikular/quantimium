@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "quantimium:block/ring_emitter"
+    },
+    "formed=true": {
+      "model": "quantimium:block/ring_emitter_active"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "model": {
+    "type": "minecraft:composite",
+    "models": [
+      {
+        "type": "minecraft:model",
+        "model": "quantimium:block/reactor_traces/1221_lit"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "quantimium:block/reactor_output_port_overlay_active"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "quantimium:block/decoherence_projector_template",
+  "textures": {
+    "side": "quantimium:block/decoherence_projector_side",
+    "top": "quantimium:block/decoherence_projector_top",
+    "bottom": "quantimium:block/decoherence_projector_bottom"
+  }
+}

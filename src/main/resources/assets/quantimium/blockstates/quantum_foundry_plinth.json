@@ -1,0 +1,74 @@
+{
+  "__comment": "Loose plinths ignore role/facing/cap. Formed, each ring piece gets its place in the 3x3: edge art is drawn as the north edge, corner art as the north-west corner, both rotated from there. The cap of a Containment Hall has its own set.",
+  "variants": {
+    "formed=false": {
+      "model": "quantimium:block/quantum_foundry_plinth"
+    },
+    "formed=true,cap=false,role=edge,facing=north": {
+      "model": "quantimium:block/quantum_foundry_plinth_edge_active"
+    },
+    "formed=true,cap=false,role=edge,facing=east": {
+      "model": "quantimium:block/quantum_foundry_plinth_edge_active",
+      "y": 90
+    },
+    "formed=true,cap=false,role=edge,facing=south": {
+      "model": "quantimium:block/quantum_foundry_plinth_edge_active",
+      "y": 180
+    },
+    "formed=true,cap=false,role=edge,facing=west": {
+      "model": "quantimium:block/quantum_foundry_plinth_edge_active",
+      "y": 270
+    },
+    "formed=true,cap=false,role=corner,facing=north": {
+      "model": "quantimium:block/quantum_foundry_plinth_corner_active"
+    },
+    "formed=true,cap=false,role=corner,facing=east": {
+      "model": "quantimium:block/quantum_foundry_plinth_corner_active",
+      "y": 90
+    },
+    "formed=true,cap=false,role=corner,facing=south": {
+      "model": "quantimium:block/quantum_foundry_plinth_corner_active",
+      "y": 180
+    },
+    "formed=true,cap=false,role=corner,facing=west": {
+      "model": "quantimium:block/quantum_foundry_plinth_corner_active",
+      "y": 270
+    },
+    "formed=true,cap=false,role=centre": {
+      "model": "quantimium:block/quantum_foundry_plinth_centre_active"
+    },
+    "formed=true,cap=true,role=edge,facing=north": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_edge_active"
+    },
+    "formed=true,cap=true,role=edge,facing=east": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_edge_active",
+      "y": 90
+    },
+    "formed=true,cap=true,role=edge,facing=south": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_edge_active",
+      "y": 180
+    },
+    "formed=true,cap=true,role=edge,facing=west": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_edge_active",
+      "y": 270
+    },
+    "formed=true,cap=true,role=corner,facing=north": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_corner_active"
+    },
+    "formed=true,cap=true,role=corner,facing=east": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_corner_active",
+      "y": 90
+    },
+    "formed=true,cap=true,role=corner,facing=south": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_corner_active",
+      "y": 180
+    },
+    "formed=true,cap=true,role=corner,facing=west": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_corner_active",
+      "y": 270
+    },
+    "formed=true,cap=true,role=centre": {
+      "model": "quantimium:block/quantum_foundry_plinth_cap_centre_active"
+    }
+  }
+}

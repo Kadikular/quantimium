@@ -1,0 +1,7 @@
+{
+  "parent": "quantimium:block/quantum_foundry_attunement_tank_shell_template",
+  "textures": {
+    "frame": "quantimium:block/quantum_foundry_tank_frame_active",
+    "glass": "quantimium:block/quantum_foundry_tank_glass_active"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FLF",
+    "SQS",
+    "FDF"
+  ],
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "L": "quantimium:anomalite_lattice",
+    "S": "quantimium:anomalite_shard",
+    "Q": "quantimium:quantum_observation_chamber",
+    "D": "minecraft:polished_deepslate"
+  },
+  "result": {
+    "id": "quantimium:materialiser",
+    "count": 1
+  }
+}

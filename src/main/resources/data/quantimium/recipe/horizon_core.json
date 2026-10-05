@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "quantimium:quantum_attuned_glass",
+    "P": "quantimium:reactor_plinth",
+    "E": "quantimium:anomalite_emitter"
+  },
+  "pattern": [
+    "GGG",
+    "GEG",
+    "PPP"
+  ],
+  "result": {
+    "id": "quantimium:horizon_core",
+    "count": 1
+  }
+}

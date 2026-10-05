@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "I": "#c:storage_blocks/iron",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FIF",
+    "IPI",
+    "FIF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_hardening_module"
+  }
+}

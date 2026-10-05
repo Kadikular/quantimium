@@ -1,0 +1,21 @@
+{
+  "recipe_types": [
+    "productivebees:centrifuge"
+  ],
+  "catalysts": [
+    "productivebees:centrifuge",
+    "productivebees:powered_centrifuge",
+    "productivebees:heated_centrifuge"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "ingredient"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "itemOutput"
+  ],
+  "energy": {
+    "flat": 1000
+  }
+}

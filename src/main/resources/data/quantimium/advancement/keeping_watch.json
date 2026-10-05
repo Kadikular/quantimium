@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:reading_the_field",
+  "display": {
+    "icon": {
+      "id": "quantimium:field_monitor",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.keeping_watch.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.keeping_watch.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_field_monitor": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:field_monitor"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_field_monitor"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

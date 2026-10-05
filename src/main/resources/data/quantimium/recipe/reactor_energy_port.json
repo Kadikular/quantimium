@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "quantimium:reactor_plinth",
+    "R": "minecraft:redstone_block",
+    "E": "quantimium:anomalite_emitter"
+  },
+  "pattern": [
+    " R ",
+    "PEP"
+  ],
+  "result": {
+    "id": "quantimium:reactor_energy_port",
+    "count": 1
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:what_is_this_place",
+  "display": {
+    "icon": {
+      "id": "quantimium:quantimium_trace",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.a_way_to_come_and_go.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.a_way_to_come_and_go.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "lit_portal": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "lit_portal"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

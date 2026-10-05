@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "#c:ingots/iron",
+    "Q": "quantimium:quantimium_trace",
+    "R": "#c:storage_blocks/redstone",
+    "C": "#c:ingots/copper"
+  },
+  "pattern": [
+    "ICI",
+    "RQR",
+    "ICI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:quantum_exciter"
+  }
+}

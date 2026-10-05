@@ -1,0 +1,12 @@
+{
+  "recipe_types": [
+    "mekanism:enriching",
+    "mekanism:crushing",
+    "mekanism:smelting"
+  ],
+  "input_mode": "field",
+  "input_field": "input",
+  "output_mode": "result_item",
+  "skip_empty_ingredients": true,
+  "energy": { "flat": 2000 }
+}

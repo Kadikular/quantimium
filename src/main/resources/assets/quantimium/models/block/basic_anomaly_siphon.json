@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "quantimium:block/basic_anomaly_siphon",
+    "top": "quantimium:block/basic_anomaly_siphon_top",
+    "bottom": "quantimium:block/machine_bottom_mid"
+  }
+}

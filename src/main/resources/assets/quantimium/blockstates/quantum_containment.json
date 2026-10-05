@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "quantimium:block/quantum_containment" }
+  }
+}

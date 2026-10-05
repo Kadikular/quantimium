@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "formed=false": {"model": "quantimium:block/quantum_foundry_pillar"},
+    "formed=true": {"model": "quantimium:block/quantum_foundry_pillar_active"}
+  }
+}

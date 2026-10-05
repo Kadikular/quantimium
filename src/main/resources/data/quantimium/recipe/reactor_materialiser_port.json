@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "quantimium:reactor_plinth",
+    "M": "quantimium:materialiser",
+    "T": "quantimium:tesseract"
+  },
+  "pattern": [
+    " M ",
+    "PTP"
+  ],
+  "result": {
+    "id": "quantimium:reactor_materialiser_port",
+    "count": 1
+  }
+}

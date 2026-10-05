@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:what_is_this_place",
+  "display": {
+    "icon": {
+      "id": "quantimium:decoherence_lance",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.stitching_the_sky.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.stitching_the_sky.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_decoherence_lance": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:decoherence_lance"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_decoherence_lance"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

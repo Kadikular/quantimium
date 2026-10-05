@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "axis=x,formed=true": {
+      "model": "quantimium:block/pod_recovery_module"
+    },
+    "axis=z,formed=true": {
+      "model": "quantimium:block/pod_recovery_module",
+      "y": 90
+    },
+    "axis=x,formed=false": {
+      "model": "quantimium:block/pod_recovery_module_off"
+    },
+    "axis=z,formed=false": {
+      "model": "quantimium:block/pod_recovery_module_off",
+      "y": 90
+    }
+  }
+}

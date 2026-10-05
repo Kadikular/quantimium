@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": "quantimium:anomalite_lattice",
+    "D": "minecraft:polished_deepslate",
+    "I": "#c:ingots/iron"
+  },
+  "pattern": [
+    "DID",
+    "IAI",
+    "DID"
+  ],
+  "result": {
+    "id": "quantimium:quantum_foundry_plinth",
+    "count": 8
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "mirror.thunder": {
+    "subtitle": "subtitles.quantimium.mirror.thunder",
+    "sounds": [
+      {
+        "name": "minecraft:ambient/weather/thunder1",
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:ambient/weather/thunder2",
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:ambient/weather/thunder3",
+        "pitch": 0.75
+      }
+    ]
+  },
+  "mirror.lightning_impact": {
+    "subtitle": "subtitles.quantimium.mirror.lightning_impact",
+    "sounds": [
+      {
+        "name": "minecraft:random/explode1",
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:random/explode2",
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:random/explode3",
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:random/explode4",
+        "pitch": 0.75
+      }
+    ]
+  },
+  "mirror.travel": {
+    "subtitle": "subtitles.quantimium.mirror.travel",
+    "sounds": [
+      {
+        "name": "minecraft:portal/travel"
+      }
+    ]
+  },
+  "lance.beam": {
+    "subtitle": "subtitles.quantimium.lance.beam",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "pitch": 1.6,
+        "volume": 0.6
+      }
+    ]
+  },
+  "rift.drain": {
+    "subtitle": "subtitles.quantimium.rift.drain",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge3",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "rift.collapse": {
+    "subtitle": "subtitles.quantimium.rift.collapse",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/deplete1",
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/deplete2",
+        "pitch": 0.55
+      }
+    ]
+  },
+  "rift.ambient": {
+    "subtitle": "subtitles.quantimium.rift.ambient",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/ambient1",
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient2",
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/ambient3",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "rift.launch": {
+    "subtitle": "subtitles.quantimium.rift.launch",
+    "sounds": [
+      {
+        "name": "minecraft:entity/wind_charge/wind_burst1",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:entity/wind_charge/wind_burst2",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:entity/wind_charge/wind_burst3",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "rift.zap": {
+    "subtitle": "subtitles.quantimium.rift.zap",
+    "sounds": [
+      {
+        "name": "quantimium:mirror/impact1",
+        "pitch": 1.8,
+        "volume": 0.5
+      },
+      {
+        "name": "quantimium:mirror/impact2",
+        "pitch": 1.8,
+        "volume": 0.5
+      },
+      {
+        "name": "quantimium:mirror/impact3",
+        "pitch": 1.8,
+        "volume": 0.5
+      },
+      {
+        "name": "quantimium:mirror/impact4",
+        "pitch": 1.8,
+        "volume": 0.5
+      }
+    ]
+  },
+  "mite.recall": {
+    "subtitle": "subtitles.quantimium.mite.recall",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal"
+      },
+      {
+        "name": "minecraft:mob/endermen/portal2"
+      }
+    ]
+  },
+  "veiled.strike": {
+    "subtitle": "subtitles.quantimium.veiled.strike",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/scream1",
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:mob/endermen/scream2",
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:mob/endermen/scream3",
+        "pitch": 0.55
+      },
+      {
+        "name": "minecraft:mob/endermen/scream4",
+        "pitch": 0.55
+      }
+    ]
+  },
+  "veiled.blink": {
+    "subtitle": "subtitles.quantimium.veiled.blink",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/portal",
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:mob/endermen/portal2",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "veiled.stare": {
+    "subtitle": "subtitles.quantimium.veiled.stare",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/stare",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "veiled.unravel": {
+    "subtitle": "subtitles.quantimium.veiled.unravel",
+    "sounds": [
+      {
+        "name": "minecraft:mob/endermen/death",
+        "pitch": 0.55
+      }
+    ]
+  },
+  "hall.starving": {
+    "subtitle": "subtitles.quantimium.hall.starving",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
+    ]
+  },
+  "veiled.contained": {
+    "subtitle": "subtitles.quantimium.veiled.contained",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/deactivate",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "pitch": 0.6
+      }
+    ]
+  }
+}

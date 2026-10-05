@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:observed",
+  "display": {
+    "icon": {
+      "id": "quantimium:flux_meter",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.reading_the_field.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.reading_the_field.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_flux_meter": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:flux_meter"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_flux_meter"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "quantimium:block/flux_maintainer"
+    },
+    "active=true": {
+      "model": "quantimium:block/flux_maintainer_active"
+    }
+  }
+}

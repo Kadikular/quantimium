@@ -1,0 +1,25 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ae2"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "quantimium:anomalite_shard",
+    "P": "ae2:pattern_provider",
+    "T": "quantimium:tesseract",
+    "C": "quantimium:quantum_crafter"
+  },
+  "pattern": [
+    "APA",
+    "TCT",
+    "APA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:me_superposition_crafter"
+  }
+}

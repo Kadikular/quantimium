@@ -1,0 +1,72 @@
+{
+  "values": [
+    {
+      "id": "modern_industrialization:bronze_boiler",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steel_boiler",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:coke_oven",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steam_blast_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_blast_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:implosion_compressor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:vacuum_freezer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:distillation_tower",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:heat_exchanger",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:oil_drilling_rig",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:nuclear_reactor",
+      "required": false
+    },
+    {
+      "id": "enderio:slice_and_splice",
+      "required": false
+    },
+    {
+      "id": "energizedpower:assembling_machine",
+      "required": false
+    },
+    {
+      "id": "energizedpower:elite_charger",
+      "required": false
+    },
+    {
+      "id": "energizedpower:elite_powered_furnace",
+      "required": false
+    },
+    {
+      "id": "mysticalagriculture:infusion_altar",
+      "required": false
+    },
+    {
+      "id": "mysticalagriculture:awakening_altar",
+      "required": false
+    }
+  ]
+}

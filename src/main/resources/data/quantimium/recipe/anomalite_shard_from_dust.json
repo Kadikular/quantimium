@@ -1,0 +1,18 @@
+{
+  "type": "quantimium:quantum_foundry",
+  "ingredients": [
+    {
+      "ingredient": "quantimium:anomalite_dust"
+    }
+  ],
+  "minimum_pillars": 1,
+  "minimum_flux_band": "medium",
+  "duration": 100,
+  "fe_per_tick": 60,
+  "flux_cost": 25.0,
+  "anomaly": 2.0,
+  "result": {
+    "id": "quantimium:anomalite_shard",
+    "count": 1
+  }
+}

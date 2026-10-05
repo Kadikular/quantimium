@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "#c:ingots/copper",
+    "I": "#c:ingots/iron",
+    "M": "quantimium:basic_decoherence_matrix",
+    "R": "#c:dusts/redstone"
+  },
+  "pattern": [
+    "IRI",
+    "CMC",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:basic_quantum_crafter"
+  }
+}

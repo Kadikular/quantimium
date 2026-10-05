@@ -1,0 +1,67 @@
+/* Quantimium's two forces, in the wiki: azure for flux, violet for anomaly. */
+:root {
+  --q-flux: #3485ff;
+  --q-anomaly: #8a60f0;
+  --q-slot: #8b8b8b;
+  --q-slot-edge: #373737;
+}
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #0f1220;
+  --md-primary-fg-color: #1b2444;
+  --md-accent-fg-color: #7fb2ff;
+  --md-typeset-a-color: #7fb2ff;
+}
+
+.qicon { image-rendering: pixelated; vertical-align: -6px; margin-right: 4px; }
+.qlink { white-space: nowrap; }
+.qrender { image-rendering: pixelated; max-width: 100%; border-radius: 4px; }
+
+/* Infobox: floats beside the opening paragraph, like a real mod wiki. */
+.qinfo { float: right; margin: 0 0 1em 1.5em; padding: 12px; border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px; background: var(--md-code-bg-color); max-width: 280px; }
+.qinfo-icon { display: block; width: 128px; height: 128px; margin: 0 auto 8px; image-rendering: pixelated; }
+.qinfo table { font-size: 0.72rem; margin: 0 !important; }
+.qinfo th { white-space: nowrap; }
+@media (max-width: 700px) { .qinfo { float: none; margin: 0 0 1em; max-width: none; } }
+
+/* Status badges, from CONTENT.md. */
+.qstatus { font-weight: 600; }
+.qstatus-done { color: #4caf73; }
+.qstatus-partial { color: #e0a526; }
+.qstatus-planned, .qstatus-internal { color: var(--md-default-fg-color--light); }
+
+/* Recipes: inventory slots. */
+.qrecipe { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0.6em 0; }
+.qgrid { display: grid; gap: 2px; }
+.qgrid.qflow { display: flex; flex-wrap: wrap; gap: 2px; max-width: 220px; }
+.qslot { position: relative; width: 40px; height: 40px; background: var(--q-slot);
+  box-shadow: inset 2px 2px 0 var(--q-slot-edge), inset -2px -2px 0 #fff; display: grid; place-items: center; }
+.qslot img { width: 32px; height: 32px; image-rendering: pixelated; }
+.qslot .qtext { font-size: 7px; line-height: 1; color: #222; text-align: center; padding: 2px; }
+.qcount { position: absolute; right: 2px; bottom: 0; font: 700 11px/1 var(--md-code-font-family);
+  color: #fff; text-shadow: 1px 1px 0 #3f3f3f; }
+.qarrow { font-size: 1.6em; opacity: 0.6; }
+
+/* Catalogue cards. */
+.qcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-bottom: 1.5em; }
+.qcard { display: grid; grid-template-columns: 48px 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  padding: 10px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 6px; color: inherit !important; }
+.qcard:hover { border-color: var(--q-flux); }
+.qcard img, .qcard .qnoicon { grid-row: span 2; width: 48px; height: 48px; image-rendering: pixelated; }
+.qcard-name { font-weight: 600; font-size: 0.8rem; }
+.qcard-text { font-size: 0.65rem; color: var(--md-default-fg-color--light); line-height: 1.35; }
+
+/* Mechanic badges: every documented rule says whether a test backs it. */
+.qmech { font: 600 0.6rem/1 var(--md-code-font-family); padding: 2px 6px; border-radius: 3px;
+  vertical-align: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+.qmech-tested { background: #1f5f3a; color: #bff3d2 !important; }
+.qmech-untested { background: #5a3a12; color: #ffd9a0 !important; }
+
+/* In-game GUI captures (tools/wiki_shots.sh), taken at GUI scale 2: keep the pixels crisp. */
+img.qgui {
+  display: block;
+  max-width: 100%;
+  margin: 1em auto;
+  image-rendering: pixelated;
+  border-radius: 4px;
+}

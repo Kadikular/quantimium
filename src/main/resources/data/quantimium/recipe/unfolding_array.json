@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "S": "quantimium:semi_stable_tesseract",
+    "O": "minecraft:crying_obsidian",
+    "A": "minecraft:respawn_anchor",
+    "Z": "quantimium:rift_residue"
+  },
+  "pattern": [
+    "FSF",
+    "OAO",
+    "OZO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:unfolding_array"
+  }
+}

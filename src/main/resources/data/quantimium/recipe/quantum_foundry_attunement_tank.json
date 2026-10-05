@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": "quantimium:anomalite_shard",
+    "G": "quantimium:quantum_attuned_glass",
+    "L": "quantimium:anomalite_lattice",
+    "Q": "quantimium:quantimium_trace"
+  },
+  "pattern": [
+    " A ",
+    "GQG",
+    " L "
+  ],
+  "result": {
+    "id": "quantimium:quantum_foundry_attunement_tank",
+    "count": 1
+  }
+}

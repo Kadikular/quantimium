@@ -1,0 +1,7 @@
+{
+  "parent": "quantimium:block/quantum_foundry_conduit_template",
+  "textures": {
+    "top": "quantimium:block/quantum_foundry_conduit_top_active",
+    "side": "quantimium:block/quantum_foundry_conduit_side_active"
+  }
+}

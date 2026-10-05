@@ -1,0 +1,16 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "quantimium:item/quantum_simulator",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -11841452
+      },
+      {
+        "type": "minecraft:constant",
+        "value": -11841452
+      }
+    ]
+  }
+}

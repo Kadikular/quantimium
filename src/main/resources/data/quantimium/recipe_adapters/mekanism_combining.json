@@ -1,0 +1,8 @@
+{
+  "recipe_types": ["mekanism:combining"],
+  "input_mode": "field",
+  "input_fields": ["mainInput", "extraInput"],
+  "output_mode": "result_item",
+  "skip_empty_ingredients": true,
+  "energy": { "flat": 2500 }
+}

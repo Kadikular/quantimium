@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "quantimium:block/tesseract_stabilizer"
+    },
+    "facing=down": {
+      "model": "quantimium:block/tesseract_stabilizer",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "quantimium:block/tesseract_stabilizer",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "quantimium:block/tesseract_stabilizer",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "quantimium:block/tesseract_stabilizer",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "quantimium:block/tesseract_stabilizer",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

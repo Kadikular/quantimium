@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": "#c:ingots/iron",
+    "Q": "quantimium:quantimium_trace",
+    "R": "#c:dusts/redstone",
+    "C": "minecraft:comparator"
+  },
+  "pattern": [
+    "IRI",
+    "QCQ",
+    "IRI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:flux_detector"
+  }
+}

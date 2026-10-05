@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": "quantimium:quantum_attuned_glass",
+    "T": "quantimium:quantimium_trace"
+  },
+  "pattern": [
+    "G",
+    "T",
+    "G"
+  ],
+  "result": {
+    "id": "quantimium:fold_rail",
+    "count": 4
+  }
+}

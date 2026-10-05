@@ -1,0 +1,29 @@
+{
+  "type": "quantimium:quantum_foundry",
+  "ingredients": [
+    {
+      "ingredient": "quantimium:semi_stable_tesseract"
+    },
+    {
+      "ingredient": "quantimium:anomalite_lattice"
+    },
+    {
+      "ingredient": "quantimium:quantimium_trace",
+      "count": 8
+    },
+    {
+      "ingredient": "quantimium:anomaly_fragment",
+      "count": 4
+    }
+  ],
+  "minimum_pillars": 4,
+  "minimum_flux_band": "high",
+  "duration": 400,
+  "fe_per_tick": 200,
+  "flux_cost": 250.0,
+  "anomaly": 25.0,
+  "result": {
+    "id": "quantimium:tesseract",
+    "count": 1
+  }
+}

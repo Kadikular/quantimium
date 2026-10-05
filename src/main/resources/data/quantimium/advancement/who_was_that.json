@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:unfolded",
+  "display": {
+    "icon": {
+      "id": "minecraft:totem_of_undying",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.who_was_that.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.who_was_that.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "rescued": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "rescued"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

@@ -1,0 +1,196 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "axis": "y",
+        "formed": "false"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "formed": "false",
+        "cap_negative": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_bottom"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "formed": "false",
+        "cap_positive": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_top"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "formed": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_active"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "formed": "true",
+        "cap_negative": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_bottom_active"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "formed": "true",
+        "cap_positive": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_top_active"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "formed": "false"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "formed": "false",
+        "cap_negative": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_top",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "formed": "false",
+        "cap_positive": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_bottom",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "formed": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_active",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "formed": "true",
+        "cap_negative": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_top_active",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "formed": "true",
+        "cap_positive": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_bottom_active",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "formed": "false"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "formed": "false",
+        "cap_negative": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_bottom",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "formed": "false",
+        "cap_positive": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_top",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "formed": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_active",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "formed": "true",
+        "cap_negative": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_bottom_active",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "formed": "true",
+        "cap_positive": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/fold_rail_collar_top_active",
+        "x": 90,
+        "y": 90
+      }
+    }
+  ]
+}

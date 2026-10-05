@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DSD",
+    "FTF",
+    "DLD"
+  ],
+  "key": {
+    "D": "minecraft:polished_deepslate",
+    "S": "quantimium:anomalite_shard",
+    "F": "quantimium:anomaly_fragment",
+    "T": "quantimium:semi_stable_tesseract",
+    "L": "quantimium:anomalite_lattice"
+  },
+  "result": {
+    "id": "quantimium:tesseract_stabilizer",
+    "count": 1
+  }
+}

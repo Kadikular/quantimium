@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "S": "minecraft:shulker_shell",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FSF",
+    "SPS",
+    "FSF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_ward_module"
+  }
+}

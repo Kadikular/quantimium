@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:reading_the_field",
+  "display": {
+    "icon": {
+      "id": "quantimium:mirror_lens",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.seeing_things.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.seeing_things.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_mirror_lens": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:mirror_lens"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_mirror_lens"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

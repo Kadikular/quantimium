@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "quantimium:reactor_plinth",
+    "H": "minecraft:hopper",
+    "T": "quantimium:tesseract"
+  },
+  "pattern": [
+    " H ",
+    "PTP"
+  ],
+  "result": {
+    "id": "quantimium:reactor_input_port",
+    "count": 1
+  }
+}

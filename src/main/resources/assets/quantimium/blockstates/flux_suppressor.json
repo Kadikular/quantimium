@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "quantimium:block/flux_suppressor"
+    },
+    "active=true": {
+      "model": "quantimium:block/flux_suppressor_active"
+    }
+  }
+}

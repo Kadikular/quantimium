@@ -1,0 +1,7 @@
+{
+  "item_settings": {
+    "display_name": { "translate": "guide.quantimium.guide" },
+    "tooltip_lines": [ { "translate": "guide.quantimium.guide.tooltip", "color": "gray" } ]
+  },
+  "default_language": "en_us"
+}

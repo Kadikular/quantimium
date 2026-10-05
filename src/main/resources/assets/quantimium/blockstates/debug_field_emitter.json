@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "setting=0": {
+      "model": "quantimium:block/debug_field_emitter"
+    },
+    "setting=1": {
+      "model": "quantimium:block/debug_field_emitter_on"
+    },
+    "setting=2": {
+      "model": "quantimium:block/debug_field_emitter_on"
+    },
+    "setting=3": {
+      "model": "quantimium:block/debug_field_emitter_on"
+    },
+    "setting=4": {
+      "model": "quantimium:block/debug_field_emitter_on"
+    },
+    "setting=5": {
+      "model": "quantimium:block/debug_field_emitter_on"
+    },
+    "setting=6": {
+      "model": "quantimium:block/debug_field_emitter_on"
+    }
+  }
+}

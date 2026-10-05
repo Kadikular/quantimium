@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "minecraft:polished_deepslate",
+    "F": "quantimium:anomaly_fragment",
+    "T": "quantimium:quantimium_trace",
+    "O": "quantimium:observation_chamber",
+    "R": "#c:storage_blocks/redstone"
+  },
+  "pattern": [
+    "DFD",
+    "TOT",
+    "DRD"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:quantum_observation_chamber"
+  }
+}

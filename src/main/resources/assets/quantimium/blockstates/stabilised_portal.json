@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "axis=x": { "model": "quantimium:block/stabilised_portal" },
+    "axis=z": { "model": "quantimium:block/stabilised_portal" }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "recipe_types": [
+    "energizedpower:charger"
+  ],
+  "catalysts": [
+    "energizedpower:charger",
+    "energizedpower:advanced_charger",
+    "energizedpower:elite_charger"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 4000,
+    "field": "energyConsumption",
+    "scale": 0.01
+  }
+}

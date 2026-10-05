@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "quantimium:block/pod_plating_top",
+    "side": "quantimium:block/pod_plating_side",
+    "bottom": "quantimium:block/pod_plating_side_off"
+  }
+}

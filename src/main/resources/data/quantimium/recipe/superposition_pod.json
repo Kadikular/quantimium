@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": "minecraft:crying_obsidian",
+    "G": "quantimium:quantum_attuned_glass",
+    "L": "quantimium:tesseract",
+    "R": "minecraft:respawn_anchor"
+  },
+  "pattern": [
+    "OGO",
+    "GLG",
+    "ORO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:superposition_pod"
+  }
+}

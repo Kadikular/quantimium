@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "formed=false,seated=false": {
+      "model": "quantimium:block/horizon_core"
+    },
+    "formed=true,seated=false": {
+      "model": "quantimium:block/horizon_core"
+    },
+    "formed=false,seated=true": {
+      "model": "quantimium:block/horizon_core"
+    },
+    "formed=true,seated=true": {
+      "model": "quantimium:block/horizon_core_active"
+    }
+  }
+}

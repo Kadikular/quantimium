@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,active=false": { "model": "quantimium:block/quantum_exciter" },
+    "facing=south,active=false": { "model": "quantimium:block/quantum_exciter", "y": 180 },
+    "facing=west,active=false": { "model": "quantimium:block/quantum_exciter", "y": 270 },
+    "facing=east,active=false": { "model": "quantimium:block/quantum_exciter", "y": 90 },
+    "facing=north,active=true": { "model": "quantimium:block/quantum_exciter_active" },
+    "facing=south,active=true": { "model": "quantimium:block/quantum_exciter_active", "y": 180 },
+    "facing=west,active=true": { "model": "quantimium:block/quantum_exciter_active", "y": 270 },
+    "facing=east,active=true": { "model": "quantimium:block/quantum_exciter_active", "y": 90 }
+  }
+}

@@ -1,0 +1,41 @@
+{
+    DataVersion: 4790,
+    size: [3, 3, 3],
+    data: [
+        {pos: [0, 0, 0], state: "quantimium:pod_cradle{formed:false}"},
+        {pos: [0, 0, 1], state: "quantimium:pod_plating{axis:x,formed:false}"},
+        {pos: [0, 0, 2], state: "quantimium:pod_cradle{formed:false}"},
+        {pos: [1, 0, 0], state: "quantimium:pod_plating{axis:x,formed:false}"},
+        {pos: [1, 0, 1], state: "quantimium:pod_cradle{formed:false}"},
+        {pos: [1, 0, 2], state: "quantimium:pod_plating{axis:x,formed:false}"},
+        {pos: [2, 0, 0], state: "quantimium:pod_cradle{formed:false}"},
+        {pos: [2, 0, 1], state: "quantimium:pod_plating{axis:x,formed:false}"},
+        {pos: [2, 0, 2], state: "quantimium:pod_cradle{formed:false}"},
+        {pos: [0, 1, 0], state: "minecraft:air"},
+        {pos: [0, 1, 1], state: "minecraft:air"},
+        {pos: [0, 1, 2], state: "minecraft:air"},
+        {pos: [1, 1, 0], state: "minecraft:air"},
+        {pos: [1, 1, 1], state: "quantimium:superposition_pod{facing:south,formed:false,half:lower}", nbt: {Energy: 0, Formed: 0b, Listed: 1b, Modules: 0, OwnerName: "", Powered: 0b, components: {}, id: "quantimium:superposition_pod_be"}},
+        {pos: [1, 1, 2], state: "minecraft:air"},
+        {pos: [2, 1, 0], state: "minecraft:air"},
+        {pos: [2, 1, 1], state: "minecraft:air"},
+        {pos: [2, 1, 2], state: "minecraft:air"},
+        {pos: [0, 2, 0], state: "minecraft:air"},
+        {pos: [0, 2, 1], state: "minecraft:air"},
+        {pos: [0, 2, 2], state: "minecraft:air"},
+        {pos: [1, 2, 0], state: "minecraft:air"},
+        {pos: [1, 2, 1], state: "quantimium:superposition_pod{facing:south,formed:false,half:upper}"},
+        {pos: [1, 2, 2], state: "minecraft:air"},
+        {pos: [2, 2, 0], state: "minecraft:air"},
+        {pos: [2, 2, 1], state: "minecraft:air"},
+        {pos: [2, 2, 2], state: "minecraft:air"}
+    ],
+    entities: [],
+    palette: [
+        "quantimium:pod_cradle{formed:false}",
+        "quantimium:pod_plating{axis:x,formed:false}",
+        "minecraft:air",
+        "quantimium:superposition_pod{facing:south,formed:false,half:upper}",
+        "quantimium:superposition_pod{facing:south,formed:false,half:lower}"
+    ]
+}

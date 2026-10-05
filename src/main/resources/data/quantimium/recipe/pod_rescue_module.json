@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "E": "minecraft:echo_shard",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FEF",
+    "EPE",
+    "FEF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_rescue_module"
+  }
+}

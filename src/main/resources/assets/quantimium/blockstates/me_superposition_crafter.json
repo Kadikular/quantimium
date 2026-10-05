@@ -1,0 +1,63 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "link": "offline"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_frame_dark"
+      }
+    },
+    {
+      "when": {
+        "link": "online"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_frame_lit"
+      }
+    },
+    {
+      "when": {
+        "link": "active"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_frame_lit"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_port"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_port",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_port",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "quantimium:block/me_superposition_crafter_port",
+        "y": 270
+      }
+    }
+  ]
+}

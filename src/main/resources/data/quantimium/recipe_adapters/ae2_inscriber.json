@@ -1,0 +1,19 @@
+{
+  "recipe_types": [
+    "ae2:inscriber"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "topOptional",
+    "middleInput",
+    "bottomOptional"
+  ],
+  "output_mode": "result_item",
+  "skip_empty_ingredients": true,
+  "non_consumed_tags": [
+    "ae2:inscriber_presses"
+  ],
+  "energy": {
+    "flat": 1600
+  }
+}

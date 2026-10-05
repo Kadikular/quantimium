@@ -1,0 +1,63 @@
+name: Wiki
+
+# Builds the wiki (MkDocs) from wiki/pages and the mod's own source, and publishes it to GitHub Pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # The wiki draws vanilla's item icons from the game's own jar.
+      - name: Set up the Minecraft jar
+        run: ./gradlew createMinecraftArtifacts
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build the wiki
+        run: |
+          python -m venv .venv-wiki
+          .venv-wiki/bin/pip install mkdocs-material pillow pyyaml
+          .venv-wiki/bin/python tools/wiki/build.py
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: wiki/build/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

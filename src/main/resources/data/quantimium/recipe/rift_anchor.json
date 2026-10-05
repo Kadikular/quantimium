@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "R": "quantimium:rift_residue",
+    "L": "quantimium:anomalite_lattice",
+    "X": "minecraft:lodestone",
+    "O": "minecraft:crying_obsidian"
+  },
+  "pattern": [
+    "RLR",
+    "OXO",
+    "OOO"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:rift_anchor"
+  }
+}

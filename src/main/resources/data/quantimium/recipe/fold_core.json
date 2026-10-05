@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": "quantimium:quantum_foundry_plinth",
+    "E": "quantimium:rift_residue",
+    "R": "quantimium:fold_rail",
+    "L": "quantimium:anomalite_lattice"
+  },
+  "pattern": [
+    "PEP",
+    "RLR",
+    "PPP"
+  ],
+  "result": {
+    "id": "quantimium:fold_core",
+    "count": 1
+  }
+}

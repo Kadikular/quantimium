@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "quantimium:block/field_regulator"
+    },
+    "active=true": {
+      "model": "quantimium:block/field_regulator_active"
+    }
+  }
+}

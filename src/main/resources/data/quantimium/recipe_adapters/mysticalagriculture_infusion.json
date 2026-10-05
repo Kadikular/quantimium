@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "mysticalagriculture:infusion"
+  ],
+  "catalysts": [
+    "mysticalagriculture:infusion_altar"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input",
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "result"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "quantimium:block/quantum_crafter",
+  "textures": {
+    "particle": "quantimium:block/basic_quantum_crafter_frame",
+    "frame": "quantimium:block/basic_quantum_crafter_frame",
+    "chassis": "quantimium:block/basic_quantum_crafter_chassis",
+    "core": "quantimium:block/basic_quantum_crafter_core"
+  }
+}

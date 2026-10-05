@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "id": "quantimium:unrealised_ore",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.root.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.root.description"
+    },
+    "background": "minecraft:textures/block/polished_deepslate.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  },
+  "requirements": [
+    [
+      "tick"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

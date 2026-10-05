@@ -1,0 +1,19 @@
+{
+  "recipe_types": [
+    "energizedpower:assembling_machine"
+  ],
+  "catalysts": [
+    "energizedpower:assembling_machine"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 4000
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:something_left_over",
+  "display": {
+    "icon": {
+      "id": "quantimium:anomaly_containment_hall",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.held.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.held.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_anomaly_containment_hall": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:anomaly_containment_hall"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_anomaly_containment_hall"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

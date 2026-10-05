@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "G": "minecraft:glistering_melon_slice",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FGF",
+    "GPG",
+    "FGF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_regeneration_module"
+  }
+}

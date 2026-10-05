@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:root",
+  "display": {
+    "icon": {
+      "id": "quantimium:unrealised_matter",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.not_what_you_expected.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.not_what_you_expected.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtained_unrealised_matter": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:unrealised_matter"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "obtained_unrealised_matter"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

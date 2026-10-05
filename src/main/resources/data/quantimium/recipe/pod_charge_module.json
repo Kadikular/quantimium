@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "R": "#c:storage_blocks/redstone",
+    "P": "quantimium:pod_plating",
+    "L": "minecraft:lightning_rod"
+  },
+  "pattern": [
+    "FLF",
+    "RPR",
+    "FLF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_charge_module"
+  }
+}

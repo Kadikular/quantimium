@@ -1,0 +1,30 @@
+{
+  "parent": "quantimium:observed",
+  "display": {
+    "icon": {
+      "id": "quantimium:stabilised_portal_frame",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.what_is_this_place.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.what_is_this_place.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_mirror": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "entered_mirror"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": "quantimium:anomaly_fragment",
+    "C": "#c:chests/wooden",
+    "E": "minecraft:ender_eye",
+    "P": "quantimium:pod_plating"
+  },
+  "pattern": [
+    "FCF",
+    "EPE",
+    "FCF"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:pod_stash_module"
+  }
+}

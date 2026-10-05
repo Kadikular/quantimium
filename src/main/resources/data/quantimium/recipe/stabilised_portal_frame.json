@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "minecraft:deepslate",
+    "S": "quantimium:anomalite_shard",
+    "L": "quantimium:anomalite_lattice"
+  },
+  "pattern": [
+    "DSD",
+    "SLS",
+    "DSD"
+  ],
+  "result": {
+    "count": 4,
+    "id": "quantimium:stabilised_portal_frame"
+  }
+}

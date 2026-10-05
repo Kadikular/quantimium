@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "quantimium:block/zeno_field_controller",
+    "top": "quantimium:block/zeno_field_controller_top",
+    "bottom": "quantimium:block/machine_bottom_mid"
+  }
+}

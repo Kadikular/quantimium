@@ -1,0 +1,37 @@
+{
+  "parent": "quantimium:coherent",
+  "display": {
+    "icon": {
+      "id": "quantimium:quantum_crafter",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.quantimium.every_machine_at_once.title"
+    },
+    "description": {
+      "translate": "advancements.quantimium.every_machine_at_once.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_quantum_crafter": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "quantimium:quantum_crafter"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_quantum_crafter"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

@@ -1,0 +1,68 @@
+{
+  "values": [
+    {
+      "id": "modern_industrialization:coke_oven",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:steam_blast_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:electric_blast_furnace",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:implosion_compressor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:vacuum_freezer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:distillation_tower",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:heat_exchanger",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:oil_drilling_rig",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:nuclear_reactor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:fusion_reactor",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:pressurizer",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:large_steam_boiler",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:advanced_large_steam_boiler",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:large_diesel_generator",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:large_steam_turbine",
+      "required": false
+    },
+    {
+      "id": "modern_industrialization:large_tank",
+      "required": false
+    }
+  ]
+}

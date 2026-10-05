@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "quantimium:item/mirror_lens"
+  },
+  "display": {
+    "head": {
+      "scale": [
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}

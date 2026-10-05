@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "quantimium:block/debug_field_emitter_on"
+  }
+}

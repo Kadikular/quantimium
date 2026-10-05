@@ -1,0 +1,31 @@
+{
+  "__comment": "Crystal cluster on the cap, as crossed planes. Cutout, not translucent: cutout discards fully transparent pixels outright, so the gaps in the cluster stop hiding the other plane of the cross and anything behind it.",
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "#crystal"
+  },
+  "elements": [
+    {
+      "name": "crystals_x",
+      "from": [2, 14, 8],
+      "to": [14, 22, 8],
+      "shade": false,
+      "faces": {
+        "north": {"uv": [2, 8, 14, 16], "texture": "#crystal"},
+        "south": {"uv": [2, 8, 14, 16], "texture": "#crystal"}
+      }
+    },
+    {
+      "name": "crystals_z",
+      "from": [8, 14, 2],
+      "to": [8, 22, 14],
+      "shade": false,
+      "faces": {
+        "west": {"uv": [2, 8, 14, 16], "texture": "#crystal"},
+        "east": {"uv": [2, 8, 14, 16], "texture": "#crystal"}
+      }
+    }
+  ]
+}

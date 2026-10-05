@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "quantimium:block/basic_quantum_crafter"
+      }
+    }
+  ]
+}

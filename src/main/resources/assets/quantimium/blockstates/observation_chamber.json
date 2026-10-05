@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "quantimium:block/observation_chamber" },
+    "facing=south,lit=false": { "model": "quantimium:block/observation_chamber", "y": 180 },
+    "facing=west,lit=false": { "model": "quantimium:block/observation_chamber", "y": 270 },
+    "facing=east,lit=false": { "model": "quantimium:block/observation_chamber", "y": 90 },
+    "facing=north,lit=true": { "model": "quantimium:block/observation_chamber_lit" },
+    "facing=south,lit=true": { "model": "quantimium:block/observation_chamber_lit", "y": 180 },
+    "facing=west,lit=true": { "model": "quantimium:block/observation_chamber_lit", "y": 270 },
+    "facing=east,lit=true": { "model": "quantimium:block/observation_chamber_lit", "y": 90 }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "type": "quantimium:quantum_foundry",
+  "ingredients": [
+    {
+      "ingredient": "minecraft:glass",
+      "count": 2
+    },
+    {
+      "ingredient": "quantimium:anomalite_shard"
+    }
+  ],
+  "minimum_pillars": 2,
+  "minimum_flux_band": "low",
+  "duration": 60,
+  "fe_per_tick": 40,
+  "flux_cost": 15.0,
+  "anomaly": 1.0,
+  "result": {
+    "id": "quantimium:quantum_attuned_glass",
+    "count": 2
+  }
+}

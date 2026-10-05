@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": "quantimium:quantum_foundry_plinth",
+    "T": "quantimium:quantimium_trace",
+    "L": "quantimium:anomalite_lattice"
+  },
+  "pattern": [
+    "PTP",
+    "TLT",
+    "PTP"
+  ],
+  "result": {
+    "id": "quantimium:reactor_plinth",
+    "count": 8
+  }
+}
