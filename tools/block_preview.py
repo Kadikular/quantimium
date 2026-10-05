@@ -19,9 +19,13 @@ south-east, so the up, south and east faces show.
 from __future__ import annotations
 
 import argparse
+import glob
+import io
 import json
 import math
 import os
+import re
+import zipfile
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -70,12 +74,39 @@ def _path(resource: str, kind: str, ext: str) -> str:
 
 
 _TEXTURE_CACHE: Dict[str, Image.Image] = {}
+_VANILLA: List[Optional[zipfile.ZipFile]] = []
+
+
+def _vanilla() -> Optional[zipfile.ZipFile]:
+    """The game's own jar, for the vanilla textures our models reference (polished deepslate, stone):
+    the one ./gradlew createMinecraftArtifacts makes for the Minecraft version in gradle.properties."""
+    if not _VANILLA:
+        with open(os.path.join(ROOT, "gradle.properties")) as handle:
+            version = re.search(r"^minecraft_version=(.+)$", handle.read(), re.M).group(1).strip()
+        jars = [j for j in sorted(glob.glob(os.path.join(ROOT, "build", "moddev", "artifacts",
+                                                         f"minecraft-patched-{version}.*.jar")))
+                if not j.endswith("-sources.jar")]
+        _VANILLA.append(zipfile.ZipFile(jars[0]) if jars else None)
+    return _VANILLA[0]
+
+
+def _open_texture(resource: str) -> Image.Image:
+    namespace, _, name = resource.partition(":")
+    if name and namespace == "minecraft":
+        jar = _vanilla()
+        if jar is None:
+            raise FileNotFoundError(resource)
+        try:
+            return Image.open(io.BytesIO(jar.read(f"assets/minecraft/textures/{name}.png")))
+        except KeyError as missing:
+            raise FileNotFoundError(resource) from missing
+    return Image.open(_path(resource, "textures", ".png"))
 
 
 def texture(resource: str) -> Image.Image:
     if resource not in _TEXTURE_CACHE:
         try:
-            img = Image.open(_path(resource, "textures", ".png")).convert("RGBA")
+            img = _open_texture(resource).convert("RGBA")
             if img.height > img.width:  # animated strip: first frame
                 img = img.crop((0, 0, img.width, img.width))
         except FileNotFoundError:

@@ -213,7 +213,7 @@ public final class ReactorCountTests {
         long countMs = best / 1_000_000;
         Quantimium.LOGGER.info("Reactor counts, 50k random recipes over {} items: graph {} ms, count {} ms; {} reachable, {} groups, {} counted",
                 items.size(), buildMs, countMs, counts.reachable(), counts.groups(), counts.counts().size());
-        helper.assertTrue(countMs < 250, "counting took " + countMs + " ms");
+        helper.assertTrue(countMs < 250 * TestSupport.timingSlack(), "counting took " + countMs + " ms");
         helper.succeed();
     }
 
@@ -247,7 +247,7 @@ public final class ReactorCountTests {
                         + "{} reachable, {} groups, {} counted, gaining loops {}",
                 recipes.graph().size(), catalysts.size(), stock.size(), buildMs, countMs, counts.reachable(), counts.groups(),
                 counts.counts().size(), counts.gaining());
-        helper.assertTrue(countMs < 100, "counting took " + countMs + " ms");
+        helper.assertTrue(countMs < 100 * TestSupport.timingSlack(), "counting took " + countMs + " ms");
         helper.succeed();
     }
 

@@ -229,9 +229,9 @@ public final class ReactorTests {
             double planMs = (System.nanoTime() - planStart) / 1_000_000.0;
             Quantimium.LOGGER.info("Reactor Materialiser Port: {} slots, {} µs a scan, a simulated take of {} pistons {} ms (sum {})",
                     slots, String.format("%.1f", perScan), pistons, String.format("%.2f", planMs), sum);
-            helper.assertTrue(perScan < 500, "a scan took " + perScan + " µs");
+            helper.assertTrue(perScan < 500 * TestSupport.timingSlack(), "a scan took " + perScan + " µs");
             helper.assertTrue(pistons == 16, "16 pistons, simulated: " + pistons);
-            helper.assertTrue(planMs < 50, "planning took " + planMs + " ms");
+            helper.assertTrue(planMs < 50 * TestSupport.timingSlack(), "planning took " + planMs + " ms");
             helper.succeed();
         });
     }

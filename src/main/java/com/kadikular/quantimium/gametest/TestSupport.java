@@ -258,6 +258,14 @@ public final class TestSupport {
     }
 
     /**
+     * How much longer a wall-clock budget may run than on a development machine: four times on CI
+     * (GitHub sets CI), whose shared runners are often that much slower, and once anywhere else.
+     */
+    public static double timingSlack() {
+        return System.getenv("CI") != null ? 4.0 : 1.0;
+    }
+
+    /**
      * A survival stand-in already in the mirror, the way a tear takes a player there but without
      * the return tear: nothing else in the test needs a way home.
      */
