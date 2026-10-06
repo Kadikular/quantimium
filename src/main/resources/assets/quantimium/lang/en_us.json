@@ -908,7 +908,7 @@
   "block.quantimium.reactor_plinth": "Reactor Plinth",
   "block.quantimium.lit_reactor_plinth": "Lit Reactor Plinth",
   "gui.quantimium.catalyst_bay.status": "%s of %s catalysts",
-  "gui.quantimium.catalyst_bay.status.tip": "Each catalyst sits in its quarter of the window. Use an item on a quarter to put it straight in.",
+  "gui.quantimium.catalyst_bay.status.tip": "Each catalyst sits in its quarter of the window, as laid out here.",
   "gui.quantimium.catalyst_bay.filter": "§6Filter",
   "gui.quantimium.catalyst_bay.filter.tip": "§7Show the filter: which recipes this bay's catalysts run for the Reactor. Click a slot with an item, or drag one in from JEI.",
   "gui.quantimium.catalyst_bay.filter.none": "No output filter",

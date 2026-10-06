@@ -69,14 +69,6 @@ public class CatalystBayBlockEntity extends BlockEntity implements MenuProvider 
         super(ModBlockEntities.CATALYST_BAY_BE.get(), pos, state);
     }
 
-    /**
-     * The slot under a point on the top face, in block-local x and z: north-west, north-east,
-     * south-west, south-east.
-     */
-    public static int slotAt(double x, double z) {
-        return (x >= 0.5 ? 1 : 0) + (z >= 0.5 ? 2 : 0);
-    }
-
     /** The centre of a slot's quarter, in block-local x and z. */
     public static double slotX(int slot) {
         return (slot & 1) == 0 ? 0.34 : 0.66;
@@ -103,13 +95,6 @@ public class CatalystBayBlockEntity extends BlockEntity implements MenuProvider 
         List<ItemStack> all = new ArrayList<>(SLOTS);
         for (int i = 0; i < SLOTS; i++) all.add(catalysts.getItem(i));
         return all;
-    }
-
-    /** Where a new catalyst goes: the slot clicked if it's free, else the first free one, else -1. */
-    public int slotToFill(int clicked) {
-        if (clicked >= 0 && getCatalyst(clicked).isEmpty()) return clicked;
-        for (int i = 0; i < SLOTS; i++) if (getCatalyst(i).isEmpty()) return i;
-        return -1;
     }
 
     public void setCatalyst(int slot, ItemStack stack) {

@@ -45,9 +45,8 @@ something earns *Should you be holding that?*
 
 [[mechanic:reactor.bays]] A Catalyst Bay is a window in the floor onto a pocket of void, and it holds
 up to {{c:CatalystBayBlockEntity.SLOTS}} catalysts, one in each quarter of the window: machines,
-crafting tables, [[item:folded_tesseract]]s. Use one on a quarter to put it there (or in the next
-free quarter). Use the bay with an empty hand to open it: its catalysts sit in a 2x2 grid laid out as
-the window's quarters, to take out or swap. Each catalyst also orbits the horizon as a moon, which
+crafting tables, [[item:folded_tesseract]]s. Use the bay to open it: its catalysts go in and out of a
+2x2 grid laid out as the window's quarters. Each catalyst also orbits the horizon as a moon, which
 flares when a craft uses it. A bay left standing on the plinth, where they used to go, sinks into the
 plinth block under it, keeping its catalyst.
 

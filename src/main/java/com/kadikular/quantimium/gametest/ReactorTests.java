@@ -100,10 +100,8 @@ public final class ReactorTests {
         BlockPos pos = CORE.below().east(2);
         helper.setBlock(pos, ModBlocks.CATALYST_BAY.get());
         CatalystBayBlockEntity bay = helper.getBlockEntity(pos, CatalystBayBlockEntity.class);
-        bay.setCatalyst(bay.slotToFill(1), new net.minecraft.world.item.ItemStack(Items.CRAFTING_TABLE));
-        bay.setCatalyst(bay.slotToFill(1), new net.minecraft.world.item.ItemStack(Items.FURNACE));
-        helper.assertTrue(bay.getCatalyst(1).is(Items.CRAFTING_TABLE), "the slot clicked");
-        helper.assertTrue(bay.getCatalyst(0).is(Items.FURNACE), "taken, so the first free one");
+        bay.setCatalyst(1, new net.minecraft.world.item.ItemStack(Items.CRAFTING_TABLE));
+        bay.setCatalyst(0, new net.minecraft.world.item.ItemStack(Items.FURNACE));
         helper.setBlock(OUTPUT, ModBlocks.REACTOR_OUTPUT_PORT.get());
         core.revalidate(helper.getLevel());
         core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);

@@ -4,11 +4,8 @@ import com.kadikular.quantimium.block.entity.CatalystBayBlockEntity;
 import com.kadikular.quantimium.reactor.ReactorTraces;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -23,9 +20,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A window in the Reactor's plinth onto a pocket of void, holding up to
  * {@link CatalystBayBlockEntity#SLOTS} catalysts: machines, crafting tables, Folded Tesseracts. Their
- * recipes join the Reactor's. Each quarter of the window is a slot: use an item on one to put it in.
- * An empty hand opens the bay's screen, to take catalysts out and set its filter. The plinth's traces
- * run into its frame.
+ * recipes join the Reactor's. Use it to open its screen, which holds the catalysts (one to each quarter
+ * of the window) and its filter. The plinth's traces run into its frame.
  */
 public class CatalystBayBlock extends BaseEntityBlock {
     public static final MapCodec<CatalystBayBlock> CODEC = simpleCodec(CatalystBayBlock::new);
@@ -66,20 +62,7 @@ public class CatalystBayBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
-    /** An item goes straight into the quarter clicked, or the next free one. */
-    @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
-                                          InteractionHand hand, BlockHitResult hitResult) {
-        if (stack.isEmpty() || !(level.getBlockEntity(pos) instanceof CatalystBayBlockEntity bay)) {
-            return InteractionResult.TRY_WITH_EMPTY_HAND;
-        }
-        int slot = bay.slotToFill(slotAt(pos, hitResult));
-        if (slot < 0) return InteractionResult.TRY_WITH_EMPTY_HAND;
-        if (!level.isClientSide()) bay.setCatalyst(slot, stack.split(1));
-        return InteractionResult.SUCCESS;
-    }
-
-    /** An empty hand opens the bay: its catalysts and its filter. */
+    /** Using the bay, with anything in hand, opens it: catalysts go in and out only through its screen. */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hitResult) {
@@ -87,14 +70,6 @@ public class CatalystBayBlock extends BaseEntityBlock {
             player.openMenu(bay, pos);
         }
         return InteractionResult.SUCCESS;
-    }
-
-    /** The quarter of the window a click on the top lands in, or -1 for any other face. */
-    private static int slotAt(BlockPos pos, BlockHitResult hit) {
-        if (hit.getDirection() != Direction.UP) return -1;
-        double x = hit.getLocation().x - pos.getX();
-        double z = hit.getLocation().z - pos.getZ();
-        return CatalystBayBlockEntity.slotAt(x, z);
     }
 
     @Override
