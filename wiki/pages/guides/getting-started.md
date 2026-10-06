@@ -6,7 +6,7 @@ The first hour of Quantimium, from the first strange ore to your first crafter.
 
 Some ore in the world is not quite real. [[block:unrealised_ore]] looks like ordinary stone or
 deepslate ore until you mine it, and it drops [[item:unrealised_matter]]: loot that has not yet
-decided what it is. Fortune gives more; Silk Touch keeps the ore itself.
+decided what it is. Fortune gives more; Silk Touch keeps the ore itself, which machines take as Matter too.
 
 With [GuideME](https://modrinth.com/mod/guideme) installed, a Book and one Unrealised Matter make the
 **Quantimium Field Guide**: this wiki, in the game.

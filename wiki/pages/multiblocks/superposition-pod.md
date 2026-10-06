@@ -228,5 +228,5 @@ Placeholders until the crafting overhaul:
 - **Pod Relay Module:** Pod Plating between Semi-stable Tesseracts and ender pearls, with Anomaly Fragments.
 - **Pod Recovery Module:** Pod Plating between recovery compasses and ender pearls, with Anomaly Fragments.
 - **Tether:** a Tesseract in leads, cornered with echo shards.
-- **Unfolding Array:** a Semi-stable Tesseract and Anomaly Fragments over a respawn anchor in crying obsidian.
-- **Array Pylon:** prismarine crystals on Quantimium Trace on obsidian.
+- **Unfolding Array:** a Semi-stable Tesseract, Anomaly Fragments and a Rift Residue over a respawn anchor in crying obsidian.
+- **Array Pylon:** a diamond on Quantimium Trace on obsidian.

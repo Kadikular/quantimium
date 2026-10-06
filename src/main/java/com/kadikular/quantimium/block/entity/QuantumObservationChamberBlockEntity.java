@@ -90,7 +90,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            if (slot < INPUT_SLOTS) return stack.is(ModItems.UNREALISED_MATTER.get());
+            if (slot < INPUT_SLOTS) return com.kadikular.quantimium.unrealised.Matter.is(stack);
             if (slot == TRACE_SLOT) return stack.is(ModItems.QUANTIMIUM_TRACE.get());
             // Result slots take whatever a collapse makes; the menu and faces refuse insertion.
             return slot >= OUTPUT_START && slot <= OUTPUT_END;
@@ -321,7 +321,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
     private void pull(IItemHandler from, SideConfig config) {
         for (int source = 0; source < from.getSlots(); source++) {
             ItemStack offered = from.extractItem(source, 64, true);
-            if (offered.isEmpty() || !offered.is(ModItems.UNREALISED_MATTER.get())) continue;
+            if (offered.isEmpty() || !com.kadikular.quantimium.unrealised.Matter.is(offered)) continue;
             for (int slot = 0; slot < INPUT_SLOTS; slot++) {
                 if (!config.allowsInputSlot(slot)) continue;
                 int accepted = offered.getCount() - inventory.insertItem(slot, offered, true).getCount();

@@ -345,7 +345,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         // Unrealised Matter held can be observed into what it could be, with no catalyst.
         java.util.Set<ItemResource> matter = new java.util.HashSet<>();
         for (ItemResource item : ledger.view().keySet()) {
-            if (item.is(com.kadikular.quantimium.init.ModItems.UNREALISED_MATTER.get())) matter.add(item);
+            if (com.kadikular.quantimium.unrealised.Matter.is(item)) matter.add(item);
         }
         recipes = recipes.withMatter(server, worldPosition, matter);
     }

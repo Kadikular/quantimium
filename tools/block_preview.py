@@ -619,9 +619,12 @@ def trace_edge(x: int, y: int, z: int, orientation: int) -> int:
     def pick(r):
         roll = r % 1000
         return 0 if roll < 650 else (1 if roll < 825 else 2)
+    def flip(lane, r):
+        # The run's lane at this edge: now and then the other one, so the trace jogs across.
+        return lane if lane == 0 or r % 1000 >= 200 else 3 - lane
     if orientation == 0:
-        return pick(h(x, y, (z + h(x, y, 11) % 6) // 6, 0))
-    return pick(h(z, y, (x + h(z, y, 13) % 6) // 6, 1))
+        return flip(pick(h(x, y, (z + h(x, y, 11) % 6) // 6, 0)), h(x, y, z, 2))
+    return flip(pick(h(z, y, (x + h(z, y, 13) % 6) // 6, 1)), h(z, y, x, 3))
 
 
 def scene_stabilizer() -> List[Placement]:

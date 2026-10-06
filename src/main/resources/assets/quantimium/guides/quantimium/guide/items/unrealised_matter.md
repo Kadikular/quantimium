@@ -17,6 +17,9 @@ item_ids:
 Mined from <ItemLink id="quantimium:unrealised_ore" />, it becomes real in an
 <ItemLink id="quantimium:observation_chamber" /> or a <ItemLink id="quantimium:quantum_observation_chamber" />.
 
+**Silk Touch keeps the ore block,** and every machine that takes
+Matter takes the block as well: one block is one Matter with no history yet.
+
 ## What it collapses into
 
 **Any ore in the pack.** A collapse picks one of the pack's ores (every

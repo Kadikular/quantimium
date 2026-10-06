@@ -125,8 +125,9 @@ public class BuddingAnomaliteBlockEntity extends BlockEntity implements QuantumE
             level.setBlock(crystalPos, existing.setValue(AnomaliteCrystalBlock.AGE,
                     existing.getValue(AnomaliteCrystalBlock.AGE) + 1), Block.UPDATE_ALL);
         }
-        level.playSound(null, crystalPos, SoundEvents.AMETHYST_CLUSTER_PLACE, SoundSource.BLOCKS,
-                0.4f, 0.8f + level.getRandom().nextFloat() * 0.4f);
+        // Only the mirror sees the crystal, so only the mirror hears it grow.
+        com.kadikular.quantimium.phase.MirrorSounds.play(level, crystalPos, SoundEvents.AMETHYST_CLUSTER_PLACE,
+                SoundSource.BLOCKS, 0.4f, 0.8f + level.getRandom().nextFloat() * 0.4f);
     }
 
     private static boolean isGrowable(ServerLevel level, BlockPos host, Direction outward) {

@@ -255,7 +255,7 @@ public final class ReactorCountTests {
     @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
     public static void thePlinthTracesMatchTheirArt(GameTestHelper helper) {
         // {x, z, north edge, west edge} as tools/reactor_traces.py's preview works them out at y 64.
-        int[][] expected = {{-37, -200, 0, 2}, {-37, -7, 2, 1}, {-37, 0, 0, 1}, {-37, 3, 0, 0}, {-37, 99999, 0, 0}, {-1, -200, 2, 0}, {-1, -7, 0, 1}, {-1, 0, 0, 0}, {-1, 3, 0, 1}, {-1, 99999, 1, 1}, {0, -200, 0, 0}, {0, -7, 0, 1}, {0, 0, 2, 0}, {0, 3, 0, 1}, {0, 99999, 0, 1}, {5, -200, 1, 0}, {5, -7, 0, 1}, {5, 0, 0, 0}, {5, 3, 0, 0}, {5, 99999, 1, 0}, {123456, -200, 0, 0}, {123456, -7, 0, 0}, {123456, 0, 0, 2}, {123456, 3, 0, 0}, {123456, 99999, 0, 2}};
+        int[][] expected = {{-37, -200, 0, 2}, {-37, -7, 1, 1}, {-37, 0, 0, 1}, {-37, 3, 0, 0}, {-37, 99999, 0, 0}, {-1, -200, 2, 0}, {-1, -7, 0, 1}, {-1, 0, 0, 0}, {-1, 3, 0, 1}, {-1, 99999, 1, 1}, {0, -200, 0, 0}, {0, -7, 0, 1}, {0, 0, 2, 0}, {0, 3, 0, 1}, {0, 99999, 0, 1}, {5, -200, 1, 0}, {5, -7, 0, 1}, {5, 0, 0, 0}, {5, 3, 0, 0}, {5, 99999, 2, 0}, {123456, -200, 0, 0}, {123456, -7, 0, 0}, {123456, 0, 0, 1}, {123456, 3, 0, 0}, {123456, 99999, 0, 1}};
         for (int[] row : expected) {
             net.minecraft.world.level.block.state.BlockState state = com.kadikular.quantimium.reactor.ReactorTraces.at(
                     com.kadikular.quantimium.init.ModBlocks.REACTOR_PLINTH.get().defaultBlockState(),

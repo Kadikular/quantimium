@@ -3,7 +3,7 @@
 # Numbers and rules belong on the hand-written pages, where they're quoted from the code.
 
 # ---- Unrealised Matter ----
-unrealised_ore: "Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the ore."
+unrealised_ore: "Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the block, which machines take as Matter too."
 unrealised_matter: "Ore that hasn't decided what it is yet. An Observation Chamber or a Materialiser turns it into one of your pack's ores."
 observation_chamber: "Turns Unrealised Matter into ore, one at a time, on a redstone pulse. Now and then it leaves a Quantimium Trace."
 quantum_observation_chamber: "The powered Observation Chamber. It works through Matter on its own and connects to pipes on every side."

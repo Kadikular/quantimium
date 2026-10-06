@@ -374,10 +374,11 @@ public class HarvestLaserBlockEntity extends BlockEntity implements QuantumEnerg
     private void harvest(ServerLevel level) {
         BlockPos crystalPos = crystalPos();
         BlockPos ringPos = ringPos();
-        OverlayBlockEdit.allow(() -> level.destroyBlock(crystalPos, false));
+        // The crystal shatters on the mirror's side: the real world hears only the laser.
+        OverlayBlockEdit.allow(() -> com.kadikular.quantimium.phase.MirrorSounds.breakQuietly(level, crystalPos));
         output.insertItem(SHARD_SLOT, new ItemStack(ModItems.ANOMALITE_SHARD.get(), SHARDS), false);
-        level.playSound(null, crystalPos, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.BLOCKS, 1.0f,
-                0.8f + level.getRandom().nextFloat() * 0.2f);
+        com.kadikular.quantimium.phase.MirrorSounds.play(level, crystalPos, SoundEvents.AMETHYST_CLUSTER_BREAK,
+                SoundSource.BLOCKS, 1.0f, 0.8f + level.getRandom().nextFloat() * 0.2f);
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
 
         if (QuantumFlux.chunkContained(level, ringPos)) return;

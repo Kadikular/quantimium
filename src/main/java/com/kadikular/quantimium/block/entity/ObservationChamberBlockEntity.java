@@ -88,7 +88,7 @@ public class ObservationChamberBlockEntity extends BlockEntity implements MenuPr
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            if (slot == INPUT_SLOT) return stack.is(ModItems.UNREALISED_MATTER.get());
+            if (slot == INPUT_SLOT) return com.kadikular.quantimium.unrealised.Matter.is(stack);
             if (slot == TRACE_SLOT) return stack.is(ModItems.QUANTIMIUM_TRACE.get());
             // Outputs accept anything from measure(); the menu refuses player placement.
             return slot >= OUTPUT_START && slot <= OUTPUT_END;
@@ -176,7 +176,7 @@ public class ObservationChamberBlockEntity extends BlockEntity implements MenuPr
     private void measure() {
         if (level == null) return;
         ItemStack input = inventory.getStackInSlot(INPUT_SLOT);
-        if (input.isEmpty() || !input.is(ModItems.UNREALISED_MATTER.get())) {
+        if (input.isEmpty() || !com.kadikular.quantimium.unrealised.Matter.is(input)) {
             refreshStatus();
             return;
         }

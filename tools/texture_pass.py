@@ -2090,31 +2090,58 @@ def anomalite_cell() -> Image.Image:
     ], CELL_LEGEND)
 
 
-EMITTER_LEGEND = {"d": DEEP_SEAM, "t": TILE, "e": EDGE, "f": FLUX, "g": FLUX_CORE, "w": FLUX_WHITE,
-                  "o": VOID, "v": VIOLET, "c": CRYSTAL, "h": HIGHLIGHT}
-
-
 @texture("item/anomalite_emitter")
 def anomalite_emitter() -> Image.Image:
-    """A shard of Anomalite set in an azure-trimmed mount, point outwards: the Lance's source."""
-    return sprite([
-        "................",
-        "................",
-        "..........oo....",
-        ".........ohco...",
-        "........ohcvo...",
-        ".......ohcvo....",
-        "......ohcvo.....",
-        ".....dhcvod.....",
-        "....dfgcofd.....",
-        "...dtfwgfftd....",
-        "...dtefffetd....",
-        "....dteeetd.....",
-        ".....dtttd......",
-        "......ddd.......",
-        "................",
-        "................",
-    ], EMITTER_LEGEND)
+    """A faceted Anomalite shard seated in a dark machined collar, point outwards: the light of the
+    Lance and the Harvest Laser. The collar's azure ring is where the light goes in; the shard is the
+    same violet as the crystals it was cut from."""
+    img = canvas()
+    dark, deep = hexc("#2a1a52"), hexc("#4a2f8f")
+    bx, by, tx, ty = 5.6, 10.4, 12.4, 2.6
+    lx, ly = tx - bx, ty - by
+    length = (lx * lx + ly * ly) ** 0.5
+    ux, uy = lx / length, ly / length
+    for y in range(16):
+        for x in range(16):
+            px, py = x + 0.5 - bx, y + 0.5 - by
+            t = (px * ux + py * uy) / length
+            if not 0.0 <= t <= 1.02:
+                continue
+            side = px * -uy + py * ux          # which face of the shard, and how far across
+            width = 2.5 if t < 0.62 else 2.5 * (1.02 - t) / 0.40
+            if abs(side) > width:
+                continue
+            if abs(side) > width - 0.8:
+                colour = dark
+            elif side < -0.25:
+                colour = CRYSTAL if t > 0.55 else VIOLET   # the lit face
+            elif side > 0.25:
+                colour = deep
+            else:
+                colour = VIOLET if t < 0.6 else CRYSTAL    # the ridge
+            put(img, x, y, colour)
+    put(img, 12, 3, HIGHLIGHT)                              # the tip, the one pale pixel
+    put(img, 13, 2, hexc("#a887ff", 120))                   # a little light leaving it
+    # The collar: dark stone with a lit rim, and an azure ring where the shard sits.
+    for y in range(16):
+        for x in range(16):
+            dx, dy = (x + 0.5 - 5.4) / 4.3, (y + 0.5 - 12.0) / 3.0
+            reach = dx * dx + dy * dy
+            if reach > 1.0:
+                continue
+            inner = ((x + 0.5 - 5.5) / 2.7) ** 2 + ((y + 0.5 - 11.2) / 1.5) ** 2
+            if inner <= 1.0:
+                colour = FLUX_CORE if inner < 0.35 else FLUX
+                if y < 11:
+                    continue                                # the shard rises out of the ring's back
+            elif reach > 0.72:
+                colour = DEEP_SEAM
+            elif dy < -0.1:
+                colour = EDGE
+            else:
+                colour = TILE
+            put(img, x, y, colour)
+    return img
 
 
 THREAD_LEGEND = {"d": VOID, "v": VIOLET, "c": CRYSTAL, "h": HIGHLIGHT, "w": FLUX_WHITE}

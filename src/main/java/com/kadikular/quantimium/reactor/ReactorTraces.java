@@ -24,6 +24,11 @@ public final class ReactorTraces {
     static final int RUN = 6;
     /** Of every thousand runs, how many carry no trace. */
     static final int EMPTY_PER_THOUSAND = 650;
+    /**
+     * Of every thousand edges on a run that carries a trace, how many cross it in the other lane. A
+     * block whose two edges differ draws its trace with a short diagonal jog between the lanes.
+     */
+    static final int FLIP_PER_THOUSAND = 200;
 
     /** {@code state} with the traces its position gives it. */
     public static BlockState at(BlockState state, BlockPos pos) {
@@ -42,19 +47,25 @@ public final class ReactorTraces {
      */
     static int northSouth(int x, int y, int z) {
         int offset = Integer.remainderUnsigned(hash(x, y, 11), RUN);
-        return pick(hash(x, y, Math.floorDiv(z + offset, RUN), 0));
+        return flip(pick(hash(x, y, Math.floorDiv(z + offset, RUN), 0)), hash(x, y, z, 2));
     }
 
     /** The edge on the west side of the block at ({@code x}, {@code z}), in runs along its row. */
     static int westEast(int x, int y, int z) {
         int offset = Integer.remainderUnsigned(hash(z, y, 13), RUN);
-        return pick(hash(z, y, Math.floorDiv(x + offset, RUN), 1));
+        return flip(pick(hash(z, y, Math.floorDiv(x + offset, RUN), 1)), hash(z, y, x, 3));
     }
 
     private static int pick(int hash) {
         int roll = Integer.remainderUnsigned(hash, 1000);
         if (roll < EMPTY_PER_THOUSAND) return 0;
         return roll < EMPTY_PER_THOUSAND + (1000 - EMPTY_PER_THOUSAND) / 2 ? 1 : 2;
+    }
+
+    /** The run's lane at this edge: now and then the other one, so the trace jogs across. */
+    private static int flip(int lane, int hash) {
+        if (lane == 0 || Integer.remainderUnsigned(hash, 1000) >= FLIP_PER_THOUSAND) return lane;
+        return 3 - lane;
     }
 
     private static int hash(int... values) {

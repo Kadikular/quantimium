@@ -47,6 +47,22 @@ public final class ChamberTests {
         });
     }
 
+    // covers: unrealised.silk_touch
+    @GameTest(template = TestSupport.FLOOR_9, batch = "chamber_silk_ore", timeoutTicks = 80)
+    public static void silkTouchedOreCollapsesLikeMatter(GameTestHelper helper) {
+        TestSupport.clearField(helper);
+        QuantumObservationChamberBlockEntity chamber = chamber(helper);
+        ItemStack ore = new ItemStack(com.kadikular.quantimium.init.ModBlocks.UNREALISED_ORE.get(), 4);
+        helper.assertTrue(chamber.getInventory().isItemValid(0, ore), "the chamber takes the ore block");
+        chamber.getInventory().setStackInSlot(0, ore);
+        helper.runAfterDelay(QuantumObservationChamberBlockEntity.CYCLE_TICKS + 2, () -> {
+            helper.assertTrue(chamber.getInventory().getStackInSlot(0).isEmpty(), "all four blocks collapsed");
+            helper.assertTrue(results(chamber) > 0, "results in the output slots");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: quantum_chamber.simulator
     @GameTest(template = TestSupport.FLOOR_9, batch = "chamber_simulator", timeoutTicks = 400)
     public static void aSimulatedChamberCollapsesABatch(GameTestHelper helper) {

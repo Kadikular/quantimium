@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:unrealised_ore" scale="2" />
 
-Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the ore.
+Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the block, which machines take as Matter too.
 
 ## Recipes
 

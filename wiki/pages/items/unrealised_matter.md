@@ -1,6 +1,9 @@
 Mined from [[block:unrealised_ore]], it becomes real in an
 [[block:observation_chamber]] or a [[block:quantum_observation_chamber]].
 
+[[mechanic:unrealised.silk_touch]] **Silk Touch keeps the ore block,** and every machine that takes
+Matter takes the block as well: one block is one Matter with no history yet.
+
 ## What it collapses into
 
 [[mechanic:unrealised.pack_ores]] **Any ore in the pack.** A collapse picks one of the pack's ores (every

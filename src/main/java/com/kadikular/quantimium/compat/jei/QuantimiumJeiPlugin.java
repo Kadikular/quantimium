@@ -70,6 +70,20 @@ public class QuantimiumJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(ModItems.FOLDED_TESSERACT.get(),
                 Component.translatable("jei.quantimium.folded_tesseract.info.catalyst"),
                 Component.translatable("jei.quantimium.folded_tesseract.info.unfold"));
+
+        // Items no recipe makes: where they come from.
+        registration.addIngredientInfo(ModItems.RIFT_RESIDUE.get(),
+                Component.translatable("jei.quantimium.rift_residue.info.from"),
+                Component.translatable("jei.quantimium.rift_residue.info.use"));
+        registration.addIngredientInfo(ModItems.VEIL_THREAD.get(),
+                Component.translatable("jei.quantimium.veil_thread.info.from"),
+                Component.translatable("jei.quantimium.veil_thread.info.use"));
+        registration.addIngredientInfo(ModItems.ANOMALY_FRAGMENT.get(),
+                Component.translatable("jei.quantimium.anomaly_fragment.info.from"));
+        registration.addIngredientInfo(ModItems.SINGULARITY.get(),
+                Component.translatable("jei.quantimium.singularity.info.from"));
+        registration.addIngredientInfo(ModItems.SOPHON.get(),
+                Component.translatable("jei.quantimium.sophon.info.from"));
     }
 
     @Override

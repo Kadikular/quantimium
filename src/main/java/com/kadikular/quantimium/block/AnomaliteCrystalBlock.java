@@ -156,7 +156,7 @@ public class AnomaliteCrystalBlock extends BaseEntityBlock {
     private static void recede(BlockState state, ServerLevel level, BlockPos pos) {
         int age = state.getValue(AGE);
         if (age <= 0) {
-            OverlayBlockEdit.allow(() -> level.destroyBlock(pos, false));
+            OverlayBlockEdit.allow(() -> com.kadikular.quantimium.phase.MirrorSounds.breakQuietly(level, pos));
             return;
         }
         level.setBlock(pos, state.setValue(AGE, age - 1), Block.UPDATE_ALL);

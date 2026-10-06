@@ -53,7 +53,7 @@ public class QuantumObservationChamberMenu extends AbstractContainerMenu {
             addSlot(new SlotItemHandler(blockEntity.getInventory(), i, INPUT_X, INPUT_Y + i * 18) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return stack.is(ModItems.UNREALISED_MATTER.get());
+                    return com.kadikular.quantimium.unrealised.Matter.is(stack);
                 }
             });
         }
@@ -132,7 +132,7 @@ public class QuantumObservationChamberMenu extends AbstractContainerMenu {
         ItemStack result = stack.copy();
         if (index < MACHINE_SLOTS) {
             if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!stack.is(ModItems.UNREALISED_MATTER.get())
+        } else if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
                 || !moveItemStackTo(stack, 0, QuantumObservationChamberBlockEntity.INPUT_SLOTS, false)) {
             return ItemStack.EMPTY;
         }

@@ -52,7 +52,7 @@ public class ObservationChamberMenu extends AbstractContainerMenu {
                 INPUT_X, INPUT_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.UNREALISED_MATTER.get());
+                return com.kadikular.quantimium.unrealised.Matter.is(stack);
             }
         });
 
@@ -122,7 +122,7 @@ public class ObservationChamberMenu extends AbstractContainerMenu {
         if (index < machineSlots) {
             if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return ItemStack.EMPTY;
         } else {
-            if (!stack.is(ModItems.UNREALISED_MATTER.get())
+            if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
                     || !moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
                     ObservationChamberBlockEntity.INPUT_SLOT + 1, false)) {
                 return ItemStack.EMPTY;

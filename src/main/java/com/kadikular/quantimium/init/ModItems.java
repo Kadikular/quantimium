@@ -276,7 +276,7 @@ public class ModItems {
 
     /** Testing only while the Veiled has no release or behaviour: body tone and rift edge. */
     public static final DeferredItem<SpawnEggItem> VEILED_SPAWN_EGG = ITEMS.registerItem("veiled_spawn_egg",
-            // Its colours, 0x42305A and 0xB36CFF, are tints in its client item definition (items/veiled_spawn_egg.json).
+            // Its own texture, painted by tools/original_art.py (26.1 has no tinted egg template).
             props -> new SpawnEggItem(props.spawnEgg(ModEntities.VEILED.get())));
 
     public static void register(IEventBus eventBus) {

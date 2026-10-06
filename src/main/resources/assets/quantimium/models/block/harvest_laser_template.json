@@ -18,20 +18,16 @@
       ],
       "faces": {
         "north": {
-          "texture": "#side",
-          "cullface": "north"
+          "texture": "#side"
         },
         "south": {
-          "texture": "#side",
-          "cullface": "south"
+          "texture": "#side"
         },
         "west": {
-          "texture": "#side",
-          "cullface": "west"
+          "texture": "#side"
         },
         "east": {
-          "texture": "#side",
-          "cullface": "east"
+          "texture": "#side"
         },
         "down": {
           "texture": "#bottom",

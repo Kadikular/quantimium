@@ -78,12 +78,14 @@ def shard(img: Image.Image, cx: float, height: int, width: float, lean: float) -
             if x == left or x == right:
                 colour = CRYSTAL_RAMP[0]
             elif abs(x - centre) < 0.6:
-                colour = CRYSTAL_RAMP[4] if t > 0.25 else CRYSTAL_RAMP[3]
+                # The ridge catches light, but softly: only its upper part reaches the lighter violet.
+                colour = CRYSTAL_RAMP[3] if t > 0.55 else CRYSTAL_RAMP[2]
             elif x < centre:
-                colour = CRYSTAL_RAMP[3] if (x + step) % 4 else CRYSTAL_RAMP[2]
+                colour = CRYSTAL_RAMP[2] if (x + step) % 5 else CRYSTAL_RAMP[3]
             else:
                 colour = CRYSTAL_RAMP[1] if (x - step) % 5 else CRYSTAL_RAMP[2]
             tp.put(img, x, y, colour)
+    # The palest tone only on the very tip.
     tp.put(img, round(cx + lean * (height - 1)), base - height + 1, CRYSTAL_RAMP[4])
 
 
@@ -342,6 +344,35 @@ def mirror_endermite() -> Image.Image:
     return img
 
 
+# ---- The Veiled's spawn egg ----
+
+def veiled_spawn_egg() -> Image.Image:
+    """An egg in the Veiled's body tone, flecked with its rift's violet. Testing only: no recipe."""
+    rng = tp.rng_for("veiled_spawn_egg")
+    img = tp.canvas()
+    body, dark, light = tp.MITE, tp.VOID, tp.hexc("#5a4480")
+    for y in range(16):
+        for x in range(16):
+            # Narrower at the top, as eggs are.
+            ry = 6.6
+            rx = 4.6 if y < 8.5 else 5.2
+            dx, dy = (x + 0.5 - 8.0) / rx, (y + 0.5 - 9.0) / ry
+            reach = dx * dx + dy * dy
+            if reach > 1.0:
+                continue
+            if reach > 0.78:
+                colour = dark
+            elif dx < -0.25 and dy < -0.2:
+                colour = light
+            else:
+                colour = body
+            tp.put(img, x, y, colour)
+    for x, y in ((6, 6), (9, 8), (7, 11), (10, 12), (8, 4), (5, 9)):
+        tp.put(img, x, y, tp.RIFT_EDGE)
+    tp.put(img, 6, 5, tp.HIGHLIGHT)
+    return img
+
+
 # ---- Painted over vanilla: keep only what was painted for Quantimium ----
 
 def own_pixels(painted: Image.Image, under: Image.Image, tolerance: int = 24) -> Image.Image:
@@ -387,6 +418,7 @@ def outputs(originals: Dict[str, Image.Image]) -> Dict[str, Image.Image]:
         "item/quantimium_trace": trace(),
         "item/unrealised_matter": matter_frames(),
         "entity/mirror_endermite": mirror_endermite(),
+        "item/veiled_spawn_egg": veiled_spawn_egg(),
     })
     if "block/unrealised_ore" in originals:
         out["block/unrealised_ore_overlay"] = unrealised_ore_overlay(originals["block/unrealised_ore"])

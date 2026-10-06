@@ -61,7 +61,7 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(blockEntity.getInventory(), MaterialiserBlockEntity.MATTER_SLOT, MATTER_X, MATTER_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.UNREALISED_MATTER.get()) || EntangledLinks.isBound(stack);
+                return com.kadikular.quantimium.unrealised.Matter.is(stack) || EntangledLinks.isBound(stack);
             }
         });
         addSlot(new SlotItemHandler(blockEntity.getInventory(), MaterialiserBlockEntity.TRACE_SLOT, TRACE_X, TRACE_Y) {
@@ -155,7 +155,7 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         ItemStack result = stack.copy();
         if (index < MACHINE_SLOTS) {
             if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (stack.is(ModItems.UNREALISED_MATTER.get())) {
+        } else if (com.kadikular.quantimium.unrealised.Matter.is(stack)) {
             if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
         } else if (stack.is(ModItems.QUANTIMIUM_TRACE.get())) {
             if (!moveItemStackTo(stack, 1, 2, false)) return ItemStack.EMPTY;

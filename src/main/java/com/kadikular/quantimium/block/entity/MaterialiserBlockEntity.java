@@ -116,7 +116,7 @@ public class MaterialiserBlockEntity extends BlockEntity
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
             // A bound Tesseract reads its linked inventory instead (see refreshSources).
-            if (slot == MATTER_SLOT) return stack.is(ModItems.UNREALISED_MATTER.get()) || EntangledLinks.isBound(stack);
+            if (slot == MATTER_SLOT) return com.kadikular.quantimium.unrealised.Matter.is(stack) || EntangledLinks.isBound(stack);
             if (slot == TRACE_SLOT) return stack.is(ModItems.QUANTIMIUM_TRACE.get()) || EntangledLinks.isBound(stack);
             return slot >= OUTPUT_START && slot <= OUTPUT_END;
         }
@@ -278,7 +278,7 @@ public class MaterialiserBlockEntity extends BlockEntity
             if (linked != null) {
                 for (int slot = 0; slot < linked.getSlots(); slot++) {
                     ItemStack stack = linked.getStackInSlot(slot);
-                    if (!stack.is(ModItems.UNREALISED_MATTER.get())) continue;
+                    if (!com.kadikular.quantimium.unrealised.Matter.is(stack)) continue;
                     if (first.isEmpty()) first = stack;
                     if (ItemStack.isSameItemSameComponents(first, stack)) count += stack.getCount();
                 }
