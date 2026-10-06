@@ -221,7 +221,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     @Override
     public boolean pushPattern(IPatternDetails details, KeyCounter[] inputs) {
         HorizonCoreBlockEntity horizon = core();
-        if (!(details instanceof SuperpositionPattern pattern) || horizon == null || grid() == null || isBusy()
+        if (!(details instanceof SuperpositionPattern pattern) || horizon == null || grid() == null
                 || !patterns.contains(pattern)) {
             return false;
         }
@@ -231,9 +231,18 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         return true;
     }
 
+    /** Results it may hold for the network at once; past this it waits for the network to take them. */
+    private static final int MAX_PENDING = 1024;
+
+    /**
+     * Only when the network has stopped taking results: otherwise it takes as many runs a tick as the
+     * network's crafting CPUs send, paying for each, and hands the results over on its next tick. A
+     * crafting CPU sends one run each time it has an operation to spare, so co-processors are what
+     * make a job go faster.
+     */
     @Override
     public boolean isBusy() {
-        return !pending.isEmpty();
+        return pending.size() >= MAX_PENDING;
     }
 
     /** Hands what patterns made to the network; whatever it can't take waits for the next tick. */
