@@ -260,6 +260,40 @@ public final class Ae2ReactorPortTests {
         });
     }
 
+    // covers: reactor.me_port.tools
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_press_trees", timeoutTicks = 400)
+    public static void aPressIsHandedOverAndBackAsAWholeTree(GameTestHelper helper) {
+        pressJob(helper, false);
+    }
+
+    // covers: reactor.me_port.tools
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_press_steps", timeoutTicks = 400)
+    public static void aPressIsHandedOverAndBackStepByStep(GameTestHelper helper) {
+        pressJob(helper, true);
+    }
+
+    /** An Inscriber in a bay, the press and three diamonds held: a job prints three circuits and the press comes home. */
+    private static void pressJob(GameTestHelper helper, boolean steps) {
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        ReactorTests.bay(helper, CORE.below().south(2), item("ae2:inscriber"));
+        helper.setBlock(CELL.north(), block("ae2:1k_crafting_storage"));
+        horizon.revalidate(helper.getLevel());
+        AEItemKey press = AEItemKey.of(item("ae2:engineering_processor_press"));
+        AEItemKey circuit = AEItemKey.of(item("ae2:printed_engineering_processor"));
+        horizon.take(press.toResource(), 1);
+        horizon.take(ItemResource.of(Items.DIAMOND), 3);
+        horizon.recountNow();
+        ReactorMePortBlockEntity port = helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class);
+        if (steps) port.cycleMode(false);
+        Object[] job = new Object[2];
+        helper.succeedWhen(() -> craft(helper, job, circuit, 3, () -> {
+            var storage = grid(helper).getStorageService();
+            helper.assertValueEqual(storage.getCachedInventory().get(circuit), 3L, "three circuits printed");
+            helper.assertValueEqual(storage.getCachedInventory().get(press), 1L, "and the press is back");
+            helper.assertValueEqual(storage.getCachedInventory().get(AEItemKey.of(Items.DIAMOND)), 0L, "the diamonds used");
+        }));
+    }
+
     // covers: reactor.me_port.loops
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_loop", timeoutTicks = 300)
     public static void aStorageBusOnItsOwnMaterialiserPortCountsNothingTwice(GameTestHelper helper) {

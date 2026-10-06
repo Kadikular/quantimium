@@ -47,17 +47,23 @@ public final class ReactorTreePattern implements IPatternDetails {
     }
 
     /**
-     * The pattern for {@code plan}, a plan for one or more of its target: what it uses up, in; the
-     * target and its leftovers, out. Null for a plan that uses nothing up (nothing to ask the network for).
+     * The pattern for {@code plan}, a plan for one or more of its target: what it uses up, and the
+     * {@code tools} it keeps (each handed back after the run), in; the target and its leftovers, out.
+     * Null for a plan that uses nothing up (nothing to ask the network for).
      */
     @Nullable
-    public static ReactorTreePattern of(ReactorPlanner.Plan plan, long fe) {
+    public static ReactorTreePattern of(ReactorPlanner.Plan plan, long fe, List<ItemResource> tools) {
         List<IInput> in = new ArrayList<>();
         List<GenericStack> used = new ArrayList<>();
         for (Map.Entry<ItemResource, Long> entry : plan.consumed().entrySet()) {
             if (entry.getValue() <= 0) continue;
-            in.add(new Exact(AEItemKey.of(entry.getKey()), entry.getValue()));
+            in.add(new Exact(AEItemKey.of(entry.getKey()), entry.getValue(), false));
             used.add(new GenericStack(AEItemKey.of(entry.getKey()), entry.getValue()));
+        }
+        // Tools the tree keeps, such as a press: handed over and handed back, for AE2 to use again.
+        for (ItemResource tool : tools) {
+            in.add(new Exact(AEItemKey.of(tool), 1, true));
+            used.add(new GenericStack(AEItemKey.of(tool), 0));
         }
         if (in.isEmpty()) return null;
         // In a fixed order, so the same tree planned again is the same pattern.
@@ -106,8 +112,8 @@ public final class ReactorTreePattern implements IPatternDetails {
         return definition.hashCode();
     }
 
-    /** Exactly this item, data and all, {@code count} of it per run. */
-    private record Exact(AEItemKey key, long count) implements IInput {
+    /** Exactly this item, data and all, {@code count} of it per run; a tool ({@code kept}) comes back. */
+    private record Exact(AEItemKey key, long count, boolean kept) implements IInput {
         @Override
         public GenericStack[] getPossibleInputs() {
             return new GenericStack[] {new GenericStack(key, 1)};
@@ -126,7 +132,7 @@ public final class ReactorTreePattern implements IPatternDetails {
         @Nullable
         @Override
         public AEKey getRemainingKey(AEKey template) {
-            return null;
+            return kept ? template : null;
         }
     }
 }

@@ -294,9 +294,8 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             if (mode.steps()) {
                 Map<net.minecraft.resources.Identifier, IPatternDetails> byId = new java.util.LinkedHashMap<>();
                 for (ReactorRecipes.Producer producer : recipes.producers()) {
-                    if (!producer.shape().tools().isEmpty()) continue;
                     byId.putIfAbsent(producer.shape().id(),
-                            new SuperpositionPattern(producer.shape(), 1, Ae2Content.REACTOR_ME_PORT_ITEM.get()));
+                            new SuperpositionPattern(producer.shape(), 1, Ae2Content.REACTOR_ME_PORT_ITEM.get(), true));
                 }
                 all.addAll(byId.values());
             }
@@ -307,7 +306,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     /**
      * One of {@code item}, planned from {@code stock} without any already made: the whole tree as one
-     * pattern. Trees that keep a tool aren't patterns, as a run couldn't hand it back.
+     * pattern. A tool the tree keeps and doesn't make, such as a press, is an input handed back.
      */
     @Nullable
     private static ReactorTreePattern planTree(HorizonCoreBlockEntity horizon, Map<ItemResource, Long> stock,
@@ -316,10 +315,19 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         without.remove(item);
         ReactorPlanner.Result result = horizon.plan(without, item, 1);
         if (!result.planned()) return null;
-        for (ReactorPlanner.Step step : result.plan().steps()) {
-            if (!step.shape().tools().isEmpty()) return null;
+        ReactorPlanner.Plan plan = result.plan();
+        List<ItemResource> tools = new ArrayList<>();
+        for (ReactorPlanner.Step step : plan.steps()) {
+            for (net.minecraft.world.item.crafting.Ingredient tool : step.shape().tools()) {
+                if (step.shape().wears().stream().anyMatch(worn -> worn == tool)) continue; // used up and handed back worn
+                if (plan.leftovers().keySet().stream().anyMatch(left -> tool.test(left.toStack(1)))) continue; // made
+                if (tools.stream().anyMatch(kept -> tool.test(kept.toStack(1)))) continue;
+                ItemResource held = without.keySet().stream().filter(have -> tool.test(have.toStack(1))).findFirst().orElse(null);
+                if (held == null) return null;
+                tools.add(held);
+            }
         }
-        return ReactorTreePattern.of(result.plan(), HorizonCoreBlockEntity.feFor(result.plan()));
+        return ReactorTreePattern.of(plan, HorizonCoreBlockEntity.feFor(plan), tools);
     }
 
     /** The network has taken the inputs out of storage for this run: they're used up, and the Reactor pays. */
@@ -331,6 +339,14 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 : details instanceof SuperpositionPattern step && horizon.payForRuns(step.shape(), step.batch());
         if (!paid) return false;
         pending.addAll(details.getOutputs());
+        // Tools come back, worn if they wear: AE2 is waiting for them.
+        IPatternDetails.IInput[] patternInputs = details.getInputs();
+        for (int i = 0; i < patternInputs.length && i < inputs.length; i++) {
+            for (var entry : inputs[i]) {
+                AEKey left = patternInputs[i].getRemainingKey(entry.getKey());
+                if (left != null) pending.add(new GenericStack(left, entry.getLongValue()));
+            }
+        }
         setChanged();
         return true;
     }

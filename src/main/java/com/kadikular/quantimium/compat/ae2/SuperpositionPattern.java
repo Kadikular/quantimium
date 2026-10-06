@@ -38,6 +38,15 @@ public final class SuperpositionPattern implements IPatternDetails {
 
     /** As offered by the block whose item is {@code offeredBy}: the ME Superposition Port's are its own. */
     public SuperpositionPattern(RecipeShape shape, int batch, net.minecraft.world.item.Item offeredBy) {
+        this(shape, batch, offeredBy, false);
+    }
+
+    /**
+     * With {@code tools}, the recipe's tools are inputs too, each handed back after the run (worn by one,
+     * if it wears): AE2 expects them back and uses them again. Only for a provider that hands them back,
+     * the ME Superposition Port.
+     */
+    public SuperpositionPattern(RecipeShape shape, int batch, net.minecraft.world.item.Item offeredBy, boolean tools) {
         this.shape = shape;
         this.batch = Math.max(1, batch);
         ItemStack marker = new ItemStack(offeredBy);
@@ -49,6 +58,12 @@ public final class SuperpositionPattern implements IPatternDetails {
 
         List<IInput> list = new ArrayList<>();
         for (RecipeShape.Input input : shape.inputs()) list.add(new Input(input.ingredient(), input.count() * this.batch));
+        if (tools) {
+            for (Ingredient tool : shape.tools()) {
+                boolean wears = shape.wears().stream().anyMatch(worn -> worn == tool);
+                list.add(new Tool(tool, wears ? this.batch : 0, Input.possibleOf(tool)));
+            }
+        }
         this.inputs = list.toArray(IInput[]::new);
 
         List<GenericStack> out = new ArrayList<>();
@@ -91,6 +106,37 @@ public final class SuperpositionPattern implements IPatternDetails {
     @Override
     public int hashCode() {
         return definition.hashCode();
+    }
+
+    /**
+     * A tool the recipe keeps: one of it, handed back after the run, worn by {@code wear} if it wears
+     * (nothing back if that breaks it).
+     */
+    private record Tool(Ingredient ingredient, int wear, GenericStack[] possible) implements IInput {
+        @Override
+        public GenericStack[] getPossibleInputs() {
+            return possible;
+        }
+
+        @Override
+        public long getMultiplier() {
+            return 1;
+        }
+
+        @Override
+        public boolean isValid(AEKey input, Level level) {
+            return input instanceof AEItemKey item && ingredient.test(item.toStack());
+        }
+
+        @Nullable
+        @Override
+        public AEKey getRemainingKey(AEKey template) {
+            if (wear == 0 || !(template instanceof AEItemKey item)) return template;
+            ItemStack worn = item.toStack();
+            if (worn.getDamageValue() + wear >= worn.getMaxDamage()) return null;
+            worn.setDamageValue(worn.getDamageValue() + wear);
+            return AEItemKey.of(worn);
+        }
     }
 
     /** Any item the ingredient accepts, {@code count} of them per run. */

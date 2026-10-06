@@ -175,6 +175,10 @@ Use the port to choose how (sneak to go back):
   crafting CPU sends one step every few ticks unless it has co-processors.
 - **Both**: AE2 picks between them.
 
+A tool a recipe keeps, such as an Inscriber's press, is an input
+of its pattern that comes back after each run, so AE2 hands it over and uses it again: one press prints
+any number of circuits. A tool that wears, such as a cutting knife, comes back worn.
+
 The Flux Meter or Jade on the port shows the mode and how many patterns it offers.
 
 What the network holds, the Reactor counts and uses as its own

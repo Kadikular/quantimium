@@ -157,6 +157,10 @@ those counts share their sources, and AE2 would plan to use the same iron twice.
   crafting CPU sends one step every few ticks unless it has co-processors.
 - **Both**: AE2 picks between them.
 
+[[mechanic:reactor.me_port.tools]] A tool a recipe keeps, such as an Inscriber's press, is an input
+of its pattern that comes back after each run, so AE2 hands it over and uses it again: one press prints
+any number of circuits. A tool that wears, such as a cutting knife, comes back worn.
+
 The Flux Meter or Jade on the port shows the mode and how many patterns it offers.
 
 [[mechanic:reactor.me_port.inputs]] What the network holds, the Reactor counts and uses as its own
