@@ -138,13 +138,26 @@ goes on the rim like the other ports and takes a channel.
 the terminal and can be taken like anything in a drive. Nothing goes in this way; use Input ports, or
 an export bus onto one.
 
-[[mechanic:reactor.me_port.patterns]] Its recipes are patterns on the network, as the
-[ME Superposition Crafter](../machines/me-superposition-crafter.md)'s are: everything its catalysts
-can make, and Matter's observations. AE2 plans with them from everything on the network, the Reactor's
-holdings included, so it knows exactly how much can be made and what's missing: Matter in a drive
-becomes anvils through four of them, and asking for one too many says how much more Matter that needs. Each run is paid for from
-the core's power, at the Reactor's price. What it could make never shows as stock: those counts share
-their sources, and AE2 would plan to use the same iron twice.
+[[mechanic:reactor.me_port.patterns]] What it can make is patterns on the network, so AE2 plans with
+them from everything on the network, the Reactor's holdings included: it knows exactly how much can be
+made and what's missing, and asking for one anvil too many says how much more iron that needs. Each run
+is paid for from the core's power, at the Reactor's price. What it could make never shows as stock:
+those counts share their sources, and AE2 would plan to use the same iron twice.
+
+[[mechanic:reactor.me_port.modes]] Use the port to choose how (sneak to go back):
+
+- **Whole trees** (the default): one pattern for each thing it can make, planned from the stock of the
+  moment, with the raw things it uses up as inputs. An anvil of Matter is one pattern, 31 Matter in,
+  and AE2 sends it once: fast, even on a crafting CPU without co-processors. A tree is planned once and
+  kept until the catalysts or the kinds of Matter change, so a running job never loses its pattern; if
+  the stock it was planned from has gone, AE2 says what's missing, and it can't use an intermediate
+  that's in storage instead.
+- **Steps**: one pattern for each recipe, as the [ME Superposition Crafter](../machines/me-superposition-crafter.md)
+  offers. AE2 plans the tree itself and runs each step, using whatever intermediates are in storage. A
+  crafting CPU sends one step every few ticks unless it has co-processors.
+- **Both**: AE2 picks between them.
+
+The Flux Meter or Jade on the port shows the mode and how many patterns it offers.
 
 [[mechanic:reactor.me_port.inputs]] What the network holds, the Reactor counts and uses as its own
 inputs on its own screen: logs in a drive count towards planks on the core's list, and a request

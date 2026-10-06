@@ -24,7 +24,9 @@ import appeng.api.storage.MEStorage;
 import appeng.api.util.AECableType;
 import com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.ReactorPortBlockEntity;
+import com.kadikular.quantimium.reactor.ReactorCounter;
 import com.kadikular.quantimium.reactor.ReactorNetwork;
+import com.kadikular.quantimium.reactor.ReactorPlanner;
 import com.kadikular.quantimium.reactor.ReactorRecipes;
 import com.kadikular.quantimium.util.NbtCompat;
 import net.minecraft.core.BlockPos;
@@ -51,9 +53,11 @@ import java.util.Map;
  *
  * <ul>
  *   <li><b>What the Reactor holds</b> is stock on the network, to see and take like a drive's.</li>
- *   <li><b>Its recipes</b> are patterns, as the ME Superposition Crafter's are, so AE2 plans with them
- *   from everything on the network, the Reactor's holdings included: Matter in a drive becomes an
- *   anvil through four of them, and AE2 knows exactly how many it can make and what's missing.</li>
+ *   <li><b>What it can make</b> is patterns, in one of three {@link Mode}s: by default one pattern a
+ *   thing, the whole tree in one run (31 Matter in, an anvil out); or one pattern a recipe, as the ME
+ *   Superposition Crafter's are, for AE2 to plan and run step by step; or both. Either way AE2 plans
+ *   from everything on the network, the Reactor's holdings included, and knows exactly how many it can
+ *   make and what's missing.</li>
  *   <li><b>What the network holds</b> the Reactor counts and uses as its own inputs when asked from its
  *   own screen ({@link ReactorNetwork}).</li>
  * </ul>
@@ -94,6 +98,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     private List<IPatternDetails> patterns = List.of();
     @Nullable
     private ReactorRecipes patternsFrom;
+    private Mode mode = Mode.TREES;
     /** What patterns have made, waiting to go to the network: never from inside a push. */
     private final List<GenericStack> pending = new ArrayList<>();
 
@@ -202,31 +207,130 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         return patterns;
     }
 
-    /** One pattern for each of the Reactor's recipes, once; recipes that keep a tool aren't patterns. */
-    private void refreshPatterns(HorizonCoreBlockEntity horizon) {
-        ReactorRecipes recipes = horizon.getRecipes();
-        if (recipes == patternsFrom) return;
-        patternsFrom = recipes;
-        Map<net.minecraft.resources.Identifier, IPatternDetails> byId = new java.util.LinkedHashMap<>();
-        for (ReactorRecipes.Producer producer : recipes.producers()) {
-            if (!producer.shape().tools().isEmpty()) continue;
-            byId.putIfAbsent(producer.shape().id(),
-                    new SuperpositionPattern(producer.shape(), 1, Ae2Content.REACTOR_ME_PORT_ITEM.get()));
+    /** How the Reactor's making is offered to the network: set by using the port. */
+    public enum Mode {
+        /** One pattern a thing it can make, the whole tree in one run. */
+        TREES,
+        /** One pattern a recipe; AE2 plans the tree and runs each step. */
+        STEPS,
+        /** Both: AE2 picks. */
+        BOTH;
+
+        boolean trees() {
+            return this != STEPS;
         }
-        patterns = List.copyOf(byId.values());
-        ICraftingProvider.requestUpdate(mainNode);
+
+        boolean steps() {
+            return this != TREES;
+        }
+    }
+
+    public Mode mode() {
+        return mode;
+    }
+
+    /** The next mode, or the one before; the patterns follow on the next tick. */
+    public Mode cycleMode(boolean back) {
+        Mode[] all = Mode.values();
+        mode = all[(mode.ordinal() + (back ? all.length - 1 : 1)) % all.length];
+        patternsFrom = null;
+        setChanged();
+        return mode;
+    }
+
+    /** Things whose trees to plan next, a few a tick, and those already queued. */
+    private static final int TREES_PER_TICK = 32;
+    private final java.util.ArrayDeque<ItemResource> toPlan = new java.util.ArrayDeque<>();
+    private final java.util.Set<ItemResource> queued = new java.util.HashSet<>();
+    private final Map<ItemResource, ReactorTreePattern> trees = new java.util.LinkedHashMap<>();
+    @Nullable
+    private ReactorCounter.Counts queuedFrom;
+    private boolean patternsChanged;
+
+    /**
+     * Keeps the patterns in step with the Reactor. A recipe change starts everything again. Otherwise
+     * each thing it newly can make has its tree planned once, from the stock of the moment, and the
+     * pattern stays: a job that has taken its inputs out still finds its pattern, and if the stock has
+     * gone, AE2 says what's missing.
+     */
+    private void refreshPatterns(HorizonCoreBlockEntity horizon, long gameTime) {
+        ReactorRecipes recipes = horizon.getRecipes();
+        if (recipes != patternsFrom) {
+            patternsFrom = recipes;
+            trees.clear();
+            toPlan.clear();
+            queued.clear();
+            queuedFrom = null;
+            patternsChanged = true;
+        }
+        if (mode.trees()) {
+            ReactorCounter.Counts counts = horizon.getCounts();
+            if (counts != queuedFrom) {
+                queuedFrom = counts;
+                counts.counts().forEach((item, amount) -> {
+                    if (amount > 0 && !trees.containsKey(item) && !recipes.producersOf(item).isEmpty() && queued.add(item)) {
+                        toPlan.add(item);
+                    }
+                });
+            }
+            if (!toPlan.isEmpty() && horizon.isActive() && level instanceof net.minecraft.server.level.ServerLevel server) {
+                Map<ItemResource, Long> stock = horizon.stockWithNetworks(server);
+                for (int i = 0; i < TREES_PER_TICK && !toPlan.isEmpty(); i++) {
+                    ItemResource item = toPlan.poll();
+                    queued.remove(item);
+                    ReactorTreePattern tree = planTree(horizon, stock, item);
+                    if (tree != null) {
+                        trees.put(item, tree);
+                        patternsChanged = true;
+                    }
+                }
+            }
+        }
+        // Told at most once a second while trees are still being planned, and at once when they're done.
+        if (patternsChanged && (toPlan.isEmpty() || gameTime % 20 == 0)) {
+            patternsChanged = false;
+            List<IPatternDetails> all = new ArrayList<>();
+            if (mode.trees()) all.addAll(trees.values());
+            if (mode.steps()) {
+                Map<net.minecraft.resources.Identifier, IPatternDetails> byId = new java.util.LinkedHashMap<>();
+                for (ReactorRecipes.Producer producer : recipes.producers()) {
+                    if (!producer.shape().tools().isEmpty()) continue;
+                    byId.putIfAbsent(producer.shape().id(),
+                            new SuperpositionPattern(producer.shape(), 1, Ae2Content.REACTOR_ME_PORT_ITEM.get()));
+                }
+                all.addAll(byId.values());
+            }
+            patterns = List.copyOf(all);
+            ICraftingProvider.requestUpdate(mainNode);
+        }
+    }
+
+    /**
+     * One of {@code item}, planned from {@code stock} without any already made: the whole tree as one
+     * pattern. Trees that keep a tool aren't patterns, as a run couldn't hand it back.
+     */
+    @Nullable
+    private static ReactorTreePattern planTree(HorizonCoreBlockEntity horizon, Map<ItemResource, Long> stock,
+                                               ItemResource item) {
+        Map<ItemResource, Long> without = new HashMap<>(stock);
+        without.remove(item);
+        ReactorPlanner.Result result = horizon.plan(without, item, 1);
+        if (!result.planned()) return null;
+        for (ReactorPlanner.Step step : result.plan().steps()) {
+            if (!step.shape().tools().isEmpty()) return null;
+        }
+        return ReactorTreePattern.of(result.plan(), HorizonCoreBlockEntity.feFor(result.plan()));
     }
 
     /** The network has taken the inputs out of storage for this run: they're used up, and the Reactor pays. */
     @Override
     public boolean pushPattern(IPatternDetails details, KeyCounter[] inputs) {
         HorizonCoreBlockEntity horizon = core();
-        if (!(details instanceof SuperpositionPattern pattern) || horizon == null || grid() == null
-                || !patterns.contains(pattern)) {
-            return false;
-        }
-        if (!horizon.payForRuns(pattern.shape(), pattern.batch())) return false;
-        pending.addAll(pattern.getOutputs());
+        if (horizon == null || grid() == null || !patterns.contains(details)) return false;
+        boolean paid = details instanceof ReactorTreePattern tree ? horizon.pay(tree.fe())
+                : details instanceof SuperpositionPattern step && horizon.payForRuns(step.shape(), step.batch());
+        if (!paid) return false;
+        pending.addAll(details.getOutputs());
         setChanged();
         return true;
     }
@@ -262,7 +366,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         if (grid == null) return;
         if (!port.pending.isEmpty()) port.flush(grid);
         HorizonCoreBlockEntity horizon = port.core();
-        if (horizon != null && level.getGameTime() % 20 == 0) port.refreshPatterns(horizon);
+        if (horizon != null) port.refreshPatterns(horizon, level.getGameTime());
     }
 
     /** Whether it's on a network and a Reactor, and how much it offers the network as craftable. */
@@ -277,7 +381,9 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         }
         return Component.translatable("message.quantimium.reactor_me_port.online",
                 String.format(java.util.Locale.ROOT, "%,d", core().getLedger().view().size()),
-                String.format(java.util.Locale.ROOT, "%,d", patterns.size())).withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
+                String.format(java.util.Locale.ROOT, "%,d", patterns.size()),
+                Component.translatable("message.quantimium.reactor_me_port.mode." + mode.name().toLowerCase(java.util.Locale.ROOT) + ".short"))
+                .withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
     }
 
     // ---- ME node ----
@@ -326,6 +432,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         tag.merge(node.buildResult());
         out.store("Grid", CompoundTag.CODEC, tag);
         out.store("Pending", GenericStack.CODEC.listOf(), List.copyOf(pending));
+        out.putString("Mode", mode.name());
     }
 
     @Override
@@ -335,5 +442,10 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 mainNode.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, NbtCompat.lookup(in), tag)));
         pending.clear();
         pending.addAll(in.read("Pending", GenericStack.CODEC.listOf()).orElse(List.of()));
+        try {
+            mode = Mode.valueOf(in.getStringOr("Mode", Mode.TREES.name()));
+        } catch (IllegalArgumentException e) {
+            mode = Mode.TREES;
+        }
     }
 }

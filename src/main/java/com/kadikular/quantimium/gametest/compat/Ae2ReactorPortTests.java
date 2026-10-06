@@ -72,6 +72,7 @@ public final class Ae2ReactorPortTests {
     public static void whatTheReactorHoldsIsStorageOnTheNetwork(GameTestHelper helper) {
         HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
         horizon.take(LOG, 3);
+        horizon.recountNow();
         boolean[] taken = {false};
         helper.succeedWhen(() -> {
             var storage = grid(helper).getStorageService();
@@ -195,6 +196,8 @@ public final class Ae2ReactorPortTests {
         // One log held: four planks can be crafted, and eight are a log short.
         HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
         horizon.take(LOG, 1);
+        // Counted here and now: the counting thread may be busy with other Reactors' tests.
+        horizon.recountNow();
         Object[] four = new Object[2];
         Object[] eight = new Object[2];
         helper.succeedWhen(() -> {
@@ -211,6 +214,7 @@ public final class Ae2ReactorPortTests {
         HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
         helper.setBlock(CELL.north(), block("ae2:1k_crafting_storage"));
         horizon.take(LOG, 1);
+        horizon.recountNow();
         boolean[] stocked = {false};
         Object[] job = new Object[2];
         helper.succeedWhen(() -> {
@@ -225,6 +229,34 @@ public final class Ae2ReactorPortTests {
                 helper.assertTrue(horizon.getEnergyStorage().getEnergyStored() < HorizonCoreBlockEntity.ENERGY_CAPACITY,
                         "paid for by the Reactor");
             });
+        });
+    }
+
+    // covers: reactor.me_port.modes
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_trees", timeoutTicks = 300)
+    public static void aWholeTreeIsOnePatternAndStepsAreSeveral(GameTestHelper helper) {
+        // 31 iron ingots held: an anvil is three iron blocks and four ingots. As a whole tree it's one
+        // pattern; step by step, the blocks and the anvil are two.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        horizon.take(ItemResource.of(Items.IRON_INGOT), 31);
+        horizon.recountNow();
+        AEItemKey anvil = AEItemKey.of(Items.ANVIL);
+        Object[] trees = new Object[2];
+        Object[] steps = new Object[2];
+        helper.succeedWhen(() -> {
+            ReactorMePortBlockEntity port = helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class);
+            if (steps[0] == null) {
+                ICraftingPlan whole = planOnly(helper, trees, anvil, 1);
+                helper.assertTrue(whole.missingItems().isEmpty(), "an anvil of 31 ingots: " + missing(whole));
+                helper.assertValueEqual(whole.patternTimes().size(), 1, "one pattern, the whole tree");
+                if (port.mode() == ReactorMePortBlockEntity.Mode.TREES) port.cycleMode(false);
+            }
+            helper.assertValueEqual(port.mode(), ReactorMePortBlockEntity.Mode.STEPS, "now step by step");
+            helper.assertTrue(port.getAvailablePatterns().stream().noneMatch(p -> p instanceof com.kadikular.quantimium.compat.ae2.ReactorTreePattern),
+                    "the trees are gone");
+            ICraftingPlan stepwise = planOnly(helper, steps, anvil, 1);
+            helper.assertTrue(stepwise.missingItems().isEmpty(), "still an anvil: " + missing(stepwise));
+            helper.assertValueEqual(stepwise.patternTimes().size(), 2, "blocks, then the anvil");
         });
     }
 

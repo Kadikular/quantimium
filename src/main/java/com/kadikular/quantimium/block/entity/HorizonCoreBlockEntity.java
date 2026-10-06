@@ -577,12 +577,15 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /**
      * Pays for {@code runs} runs of {@code shape} that a network has handed the inputs for, at the
-     * Reactor's price; lights nothing, keeps nothing. Whether it could pay.
+     * Reactor's price. Whether it could pay.
      */
     public boolean payForRuns(com.kadikular.quantimium.recipe.RecipeShape shape, long runs) {
-        if (!(level instanceof ServerLevel server) || !isActive()) return false;
-        long fe = (long) Math.ceil(shape.baseFe() * runs * Config.crafterTaxFraction(FluxBand.SINGULARITY));
-        if (energy.getEnergyStored() < fe) return false;
+        return pay((long) Math.ceil(shape.baseFe() * runs * Config.crafterTaxFraction(FluxBand.SINGULARITY)));
+    }
+
+    /** Pays {@code fe} for work a network asked of it, if it's running and has it. Whether it could. */
+    public boolean pay(long fe) {
+        if (!(level instanceof ServerLevel server) || !isActive() || energy.getEnergyStored() < fe) return false;
         energy.consume(fe);
         if (fe > 0) QuantumFlux.emitFromEnergy(server, worldPosition, fe);
         setChanged();
