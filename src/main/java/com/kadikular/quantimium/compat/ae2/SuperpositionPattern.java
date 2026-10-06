@@ -19,9 +19,9 @@ import java.util.List;
 
 /**
  * One recipe offered to an ME network, made in code rather than encoded on an item. Its definition,
- * which AE2 uses to tell patterns apart, is the ME Superposition Crafter's own item tagged with the
- * recipe id and batch: two crafters offering the same recipe at the same batch offer the same pattern,
- * and AE2 may use either.
+ * which AE2 uses to tell patterns apart, is the offering block's own item (the ME Superposition
+ * Crafter's or Port's) tagged with the recipe id and batch: two crafters offering the same recipe at
+ * the same batch offer the same pattern, and AE2 may use either.
  */
 public final class SuperpositionPattern implements IPatternDetails {
 
@@ -33,9 +33,14 @@ public final class SuperpositionPattern implements IPatternDetails {
 
     /** One run of the pattern is {@code batch} runs of the recipe: inputs, outputs and cost all scaled. */
     public SuperpositionPattern(RecipeShape shape, int batch) {
+        this(shape, batch, Ae2Content.SUPERPOSITION_CRAFTER_ITEM.get());
+    }
+
+    /** As offered by the block whose item is {@code offeredBy}: the ME Superposition Port's are its own. */
+    public SuperpositionPattern(RecipeShape shape, int batch, net.minecraft.world.item.Item offeredBy) {
         this.shape = shape;
         this.batch = Math.max(1, batch);
-        ItemStack marker = new ItemStack(Ae2Content.SUPERPOSITION_CRAFTER_ITEM.get());
+        ItemStack marker = new ItemStack(offeredBy);
         CompoundTag tag = new CompoundTag();
         tag.putString("recipe", shape.id().toString());
         tag.putInt("batch", this.batch);

@@ -150,6 +150,11 @@ public final class ReactorRecipes {
         return true;
     }
 
+    /** Every recipe, the catalysts' and Matter's. */
+    public List<Producer> producers() {
+        return producers;
+    }
+
     public List<Producer> producersOf(ItemResource item) {
         return byOutput.getOrDefault(item, List.of());
     }

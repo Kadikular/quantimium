@@ -109,7 +109,7 @@ public class HorizonCoreMenu extends AbstractContainerMenu {
     private List<HorizonViewPayload.Entry> entries() {
         ReactorCounter.Counts counts = blockEntity.getCounts();
         java.util.Map<ItemResource, Long> held = blockEntity.getLedger().view();
-        java.util.Map<ItemResource, Long> network = blockEntity.lastNetworkStock();
+        java.util.Map<ItemResource, Long> network = blockEntity.countedNetworkStock();
         List<HorizonViewPayload.Entry> entries = new ArrayList<>(counts.counts().size() + held.size());
         counts.counts().forEach((item, total) -> {
             long have = held.getOrDefault(item, 0L);

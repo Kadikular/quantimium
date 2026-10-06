@@ -77,7 +77,8 @@ public final class Ae2ReactorPortTests {
             var storage = grid(helper).getStorageService();
             if (!taken[0]) {
                 helper.assertValueEqual(storage.getCachedInventory().get(LOG_KEY), 3L, "three logs on the network");
-                helper.assertValueEqual(storage.getCachedInventory().get(PLANKS_KEY), 0L, "planks aren't stock");
+                helper.assertValueEqual(storage.getCachedInventory().get(PLANKS_KEY), 0L, "what they make isn't stock");
+                helper.assertTrue(grid(helper).getCraftingService().isCraftable(PLANKS_KEY), "it's a pattern");
                 long got = storage.getInventory().extract(LOG_KEY, 2, Actionable.MODULATE, IActionSource.empty());
                 helper.assertValueEqual(got, 2L, "two taken through ME");
                 taken[0] = true;
@@ -114,6 +115,7 @@ public final class Ae2ReactorPortTests {
         // An empty Reactor, and Unrealised Matter in the network: it shows what the Matter could become.
         HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
         boolean[] stocked = {false};
+        Object[] plan = new Object[2];
         helper.succeedWhen(() -> {
             var storage = grid(helper).getStorageService();
             if (!stocked[0]) {
@@ -124,43 +126,105 @@ public final class Ae2ReactorPortTests {
             horizon.revalidate(helper.getLevel());
             helper.assertTrue(horizon.recountNow().count(ItemResource.of(Items.RAW_IRON)) > 0, "raw iron on the list, from the network's Matter");
             helper.assertTrue(horizon.getLedger().isEmpty(), "nothing held");
+            helper.assertTrue(planOnly(helper, plan, AEItemKey.of(Items.RAW_IRON), 4).missingItems().isEmpty(),
+                    "and AE2 can craft four raw iron of four Matter");
         });
     }
 
-    // covers: reactor.me_port.craftable
+    /**
+     * Plans {@code amount} of {@code key} on the network, and once planned, runs it if nothing is
+     * missing. Checks {@code done} once the job has finished; true then.
+     */
+    private static boolean craft(GameTestHelper helper, Object[] state, AEItemKey key, long amount, Runnable done) {
+        IGrid grid = grid(helper);
+        var crafting = grid.getCraftingService();
+        // Requested as a machine on the network: AE2 finds patterns through the requester's own node.
+        IActionSource source = IActionSource.ofMachine(helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class));
+        helper.assertTrue(!crafting.getCpus().isEmpty(), "the crafting CPU has not formed yet");
+        helper.assertTrue(crafting.isCraftable(key), "the pattern isn't on the network yet");
+        if (state[0] == null) {
+            state[0] = crafting.beginCraftingCalculation(helper.getLevel(), () -> source, key, amount,
+                    CalculationStrategy.REPORT_MISSING_ITEMS);
+        }
+        @SuppressWarnings("unchecked") var plan = (java.util.concurrent.Future<ICraftingPlan>) state[0];
+        helper.assertTrue(plan.isDone(), "still planning");
+        if (state[1] == null) {
+            try {
+                ICraftingPlan done1 = plan.get();
+                helper.assertTrue(done1.missingItems().isEmpty(), "nothing missing: " + missing(done1));
+                helper.assertTrue(crafting.submitJob(done1, null, null, true, source).successful(), "the job starts");
+                state[1] = true;
+            } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+                throw new AssertionError(e);
+            }
+        }
+        for (var cpu : crafting.getCpus()) helper.assertTrue(!cpu.isBusy(), "the job has not finished");
+        done.run();
+        return true;
+    }
+
+    private static String missing(ICraftingPlan plan) {
+        StringBuilder out = new StringBuilder();
+        for (var entry : plan.missingItems()) out.append(entry.getKey()).append(" x").append(entry.getLongValue()).append(' ');
+        out.append("| patterns ").append(plan.patternTimes().size()).append(" used ");
+        for (var entry : plan.usedItems()) out.append(entry.getKey()).append(" x").append(entry.getLongValue()).append(' ');
+        out.append("| simulation ").append(plan.simulation()).append(" bytes ").append(plan.bytes());
+        return out.toString();
+    }
+
+    private static ICraftingPlan planOnly(GameTestHelper helper, Object[] state, AEItemKey key, long amount) {
+        IGrid grid = grid(helper);
+        helper.assertTrue(grid.getCraftingService().isCraftable(key), "the pattern isn't on the network yet");
+        if (state[0] == null) {
+            IActionSource source = IActionSource.ofMachine(helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class));
+            state[0] = grid.getCraftingService().beginCraftingCalculation(helper.getLevel(), () -> source, key, amount,
+                    CalculationStrategy.REPORT_MISSING_ITEMS);
+        }
+        @SuppressWarnings("unchecked") var plan = (java.util.concurrent.Future<ICraftingPlan>) state[0];
+        helper.assertTrue(plan.isDone(), "still planning");
+        try {
+            return plan.get();
+        } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    // covers: reactor.me_port.patterns
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_exact", timeoutTicks = 300)
+    public static void ae2KnowsExactlyHowManyItCanMake(GameTestHelper helper) {
+        // One log held: four planks can be crafted, and eight are a log short.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        horizon.take(LOG, 1);
+        Object[] four = new Object[2];
+        Object[] eight = new Object[2];
+        helper.succeedWhen(() -> {
+            ICraftingPlan fourPlan = planOnly(helper, four, PLANKS_KEY, 4);
+            helper.assertTrue(fourPlan.missingItems().isEmpty(), "four planks need nothing more: " + missing(fourPlan));
+            helper.assertTrue(!planOnly(helper, eight, PLANKS_KEY, 8).missingItems().isEmpty(), "eight are a log short");
+        });
+    }
+
+    // covers: reactor.me_port.patterns
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_job", timeoutTicks = 400)
-    public static void anAe2CraftingJobAsksTheReactor(GameTestHelper helper) {
+    public static void anAe2CraftingJobRunsTheReactorsRecipes(GameTestHelper helper) {
+        // A log held and a log in the drive: a job for eight planks uses both, paid for by the Reactor.
         HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
         helper.setBlock(CELL.north(), block("ae2:1k_crafting_storage"));
         horizon.take(LOG, 1);
-        horizon.recountNow();
-        IActionSource source = IActionSource.empty();
-        @SuppressWarnings("unchecked") java.util.concurrent.Future<ICraftingPlan>[] plan = new java.util.concurrent.Future[1];
-        boolean[] submitted = {false};
+        boolean[] stocked = {false};
+        Object[] job = new Object[2];
         helper.succeedWhen(() -> {
-            IGrid grid = grid(helper);
-            var crafting = grid.getCraftingService();
-            helper.assertTrue(!crafting.getCpus().isEmpty(), "the crafting CPU has not formed yet");
-            helper.assertTrue(crafting.canEmitFor(PLANKS_KEY) && crafting.getCraftables(key -> true).contains(PLANKS_KEY),
-                    "planks should show as craftable");
-            if (plan[0] == null) {
-                plan[0] = crafting.beginCraftingCalculation(helper.getLevel(), () -> source, PLANKS_KEY, 4,
-                        CalculationStrategy.REPORT_MISSING_ITEMS);
+            var storage = grid(helper).getStorageService();
+            if (!stocked[0]) {
+                storage.getInventory().insert(LOG_KEY, 1, Actionable.MODULATE, IActionSource.empty());
+                stocked[0] = true;
             }
-            helper.assertTrue(plan[0].isDone(), "still planning");
-            if (!submitted[0]) {
-                try {
-                    ICraftingPlan done = plan[0].get();
-                    helper.assertTrue(done.missingItems().isEmpty(), "nothing missing");
-                    helper.assertTrue(crafting.submitJob(done, null, null, true, source).successful(), "the job starts");
-                    submitted[0] = true;
-                } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
-                    throw new AssertionError(e);
-                }
-            }
-            for (var cpu : crafting.getCpus()) helper.assertTrue(!cpu.isBusy(), "the job has not finished");
-            helper.assertValueEqual(grid.getStorageService().getCachedInventory().get(PLANKS_KEY), 4L, "four planks on the network");
-            helper.assertValueEqual(horizon.getLedger().count(LOG), 0L, "made of the Reactor's log");
+            craft(helper, job, PLANKS_KEY, 8, () -> {
+                helper.assertValueEqual(storage.getCachedInventory().get(PLANKS_KEY), 8L, "eight planks on the network");
+                helper.assertValueEqual(storage.getCachedInventory().get(LOG_KEY), 0L, "both logs used");
+                helper.assertTrue(horizon.getEnergyStorage().getEnergyStored() < HorizonCoreBlockEntity.ENERGY_CAPACITY,
+                        "paid for by the Reactor");
+            });
         });
     }
 

@@ -1,7 +1,6 @@
 package com.kadikular.quantimium.compat.ae2;
 
 import appeng.api.config.Actionable;
-import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
@@ -9,8 +8,9 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.IManagedGridNode;
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
-import appeng.api.networking.crafting.ICraftingService;
+import appeng.api.stacks.GenericStack;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPart;
@@ -24,8 +24,8 @@ import appeng.api.storage.MEStorage;
 import appeng.api.util.AECableType;
 import com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.ReactorPortBlockEntity;
-import com.kadikular.quantimium.reactor.ReactorCounter;
 import com.kadikular.quantimium.reactor.ReactorNetwork;
+import com.kadikular.quantimium.reactor.ReactorRecipes;
 import com.kadikular.quantimium.util.NbtCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,35 +41,32 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The ME Superposition Port: a Reactor port on an ME network, in both directions.
  *
  * <ul>
- *   <li><b>What the Reactor holds</b> is storage on the network, to see and take like a drive's.</li>
- *   <li><b>What it could make</b> is craftable: AE2 shows it so, and a crafting job that needs one
- *   asks for it. The port makes what's asked through the Reactor's planner and hands it to the job.
- *   Never shown as stock, since the Reactor's counts share their sources and AE2 would add them up.</li>
- *   <li><b>What the network holds</b> the Reactor counts and uses as its own inputs
- *   ({@link ReactorNetwork}).</li>
+ *   <li><b>What the Reactor holds</b> is stock on the network, to see and take like a drive's.</li>
+ *   <li><b>Its recipes</b> are patterns, as the ME Superposition Crafter's are, so AE2 plans with them
+ *   from everything on the network, the Reactor's holdings included: Matter in a drive becomes an
+ *   anvil through four of them, and AE2 knows exactly how many it can make and what's missing.</li>
+ *   <li><b>What the network holds</b> the Reactor counts and uses as its own inputs when asked from its
+ *   own screen ({@link ReactorNetwork}).</li>
  * </ul>
  *
+ * <p>What it could make is never shown as stock: those counts share their sources, and AE2 would plan
+ * to use two of them from one log. With patterns AE2 does the sums itself.
+ *
  * <p>None of this can loop back on itself: the core reads and takes from the network only with its
- * own ports turned away ({@link HorizonCoreBlockEntity#isDrawing()}), and a Materialiser Port this
- * network reads through a storage bus goes dark.
+ * own ports turned away ({@link HorizonCoreBlockEntity#isDrawing()}), so what this port offers is never
+ * counted as network stock, and a Materialiser Port this network reads through a storage bus goes dark.
  */
 public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
-        implements IInWorldGridNodeHost, IActionHost, ICraftingProvider, IStorageProvider, ReactorNetwork {
-
-    /** How often it answers crafting requests, and how many of one thing it makes at a time. */
-    private static final int REQUEST_TICKS = 5;
-    private static final long MAX_PER_REQUEST = 4096;
-    private static final int MAX_KEYS_PER_CYCLE = 16;
+        implements IInWorldGridNodeHost, IActionHost, IStorageProvider, ICraftingProvider, ReactorNetwork {
 
     private static final IGridNodeListener<ReactorMePortBlockEntity> LISTENER = new IGridNodeListener<>() {
         @Override
@@ -79,7 +76,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
         @Override
         public void onStateChanged(ReactorMePortBlockEntity owner, IGridNode node, State state) {
-            owner.craftablesFrom = null;
+            owner.patternsFrom = null;
         }
     };
 
@@ -89,14 +86,16 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             .setTagName("node")
             .setFlags(GridFlags.REQUIRE_CHANNEL)
             .setIdlePowerUsage(2.0)
-            .addService(ICraftingProvider.class, this)
-            .addService(IStorageProvider.class, this);
+            .addService(IStorageProvider.class, this)
+            .addService(ICraftingProvider.class, this);
 
-    private final HeldStorage held = new HeldStorage();
-    /** What the Reactor could make, as AE2 keys, and the count they were taken from. */
-    private Set<AEKey> craftables = Set.of();
+    private final OfferStorage offer = new OfferStorage();
+    /** The Reactor's recipes as patterns, and the recipes they were made from. */
+    private List<IPatternDetails> patterns = List.of();
     @Nullable
-    private ReactorCounter.Counts craftablesFrom;
+    private ReactorRecipes patternsFrom;
+    /** What patterns have made, waiting to go to the network: never from inside a push. */
+    private final List<GenericStack> pending = new ArrayList<>();
 
     public ReactorMePortBlockEntity(BlockPos pos, BlockState state) {
         super(Ae2Content.REACTOR_ME_PORT_BE.get(), pos, state);
@@ -157,11 +156,11 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     @Override
     public void mountInventories(IStorageMounts mounts) {
-        mounts.mount(held);
+        mounts.mount(offer);
     }
 
     /** The Reactor's held items as a storage: seen and taken, never filled (Input ports do that). */
-    private final class HeldStorage implements MEStorage {
+    private final class OfferStorage implements MEStorage {
         @Nullable
         private HorizonCoreBlockEntity visibleCore() {
             HorizonCoreBlockEntity horizon = core();
@@ -196,67 +195,65 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         }
     }
 
-    @Override
-    public List<IPatternDetails> getAvailablePatterns() {
-        return List.of();
-    }
+    // ---- patterns ----
 
     @Override
+    public List<IPatternDetails> getAvailablePatterns() {
+        return patterns;
+    }
+
+    /** One pattern for each of the Reactor's recipes, once; recipes that keep a tool aren't patterns. */
+    private void refreshPatterns(HorizonCoreBlockEntity horizon) {
+        ReactorRecipes recipes = horizon.getRecipes();
+        if (recipes == patternsFrom) return;
+        patternsFrom = recipes;
+        Map<net.minecraft.resources.Identifier, IPatternDetails> byId = new java.util.LinkedHashMap<>();
+        for (ReactorRecipes.Producer producer : recipes.producers()) {
+            if (!producer.shape().tools().isEmpty()) continue;
+            byId.putIfAbsent(producer.shape().id(),
+                    new SuperpositionPattern(producer.shape(), 1, Ae2Content.REACTOR_ME_PORT_ITEM.get()));
+        }
+        patterns = List.copyOf(byId.values());
+        ICraftingProvider.requestUpdate(mainNode);
+    }
+
+    /** The network has taken the inputs out of storage for this run: they're used up, and the Reactor pays. */
+    @Override
     public boolean pushPattern(IPatternDetails details, KeyCounter[] inputs) {
-        return false;
+        HorizonCoreBlockEntity horizon = core();
+        if (!(details instanceof SuperpositionPattern pattern) || horizon == null || grid() == null || isBusy()
+                || !patterns.contains(pattern)) {
+            return false;
+        }
+        if (!horizon.payForRuns(pattern.shape(), pattern.batch())) return false;
+        pending.addAll(pattern.getOutputs());
+        setChanged();
+        return true;
     }
 
     @Override
     public boolean isBusy() {
-        return false;
+        return !pending.isEmpty();
     }
 
-    /** Everything the Reactor could make: craftable from nothing, as far as AE2 is concerned. */
-    @Override
-    public Set<AEKey> getEmitableItems() {
-        return craftables;
-    }
-
-    /** Follows the Reactor's count: what it could make now is what AE2 may ask it for. */
-    private void refreshCraftables(HorizonCoreBlockEntity horizon) {
-        ReactorCounter.Counts counts = horizon.getCounts();
-        if (counts == craftablesFrom) return;
-        craftablesFrom = counts;
-        Set<AEKey> keys = new HashSet<>();
-        counts.counts().forEach((item, amount) -> {
-            if (amount > 0 && !horizon.getRecipes().producersOf(item).isEmpty()) keys.add(AEItemKey.of(item));
-        });
-        // Told every time it's worked out again, which includes each time the node comes online: an
-        // update asked for before the grid was up is lost.
-        craftables = Set.copyOf(keys);
-        ICraftingProvider.requestUpdate(mainNode);
-    }
-
-    /** Makes what crafting jobs are waiting for, and hands it to them through the network. */
-    private void answerRequests(HorizonCoreBlockEntity horizon, IGrid grid) {
-        ICraftingService crafting = grid.getCraftingService();
-        if (!crafting.isRequestingAny()) return;
+    /** Hands what patterns made to the network; whatever it can't take waits for the next tick. */
+    private void flush(IGrid grid) {
         MEStorage network = grid.getStorageService().getInventory();
-        int answered = 0;
-        for (AEKey key : craftables) {
-            if (answered >= MAX_KEYS_PER_CYCLE) break;
-            long wanted = crafting.getRequestedAmount(key);
-            if (wanted <= 0 || !(key instanceof AEItemKey item)) continue;
-            answered++;
-            long made = horizon.produce(item.toResource(), Math.min(wanted, MAX_PER_REQUEST));
-            if (made <= 0) continue;
-            long sent = network.insert(key, made, Actionable.MODULATE, source());
-            // Whatever the network wouldn't take goes back in the horizon it came from.
-            if (sent < made) horizon.restore(item.toResource(), made - sent);
+        for (int i = 0; i < pending.size(); i++) {
+            GenericStack stack = pending.get(i);
+            long sent = network.insert(stack.what(), stack.amount(), Actionable.MODULATE, source());
+            if (sent >= stack.amount()) pending.remove(i--);
+            else if (sent > 0) pending.set(i, new GenericStack(stack.what(), stack.amount() - sent));
         }
+        if (!pending.isEmpty()) setChanged();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ReactorMePortBlockEntity port) {
-        HorizonCoreBlockEntity horizon = port.core();
         IGrid grid = port.grid();
-        if (horizon == null || grid == null || level.getGameTime() % REQUEST_TICKS != 0) return;
-        port.refreshCraftables(horizon);
-        if (horizon.isActive()) port.answerRequests(horizon, grid);
+        if (grid == null) return;
+        if (!port.pending.isEmpty()) port.flush(grid);
+        HorizonCoreBlockEntity horizon = port.core();
+        if (horizon != null && level.getGameTime() % 20 == 0) port.refreshPatterns(horizon);
     }
 
     /** Whether it's on a network and a Reactor, and how much it offers the network as craftable. */
@@ -270,7 +267,8 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             return Component.translatable("message.quantimium.reactor_me_port.offline").withStyle(net.minecraft.ChatFormatting.YELLOW);
         }
         return Component.translatable("message.quantimium.reactor_me_port.online",
-                String.format(java.util.Locale.ROOT, "%,d", craftables.size())).withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
+                String.format(java.util.Locale.ROOT, "%,d", core().getLedger().view().size()),
+                String.format(java.util.Locale.ROOT, "%,d", patterns.size())).withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
     }
 
     // ---- ME node ----
@@ -318,6 +316,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         CompoundTag tag = new CompoundTag();
         tag.merge(node.buildResult());
         out.store("Grid", CompoundTag.CODEC, tag);
+        out.store("Pending", GenericStack.CODEC.listOf(), List.copyOf(pending));
     }
 
     @Override
@@ -325,5 +324,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         super.loadAdditional(in);
         in.read("Grid", CompoundTag.CODEC).ifPresent(tag ->
                 mainNode.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, NbtCompat.lookup(in), tag)));
+        pending.clear();
+        pending.addAll(in.read("Pending", GenericStack.CODEC.listOf()).orElse(List.of()));
     }
 }

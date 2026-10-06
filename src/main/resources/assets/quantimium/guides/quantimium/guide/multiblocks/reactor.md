@@ -156,13 +156,17 @@ What the Reactor holds is storage on the network: it shows in
 the terminal and can be taken like anything in a drive. Nothing goes in this way; use Input ports, or
 an export bus onto one.
 
-What it could make shows in the terminal as craftable, not as
-stock. Ask for some, or let a crafting job need some, and the port makes it through the Reactor and
-hands it to the job; nothing is listed twice, and no count is added to another that shares its iron.
+Its recipes are patterns on the network, as the
+[ME Superposition Crafter](../machines/me-superposition-crafter.md)'s are: everything its catalysts
+can make, and Matter's observations. AE2 plans with them from everything on the network, the Reactor's
+holdings included, so it knows exactly how much can be made and what's missing: Matter in a drive
+becomes anvils through four of them, and asking for one too many says how much more Matter that needs. Each run is paid for from
+the core's power, at the Reactor's price. What it could make never shows as stock: those counts share
+their sources, and AE2 would plan to use the same iron twice.
 
 What the network holds, the Reactor counts and uses as its own
-inputs: logs in a drive count towards planks on the core's list, and a request takes them from the
-network as it needs them. Unrealised Matter in the network is observed just as Matter held is. The
+inputs on its own screen: logs in a drive count towards planks on the core's list, and a request
+there takes them from the network as it needs them. Unrealised Matter in the network is observed just as Matter held is. The
 network's own items aren't listed again on the core's screen.
 
 A storage bus on one of the Reactor's own Materialiser Ports, on

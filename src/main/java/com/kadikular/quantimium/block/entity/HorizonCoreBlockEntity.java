@@ -91,6 +91,9 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     private java.util.concurrent.CompletableFuture<ReactorCounter.Counts[]> recount;
     private int countedVersion = -1;
     private java.util.Map<ItemResource, Long> countedNetwork = java.util.Map.of();
+    /** The network stock the counts in hand were made with, and the one the recount under way uses. */
+    private java.util.Map<ItemResource, Long> countsNetwork = java.util.Map.of();
+    private java.util.Map<ItemResource, Long> recountNetwork = java.util.Map.of();
 
     /** While above zero the core is reading or taking from a network: its own ports show nothing. */
     private int drawing;
@@ -178,14 +181,6 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
             setChanged();
         }
         return taken;
-    }
-
-    /** Puts back what was made but couldn't be delivered: it came from the horizon, so it always fits. */
-    public void restore(ItemResource item, long amount) {
-        if (amount <= 0) return;
-        ledger.add(item, amount);
-        ledgerVersion++;
-        setChanged();
     }
 
     public int ledgerVersion() {
@@ -424,6 +419,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
             counts = both[0];
             ownCounts = both[1];
             countedNetwork = network;
+            countsNetwork = network;
         }
         countedVersion = ledgerVersion;
         countedRecipes = recipes;
@@ -457,6 +453,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
                 ReactorCounter.Counts[] both = recount.join();
                 counts = both[0];
                 ownCounts = both[1];
+                countsNetwork = recountNetwork;
             } catch (RuntimeException e) {
                 com.kadikular.quantimium.Quantimium.LOGGER.warn("A Horizon Core at {} failed to count what it can make",
                         worldPosition, e);
@@ -473,8 +470,10 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         countedNetwork = network;
         if (!isFormed()) {
             counts = ownCounts = ReactorCounter.Counts.EMPTY;
+            countsNetwork = java.util.Map.of();
             return;
         }
+        recountNetwork = network;
         ReactorRecipes graphOf = recipes;
         java.util.Map<ItemResource, Long> stock = ledger.snapshot();
         recount = java.util.concurrent.CompletableFuture.supplyAsync(
@@ -524,9 +523,9 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         return networkStock;
     }
 
-    /** The linked networks' stock as last read, without reading it again. */
-    public java.util.Map<ItemResource, Long> lastNetworkStock() {
-        return networkStock;
+    /** The linked networks' stock that the counts in hand were made with. */
+    public java.util.Map<ItemResource, Long> countedNetworkStock() {
+        return countsNetwork;
     }
 
     /** What the horizon holds and its networks hold, together: what a request may plan with. */
@@ -577,35 +576,17 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     /**
-     * Makes as much of {@code amount} of {@code item} as it can, up to that, from what it and its
-     * networks hold, and pays for it; the caller delivers what's made. For the ME Superposition Port,
-     * filling a crafting job's request. How many were made.
+     * Pays for {@code runs} runs of {@code shape} that a network has handed the inputs for, at the
+     * Reactor's price; lights nothing, keeps nothing. Whether it could pay.
      */
-    public long produce(ItemResource item, long amount) {
-        if (!(level instanceof ServerLevel server) || !isActive() || amount <= 0) return 0;
-        refreshRecipes(server);
-        java.util.Map<ItemResource, Long> stock = stockWithNetworks(server);
-        ReactorPlanner.Plan best = null;
-        long bestFe = 0;
-        long made = 0;
-        long low = 1;
-        long high = amount;
-        for (int plans = 0; low <= high && plans < 7; plans++) {
-            long attempt = plans == 0 ? high : (low + high) / 2;
-            ReactorPlanner.Result result = ReactorPlanner.plan(recipes, stock, item, attempt);
-            long fe = result.planned() ? feFor(result.plan()) : Long.MAX_VALUE;
-            if (result.planned() && fe <= energy.getEnergyStored()) {
-                best = result.plan();
-                bestFe = fe;
-                made = attempt;
-                low = attempt + 1;
-            } else {
-                high = attempt - 1;
-            }
-        }
-        if (best == null || !pullFromNetworks(server, best)) return 0;
-        spend(server, best, bestFe);
-        return made;
+    public boolean payForRuns(com.kadikular.quantimium.recipe.RecipeShape shape, long runs) {
+        if (!(level instanceof ServerLevel server) || !isActive()) return false;
+        long fe = (long) Math.ceil(shape.baseFe() * runs * Config.crafterTaxFraction(FluxBand.SINGULARITY));
+        if (energy.getEnergyStored() < fe) return false;
+        energy.consume(fe);
+        if (fe > 0) QuantumFlux.emitFromEnergy(server, worldPosition, fe);
+        setChanged();
+        return true;
     }
 
     /** Materialiser Ports a linked network reads through something of its own beside them. */

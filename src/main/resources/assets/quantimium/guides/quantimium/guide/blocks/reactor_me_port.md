@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-Joins the Reactor to an ME network: what it holds as storage, what it could make as craftable, and the network's items as its inputs.
+Joins the Reactor to an ME network: what it holds as storage, its recipes as patterns, and the network's items as its inputs.
 
 ## Recipes
 
