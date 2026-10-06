@@ -144,12 +144,13 @@ hands it to the job; nothing is listed twice, and no count is added to another t
 
 [[mechanic:reactor.me_port.inputs]] What the network holds, the Reactor counts and uses as its own
 inputs: logs in a drive count towards planks on the core's list, and a request takes them from the
-network as it needs them. The network's own items aren't listed again on the core's screen.
+network as it needs them. Unrealised Matter in the network is observed just as Matter held is. The
+network's own items aren't listed again on the core's screen.
 
 [[mechanic:reactor.me_port.loops]] A storage bus on one of the Reactor's own Materialiser Ports, on
 the same network, would show the network the Reactor twice, and let the Reactor count its own
 holdings back in as network stock. So that port goes dark while the ME port is linked: it shows that
-network nothing. The ME port shows everything the bus would have. And while the Reactor reads or takes
+network nothing, and the Flux Meter (or Jade) on it says so. The ME port shows everything the bus would have. And while the Reactor reads or takes
 from the network, its own ports show nothing at all, so no route the Reactor can't see makes it count
 or take anything twice either.
 

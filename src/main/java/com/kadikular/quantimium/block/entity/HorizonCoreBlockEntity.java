@@ -385,9 +385,12 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
             }
         }
         if (!recipes.builtFrom(catalysts, filters)) recipes = ReactorRecipes.build(server, catalysts, filters);
-        // Unrealised Matter held can be observed into what it could be, with no catalyst.
+        // Unrealised Matter held, or in a linked network, can be observed into what it could be, with no catalyst.
         java.util.Set<ItemResource> matter = new java.util.HashSet<>();
         for (ItemResource item : ledger.view().keySet()) {
+            if (com.kadikular.quantimium.unrealised.Matter.is(item)) matter.add(item);
+        }
+        for (ItemResource item : networkStock(server).keySet()) {
             if (com.kadikular.quantimium.unrealised.Matter.is(item)) matter.add(item);
         }
         recipes = recipes.withMatter(server, worldPosition, matter);

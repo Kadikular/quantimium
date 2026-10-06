@@ -259,6 +259,20 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         if (horizon.isActive()) port.answerRequests(horizon, grid);
     }
 
+    /** Whether it's on a network and a Reactor, and how much it offers the network as craftable. */
+    @Override
+    @Nullable
+    public net.minecraft.network.chat.MutableComponent fluxMeterLine() {
+        if (core() == null) {
+            return Component.translatable("message.quantimium.reactor_port.unlinked").withStyle(net.minecraft.ChatFormatting.GRAY);
+        }
+        if (grid() == null) {
+            return Component.translatable("message.quantimium.reactor_me_port.offline").withStyle(net.minecraft.ChatFormatting.YELLOW);
+        }
+        return Component.translatable("message.quantimium.reactor_me_port.online",
+                String.format(java.util.Locale.ROOT, "%,d", craftables.size())).withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
+    }
+
     // ---- ME node ----
 
     @Override

@@ -32,7 +32,7 @@ import java.util.List;
  *   its counted amount; see {@link MaterialiserHandler}.</li>
  * </ul>
  */
-public class ReactorPortBlockEntity extends BlockEntity {
+public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular.quantimium.flux.FluxMeterReadout {
 
     public static final int OUTPUT_SLOTS = 9;
 
@@ -105,6 +105,28 @@ public class ReactorPortBlockEntity extends BlockEntity {
         if (kind() != ReactorPortBlock.Kind.ENERGY) return null;
         HorizonCoreBlockEntity horizon = core();
         return horizon == null ? null : horizon.getEnergyStorage();
+    }
+
+    /**
+     * What the Flux Meter and Jade say of a Materialiser Port: what it shows, or why it shows nothing.
+     * Server side.
+     */
+    @Override
+    @Nullable
+    public net.minecraft.network.chat.MutableComponent fluxMeterLine() {
+        if (kind() != ReactorPortBlock.Kind.MATERIALISER) return null;
+        HorizonCoreBlockEntity horizon = core();
+        if (horizon == null) {
+            return net.minecraft.network.chat.Component.translatable("message.quantimium.reactor_port.unlinked")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY);
+        }
+        if (horizon.isDarkPort(worldPosition)) {
+            return net.minecraft.network.chat.Component.translatable("message.quantimium.reactor_port.dark")
+                    .withStyle(net.minecraft.ChatFormatting.YELLOW);
+        }
+        return net.minecraft.network.chat.Component.translatable("message.quantimium.reactor_port.showing",
+                        String.format(java.util.Locale.ROOT, "%,d", horizon.getOwnCounts().counts().size()))
+                .withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
     }
 
     /** Room for {@code stack} in the output buffer, as a count. */

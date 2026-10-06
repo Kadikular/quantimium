@@ -108,6 +108,25 @@ public final class Ae2ReactorPortTests {
         });
     }
 
+    // covers: reactor.me_port.inputs
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_matter", timeoutTicks = 300)
+    public static void matterInTheNetworkIsObservedLikeMatterHeld(GameTestHelper helper) {
+        // An empty Reactor, and Unrealised Matter in the network: it shows what the Matter could become.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        boolean[] stocked = {false};
+        helper.succeedWhen(() -> {
+            var storage = grid(helper).getStorageService();
+            if (!stocked[0]) {
+                storage.getInventory().insert(AEItemKey.of(com.kadikular.quantimium.init.ModItems.UNREALISED_MATTER.get()), 4,
+                        Actionable.MODULATE, IActionSource.empty());
+                stocked[0] = true;
+            }
+            horizon.revalidate(helper.getLevel());
+            helper.assertTrue(horizon.recountNow().count(ItemResource.of(Items.RAW_IRON)) > 0, "raw iron on the list, from the network's Matter");
+            helper.assertTrue(horizon.getLedger().isEmpty(), "nothing held");
+        });
+    }
+
     // covers: reactor.me_port.craftable
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_job", timeoutTicks = 400)
     public static void anAe2CraftingJobAsksTheReactor(GameTestHelper helper) {
@@ -166,6 +185,10 @@ public final class Ae2ReactorPortTests {
             if (!made[0]) {
                 horizon.revalidate(helper.getLevel());
                 helper.assertTrue(horizon.isDarkPort(helper.absolutePos(materialiser)), "the bused Materialiser Port goes dark");
+                var line = helper.getBlockEntity(materialiser, com.kadikular.quantimium.block.entity.ReactorPortBlockEntity.class)
+                        .fluxMeterLine();
+                helper.assertTrue(line != null && line.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                        && t.getKey().equals("message.quantimium.reactor_port.dark"), "and says so");
                 helper.assertValueEqual(storage.getInventory().getAvailableStacks().get(LOG_KEY), 1L, "the log, seen once");
                 // Recounted again and again, it never grows on itself.
                 helper.assertValueEqual(horizon.recountNow().count(ItemResource.of(Items.OAK_PLANKS)), 4L, "four planks, not eight");
