@@ -2,7 +2,7 @@
 navigation:
   title: Pod Charge Module
   parent: blocks/index.md
-  position: 25
+  position: 26
   icon: quantimium:pod_charge_module
 ---
 

@@ -592,13 +592,13 @@ def scene_fold_chamber() -> List[Placement]:
 
 
 def scene_reactor_parts() -> List[Placement]:
-    """A corner of a formed Reactor: plinth, a port of each kind, and the Horizon Core's cage."""
+    """A corner of a formed Reactor: plinth, a Catalyst Bay, a port of each kind, and the Horizon Core's cage."""
     blocks: List[Placement] = []
     def traces(x, z):
         return {"trace_north": str(trace_edge(x, 64, z, 0)), "trace_south": str(trace_edge(x, 64, z + 1, 0)),
                 "trace_west": str(trace_edge(x, 64, z, 1)), "trace_east": str(trace_edge(x + 1, 64, z, 1))}
     ports = {(3, 0): "reactor_input_port", (3, 1): "reactor_output_port", (3, 2): "reactor_energy_port",
-             (3, 3): "reactor_materialiser_port"}
+             (3, 3): "reactor_materialiser_port", (1, 3): "catalyst_bay"}
     for x in range(4):
         for z in range(4):
             block = ports.get((x, z), "reactor_plinth")

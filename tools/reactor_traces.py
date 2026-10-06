@@ -185,6 +185,98 @@ def animate(image: Image.Image) -> Image.Image:
     return frames
 
 
+WINDOW = (3, 12)  # the bay's window, inclusive, on both axes
+
+
+def bay_frame(lit: bool) -> Image.Image:
+    """The Catalyst Bay's top: plinth around a window into its pocket, rimmed in light."""
+    P = palette(lit)
+    img = tile(0, 0, 0, 0, lit)
+    lo, hi = WINDOW
+    rim = P["via"]
+    for i in range(lo - 1, hi + 2):
+        for x, y in ((i, lo - 1), (i, hi + 1), (lo - 1, i), (hi + 1, i)):
+            img.putpixel((x, y), rim)
+    for x in range(lo, hi + 1):
+        for y in range(lo, hi + 1):
+            img.putpixel((x, y), (0, 0, 0, 0))
+    return img
+
+
+def bay_stub(edge: str, lane: int, lit: bool) -> Image.Image:
+    """A trace from one edge of a bay to the rim of its window, laid over the frame."""
+    P = palette(lit)
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    p = LANE[lane]
+    depth = WINDOW[0] - 1  # up to the rim
+    cells = [(p + a, d) for a in (0, 1) for d in range(depth)]
+    for a, d in cells:
+        x, y = {"n": (a, d), "s": (a, 15 - d), "w": (d, a), "e": (15 - d, a)}[edge]
+        img.putpixel((x, y), P["tr"])
+    return img
+
+
+def pocket() -> Image.Image:
+    """The walls of a bay's pocket, as an item shows them: the void drawn in the world covers them."""
+    img = Image.new("RGBA", (16, 16), hx("07060f"))
+    rnd = random.Random(11)
+    for _ in range(14):
+        img.putpixel((rnd.randrange(16), rnd.randrange(16)), rnd.choice([hx("1a1033"), hx("2a1a52"), hx("0f0b20")]))
+    return img
+
+
+def write_bay(parts_for_traces: list) -> None:
+    """The Catalyst Bay: a frame with a hole, a pocket under it, and the plinth's traces run in to the rim."""
+    models = os.path.join(ASSETS, "models", "block")
+    textures = os.path.join(ASSETS, "textures", "block")
+    pocket().save(os.path.join(textures, "catalyst_bay_pocket.png"))
+    multipart = []
+    for formed, tag in ((False, ""), (True, "_lit")):
+        bay_frame(formed).save(os.path.join(textures, f"catalyst_bay_frame{tag}.png"))
+        side = "quantimium:block/reactor_plinth_side" + ("_active" if formed else "")
+        lo, hi = WINDOW[0], WINDOW[1] + 1
+        inward = {"texture": "#pocket"}
+        model = {
+            "parent": "minecraft:block/block",
+            "render_type": "minecraft:cutout",
+            "textures": {"top": f"quantimium:block/catalyst_bay_frame{tag}", "side": side,
+                         "bottom": "quantimium:block/quantum_foundry_base",
+                         "pocket": "quantimium:block/catalyst_bay_pocket", "particle": side},
+            "elements": [
+                {"from": [0, 0, 0], "to": [16, 16, 16], "faces": {
+                    **{d: {"texture": "#side", "cullface": d} for d in ("north", "south", "east", "west")},
+                    "up": {"texture": "#top", "cullface": "up"},
+                    "down": {"texture": "#bottom", "cullface": "down"}}},
+                # The pocket's walls, each a thin slab whose face looks into it.
+                {"from": [lo - 1, 1, lo], "to": [lo, 16, hi], "shade": False, "faces": {"east": inward}},
+                {"from": [hi, 1, lo], "to": [hi + 1, 16, hi], "shade": False, "faces": {"west": inward}},
+                {"from": [lo, 1, lo - 1], "to": [hi, 16, lo], "shade": False, "faces": {"south": inward}},
+                {"from": [lo, 1, hi], "to": [hi, 16, hi + 1], "shade": False, "faces": {"north": inward}},
+                {"from": [lo, 0, lo], "to": [hi, 1, hi], "shade": False, "faces": {"up": inward}},
+            ],
+        }
+        with open(os.path.join(models, f"catalyst_bay{tag}.json"), "w") as handle:
+            json.dump(model, handle, indent=2)
+        multipart.append({"when": {"formed": str(formed).lower()}, "apply": {"model": f"quantimium:block/catalyst_bay{tag}"}})
+        for edge, prop in (("n", "trace_north"), ("e", "trace_east"), ("s", "trace_south"), ("w", "trace_west")):
+            for lane in (1, 2):
+                stub = f"catalyst_bay_stub_{edge}{lane}{tag}"
+                bay_stub(edge, lane, formed).save(os.path.join(textures, f"{stub}.png"))
+                overlay = {
+                    "parent": "minecraft:block/block",
+                    "render_type": "minecraft:cutout",
+                    "textures": {"stub": f"quantimium:block/{stub}", "particle": side},
+                    "elements": [{"from": [0, 16.01, 0], "to": [16, 16.01, 16],
+                                  "faces": {"up": {"uv": [0, 0, 16, 16], "texture": "#stub", "cullface": "up"}}}],
+                }
+                with open(os.path.join(models, f"{stub}.json"), "w") as handle:
+                    json.dump(overlay, handle, indent=2)
+                multipart.append({"when": {"formed": str(formed).lower(), prop: str(lane)},
+                                  "apply": {"model": f"quantimium:block/{stub}"}})
+    with open(os.path.join(ASSETS, "blockstates", "catalyst_bay.json"), "w") as handle:
+        json.dump({"multipart": multipart}, handle, indent=1)
+
+
 def name(edges: dict) -> str:
     return "".join(str(edges[e]) for e in "nesw")
 
@@ -230,6 +322,11 @@ def main() -> None:
 
     with open(os.path.join(ASSETS, "blockstates", "reactor_plinth.json"), "w") as handle:
         json.dump({"variants": variants}, handle, indent=1)
+    # The Lit Reactor Plinth: the same traces, always lit.
+    lit_variants = {key: {"model": value["model"].removesuffix("_lit") + "_lit"} for key, value in variants.items()}
+    with open(os.path.join(ASSETS, "blockstates", "lit_reactor_plinth.json"), "w") as handle:
+        json.dump({"variants": lit_variants}, handle, indent=1)
+    write_bay(parts)
     for port in ("input", "output", "energy", "materialiser"):
         # A port is the plinth with a flat socket laid over every face (tools/reactor_art.py draws it).
         port_parts = list(parts)

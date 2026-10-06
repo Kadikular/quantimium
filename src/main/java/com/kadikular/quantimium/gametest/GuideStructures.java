@@ -47,8 +47,10 @@ public final class GuideStructures {
             BlockPos core = ReactorTests.CORE;
             h.setBlock(core.offset(3, 0, 3), ModBlocks.RING_EMITTER.get());
             h.setBlock(core.offset(-3, 0, -3), ModBlocks.RING_EMITTER.get());
-            ReactorTests.bay(h, core.offset(2, 0, -1), Items.CRAFTING_TABLE);
-            ReactorTests.bay(h, core.offset(-2, 0, 1), Items.FURNACE);
+            ReactorTests.bay(h, core.below().offset(2, 0, -1), Items.CRAFTING_TABLE);
+            ReactorTests.bay(h, core.below().offset(-2, 0, 1), Items.FURNACE);
+            h.getBlockEntity(core.below().offset(2, 0, -1), com.kadikular.quantimium.block.entity.CatalystBayBlockEntity.class)
+                    .setCatalyst(3, new net.minecraft.world.item.ItemStack(Items.STONECUTTER));
             h.setBlock(core.below().south(5), ModBlocks.REACTOR_OUTPUT_PORT.get());
             h.setBlock(core.below().east(5), ModBlocks.REACTOR_ENERGY_PORT.get());
             h.setBlock(core.below().west(5), ModBlocks.REACTOR_MATERIALISER_PORT.get());

@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.gametest;
 
+import com.kadikular.quantimium.block.QuantumFoundryStructure;
 import com.kadikular.quantimium.block.entity.CatalystBayBlockEntity;
 import com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.ReactorPortBlockEntity;
@@ -65,6 +66,81 @@ public final class ReactorTests {
         helper.succeed();
     }
 
+    // covers: reactor.bays
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
+    public static void baysGoInThePlinthInsideTheRim(GameTestHelper helper) {
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        ServerLevel level = helper.getLevel();
+        Block plinth = ModBlocks.REACTOR_PLINTH.get();
+
+        // Not under the core, and not on the rim, where ports go.
+        helper.setBlock(CORE.below(), ModBlocks.CATALYST_BAY.get());
+        core.revalidate(level);
+        helper.assertFalse(core.isFormed(), "a bay under the core");
+        helper.setBlock(CORE.below(), plinth);
+        helper.setBlock(CORE.below().west(5), ModBlocks.CATALYST_BAY.get());
+        core.revalidate(level);
+        helper.assertFalse(core.isFormed(), "a bay on the rim");
+        helper.setBlock(CORE.below().west(5), plinth);
+
+        // Eight anywhere else; a ninth is too many.
+        int[][] spots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}, {2, 0}};
+        for (int[] spot : spots) helper.setBlock(CORE.below().offset(spot[0], 0, spot[1]), ModBlocks.CATALYST_BAY.get());
+        core.revalidate(level);
+        helper.assertFalse(core.isFormed(), "nine bays");
+        helper.setBlock(CORE.below().east(2), plinth);
+        core.revalidate(level);
+        helper.assertTrue(core.isFormed(), "eight bays: " + core.getLayout().problem());
+        helper.assertValueEqual(core.getLayout().bays().size(), 8, "bays");
+        helper.assertTrue(helper.getBlockState(CORE.below().east(1)).getValue(QuantumFoundryStructure.FORMED),
+                "a bay lights with the reactor");
+        helper.succeed();
+    }
+
+    // covers: reactor.bays
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
+    public static void oneBayHoldsFourCatalysts(GameTestHelper helper) {
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        BlockPos pos = CORE.below().east(2);
+        helper.setBlock(pos, ModBlocks.CATALYST_BAY.get());
+        CatalystBayBlockEntity bay = helper.getBlockEntity(pos, CatalystBayBlockEntity.class);
+        bay.setCatalyst(bay.slotToFill(1), new net.minecraft.world.item.ItemStack(Items.CRAFTING_TABLE));
+        bay.setCatalyst(bay.slotToFill(1), new net.minecraft.world.item.ItemStack(Items.FURNACE));
+        helper.assertTrue(bay.getCatalyst(1).is(Items.CRAFTING_TABLE), "the slot clicked");
+        helper.assertTrue(bay.getCatalyst(0).is(Items.FURNACE), "taken, so the first free one");
+        helper.setBlock(OUTPUT, ModBlocks.REACTOR_OUTPUT_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        core.getLedger().add(ItemResource.of(Items.OAK_LOG), 1);
+        core.getLedger().add(ItemResource.of(Items.RAW_IRON), 3);
+
+        helper.runAfterDelay(2, () -> {
+            ReactorPlanner.Result made = core.request(ItemResource.of(Items.IRON_PICKAXE), 1);
+            helper.assertTrue(made.planned(), "a pickaxe through both catalysts in one bay: " + made.problem());
+            helper.assertTrue(core.flashBays().contains(0) && core.flashBays().contains(1), "both moons flare");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: reactor.bays
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
+    public static void aBayStandingOnThePlinthSinksIntoIt(GameTestHelper helper) {
+        // Bays used to stand on the plinth. One left there sinks into the block under it, catalyst and all.
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        helper.setBlock(CORE.east(2), ModBlocks.CATALYST_BAY.get());
+        helper.getBlockEntity(CORE.east(2), CatalystBayBlockEntity.class)
+                .setCatalyst(0, new net.minecraft.world.item.ItemStack(Items.FURNACE));
+        core.revalidate(helper.getLevel());
+        helper.assertBlockPresent(Blocks.AIR, CORE.east(2));
+        helper.assertBlockPresent(ModBlocks.CATALYST_BAY.get(), CORE.below().east(2));
+        helper.assertTrue(helper.getBlockEntity(CORE.below().east(2), CatalystBayBlockEntity.class).getCatalyst(0)
+                .is(Items.FURNACE), "the catalyst came with it");
+        helper.assertValueEqual(core.getLayout().bays().size(), 1, "and it's the reactor's bay");
+        helper.assertTrue(helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).isEmpty(), "nothing dropped");
+        helper.succeed();
+    }
+
     // covers: reactor.input
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
     public static void anInputPortFeedsTheHorizonOnlyWhenPowered(GameTestHelper helper) {
@@ -91,8 +167,8 @@ public final class ReactorTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
     public static void itMakesAPickaxeThroughTwoMachines(GameTestHelper helper) {
         HorizonCoreBlockEntity core = buildReactor(helper, 1);
-        bay(helper, CORE.east(2), Items.CRAFTING_TABLE);
-        bay(helper, CORE.west(2), Items.FURNACE);
+        bay(helper, CORE.below().east(2), Items.CRAFTING_TABLE);
+        bay(helper, CORE.below().west(2), Items.FURNACE);
         helper.setBlock(OUTPUT, ModBlocks.REACTOR_OUTPUT_PORT.get());
         core.revalidate(helper.getLevel());
         core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
@@ -125,8 +201,8 @@ public final class ReactorTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor_live", timeoutTicks = 2000)
     public static void theCoreKeepsCountOfWhatItCanMake(GameTestHelper helper) {
         HorizonCoreBlockEntity core = buildReactor(helper, 1);
-        bay(helper, CORE.east(2), Items.CRAFTING_TABLE);
-        bay(helper, CORE.west(2), Items.FURNACE);
+        bay(helper, CORE.below().east(2), Items.CRAFTING_TABLE);
+        bay(helper, CORE.below().west(2), Items.FURNACE);
         core.revalidate(helper.getLevel());
         core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
         helper.runAfterDelay(2, () -> {
@@ -148,8 +224,8 @@ public final class ReactorTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 100)
     public static void theMaterialiserPortOffersEverythingAndMakesWhatsTaken(GameTestHelper helper) {
         HorizonCoreBlockEntity core = buildReactor(helper, 1);
-        bay(helper, CORE.north(2), Items.CRAFTING_TABLE);
-        bay(helper, CORE.south(2), Items.FURNACE);
+        bay(helper, CORE.below().north(2), Items.CRAFTING_TABLE);
+        bay(helper, CORE.below().south(2), Items.FURNACE);
         BlockPos portPos = CORE.below().east(5);
         helper.setBlock(portPos, ModBlocks.REACTOR_MATERIALISER_PORT.get());
         core.revalidate(helper.getLevel());
@@ -197,7 +273,7 @@ public final class ReactorTests {
         // Every vanilla workstation and a base's worth of stock: hundreds of slots for a storage bus to read.
         HorizonCoreBlockEntity core = buildReactor(helper, 3);
         Item[] stations = {Items.CRAFTING_TABLE, Items.FURNACE, Items.BLAST_FURNACE, Items.SMOKER, Items.STONECUTTER};
-        BlockPos[] bays = {CORE.north(2), CORE.south(2), CORE.east(2), CORE.west(2), CORE.offset(2, 0, -1)};
+        BlockPos[] bays = {CORE.below().north(2), CORE.below().south(2), CORE.below().east(2), CORE.below().west(2), CORE.below().offset(2, 0, -1)};
         for (int i = 0; i < stations.length; i++) bay(helper, bays[i], stations[i]);
         BlockPos portPos = CORE.below().east(5);
         helper.setBlock(portPos, ModBlocks.REACTOR_MATERIALISER_PORT.get());
@@ -280,7 +356,7 @@ public final class ReactorTests {
     public static void unrealisedMatterIsObservedIntoWhatsNeeded(GameTestHelper helper) {
         // Only Matter and a furnace: iron ingots come from Matter observed as raw iron, then smelted.
         HorizonCoreBlockEntity core = buildReactor(helper, 1);
-        bay(helper, CORE.east(2), Items.FURNACE);
+        bay(helper, CORE.below().east(2), Items.FURNACE);
         helper.setBlock(OUTPUT, ModBlocks.REACTOR_OUTPUT_PORT.get());
         core.revalidate(helper.getLevel());
         core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
@@ -305,9 +381,9 @@ public final class ReactorTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
     public static void aFoldedFoundryTakesItsTurnInAChain(GameTestHelper helper) {
         HorizonCoreBlockEntity core = buildReactor(helper, 1);
-        bay(helper, CORE.west(2), Items.FURNACE);
-        helper.setBlock(CORE.east(2), ModBlocks.CATALYST_BAY.get());
-        helper.getBlockEntity(CORE.east(2), CatalystBayBlockEntity.class).setCatalyst(foldedFoundry(4));
+        bay(helper, CORE.below().west(2), Items.FURNACE);
+        helper.setBlock(CORE.below().east(2), ModBlocks.CATALYST_BAY.get());
+        helper.getBlockEntity(CORE.below().east(2), CatalystBayBlockEntity.class).setCatalyst(0, foldedFoundry(4));
         helper.setBlock(OUTPUT, ModBlocks.REACTOR_OUTPUT_PORT.get());
         core.revalidate(helper.getLevel());
         core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
@@ -368,7 +444,7 @@ public final class ReactorTests {
 
     public static void bay(GameTestHelper helper, BlockPos pos, net.minecraft.world.item.Item catalyst) {
         helper.setBlock(pos, ModBlocks.CATALYST_BAY.get());
-        helper.getBlockEntity(pos, CatalystBayBlockEntity.class).setCatalyst(new net.minecraft.world.item.ItemStack(catalyst));
+        helper.getBlockEntity(pos, CatalystBayBlockEntity.class).setCatalyst(0, new net.minecraft.world.item.ItemStack(catalyst));
     }
 
     private static void emitter(GameTestHelper helper, BlockPos pos) {

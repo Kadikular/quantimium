@@ -30,6 +30,7 @@ navigation:
 - <ItemLink id="quantimium:fold_rail" />
 - <ItemLink id="quantimium:harvest_laser" />
 - <ItemLink id="quantimium:horizon_core" />
+- <ItemLink id="quantimium:lit_reactor_plinth" />
 - <ItemLink id="quantimium:materialiser" />
 - <ItemLink id="quantimium:me_superposition_crafter" />
 - <ItemLink id="quantimium:observation_chamber" />

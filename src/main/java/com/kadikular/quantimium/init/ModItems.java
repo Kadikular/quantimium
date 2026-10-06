@@ -208,6 +208,8 @@ public class ModItems {
             "horizon_core", ModBlocks.HORIZON_CORE);
     public static final DeferredItem<BlockItem> REACTOR_PLINTH_ITEM = ITEMS.registerSimpleBlockItem(
             "reactor_plinth", ModBlocks.REACTOR_PLINTH);
+    public static final DeferredItem<BlockItem> LIT_REACTOR_PLINTH_ITEM = ITEMS.registerSimpleBlockItem(
+            "lit_reactor_plinth", ModBlocks.LIT_REACTOR_PLINTH);
     public static final DeferredItem<BlockItem> RING_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
             "ring_emitter", ModBlocks.RING_EMITTER);
     public static final DeferredItem<BlockItem> CATALYST_BAY_ITEM = ITEMS.registerSimpleBlockItem(

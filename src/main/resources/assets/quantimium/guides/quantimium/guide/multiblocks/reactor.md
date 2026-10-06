@@ -56,10 +56,16 @@ Fixed in size:
   quadruples what the horizon holds: 1,000,000 items with one ring,
   four million with two, sixteen million with three. Each emitter draws
   1,000 FE/t;
-- up to eight <ItemLink id="quantimium:catalyst_bay" />s anywhere else on the plinth beside the core. Use a machine, a
-  crafting table or a <ItemLink id="quantimium:folded_tesseract" /> on a bay to install it; an empty hand takes it back;
+- up to eight <ItemLink id="quantimium:catalyst_bay" />s in place of plinth, anywhere inside the rim but under the core;
 - **ports** in place of plinth on the disc's rim, as many as you like: Input, Output, Energy and
   Materialiser, each marked on every face by a socket in its colour.
+
+A Catalyst Bay is a window in the floor onto a pocket of void, and it holds
+up to 4 catalysts, one in each quarter of the window: machines,
+crafting tables, <ItemLink id="quantimium:folded_tesseract" />s. Use one on a quarter to install it there (or in the next
+free quarter); use an empty hand on a quarter to take it back. Each catalyst also orbits the horizon as
+a moon, which flares when a craft uses it. A bay left standing on the plinth, where they used to go, sinks
+into the plinth block under it, keeping its catalyst.
 
 Unpowered, the rings go down: the Reactor takes nothing in and makes
 nothing, but keeps everything. The core stores 20,000,000 FE,

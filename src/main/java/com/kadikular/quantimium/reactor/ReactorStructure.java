@@ -1,10 +1,13 @@
 package com.kadikular.quantimium.reactor;
 
 import com.kadikular.quantimium.block.ReactorPortBlock;
+import com.kadikular.quantimium.block.entity.CatalystBayBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -14,8 +17,8 @@ import java.util.function.Consumer;
 /**
  * The Quantimium Reactor's footprint: a disc of Reactor Plinth 11 blocks across under the Horizon
  * Core, which sits on its centre. On the plinth, around the core, stand up to three facing pairs of
- * Ring Emitters (each whole pair drives one ring) and up to {@link #MAX_BAYS} Catalyst Bays. Ports
- * take the place of plinth on the disc's rim.
+ * Ring Emitters (each whole pair drives one ring). Up to {@link #MAX_BAYS} Catalyst Bays take the place
+ * of plinth anywhere inside the rim but under the core; ports take its place on the rim.
  *
  * <p>Fixed size: more rings come from more emitters, not a bigger floor.
  */
@@ -39,13 +42,6 @@ public final class ReactorStructure {
     /** On the disc's outer edge, where ports go. */
     public static boolean onRim(int dx, int dz) {
         return inDisc(dx, dz) && (!inDisc(dx + 1, dz) || !inDisc(dx - 1, dz) || !inDisc(dx, dz + 1) || !inDisc(dx, dz - 1));
-    }
-
-    public static boolean isEmitterSpot(int dx, int dz) {
-        for (int[] pair : EMITTER_PAIRS) {
-            if ((pair[0] == dx && pair[1] == dz) || (pair[2] == dx && pair[3] == dz)) return true;
-        }
-        return false;
     }
 
     /** Every plinth-layer cell, under the core's layer. */
@@ -87,13 +83,18 @@ public final class ReactorStructure {
                 BlockState state = level.getBlockState(pos);
                 if (state.is(ModBlocks.REACTOR_PLINTH.get())) {
                     parts.add(pos.immutable());
+                } else if (state.is(ModBlocks.CATALYST_BAY.get()) && !onRim(dx, dz) && (dx != 0 || dz != 0)) {
+                    if (bays.size() == MAX_BAYS) return refuse("message.quantimium.reactor.too_many_bays");
+                    bays.add(pos.immutable());
+                    parts.add(pos.immutable());
                 } else if (state.getBlock() instanceof ReactorPortBlock && onRim(dx, dz)) {
                     ports.add(pos.immutable());
                     parts.add(pos.immutable());
                 } else {
-                    return refuse(Component.translatable(state.getBlock() instanceof ReactorPortBlock
-                                    ? "message.quantimium.reactor.port_off_rim" : "message.quantimium.reactor.plinth_gap",
-                            pos.getX(), pos.getY(), pos.getZ()));
+                    String key = state.getBlock() instanceof ReactorPortBlock ? "message.quantimium.reactor.port_off_rim"
+                            : state.is(ModBlocks.CATALYST_BAY.get()) ? "message.quantimium.reactor.bay_misplaced"
+                            : "message.quantimium.reactor.plinth_gap";
+                    return refuse(Component.translatable(key, pos.getX(), pos.getY(), pos.getZ()));
                 }
             }
         }
@@ -111,16 +112,33 @@ public final class ReactorStructure {
             }
         }
         if (rings == 0) return refuse("message.quantimium.reactor.no_rings");
+        return new Layout(rings, ports, bays, parts, null, emitters);
+    }
+
+    /**
+     * Sinks each Catalyst Bay still standing on the plinth, as bays did before they became part of the
+     * floor, into the plinth block under it, catalyst and all. The plinth block it replaces is used up.
+     */
+    public static void sinkRaisedBays(Level level, BlockPos core) {
         for (int dx = -REACH; dx <= REACH; dx++) {
             for (int dz = -REACH; dz <= REACH; dz++) {
-                if (!inDisc(dx, dz) || (dx == 0 && dz == 0) || isEmitterSpot(dx, dz)) continue;
-                BlockPos pos = core.offset(dx, 0, dz);
-                if (level.getBlockState(pos).is(ModBlocks.CATALYST_BAY.get()) && bays.size() < MAX_BAYS) {
-                    bays.add(pos.immutable());
+                if (!inDisc(dx, dz) || onRim(dx, dz) || (dx == 0 && dz == 0)) continue;
+                BlockPos raised = core.offset(dx, 0, dz);
+                BlockPos floor = raised.below();
+                if (!level.isLoaded(raised) || !level.getBlockState(raised).is(ModBlocks.CATALYST_BAY.get())
+                        || !level.getBlockState(floor).is(ModBlocks.REACTOR_PLINTH.get())
+                        || !(level.getBlockEntity(raised) instanceof CatalystBayBlockEntity bay)) {
+                    continue;
+                }
+                List<ItemStack> catalysts = bay.getCatalysts().stream().map(ItemStack::copy).toList();
+                for (int slot = 0; slot < CatalystBayBlockEntity.SLOTS; slot++) bay.setCatalyst(slot, ItemStack.EMPTY);
+                level.removeBlock(raised, false);
+                level.setBlock(floor, ReactorTraces.at(ModBlocks.CATALYST_BAY.get().defaultBlockState(), floor), Block.UPDATE_ALL);
+                if (level.getBlockEntity(floor) instanceof CatalystBayBlockEntity sunk) {
+                    for (int slot = 0; slot < catalysts.size(); slot++) sunk.setCatalyst(slot, catalysts.get(slot));
                 }
             }
         }
-        return new Layout(rings, ports, bays, parts, null, emitters);
     }
 
     private static boolean isEmitter(Level level, BlockPos pos) {

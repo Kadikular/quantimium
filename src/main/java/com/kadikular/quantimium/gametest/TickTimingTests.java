@@ -84,8 +84,8 @@ public final class TickTimingTests {
         BlockPos centre = ReactorTests.CORE;
         net.minecraft.world.item.Item[] stations = {Items.CRAFTING_TABLE, Items.FURNACE, Items.BLAST_FURNACE,
                 Items.SMOKER, Items.STONECUTTER};
-        BlockPos[] bays = {centre.offset(2, 0, 1), centre.offset(-2, 0, 1), centre.offset(2, 0, -1),
-                centre.offset(-2, 0, -1), centre.offset(1, 0, 2)};
+        BlockPos[] bays = {centre.below().offset(2, 0, 1), centre.below().offset(-2, 0, 1), centre.below().offset(2, 0, -1),
+                centre.below().offset(-2, 0, -1), centre.below().offset(1, 0, 2)};
         for (int i = 0; i < stations.length; i++) ReactorTests.bay(helper, bays[i], stations[i]);
         core.revalidate(helper.getLevel());
         for (String tag : java.util.List.of("minecraft:logs", "c:ingots", "c:gems", "c:dusts", "c:cobblestones",

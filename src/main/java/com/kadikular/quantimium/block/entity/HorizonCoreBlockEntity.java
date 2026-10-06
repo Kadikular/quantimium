@@ -98,7 +98,10 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     private List<BlockPos> syncedBays = List.of();
     /** Each ring's emitter pair, in ring order: two positions a ring. */
     private List<BlockPos> syncedEmitters = List.of();
-    /** When the last craft ran, and which bays' catalysts it used, in order: the moons flare for it. */
+    /**
+     * When the last craft ran, and which catalysts it used, in order, each as bay * SLOTS + slot: the
+     * moons flare for it.
+     */
     private long flashTime = Long.MIN_VALUE;
     private List<Integer> flashBays = List.of();
 
@@ -312,6 +315,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /** Reads the structure, tells its ports where it is and lights its parts. */
     public void revalidate(ServerLevel server) {
+        ReactorStructure.sinkRaisedBays(server, worldPosition);
         ReactorStructure.Layout next = seated ? ReactorStructure.read(server, worldPosition)
                 : new ReactorStructure.Layout(0, List.of(), List.of(), List.of(),
                         Component.translatable("message.quantimium.reactor.no_singularity"));
@@ -339,7 +343,9 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     private void refreshRecipes(ServerLevel server) {
         List<ItemStack> catalysts = new ArrayList<>();
         for (BlockPos bay : layout.bays()) {
-            if (server.getBlockEntity(bay) instanceof CatalystBayBlockEntity entity) catalysts.add(entity.getCatalyst());
+            // Every slot, empty or not, so catalyst i is always slot i % SLOTS of bay i / SLOTS.
+            if (server.getBlockEntity(bay) instanceof CatalystBayBlockEntity entity) catalysts.addAll(entity.getCatalysts());
+            else for (int i = 0; i < CatalystBayBlockEntity.SLOTS; i++) catalysts.add(ItemStack.EMPTY);
         }
         if (!recipes.builtFrom(catalysts)) recipes = ReactorRecipes.build(server, catalysts);
         // Unrealised Matter held can be observed into what it could be, with no catalyst.

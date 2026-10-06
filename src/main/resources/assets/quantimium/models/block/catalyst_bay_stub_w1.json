@@ -1,0 +1,34 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "stub": "quantimium:block/catalyst_bay_stub_w1",
+    "particle": "quantimium:block/reactor_plinth_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        16.01,
+        0
+      ],
+      "to": [
+        16,
+        16.01,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#stub",
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

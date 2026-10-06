@@ -48,6 +48,7 @@
     "quantimium:fold_core",
     "quantimium:horizon_core",
     "quantimium:reactor_plinth",
+    "quantimium:lit_reactor_plinth",
     "quantimium:ring_emitter",
     "quantimium:catalyst_bay",
     "quantimium:reactor_input_port",

@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Attuned Glass
   parent: blocks/index.md
-  position: 35
+  position: 36
   icon: quantimium:quantum_attuned_glass
 item_ids:
 - quantimium:quantum_attuned_glass

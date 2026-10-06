@@ -13,6 +13,7 @@ import com.kadikular.quantimium.block.CatalystBayBlock;
 import com.kadikular.quantimium.block.HorizonCoreBlock;
 import com.kadikular.quantimium.block.ReactorPartBlock;
 import com.kadikular.quantimium.block.ReactorPlinthBlock;
+import com.kadikular.quantimium.block.LitReactorPlinthBlock;
 import com.kadikular.quantimium.block.ReactorPortBlock;
 import com.kadikular.quantimium.block.CreativeEnergyCellBlock;
 import com.kadikular.quantimium.block.DebugFieldEmitterBlock;
@@ -654,15 +655,19 @@ public class ModBlocks {
                     .sound(SoundType.AMETHYST)
                     .lightLevel(formedLight(10))));
 
-    /** A glass case on the plinth holding one of the Reactor's catalysts. */
+    /** A window in the plinth onto a pocket of void, holding up to four of the Reactor's catalysts. */
     public static final DeferredBlock<Block> CATALYST_BAY = BLOCKS.register(
-            "catalyst_bay",
-            id -> new CatalystBayBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.TINTED_GLASS)
+            "catalyst_bay", id -> new CatalystBayBlock(reactorPort(id).noOcclusion()));
+
+    /** Reactor Plinth that's always lit, for building with. */
+    public static final DeferredBlock<Block> LIT_REACTOR_PLINTH = BLOCKS.register(
+            "lit_reactor_plinth",
+            id -> new LitReactorPlinthBlock(BlockBehaviour.Properties.of()
                     .setId(ResourceKey.create(Registries.BLOCK, id))
-                    .mapColor(MapColor.COLOR_PURPLE)
-                    .noOcclusion()
-                    .isViewBlocking((state, level, pos) -> false)
-                    .lightLevel(state -> 6)));
+                    .mapColor(MapColor.DEEPSLATE)
+                    .strength(5.0f, 12.0f)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> 3)));
 
     public static final DeferredBlock<Block> REACTOR_INPUT_PORT = BLOCKS.register(
             "reactor_input_port", id -> new ReactorPortBlock(reactorPort(id), ReactorPortBlock.Kind.INPUT));

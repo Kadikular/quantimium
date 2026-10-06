@@ -480,8 +480,8 @@ public final class Ae2CompatTests {
         // on its Materialiser Port, on a network powered by a creative cell.
         BlockPos core = com.kadikular.quantimium.gametest.ReactorTests.CORE;
         var horizon = com.kadikular.quantimium.gametest.ReactorTests.buildReactor(helper, 1);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.north(2), Items.CRAFTING_TABLE);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.south(2), Items.FURNACE);
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().north(2), Items.CRAFTING_TABLE);
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().south(2), Items.FURNACE);
         BlockPos portPos = core.below().east(5);
         helper.setBlock(portPos, ModBlocks.REACTOR_MATERIALISER_PORT.get());
         horizon.revalidate(helper.getLevel());
@@ -524,7 +524,7 @@ public final class Ae2CompatTests {
     public static void aReactorPrintsCircuitsAndKeepsThePress(GameTestHelper helper) {
         BlockPos core = com.kadikular.quantimium.gametest.ReactorTests.CORE;
         var horizon = com.kadikular.quantimium.gametest.ReactorTests.buildReactor(helper, 1);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.north(2), item("ae2:inscriber"));
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().north(2), item("ae2:inscriber"));
         horizon.revalidate(helper.getLevel());
         horizon.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
         var press = net.neoforged.neoforge.transfer.item.ItemResource.of(item("ae2:engineering_processor_press"));
@@ -546,7 +546,7 @@ public final class Ae2CompatTests {
     public static void aCuttingKnifeWearsInsteadOfBeingUsedUp(GameTestHelper helper) {
         BlockPos core = com.kadikular.quantimium.gametest.ReactorTests.CORE;
         var horizon = com.kadikular.quantimium.gametest.ReactorTests.buildReactor(helper, 1);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.north(2), Items.CRAFTING_TABLE);
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().north(2), Items.CRAFTING_TABLE);
         helper.setBlock(core.below().south(5), ModBlocks.REACTOR_OUTPUT_PORT.get());
         horizon.revalidate(helper.getLevel());
         horizon.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
@@ -592,8 +592,8 @@ public final class Ae2CompatTests {
     public static void chargedQuartzIsTheSameQuartz(GameTestHelper helper) {
         BlockPos core = com.kadikular.quantimium.gametest.ReactorTests.CORE;
         var horizon = com.kadikular.quantimium.gametest.ReactorTests.buildReactor(helper, 1);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.north(2), Items.CRAFTING_TABLE);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.south(2), item("ae2:charger"));
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().north(2), Items.CRAFTING_TABLE);
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().south(2), item("ae2:charger"));
         helper.setBlock(core.below().south(5), ModBlocks.REACTOR_OUTPUT_PORT.get());
         horizon.revalidate(helper.getLevel());
         horizon.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
@@ -629,10 +629,10 @@ public final class Ae2CompatTests {
     public static void storageComponentsCountAndMakeExactly(GameTestHelper helper) {
         BlockPos core = com.kadikular.quantimium.gametest.ReactorTests.CORE;
         var horizon = com.kadikular.quantimium.gametest.ReactorTests.buildReactor(helper, 1);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.north(2), Items.CRAFTING_TABLE);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.south(2), item("ae2:inscriber"));
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.offset(2, 0, 1), Items.FURNACE);
-        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.offset(-2, 0, 1), item("ae2:charger"));
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().north(2), Items.CRAFTING_TABLE);
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().south(2), item("ae2:inscriber"));
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().offset(2, 0, 1), Items.FURNACE);
+        com.kadikular.quantimium.gametest.ReactorTests.bay(helper, core.below().offset(-2, 0, 1), item("ae2:charger"));
         // What's made goes out, so it isn't counted again as stock.
         helper.setBlock(core.below().south(5), ModBlocks.REACTOR_OUTPUT_PORT.get());
         horizon.revalidate(helper.getLevel());

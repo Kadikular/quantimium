@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "quantimium:lit_reactor_plinth"
+  ],
+  "result": {
+    "id": "quantimium:reactor_plinth",
+    "count": 1
+  }
+}

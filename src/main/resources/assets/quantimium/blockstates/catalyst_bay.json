@@ -1,7 +1,164 @@
 {
-  "variants": {
-    "": {
-      "model": "quantimium:block/catalyst_bay"
-    }
+ "multipart": [
+  {
+   "when": {
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_north": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_n1"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_north": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_n2"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_east": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_e1"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_east": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_e2"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_south": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_s1"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_south": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_s2"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_west": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_w1"
+   }
+  },
+  {
+   "when": {
+    "formed": "false",
+    "trace_west": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_w2"
+   }
+  },
+  {
+   "when": {
+    "formed": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_north": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_n1_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_north": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_n2_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_east": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_e1_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_east": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_e2_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_south": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_s1_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_south": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_s2_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_west": "1"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_w1_lit"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "trace_west": "2"
+   },
+   "apply": {
+    "model": "quantimium:block/catalyst_bay_stub_w2_lit"
+   }
   }
+ ]
 }

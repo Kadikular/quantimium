@@ -2,7 +2,7 @@
 navigation:
   title: Foundry Flux Conduit
   parent: blocks/index.md
-  position: 39
+  position: 40
   icon: quantimium:quantum_foundry_conduit
 ---
 

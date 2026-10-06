@@ -8,8 +8,8 @@
   },
   "pattern": [
     "GSG",
-    "G G",
-    "PPP"
+    "SPS",
+    "GSG"
   ],
   "result": {
     "id": "quantimium:catalyst_bay",

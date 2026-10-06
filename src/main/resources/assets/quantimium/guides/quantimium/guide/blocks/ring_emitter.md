@@ -2,7 +2,7 @@
 navigation:
   title: Ring Emitter
   parent: blocks/index.md
-  position: 53
+  position: 54
   icon: quantimium:ring_emitter
 ---
 

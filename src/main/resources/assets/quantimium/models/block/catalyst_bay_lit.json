@@ -1,0 +1,141 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "top": "quantimium:block/catalyst_bay_frame_lit",
+    "side": "quantimium:block/reactor_plinth_side_active",
+    "bottom": "quantimium:block/quantum_foundry_base",
+    "pocket": "quantimium:block/catalyst_bay_pocket",
+    "particle": "quantimium:block/reactor_plinth_side_active"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#side",
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#top",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#bottom",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        1,
+        3
+      ],
+      "to": [
+        3,
+        16,
+        13
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        1,
+        3
+      ],
+      "to": [
+        14,
+        16,
+        13
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        1,
+        2
+      ],
+      "to": [
+        13,
+        16,
+        3
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        1,
+        13
+      ],
+      "to": [
+        13,
+        16,
+        14
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        1,
+        13
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#pocket"
+        }
+      }
+    }
+  ]
+}

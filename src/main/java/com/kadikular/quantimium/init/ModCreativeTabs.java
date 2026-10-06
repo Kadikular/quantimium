@@ -55,6 +55,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.SINGULARITY.get());
                         output.accept(ModItems.HORIZON_CORE_ITEM.get());
                         output.accept(ModItems.REACTOR_PLINTH_ITEM.get());
+                        output.accept(ModItems.LIT_REACTOR_PLINTH_ITEM.get());
                         output.accept(ModItems.RING_EMITTER_ITEM.get());
                         output.accept(ModItems.CATALYST_BAY_ITEM.get());
                         output.accept(ModItems.REACTOR_INPUT_PORT_ITEM.get());

@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/catalyst_bay"
+    "model": "quantimium:block/catalyst_bay_lit"
   }
 }

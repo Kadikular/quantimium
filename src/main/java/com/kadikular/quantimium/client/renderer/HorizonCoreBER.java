@@ -239,7 +239,7 @@ public class HorizonCoreBER extends SubmittingBER<HorizonCoreBlockEntity> {
     }
 
     /**
-     * Each Catalyst Bay's catalyst, in orbit just outside the disk at a third of its size. A moon whose
+     * Each catalyst in the Catalyst Bays, in orbit just outside the disk at a third of its size. A moon whose
      * catalyst ran in the last craft flares, and threads light into the disk, in the order they ran.
      */
     private static void moons(HorizonCoreBlockEntity core, PoseStack poses, MultiBufferSource buffers, float r,
@@ -253,18 +253,27 @@ public class HorizonCoreBER extends SubmittingBER<HorizonCoreBlockEntity> {
             int step = (int) (since * core.flashBays().size() / FLASH_TICKS);
             flaring = core.flashBays().get(Math.min(step, core.flashBays().size() - 1));
         }
+        // Every catalyst in every bay, numbered as the core numbers them: bay * SLOTS + slot.
+        List<Integer> indices = new java.util.ArrayList<>();
+        List<ItemStack> catalysts = new java.util.ArrayList<>();
+        for (int b = 0; b < bays.size(); b++) {
+            if (!(core.getLevel().getBlockEntity(bays.get(b)) instanceof CatalystBayBlockEntity bay)) continue;
+            for (int slot = 0; slot < CatalystBayBlockEntity.SLOTS; slot++) {
+                if (bay.getCatalyst(slot).isEmpty()) continue;
+                indices.add(b * CatalystBayBlockEntity.SLOTS + slot);
+                catalysts.add(bay.getCatalyst(slot));
+            }
+        }
         VertexConsumer threads = null;
-        for (int i = 0; i < bays.size(); i++) {
-            if (!(core.getLevel().getBlockEntity(bays.get(i)) instanceof CatalystBayBlockEntity bay)) continue;
-            ItemStack catalyst = bay.getCatalyst();
-            if (catalyst.isEmpty()) continue;
-            float angle = Mth.TWO_PI * i / bays.size() + time * 0.006f * spin;
+        for (int i = 0; i < catalysts.size(); i++) {
+            ItemStack catalyst = catalysts.get(i);
+            float angle = Mth.TWO_PI * i / catalysts.size() + time * 0.006f * spin;
             float x = orbit * Mth.cos(angle);
             float z = orbit * Mth.sin(angle);
             float bob = 0.15f * Mth.sin(time * 0.05f + i);
             poses.pushPose();
             poses.translate(x, bob, z);
-            boolean flare = i == flaring;
+            boolean flare = indices.get(i) == flaring;
             // Each moon is held in a Tesseract, as a docked one is: the catalyst turning inside its shell.
             poses.pushPose();
             float shell = flare ? 0.63f : 0.54f;
@@ -280,7 +289,7 @@ public class HorizonCoreBER extends SubmittingBER<HorizonCoreBlockEntity> {
             SubmitBuffers.item(buffers, poses, catalyst, ItemDisplayContext.FIXED, LightCoordsUtil.FULL_BRIGHT,
                     overlay, core.getLevel(), i);
             poses.popPose();
-            if (i == flaring) {
+            if (flare) {
                 if (threads == null) threads = buffers.getBuffer(QuantumRenderTypes.ADDITIVE_GLOW);
                 thread(threads, poses.last(), x, bob, z, r * 1.5f);
             }

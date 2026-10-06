@@ -1,73 +1,139 @@
 {
   "parent": "minecraft:block/block",
-  "render_type": "minecraft:translucent",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "base": "quantimium:block/catalyst_bay_base",
-    "glass": "quantimium:block/quantum_attuned_glass",
-    "particle": "quantimium:block/quantum_attuned_glass"
+    "top": "quantimium:block/catalyst_bay_frame",
+    "side": "quantimium:block/reactor_plinth_side",
+    "bottom": "quantimium:block/quantum_foundry_base",
+    "pocket": "quantimium:block/catalyst_bay_pocket",
+    "particle": "quantimium:block/reactor_plinth_side"
   },
   "elements": [
     {
       "from": [
-        1,
         0,
-        1
+        0,
+        0
       ],
       "to": [
-        15,
-        2,
-        15
+        16,
+        16,
+        16
       ],
       "faces": {
         "north": {
-          "texture": "#base"
+          "texture": "#side",
+          "cullface": "north"
         },
         "south": {
-          "texture": "#base"
+          "texture": "#side",
+          "cullface": "south"
         },
         "east": {
-          "texture": "#base"
+          "texture": "#side",
+          "cullface": "east"
         },
         "west": {
-          "texture": "#base"
+          "texture": "#side",
+          "cullface": "west"
         },
         "up": {
-          "texture": "#base"
+          "texture": "#top",
+          "cullface": "up"
         },
         "down": {
-          "texture": "#base"
+          "texture": "#bottom",
+          "cullface": "down"
         }
       }
     },
     {
       "from": [
-        1,
         2,
-        1
+        1,
+        3
       ],
       "to": [
-        15,
-        15,
-        15
+        3,
+        16,
+        13
       ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        1,
+        3
+      ],
+      "to": [
+        14,
+        16,
+        13
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        1,
+        2
+      ],
+      "to": [
+        13,
+        16,
+        3
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        1,
+        13
+      ],
+      "to": [
+        13,
+        16,
+        14
+      ],
+      "shade": false,
       "faces": {
         "north": {
-          "texture": "#glass"
-        },
-        "south": {
-          "texture": "#glass"
-        },
-        "east": {
-          "texture": "#glass"
-        },
-        "west": {
-          "texture": "#glass"
-        },
+          "texture": "#pocket"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        1,
+        13
+      ],
+      "shade": false,
+      "faces": {
         "up": {
-          "texture": "#glass"
-        },
-        "down": {
-          "texture": "#glass"
+          "texture": "#pocket"
         }
       }
     }
