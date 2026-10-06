@@ -294,6 +294,62 @@ public final class Ae2ReactorPortTests {
         }));
     }
 
+    // covers: reactor.me_port.tools
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_knife", timeoutTicks = 400)
+    public static void aTreeTakesAnyKnifeNotTheOneItWasPlannedWith(GameTestHelper helper) {
+        // Planned with a worn knife on hand; the knife swapped for a fresh one, anchors still need nothing.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        ItemResource knife = ItemResource.of(item("ae2:certus_quartz_cutting_knife"));
+        ItemStack wornStack = knife.toStack(1);
+        wornStack.setDamageValue(10);
+        ItemResource worn = ItemResource.of(wornStack);
+        horizon.take(worn, 1);
+        horizon.take(ItemResource.of(Items.IRON_INGOT), 8);
+        horizon.recountNow();
+        AEItemKey anchor = AEItemKey.of(item("ae2:cable_anchor"));
+        Object[] before = new Object[2];
+        Object[] after = new Object[2];
+        boolean[] swapped = {false};
+        helper.succeedWhen(() -> {
+            if (!swapped[0]) {
+                ICraftingPlan first = planOnly(helper, before, anchor, 4);
+                helper.assertTrue(first.missingItems().isEmpty(), "anchors with the worn knife: " + missing(first));
+                horizon.withdraw(worn, 1);
+                horizon.take(knife, 1);
+                horizon.recountNow();
+                swapped[0] = true;
+            }
+            ICraftingPlan second = planOnly(helper, after, anchor, 4);
+            helper.assertTrue(second.missingItems().isEmpty(), "and with a fresh one: " + missing(second));
+        });
+    }
+
+    // covers: reactor.me_port.trees
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_stale", timeoutTicks = 400)
+    public static void aTreeWhoseInputsHaveGoneIsPlannedAgain(GameTestHelper helper) {
+        // Sticks planned from an oak log; the oak log swapped for a birch log, sticks come of that instead.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        horizon.take(LOG, 1);
+        horizon.recountNow();
+        AEItemKey sticks = AEItemKey.of(Items.STICK);
+        Object[] before = new Object[2];
+        Object[] after = new Object[2];
+        boolean[] swapped = {false};
+        helper.succeedWhen(() -> {
+            if (!swapped[0]) {
+                ICraftingPlan first = planOnly(helper, before, sticks, 4);
+                helper.assertTrue(first.missingItems().isEmpty(), "sticks of oak: " + missing(first));
+                horizon.withdraw(LOG, 1);
+                horizon.take(ItemResource.of(Items.BIRCH_LOG), 1);
+                horizon.recountNow();
+                swapped[0] = true;
+            }
+            ICraftingPlan second = planOnly(helper, after, sticks, 4);
+            if (!second.missingItems().isEmpty()) after[0] = null; // planned again before the tree was: ask again
+            helper.assertTrue(second.missingItems().isEmpty(), "sticks of birch: " + missing(second));
+        });
+    }
+
     // covers: reactor.me_port.loops
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_loop", timeoutTicks = 300)
     public static void aStorageBusOnItsOwnMaterialiserPortCountsNothingTwice(GameTestHelper helper) {

@@ -61,7 +61,7 @@ public final class SuperpositionPattern implements IPatternDetails {
         if (tools) {
             for (Ingredient tool : shape.tools()) {
                 boolean wears = shape.wears().stream().anyMatch(worn -> worn == tool);
-                list.add(new Tool(tool, wears ? this.batch : 0, Input.possibleOf(tool)));
+                list.add(new ToolInput(tool, wears ? this.batch : 0));
             }
         }
         this.inputs = list.toArray(IInput[]::new);
@@ -108,37 +108,6 @@ public final class SuperpositionPattern implements IPatternDetails {
         return definition.hashCode();
     }
 
-    /**
-     * A tool the recipe keeps: one of it, handed back after the run, worn by {@code wear} if it wears
-     * (nothing back if that breaks it).
-     */
-    private record Tool(Ingredient ingredient, int wear, GenericStack[] possible) implements IInput {
-        @Override
-        public GenericStack[] getPossibleInputs() {
-            return possible;
-        }
-
-        @Override
-        public long getMultiplier() {
-            return 1;
-        }
-
-        @Override
-        public boolean isValid(AEKey input, Level level) {
-            return input instanceof AEItemKey item && ingredient.test(item.toStack());
-        }
-
-        @Nullable
-        @Override
-        public AEKey getRemainingKey(AEKey template) {
-            if (wear == 0 || !(template instanceof AEItemKey item)) return template;
-            ItemStack worn = item.toStack();
-            if (worn.getDamageValue() + wear >= worn.getMaxDamage()) return null;
-            worn.setDamageValue(worn.getDamageValue() + wear);
-            return AEItemKey.of(worn);
-        }
-    }
-
     /** Any item the ingredient accepts, {@code count} of them per run. */
     private record Input(Ingredient ingredient, long count, GenericStack[] possible) implements IInput {
 
@@ -146,7 +115,7 @@ public final class SuperpositionPattern implements IPatternDetails {
             this(ingredient, count, possibleOf(ingredient));
         }
 
-        private static GenericStack[] possibleOf(Ingredient ingredient) {
+        static GenericStack[] possibleOf(Ingredient ingredient) {
             List<GenericStack> stacks = new ArrayList<>();
             for (ItemStack stack : RecipeCompat.stacks(ingredient)) {
                 if (stack.isEmpty()) continue;

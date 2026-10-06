@@ -46,36 +46,58 @@ public final class ReactorTreePattern implements IPatternDetails {
         this.definition = AEItemKey.of(marker);
     }
 
+    /** A tool a tree wears down, such as a cutting knife: any that fits, worn by {@code uses}. */
+    public record Worn(net.minecraft.world.item.crafting.Ingredient tool, int uses) {}
+
     /**
-     * The pattern for {@code plan}, a plan for one or more of its target: what it uses up, and the
-     * {@code tools} it keeps (each handed back after the run), in; the target and its leftovers, out.
-     * Null for a plan that uses nothing up (nothing to ask the network for).
+     * The pattern for {@code plan}, a plan for one of its target: what it uses up, and the tools it
+     * keeps, in; the target and its leftovers, out. A tool it {@code kept} (a press) is that very item,
+     * handed back. A tool it {@code worn} (a knife) is any that fits, handed back worn: the plan's own
+     * choice of knife, and the worn knife it leaves, are left out, so the pattern doesn't ask for one
+     * knife in particular. Null for a plan that uses nothing up (nothing to ask the network for).
      */
     @Nullable
-    public static ReactorTreePattern of(ReactorPlanner.Plan plan, long fe, List<ItemResource> tools) {
+    public static ReactorTreePattern of(ReactorPlanner.Plan plan, long fe, List<ItemResource> kept, List<Worn> worn) {
+        java.util.function.Predicate<ItemResource> wornTool =
+                item -> worn.stream().anyMatch(tool -> tool.tool().test(item.toStack(1)));
         List<IInput> in = new ArrayList<>();
-        List<GenericStack> used = new ArrayList<>();
+        List<String> shape = new ArrayList<>();
         for (Map.Entry<ItemResource, Long> entry : plan.consumed().entrySet()) {
-            if (entry.getValue() <= 0) continue;
+            if (entry.getValue() <= 0 || wornTool.test(entry.getKey())) continue;
             in.add(new Exact(AEItemKey.of(entry.getKey()), entry.getValue(), false));
-            used.add(new GenericStack(AEItemKey.of(entry.getKey()), entry.getValue()));
-        }
-        // Tools the tree keeps, such as a press: handed over and handed back, for AE2 to use again.
-        for (ItemResource tool : tools) {
-            in.add(new Exact(AEItemKey.of(tool), 1, true));
-            used.add(new GenericStack(AEItemKey.of(tool), 0));
+            shape.add(AEItemKey.of(entry.getKey()) + "x" + entry.getValue());
         }
         if (in.isEmpty()) return null;
-        // In a fixed order, so the same tree planned again is the same pattern.
-        used.sort(java.util.Comparator.comparing(stack -> stack.what().toString()));
+        for (ItemResource tool : kept) {
+            in.add(new Exact(AEItemKey.of(tool), 1, true));
+            shape.add("keep " + AEItemKey.of(tool));
+        }
+        for (Worn tool : worn) {
+            in.add(new ToolInput(tool.tool(), tool.uses()));
+            shape.add("wear " + com.kadikular.quantimium.recipe.RecipeCompat.stacks(tool.tool()) + "x" + tool.uses());
+        }
         List<GenericStack> out = new ArrayList<>();
         long made = plan.count() + plan.leftovers().getOrDefault(plan.target(), 0L);
         out.add(new GenericStack(AEItemKey.of(plan.target()), made));
         plan.leftovers().forEach((item, amount) -> {
-            if (!item.equals(plan.target()) && amount > 0) out.add(new GenericStack(AEItemKey.of(item), amount));
+            if (!item.equals(plan.target()) && amount > 0 && !wornTool.test(item)) {
+                out.add(new GenericStack(AEItemKey.of(item), amount));
+            }
         });
-        return new ReactorTreePattern(plan.target(), fe, in.toArray(IInput[]::new), List.copyOf(out),
-                Objects.hash(used, out));
+        // In a fixed order, so the same tree planned again is the same pattern.
+        java.util.Collections.sort(shape);
+        out.forEach(stack -> shape.add("out " + stack));
+        return new ReactorTreePattern(plan.target(), fe, in.toArray(IInput[]::new), List.copyOf(out), shape.hashCode());
+    }
+
+    /** Whether all it asks for, but the tools it keeps or wears, are somewhere in {@code stock}. */
+    public boolean findsItsInputsIn(Map<ItemResource, Long> stock) {
+        for (IInput input : inputs) {
+            if (input instanceof Exact exact && !exact.kept() && stock.getOrDefault(exact.key().toResource(), 0L) <= 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public ItemResource target() {

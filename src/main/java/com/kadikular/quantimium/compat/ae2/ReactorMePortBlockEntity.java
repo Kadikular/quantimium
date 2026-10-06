@@ -243,46 +243,70 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     private final java.util.ArrayDeque<ItemResource> toPlan = new java.util.ArrayDeque<>();
     private final java.util.Set<ItemResource> queued = new java.util.HashSet<>();
     private final Map<ItemResource, ReactorTreePattern> trees = new java.util.LinkedHashMap<>();
+    /** Trees replaced while a crafting job might still be running one: offered until no CPU is busy. */
+    private final List<IPatternDetails> retired = new ArrayList<>();
+    /** Where the slow look over every tree has got to, so better routes are found in time. */
+    private java.util.Iterator<ItemResource> rolling = java.util.Collections.emptyIterator();
     @Nullable
     private ReactorCounter.Counts queuedFrom;
     private boolean patternsChanged;
 
+    private void queue(ItemResource item, boolean first) {
+        if (!queued.add(item)) return;
+        if (first) toPlan.addFirst(item);
+        else toPlan.addLast(item);
+    }
+
     /**
-     * Keeps the patterns in step with the Reactor. A recipe change starts everything again. Otherwise
-     * each thing it newly can make has its tree planned once, from the stock of the moment, and the
-     * pattern stays: a job that has taken its inputs out still finds its pattern, and if the stock has
-     * gone, AE2 says what's missing.
+     * Keeps the patterns in step with the Reactor. A recipe change plans everything again. Each thing it
+     * newly can make has its tree planned from the stock of the moment; a tree whose inputs have gone
+     * from the network is planned again at once, and every tree is looked at again now and then, so a
+     * better route turns up. A tree replaced while a crafting job may be running it stays offered until
+     * no CPU is busy, so the job still finds it.
      */
-    private void refreshPatterns(HorizonCoreBlockEntity horizon, long gameTime) {
+    private void refreshPatterns(HorizonCoreBlockEntity horizon, IGrid grid, long gameTime) {
         ReactorRecipes recipes = horizon.getRecipes();
         if (recipes != patternsFrom) {
             patternsFrom = recipes;
+            retired.addAll(trees.values());
             trees.clear();
             toPlan.clear();
             queued.clear();
+            rolling = java.util.Collections.emptyIterator();
             queuedFrom = null;
             patternsChanged = true;
         }
-        if (mode.trees()) {
+        if (!retired.isEmpty() && grid.getCraftingService().getCpus().stream().noneMatch(cpu -> cpu.isBusy())) {
+            retired.clear();
+            patternsChanged = true;
+        }
+        if (mode.trees() && horizon.isActive() && level instanceof net.minecraft.server.level.ServerLevel server) {
             ReactorCounter.Counts counts = horizon.getCounts();
             if (counts != queuedFrom) {
                 queuedFrom = counts;
                 counts.counts().forEach((item, amount) -> {
-                    if (amount > 0 && !trees.containsKey(item) && !recipes.producersOf(item).isEmpty() && queued.add(item)) {
-                        toPlan.add(item);
-                    }
+                    if (amount > 0 && !trees.containsKey(item) && !recipes.producersOf(item).isEmpty()) queue(item, false);
                 });
             }
-            if (!toPlan.isEmpty() && horizon.isActive() && level instanceof net.minecraft.server.level.ServerLevel server) {
-                Map<ItemResource, Long> stock = horizon.stockWithNetworks(server);
-                for (int i = 0; i < TREES_PER_TICK && !toPlan.isEmpty(); i++) {
-                    ItemResource item = toPlan.poll();
-                    queued.remove(item);
-                    ReactorTreePattern tree = planTree(horizon, stock, item);
-                    if (tree != null) {
-                        trees.put(item, tree);
-                        patternsChanged = true;
-                    }
+            Map<ItemResource, Long> stock = horizon.stockWithNetworks(server);
+            if (gameTime % 20 == 0) {
+                trees.forEach((item, tree) -> {
+                    if (!tree.findsItsInputsIn(stock)) queue(item, true);
+                });
+            }
+            if (toPlan.isEmpty()) {
+                if (!rolling.hasNext()) rolling = List.copyOf(trees.keySet()).iterator();
+                if (rolling.hasNext()) queue(rolling.next(), false);
+            }
+            for (int i = 0; i < TREES_PER_TICK && !toPlan.isEmpty(); i++) {
+                ItemResource item = toPlan.poll();
+                queued.remove(item);
+                ReactorTreePattern tree = planTree(horizon, stock, item);
+                if (tree == null) continue;
+                ReactorTreePattern old = trees.put(item, tree);
+                if (!tree.equals(old)) {
+                    if (old != null) retired.add(old);
+                    patternsChanged = true;
                 }
             }
         }
@@ -291,6 +315,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             patternsChanged = false;
             List<IPatternDetails> all = new ArrayList<>();
             if (mode.trees()) all.addAll(trees.values());
+            all.addAll(retired);
             if (mode.steps()) {
                 Map<net.minecraft.resources.Identifier, IPatternDetails> byId = new java.util.LinkedHashMap<>();
                 for (ReactorRecipes.Producer producer : recipes.producers()) {
@@ -299,14 +324,15 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 }
                 all.addAll(byId.values());
             }
-            patterns = List.copyOf(all);
+            patterns = List.copyOf(new java.util.LinkedHashSet<>(all));
             ICraftingProvider.requestUpdate(mainNode);
         }
     }
 
     /**
      * One of {@code item}, planned from {@code stock} without any already made: the whole tree as one
-     * pattern. A tool the tree keeps and doesn't make, such as a press, is an input handed back.
+     * pattern. A tool the tree keeps and doesn't make, such as a press, is that item, handed back; a tool
+     * it wears, such as a knife, is any that fits, handed back worn.
      */
     @Nullable
     private static ReactorTreePattern planTree(HorizonCoreBlockEntity horizon, Map<ItemResource, Long> stock,
@@ -316,18 +342,28 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         ReactorPlanner.Result result = horizon.plan(without, item, 1);
         if (!result.planned()) return null;
         ReactorPlanner.Plan plan = result.plan();
-        List<ItemResource> tools = new ArrayList<>();
+        List<ItemResource> kept = new ArrayList<>();
+        List<ReactorTreePattern.Worn> worn = new ArrayList<>();
         for (ReactorPlanner.Step step : plan.steps()) {
             for (net.minecraft.world.item.crafting.Ingredient tool : step.shape().tools()) {
-                if (step.shape().wears().stream().anyMatch(worn -> worn == tool)) continue; // used up and handed back worn
+                if (step.shape().wears().stream().anyMatch(wears -> wears == tool)) {
+                    // A knife on hand is any knife, handed back worn; one the tree has to make stays as planned.
+                    if (without.keySet().stream().noneMatch(have -> tool.test(have.toStack(1)))) continue;
+                    int uses = (int) Math.min(Integer.MAX_VALUE, step.runs());
+                    int same = -1;
+                    for (int i = 0; i < worn.size(); i++) if (worn.get(i).tool() == tool) same = i;
+                    if (same >= 0) worn.set(same, new ReactorTreePattern.Worn(tool, worn.get(same).uses() + uses));
+                    else worn.add(new ReactorTreePattern.Worn(tool, uses));
+                    continue;
+                }
                 if (plan.leftovers().keySet().stream().anyMatch(left -> tool.test(left.toStack(1)))) continue; // made
-                if (tools.stream().anyMatch(kept -> tool.test(kept.toStack(1)))) continue;
+                if (kept.stream().anyMatch(have -> tool.test(have.toStack(1)))) continue;
                 ItemResource held = without.keySet().stream().filter(have -> tool.test(have.toStack(1))).findFirst().orElse(null);
                 if (held == null) return null;
-                tools.add(held);
+                kept.add(held);
             }
         }
-        return ReactorTreePattern.of(plan, HorizonCoreBlockEntity.feFor(plan), tools);
+        return ReactorTreePattern.of(plan, HorizonCoreBlockEntity.feFor(plan), kept, worn);
     }
 
     /** The network has taken the inputs out of storage for this run: they're used up, and the Reactor pays. */
@@ -382,7 +418,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         if (grid == null) return;
         if (!port.pending.isEmpty()) port.flush(grid);
         HorizonCoreBlockEntity horizon = port.core();
-        if (horizon != null) port.refreshPatterns(horizon, level.getGameTime());
+        if (horizon != null) port.refreshPatterns(horizon, grid, level.getGameTime());
     }
 
     /** Whether it's on a network and a Reactor, and how much it offers the network as craftable. */

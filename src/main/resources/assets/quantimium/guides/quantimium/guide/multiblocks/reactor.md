@@ -166,18 +166,21 @@ Use the port to choose how (sneak to go back):
 
 - **Whole trees** (the default): one pattern for each thing it can make, planned from the stock of the
   moment, with the raw things it uses up as inputs. An anvil of Matter is one pattern, 31 Matter in,
-  and AE2 sends it once: fast, even on a crafting CPU without co-processors. A tree is planned once and
-  kept until the catalysts or the kinds of Matter change, so a running job never loses its pattern; if
-  the stock it was planned from has gone, AE2 says what's missing, and it can't use an intermediate
-  that's in storage instead.
+  and AE2 sends it once: fast, even on a crafting CPU without co-processors. A tree whose inputs have
+  gone from the network is planned again within a second, and every tree is looked over again now and
+  then, so a better route turns up. A tree replaced while a crafting job is running stays offered until
+  no CPU is busy, so the job still finds it.
 - **Steps**: one pattern for each recipe, as the [ME Superposition Crafter](../machines/me-superposition-crafter.md)
   offers. AE2 plans the tree itself and runs each step, using whatever intermediates are in storage. A
-  crafting CPU sends one step every few ticks unless it has co-processors.
+  crafting CPU sends one step every few ticks unless it has co-processors. AE2 chooses its own routes
+  through every recipe the catalysts know, not the Reactor's least wasteful one, and when no route works
+  it lists what one of them was missing, which can look unrelated to what you asked for.
 - **Both**: AE2 picks between them.
 
 A tool a recipe keeps, such as an Inscriber's press, is an input
 of its pattern that comes back after each run, so AE2 hands it over and uses it again: one press prints
-any number of circuits. A tool that wears, such as a cutting knife, comes back worn.
+any number of circuits. A tool that wears, such as a cutting knife, comes back worn, and a whole tree
+takes any knife that fits, not the one it was planned with.
 
 The Flux Meter or Jade on the port shows the mode and how many patterns it offers.
 
