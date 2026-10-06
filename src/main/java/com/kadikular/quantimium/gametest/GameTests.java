@@ -56,7 +56,10 @@ public final class GameTests {
             classes.add(MiCompatTests.class);
             classes.add(MiTickTimingTests.class);
         }
-        if (ModList.get().isLoaded("ae2")) classes.add(Ae2CompatTests.class);
+        if (ModList.get().isLoaded("ae2")) {
+            classes.add(Ae2CompatTests.class);
+            classes.add(com.kadikular.quantimium.gametest.compat.Ae2ReactorPortTests.class);
+        }
         if (ModList.get().isLoaded("hostilenetworks")) classes.add(HnnCompatTests.class);
         classes.add(com.kadikular.quantimium.gametest.compat.PartnerMachineTests.class);
         return classes;

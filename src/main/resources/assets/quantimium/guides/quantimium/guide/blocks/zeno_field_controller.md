@@ -2,7 +2,7 @@
 navigation:
   title: Zeno Field Controller
   parent: blocks/index.md
-  position: 60
+  position: 61
   icon: quantimium:zeno_field_controller
 item_ids:
 - quantimium:zeno_field_controller

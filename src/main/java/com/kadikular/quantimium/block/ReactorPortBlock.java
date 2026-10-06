@@ -18,7 +18,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
  */
 public class ReactorPortBlock extends BaseEntityBlock {
 
-    public enum Kind { INPUT, OUTPUT, ENERGY, MATERIALISER }
+    /** {@code ME}: the ME Superposition Port, which only exists with AE2 (compat.ae2). */
+    public enum Kind { INPUT, OUTPUT, ENERGY, MATERIALISER, ME }
 
     private final Kind kind;
 
@@ -41,6 +42,7 @@ public class ReactorPortBlock extends BaseEntityBlock {
             case OUTPUT -> simpleCodec(p -> new ReactorPortBlock(p, Kind.OUTPUT));
             case ENERGY -> simpleCodec(p -> new ReactorPortBlock(p, Kind.ENERGY));
             case MATERIALISER -> simpleCodec(p -> new ReactorPortBlock(p, Kind.MATERIALISER));
+            case ME -> simpleCodec(p -> new ReactorPortBlock(p, Kind.ME));
         };
     }
 

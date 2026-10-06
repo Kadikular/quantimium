@@ -62,6 +62,10 @@
     "quantimium:reactor_input_port",
     "quantimium:reactor_output_port",
     "quantimium:reactor_energy_port",
-    "quantimium:reactor_materialiser_port"
+    "quantimium:reactor_materialiser_port",
+    {
+      "id": "quantimium:reactor_me_port",
+      "required": false
+    }
   ]
 }

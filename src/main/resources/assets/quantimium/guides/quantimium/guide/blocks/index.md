@@ -57,6 +57,7 @@ navigation:
 - <ItemLink id="quantimium:reactor_energy_port" />
 - <ItemLink id="quantimium:reactor_input_port" />
 - <ItemLink id="quantimium:reactor_materialiser_port" />
+- <ItemLink id="quantimium:reactor_me_port" />
 - <ItemLink id="quantimium:reactor_output_port" />
 - <ItemLink id="quantimium:reactor_plinth" />
 - <ItemLink id="quantimium:rift_anchor" />

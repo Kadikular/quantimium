@@ -960,6 +960,8 @@
   "gui.quantimium.horizon_core.sort.name": "Sort: name",
   "gui.quantimium.horizon_core.makeable": "~%s more could be made",
   "block.quantimium.reactor_materialiser_port": "Reactor Materialiser Port",
+  "block.quantimium.reactor_me_port": "ME Superposition Port",
+  "message.quantimium.reactor.network_moved": "The ME network changed before it could be used: try again",
   "item.quantimium.singularity.holds": "Holds %s items, %s kinds",
   "item.quantimium.singularity.seat": "Seat it in a Horizon Core to make a Reactor's horizon",
   "message.quantimium.reactor.no_singularity": "The cage is empty: seat a Singularity in it",

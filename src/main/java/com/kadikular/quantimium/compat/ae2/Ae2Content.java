@@ -27,7 +27,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * Everything Quantimium adds for Applied Energistics 2. Only {@link #init} reaches it, and only when
  * AE2 is loaded, so these classes (which use AE2's API) are never loaded without it, and without AE2
- * there is no ME Superposition Crafter at all rather than a dead one.
+ * there is no ME Superposition Crafter or ME Superposition Port at all rather than dead ones.
  */
 public final class Ae2Content {
 
@@ -58,6 +58,23 @@ public final class Ae2Content {
             BLOCK_ENTITIES.register("me_superposition_crafter_be", () ->
                     new BlockEntityType<>(SuperpositionCrafterBlockEntity::new, SUPERPOSITION_CRAFTER.get()));
 
+    /** A Reactor port on an ME network: the Reactor's holdings as storage, what it makes as craftable. */
+    public static final DeferredBlock<ReactorMePortBlock> REACTOR_ME_PORT = BLOCKS.register(
+            "reactor_me_port",
+            id -> new ReactorMePortBlock(BlockBehaviour.Properties.of()
+                    .setId(ResourceKey.create(Registries.BLOCK, id))
+                    .mapColor(MapColor.DEEPSLATE)
+                    .strength(5.0f, 12.0f)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(com.kadikular.quantimium.block.QuantumFoundryStructure.FORMED) ? 6 : 0)));
+
+    public static final DeferredItem<BlockItem> REACTOR_ME_PORT_ITEM =
+            ITEMS.registerSimpleBlockItem("reactor_me_port", REACTOR_ME_PORT);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReactorMePortBlockEntity>> REACTOR_ME_PORT_BE =
+            BLOCK_ENTITIES.register("reactor_me_port_be", () ->
+                    new BlockEntityType<>(ReactorMePortBlockEntity::new, REACTOR_ME_PORT.get()));
+
     public static final DeferredHolder<MenuType<?>, MenuType<SuperpositionCrafterMenu>> SUPERPOSITION_CRAFTER_MENU =
             MENUS.register("me_superposition_crafter_menu", () -> IMenuTypeExtension.create(SuperpositionCrafterMenu::new));
 
@@ -75,6 +92,8 @@ public final class Ae2Content {
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, SUPERPOSITION_CRAFTER_BE.get(),
                 (be, context) -> be);
+        event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, REACTOR_ME_PORT_BE.get(),
+                (be, context) -> be);
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SUPERPOSITION_CRAFTER_BE.get(),
                 (be, context) -> be.getEnergyStorage());
         event.registerBlockEntity(Capabilities.Item.BLOCK, SUPERPOSITION_CRAFTER_BE.get(),
@@ -82,6 +101,9 @@ public final class Ae2Content {
     }
 
     private static void addToCreativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTab() == ModCreativeTabs.QUANTIMIUM_TAB.get()) event.accept(SUPERPOSITION_CRAFTER_ITEM.get());
+        if (event.getTab() == ModCreativeTabs.QUANTIMIUM_TAB.get()) {
+            event.accept(SUPERPOSITION_CRAFTER_ITEM.get());
+            event.accept(REACTOR_ME_PORT_ITEM.get());
+        }
     }
 }

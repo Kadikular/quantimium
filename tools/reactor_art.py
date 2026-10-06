@@ -37,6 +37,7 @@ KINDS = {  # port colour (lit, dark)
     "output": (hx("b196ff"), hx("3a2c5e")),
     "energy": (hx("f0b429"), hx("5a4510")),
     "materialiser": (hx("e8f2ff"), hx("3a4058")),
+    "me": (hx("3fe0c8"), hx("164a44")),
 }
 
 
@@ -102,6 +103,10 @@ def glyph_pixels(kind: str) -> list:
         return [(7, 10), (8, 10), (7, 9), (8, 9), (7, 8), (8, 8), (7, 7), (8, 7), (5, 7), (6, 6), (7, 5), (8, 5), (9, 6), (10, 7)]
     if kind == "energy":  # a bolt
         return [(9, 4), (8, 5), (8, 6), (7, 7), (8, 7), (9, 7), (8, 8), (7, 9), (7, 10), (6, 11)]
+    if kind == "me":  # a hub with four linked nodes: a network
+        nodes = [(7, 7), (4, 4), (10, 4), (4, 10), (10, 10)]
+        pixels = [(x + dx, y + dy) for x, y in nodes for dx in (0, 1) for dy in (0, 1)]
+        return pixels + [(6, 6), (9, 6), (6, 9), (9, 9)]
     # materialiser: a ring with a dot, an eye that observes
     ring = [(x, y) for x in range(16) for y in range(16) if 2.2 <= math.hypot(x - 7.5, y - 7.5) < 3.3]
     return ring + [(7, 7), (8, 7), (7, 8), (8, 8)]

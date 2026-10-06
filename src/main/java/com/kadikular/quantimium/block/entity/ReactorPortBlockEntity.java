@@ -58,7 +58,13 @@ public class ReactorPortBlockEntity extends BlockEntity {
     private final MaterialiserHandler materialiser = new MaterialiserHandler();
 
     public ReactorPortBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.REACTOR_PORT_BE.get(), pos, state);
+        this(ModBlockEntities.REACTOR_PORT_BE.get(), pos, state);
+    }
+
+    /** For a port of another block entity type: the ME Superposition Port. */
+    protected ReactorPortBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos,
+                                     BlockState state) {
+        super(type, pos, state);
     }
 
     public ReactorPortBlock.Kind kind() {
@@ -89,7 +95,7 @@ public class ReactorPortBlockEntity extends BlockEntity {
         return switch (kind()) {
             case INPUT -> input;
             case OUTPUT -> output;
-            case ENERGY -> null;
+            case ENERGY, ME -> null;
             case MATERIALISER -> materialiser;
         };
     }
@@ -258,8 +264,20 @@ public class ReactorPortBlockEntity extends BlockEntity {
         private int cachedAmount;
         private Op cachedAnswer;
 
+        /**
+         * The core, unless this port is to show nothing: while the core is reading or taking from a
+         * network (which might be reading this very port), or while a network it's linked to reads
+         * this port through a storage bus and would see it twice.
+         */
+        @Nullable
+        private HorizonCoreBlockEntity visibleCore() {
+            HorizonCoreBlockEntity horizon = core();
+            if (horizon == null || horizon.isDrawing() || horizon.isDarkPort(worldPosition)) return null;
+            return horizon;
+        }
+
         private void refreshSlots(HorizonCoreBlockEntity horizon) {
-            com.kadikular.quantimium.reactor.ReactorCounter.Counts counts = horizon.getCounts();
+            com.kadikular.quantimium.reactor.ReactorCounter.Counts counts = horizon.getOwnCounts();
             if (counts == slotsFrom) return;
             slotsFrom = counts;
             List<ItemResource> items = new ArrayList<>(counts.counts().size());
@@ -274,7 +292,7 @@ public class ReactorPortBlockEntity extends BlockEntity {
 
         @Override
         public int size() {
-            HorizonCoreBlockEntity horizon = core();
+            HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null) return 0;
             refreshSlots(horizon);
             return slots.size() + 1;
@@ -282,11 +300,13 @@ public class ReactorPortBlockEntity extends BlockEntity {
 
         @Override
         public ItemResource getResource(int index) {
+            if (visibleCore() == null) return ItemResource.EMPTY;
             return index >= 0 && index < slots.size() ? slots.get(index) : ItemResource.EMPTY;
         }
 
         @Override
         public long getAmountAsLong(int index) {
+            if (visibleCore() == null) return 0;
             return index >= 0 && index < amounts.size() ? amounts.get(index) : 0;
         }
 
@@ -297,7 +317,7 @@ public class ReactorPortBlockEntity extends BlockEntity {
 
         @Override
         public boolean isValid(int index, ItemResource resource) {
-            HorizonCoreBlockEntity horizon = core();
+            HorizonCoreBlockEntity horizon = visibleCore();
             return horizon != null && horizon.accepts() && com.kadikular.quantimium.Config.materialiserPortAcceptsItems();
         }
 
@@ -309,7 +329,7 @@ public class ReactorPortBlockEntity extends BlockEntity {
         @Override
         public int insert(ItemResource resource, int amount, TransactionContext transaction) {
             if (resource.isEmpty() || amount <= 0 || !com.kadikular.quantimium.Config.materialiserPortAcceptsItems()) return 0;
-            HorizonCoreBlockEntity horizon = core();
+            HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null || !horizon.accepts()) return 0;
             long pending = 0;
             for (Op op : ops) {
@@ -331,7 +351,7 @@ public class ReactorPortBlockEntity extends BlockEntity {
         @Override
         public int extract(ItemResource resource, int amount, TransactionContext transaction) {
             if (resource.isEmpty() || amount <= 0) return 0;
-            HorizonCoreBlockEntity horizon = core();
+            HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null || !horizon.isActive() || level == null) return 0;
             Op answer = answer(horizon, resource, amount);
             if (answer == null) return 0;

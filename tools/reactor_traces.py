@@ -348,7 +348,7 @@ def main() -> None:
     with open(os.path.join(ASSETS, "blockstates", "lit_reactor_plinth.json"), "w") as handle:
         json.dump({"variants": lit_variants}, handle, indent=1)
     write_bay(parts)
-    for port in ("input", "output", "energy", "materialiser"):
+    for port in ("input", "output", "energy", "materialiser", "me"):
         # A port is the plinth with a flat socket laid over every face (tools/reactor_art.py draws it).
         port_parts = list(parts)
         for formed in (False, True):

@@ -8,6 +8,7 @@ import com.kadikular.quantimium.flux.QuantumFlux;
 import com.kadikular.quantimium.reactor.ReactorCounter;
 import com.kadikular.quantimium.reactor.ReactorLedger;
 import com.kadikular.quantimium.reactor.ReactorPlanner;
+import com.kadikular.quantimium.reactor.ReactorNetwork;
 import com.kadikular.quantimium.reactor.ReactorRecipes;
 import com.kadikular.quantimium.recipe.RecipeFilter;
 import com.kadikular.quantimium.reactor.ReactorStructure;
@@ -84,9 +85,20 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     /** At most one recount a second, and only when the stock or the catalysts have changed. */
     private static final int RECOUNT_TICKS = 20;
     private ReactorCounter.Counts counts = ReactorCounter.Counts.EMPTY;
+    /** What it could make of what it holds alone, leaving out any network: what Materialiser Ports show. */
+    private ReactorCounter.Counts ownCounts = ReactorCounter.Counts.EMPTY;
     @Nullable
-    private java.util.concurrent.CompletableFuture<ReactorCounter.Counts> recount;
+    private java.util.concurrent.CompletableFuture<ReactorCounter.Counts[]> recount;
     private int countedVersion = -1;
+    private java.util.Map<ItemResource, Long> countedNetwork = java.util.Map.of();
+
+    /** While above zero the core is reading or taking from a network: its own ports show nothing. */
+    private int drawing;
+    /** The network stock as last read, and when, so it's read at most once a tick. */
+    private java.util.Map<ItemResource, Long> networkStock = java.util.Map.of();
+    private long networkStockTick = Long.MIN_VALUE;
+    /** Materialiser Ports a linked network reads through a storage bus: dark, so it never sees them twice. */
+    private Set<BlockPos> darkPorts = Set.of();
     @Nullable
     private ReactorRecipes countedRecipes;
     /** Far enough back that the first recount can start at once, without overflowing the subtraction. */
@@ -154,6 +166,24 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         long fits = Math.min(amount, room());
         if (fits <= 0) return;
         ledger.add(item, fits);
+        ledgerVersion++;
+        setChanged();
+    }
+
+    /** Takes up to {@code amount} of {@code item} out of the horizon as it is, for a network taking it. How many. */
+    public long withdraw(ItemResource item, long amount) {
+        long taken = ledger.remove(item, amount);
+        if (taken > 0) {
+            ledgerVersion++;
+            setChanged();
+        }
+        return taken;
+    }
+
+    /** Puts back what was made but couldn't be delivered: it came from the horizon, so it always fits. */
+    public void restore(ItemResource item, long amount) {
+        if (amount <= 0) return;
+        ledger.add(item, amount);
         ledgerVersion++;
         setChanged();
     }
@@ -337,6 +367,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         lit.clear();
         lit.addAll(nowLit);
         layout = next;
+        darkPorts = findDarkPorts(server);
         refreshRecipes(server);
     }
 
@@ -366,48 +397,233 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         return recipes;
     }
 
-    /** What it could make of what it holds, as last counted: the screen's and the Materialiser Port's list. */
+    /** What it could make of what it holds and its networks hold, as last counted: the screen's list. */
     public ReactorCounter.Counts getCounts() {
         return counts;
     }
 
+    /**
+     * What it could make of what it holds alone, as last counted: the Materialiser Ports' list. A
+     * network's stock is never offered back out through them, so nothing a network sees of the Reactor
+     * can feed the Reactor's own counts.
+     */
+    public ReactorCounter.Counts getOwnCounts() {
+        return ownCounts;
+    }
+
     /** Counts on the spot, on this thread: for tests, which can't wait on wall-clock time. */
     public ReactorCounter.Counts recountNow() {
-        counts = isFormed() ? ReactorCounter.count(recipes.graph(), ledger.snapshot()) : ReactorCounter.Counts.EMPTY;
+        if (!isFormed()) {
+            counts = ownCounts = ReactorCounter.Counts.EMPTY;
+        } else {
+            java.util.Map<ItemResource, Long> network = level instanceof ServerLevel server ? networkStock(server) : java.util.Map.of();
+            ReactorCounter.Counts[] both = countBoth(recipes, ledger.snapshot(), network);
+            counts = both[0];
+            ownCounts = both[1];
+            countedNetwork = network;
+        }
         countedVersion = ledgerVersion;
         countedRecipes = recipes;
         return counts;
     }
 
+    /** With the network and without; the same count twice over when there's no network. */
+    private static ReactorCounter.Counts[] countBoth(ReactorRecipes recipes, java.util.Map<ItemResource, Long> held,
+                                                     java.util.Map<ItemResource, Long> network) {
+        ReactorCounter.Counts own = ReactorCounter.count(recipes.graph(), held);
+        if (network.isEmpty()) return new ReactorCounter.Counts[] {own, own};
+        return new ReactorCounter.Counts[] {ReactorCounter.count(recipes.graph(), merged(held, network)), own};
+    }
+
+    private static java.util.Map<ItemResource, Long> merged(java.util.Map<ItemResource, Long> held,
+                                                           java.util.Map<ItemResource, Long> network) {
+        java.util.Map<ItemResource, Long> all = new java.util.HashMap<>(held);
+        network.forEach((item, amount) -> all.merge(item, amount, Long::sum));
+        return all;
+    }
+
     /**
-     * Starts a recount off the server thread when the stock or the catalysts have changed, at most
-     * once a second, and picks up a finished one. A result finished after the stock moved again is
-     * still kept, being newer than the last; the next recount follows.
+     * Starts a recount off the server thread when the stock, a network's stock or the catalysts have
+     * changed, at most once a second, and picks up a finished one. A result finished after the stock
+     * moved again is still kept, being newer than the last; the next recount follows.
      */
     private void recount(ServerLevel server) {
         if (recount != null) {
             if (!recount.isDone()) return;
             try {
-                counts = recount.join();
+                ReactorCounter.Counts[] both = recount.join();
+                counts = both[0];
+                ownCounts = both[1];
             } catch (RuntimeException e) {
                 com.kadikular.quantimium.Quantimium.LOGGER.warn("A Horizon Core at {} failed to count what it can make",
                         worldPosition, e);
             }
             recount = null;
         }
-        boolean stale = countedVersion != ledgerVersion || countedRecipes != recipes;
-        if (!stale || server.getGameTime() - lastRecount < RECOUNT_TICKS) return;
+        if (server.getGameTime() - lastRecount < RECOUNT_TICKS) return;
+        java.util.Map<ItemResource, Long> network = isFormed() ? networkStock(server) : java.util.Map.of();
+        boolean stale = countedVersion != ledgerVersion || countedRecipes != recipes || !network.equals(countedNetwork);
+        if (!stale) return;
         lastRecount = server.getGameTime();
         countedVersion = ledgerVersion;
         countedRecipes = recipes;
+        countedNetwork = network;
         if (!isFormed()) {
-            counts = ReactorCounter.Counts.EMPTY;
+            counts = ownCounts = ReactorCounter.Counts.EMPTY;
             return;
         }
         ReactorRecipes graphOf = recipes;
         java.util.Map<ItemResource, Long> stock = ledger.snapshot();
         recount = java.util.concurrent.CompletableFuture.supplyAsync(
-                () -> ReactorCounter.count(graphOf.graph(), stock), ReactorCounter.EXECUTOR);
+                () -> countBoth(graphOf, stock, network), ReactorCounter.EXECUTOR);
+    }
+
+    // ---- networks ----
+
+    /** Whether the core is reading or taking from a network just now; its own ports show nothing meanwhile. */
+    public boolean isDrawing() {
+        return drawing > 0;
+    }
+
+    /** Whether a linked network reads this Materialiser Port through a storage bus, so it shows nothing. */
+    public boolean isDarkPort(BlockPos port) {
+        return darkPorts.contains(port);
+    }
+
+    /** The networks linked through this reactor's ports, each once. */
+    public List<ReactorNetwork> networks(ServerLevel server) {
+        List<ReactorNetwork> found = new ArrayList<>();
+        Set<Object> seen = new HashSet<>();
+        if (!layout.formed()) return found;
+        for (BlockPos pos : layout.ports()) {
+            if (server.getBlockEntity(pos) instanceof ReactorNetwork network && network.network() != null
+                    && seen.add(network.network())) {
+                found.add(network);
+            }
+        }
+        return found;
+    }
+
+    /** Everything the linked networks hold, never counting what they see of this reactor; read once a tick. */
+    public java.util.Map<ItemResource, Long> networkStock(ServerLevel server) {
+        if (networkStockTick == server.getGameTime()) return networkStock;
+        java.util.Map<ItemResource, Long> stock = new java.util.HashMap<>();
+        drawing++;
+        try {
+            for (ReactorNetwork network : networks(server)) {
+                network.stock().forEach((item, amount) -> stock.merge(item, amount, Long::sum));
+            }
+        } finally {
+            drawing--;
+        }
+        networkStock = stock.isEmpty() ? java.util.Map.of() : stock;
+        networkStockTick = server.getGameTime();
+        return networkStock;
+    }
+
+    /** The linked networks' stock as last read, without reading it again. */
+    public java.util.Map<ItemResource, Long> lastNetworkStock() {
+        return networkStock;
+    }
+
+    /** What the horizon holds and its networks hold, together: what a request may plan with. */
+    public java.util.Map<ItemResource, Long> stockWithNetworks(ServerLevel server) {
+        return merged(ledger.snapshot(), networkStock(server));
+    }
+
+    /**
+     * Pulls into the horizon whatever {@code plan} uses beyond what's held, from the linked networks.
+     * Anything pulled stays held, so a pull that comes up short loses nothing. Whether all of it came.
+     */
+    private boolean pullFromNetworks(ServerLevel server, ReactorPlanner.Plan plan) {
+        java.util.Map<ItemResource, Long> missing = new java.util.HashMap<>();
+        plan.consumed().forEach((item, amount) -> {
+            long short_ = amount - ledger.count(item);
+            if (short_ > 0) missing.put(item, short_);
+        });
+        if (missing.isEmpty()) return true;
+        List<ReactorNetwork> networks = networks(server);
+        drawing++;
+        try {
+            // All of it, simulated, before any of it for real.
+            for (var entry : missing.entrySet()) {
+                long found = 0;
+                for (ReactorNetwork network : networks) {
+                    found += network.extract(entry.getKey(), entry.getValue() - found, true);
+                    if (found >= entry.getValue()) break;
+                }
+                if (found < entry.getValue()) return false;
+            }
+            boolean all = true;
+            for (var entry : missing.entrySet()) {
+                long got = 0;
+                for (ReactorNetwork network : networks) {
+                    got += network.extract(entry.getKey(), entry.getValue() - got, false);
+                    if (got >= entry.getValue()) break;
+                }
+                if (got > 0) ledger.add(entry.getKey(), got);
+                if (got < entry.getValue()) all = false;
+            }
+            ledgerVersion++;
+            networkStockTick = Long.MIN_VALUE;
+            setChanged();
+            return all;
+        } finally {
+            drawing--;
+        }
+    }
+
+    /**
+     * Makes as much of {@code amount} of {@code item} as it can, up to that, from what it and its
+     * networks hold, and pays for it; the caller delivers what's made. For the ME Superposition Port,
+     * filling a crafting job's request. How many were made.
+     */
+    public long produce(ItemResource item, long amount) {
+        if (!(level instanceof ServerLevel server) || !isActive() || amount <= 0) return 0;
+        refreshRecipes(server);
+        java.util.Map<ItemResource, Long> stock = stockWithNetworks(server);
+        ReactorPlanner.Plan best = null;
+        long bestFe = 0;
+        long made = 0;
+        long low = 1;
+        long high = amount;
+        for (int plans = 0; low <= high && plans < 7; plans++) {
+            long attempt = plans == 0 ? high : (low + high) / 2;
+            ReactorPlanner.Result result = ReactorPlanner.plan(recipes, stock, item, attempt);
+            long fe = result.planned() ? feFor(result.plan()) : Long.MAX_VALUE;
+            if (result.planned() && fe <= energy.getEnergyStored()) {
+                best = result.plan();
+                bestFe = fe;
+                made = attempt;
+                low = attempt + 1;
+            } else {
+                high = attempt - 1;
+            }
+        }
+        if (best == null || !pullFromNetworks(server, best)) return 0;
+        spend(server, best, bestFe);
+        return made;
+    }
+
+    /** Materialiser Ports a linked network reads through something of its own beside them. */
+    private Set<BlockPos> findDarkPorts(ServerLevel server) {
+        Set<BlockPos> dark = new HashSet<>();
+        List<ReactorNetwork> networks = networks(server);
+        if (networks.isEmpty()) return dark;
+        for (BlockPos pos : layout.ports()) {
+            if (!(server.getBlockEntity(pos) instanceof ReactorPortBlockEntity port)
+                    || port.kind() != com.kadikular.quantimium.block.ReactorPortBlock.Kind.MATERIALISER) {
+                continue;
+            }
+            for (net.minecraft.core.Direction side : net.minecraft.core.Direction.values()) {
+                BlockPos beside = pos.relative(side);
+                if (!server.isLoaded(beside)) continue;
+                for (ReactorNetwork network : networks) {
+                    if (network.readsFrom(server, beside, side.getOpposite())) dark.add(pos);
+                }
+            }
+        }
+        return dark;
     }
 
     /**
@@ -419,7 +635,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         if (!(level instanceof ServerLevel server)) return refused("message.quantimium.reactor.offline");
         if (!isActive()) return refused("message.quantimium.reactor.offline");
         refreshRecipes(server);
-        ReactorPlanner.Result result = ReactorPlanner.plan(recipes, ledger.snapshot(), target, count);
+        ReactorPlanner.Result result = ReactorPlanner.plan(recipes, stockWithNetworks(server), target, count);
         if (!result.planned()) return result;
         ReactorPlanner.Plan plan = result.plan();
 
@@ -435,10 +651,17 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         for (ReactorPortBlockEntity port : outputs) deliverable += port.roomFor(sample);
         long kept = Math.max(0, count - deliverable);
         long consumed = 0;
-        for (long amount : plan.consumed().values()) consumed += amount;
+        long pulled = 0;
+        for (var entry : plan.consumed().entrySet()) {
+            consumed += entry.getValue();
+            pulled += Math.max(0, entry.getValue() - ledger.count(entry.getKey()));
+        }
         long left = 0;
         for (long amount : plan.leftovers().values()) left += amount;
-        if (ledger.mass() - consumed + left + kept > capacity()) return refused("message.quantimium.reactor.full");
+        if (ledger.mass() + pulled - consumed + left + kept > capacity()) return refused("message.quantimium.reactor.full");
+        // Whatever it uses from a network comes into the horizon first; if the network has changed since
+        // the plan, what did come stays held and nothing is made.
+        if (!pullFromNetworks(server, plan)) return refused("message.quantimium.reactor.network_moved");
 
         spend(server, plan, fe);
         long toSend = count;

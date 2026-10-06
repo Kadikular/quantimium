@@ -102,15 +102,19 @@ public class HorizonCoreMenu extends AbstractContainerMenu {
 
     /**
      * Everything held or makeable: held amounts straight from the ledger, totals from the last count.
-     * Something held since the last count shows with what's held until the next.
+     * Something held since the last count shows with what's held until the next. What a linked ME
+     * network holds counts towards what can be made, but the network's own stock isn't listed again:
+     * its terminal shows that.
      */
     private List<HorizonViewPayload.Entry> entries() {
         ReactorCounter.Counts counts = blockEntity.getCounts();
         java.util.Map<ItemResource, Long> held = blockEntity.getLedger().view();
+        java.util.Map<ItemResource, Long> network = blockEntity.lastNetworkStock();
         List<HorizonViewPayload.Entry> entries = new ArrayList<>(counts.counts().size() + held.size());
         counts.counts().forEach((item, total) -> {
             long have = held.getOrDefault(item, 0L);
-            entries.add(new HorizonViewPayload.Entry(item, have, Math.max(total, have)));
+            long shown = Math.max(total - network.getOrDefault(item, 0L), have);
+            if (shown > 0) entries.add(new HorizonViewPayload.Entry(item, have, shown));
         });
         held.forEach((item, have) -> {
             if (!counts.counts().containsKey(item)) entries.add(new HorizonViewPayload.Entry(item, have, have));

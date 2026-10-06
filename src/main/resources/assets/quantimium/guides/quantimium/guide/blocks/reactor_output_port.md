@@ -2,7 +2,7 @@
 navigation:
   title: Reactor Output Port
   parent: blocks/index.md
-  position: 49
+  position: 50
   icon: quantimium:reactor_output_port
 ---
 

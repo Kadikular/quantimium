@@ -45,7 +45,8 @@ MULTIBLOCK_PARTS = {
                                          "pod_relay_module", "pod_rescue_module", "pod_stash_module", "pod_ward_module",
                                          "unfolding_array", "array_pylon"],
     "multiblocks/reactor.md": ["horizon_core", "reactor_plinth", "ring_emitter", "catalyst_bay", "reactor_input_port",
-                               "reactor_output_port", "reactor_energy_port", "reactor_materialiser_port"],
+                               "reactor_output_port", "reactor_energy_port", "reactor_materialiser_port",
+                               "reactor_me_port"],
 }
 PART_OF = {part: page for page, parts in MULTIBLOCK_PARTS.items() for part in parts}
 

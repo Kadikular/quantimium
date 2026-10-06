@@ -126,7 +126,32 @@ too, unless a pack turns that off (`reactor.materialiserPortAcceptsItems`).
 [[mechanic:reactor.materialiser_port.ae2]] On an [AE2](../concepts/partner-mods.md) network, one
 storage bus on the port shows the whole list in the terminal as stock. Because the counts are
 estimates that share their sources, asking for 64 of something can bring fewer, and other counts drop
-as one is taken.
+as one is taken. A Materialiser Port only ever shows what the Reactor could make of what *it* holds,
+never of what a network linked through an ME Superposition Port holds.
+
+## The ME Superposition Port
+
+With AE2 installed, the [[block:reactor_me_port]] joins the Reactor to an ME network both ways. It
+goes on the rim like the other ports and takes a channel.
+
+[[mechanic:reactor.me_port.storage]] What the Reactor holds is storage on the network: it shows in
+the terminal and can be taken like anything in a drive. Nothing goes in this way; use Input ports, or
+an export bus onto one.
+
+[[mechanic:reactor.me_port.craftable]] What it could make shows in the terminal as craftable, not as
+stock. Ask for some, or let a crafting job need some, and the port makes it through the Reactor and
+hands it to the job; nothing is listed twice, and no count is added to another that shares its iron.
+
+[[mechanic:reactor.me_port.inputs]] What the network holds, the Reactor counts and uses as its own
+inputs: logs in a drive count towards planks on the core's list, and a request takes them from the
+network as it needs them. The network's own items aren't listed again on the core's screen.
+
+[[mechanic:reactor.me_port.loops]] A storage bus on one of the Reactor's own Materialiser Ports, on
+the same network, would show the network the Reactor twice, and let the Reactor count its own
+holdings back in as network stock. So that port goes dark while the ME port is linked: it shows that
+network nothing. The ME port shows everything the bus would have. And while the Reactor reads or takes
+from the network, its own ports show nothing at all, so no route the Reactor can't see makes it count
+or take anything twice either.
 
 ## Cost to the server
 

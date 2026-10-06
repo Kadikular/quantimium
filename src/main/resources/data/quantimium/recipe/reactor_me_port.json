@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "ae2"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "quantimium:reactor_plinth",
+    "I": "ae2:interface",
+    "E": "ae2:engineering_processor",
+    "T": "quantimium:tesseract"
+  },
+  "pattern": [
+    "EIE",
+    "PTP"
+  ],
+  "result": {
+    "id": "quantimium:reactor_me_port",
+    "count": 1
+  }
+}
