@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  * The Quantimium Reactor's footprint: a disc of Reactor Plinth 11 blocks across under the Horizon
  * Core, which sits on its centre. On the plinth, around the core, stand up to three facing pairs of
  * Ring Emitters (each whole pair drives one ring). Up to {@link #MAX_BAYS} Catalyst Bays take the place
- * of plinth anywhere inside the rim but under the core; ports take its place on the rim.
+ * of plinth anywhere but under the core; ports take its place on the rim.
  *
  * <p>Fixed size: more rings come from more emitters, not a bigger floor.
  */
@@ -83,7 +83,7 @@ public final class ReactorStructure {
                 BlockState state = level.getBlockState(pos);
                 if (state.is(ModBlocks.REACTOR_PLINTH.get())) {
                     parts.add(pos.immutable());
-                } else if (state.is(ModBlocks.CATALYST_BAY.get()) && !onRim(dx, dz) && (dx != 0 || dz != 0)) {
+                } else if (state.is(ModBlocks.CATALYST_BAY.get()) && (dx != 0 || dz != 0)) {
                     if (bays.size() == MAX_BAYS) return refuse("message.quantimium.reactor.too_many_bays");
                     bays.add(pos.immutable());
                     parts.add(pos.immutable());
@@ -122,7 +122,7 @@ public final class ReactorStructure {
     public static void sinkRaisedBays(Level level, BlockPos core) {
         for (int dx = -REACH; dx <= REACH; dx++) {
             for (int dz = -REACH; dz <= REACH; dz++) {
-                if (!inDisc(dx, dz) || onRim(dx, dz) || (dx == 0 && dz == 0)) continue;
+                if (!inDisc(dx, dz) || (dx == 0 && dz == 0)) continue;
                 BlockPos raised = core.offset(dx, 0, dz);
                 BlockPos floor = raised.below();
                 if (!level.isLoaded(raised) || !level.getBlockState(raised).is(ModBlocks.CATALYST_BAY.get())

@@ -68,23 +68,19 @@ public final class ReactorTests {
 
     // covers: reactor.bays
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
-    public static void baysGoInThePlinthInsideTheRim(GameTestHelper helper) {
+    public static void baysGoAnywhereInThePlinthButUnderTheCore(GameTestHelper helper) {
         HorizonCoreBlockEntity core = buildReactor(helper, 1);
         ServerLevel level = helper.getLevel();
         Block plinth = ModBlocks.REACTOR_PLINTH.get();
 
-        // Not under the core, and not on the rim, where ports go.
+        // Not under the core.
         helper.setBlock(CORE.below(), ModBlocks.CATALYST_BAY.get());
         core.revalidate(level);
         helper.assertFalse(core.isFormed(), "a bay under the core");
         helper.setBlock(CORE.below(), plinth);
-        helper.setBlock(CORE.below().west(5), ModBlocks.CATALYST_BAY.get());
-        core.revalidate(level);
-        helper.assertFalse(core.isFormed(), "a bay on the rim");
-        helper.setBlock(CORE.below().west(5), plinth);
 
-        // Eight anywhere else; a ninth is too many.
-        int[][] spots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}, {2, 0}};
+        // Eight anywhere else, the rim too; a ninth is too many.
+        int[][] spots = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {1, -1}, {-5, 0}, {2, 0}};
         for (int[] spot : spots) helper.setBlock(CORE.below().offset(spot[0], 0, spot[1]), ModBlocks.CATALYST_BAY.get());
         core.revalidate(level);
         helper.assertFalse(core.isFormed(), "nine bays");
@@ -139,6 +135,45 @@ public final class ReactorTests {
         helper.assertValueEqual(core.getLayout().bays().size(), 1, "and it's the reactor's bay");
         helper.assertTrue(helper.getEntities(net.minecraft.world.entity.EntityType.ITEM).isEmpty(), "nothing dropped");
         helper.succeed();
+    }
+
+    // covers: reactor.bays.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
+    public static void aBaysFilterLimitsWhatItsCatalystsMakeAndUse(GameTestHelper helper) {
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        bay(helper, CORE.below().east(2), Items.CRAFTING_TABLE);
+        CatalystBayBlockEntity bay = helper.getBlockEntity(CORE.below().east(2), CatalystBayBlockEntity.class);
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        core.getLedger().add(ItemResource.of(Items.OAK_LOG), 1);
+        core.getLedger().add(ItemResource.of(Items.BIRCH_LOG), 1);
+
+        helper.runAfterDelay(2, () -> {
+            var before = core.recountNow();
+            helper.assertTrue(before.count(ItemResource.of(Items.STICK)) > 0, "sticks, unfiltered");
+            helper.assertTrue(before.count(ItemResource.of(Items.OAK_PLANKS)) > 0, "planks, unfiltered");
+
+            // A whitelist of sticks (outputs start as a whitelist): no planks offered for themselves.
+            bay.setFilterSlot(0, new net.minecraft.world.item.ItemStack(Items.STICK));
+            core.revalidate(helper.getLevel());
+            helper.assertValueEqual(core.recountNow().count(ItemResource.of(Items.OAK_PLANKS)), 0L, "planks aren't on the whitelist");
+
+            // A blacklist of sticks: no sticks, planks still.
+            bay.toggleOutputMode();
+            core.revalidate(helper.getLevel());
+            var counts = core.recountNow();
+            helper.assertValueEqual(counts.count(ItemResource.of(Items.STICK)), 0L, "no sticks, blacklisted");
+            helper.assertTrue(counts.count(ItemResource.of(Items.OAK_PLANKS)) > 0, "planks still");
+
+            // An input blacklist of oak logs: the birch log is still there to use.
+            bay.setFilterSlot(0, net.minecraft.world.item.ItemStack.EMPTY);
+            bay.setFilterSlot(CatalystBayBlockEntity.INPUT_FILTER_START, new net.minecraft.world.item.ItemStack(Items.OAK_LOG));
+            core.revalidate(helper.getLevel());
+            counts = core.recountNow();
+            helper.assertValueEqual(counts.count(ItemResource.of(Items.OAK_PLANKS)), 0L, "oak logs never used");
+            helper.assertTrue(counts.count(ItemResource.of(Items.BIRCH_PLANKS)) > 0, "birch logs are");
+            helper.succeed();
+        });
     }
 
     // covers: reactor.input

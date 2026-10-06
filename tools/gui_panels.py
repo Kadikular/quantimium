@@ -317,6 +317,17 @@ def superposition_crafter_filter() -> Panel:
     return panel
 
 
+def catalyst_bay() -> Panel:
+    """A Catalyst Bay: its four catalysts in a 2x2 grid on the left, laid out as the window's quarters,
+    in brackets, and the filter's readout beside it (CatalystBayMenu.GRID_*)."""
+    panel = Panel(HIGH)
+    panel.grid((26, 27), 2, 2, "catalysts")
+    panel.brackets(18, 19, 50, 50)
+    panel.region("info", (76, 22, 94, 50))
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -395,6 +406,9 @@ PANELS = {
     "rift_anchor": rift_anchor,
     "me_superposition_crafter": superposition_crafter,
     "me_superposition_crafter_filter": superposition_crafter_filter,
+    "catalyst_bay": catalyst_bay,
+    # The same 27 ghost slots as the Superposition Crafter's filter.
+    "catalyst_bay_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,
     "fold_core": fold_core,

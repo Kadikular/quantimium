@@ -225,6 +225,18 @@ def pocket() -> Image.Image:
     return img
 
 
+LIP = 2  # the window's inner rim: a pixel of the lit ring, then a pixel of edge, before the void
+
+
+def bay_lip(lit: bool) -> Image.Image:
+    """The inside of the window's rim: the ring's light running one pixel down, then the frame's edge."""
+    img = Image.new("RGBA", (16, 16), hx("07060f"))
+    for x in range(16):
+        img.putpixel((x, 0), palette(lit)["via"])
+        img.putpixel((x, 1), hx("262c48"))
+    return img
+
+
 def write_bay(parts_for_traces: list) -> None:
     """The Catalyst Bay: a frame with a hole, a pocket under it, and the plinth's traces run in to the rim."""
     models = os.path.join(ASSETS, "models", "block")
@@ -233,25 +245,34 @@ def write_bay(parts_for_traces: list) -> None:
     multipart = []
     for formed, tag in ((False, ""), (True, "_lit")):
         bay_frame(formed).save(os.path.join(textures, f"catalyst_bay_frame{tag}.png"))
+        bay_lip(formed).save(os.path.join(textures, f"catalyst_bay_lip{tag}.png"))
         side = "quantimium:block/reactor_plinth_side" + ("_active" if formed else "")
         lo, hi = WINDOW[0], WINDOW[1] + 1
         inward = {"texture": "#pocket"}
+        lip = {"texture": "#lip", "uv": [lo, 0, hi, LIP]}
+        rim = 16 - LIP
         model = {
             "parent": "minecraft:block/block",
             "render_type": "minecraft:cutout",
             "textures": {"top": f"quantimium:block/catalyst_bay_frame{tag}", "side": side,
                          "bottom": "quantimium:block/quantum_foundry_base",
-                         "pocket": "quantimium:block/catalyst_bay_pocket", "particle": side},
+                         "pocket": "quantimium:block/catalyst_bay_pocket",
+                         "lip": f"quantimium:block/catalyst_bay_lip{tag}", "particle": side},
             "elements": [
                 {"from": [0, 0, 0], "to": [16, 16, 16], "faces": {
                     **{d: {"texture": "#side", "cullface": d} for d in ("north", "south", "east", "west")},
                     "up": {"texture": "#top", "cullface": "up"},
                     "down": {"texture": "#bottom", "cullface": "down"}}},
-                # The pocket's walls, each a thin slab whose face looks into it.
-                {"from": [lo - 1, 1, lo], "to": [lo, 16, hi], "shade": False, "faces": {"east": inward}},
-                {"from": [hi, 1, lo], "to": [hi + 1, 16, hi], "shade": False, "faces": {"west": inward}},
-                {"from": [lo, 1, lo - 1], "to": [hi, 16, lo], "shade": False, "faces": {"south": inward}},
-                {"from": [lo, 1, hi], "to": [hi, 16, hi + 1], "shade": False, "faces": {"north": inward}},
+                # The pocket's walls, each a thin slab whose face looks into it: the rim's lip at the top,
+                # then the walls the void covers in the world (an item shows them).
+                {"from": [lo - 1, rim, lo], "to": [lo, 16, hi], "shade": False, "faces": {"east": lip}},
+                {"from": [hi, rim, lo], "to": [hi + 1, 16, hi], "shade": False, "faces": {"west": lip}},
+                {"from": [lo, rim, lo - 1], "to": [hi, 16, lo], "shade": False, "faces": {"south": lip}},
+                {"from": [lo, rim, hi], "to": [hi, 16, hi + 1], "shade": False, "faces": {"north": lip}},
+                {"from": [lo - 1, 1, lo], "to": [lo, rim, hi], "shade": False, "faces": {"east": inward}},
+                {"from": [hi, 1, lo], "to": [hi + 1, rim, hi], "shade": False, "faces": {"west": inward}},
+                {"from": [lo, 1, lo - 1], "to": [hi, rim, lo], "shade": False, "faces": {"south": inward}},
+                {"from": [lo, 1, hi], "to": [hi, rim, hi + 1], "shade": False, "faces": {"north": inward}},
                 {"from": [lo, 0, lo], "to": [hi, 1, hi], "shade": False, "faces": {"up": inward}},
             ],
         }

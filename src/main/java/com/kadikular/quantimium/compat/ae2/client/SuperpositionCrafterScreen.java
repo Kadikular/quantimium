@@ -25,7 +25,8 @@ import java.util.List;
  * Two views on one panel: the catalyst and what it is offering the network, or the filter. The
  * filter's slots are ghosts: click one with an item, or drag an item onto it from JEI.
  */
-public class SuperpositionCrafterScreen extends QuantumMachineScreen<SuperpositionCrafterMenu> {
+public class SuperpositionCrafterScreen extends QuantumMachineScreen<SuperpositionCrafterMenu>
+        implements com.kadikular.quantimium.client.screen.GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
             Quantimium.MODID, "textures/gui/container/me_superposition_crafter.png");
@@ -96,6 +97,7 @@ public class SuperpositionCrafterScreen extends QuantumMachineScreen<Superpositi
     }
 
     /** Where the filter's ghost slots are on screen, for JEI to drop onto; empty while hidden. */
+    @Override
     public List<Rect2i> ghostTargets() {
         List<Rect2i> targets = new ArrayList<>();
         if (!menu.isFilterView()) return targets;
@@ -108,6 +110,7 @@ public class SuperpositionCrafterScreen extends QuantumMachineScreen<Superpositi
     }
 
     /** Filter index of the first spot in the list on show: outputs start at 0, inputs after them. */
+    @Override
     public int ghostOffset() {
         return menu.isInputList() ? SuperpositionCrafterBlockEntity.INPUT_FILTER_START : 0;
     }
@@ -255,5 +258,10 @@ public class SuperpositionCrafterScreen extends QuantumMachineScreen<Superpositi
                         .withStyle(ChatFormatting.AQUA)));
         lines.add(Component.translatable("gui.quantimium.me_superposition_crafter.entry.hint").withStyle(ChatFormatting.GRAY));
         return lines;
+    }
+
+    @Override
+    public int ghostContainerId() {
+        return menu.containerId;
     }
 }

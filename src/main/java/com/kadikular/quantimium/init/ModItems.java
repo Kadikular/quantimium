@@ -208,8 +208,16 @@ public class ModItems {
             "horizon_core", ModBlocks.HORIZON_CORE);
     public static final DeferredItem<BlockItem> REACTOR_PLINTH_ITEM = ITEMS.registerSimpleBlockItem(
             "reactor_plinth", ModBlocks.REACTOR_PLINTH);
-    public static final DeferredItem<BlockItem> LIT_REACTOR_PLINTH_ITEM = ITEMS.registerSimpleBlockItem(
-            "lit_reactor_plinth", ModBlocks.LIT_REACTOR_PLINTH);
+    public static final DeferredItem<BlockItem> LIT_REACTOR_PLINTH_ITEM = ITEMS.registerItem(
+            "lit_reactor_plinth",
+            props -> new BlockItem(ModBlocks.LIT_REACTOR_PLINTH.get(), props.useBlockDescriptionPrefix()) {
+                @Override
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
+                                            Consumer<Component> tip, TooltipFlag flag) {
+                    tip.accept(Component.translatable("block.quantimium.lit_reactor_plinth.tooltip")
+                            .withStyle(ChatFormatting.GRAY));
+                }
+            });
     public static final DeferredItem<BlockItem> RING_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
             "ring_emitter", ModBlocks.RING_EMITTER);
     public static final DeferredItem<BlockItem> CATALYST_BAY_ITEM = ITEMS.registerSimpleBlockItem(

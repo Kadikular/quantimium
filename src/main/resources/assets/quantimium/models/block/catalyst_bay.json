@@ -6,6 +6,7 @@
     "side": "quantimium:block/reactor_plinth_side",
     "bottom": "quantimium:block/quantum_foundry_base",
     "pocket": "quantimium:block/catalyst_bay_pocket",
+    "lip": "quantimium:block/catalyst_bay_lip",
     "particle": "quantimium:block/reactor_plinth_side"
   },
   "elements": [
@@ -50,12 +51,108 @@
     {
       "from": [
         2,
-        1,
+        14,
         3
       ],
       "to": [
         3,
         16,
+        13
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#lip",
+          "uv": [
+            3,
+            0,
+            13,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        13,
+        14,
+        3
+      ],
+      "to": [
+        14,
+        16,
+        13
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#lip",
+          "uv": [
+            3,
+            0,
+            13,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        14,
+        2
+      ],
+      "to": [
+        13,
+        16,
+        3
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#lip",
+          "uv": [
+            3,
+            0,
+            13,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        14,
+        13
+      ],
+      "to": [
+        13,
+        16,
+        14
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#lip",
+          "uv": [
+            3,
+            0,
+            13,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        1,
+        3
+      ],
+      "to": [
+        3,
+        14,
         13
       ],
       "shade": false,
@@ -73,7 +170,7 @@
       ],
       "to": [
         14,
-        16,
+        14,
         13
       ],
       "shade": false,
@@ -91,7 +188,7 @@
       ],
       "to": [
         13,
-        16,
+        14,
         3
       ],
       "shade": false,
@@ -109,7 +206,7 @@
       ],
       "to": [
         13,
-        16,
+        14,
         14
       ],
       "shade": false,

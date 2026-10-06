@@ -51,6 +51,7 @@ public class QuantimiumClient {
         event.register(ModMenuTypes.QUANTUM_SIMULATOR_MENU.get(), QuantumSimulatorScreen::new);
         event.register(ModMenuTypes.UNFOLDING_ARRAY_MENU.get(), UnfoldingArrayScreen::new);
         event.register(ModMenuTypes.FOLD_CORE_MENU.get(), FoldCoreScreen::new);
+        event.register(ModMenuTypes.CATALYST_BAY_MENU.get(), com.kadikular.quantimium.client.screen.CatalystBayScreen::new);
         event.register(ModMenuTypes.HORIZON_CORE_MENU.get(), HorizonCoreScreen::new);
         event.register(ModMenuTypes.RELAY_MODULE_MENU.get(), RelayModuleScreen::new);
         event.register(ModMenuTypes.QUANTUM_CRAFTER_MENU.get(), QuantumCrafterScreen::new);

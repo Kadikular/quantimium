@@ -23,8 +23,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A window in the Reactor's plinth onto a pocket of void, holding up to
  * {@link CatalystBayBlockEntity#SLOTS} catalysts: machines, crafting tables, Folded Tesseracts. Their
- * recipes join the Reactor's. Each quarter of the window is a slot: use an item on one to put it in,
- * an empty hand to take it out. The plinth's traces run into its frame.
+ * recipes join the Reactor's. Each quarter of the window is a slot: use an item on one to put it in.
+ * An empty hand opens the bay's screen, to take catalysts out and set its filter. The plinth's traces
+ * run into its frame.
  */
 public class CatalystBayBlock extends BaseEntityBlock {
     public static final MapCodec<CatalystBayBlock> CODEC = simpleCodec(CatalystBayBlock::new);
@@ -65,26 +66,25 @@ public class CatalystBayBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
+    /** An item goes straight into the quarter clicked, or the next free one. */
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hitResult) {
-        if (!(level.getBlockEntity(pos) instanceof CatalystBayBlockEntity bay)) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        if (stack.isEmpty() || !(level.getBlockEntity(pos) instanceof CatalystBayBlockEntity bay)) {
+            return InteractionResult.TRY_WITH_EMPTY_HAND;
+        }
         int slot = bay.slotToFill(slotAt(pos, hitResult));
         if (slot < 0) return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (!level.isClientSide()) bay.setCatalyst(slot, stack.split(1));
         return InteractionResult.SUCCESS;
     }
 
+    /** An empty hand opens the bay: its catalysts and its filter. */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hitResult) {
-        if (!(level.getBlockEntity(pos) instanceof CatalystBayBlockEntity bay)) return InteractionResult.PASS;
-        int slot = bay.slotToEmpty(slotAt(pos, hitResult));
-        if (slot < 0) return InteractionResult.PASS;
-        if (!level.isClientSide()) {
-            ItemStack taken = bay.getCatalyst(slot);
-            bay.setCatalyst(slot, ItemStack.EMPTY);
-            if (!player.getInventory().add(taken)) player.drop(taken, false);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof CatalystBayBlockEntity bay) {
+            player.openMenu(bay, pos);
         }
         return InteractionResult.SUCCESS;
     }

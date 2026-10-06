@@ -22,7 +22,8 @@ public class CatalystBayBER extends SubmittingBER<CatalystBayBlockEntity> {
     private static final float WINDOW_MIN = 3.0f / 16.0f + 0.002f;
     private static final float WINDOW_MAX = 13.0f / 16.0f - 0.002f;
     private static final float FLOOR = 1.0f / 16.0f + 0.002f;
-    private static final float TOP = 1.0f - 0.002f;
+    /** Under the window's 2 px inner rim, which is the model's. */
+    private static final float TOP = 14.0f / 16.0f - 0.002f;
 
     private static final float SCALE = 0.24f;
 
@@ -37,7 +38,7 @@ public class CatalystBayBER extends SubmittingBER<CatalystBayBlockEntity> {
             ItemStack catalyst = bay.getCatalyst(slot);
             if (catalyst.isEmpty()) continue;
             poses.pushPose();
-            poses.translate(CatalystBayBlockEntity.slotX(slot), 0.68 + Math.sin(time * 0.06 + slot * 1.7) * 0.03,
+            poses.translate(CatalystBayBlockEntity.slotX(slot), 0.6 + Math.sin(time * 0.06 + slot * 1.7) * 0.03,
                     CatalystBayBlockEntity.slotZ(slot));
             poses.mulPose(Axis.YP.rotationDegrees(time * 1.2f + slot * 90.0f));
             poses.scale(SCALE, SCALE, SCALE);

@@ -9,6 +9,7 @@ import com.kadikular.quantimium.reactor.ReactorCounter;
 import com.kadikular.quantimium.reactor.ReactorLedger;
 import com.kadikular.quantimium.reactor.ReactorPlanner;
 import com.kadikular.quantimium.reactor.ReactorRecipes;
+import com.kadikular.quantimium.recipe.RecipeFilter;
 import com.kadikular.quantimium.reactor.ReactorStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -342,12 +343,17 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     /** Rebuilds what the catalysts can make, only when a catalyst has changed. */
     private void refreshRecipes(ServerLevel server) {
         List<ItemStack> catalysts = new ArrayList<>();
+        List<RecipeFilter> filters = new ArrayList<>();
         for (BlockPos bay : layout.bays()) {
             // Every slot, empty or not, so catalyst i is always slot i % SLOTS of bay i / SLOTS.
-            if (server.getBlockEntity(bay) instanceof CatalystBayBlockEntity entity) catalysts.addAll(entity.getCatalysts());
-            else for (int i = 0; i < CatalystBayBlockEntity.SLOTS; i++) catalysts.add(ItemStack.EMPTY);
+            CatalystBayBlockEntity entity = server.getBlockEntity(bay) instanceof CatalystBayBlockEntity found ? found : null;
+            RecipeFilter filter = entity == null ? RecipeFilter.NONE : entity.recipeFilter();
+            for (int i = 0; i < CatalystBayBlockEntity.SLOTS; i++) {
+                catalysts.add(entity == null ? ItemStack.EMPTY : entity.getCatalyst(i));
+                filters.add(filter);
+            }
         }
-        if (!recipes.builtFrom(catalysts)) recipes = ReactorRecipes.build(server, catalysts);
+        if (!recipes.builtFrom(catalysts, filters)) recipes = ReactorRecipes.build(server, catalysts, filters);
         // Unrealised Matter held can be observed into what it could be, with no catalyst.
         java.util.Set<ItemResource> matter = new java.util.HashSet<>();
         for (ItemResource item : ledger.view().keySet()) {

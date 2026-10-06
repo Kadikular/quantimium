@@ -14,6 +14,7 @@ import com.kadikular.quantimium.menu.QuantumSimulatorMenu;
 import com.kadikular.quantimium.menu.RelayModuleMenu;
 import com.kadikular.quantimium.menu.RiftAnchorMenu;
 import com.kadikular.quantimium.menu.TesseractStabilizerMenu;
+import com.kadikular.quantimium.menu.CatalystBayMenu;
 import com.kadikular.quantimium.menu.FoldCoreMenu;
 import com.kadikular.quantimium.menu.HorizonCoreMenu;
 import com.kadikular.quantimium.menu.UnfoldingArrayMenu;
@@ -52,6 +53,10 @@ public class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<HorizonCoreMenu>> HORIZON_CORE_MENU =
             MENUS.register("horizon_core_menu", () ->
                     IMenuTypeExtension.create(HorizonCoreMenu::new));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<CatalystBayMenu>> CATALYST_BAY_MENU =
+            MENUS.register("catalyst_bay_menu", () ->
+                    IMenuTypeExtension.create(CatalystBayMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FoldCoreMenu>> FOLD_CORE_MENU =
             MENUS.register("fold_core_menu", () ->

@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.reactor;
 
+import com.kadikular.quantimium.recipe.RecipeFilter;
 import com.kadikular.quantimium.recipe.RecipeShape;
 import com.kadikular.quantimium.recipe.RecipeShapes;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +34,8 @@ public final class ReactorRecipes {
     public static final ReactorRecipes NONE = of(List.of(), List.of());
 
     private final List<ItemStack> catalysts;
+    /** Each catalyst's bay's filter, by catalyst. */
+    private final List<RecipeFilter> filters;
     /** The catalysts' own recipes, kept so Matter can be added without working them out again. */
     private final List<Producer> fromCatalysts;
     /** The kinds of Unrealised Matter (each history) whose observations are among the recipes. */
@@ -42,9 +45,10 @@ public final class ReactorRecipes {
     /** Built on first use, from whichever thread asks first; never changes after. */
     private volatile ReactorGraph graph;
 
-    private ReactorRecipes(List<ItemStack> catalysts, List<Producer> fromCatalysts, java.util.Set<ItemResource> matter,
+    private ReactorRecipes(List<ItemStack> catalysts, List<RecipeFilter> filters, List<Producer> fromCatalysts, java.util.Set<ItemResource> matter,
                            List<Producer> producers, Map<ItemResource, List<Producer>> byOutput) {
         this.catalysts = catalysts;
+        this.filters = filters;
         this.fromCatalysts = fromCatalysts;
         this.matter = matter;
         this.producers = producers;
@@ -53,10 +57,10 @@ public final class ReactorRecipes {
 
     /** Recipes as given, for tests and benchmarks: no catalysts behind them. */
     public static ReactorRecipes of(List<ItemStack> catalysts, List<Producer> producers) {
-        return of(catalysts, producers, java.util.Set.of(), List.of());
+        return of(catalysts, List.of(), producers, java.util.Set.of(), List.of());
     }
 
-    private static ReactorRecipes of(List<ItemStack> catalysts, List<Producer> fromCatalysts, java.util.Set<ItemResource> matter,
+    private static ReactorRecipes of(List<ItemStack> catalysts, List<RecipeFilter> filters, List<Producer> fromCatalysts, java.util.Set<ItemResource> matter,
                                      List<Producer> observed) {
         List<Producer> producers = new ArrayList<>(fromCatalysts);
         producers.addAll(observed);
@@ -70,7 +74,7 @@ public final class ReactorRecipes {
         }
         List<ItemStack> copies = new ArrayList<>();
         for (ItemStack catalyst : catalysts) copies.add(catalyst.copy());
-        return new ReactorRecipes(List.copyOf(copies), List.copyOf(fromCatalysts), java.util.Set.copyOf(matter),
+        return new ReactorRecipes(List.copyOf(copies), List.copyOf(filters), List.copyOf(fromCatalysts), java.util.Set.copyOf(matter),
                 List.copyOf(producers), byOutput);
     }
 
@@ -104,7 +108,7 @@ public final class ReactorRecipes {
                         com.kadikular.quantimium.block.entity.MaterialiserBlockEntity.FE_PER_MATTER), NO_BAY));
             }
         }
-        return of(catalysts, fromCatalysts, kinds, observed);
+        return of(catalysts, filters, fromCatalysts, kinds, observed);
     }
 
     public ReactorGraph graph() {
@@ -119,20 +123,29 @@ public final class ReactorRecipes {
     }
 
     public static ReactorRecipes build(Level level, List<ItemStack> catalysts) {
+        return build(level, catalysts, java.util.Collections.nCopies(catalysts.size(), RecipeFilter.NONE));
+    }
+
+    /** The recipes of {@code catalysts}, each as the filter of its bay, at the same index, lets it run. */
+    public static ReactorRecipes build(Level level, List<ItemStack> catalysts, List<RecipeFilter> filters) {
         List<Producer> producers = new ArrayList<>();
         for (int bay = 0; bay < catalysts.size(); bay++) {
             ItemStack catalyst = catalysts.get(bay);
             if (catalyst.isEmpty()) continue;
-            for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst)) producers.add(new Producer(shape, bay));
+            for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst)) {
+                RecipeShape allowed = filters.get(bay).apply(shape);
+                if (allowed != null) producers.add(new Producer(allowed, bay));
+            }
         }
-        return of(catalysts, producers);
+        return of(catalysts, filters, producers, java.util.Set.of(), List.of());
     }
 
-    /** Whether these were built from exactly {@code catalysts}, components and all. */
-    public boolean builtFrom(List<ItemStack> catalysts) {
-        if (catalysts.size() != this.catalysts.size()) return false;
+    /** Whether these were built from exactly {@code catalysts}, components and all, through the same filters. */
+    public boolean builtFrom(List<ItemStack> catalysts, List<RecipeFilter> filters) {
+        if (catalysts.size() != this.catalysts.size() || filters.size() != this.filters.size()) return false;
         for (int i = 0; i < catalysts.size(); i++) {
             if (!ItemStack.isSameItemSameComponents(catalysts.get(i), this.catalysts.get(i))) return false;
+            if (!filters.get(i).same(this.filters.get(i))) return false;
         }
         return true;
     }

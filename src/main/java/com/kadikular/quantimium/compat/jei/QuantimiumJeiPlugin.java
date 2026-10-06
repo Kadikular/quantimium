@@ -5,7 +5,6 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.client.renderer.Rect2i;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import com.kadikular.quantimium.client.screen.QuantumMachineScreen;
-import com.kadikular.quantimium.compat.ae2.client.SuperpositionFilterGhosts;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import net.neoforged.fml.ModList;
 import com.kadikular.quantimium.Quantimium;
@@ -108,8 +107,11 @@ public class QuantimiumJeiPlugin implements IModPlugin {
                 return screen.tabAreas();
             }
         });
-        // The Superposition Crafter only exists with AE2; its handler is only touched then.
-        if (ModList.get().isLoaded("ae2")) SuperpositionFilterGhosts.register(registration);
+        GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.CatalystBayScreen.class);
+        // The Superposition Crafter only exists with AE2; its screen class is only touched then.
+        if (ModList.get().isLoaded("ae2")) {
+            GhostFilterTargets.register(registration, com.kadikular.quantimium.compat.ae2.client.SuperpositionCrafterScreen.class);
+        }
     }
 
     @Override

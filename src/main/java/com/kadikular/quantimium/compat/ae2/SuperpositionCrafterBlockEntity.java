@@ -1,6 +1,5 @@
 package com.kadikular.quantimium.compat.ae2;
 
-import com.kadikular.quantimium.recipe.RecipeCompat;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
@@ -11,8 +10,8 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.Connection;
-import net.minecraft.world.item.crafting.Ingredient;
 import com.kadikular.quantimium.recipe.FilterEntry;
+import com.kadikular.quantimium.recipe.RecipeFilter;
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.GridFlags;
@@ -432,61 +431,20 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
             ICraftingProvider.requestUpdate(mainNode);
             return;
         }
+        RecipeFilter filter = recipeFilter();
         for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst.getStackInSlot(0))) {
             // A pattern can't keep a press between crafts: recipes with tools are the Reactor's alone.
             if (!shape.tools().isEmpty()) continue;
-            if (!offers(shape.primaryOutput())) continue;
-            RecipeShape allowed = withInputFilter(shape);
+            RecipeShape allowed = filter.apply(shape);
             if (allowed != null) built.add(new SuperpositionPattern(allowed, batch()));
         }
         patterns = List.copyOf(built);
         ICraftingProvider.requestUpdate(mainNode);
     }
 
-    /** An empty output list offers everything; otherwise the output must (whitelist) or must not (blacklist) be listed. */
-    private boolean offers(ItemStack output) {
-        boolean empty = true;
-        boolean listed = false;
-        for (int i = 0; i < FILTER_SLOTS; i++) {
-            ItemStack entry = filter.getItem(i);
-            if (entry.isEmpty()) continue;
-            empty = false;
-            if (FilterEntry.matches(entry, output)) listed = true;
-        }
-        if (empty) return true;
-        return filterMode == MODE_ALLOW ? listed : !listed;
-    }
-
-    /**
-     * The shape with its ingredients cut down by the input list: a blacklist takes the listed items
-     * out, a whitelist keeps only them. Null if an ingredient is left with nothing it accepts. Only
-     * items go, not whole recipes: a recipe taking any log still takes birch when oak is blacklisted.
-     */
-    @Nullable
-    private RecipeShape withInputFilter(RecipeShape shape) {
-        List<ItemStack> listed = new ArrayList<>();
-        for (int i = INPUT_FILTER_START; i < filter.getContainerSize(); i++) {
-            if (!filter.getItem(i).isEmpty()) listed.add(filter.getItem(i));
-        }
-        if (listed.isEmpty()) return shape;
-        boolean whitelist = inputMode == MODE_ALLOW;
-        List<RecipeShape.Input> inputs = new ArrayList<>();
-        boolean changed = false;
-        for (RecipeShape.Input input : shape.inputs()) {
-            List<ItemStack> kept = new ArrayList<>();
-            for (ItemStack option : RecipeCompat.stacks(input.ingredient())) {
-                boolean onList = listed.stream().anyMatch(entry -> FilterEntry.matches(entry, option));
-                if (onList == whitelist) kept.add(option);
-            }
-            if (kept.isEmpty()) return null;
-            if (kept.size() == RecipeCompat.stacks(input.ingredient()).size()) {
-                inputs.add(input);
-            } else {
-                inputs.add(new RecipeShape.Input(Ingredient.of(kept.stream().map(ItemStack::getItem)), input.count()));
-                changed = true;
-            }
-        }
-        return changed ? new RecipeShape(shape.id(), inputs, shape.outputs(), shape.baseFe(), shape.tools()) : shape;
+    /** The two filter lists as they stand. */
+    private RecipeFilter recipeFilter() {
+        return RecipeFilter.of(filter, FILTER_SLOTS, filterMode == MODE_ALLOW, inputMode == MODE_ALLOW);
     }
 
     // ---- tick ----
