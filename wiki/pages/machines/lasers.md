@@ -64,10 +64,13 @@ even ones carrying nothing, so you can see where light would go.
 
 ## Optical cavities
 
-[[mechanic:laser.cavity]] Two [[block:cavity_mirror]]s facing each other across a clear gap of up to
-{{c:LaserTuning.CAVITY_MAX_GAP}} blocks hold light between them, as a real laser's cavity does: a
-battery for a laser network. Each mirror holds {{c:LaserTuning.CAVITY_FE_PER_BLOCK}} FE for each
-block of gap, and takes or gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t.
+[[mechanic:laser.cavity]] A [[block:cavity_mirror]] facing a [[block:laser_mirror]], or another Cavity
+Mirror, across a clear gap of up to {{c:LaserTuning.CAVITY_MAX_GAP}} blocks holds light between them,
+as a real laser's cavity does: a battery for a laser network. Only one end needs to be a Cavity Mirror.
+Each Cavity Mirror holds {{c:LaserTuning.CAVITY_FE_PER_BLOCK}} FE for each block of gap, and takes or
+gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t; a Laser Mirror at the other end holds nothing.
+
+With nothing facing it, a Cavity Mirror is just a mirror: light that reaches it leaves by its back.
 
 - Light that reaches a cavity mirror from outside charges it, but only with what the network's
   emitters have left over once its blocks are served. One cavity never fills another.
@@ -75,8 +78,9 @@ block of gap, and takes or gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t.
   serves its blocks from its emitters first, then from its cavities. Use a wrench on a mirror to turn
   its back output off, or on again: a mirror with its output off only stores. Sneak-click a face with
   an empty hand to point the mirror there.
-- The light bounces between the two mirrors, so what either holds evens out between them: both glow,
-  and both can give it out.
+- With two Cavity Mirrors, the light bounces between them, so what either holds evens out between
+  them: both glow, and both can give it out.
+- Light reaching the Laser Mirror at the far end is passed into the cavity, so that end can feed it.
 - A cavity leaks: each tick it loses {{c:LaserTuning.CAVITY_LEAK|pct}} of what it holds, and that
   becomes flux where it stands. Break a charged mirror, or block its gap, and the light it held all goes
   into the field at once.

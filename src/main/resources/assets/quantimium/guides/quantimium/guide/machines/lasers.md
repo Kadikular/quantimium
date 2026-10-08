@@ -72,10 +72,13 @@ even ones carrying nothing, so you can see where light would go.
 
 ## Optical cavities
 
-Two <ItemLink id="quantimium:cavity_mirror" />s facing each other across a clear gap of up to
-16 blocks hold light between them, as a real laser's cavity does: a
-battery for a laser network. Each mirror holds 10,000,000 FE for each
-block of gap, and takes or gives up to 32,000 FE/t.
+A <ItemLink id="quantimium:cavity_mirror" /> facing a <ItemLink id="quantimium:laser_mirror" />, or another Cavity
+Mirror, across a clear gap of up to 16 blocks holds light between them,
+as a real laser's cavity does: a battery for a laser network. Only one end needs to be a Cavity Mirror.
+Each Cavity Mirror holds 10,000,000 FE for each block of gap, and takes or
+gives up to 512,000 FE/t; a Laser Mirror at the other end holds nothing.
+
+With nothing facing it, a Cavity Mirror is just a mirror: light that reaches it leaves by its back.
 
 - Light that reaches a cavity mirror from outside charges it, but only with what the network's
   emitters have left over once its blocks are served. One cavity never fills another.
@@ -83,8 +86,9 @@ block of gap, and takes or gives up to 32,000 FE/t.
   serves its blocks from its emitters first, then from its cavities. Use a wrench on a mirror to turn
   its back output off, or on again: a mirror with its output off only stores. Sneak-click a face with
   an empty hand to point the mirror there.
-- The light bounces between the two mirrors, so what either holds evens out between them: both glow,
-  and both can give it out.
+- With two Cavity Mirrors, the light bounces between them, so what either holds evens out between
+  them: both glow, and both can give it out.
+- Light reaching the Laser Mirror at the far end is passed into the cavity, so that end can feed it.
 - A cavity leaks: each tick it loses 0% of what it holds, and that
   becomes flux where it stands. Break a charged mirror, or block its gap, and the light it held all goes
   into the field at once.

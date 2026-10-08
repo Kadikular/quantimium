@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * A Cavity Mirror. Two facing each other across a clear gap hold light between them. Placed, it faces
  * you; a sneaking empty hand on a face turns it there, and a wrench turns its back output on or off.
  */
-public class CavityMirrorBlock extends BaseEntityBlock {
+public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
     public static final MapCodec<CavityMirrorBlock> CODEC = simpleCodec(CavityMirrorBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
@@ -74,6 +74,14 @@ public class CavityMirrorBlock extends BaseEntityBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    public void appendTooltip(java.util.function.Consumer<net.minecraft.network.chat.Component> tooltip) {
+        String rate = String.format(java.util.Locale.ROOT, "%,d", com.kadikular.quantimium.laser.LaserTuning.CAVITY_RATE);
+        String held = String.format(java.util.Locale.ROOT, "%,d", com.kadikular.quantimium.laser.LaserTuning.CAVITY_FE_PER_BLOCK);
+        tooltip.accept(net.minecraft.network.chat.Component.translatable("block.quantimium.cavity_mirror.tip", rate, held)
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
     }
 
     @Override

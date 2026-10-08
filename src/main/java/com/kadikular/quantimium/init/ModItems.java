@@ -222,18 +222,18 @@ public class ModItems {
             });
     public static final DeferredItem<BlockItem> RING_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
             "ring_emitter", ModBlocks.RING_EMITTER);
-    public static final DeferredItem<BlockItem> FLASH_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
-            "flash_emitter", ModBlocks.FLASH_EMITTER);
-    public static final DeferredItem<BlockItem> LASER_EMITTER_1_ITEM = ITEMS.registerSimpleBlockItem(
-            "laser_emitter_1", ModBlocks.LASER_EMITTER_1);
-    public static final DeferredItem<BlockItem> LASER_EMITTER_2_ITEM = ITEMS.registerSimpleBlockItem(
-            "laser_emitter_2", ModBlocks.LASER_EMITTER_2);
-    public static final DeferredItem<BlockItem> LASER_EMITTER_3_ITEM = ITEMS.registerSimpleBlockItem(
-            "laser_emitter_3", ModBlocks.LASER_EMITTER_3);
+    public static final DeferredItem<BlockItem> FLASH_EMITTER_ITEM = ITEMS.registerItem(
+            "flash_emitter", props -> new TooltipBlockItem(ModBlocks.FLASH_EMITTER.get(), props.useBlockDescriptionPrefix()));
+    public static final DeferredItem<BlockItem> LASER_EMITTER_1_ITEM = ITEMS.registerItem(
+            "laser_emitter_1", props -> new TooltipBlockItem(ModBlocks.LASER_EMITTER_1.get(), props.useBlockDescriptionPrefix()));
+    public static final DeferredItem<BlockItem> LASER_EMITTER_2_ITEM = ITEMS.registerItem(
+            "laser_emitter_2", props -> new TooltipBlockItem(ModBlocks.LASER_EMITTER_2.get(), props.useBlockDescriptionPrefix()));
+    public static final DeferredItem<BlockItem> LASER_EMITTER_3_ITEM = ITEMS.registerItem(
+            "laser_emitter_3", props -> new TooltipBlockItem(ModBlocks.LASER_EMITTER_3.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> LASER_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_mirror", ModBlocks.LASER_MIRROR);
-    public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
-            "cavity_mirror", ModBlocks.CAVITY_MIRROR);
+    public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerItem(
+            "cavity_mirror", props -> new TooltipBlockItem(ModBlocks.CAVITY_MIRROR.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> PHOTODETECTOR_ITEM = ITEMS.registerSimpleBlockItem(
             "photodetector", ModBlocks.PHOTODETECTOR);
     public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(

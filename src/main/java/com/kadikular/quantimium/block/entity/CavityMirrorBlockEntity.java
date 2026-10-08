@@ -33,8 +33,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * One mirror of an optical cavity. Two Cavity Mirrors facing each other across a clear gap hold light
- * between them, as a laser's cavity does. Light that reaches either mirror from outside charges it;
+ * One mirror of an optical cavity. A Cavity Mirror facing another mirror (a Laser Mirror, or a second
+ * Cavity Mirror) across a clear gap holds light between them, as a laser's cavity does. Unpaired, it
+ * passes light on out of its back, as a Laser Mirror does. Light that reaches either mirror from outside charges it;
  * light leaves through its back, the output coupler, for blocks that ask for it. Each holds
  * {@link LaserTuning#CAVITY_FE_PER_BLOCK} for each block of gap, and loses a little every tick, as flux.
  * A mirror that loses its partner, or is broken, lets all its light go as flux.
@@ -44,6 +45,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     private long stored;
     /** Blocks of clear gap to the partner, or 0 for none. */
     private int gap;
+    /** Whether the partner is a Cavity Mirror too, so both hold the light; a Laser Mirror holds none. */
+    private boolean partnerHolds;
     private double leaked;
     /** Whether light leaves by the back; a wrench turns it off, so the cavity only stores. */
     private boolean output = true;
@@ -82,8 +85,9 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return gap * LaserTuning.CAVITY_FE_PER_BLOCK;
     }
 
-    /** Whether a Cavity Mirror faces this one across a clear gap; how many blocks of gap, or 0. */
+    /** Whether a mirror faces this one across a clear gap; how many blocks of gap, or 0. */
     private int findGap() {
+        partnerHolds = false;
         if (level == null) return 0;
         BlockPos.MutableBlockPos at = worldPosition.mutable();
         Direction facing = facing();
@@ -91,7 +95,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
             at.move(facing);
             if (!level.isLoaded(at)) return 0;
             if (level.getBlockEntity(at) instanceof CavityMirrorBlockEntity other) {
+                partnerHolds = true;
                 return other.facing() == facing.getOpposite() && step > 1 ? step - 1 : 0;
+            }
+            BlockState there = level.getBlockState(at);
+            if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) {
+                return there.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING) == facing.getOpposite() && step > 1 ? step - 1 : 0;
             }
             if (!LaserBeam.passes(level, at, level.getBlockState(at))) return 0;
         }
@@ -121,7 +130,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
      * both glow and both can give it out. The lower of the two does it, once a tick.
      */
     private void share(ServerLevel server) {
-        if (!paired()) return;
+        if (!paired() || !partnerHolds) return;
         BlockPos other = worldPosition.relative(facing(), gap + 1);
         if (other.compareTo(worldPosition) < 0 || !(server.getBlockEntity(other) instanceof CavityMirrorBlockEntity partner)) return;
         long total = stored + partner.stored;
@@ -133,8 +142,9 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     }
 
     private void checkPartner(ServerLevel server) {
+        boolean held = partnerHolds;
         int now = findGap();
-        if (now == gap) return;
+        if (now == gap && held == partnerHolds) return;
         gap = now;
         if (stored > capacity()) release(server, stored - capacity());
         setChanged();
@@ -170,10 +180,10 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return worldPosition;
     }
 
-    /** Light leaves by the back, while it has a partner and its output is on. */
+    /** Light leaves by the back while its output is on: what it held when paired, or what reaches it when not. */
     @Override
     public Set<Direction> outputs() {
-        return paired() && output ? Set.of(facing().getOpposite()) : Set.of();
+        return output ? Set.of(facing().getOpposite()) : Set.of();
     }
 
     @Override
@@ -181,14 +191,15 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return LaserTuning.RELAY_RANGE;
     }
 
+    /** Unpaired, it's a mirror: light passes through it, out of its back. */
     @Override
     public boolean relays() {
-        return false;
+        return !paired();
     }
 
     @Override
     public boolean buffers() {
-        return true;
+        return paired();
     }
 
     @Override
@@ -220,10 +231,11 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (!same) sync();
     }
 
-    /** Its output, and the light held, drawn between it and its partner: by the lower of the two, across the whole gap. */
+    /** Its output, and the light held, drawn across the whole gap: by this one, or the lower of two Cavity Mirrors. */
     @Override
     public List<LaserBeam> syncedBeams() {
-        if (gap <= 0 || shownCharge <= 0 || worldPosition.relative(facing(), gap + 1).compareTo(worldPosition) < 0) return shownBeams;
+        if (gap <= 0 || shownCharge <= 0) return shownBeams;
+        if (partnerHolds && worldPosition.relative(facing(), gap + 1).compareTo(worldPosition) < 0) return shownBeams;
         List<LaserBeam> all = new ArrayList<>(shownBeams);
         long flow = (long) Math.pow(10, shownCharge - 1);
         all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true));
@@ -271,6 +283,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         super.saveAdditional(out);
         out.putLong("Stored", stored);
         out.putInt("Gap", gap);
+        out.putBoolean("PartnerHolds", partnerHolds);
         out.putBoolean("Output", output);
     }
 
@@ -279,6 +292,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         super.loadAdditional(in);
         stored = in.getLongOr("Stored", 0);
         gap = in.getIntOr("Gap", 0);
+        partnerHolds = in.getBooleanOr("PartnerHolds", true);
         output = in.getBooleanOr("Output", true);
         shownCharge = in.getIntOr("Charge", 0);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));

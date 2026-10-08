@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * A laser emitter, of one tier. Placed, it faces you. A wrench, or a sneaking
  * empty hand, on another face adds an output there, or takes one away; an empty hand opens it.
  */
-public class LaserEmitterBlock extends BaseEntityBlock {
+public class LaserEmitterBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
@@ -49,6 +49,16 @@ public class LaserEmitterBlock extends BaseEntityBlock {
 
     public LaserTuning.Tier tier() {
         return tier;
+    }
+
+    @Override
+    public void appendTooltip(java.util.function.Consumer<net.minecraft.network.chat.Component> tooltip) {
+        String rate = String.format(java.util.Locale.ROOT, "%,d", tier.rate);
+        tooltip.accept(net.minecraft.network.chat.Component.translatable("block.quantimium.laser_emitter.tip", rate, tier.range)
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
+        if (tier == LaserTuning.Tier.FLASH) {
+            tooltip.accept(net.minecraft.network.chat.Component.translatable("block.quantimium.flash_emitter.tip").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
     }
 
     @Override

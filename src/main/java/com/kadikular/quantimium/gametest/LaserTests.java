@@ -467,4 +467,38 @@ public final class LaserTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aCavityMirrorAndALaserMirrorMakeACavity(GameTestHelper helper) {
+        // Only one end needs to be a Cavity Mirror: it holds the light, the Laser Mirror holds none.
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.WEST));
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(a.paired(), "paired with the Laser Mirror");
+            helper.assertValueEqual(a.capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks of gap");
+            a.fill(20_000);
+        });
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(a.stored() > 19_000, "it keeps what it holds: " + a.stored());
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void anUnpairedCavityMirrorPassesLightOn(GameTestHelper helper) {
+        // Alone, light reaching it leaves by its back, as a Laser Mirror's does by its face.
+        emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var mirror = cavityMirror(helper, new BlockPos(7, Y, 8), Direction.SOUTH);
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(7, Y, 3));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!mirror.paired(), "nothing faces it");
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "light out of its back");
+            TestSupport.clearField(helper);
+        });
+    }
 }

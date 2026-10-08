@@ -19,7 +19,7 @@ public final class LaserTuning {
     /** An optical cavity: the longest gap between its two mirrors, what each holds per block of gap, its rate in and out, and its leak. */
     public static final int CAVITY_MAX_GAP = 16;
     public static final long CAVITY_FE_PER_BLOCK = 10_000_000;
-    public static final long CAVITY_RATE = 32_000;
+    public static final long CAVITY_RATE = 512_000;
     /** The share of what a cavity mirror holds that leaks away each tick, as flux. */
     public static final double CAVITY_LEAK = 0.00002;
 
