@@ -117,7 +117,7 @@ public final class ReactorPlanner {
             making.push(item);
             boolean ok = true;
             for (RecipeShape.Input input : producer.shape().inputs()) {
-                if (!needIngredient(input.ingredient(), input.count() * runs, depth + 1)) {
+                if (!needIngredient(input.ingredient(), input.count() * runs, depth + 1, producer.shape().outputs())) {
                     ok = false;
                     break;
                 }
@@ -147,12 +147,12 @@ public final class ReactorPlanner {
      * Takes or makes {@code n} items matching {@code ingredient}: from what's on hand first, across
      * every matching item, then by making whichever matching item can be made.
      */
-    private boolean needIngredient(Ingredient ingredient, long n, int depth) {
+    private boolean needIngredient(Ingredient ingredient, long n, int depth, List<ItemStack> recipeOutputs) {
         Map<ItemResource, Long> taken = new LinkedHashMap<>();
         n -= takeMatching(made, ingredient, n, false, taken);
         n -= takeMatching(stock, ingredient, n, true, taken);
         if (n <= 0) {
-            leaveRemainders(taken);
+            leaveRemainders(taken, recipeOutputs);
             return true;
         }
         List<ItemStack> options = RecipeCompat.stacks(ingredient);
@@ -162,7 +162,7 @@ public final class ReactorPlanner {
             State saved = save();
             if (need(item, n, depth)) {
                 taken.merge(item, n, Long::sum);
-                leaveRemainders(taken);
+                leaveRemainders(taken, recipeOutputs);
                 return true;
             }
             restore(saved);
@@ -175,11 +175,17 @@ public final class ReactorPlanner {
     /**
      * What a craft leaves of what it took goes back: an empty bucket for a filled one. A tool a
      * recipe keeps, worn or not, is a tool of its shape instead ({@link #needUses}, {@link #haveTool}).
+     * A recipe that already gives the empty container back as one of its outputs (as some machines'
+     * recipes do) isn't given it twice.
      */
-    private void leaveRemainders(Map<ItemResource, Long> taken) {
+    private void leaveRemainders(Map<ItemResource, Long> taken, List<ItemStack> recipeOutputs) {
         taken.forEach((item, count) -> {
             ItemStack left = remainder(item.toStack(1));
-            if (!left.isEmpty()) add(made, ItemResource.of(left), left.getCount() * count);
+            if (left.isEmpty()) return;
+            for (ItemStack output : recipeOutputs) {
+                if (ItemStack.isSameItem(output, left)) return;
+            }
+            add(made, ItemResource.of(left), left.getCount() * count);
         });
     }
 

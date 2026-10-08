@@ -116,6 +116,19 @@ public final class ReactorCountTests {
         helper.succeed();
     }
 
+    // covers: reactor.planning
+    @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
+    public static void aContainerARecipeGivesBackItselfIsNotGivenTwice(GameTestHelper helper) {
+        // A machine that takes a milk bucket and gives a cake and the empty bucket: one bucket, not two.
+        ReactorRecipes recipes = ReactorRecipes.of(List.of(), List.of(new ReactorRecipes.Producer(
+                new RecipeShape(id(), List.of(input(Items.MILK_BUCKET, 1)),
+                        List.of(new ItemStack(Items.CAKE), new ItemStack(Items.BUCKET)), 100), 0)));
+        ReactorPlanner.Result result = ReactorPlanner.plan(recipes, resources(Map.of(Items.MILK_BUCKET, 1L)), of(Items.CAKE), 1);
+        helper.assertTrue(result.planned(), "a cake: " + result.problem());
+        helper.assertValueEqual(result.plan().leftovers().get(of(Items.BUCKET)), 1L, "one bucket back");
+        helper.succeed();
+    }
+
     // covers: reactor.planning.choice
     @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
     public static void theLeastWastefulRecipeIsUsed(GameTestHelper helper) {
