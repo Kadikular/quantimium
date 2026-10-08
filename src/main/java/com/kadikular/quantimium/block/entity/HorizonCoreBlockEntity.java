@@ -166,16 +166,47 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /** Adds what an Input port took. Called on the transaction's commit, so it always fits. */
     public void take(ItemResource item, int amount) {
-        long fits = Math.min(amount, room());
-        if (fits <= 0) return;
-        ledger.add(item, fits);
+        // All of it, even past the room left: two ports in one transaction each checked the room on their
+        // own, and what they took has already left the pipe. A little over is better than items lost.
+        if (amount <= 0) return;
+        ledger.add(item, amount);
         ledgerVersion++;
         setChanged();
     }
 
+    /**
+     * What open transactions have promised away (Materialiser Ports' extractions waiting to commit), so
+     * no other port, or a network, takes it meanwhile.
+     */
+    private final java.util.Map<ItemResource, Long> reserved = new java.util.HashMap<>();
+
+    public void reserve(java.util.Map<ItemResource, Long> items) {
+        items.forEach((item, amount) -> reserved.merge(item, amount, Long::sum));
+    }
+
+    public void release(java.util.Map<ItemResource, Long> items) {
+        items.forEach((item, amount) -> reserved.computeIfPresent(item, (k, have) -> have > amount ? have - amount : null));
+    }
+
+    public boolean hasReservations() {
+        return !reserved.isEmpty();
+    }
+
+    /** What's held and not promised to an open transaction: what a plan may use. */
+    public java.util.Map<ItemResource, Long> available() {
+        java.util.Map<ItemResource, Long> stock = ledger.snapshot();
+        reserved.forEach((item, amount) -> stock.computeIfPresent(item, (k, have) -> have > amount ? have - amount : null));
+        return stock;
+    }
+
+    /** How many of {@code item} are held and not promised to an open transaction. */
+    public long availableCount(ItemResource item) {
+        return Math.max(0, ledger.count(item) - reserved.getOrDefault(item, 0L));
+    }
+
     /** Takes up to {@code amount} of {@code item} out of the horizon as it is, for a network taking it. How many. */
     public long withdraw(ItemResource item, long amount) {
-        long taken = ledger.remove(item, amount);
+        long taken = ledger.remove(item, Math.min(amount, availableCount(item)));
         if (taken > 0) {
             ledgerVersion++;
             setChanged();
@@ -545,7 +576,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /** What the horizon holds and its networks hold, together: what a request may plan with. */
     public java.util.Map<ItemResource, Long> stockWithNetworks(ServerLevel server) {
-        return merged(ledger.snapshot(), networkStock(server));
+        return merged(available(), networkStock(server));
     }
 
     /**
@@ -665,7 +696,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         // the plan, what did come stays held and nothing is made.
         if (!pullFromNetworks(server, plan)) return refused("message.quantimium.reactor.network_moved");
 
-        spend(server, plan, fe);
+        if (!spend(server, plan, fe)) return refused("message.quantimium.reactor.network_moved");
         long toSend = count;
         for (ReactorPortBlockEntity port : outputs) {
             while (toSend > 0) {
@@ -692,9 +723,18 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /**
      * Carries out {@code plan} whose result has gone elsewhere: takes its inputs, keeps its leftovers,
-     * pays {@code fe}, and lights the moons that worked. The caller has checked it still fits.
+     * pays {@code fe}, and lights the moons that worked. The caller has checked it still fits. Refuses,
+     * changing nothing, if the horizon doesn't hold everything the plan uses.
      */
-    public void spend(ServerLevel server, ReactorPlanner.Plan plan, long fe) {
+    public boolean spend(ServerLevel server, ReactorPlanner.Plan plan, long fe) {
+        // Never more than is held: a plan that's gone stale would otherwise make things from nothing.
+        for (var entry : plan.consumed().entrySet()) {
+            if (ledger.count(entry.getKey()) < entry.getValue()) {
+                com.kadikular.quantimium.Quantimium.LOGGER.error("A Horizon Core at {} was asked to use {} x{} but holds {}; "
+                        + "nothing was made", worldPosition, entry.getKey(), entry.getValue(), ledger.count(entry.getKey()));
+                return false;
+            }
+        }
         plan.consumed().forEach(ledger::remove);
         plan.leftovers().forEach(ledger::add);
         ledgerVersion++;
@@ -710,6 +750,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
             server.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
         setChanged();
+        return true;
     }
 
     private static ReactorPlanner.Result refused(String key) {

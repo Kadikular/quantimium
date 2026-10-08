@@ -379,6 +379,8 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             if (answer == null) return 0;
             updateSnapshots(transaction);
             ops.add(answer);
+            // Promised: no other port, nor a network, takes it before this transaction is done.
+            horizon.reserve(answer.plan().consumed());
             return answer.amount();
         }
 
@@ -386,19 +388,20 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         @Nullable
         private Op answer(HorizonCoreBlockEntity horizon, ItemResource item, int amount) {
             long tick = level.getGameTime();
-            boolean clean = ops.isEmpty();
+            boolean clean = ops.isEmpty() && !horizon.hasReservations();
             if (clean && cachedTick == tick && cachedVersion == horizon.ledgerVersion() && item.equals(cachedItem)
                     && cachedAmount == amount) {
                 return cachedAnswer;
             }
-            java.util.Map<ItemResource, Long> stock = horizon.getLedger().snapshot();
+            // What's held less what any open transaction has promised (this one's included), and what this
+            // one's own earlier steps leave or put in.
+            java.util.Map<ItemResource, Long> stock = horizon.available();
             long fe = horizon.getEnergyStorage().getEnergyStored();
             for (Op op : ops) {
                 if (op.plan() == null) {
                     stock.merge(op.item(), (long) op.amount(), Long::sum);
                     continue;
                 }
-                op.plan().consumed().forEach((taken, count) -> stock.computeIfPresent(taken, (k, have) -> have > count ? have - count : null));
                 op.plan().leftovers().forEach((left, count) -> stock.merge(left, count, Long::sum));
                 fe -= op.fe();
             }
@@ -436,7 +439,11 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
 
         @Override
         protected void revertToSnapshot(Integer snapshot) {
-            while (ops.size() > snapshot) ops.removeLast();
+            HorizonCoreBlockEntity horizon = core();
+            while (ops.size() > snapshot) {
+                Op op = ops.removeLast();
+                if (op.plan() != null && horizon != null) horizon.release(op.plan().consumed());
+            }
         }
 
         @Override
@@ -444,8 +451,12 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             HorizonCoreBlockEntity horizon = core();
             if (horizon != null && level instanceof net.minecraft.server.level.ServerLevel server) {
                 for (Op op : ops) {
-                    if (op.plan() == null) horizon.take(op.item(), op.amount());
-                    else horizon.spend(server, op.plan(), op.fe());
+                    if (op.plan() == null) {
+                        horizon.take(op.item(), op.amount());
+                        continue;
+                    }
+                    horizon.release(op.plan().consumed());
+                    horizon.spend(server, op.plan(), op.fe());
                 }
             }
             ops.clear();

@@ -174,6 +174,60 @@ public final class ReactorTests {
         });
     }
 
+    // covers: reactor.materialiser_port.transactions
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
+    public static void twoMaterialiserPortsInOneTransactionNeverPromiseTheSameLog(GameTestHelper helper) {
+        // One log, two Materialiser Ports, one transaction asking each for four planks: only one gets them.
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        bay(helper, CORE.below().east(2), Items.CRAFTING_TABLE);
+        BlockPos a = CORE.below().east(5);
+        BlockPos b = CORE.below().west(5);
+        helper.setBlock(a, ModBlocks.REACTOR_MATERIALISER_PORT.get());
+        helper.setBlock(b, ModBlocks.REACTOR_MATERIALISER_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        core.getLedger().add(ItemResource.of(Items.OAK_LOG), 1);
+        helper.runAfterDelay(2, () -> {
+            core.recountNow();
+            var first = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(a), null);
+            var second = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(b), null);
+            ItemResource planks = ItemResource.of(Items.OAK_PLANKS);
+            int got;
+            try (Transaction tx = Transaction.openRoot()) {
+                got = first.extract(planks, 4, tx) + second.extract(planks, 4, tx);
+                tx.commit();
+            }
+            helper.assertValueEqual(got, 4, "four planks between them, from one log");
+            helper.assertValueEqual(core.getLedger().count(ItemResource.of(Items.OAK_LOG)), 0L, "the log used once");
+            helper.assertTrue(!core.hasReservations(), "nothing left promised");
+            helper.succeed();
+        });
+    }
+
+    // covers: reactor.input
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
+    public static void twoInputPortsAtTheLimitLoseNothing(GameTestHelper helper) {
+        // Room for one more item, and two Input ports each taking one in the same transaction: both kept.
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        BlockPos second = CORE.below().west(5);
+        helper.setBlock(second, ModBlocks.REACTOR_INPUT_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        core.getLedger().add(ItemResource.of(Items.COBBLESTONE), core.capacity() - 1);
+        helper.runAfterDelay(2, () -> {
+            var one = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(INPUT), null);
+            var two = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(second), null);
+            int taken;
+            try (Transaction tx = Transaction.openRoot()) {
+                taken = one.insert(ItemResource.of(Items.DIAMOND), 1, tx) + two.insert(ItemResource.of(Items.DIAMOND), 1, tx);
+                tx.commit();
+            }
+            helper.assertValueEqual(core.getLedger().count(ItemResource.of(Items.DIAMOND)), (long) taken,
+                    "every diamond the ports took is held");
+            helper.succeed();
+        });
+    }
+
     // covers: reactor.input
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
     public static void anInputPortFeedsTheHorizonOnlyWhenPowered(GameTestHelper helper) {

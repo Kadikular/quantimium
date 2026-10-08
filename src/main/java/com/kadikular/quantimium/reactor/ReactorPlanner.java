@@ -184,7 +184,7 @@ public final class ReactorPlanner {
     }
 
     /** What crafting with one {@code stack} leaves behind, if anything. */
-    static ItemStack remainder(ItemStack stack) {
+    public static ItemStack remainder(ItemStack stack) {
         net.minecraft.world.item.ItemStackTemplate left = stack.getItem().getCraftingRemainder(stack);
         return left == null ? ItemStack.EMPTY : left.create();
     }

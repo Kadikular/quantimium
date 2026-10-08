@@ -57,7 +57,9 @@ public final class SuperpositionPattern implements IPatternDetails {
         this.definition = AEItemKey.of(marker);
 
         List<IInput> list = new ArrayList<>();
-        for (RecipeShape.Input input : shape.inputs()) list.add(new Input(input.ingredient(), input.count() * this.batch));
+        for (RecipeShape.Input input : shape.inputs()) {
+            list.add(new Input(input.ingredient(), input.count() * this.batch, Input.possibleOf(input.ingredient()), tools));
+        }
         if (tools) {
             for (Ingredient tool : shape.tools()) {
                 boolean wears = shape.wears().stream().anyMatch(worn -> worn == tool);
@@ -108,12 +110,11 @@ public final class SuperpositionPattern implements IPatternDetails {
         return definition.hashCode();
     }
 
-    /** Any item the ingredient accepts, {@code count} of them per run. */
-    private record Input(Ingredient ingredient, long count, GenericStack[] possible) implements IInput {
-
-        Input(Ingredient ingredient, int count) {
-            this(ingredient, count, possibleOf(ingredient));
-        }
+    /**
+     * Any item the ingredient accepts, {@code count} of them per run. With {@code givesBack}, what a craft
+     * leaves of it (an empty bucket for a filled one) comes back, for a provider that hands it back.
+     */
+    private record Input(Ingredient ingredient, long count, GenericStack[] possible, boolean givesBack) implements IInput {
 
         static GenericStack[] possibleOf(Ingredient ingredient) {
             List<GenericStack> stacks = new ArrayList<>();
@@ -143,7 +144,9 @@ public final class SuperpositionPattern implements IPatternDetails {
         @Nullable
         @Override
         public AEKey getRemainingKey(AEKey template) {
-            return null;
+            if (!givesBack || !(template instanceof AEItemKey item)) return null;
+            ItemStack left = com.kadikular.quantimium.reactor.ReactorPlanner.remainder(item.toStack());
+            return left.isEmpty() ? null : AEItemKey.of(left);
         }
     }
 }

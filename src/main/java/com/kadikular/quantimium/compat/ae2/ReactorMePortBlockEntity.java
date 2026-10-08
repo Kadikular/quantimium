@@ -342,7 +342,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             if (horizon == null || !(what instanceof AEItemKey key) || amount <= 0) return 0;
             ItemResource item = key.toResource();
             if (!shows(item)) return 0;
-            long available = Math.min(amount, horizon.getLedger().count(item));
+            long available = Math.min(amount, horizon.availableCount(item));
             if (available <= 0) return 0;
             return mode == Actionable.MODULATE ? horizon.withdraw(item, available) : available;
         }
@@ -636,6 +636,23 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 String.format(java.util.Locale.ROOT, "%,d", patterns.size()),
                 Component.translatable("message.quantimium.reactor_me_port.mode." + mode.name().toLowerCase(java.util.Locale.ROOT) + ".short"))
                 .withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
+    }
+
+    /** Broken, it drops what it made and hadn't yet handed to the network. */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level == null) return;
+        for (GenericStack stack : pending) {
+            if (!(stack.what() instanceof AEItemKey item)) continue;
+            long left = stack.amount();
+            while (left > 0) {
+                int count = (int) Math.min(left, item.getReadOnlyStack().getMaxStackSize());
+                net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), item.toStack(count));
+                left -= count;
+            }
+        }
+        pending.clear();
     }
 
     // ---- ME node ----

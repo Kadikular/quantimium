@@ -412,6 +412,26 @@ public final class Ae2ReactorPortTests {
         });
     }
 
+    // covers: reactor.me_port.tools
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_buckets", timeoutTicks = 400)
+    public static void aStepGivesBackItsBuckets(GameTestHelper helper) {
+        // A cake step by step: three milk buckets go in, and three empty buckets come back to the network.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        helper.setBlock(CELL.north(), block("ae2:1k_crafting_storage"));
+        helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class).setMode(ReactorMePortBlockEntity.Mode.STEPS);
+        horizon.take(ItemResource.of(Items.MILK_BUCKET), 3);
+        horizon.take(ItemResource.of(Items.SUGAR), 2);
+        horizon.take(ItemResource.of(Items.EGG), 1);
+        horizon.take(ItemResource.of(Items.WHEAT), 3);
+        horizon.recountNow();
+        Object[] job = new Object[2];
+        helper.succeedWhen(() -> craft(helper, job, AEItemKey.of(Items.CAKE), 1, () -> {
+            var storage = grid(helper).getStorageService();
+            helper.assertValueEqual(storage.getCachedInventory().get(AEItemKey.of(Items.CAKE)), 1L, "a cake");
+            helper.assertValueEqual(storage.getCachedInventory().get(AEItemKey.of(Items.BUCKET)), 3L, "and the three buckets");
+        }));
+    }
+
     // covers: reactor.me_port.loops
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_loop", timeoutTicks = 300)
     public static void aStorageBusOnItsOwnMaterialiserPortCountsNothingTwice(GameTestHelper helper) {
