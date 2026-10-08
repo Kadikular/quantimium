@@ -409,4 +409,62 @@ public final class LaserTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void anEmitterFillsACavityThatsGivingToABlock(GameTestHelper helper) {
+        // Emitter into a cavity whose back feeds a void that never fills: the emitter still fills the
+        // cavity, and pays only for what its own light reaches.
+        LaserEmitterBlockEntity emitter = emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        cavityMirror(helper, new BlockPos(9, Y, 8), Direction.WEST);
+        helper.setBlock(new BlockPos(13, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
+        var drain = helper.getBlockEntity(new BlockPos(13, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
+        helper.runAfterDelay(65, () -> {
+            helper.assertTrue(emitter.sending() > 0, "the emitter sends into the cavity: " + emitter.sending());
+            helper.assertTrue(drain.taking() > 0, "the cavity gives out of its back: " + drain.taking());
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            helper.setBlock(new BlockPos(9, Y, 8), Blocks.AIR);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aCavityWithItsOutputOffOnlyStores(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        cavityMirror(helper, new BlockPos(9, Y, 8), Direction.WEST);
+        helper.setBlock(new BlockPos(13, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
+        var drain = helper.getBlockEntity(new BlockPos(13, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
+        helper.getBlockEntity(new BlockPos(9, Y, 8), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class).toggleOutput();
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(a.stored() > 0, "it fills");
+            helper.assertValueEqual(drain.taking(), 0L, "and gives nothing out");
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            helper.setBlock(new BlockPos(9, Y, 8), Blocks.AIR);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aPrismLetsGoOfGrassThatsGone(GameTestHelper helper) {
+        // Light passes through grass and through air alike, so only the block being gone shows it.
+        BlockPos target = new BlockPos(12, Y, 12);
+        var prism = prism(helper, new BlockPos(7, Y, 8));
+        helper.setBlock(target.below(), Blocks.GRASS_BLOCK);
+        helper.setBlock(target, Blocks.SHORT_GRASS);
+        prism.toggleLink(helper.absolutePos(target));
+        helper.runAfterDelay(15, () -> {
+            helper.assertValueEqual(prism.targets().size(), 1, "linked");
+            helper.setBlock(target, Blocks.AIR);
+        });
+        helper.runAfterDelay(40, () -> {
+            helper.assertValueEqual(prism.targets().size(), 0, "let go");
+            helper.succeed();
+        });
+    }
 }

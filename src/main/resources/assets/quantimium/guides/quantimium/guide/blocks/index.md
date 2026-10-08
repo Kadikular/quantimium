@@ -19,6 +19,7 @@ navigation:
 - <ItemLink id="quantimium:catalyst_bay" />
 - <ItemLink id="quantimium:cavity_mirror" />
 - <ItemLink id="quantimium:creative_energy_cell" />
+- <ItemLink id="quantimium:creative_energy_void" />
 - <ItemLink id="quantimium:decoherence_projector" />
 - <ItemLink id="quantimium:entangled_dock" />
 - <ItemLink id="quantimium:field_monitor" />

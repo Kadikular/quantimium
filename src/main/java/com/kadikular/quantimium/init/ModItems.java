@@ -137,6 +137,8 @@ public class ModItems {
             "flux_detector", ModBlocks.FLUX_DETECTOR);
     public static final DeferredItem<BlockItem> CREATIVE_ENERGY_CELL_ITEM = ITEMS.registerItem(
             "creative_energy_cell", props -> new TooltipBlockItem(ModBlocks.CREATIVE_ENERGY_CELL.get(), props.useBlockDescriptionPrefix()));
+    public static final DeferredItem<BlockItem> CREATIVE_ENERGY_VOID_ITEM = ITEMS.registerItem(
+            "creative_energy_void", props -> new TooltipBlockItem(ModBlocks.CREATIVE_ENERGY_VOID.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> DEBUG_FIELD_EMITTER_ITEM = ITEMS.registerItem(
             "debug_field_emitter", props -> new TooltipBlockItem(ModBlocks.DEBUG_FIELD_EMITTER.get(), props.useBlockDescriptionPrefix()));
 

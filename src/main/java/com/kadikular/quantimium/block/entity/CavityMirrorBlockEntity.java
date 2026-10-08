@@ -45,6 +45,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     /** Blocks of clear gap to the partner, or 0 for none. */
     private int gap;
     private double leaked;
+    /** Whether light leaves by the back; a wrench turns it off, so the cavity only stores. */
+    private boolean output = true;
     private List<LaserBeam> shownBeams = List.of();
     /** On the client: how bright the light held looks, for the glow between the mirrors. */
     private int shownCharge;
@@ -63,6 +65,17 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
 
     public long stored() {
         return stored;
+    }
+
+    public boolean output() {
+        return output;
+    }
+
+    /** Turns light out of the back on or off. */
+    public void toggleOutput() {
+        output = !output;
+        setChanged();
+        if (level != null) LaserNetworks.changed(level);
     }
 
     public long capacity() {
@@ -157,10 +170,10 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return worldPosition;
     }
 
-    /** Light leaves by the back, while it has a partner. */
+    /** Light leaves by the back, while it has a partner and its output is on. */
     @Override
     public Set<Direction> outputs() {
-        return paired() ? Set.of(facing().getOpposite()) : Set.of();
+        return paired() && output ? Set.of(facing().getOpposite()) : Set.of();
     }
 
     @Override
@@ -180,7 +193,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
 
     @Override
     public long available() {
-        return paired() ? Math.min(stored, LaserTuning.CAVITY_RATE) : 0;
+        return paired() && output ? Math.min(stored, LaserTuning.CAVITY_RATE) : 0;
     }
 
     @Override
@@ -207,14 +220,13 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (!same) sync();
     }
 
-    /** Its output, and the light held, drawn between it and its partner. */
+    /** Its output, and the light held, drawn between it and its partner: by the lower of the two, across the whole gap. */
     @Override
     public List<LaserBeam> syncedBeams() {
-        if (gap <= 0 || shownCharge <= 0) return shownBeams;
+        if (gap <= 0 || shownCharge <= 0 || worldPosition.relative(facing(), gap + 1).compareTo(worldPosition) < 0) return shownBeams;
         List<LaserBeam> all = new ArrayList<>(shownBeams);
-        // Half the gap from each mirror: the two halves meet in the middle.
         long flow = (long) Math.pow(10, shownCharge - 1);
-        all.add(new LaserBeam(worldPosition, facing(), null, (gap + 1) / 2, null, LaserBeam.End.OPEN, flow, true));
+        all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true));
         return all;
     }
 
@@ -259,6 +271,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         super.saveAdditional(out);
         out.putLong("Stored", stored);
         out.putInt("Gap", gap);
+        out.putBoolean("Output", output);
     }
 
     @Override
@@ -266,6 +279,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         super.loadAdditional(in);
         stored = in.getLongOr("Stored", 0);
         gap = in.getIntOr("Gap", 0);
+        output = in.getBooleanOr("Output", true);
         shownCharge = in.getIntOr("Charge", 0);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
@@ -288,7 +302,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     @Nullable
     public MutableComponent fluxMeterLine() {
         if (!paired()) return Component.translatable("message.quantimium.cavity.unpaired").withStyle(ChatFormatting.GRAY);
-        return Component.translatable("message.quantimium.cavity.holds", String.format(java.util.Locale.ROOT, "%,d", stored),
+        MutableComponent line = Component.translatable("message.quantimium.cavity.holds", String.format(java.util.Locale.ROOT, "%,d", stored),
                 String.format(java.util.Locale.ROOT, "%,d", capacity()), gap).withStyle(ChatFormatting.DARK_AQUA);
+        return output ? line : line.append(Component.translatable("message.quantimium.cavity.no_output").withStyle(ChatFormatting.GRAY));
     }
 }

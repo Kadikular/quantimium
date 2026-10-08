@@ -24,6 +24,7 @@ zeno_field_controller: "Holds the random ticks around it still, or runs them up 
 anomaly_fragment: "Drawn off by Anomaly Siphons as they hold anomaly down. A common ingredient in mid-game machines."
 debug_field_emitter: "Creative only. Stirs the field as a machine spending that much power would."
 creative_energy_cell: "Creative only. An endless supply of power for the blocks next to it."
+creative_energy_void: "Creative only. Takes all the power it's given and keeps none."
 
 # ---- Crafting ----
 basic_decoherence_matrix: "The heart of the Basic Quantum Crafter."

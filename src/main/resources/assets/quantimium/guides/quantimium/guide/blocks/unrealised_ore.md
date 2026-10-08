@@ -2,7 +2,7 @@
 navigation:
   title: Unrealised Ore
   parent: blocks/index.md
-  position: 68
+  position: 69
   icon: quantimium:unrealised_ore
 item_ids:
 - quantimium:unrealised_ore

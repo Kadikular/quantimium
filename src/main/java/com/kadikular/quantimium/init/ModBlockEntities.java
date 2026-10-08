@@ -5,6 +5,7 @@ import com.kadikular.quantimium.block.entity.AnomaliteCrystalBlockEntity;
 import com.kadikular.quantimium.block.entity.BuddingAnomaliteBlockEntity;
 import com.kadikular.quantimium.block.entity.ContainmentHallBlockEntity;
 import com.kadikular.quantimium.block.entity.CreativeEnergyCellBlockEntity;
+import com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity;
 import com.kadikular.quantimium.block.entity.DebugFieldEmitterBlockEntity;
 import com.kadikular.quantimium.block.entity.DecoherenceProjectorBlockEntity;
 import com.kadikular.quantimium.block.entity.EntangledDockBlockEntity;
@@ -156,6 +157,10 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluxDetectorBlockEntity>> FLUX_DETECTOR_BE =
             BLOCK_ENTITIES.register("flux_detector_be", () ->
                     new BlockEntityType<>(FluxDetectorBlockEntity::new, ModBlocks.FLUX_DETECTOR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CreativeEnergyVoidBlockEntity>> CREATIVE_ENERGY_VOID_BE =
+            BLOCK_ENTITIES.register("creative_energy_void_be", () ->
+                    new BlockEntityType<>(CreativeEnergyVoidBlockEntity::new, ModBlocks.CREATIVE_ENERGY_VOID.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CreativeEnergyCellBlockEntity>> CREATIVE_ENERGY_CELL_BE =
             BLOCK_ENTITIES.register("creative_energy_cell_be", () ->

@@ -135,6 +135,12 @@ public class Quantimium {
                 ModBlockEntities.CREATIVE_ENERGY_CELL_BE.get(),
                 (be, context) -> InfiniteEnergyHandler.INSTANCE
         );
+        // Takes everything, keeps nothing.
+        event.registerBlockEntity(
+                Capabilities.Energy.BLOCK,
+                ModBlockEntities.CREATIVE_ENERGY_VOID_BE.get(),
+                (be, context) -> be.energy()
+        );
 
         // Laser emitters take power on every face; the flash emitter takes fuel too.
         event.registerBlockEntity(

@@ -22,6 +22,7 @@ import com.kadikular.quantimium.block.PhotodetectorBlock;
 import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.block.ReactorPortBlock;
 import com.kadikular.quantimium.block.CreativeEnergyCellBlock;
+import com.kadikular.quantimium.block.CreativeEnergyVoidBlock;
 import com.kadikular.quantimium.block.DebugFieldEmitterBlock;
 import com.kadikular.quantimium.block.DecoherenceProjectorBlock;
 import com.kadikular.quantimium.block.EntangledDockBlock;
@@ -524,6 +525,15 @@ public class ModBlocks {
             id -> new CreativeEnergyCellBlock(BlockBehaviour.Properties.of()
                     .setId(ResourceKey.create(Registries.BLOCK, id))
                     .mapColor(MapColor.COLOR_MAGENTA)
+                    .strength(-1.0f, 3_600_000.0f)
+                    .noLootTable()));
+
+    /** Creative testing only; see CreativeEnergyVoidBlock. */
+    public static final DeferredBlock<Block> CREATIVE_ENERGY_VOID = BLOCKS.register(
+            "creative_energy_void",
+            id -> new CreativeEnergyVoidBlock(BlockBehaviour.Properties.of()
+                    .setId(ResourceKey.create(Registries.BLOCK, id))
+                    .mapColor(MapColor.COLOR_BLACK)
                     .strength(-1.0f, 3_600_000.0f)
                     .noLootTable()));
 

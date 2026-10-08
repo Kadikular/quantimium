@@ -28,4 +28,17 @@ public final class CreativeEnergyCellTests {
             });
         });
     }
+
+    @GameTest(template = TestSupport.FLOOR_9, batch = "creative_energy_cell", timeoutTicks = 60)
+    public static void theVoidTakesAllItsGivenAndKeepsNone(GameTestHelper helper) {
+        BlockPos voidPos = new BlockPos(4, 2, 4);
+        helper.setBlock(voidPos, ModBlocks.CREATIVE_ENERGY_VOID.get());
+        helper.setBlock(voidPos.east(), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        var drain = helper.getBlockEntity(voidPos, com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(drain.taking() > 1_000_000, "it takes all the cell pushes: " + drain.taking());
+            helper.assertValueEqual(drain.energy().getAmountAsLong(), 0L, "and keeps none");
+            helper.succeed();
+        });
+    }
 }

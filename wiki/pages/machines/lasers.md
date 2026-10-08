@@ -59,7 +59,7 @@ them could send. It refocuses and taxes light as a mirror does.
 pick it, then on each block its light should reach, once to link it and again to unlink it. A prism
 links up to {{c:LaserTuning.PRISM_LINKS}} blocks, within {{c:LaserTuning.PRISM_RANGE}} blocks. Sneak-use
 the Linker in the air to let the prism go, and sneak-click the prism with an empty hand to let go of
-all its links. A link to a block that's been removed is let go of by itself. Holding the Linker, or a wrench, shows every beam faintly,
+all its links. A link to a block that's been removed, even one light passes through such as grass, is let go of by itself. Holding the Linker, or a wrench, shows every beam faintly,
 even ones carrying nothing, so you can see where light would go.
 
 ## Optical cavities
@@ -72,14 +72,16 @@ block of gap, and takes or gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t.
 - Light that reaches a cavity mirror from outside charges it, but only with what the network's
   emitters have left over once its blocks are served. One cavity never fills another.
 - Light leaves by the mirror's **back**, its output coupler, for the blocks that ask for it. A network
-  serves its blocks from its emitters first, then from its cavities.
+  serves its blocks from its emitters first, then from its cavities. Use a wrench on a mirror to turn
+  its back output off, or on again: a mirror with its output off only stores. Sneak-click a face with
+  an empty hand to point the mirror there.
 - The light bounces between the two mirrors, so what either holds evens out between them: both glow,
   and both can give it out.
 - A cavity leaks: each tick it loses {{c:LaserTuning.CAVITY_LEAK|pct}} of what it holds, and that
   becomes flux where it stands. Break a charged mirror, or block its gap, and the light it held all goes
   into the field at once.
 
-The held light glows between the two mirrors, brighter the more there is.
+The held light glows in one beam across the gap, brighter the more there is.
 
 ## Photodetectors
 
@@ -102,7 +104,8 @@ block beyond it gets nothing.
 
 Emitters, mirrors, prisms, cavities and photodetectors joined by light make one network. Power goes where it's asked for: every block
 the network's light reaches is charged as far as the network's emitters have power, shared between
-them in proportion to what each has. Light reaches a block by the fewest mirrors it can.
+the emitters whose light reaches it in proportion to what each has. An emitter only ever pays for the
+blocks its own light reaches. Light reaches a block by the fewest mirrors it can.
 
 Use the Flux Meter, or look with Jade, at an emitter or mirror to see what it's sending or passing on.
 [[mechanic:laser.live]] Beams glow brighter the more they carry. A switched-on emitter with power keeps

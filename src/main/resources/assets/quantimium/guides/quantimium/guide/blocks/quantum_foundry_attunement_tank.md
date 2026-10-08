@@ -2,7 +2,7 @@
 navigation:
   title: Attunement Tank
   parent: blocks/index.md
-  position: 47
+  position: 48
   icon: quantimium:quantum_foundry_attunement_tank
 ---
 

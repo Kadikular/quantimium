@@ -40,6 +40,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.FLUX_DETECTOR_ITEM.get());
                         output.accept(ModItems.DEBUG_FIELD_EMITTER_ITEM.get());
                         output.accept(ModItems.CREATIVE_ENERGY_CELL_ITEM.get());
+                        output.accept(ModItems.CREATIVE_ENERGY_VOID_ITEM.get());
                         output.accept(ModItems.QUANTUM_EXCITER_ITEM.get());
                         output.accept(ModItems.FLUX_SUPPRESSOR_ITEM.get());
                         output.accept(ModItems.ZENO_FIELD_CONTROLLER_ITEM.get());

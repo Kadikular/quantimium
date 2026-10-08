@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A Cavity Mirror. Two facing each other across a clear gap hold light between them. Placed, it faces
- * the way you were looking; a wrench, or a sneaking empty hand, on a face turns it there.
+ * you; a sneaking empty hand on a face turns it there, and a wrench turns its back output on or off.
  */
 public class CavityMirrorBlock extends BaseEntityBlock {
     public static final MapCodec<CavityMirrorBlock> CODEC = simpleCodec(CavityMirrorBlock::new);
@@ -80,7 +80,13 @@ public class CavityMirrorBlock extends BaseEntityBlock {
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
         if (!stack.is(ModTags.TOOLS_WRENCH)) return InteractionResult.TRY_WITH_EMPTY_HAND;
-        return point(state, level, pos, hit.getDirection());
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity mirror) {
+            mirror.toggleOutput();
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, mirror.output() ? 1.3f : 0.8f);
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable(mirror.output()
+                    ? "message.quantimium.cavity.output_on" : "message.quantimium.cavity.output_off"));
+        }
+        return InteractionResult.SUCCESS;
     }
 
     @Override

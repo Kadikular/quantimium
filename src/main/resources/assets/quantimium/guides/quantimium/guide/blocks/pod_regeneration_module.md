@@ -2,7 +2,7 @@
 navigation:
   title: Pod Regeneration Module
   parent: blocks/index.md
-  position: 39
+  position: 40
   icon: quantimium:pod_regeneration_module
 ---
 

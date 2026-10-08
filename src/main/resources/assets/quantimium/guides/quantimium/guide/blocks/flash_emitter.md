@@ -2,7 +2,7 @@
 navigation:
   title: Flash Emitter
   parent: blocks/index.md
-  position: 15
+  position: 16
   icon: quantimium:flash_emitter
 item_ids:
 - quantimium:flash_emitter

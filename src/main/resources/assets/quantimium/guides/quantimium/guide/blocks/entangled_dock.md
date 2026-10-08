@@ -2,7 +2,7 @@
 navigation:
   title: Entangled Dock
   parent: blocks/index.md
-  position: 12
+  position: 13
   icon: quantimium:entangled_dock
 item_ids:
 - quantimium:entangled_dock

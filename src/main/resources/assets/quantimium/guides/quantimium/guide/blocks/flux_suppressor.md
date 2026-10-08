@@ -2,7 +2,7 @@
 navigation:
   title: Flux Suppressor
   parent: blocks/index.md
-  position: 18
+  position: 19
   icon: quantimium:flux_suppressor
 item_ids:
 - quantimium:flux_suppressor

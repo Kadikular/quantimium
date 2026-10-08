@@ -2,7 +2,7 @@
 navigation:
   title: Fold Pylon
   parent: blocks/index.md
-  position: 20
+  position: 21
   icon: quantimium:fold_pylon
 ---
 

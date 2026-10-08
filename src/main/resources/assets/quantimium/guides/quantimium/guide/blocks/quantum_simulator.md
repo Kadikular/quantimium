@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Simulator
   parent: blocks/index.md
-  position: 53
+  position: 54
   icon: quantimium:quantum_simulator
 item_ids:
 - quantimium:quantum_simulator

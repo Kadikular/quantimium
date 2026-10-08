@@ -2,7 +2,7 @@
 navigation:
   title: Photodetector
   parent: blocks/index.md
-  position: 33
+  position: 34
   icon: quantimium:photodetector
 item_ids:
 - quantimium:photodetector

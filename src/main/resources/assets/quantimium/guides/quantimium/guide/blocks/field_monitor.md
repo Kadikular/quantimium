@@ -2,7 +2,7 @@
 navigation:
   title: Field Monitor
   parent: blocks/index.md
-  position: 13
+  position: 14
   icon: quantimium:field_monitor
 item_ids:
 - quantimium:field_monitor
