@@ -22,6 +22,7 @@ navigation:
 - <ItemLink id="quantimium:entangled_dock" />
 - <ItemLink id="quantimium:field_monitor" />
 - <ItemLink id="quantimium:field_regulator" />
+- <ItemLink id="quantimium:flash_emitter" />
 - <ItemLink id="quantimium:flux_detector" />
 - <ItemLink id="quantimium:flux_maintainer" />
 - <ItemLink id="quantimium:flux_suppressor" />
@@ -30,6 +31,10 @@ navigation:
 - <ItemLink id="quantimium:fold_rail" />
 - <ItemLink id="quantimium:harvest_laser" />
 - <ItemLink id="quantimium:horizon_core" />
+- <ItemLink id="quantimium:laser_emitter_1" />
+- <ItemLink id="quantimium:laser_emitter_2" />
+- <ItemLink id="quantimium:laser_emitter_3" />
+- <ItemLink id="quantimium:laser_mirror" />
 - <ItemLink id="quantimium:lit_reactor_plinth" />
 - <ItemLink id="quantimium:materialiser" />
 - <ItemLink id="quantimium:me_superposition_crafter" />

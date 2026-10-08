@@ -15,3 +15,4 @@ navigation:
 - [Tesseract Stabiliser](tesseract-stabilizer.md)
 - [Zeno Field Controller](zeno-field-controller.md)
 - [ME Superposition Crafter](me-superposition-crafter.md)
+- [Lasers](lasers.md)

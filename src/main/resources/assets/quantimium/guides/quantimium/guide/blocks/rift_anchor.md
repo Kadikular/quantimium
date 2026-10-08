@@ -2,7 +2,7 @@
 navigation:
   title: Rift Anchor
   parent: blocks/index.md
-  position: 52
+  position: 57
   icon: quantimium:rift_anchor
 ---
 

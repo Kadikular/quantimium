@@ -74,6 +74,7 @@ nav:
       - Tesseract Stabilizer: machines/tesseract-stabilizer.md
       - Zeno Field Controller: machines/zeno-field-controller.md
       - ME Superposition Crafter: machines/me-superposition-crafter.md
+      - Lasers: machines/lasers.md
   - Multiblocks:
       - Quantum Foundry: multiblocks/quantum-foundry.md
       - Anomaly Containment Hall: multiblocks/containment-hall.md

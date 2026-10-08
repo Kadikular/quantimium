@@ -14,6 +14,9 @@ import com.kadikular.quantimium.block.HorizonCoreBlock;
 import com.kadikular.quantimium.block.ReactorPartBlock;
 import com.kadikular.quantimium.block.ReactorPlinthBlock;
 import com.kadikular.quantimium.block.LitReactorPlinthBlock;
+import com.kadikular.quantimium.block.LaserEmitterBlock;
+import com.kadikular.quantimium.block.LaserMirrorBlock;
+import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.block.ReactorPortBlock;
 import com.kadikular.quantimium.block.CreativeEnergyCellBlock;
 import com.kadikular.quantimium.block.DebugFieldEmitterBlock;
@@ -685,6 +688,29 @@ public class ModBlocks {
                 .strength(5.0f, 12.0f)
                 .requiresCorrectToolForDrops()
                 .lightLevel(formedLight(6));
+    }
+
+    // ---- Lasers ----
+
+    public static final DeferredBlock<Block> FLASH_EMITTER = BLOCKS.register(
+            "flash_emitter", id -> new LaserEmitterBlock(laserBlock(id, MapColor.METAL), LaserTuning.Tier.FLASH));
+    public static final DeferredBlock<Block> LASER_EMITTER_1 = BLOCKS.register(
+            "laser_emitter_1", id -> new LaserEmitterBlock(laserBlock(id, MapColor.COLOR_LIGHT_BLUE), LaserTuning.Tier.ONE));
+    public static final DeferredBlock<Block> LASER_EMITTER_2 = BLOCKS.register(
+            "laser_emitter_2", id -> new LaserEmitterBlock(laserBlock(id, MapColor.COLOR_BLUE), LaserTuning.Tier.TWO));
+    public static final DeferredBlock<Block> LASER_EMITTER_3 = BLOCKS.register(
+            "laser_emitter_3", id -> new LaserEmitterBlock(laserBlock(id, MapColor.COLOR_PURPLE), LaserTuning.Tier.THREE));
+    public static final DeferredBlock<Block> LASER_MIRROR = BLOCKS.register(
+            "laser_mirror", id -> new LaserMirrorBlock(laserBlock(id, MapColor.QUARTZ)));
+
+    private static BlockBehaviour.Properties laserBlock(Identifier id, MapColor color) {
+        return BlockBehaviour.Properties.of()
+                .setId(ResourceKey.create(Registries.BLOCK, id))
+                .mapColor(color)
+                .strength(3.5f, 6.0f)
+                .requiresCorrectToolForDrops()
+                .sound(SoundType.METAL)
+                .lightLevel(state -> state.hasProperty(LaserEmitterBlock.LIT) && state.getValue(LaserEmitterBlock.LIT) ? 7 : 0);
     }
 
     public static final DeferredBlock<Block> ANOMALITE_LATTICE = BLOCKS.register(

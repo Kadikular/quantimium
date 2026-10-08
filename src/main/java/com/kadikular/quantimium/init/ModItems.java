@@ -220,6 +220,16 @@ public class ModItems {
             });
     public static final DeferredItem<BlockItem> RING_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
             "ring_emitter", ModBlocks.RING_EMITTER);
+    public static final DeferredItem<BlockItem> FLASH_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
+            "flash_emitter", ModBlocks.FLASH_EMITTER);
+    public static final DeferredItem<BlockItem> LASER_EMITTER_1_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_emitter_1", ModBlocks.LASER_EMITTER_1);
+    public static final DeferredItem<BlockItem> LASER_EMITTER_2_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_emitter_2", ModBlocks.LASER_EMITTER_2);
+    public static final DeferredItem<BlockItem> LASER_EMITTER_3_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_emitter_3", ModBlocks.LASER_EMITTER_3);
+    public static final DeferredItem<BlockItem> LASER_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_mirror", ModBlocks.LASER_MIRROR);
     public static final DeferredItem<BlockItem> CATALYST_BAY_ITEM = ITEMS.registerSimpleBlockItem(
             "catalyst_bay", ModBlocks.CATALYST_BAY);
     public static final DeferredItem<BlockItem> REACTOR_INPUT_PORT_ITEM = ITEMS.registerSimpleBlockItem(

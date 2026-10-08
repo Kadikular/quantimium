@@ -1,0 +1,50 @@
+{
+ "variants": {
+  "facing=north,lit=false": {
+   "model": "quantimium:block/flash_emitter"
+  },
+  "facing=north,lit=true": {
+   "model": "quantimium:block/flash_emitter_lit"
+  },
+  "facing=south,lit=false": {
+   "model": "quantimium:block/flash_emitter",
+   "y": 180
+  },
+  "facing=south,lit=true": {
+   "model": "quantimium:block/flash_emitter_lit",
+   "y": 180
+  },
+  "facing=west,lit=false": {
+   "model": "quantimium:block/flash_emitter",
+   "y": 270
+  },
+  "facing=west,lit=true": {
+   "model": "quantimium:block/flash_emitter_lit",
+   "y": 270
+  },
+  "facing=east,lit=false": {
+   "model": "quantimium:block/flash_emitter",
+   "y": 90
+  },
+  "facing=east,lit=true": {
+   "model": "quantimium:block/flash_emitter_lit",
+   "y": 90
+  },
+  "facing=up,lit=false": {
+   "model": "quantimium:block/flash_emitter",
+   "x": 270
+  },
+  "facing=up,lit=true": {
+   "model": "quantimium:block/flash_emitter_lit",
+   "x": 270
+  },
+  "facing=down,lit=false": {
+   "model": "quantimium:block/flash_emitter",
+   "x": 90
+  },
+  "facing=down,lit=true": {
+   "model": "quantimium:block/flash_emitter_lit",
+   "x": 90
+  }
+ }
+}

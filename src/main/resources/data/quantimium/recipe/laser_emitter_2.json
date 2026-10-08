@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "quantimium:anomalite_cell",
+    "G": "quantimium:quantum_attuned_glass",
+    "T": "quantimium:semi_stable_tesseract",
+    "E": "quantimium:laser_emitter_1",
+    "L": "quantimium:anomalite_lattice"
+  },
+  "pattern": [
+    "CGC",
+    "TET",
+    "CLC"
+  ],
+  "result": {
+    "id": "quantimium:laser_emitter_2",
+    "count": 1
+  }
+}

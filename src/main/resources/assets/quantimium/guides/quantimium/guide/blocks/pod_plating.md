@@ -2,7 +2,7 @@
 navigation:
   title: Pod Plating
   parent: blocks/index.md
-  position: 29
+  position: 34
   icon: quantimium:pod_plating
 ---
 

@@ -136,6 +136,19 @@ public class Quantimium {
                 (be, context) -> InfiniteEnergyHandler.INSTANCE
         );
 
+        // Laser emitters take power on every face; the flash emitter takes fuel too.
+        event.registerBlockEntity(
+                Capabilities.Energy.BLOCK,
+                ModBlockEntities.LASER_EMITTER_BE.get(),
+                (be, context) -> be.getEnergyStorage()
+        );
+        event.registerBlockEntity(
+                Capabilities.Item.BLOCK,
+                ModBlockEntities.LASER_EMITTER_BE.get(),
+                (be, context) -> be.tier() == com.kadikular.quantimium.laser.LaserTuning.Tier.FLASH
+                        ? be.getFuel() : null
+        );
+
         // Quantum Simulator automation capabilities
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,

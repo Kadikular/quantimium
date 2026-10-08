@@ -2,7 +2,7 @@
 navigation:
   title: Stabilised rift
   parent: multiblocks/index.md
-  position: 18
+  position: 19
 item_ids:
 - quantimium:rift_anchor
 - quantimium:rift_stabiliser

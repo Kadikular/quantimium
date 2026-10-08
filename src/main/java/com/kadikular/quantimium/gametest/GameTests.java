@@ -51,7 +51,8 @@ public final class GameTests {
                 DockTests.class, FoldTests.class, ReactorTests.class, ReactorCountTests.class, FieldControlTests.class, FieldModelTests.class, FluxTests.class, HallTests.class,
                 HarvesterTests.class, MirrorLensTests.class, MirrorTests.class, ProjectorTests.class,
                 RiftTests.class, SimulatorTests.class, StabilizerTests.class, SuperpositionTests.class,
-                TickTimingTests.class, TierTests.class, UnrealisedTests.class, VeiledTests.class, ZenoTests.class));
+                TickTimingTests.class, TierTests.class, UnrealisedTests.class, VeiledTests.class, ZenoTests.class,
+                LaserTests.class));
         if (ModList.get().isLoaded("modern_industrialization")) {
             classes.add(MiCompatTests.class);
             classes.add(MiTickTimingTests.class);

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "V": "quantimium:veil_thread",
+    "G": "quantimium:quantum_attuned_glass",
+    "C": "quantimium:anomalite_cell",
+    "E": "quantimium:laser_emitter_2",
+    "R": "quantimium:rift_residue"
+  },
+  "pattern": [
+    "VGV",
+    "CEC",
+    "VRV"
+  ],
+  "result": {
+    "id": "quantimium:laser_emitter_3",
+    "count": 1
+  }
+}

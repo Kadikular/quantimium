@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Foundry
   parent: multiblocks/index.md
-  position: 16
+  position: 17
 item_ids:
 - quantimium:quantum_foundry_controller
 - quantimium:quantum_foundry_plinth

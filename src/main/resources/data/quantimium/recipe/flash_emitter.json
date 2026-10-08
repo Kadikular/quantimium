@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:glass",
+    "F": "minecraft:furnace",
+    "T": "quantimium:quantimium_trace"
+  },
+  "pattern": [
+    "IGI",
+    "IFI",
+    "ITI"
+  ],
+  "result": {
+    "id": "quantimium:flash_emitter",
+    "count": 1
+  }
+}

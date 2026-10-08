@@ -342,6 +342,19 @@ def reactor_me_port() -> Panel:
     return panel
 
 
+def laser_emitter(flash: bool) -> Panel:
+    """A laser emitter: the energy bar, its readout beside it; the flash emitter adds a fuel socket with a
+    burn gauge over it (LaserEmitterScreen, LaserEmitterMenu)."""
+    panel = Panel(HIGH)
+    panel.energy()
+    if flash:
+        panel.socket(26, 44, "fuel")
+        panel.gauge((26, 36, 16, 3), "burn")
+    panel.region("info", (52, 20, 118, 44))
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -424,6 +437,8 @@ PANELS = {
     # The same 27 ghost slots as the Superposition Crafter's filter.
     "catalyst_bay_filter": superposition_crafter_filter,
     "reactor_me_port": reactor_me_port,
+    "laser_emitter": lambda: laser_emitter(False),
+    "flash_emitter": lambda: laser_emitter(True),
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,

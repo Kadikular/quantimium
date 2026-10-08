@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": "quantimium:anomalite_shard",
+    "G": "quantimium:quantum_attuned_glass",
+    "F": "quantimium:flash_emitter",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "SGS",
+    "SFS",
+    "SRS"
+  ],
+  "result": {
+    "id": "quantimium:laser_emitter_1",
+    "count": 1
+  }
+}

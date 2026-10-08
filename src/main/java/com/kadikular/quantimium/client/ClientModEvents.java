@@ -102,6 +102,10 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.STABILISED_PORTAL_BE.get(), StabilisedPortalBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.DECOHERENCE_PROJECTOR_BE.get(), DecoherenceProjectorBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.HARVEST_LASER_BE.get(), HarvestLaserBER::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.LASER_EMITTER_BE.get(),
+                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.LASER_MIRROR_BE.get(),
+                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.RIFT_STABILISER_BE.get(), RiftStabiliserBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ENTANGLED_DOCK_BE.get(), EntangledDockBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SUPERPOSITION_POD_BE.get(), SuperpositionPodBER::new);

@@ -12,6 +12,8 @@ import com.kadikular.quantimium.block.entity.FieldControlBlockEntity;
 import com.kadikular.quantimium.block.entity.FieldMonitorBlockEntity;
 import com.kadikular.quantimium.block.entity.FluxDetectorBlockEntity;
 import com.kadikular.quantimium.block.entity.CatalystBayBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.ReactorPortBlockEntity;
@@ -174,6 +176,14 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StabilisedPortalBlockEntity>> STABILISED_PORTAL_BE =
             BLOCK_ENTITIES.register("stabilised_portal_be", () ->
                     new BlockEntityType<>(StabilisedPortalBlockEntity::new, ModBlocks.STABILISED_PORTAL.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaserEmitterBlockEntity>> LASER_EMITTER_BE =
+            BLOCK_ENTITIES.register("laser_emitter_be", () ->
+                    new BlockEntityType<>(LaserEmitterBlockEntity::new, ModBlocks.FLASH_EMITTER.get(),
+                            ModBlocks.LASER_EMITTER_1.get(), ModBlocks.LASER_EMITTER_2.get(), ModBlocks.LASER_EMITTER_3.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaserMirrorBlockEntity>> LASER_MIRROR_BE =
+            BLOCK_ENTITIES.register("laser_mirror_be", () ->
+                    new BlockEntityType<>(LaserMirrorBlockEntity::new, ModBlocks.LASER_MIRROR.get()));
 
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);

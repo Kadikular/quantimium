@@ -2,7 +2,7 @@
 navigation:
   title: Pod Ward Module
   parent: blocks/index.md
-  position: 35
+  position: 40
   icon: quantimium:pod_ward_module
 ---
 

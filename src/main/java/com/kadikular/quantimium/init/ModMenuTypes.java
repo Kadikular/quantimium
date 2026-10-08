@@ -58,6 +58,10 @@ public class ModMenuTypes {
             MENUS.register("catalyst_bay_menu", () ->
                     IMenuTypeExtension.create(CatalystBayMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LaserEmitterMenu>> LASER_EMITTER_MENU =
+            MENUS.register("laser_emitter_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.LaserEmitterMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<FoldCoreMenu>> FOLD_CORE_MENU =
             MENUS.register("fold_core_menu", () ->
                     IMenuTypeExtension.create(FoldCoreMenu::new));
