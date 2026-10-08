@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.debug.TickProfiler;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +53,7 @@ public final class TickTiming {
      * Waits out the warm-up, records {@code target}'s ticks, reports them, and succeeds if the median
      * is inside the budget. {@code cleanup} runs either way, before the verdict.
      */
-    public static void measure(GameTestHelper helper, Scenario scenario, BlockEntity target,
+    public static void measure(GameTestHelper helper, Scenario scenario, Object target,
                                Supplier<String> state, Runnable cleanup) {
         // Flux and anomaly left by earlier tests would add surcharges; what these leave would do the same
         // to the tests after them.

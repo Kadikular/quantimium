@@ -1,6 +1,5 @@
 package com.kadikular.quantimium.debug;
 
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,7 +16,7 @@ public final class TickProfiler {
 
     /** Read on every block entity tick; true only while at least one block entity is watched. */
     private static volatile boolean active;
-    private static final Map<BlockEntity, Samples> WATCHED = Collections.synchronizedMap(new IdentityHashMap<>());
+    private static final Map<Object, Samples> WATCHED = Collections.synchronizedMap(new IdentityHashMap<>());
 
     private TickProfiler() {}
 
@@ -25,21 +24,21 @@ public final class TickProfiler {
         return active;
     }
 
-    /** Starts recording {@code blockEntity}'s ticks, from its next one. */
-    public static Samples watch(BlockEntity blockEntity, int capacity) {
+    /** Starts recording {@code blockEntity}'s ticks (or another ticking thing's, such as a level's laser networks), from its next one. */
+    public static Samples watch(Object blockEntity, int capacity) {
         Samples samples = new Samples(capacity);
         WATCHED.put(blockEntity, samples);
         active = true;
         return samples;
     }
 
-    public static void unwatch(BlockEntity blockEntity) {
+    public static void unwatch(Object blockEntity) {
         WATCHED.remove(blockEntity);
         active = !WATCHED.isEmpty();
     }
 
     /** Called round each ticker call while active. */
-    public static void record(BlockEntity blockEntity, long nanos) {
+    public static void record(Object blockEntity, long nanos) {
         Samples samples = WATCHED.get(blockEntity);
         if (samples != null) samples.add(nanos);
     }
