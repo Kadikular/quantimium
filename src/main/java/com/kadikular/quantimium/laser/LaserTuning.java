@@ -12,6 +12,9 @@ public final class LaserTuning {
     public static final double HOP_TAX = 0.01;
     /** How far a mirror's light reaches before it needs refocusing again. */
     public static final int RELAY_RANGE = 32;
+    /** How far a prism reaches, in a straight line to each block it's linked to, and how many it links. */
+    public static final int PRISM_RANGE = 24;
+    public static final int PRISM_LINKS = 8;
 
     /** Emitter tiers: the most they send a tick, how far a run reaches, what they hold, and what they burn idle. */
     public enum Tier {

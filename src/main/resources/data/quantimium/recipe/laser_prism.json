@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "quantimium:quantum_attuned_glass",
+    "S": "quantimium:anomalite_shard",
+    "M": "quantimium:laser_mirror"
+  },
+  "pattern": [
+    "GSG",
+    "SMS",
+    "GSG"
+  ],
+  "result": {
+    "id": "quantimium:laser_prism",
+    "count": 1
+  }
+}

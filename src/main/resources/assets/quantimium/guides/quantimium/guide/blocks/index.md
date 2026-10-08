@@ -35,6 +35,7 @@ navigation:
 - <ItemLink id="quantimium:laser_emitter_2" />
 - <ItemLink id="quantimium:laser_emitter_3" />
 - <ItemLink id="quantimium:laser_mirror" />
+- <ItemLink id="quantimium:laser_prism" />
 - <ItemLink id="quantimium:lit_reactor_plinth" />
 - <ItemLink id="quantimium:materialiser" />
 - <ItemLink id="quantimium:me_superposition_crafter" />

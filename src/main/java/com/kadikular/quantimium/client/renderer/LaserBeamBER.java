@@ -28,17 +28,35 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         List<LaserBeam> beams = node.syncedBeams();
         if (beams.isEmpty()) return;
         Vec3 centre = node.getBlockPos().getCenter();
-        LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, beams));
+        boolean aiming = aiming();
+        LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, beams, aiming));
     }
 
-    private static void draw(PoseStack poses, MultiBufferSource buffers, Vec3 camera, float time, Vec3 centre, List<LaserBeam> beams) {
+    /** Holding the Laser Linker or a wrench shows even dark beams, faintly: where light would go. */
+    private static boolean aiming() {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player == null) return false;
+        for (var stack : List.of(player.getMainHandItem(), player.getOffhandItem())) {
+            if (stack.is(com.kadikular.quantimium.init.ModItems.LASER_LINKER.get())
+                    || stack.is(com.kadikular.quantimium.init.ModTags.TOOLS_WRENCH)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void draw(PoseStack poses, MultiBufferSource buffers, Vec3 camera, float time, Vec3 centre, List<LaserBeam> beams,
+                             boolean aiming) {
         PoseStack.Pose pose = poses.last();
         VertexConsumer halo = buffers.getBuffer(QuantumRenderTypes.FIELD_GLOW);
         for (LaserBeam beam : beams) {
             int bright = LaserNetworks.brightness(beam.flow());
-            if (bright == 0) continue;
+            if (bright == 0) {
+                if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(centre, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
+                continue;
+            }
             Vec3[] line = line(centre, beam, camera);
-            float flicker = 0.92f + 0.08f * Mth.sin(time * 0.7f + beam.direction().ordinal());
+            float flicker = 0.92f + 0.08f * Mth.sin(time * 0.7f + beam.face().ordinal());
             BeamRibbon.draw(halo, pose, Vec3.ZERO, line, 0.05f + 0.025f * bright, 0.40f, 0.62f, 1.0f, 0.12f + 0.03f * bright * flicker);
         }
         // Cores after every halo: one render type at a time.
@@ -51,12 +69,10 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         }
     }
 
-    /** From the node's face to the face of what the beam ends on, or to where it fades; camera-relative. */
+    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. */
     private static Vec3[] line(Vec3 centre, LaserBeam beam, Vec3 camera) {
-        Vec3 dir = Vec3.atLowerCornerOf(beam.direction().getUnitVec3i());
-        Vec3 from = centre.add(dir.scale(0.5));
-        Vec3 to = centre.add(dir.scale(beam.length() + 0.5));
-        return new Vec3[] {from.subtract(camera), to.subtract(camera)};
+        Vec3[] ends = beam.ends();
+        return new Vec3[] {ends[0].subtract(camera), ends[1].subtract(camera)};
     }
 
     /** Beams reach as far as they go. */
@@ -64,7 +80,8 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
     public AABB getRenderBoundingBox(T node) {
         AABB box = new AABB(node.getBlockPos());
         for (LaserBeam beam : node.syncedBeams()) {
-            box = box.minmax(new AABB(node.getBlockPos().relative(beam.direction(), beam.length() + 1)));
+            Vec3[] ends = beam.ends();
+            box = box.minmax(new AABB(ends[1], ends[1]));
         }
         return box.inflate(0.5);
     }

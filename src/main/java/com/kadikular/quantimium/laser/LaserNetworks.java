@@ -131,7 +131,7 @@ public final class LaserNetworks {
             for (int i = 0; i < traced.size(); i++) {
                 LaserBeam beam = traced.get(i);
                 for (LaserBeam old : was) {
-                    if (old.direction() == beam.direction() && old.length() == beam.length() && old.end() == beam.end()) {
+                    if (old.sameRun(beam)) {
                         traced.set(i, beam.withFlow(old.flow()));
                     }
                 }
@@ -161,6 +161,7 @@ public final class LaserNetworks {
     private List<LaserBeam> trace(LaserNode node) {
         List<LaserBeam> traced = new ArrayList<>();
         for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, node.range()));
+        for (BlockPos target : node.targets()) traced.add(LaserBeam.traceTo(level, node.nodePos(), target, node.range()));
         return traced;
     }
 
@@ -208,7 +209,7 @@ public final class LaserNetworks {
                     double efficiency = Math.pow(1.0 - LaserTuning.HOP_TAX, visit.relays());
                     Sink sink = sinks.get(beam.hit());
                     if (sink == null || sink.efficiency() < efficiency) {
-                        sinks.put(beam.hit(), new Sink(beam.hit(), beam.direction().getOpposite(), List.copyOf(path), efficiency));
+                        sinks.put(beam.hit(), new Sink(beam.hit(), beam.face().getOpposite(), List.copyOf(path), efficiency));
                     }
                 } else if (beam.end() == LaserBeam.End.NODE) {
                     LaserNode next = nodes.get(beam.hit());
@@ -237,7 +238,7 @@ public final class LaserNetworks {
             for (LaserNode node : nodes.values()) {
                 if (Math.floorMod(node.nodePos().hashCode() + time, RECHECK_TICKS) != 0) continue;
                 List<LaserBeam> was = beams.get(node.nodePos());
-                if (was == null || was.size() != node.outputs().size()) {
+                if (was == null || was.size() != node.outputs().size() + node.targets().size()) {
                     dirty = true;
                     break;
                 }

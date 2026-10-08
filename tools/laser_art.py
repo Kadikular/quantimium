@@ -112,6 +112,33 @@ def mirror_face() -> Image.Image:
     return img
 
 
+def prism_face() -> Image.Image:
+    """Facets of pale crystal in a dark frame: light split along clean lines."""
+    img = stone(("12142a", "1b1e38", "262a4a"), 31)
+    facets = [hx("7fb2ff"), hx("a9c9ff"), hx("c8dcff"), hx("5d8fe0")]
+    for x in range(2, 14):
+        for y in range(2, 14):
+            img.putpixel((x, y), facets[((x // 3) + (y // 3) + (1 if x > y else 0)) % len(facets)])
+    for i in range(2, 14):
+        img.putpixel((i, i), hx("f4f8ff"))
+        img.putpixel((i, 15 - i), hx("e8f2ff"))
+    return img
+
+
+def linker() -> Image.Image:
+    """The Laser Linker: a dark rod with a lens at its tip and an azure line down it."""
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for i in range(3, 13):
+        img.putpixel((i, 15 - i), hx("3b3b45"))
+        img.putpixel((i + 1, 15 - i), hx("2b2b33"))
+    for i in range(5, 11):
+        img.putpixel((i, 15 - i), hx("3485ff"))
+    for x, y in ((12, 2), (13, 2), (12, 3), (13, 3), (11, 3), (12, 1)):
+        img.putpixel((x, y), hx("c8dcff"))
+    img.putpixel((13, 1), hx("ffffff"))
+    return img
+
+
 def cube(textures: dict, front_key: str) -> dict:
     faces = {}
     for face in ("north", "south", "east", "west", "up", "down"):
@@ -158,7 +185,19 @@ def main() -> None:
                   handle, indent=1)
     with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_mirror"}}, handle, indent=2)
-    print(f"wrote {written + 2} textures for the emitters and the mirror, with their models")
+    prism_face().save(os.path.join(TEX, "laser_prism.png"))
+    with open(os.path.join(MODELS, "laser_prism.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/laser_prism"}}, handle, indent=2)
+    with open(os.path.join(STATES, "laser_prism.json"), "w") as handle:
+        json.dump({"variants": {"": {"model": "quantimium:block/laser_prism"}}}, handle, indent=1)
+    with open(os.path.join(ITEMS, "laser_prism.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_prism"}}, handle, indent=2)
+    linker().save(os.path.join(ASSETS, "textures", "item", "laser_linker.png"))
+    with open(os.path.join(ASSETS, "models", "item", "laser_linker.json"), "w") as handle:
+        json.dump({"parent": "minecraft:item/handheld", "textures": {"layer0": "quantimium:item/laser_linker"}}, handle, indent=2)
+    with open(os.path.join(ITEMS, "laser_linker.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:item/laser_linker"}}, handle, indent=2)
+    print(f"wrote {written + 4} textures for the emitters and the mirror, with their models")
 
 
 if __name__ == "__main__":

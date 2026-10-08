@@ -185,6 +185,10 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("laser_mirror_be", () ->
                     new BlockEntityType<>(LaserMirrorBlockEntity::new, ModBlocks.LASER_MIRROR.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserPrismBlockEntity>> LASER_PRISM_BE =
+            BLOCK_ENTITIES.register("laser_prism_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserPrismBlockEntity::new, ModBlocks.LASER_PRISM.get()));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

@@ -18,6 +18,11 @@ public interface LaserNode {
     /** The faces light leaves from. */
     Set<Direction> outputs();
 
+    /** The blocks a prism is linked to: light goes to each along a straight line, at any angle. */
+    default List<BlockPos> targets() {
+        return List.of();
+    }
+
     /** How far one straight run of this node's light reaches before it fades. */
     int range();
 

@@ -159,4 +159,74 @@ public final class LaserTests {
             helper.assertTrue(west.getEnergyStorage().getEnergyStored() > 0, "and west");
         });
     }
+
+    private static com.kadikular.quantimium.block.entity.LaserPrismBlockEntity prism(GameTestHelper helper, BlockPos pos, BlockPos... targets) {
+        helper.setBlock(pos, ModBlocks.LASER_PRISM.get());
+        var prism = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
+        for (BlockPos target : targets) prism.toggleLink(helper.absolutePos(target));
+        return prism;
+    }
+
+    // covers: laser.prism.split
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismSendsLightToEachBlockItsLinkedTo(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos a = new BlockPos(13, Y, 12);
+        BlockPos b = new BlockPos(12, Y + 3, 3);
+        prism(helper, new BlockPos(7, Y, 8), a, b);
+        FoldCoreBlockEntity first = sink(helper, a);
+        FoldCoreBlockEntity second = sink(helper, b);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(first.getEnergyStorage().getEnergyStored() > 0, "light at an angle to one");
+            helper.assertTrue(second.getEnergyStorage().getEnergyStored() > 0, "and up and across to the other");
+        });
+    }
+
+    // covers: laser.prism.join
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismJoinsTwoEmittersIntoOneBeam(GameTestHelper helper) {
+        // Two emitters into one prism: the core gets more than either could send alone.
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        emitter(helper, new BlockPos(8, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        BlockPos target = new BlockPos(14, Y, 14);
+        prism(helper, new BlockPos(8, Y, 8), target);
+        FoldCoreBlockEntity core = sink(helper, target);
+        long[] before = {-1};
+        helper.runAfterDelay(40, () -> before[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(60, () -> {
+            long gained = core.getEnergyStorage().getEnergyStored() - before[0];
+            helper.assertTrue(gained > 20L * LaserTuning.Tier.ONE.rate * 1.5, "both emitters' light: " + gained);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.split
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void somethingOnAPrismsLineStopsIt(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos target = new BlockPos(12, Y, 12);
+        prism(helper, new BlockPos(8, Y, 8), target);
+        helper.setBlock(new BlockPos(10, Y, 10), Blocks.STONE);
+        FoldCoreBlockEntity core = sink(helper, target);
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(core.getEnergyStorage().getEnergyStored(), 0, "the stone on the diagonal stops it");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void aPrismLinksSoFarAndSoMany(GameTestHelper helper) {
+        var prism = prism(helper, new BlockPos(8, Y, 8));
+        BlockPos at = helper.absolutePos(new BlockPos(8, Y, 8));
+        helper.assertValueEqual(prism.toggleLink(at), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.SELF, "not itself");
+        helper.assertValueEqual(prism.toggleLink(at.east(LaserTuning.PRISM_RANGE + 1)),
+                com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.TOO_FAR, "not out of reach");
+        for (int i = 1; i <= LaserTuning.PRISM_LINKS; i++) {
+            helper.assertValueEqual(prism.toggleLink(at.north(i)), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.ADDED, "link " + i);
+        }
+        helper.assertValueEqual(prism.toggleLink(at.south(1)), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.FULL, "no more");
+        helper.assertValueEqual(prism.toggleLink(at.north(1)), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.REMOVED, "unlinked");
+        helper.succeed();
+    }
 }

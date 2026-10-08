@@ -63,6 +63,7 @@
     "quantimium:laser_emitter_1",
     "quantimium:laser_emitter_2",
     "quantimium:laser_emitter_3",
-    "quantimium:laser_mirror"
+    "quantimium:laser_mirror",
+    "quantimium:laser_prism"
   ]
 }

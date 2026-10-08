@@ -2,7 +2,7 @@
 navigation:
   title: Sophon
   parent: items/index.md
-  position: 15
+  position: 16
   icon: quantimium:sophon
 item_ids:
 - quantimium:sophon

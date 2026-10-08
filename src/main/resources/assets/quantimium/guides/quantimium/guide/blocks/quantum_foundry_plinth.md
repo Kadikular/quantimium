@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Foundry Plinth
   parent: blocks/index.md
-  position: 48
+  position: 49
   icon: quantimium:quantum_foundry_plinth
 ---
 

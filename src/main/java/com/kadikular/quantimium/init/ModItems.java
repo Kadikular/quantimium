@@ -230,6 +230,10 @@ public class ModItems {
             "laser_emitter_3", ModBlocks.LASER_EMITTER_3);
     public static final DeferredItem<BlockItem> LASER_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_mirror", ModBlocks.LASER_MIRROR);
+    public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_prism", ModBlocks.LASER_PRISM);
+    public static final DeferredItem<com.kadikular.quantimium.item.LaserLinkerItem> LASER_LINKER = ITEMS.registerItem(
+            "laser_linker", props -> new com.kadikular.quantimium.item.LaserLinkerItem(props.stacksTo(1)));
     public static final DeferredItem<BlockItem> CATALYST_BAY_ITEM = ITEMS.registerSimpleBlockItem(
             "catalyst_bay", ModBlocks.CATALYST_BAY);
     public static final DeferredItem<BlockItem> REACTOR_INPUT_PORT_ITEM = ITEMS.registerSimpleBlockItem(

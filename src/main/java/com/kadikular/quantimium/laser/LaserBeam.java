@@ -6,19 +6,26 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
- * One straight run of light from a node's face: how far it got and what stopped it.
+ * One straight run of light: out of a node's face, or from a prism at a block it's linked to, along
+ * any line. How far it got and what stopped it.
  *
- * @param length blocks of open space crossed before what it ends on (0 if that's the very next block)
+ * @param face   the way it travels, to the nearest of the six: which face of what it ends on it reaches
+ * @param aim    the block a prism aimed it at, or null for light leaving a face
+ * @param length blocks crossed before what it ends on
  * @param hit    the block it ends on, or null if it faded in open air at its range
  * @param end    what that block is to the network
  * @param flow   FE a tick it carried when last worked out, for its brightness
  */
-public record LaserBeam(BlockPos from, Direction direction, int length, @Nullable BlockPos hit, End end, long flow) {
+public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, int length, @Nullable BlockPos hit, End end,
+                        long flow) {
 
     /** What a beam ends on. */
     public enum End {
@@ -33,7 +40,13 @@ public record LaserBeam(BlockPos from, Direction direction, int length, @Nullabl
     }
 
     public LaserBeam withFlow(long flow) {
-        return new LaserBeam(from, direction, length, hit, end, flow);
+        return new LaserBeam(from, face, aim, length, hit, end, flow);
+    }
+
+    /** Whether it's the same run of light as {@code other}, whatever each carried. */
+    public boolean sameRun(LaserBeam other) {
+        return face == other.face && length == other.length && end == other.end && Objects.equals(aim, other.aim)
+                && Objects.equals(hit, other.hit);
     }
 
     /**
@@ -45,15 +58,63 @@ public record LaserBeam(BlockPos from, Direction direction, int length, @Nullabl
         BlockPos.MutableBlockPos at = from.mutable();
         for (int step = 0; step < range; step++) {
             at.move(direction);
-            if (!level.isLoaded(at)) return new LaserBeam(from, direction, step, null, End.OPEN, 0);
-            BlockPos pos = at.immutable();
-            if (level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, direction, step, pos, End.NODE, 0);
-            BlockState state = level.getBlockState(pos);
-            if (passes(level, pos, state)) continue;
-            boolean takes = level.getCapability(Capabilities.Energy.BLOCK, pos, direction.getOpposite()) != null;
-            return new LaserBeam(from, direction, step, pos, takes ? End.SINK : End.BLOCKED, 0);
+            LaserBeam ended = endsAt(level, from, direction, null, step, at.immutable());
+            if (ended != null) return ended;
         }
-        return new LaserBeam(from, direction, range, null, End.OPEN, 0);
+        return new LaserBeam(from, direction, null, range, null, End.OPEN, 0);
+    }
+
+    /**
+     * Follows light from the middle of {@code from} towards the middle of {@code target}, through every
+     * block the line crosses, for up to {@code range} blocks. Ends on the first block that stops light,
+     * or on the target.
+     */
+    public static LaserBeam traceTo(Level level, BlockPos from, BlockPos target, int range) {
+        Vec3 start = from.getCenter();
+        Vec3 delta = target.getCenter().subtract(start);
+        Direction face = Direction.getApproximateNearest(delta.x, delta.y, delta.z);
+        if (delta.length() > range) return new LaserBeam(from, face, target, range, null, End.OPEN, 0);
+        // Every block the line passes through, in order (Amanatides and Woo's walk).
+        int x = from.getX(), y = from.getY(), z = from.getZ();
+        int stepX = (int) Math.signum(delta.x), stepY = (int) Math.signum(delta.y), stepZ = (int) Math.signum(delta.z);
+        double tDeltaX = stepX == 0 ? Double.MAX_VALUE : Math.abs(1.0 / delta.x);
+        double tDeltaY = stepY == 0 ? Double.MAX_VALUE : Math.abs(1.0 / delta.y);
+        double tDeltaZ = stepZ == 0 ? Double.MAX_VALUE : Math.abs(1.0 / delta.z);
+        // From the middle of a block, the first boundary is half a block away along each axis.
+        double tMaxX = tDeltaX * 0.5, tMaxY = tDeltaY * 0.5, tMaxZ = tDeltaZ * 0.5;
+        int steps = 0;
+        while (steps++ < range * 3 + 3) {
+            if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+                x += stepX;
+                tMaxX += tDeltaX;
+            } else if (tMaxY < tMaxZ) {
+                y += stepY;
+                tMaxY += tDeltaY;
+            } else {
+                z += stepZ;
+                tMaxZ += tDeltaZ;
+            }
+            BlockPos pos = new BlockPos(x, y, z);
+            int length = (int) Math.round(pos.getCenter().distanceTo(start)) - 1;
+            if (pos.equals(target)) {
+                LaserBeam ended = endsAt(level, from, face, target, length, pos);
+                return ended != null ? ended : new LaserBeam(from, face, target, length, pos, End.BLOCKED, 0);
+            }
+            LaserBeam ended = endsAt(level, from, face, target, length, pos);
+            if (ended != null) return ended;
+        }
+        return new LaserBeam(from, face, target, range, null, End.OPEN, 0);
+    }
+
+    /** What the light does at {@code pos}: ends there (and how), or null to go on through. */
+    @Nullable
+    private static LaserBeam endsAt(Level level, BlockPos from, Direction face, @Nullable BlockPos aim, int length, BlockPos pos) {
+        if (!level.isLoaded(pos)) return new LaserBeam(from, face, aim, length, null, End.OPEN, 0);
+        if (level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0);
+        BlockState state = level.getBlockState(pos);
+        if (passes(level, pos, state)) return null;
+        boolean takes = level.getCapability(Capabilities.Energy.BLOCK, pos, face.getOpposite()) != null;
+        return new LaserBeam(from, face, aim, length, pos, takes ? End.SINK : End.BLOCKED, 0);
     }
 
     /** Whether light goes through this block. */
@@ -64,27 +125,46 @@ public record LaserBeam(BlockPos from, Direction direction, int length, @Nullabl
         return state.getCollisionShape(level, pos).isEmpty() && state.getFluidState().isEmpty();
     }
 
-    /** Whether this beam still runs as it did: every block it crosses still lets light through, and it ends on the same thing. */
-    public boolean stillHolds(Level level, int range) {
-        LaserBeam now = trace(level, from, direction, range);
-        return now.length == length && now.end == end && java.util.Objects.equals(now.hit, hit);
+    /** Traces this beam again the same way: light from a face, or aimed at a block. */
+    public LaserBeam retrace(Level level, int range) {
+        return aim == null ? trace(level, from, face, range) : traceTo(level, from, aim, range);
     }
 
-    /** For the client: direction, length, what it ends on and how bright. */
+    /** Whether this beam still runs as it did: every block it crosses still lets light through, and it ends on the same thing. */
+    public boolean stillHolds(Level level, int range) {
+        return sameRun(retrace(level, range));
+    }
+
+    /** Where the light starts and stops, block-world coordinates: from the node's side to what it ends on. */
+    public Vec3[] ends() {
+        Vec3 centre = from.getCenter();
+        if (aim == null) {
+            Vec3 dir = Vec3.atLowerCornerOf(face.getUnitVec3i());
+            return new Vec3[] {centre.add(dir.scale(0.5)), centre.add(dir.scale(length + 0.5))};
+        }
+        Vec3 dir = aim.getCenter().subtract(centre).normalize();
+        double reach = hit == null ? length + 0.5 : Math.max(0.5, hit.getCenter().distanceTo(centre) - 0.5);
+        return new Vec3[] {centre.add(dir.scale(0.5)), centre.add(dir.scale(reach))};
+    }
+
+    /** For the client: how it runs, what it ends on and how bright. */
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("Dir", direction.get3DDataValue());
+        tag.putInt("Dir", face.get3DDataValue());
         tag.putInt("Length", length);
         tag.putInt("End", end.ordinal());
         tag.putLong("Flow", flow);
+        if (aim != null) tag.putLong("Aim", aim.asLong());
+        if (hit != null) tag.putLong("Hit", hit.asLong());
         return tag;
     }
 
     public static LaserBeam load(BlockPos from, CompoundTag tag) {
-        Direction direction = Direction.from3DDataValue(tag.getIntOr("Dir", 0));
+        Direction face = Direction.from3DDataValue(tag.getIntOr("Dir", 0));
         int length = tag.getIntOr("Length", 0);
         End end = End.values()[Math.clamp(tag.getIntOr("End", 0), 0, End.values().length - 1)];
-        BlockPos hit = end == End.OPEN ? null : from.relative(direction, length + 1);
-        return new LaserBeam(from, direction, length, hit, end, tag.getLongOr("Flow", 0));
+        BlockPos aim = tag.getLong("Aim").map(BlockPos::of).orElse(null);
+        BlockPos hit = tag.getLong("Hit").map(BlockPos::of).orElse(null);
+        return new LaserBeam(from, face, aim, length, hit, end, tag.getLongOr("Flow", 0));
     }
 }

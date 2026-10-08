@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "minecraft:glass_pane",
+    "R": "minecraft:redstone",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "  P",
+    " R ",
+    "I  "
+  ],
+  "result": {
+    "id": "quantimium:laser_linker",
+    "count": 1
+  }
+}

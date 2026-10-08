@@ -11,7 +11,7 @@ navigation:
 
 Laser emitters send power as light. A beam crosses open air, glass and anything you can walk
 through (grass, torches, flowers), and charges the first block it meets that takes power, from any
-mod. Mirrors turn the light around corners. This is the first part of Quantimium's lasers; lenses that
+mod. Mirrors turn the light around corners, and prisms split and join it at any angle. This is the first part of Quantimium's lasers; lenses that
 turn a beam's end into a tool, and items carried by light, come later.
 
 > **Badges**
@@ -54,6 +54,21 @@ the light, so a run from a mirror reaches 32 blocks whatever sent it.
 Each mirror a beam passes takes 1% of what passes, and that becomes flux
 where the mirror stands.
 
+## Prisms
+
+A <ItemLink id="quantimium:laser_prism" /> sends the light that reaches it to each block
+it's linked to, along a straight line at any angle, sharing it by what each asks for.
+
+Light can reach it from any side, from any number of beams, so a prism
+also joins several emitters into one network: a block it's linked to can take more than any one of
+them could send. It refocuses and taxes light as a mirror does.
+
+Link it with the <ItemLink id="quantimium:laser_linker" />: use the Linker on the prism to
+pick it, then on each block its light should reach, once to link it and again to unlink it. A prism
+links up to 8 blocks, within 24 blocks. Sneak-use
+the Linker in the air to let the prism go. Holding the Linker, or a wrench, shows every beam faintly,
+even ones carrying nothing, so you can see where light would go.
+
 ## What stops light
 
 Anything solid in the way stops a beam: it ends on that block, and charges
@@ -66,7 +81,7 @@ block beyond it gets nothing.
 
 ## Networks
 
-Emitters and mirrors joined by light make one network. Power goes where it's asked for: every block
+Emitters, mirrors and prisms joined by light make one network. Power goes where it's asked for: every block
 the network's light reaches is charged as far as the network's emitters have power, shared between
 them in proportion to what each has. Light reaches a block by the fewest mirrors it can.
 

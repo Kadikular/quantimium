@@ -17,6 +17,7 @@ navigation:
 - <ItemLink id="quantimium:decoherence_lance" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
+- <ItemLink id="quantimium:laser_linker" />
 - <ItemLink id="quantimium:mirror_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />
 - <ItemLink id="quantimium:rift_residue" />

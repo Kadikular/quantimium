@@ -2,7 +2,7 @@
 navigation:
   title: Semi-Stable Tesseract
   parent: items/index.md
-  position: 13
+  position: 14
   icon: quantimium:semi_stable_tesseract
 item_ids:
 - quantimium:semi_stable_tesseract

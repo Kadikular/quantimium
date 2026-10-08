@@ -2,7 +2,7 @@
 navigation:
   title: Rift Lens
   parent: blocks/index.md
-  position: 58
+  position: 59
   icon: quantimium:rift_lens
 item_ids:
 - quantimium:rift_lens
