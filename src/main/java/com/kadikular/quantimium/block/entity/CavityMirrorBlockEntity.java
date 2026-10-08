@@ -88,6 +88,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     public static void serverTick(Level level, BlockPos pos, BlockState state, CavityMirrorBlockEntity mirror) {
         if (!(level instanceof ServerLevel server)) return;
         if (level.getGameTime() % 20 == Math.floorMod(pos.hashCode(), 20)) mirror.checkPartner(server);
+        mirror.share(server);
         if (mirror.stored > 0) {
             double leak = mirror.stored * LaserTuning.CAVITY_LEAK;
             mirror.leaked += leak;
@@ -100,6 +101,22 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
             mirror.leaked = 0;
             mirror.showCharge();
         }
+    }
+
+    /**
+     * Light held in a cavity bounces between both mirrors: what either holds evens out between them, so
+     * both glow and both can give it out. The lower of the two does it, once a tick.
+     */
+    private void share(ServerLevel server) {
+        if (!paired()) return;
+        BlockPos other = worldPosition.relative(facing(), gap + 1);
+        if (other.compareTo(worldPosition) < 0 || !(server.getBlockEntity(other) instanceof CavityMirrorBlockEntity partner)) return;
+        long total = stored + partner.stored;
+        if (Math.abs(stored - partner.stored) <= 1) return;
+        stored = Math.min(capacity(), total / 2);
+        partner.stored = Math.min(partner.capacity(), total - stored);
+        setChanged();
+        partner.setChanged();
     }
 
     private void checkPartner(ServerLevel server) {
@@ -197,7 +214,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         List<LaserBeam> all = new ArrayList<>(shownBeams);
         // Half the gap from each mirror: the two halves meet in the middle.
         long flow = (long) Math.pow(10, shownCharge - 1);
-        all.add(new LaserBeam(worldPosition, facing(), null, (gap + 1) / 2, null, LaserBeam.End.OPEN, flow));
+        all.add(new LaserBeam(worldPosition, facing(), null, (gap + 1) / 2, null, LaserBeam.End.OPEN, flow, true));
         return all;
     }
 

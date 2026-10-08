@@ -213,7 +213,7 @@ public class LaserEmitterBlockEntity extends BlockEntity implements LaserNode, M
             return;
         }
         shownBeams = beams;
-        boolean lit = sending() > 0;
+        boolean lit = sending() > 0 || beams.stream().anyMatch(LaserBeam::live);
         BlockState state = getBlockState();
         if (level != null && state.getValue(LaserEmitterBlock.LIT) != lit) {
             level.setBlock(worldPosition, state.setValue(LaserEmitterBlock.LIT, lit), Block.UPDATE_CLIENTS);

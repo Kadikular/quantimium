@@ -19,7 +19,7 @@ public interface LaserBeamView {
         for (int i = 0; i < a.size(); i++) {
             LaserBeam x = a.get(i);
             LaserBeam y = b.get(i);
-            if (!x.sameRun(y) || LaserNetworks.brightness(x.flow()) != LaserNetworks.brightness(y.flow())) {
+            if (!x.sameRun(y) || x.live() != y.live() || LaserNetworks.brightness(x.flow()) != LaserNetworks.brightness(y.flow())) {
                 return false;
             }
         }

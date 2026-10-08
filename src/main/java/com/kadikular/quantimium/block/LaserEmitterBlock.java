@@ -32,7 +32,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A laser emitter, of one tier. Placed, its light goes where you were looking. A wrench, or a sneaking
+ * A laser emitter, of one tier. Placed, it faces you. A wrench, or a sneaking
  * empty hand, on another face adds an output there, or takes one away; an empty hand opens it.
  */
 public class LaserEmitterBlock extends BaseEntityBlock {
@@ -64,7 +64,7 @@ public class LaserEmitterBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection());
+        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
     }
 
     @Override

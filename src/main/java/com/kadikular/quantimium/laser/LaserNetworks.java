@@ -49,6 +49,8 @@ public final class LaserNetworks {
     private final ServerLevel level;
     private final Map<BlockPos, LaserNode> nodes = new LinkedHashMap<>();
     private final Map<BlockPos, List<LaserBeam>> beams = new HashMap<>();
+    /** How far each node's light reaches: its own range, or for a node that doesn't refocus, what's left of the light reaching it. */
+    private final Map<BlockPos, Integer> ranges = new HashMap<>();
     private List<Network> networks = List.of();
     private boolean dirty;
     /** What each relay has lost to the hop tax since the last settle, to put into the field. */
@@ -115,7 +117,30 @@ public final class LaserNetworks {
      * A block a beam charges: where, from which face, through which beams from a source (each as its
      * node and face index), and what fraction of what leaves the source arrives.
      */
-    private record Sink(BlockPos pos, Direction face, List<Hop> path, double efficiency, @Nullable LaserNode buffer) {}
+    private record Sink(BlockPos pos, Direction face, List<Route> routes, @Nullable LaserNode buffer) {
+        /** What arrives of what leaves a source, by its best open route. */
+        double efficiency() {
+            double best = 0;
+            for (Route route : routes) best = Math.max(best, route.efficiency());
+            return best;
+        }
+    }
+
+    /** One source's best way to a block: the beams from it, and what arrives of what leaves it. */
+    private record Route(BlockPos source, List<Hop> path, double efficiency) {}
+
+    /** Each source's power this tick, while it moves: how a block's share is credited along each route. */
+    private final Map<BlockPos, Long> sharing = new HashMap<>();
+
+    /** Adds {@code source}'s route to the block at {@code pos}, if it's that source's best. */
+    private static void route(Map<BlockPos, Sink> sinks, BlockPos pos, Direction face, @Nullable LaserNode buffer,
+                              BlockPos source, List<Hop> path, double efficiency) {
+        Sink sink = sinks.get(pos);
+        List<Route> routes = sink == null ? new ArrayList<>() : new ArrayList<>(sink.routes());
+        routes.removeIf(route -> route.source().equals(source) && route.efficiency() < efficiency);
+        if (routes.stream().noneMatch(route -> route.source().equals(source))) routes.add(new Route(source, List.copyOf(path), efficiency));
+        sinks.put(pos, new Sink(pos, face, routes, buffer));
+    }
 
     /** A beam on a sink's path: its node, which of the node's beams, and the relay it leaves from (null at the source). */
     private record Hop(BlockPos node, int beam, boolean relay) {}
@@ -125,20 +150,26 @@ public final class LaserNetworks {
         Map<BlockPos, List<LaserBeam>> before = new HashMap<>(beams);
         beams.clear();
         carried.clear();
+        ranges.clear();
+        // Nodes that refocus first, at their own range; then those that don't (a photodetector), at what's
+        // left of the light reaching them, round by round so a line of them carries the remainder on.
+        List<LaserNode> waiting = new ArrayList<>();
         for (LaserNode node : nodes.values()) {
-            // A beam that runs as it did keeps its brightness, so a change elsewhere doesn't make it flicker.
-            List<LaserBeam> traced = trace(node);
-            List<LaserBeam> was = before.getOrDefault(node.nodePos(), List.of());
-            for (int i = 0; i < traced.size(); i++) {
-                LaserBeam beam = traced.get(i);
-                for (LaserBeam old : was) {
-                    if (old.sameRun(beam)) {
-                        traced.set(i, beam.withFlow(old.flow()));
-                    }
-                }
+            if (node.refocuses()) traceAt(node, node.range(), before);
+            else waiting.add(node);
+        }
+        for (int round = 0; round <= waiting.size() && !waiting.isEmpty(); round++) {
+            List<LaserNode> still = new ArrayList<>();
+            for (LaserNode node : waiting) {
+                int reach = remainingAt(node.nodePos());
+                if (reach < 0 && round < waiting.size()) still.add(node);
+                else traceAt(node, Math.max(0, reach), before);
             }
-            beams.put(node.nodePos(), traced);
-            node.showBeams(traced);
+            if (still.size() == waiting.size()) {
+                for (LaserNode node : still) traceAt(node, Math.max(0, remainingAt(node.nodePos())), before);
+                break;
+            }
+            waiting = still;
         }
         // Every node reached from each source, nearest first: each hop costs the tax, so fewest hops is best.
         List<Network> built = new ArrayList<>();
@@ -159,21 +190,67 @@ public final class LaserNetworks {
         networks = built;
     }
 
-    private List<LaserBeam> trace(LaserNode node) {
+    /** Traces {@code node}'s beams at {@code range}; a beam that runs as it did keeps its brightness, so a change elsewhere doesn't make it flicker. */
+    private void traceAt(LaserNode node, int range, Map<BlockPos, List<LaserBeam>> before) {
+        ranges.put(node.nodePos(), range);
+        List<LaserBeam> traced = trace(node, range);
+        List<LaserBeam> was = before.getOrDefault(node.nodePos(), List.of());
+        for (int i = 0; i < traced.size(); i++) {
+            LaserBeam beam = traced.get(i);
+            for (LaserBeam old : was) {
+                if (old.sameRun(beam)) traced.set(i, beam.withFlow(old.flow()).withLive(old.live()));
+            }
+        }
+        beams.put(node.nodePos(), traced);
+        node.showBeams(traced);
+    }
+
+    /** The most range left in any light reaching {@code pos} from a node already traced; -1 if none has yet. */
+    private int remainingAt(BlockPos pos) {
+        int best = -1;
+        for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
+            int range = ranges.getOrDefault(entry.getKey(), 0);
+            for (LaserBeam beam : entry.getValue()) {
+                if (beam.end() == LaserBeam.End.NODE && pos.equals(beam.hit())) best = Math.max(best, range - beam.length() - 1);
+            }
+        }
+        return best;
+    }
+
+    private int rangeOf(LaserNode node) {
+        return ranges.getOrDefault(node.nodePos(), node.range());
+    }
+
+    private List<LaserBeam> trace(LaserNode node, int range) {
         List<LaserBeam> traced = new ArrayList<>();
-        for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, node.range()));
-        for (BlockPos target : node.targets()) traced.add(LaserBeam.traceTo(level, node.nodePos(), target, node.range()));
+        for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, range));
+        for (BlockPos target : List.copyOf(node.targets())) {
+            // A link to a block that's gone is let go.
+            if (level.isLoaded(target) && level.getBlockState(target).isAir()) {
+                node.forget(target);
+                continue;
+            }
+            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, range));
+        }
         return traced;
     }
 
     /** Every node joined to {@code start} by a beam either way. */
     private List<LaserNode> component(LaserNode start) {
         Map<BlockPos, List<BlockPos>> links = new HashMap<>();
+        // Nodes whose light charges the same block share a network too, so that block draws on all of them.
+        Map<BlockPos, List<BlockPos>> chargers = new HashMap<>();
         beams.forEach((from, list) -> {
             for (LaserBeam beam : list) {
+                if (beam.end() == LaserBeam.End.SINK) chargers.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(from);
                 if (beam.end() != LaserBeam.End.NODE || !nodes.containsKey(beam.hit())) continue;
                 links.computeIfAbsent(from, key -> new ArrayList<>()).add(beam.hit());
                 links.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(from);
+            }
+        });
+        chargers.values().forEach(sharing -> {
+            for (BlockPos a : sharing) {
+                for (BlockPos b : sharing) if (!a.equals(b)) links.computeIfAbsent(a, key -> new ArrayList<>()).add(b);
             }
         });
         List<LaserNode> found = new ArrayList<>();
@@ -207,20 +284,12 @@ public final class LaserNetworks {
                 List<Hop> path = new ArrayList<>(visit.path());
                 path.add(new Hop(visit.node(), i, relay));
                 if (beam.end() == LaserBeam.End.SINK) {
-                    double efficiency = visit.efficiency();
-                    Sink sink = sinks.get(beam.hit());
-                    if (sink == null || sink.efficiency() < efficiency) {
-                        sinks.put(beam.hit(), new Sink(beam.hit(), beam.face().getOpposite(), List.copyOf(path), efficiency, null));
-                    }
+                    route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), path, visit.efficiency());
                 } else if (beam.end() == LaserBeam.End.NODE) {
                     LaserNode next = nodes.get(beam.hit());
                     // A cavity takes light from emitters, never from another cavity.
                     if (next != null && next.buffers() && !source.buffers()) {
-                        double efficiency = visit.efficiency();
-                        Sink sink = sinks.get(beam.hit());
-                        if (sink == null || sink.efficiency() < efficiency) {
-                            sinks.put(beam.hit(), new Sink(beam.hit(), beam.face().getOpposite(), List.copyOf(path), efficiency, next));
-                        }
+                        route(sinks, beam.hit(), beam.face().getOpposite(), next, source.nodePos(), path, visit.efficiency());
                     }
                     if (next != null && next.relays() && seen.add(beam.hit())) {
                         queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
@@ -247,12 +316,13 @@ public final class LaserNetworks {
             for (LaserNode node : nodes.values()) {
                 if (Math.floorMod(node.nodePos().hashCode() + time, RECHECK_TICKS) != 0) continue;
                 List<LaserBeam> was = beams.get(node.nodePos());
-                if (was == null || was.size() != node.outputs().size() + node.targets().size()) {
+                if (was == null || was.size() != node.outputs().size() + node.targets().size()
+                        || (node.refocuses() && rangeOf(node) != node.range())) {
                     dirty = true;
                     break;
                 }
                 for (LaserBeam beam : was) {
-                    if (!beam.stillHolds(level, node.range())) {
+                    if (!beam.stillHolds(level, rangeOf(node))) {
                         dirty = true;
                         break;
                     }
@@ -282,6 +352,8 @@ public final class LaserNetworks {
         }
         long supply = fromEmitters + fromCavities;
         if (supply <= 0 || network.sinks().isEmpty()) return;
+        sharing.clear();
+        for (int i = 0; i < available.length; i++) sharing.put(sources.get(i).nodePos(), available[i]);
 
         // Blocks first.
         long cost = charge(network, supply, false);
@@ -379,9 +451,16 @@ public final class LaserNetworks {
         return want - left;
     }
 
-    /** Whether every relay on the way to this sink is switched on. */
+    /** Whether every relay on the way to this block, on some route, is switched on. */
     private boolean pathOpen(Sink sink) {
-        for (Hop hop : sink.path()) {
+        for (Route route : sink.routes()) {
+            if (open(route)) return true;
+        }
+        return false;
+    }
+
+    private boolean open(Route route) {
+        for (Hop hop : route.path()) {
             if (!hop.relay()) continue;
             LaserNode relay = nodes.get(hop.node());
             if (relay == null || !relay.enabled()) return false;
@@ -389,18 +468,28 @@ public final class LaserNetworks {
         return true;
     }
 
-    /** {@code sent} left the source for this sink: what each beam on the way carried, and what each relay lost. */
+    /**
+     * {@code sent} left the sources for this block: shared between its open routes by what each source has
+     * this tick, it credits what each beam on the way carried, and what each relay lost.
+     */
     private void account(Sink sink, long sent) {
-        double power = sent;
-        for (Hop hop : sink.path()) {
-            if (hop.relay()) {
-                LaserNode relay = nodes.get(hop.node());
-                double tax = power * (relay == null ? LaserTuning.HOP_TAX : relay.tax());
-                lost.merge(hop.node(), Math.round(tax), Long::sum);
-                power -= tax;
+        List<Route> routes = sink.routes().stream().filter(this::open).toList();
+        if (routes.isEmpty()) return;
+        long weights = 0;
+        for (Route route : routes) weights += sharing.getOrDefault(route.source(), 0L);
+        for (Route route : routes) {
+            double part = weights > 0 ? (double) sharing.getOrDefault(route.source(), 0L) / weights : 1.0 / routes.size();
+            double power = sent * part;
+            for (Hop hop : route.path()) {
+                if (hop.relay()) {
+                    LaserNode relay = nodes.get(hop.node());
+                    double tax = power * (relay == null ? LaserTuning.HOP_TAX : relay.tax());
+                    lost.merge(hop.node(), Math.round(tax), Long::sum);
+                    power -= tax;
+                }
+                long[] perBeam = carried.computeIfAbsent(hop.node(), key -> new long[Math.max(1, beamsOf(key).size())]);
+                if (hop.beam() < perBeam.length) perBeam[hop.beam()] += Math.round(power);
             }
-            long[] perBeam = carried.computeIfAbsent(hop.node(), key -> new long[Math.max(1, beamsOf(key).size())]);
-            if (hop.beam() < perBeam.length) perBeam[hop.beam()] += Math.round(power);
         }
     }
 
@@ -408,17 +497,41 @@ public final class LaserNetworks {
     private void settle() {
         lost.forEach((pos, fe) -> QuantumFlux.emitFromEnergy(level, pos, fe));
         lost.clear();
+        Set<BlockPos> live = live();
         for (LaserNode node : nodes.values()) {
             BlockPos pos = node.nodePos();
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
             long[] sum = carried.getOrDefault(pos, new long[0]);
             List<LaserBeam> flowing = new ArrayList<>(list.size());
-            for (int i = 0; i < list.size(); i++) flowing.add(list.get(i).withFlow(i < sum.length ? sum[i] / SETTLE_TICKS : 0));
+            boolean on = live.contains(pos);
+            for (int i = 0; i < list.size(); i++) {
+                flowing.add(list.get(i).withFlow(i < sum.length ? sum[i] / SETTLE_TICKS : 0).withLive(on));
+            }
             beams.put(pos, flowing);
-            // The node tells its clients only if the beams look different: shape, or a step in brightness.
+            // The node tells its clients only if the beams look different: shape, liveness, or a step in brightness.
             node.showBeams(flowing);
         }
         carried.clear();
+    }
+
+    /**
+     * The nodes light runs from: every switched-on source with power to send, and every switched-on relay
+     * its light reaches. Their beams glow dimly even when nothing at their ends needs power.
+     */
+    private Set<BlockPos> live() {
+        Set<BlockPos> live = new HashSet<>();
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        for (LaserNode node : nodes.values()) {
+            if (!node.relays() && node.enabled() && node.available() > 0 && live.add(node.nodePos())) queue.add(node.nodePos());
+        }
+        while (!queue.isEmpty()) {
+            for (LaserBeam beam : beams.getOrDefault(queue.poll(), List.of())) {
+                if (beam.end() != LaserBeam.End.NODE) continue;
+                LaserNode next = nodes.get(beam.hit());
+                if (next != null && next.relays() && next.enabled() && live.add(beam.hit())) queue.add(beam.hit());
+            }
+        }
+        return live;
     }
 
     /** A beam's brightness, in steps that change only when its flow changes by a lot: 0 for dark. */

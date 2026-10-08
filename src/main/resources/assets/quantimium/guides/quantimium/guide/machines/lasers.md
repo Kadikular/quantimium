@@ -22,7 +22,7 @@ turn a beam's end into a tool, and items carried by light, come later.
 ## Emitters
 
 An emitter takes power on any face and sends it out as light from its
-outputs. Placed, its light goes the way you were looking.
+outputs. Placed, it faces you, and its light comes out towards you.
 
 It sends only what the blocks its beams reach ask for, up to its rate: point
 one at a full battery, or at nothing, and it keeps its power, but for a small cost of being ready.
@@ -49,7 +49,7 @@ redstone: not at all, on only with a signal, or off with a signal.
 ## Mirrors
 
 A <ItemLink id="quantimium:laser_mirror" /> sends every beam that reaches it out of its face.
-Placed, it faces the way you were looking; sneak-click or wrench a face to point it there. It refocuses
+Placed, it faces you; sneak-click or wrench a face to point it there. It refocuses
 the light, so a run from a mirror reaches 32 blocks whatever sent it.
 Each mirror a beam passes takes 1% of what passes, and that becomes flux
 where the mirror stands.
@@ -66,7 +66,8 @@ them could send. It refocuses and taxes light as a mirror does.
 Link it with the <ItemLink id="quantimium:laser_linker" />: use the Linker on the prism to
 pick it, then on each block its light should reach, once to link it and again to unlink it. A prism
 links up to 8 blocks, within 24 blocks. Sneak-use
-the Linker in the air to let the prism go. Holding the Linker, or a wrench, shows every beam faintly,
+the Linker in the air to let the prism go, and sneak-click the prism with an empty hand to let go of
+all its links. A link to a block that's been removed is let go of by itself. Holding the Linker, or a wrench, shows every beam faintly,
 even ones carrying nothing, so you can see where light would go.
 
 ## Optical cavities
@@ -80,6 +81,8 @@ block of gap, and takes or gives up to 32,000 FE/t.
   emitters have left over once its blocks are served. One cavity never fills another.
 - Light leaves by the mirror's **back**, its output coupler, for the blocks that ask for it. A network
   serves its blocks from its emitters first, then from its cavities.
+- The light bounces between the two mirrors, so what either holds evens out between them: both glow,
+  and both can give it out.
 - A cavity leaks: each tick it loses 0.02% of what it holds, and that
   becomes flux where it stands. Break a charged mirror, or block its gap, and the light it held all goes
   into the field at once.
@@ -89,7 +92,8 @@ The held light glows between the two mirrors, brighter the more there is.
 ## Photodetectors
 
 A <ItemLink id="quantimium:photodetector" /> sits in a beam: light passes through it and
-out of its face, and it takes nothing for it. It lights up while light passes, and gives a redstone
+out of its face, and it takes nothing for it. It doesn't refocus the light, so the light goes on only as
+far as it had left. It lights up while light passes, and gives a redstone
 signal, and a comparator reading, for how much: 1 for a trickle, two more for each tenfold, up to 15.
 
 ## What stops light
@@ -109,4 +113,9 @@ the network's light reaches is charged as far as the network's emitters have pow
 them in proportion to what each has. Light reaches a block by the fewest mirrors it can.
 
 Use the Flux Meter, or look with Jade, at an emitter or mirror to see what it's sending or passing on.
-Beams glow brighter the more they carry; light that carries nothing isn't drawn.
+Beams glow brighter the more they carry. A switched-on emitter with power keeps
+a dim beam lit even when nothing at its end needs power, along with the mirrors and prisms that light
+reaches: it's checking for somewhere to send power, and that's what its small ready cost pays for.
+
+Emitters whose light reaches the same block share a network, so that block
+draws on all of them by what each has.

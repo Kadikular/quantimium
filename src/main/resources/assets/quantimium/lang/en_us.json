@@ -928,6 +928,7 @@
   "message.quantimium.laser_linker.too_far": "Too far from the prism",
   "message.quantimium.laser_linker.self": "A prism can't light itself",
   "message.quantimium.laser_linker.cleared": "Let the prism go",
+  "message.quantimium.laser_prism.cleared": "Let go of %s links",
   "message.quantimium.laser.prism": "Linked to %s of %s; passing on %s FE/t",
   "message.quantimium.laser.off": "Switched off by redstone",
   "message.quantimium.laser.empty": "No power to send",

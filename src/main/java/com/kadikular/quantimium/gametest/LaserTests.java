@@ -67,6 +67,7 @@ public final class LaserTests {
             helper.assertTrue(gained < full && gained >= full * (1.0 - LaserTuning.HOP_TAX) - LaserTuning.Tier.ONE.rate,
                     "the mirror takes its tax: " + gained + " of " + full);
             helper.assertTrue(LaserNetworks.of(helper.getLevel()).throughput(helper.absolutePos(mirror)) > 0, "light passes the mirror");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -87,6 +88,7 @@ public final class LaserTests {
         helper.runAfterDelay(30 + LaserNetworks.RECHECK_TICKS + 5, () -> at[0] = core.getEnergyStorage().getEnergyStored());
         helper.runAfterDelay(30 + LaserNetworks.RECHECK_TICKS + 25, () -> {
             helper.assertValueEqual((long) core.getEnergyStorage().getEnergyStored(), at[0], "nothing gets past the stone");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -99,6 +101,7 @@ public final class LaserTests {
         FoldCoreBlockEntity core = sink(helper, new BlockPos(2 + LaserTuning.Tier.FLASH.range + 2, Y, 8));
         helper.runAfterDelay(40, () -> {
             helper.assertValueEqual(core.getEnergyStorage().getEnergyStored(), 0, "out of reach");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -112,6 +115,7 @@ public final class LaserTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(flash.getFuel().getStackInSlot(0).getCount() < 2, "a coal burning");
             helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "and its light charging the core");
+            TestSupport.clearField(helper);
         });
     }
 
@@ -125,6 +129,7 @@ public final class LaserTests {
             int left = emitter.getEnergyStorage().getEnergyStored();
             helper.assertTrue(left >= 100_000 - 41 * LaserTuning.Tier.ONE.idle, "only the idle cost: " + left);
             helper.assertValueEqual(emitter.sending(), 0L, "sending nothing");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -142,6 +147,7 @@ public final class LaserTests {
         });
         helper.runAfterDelay(70, () -> {
             helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "on again without the signal");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -157,6 +163,7 @@ public final class LaserTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(east.getEnergyStorage().getEnergyStored() > 0, "east");
             helper.assertTrue(west.getEnergyStorage().getEnergyStored() > 0, "and west");
+            TestSupport.clearField(helper);
         });
     }
 
@@ -179,6 +186,7 @@ public final class LaserTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(first.getEnergyStorage().getEnergyStored() > 0, "light at an angle to one");
             helper.assertTrue(second.getEnergyStorage().getEnergyStored() > 0, "and up and across to the other");
+            TestSupport.clearField(helper);
         });
     }
 
@@ -196,6 +204,7 @@ public final class LaserTests {
         helper.runAfterDelay(60, () -> {
             long gained = core.getEnergyStorage().getEnergyStored() - before[0];
             helper.assertTrue(gained > 20L * LaserTuning.Tier.ONE.rate * 1.5, "both emitters' light: " + gained);
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -210,6 +219,7 @@ public final class LaserTests {
         FoldCoreBlockEntity core = sink(helper, target);
         helper.runAfterDelay(60, () -> {
             helper.assertValueEqual(core.getEnergyStorage().getEnergyStored(), 0, "the stone on the diagonal stops it");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -227,6 +237,7 @@ public final class LaserTests {
         }
         helper.assertValueEqual(prism.toggleLink(at.south(1)), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.FULL, "no more");
         helper.assertValueEqual(prism.toggleLink(at.north(1)), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.REMOVED, "unlinked");
+        TestSupport.clearField(helper);
         helper.succeed();
     }
 
@@ -260,6 +271,7 @@ public final class LaserTests {
             charged[0] = core.getEnergyStorage().getEnergyStored();
             helper.assertTrue(charged[0] > 0, "the core charged from the cavity alone");
             helper.assertTrue(a.stored() < held[0], "the cavity gave it");
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }
@@ -272,15 +284,18 @@ public final class LaserTests {
         cavityMirror(helper, new BlockPos(10, Y, 8), Direction.WEST);
         helper.runAfterDelay(25, () -> {
             helper.assertTrue(a.paired(), "paired");
-            a.fill(300_000);
+            a.fill(20_000);
         });
         helper.runAfterDelay(45, () -> {
-            helper.assertTrue(a.stored() < 300_000, "it leaks: " + a.stored());
+            helper.assertTrue(a.stored() + helper.getBlockEntity(new BlockPos(10, Y, 8),
+                    com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class).stored() < 20_000, "it leaks");
             var chunk = helper.getLevel().getChunkAt(helper.absolutePos(new BlockPos(5, Y, 8)));
             double before = chunk.getData(com.kadikular.quantimium.init.ModAttachments.CHUNK_FLUX).pendingFlux();
             helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
             double after = chunk.getData(com.kadikular.quantimium.init.ModAttachments.CHUNK_FLUX).pendingFlux();
             helper.assertTrue(after > before, "broken, its light goes into the field: " + before + " to " + after);
+            // The other one lets its light go too: break it before clearing, so none is left for the next test.
+            helper.setBlock(new BlockPos(10, Y, 8), Blocks.AIR);
             TestSupport.clearField(helper);
             helper.succeed();
         });
@@ -306,6 +321,91 @@ public final class LaserTests {
                     || helper.getLevel().hasNeighborSignal(helper.absolutePos(detector.above())), true, "a redstone signal");
             long gained = core.getEnergyStorage().getEnergyStored() - before[0];
             helper.assertValueEqual(gained, 20L * LaserTuning.Tier.ONE.rate, "nothing taken on the way");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.share
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void twoEmittersIntoOneBlockShareIt(GameTestHelper helper) {
+        // A projector takes 1,000 FE/t: either emitter alone could fill it, but both share the load.
+        LaserEmitterBlockEntity west = emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        LaserEmitterBlockEntity north = emitter(helper, new BlockPos(8, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        helper.setBlock(new BlockPos(8, Y, 8), ModBlocks.DECOHERENCE_PROJECTOR.get());
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(west.sending() > 0 && north.sending() > 0, "both send: " + west.sending() + " and " + north.sending());
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.live
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aPoweredEmitterShinesDimlyWithNothingToCharge(GameTestHelper helper) {
+        LaserEmitterBlockEntity on = emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        LaserEmitterBlockEntity empty = emitter(helper, new BlockPos(3, Y, 12), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, false);
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(on.syncedBeams().stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "powered: its light is on, checking");
+            helper.assertValueEqual(on.sending(), 0L, "though it sends nothing");
+            helper.assertTrue(empty.syncedBeams().stream().noneMatch(com.kadikular.quantimium.laser.LaserBeam::live), "no power: no light");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.photodetector
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aPhotodetectorDoesNotRefocus(GameTestHelper helper) {
+        // A flash emitter reaches 8 blocks. Through a photodetector 3 blocks out, the light goes on for
+        // the 4 it has left, not a fresh 32: a core 6 blocks past the detector gets nothing.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.FLASH_EMITTER.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.PHOTODETECTOR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.PhotodetectorBlock.FACING, Direction.EAST));
+        FoldCoreBlockEntity near = sink(helper, new BlockPos(9, Y, 8));
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(near.getEnergyStorage().getEnergyStored() > 0, "within what's left");
+            helper.setBlock(new BlockPos(9, Y, 8), Blocks.AIR);
+            sink(helper, new BlockPos(12, Y, 8));
+        });
+        helper.runAfterDelay(55, () -> {
+            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(12, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0,
+                    "beyond it");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aPrismLetsGoOfABlockThatsGone(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos target = new BlockPos(12, Y, 12);
+        var prism = prism(helper, new BlockPos(7, Y, 8), target);
+        sink(helper, target);
+        helper.runAfterDelay(20, () -> {
+            helper.assertValueEqual(prism.targets().size(), 1, "linked");
+            helper.setBlock(target, Blocks.AIR);
+        });
+        helper.runAfterDelay(20 + LaserNetworks.RECHECK_TICKS + 5, () -> {
+            helper.assertValueEqual(prism.targets().size(), 0, "the link to a block that's gone is let go");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void bothMirrorsOfACavityHoldItsLight(GameTestHelper helper) {
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        var b = cavityMirror(helper, new BlockPos(10, Y, 8), Direction.WEST);
+        helper.runAfterDelay(25, () -> a.fill(20_000));
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(b.stored() > 5_000, "the light bounces to the other mirror: " + b.stored());
+            helper.assertTrue(Math.abs(a.stored() - b.stored()) < 100, "and evens out");
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            helper.setBlock(new BlockPos(10, Y, 8), Blocks.AIR);
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }

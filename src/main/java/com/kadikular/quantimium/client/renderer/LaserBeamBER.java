@@ -16,8 +16,8 @@ import java.util.List;
 
 /**
  * The light leaving a laser emitter or mirror: a straight coherent beam from its face to what it ends
- * on, azure in a soft halo, wider and brighter the more it carries. A beam that carries nothing isn't
- * drawn: dark light is no light.
+ * on, azure in a soft halo, wider and brighter the more it carries. A live beam carrying nothing is a
+ * dim line, checking for somewhere to send power; a dark one shows only while aiming.
  */
 public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends SubmittingBER<T> {
 
@@ -52,7 +52,9 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         for (LaserBeam beam : beams) {
             int bright = LaserNetworks.brightness(beam.flow());
             if (bright == 0) {
-                if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(centre, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
+                // Live but carrying nothing: a dim line, checking. Dark, it shows only while aiming.
+                if (beam.live()) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(centre, beam, camera), 0.04f, 0.40f, 0.62f, 1.0f, 0.10f);
+                else if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(centre, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
                 continue;
             }
             Vec3[] line = line(centre, beam, camera);
@@ -63,7 +65,10 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         VertexConsumer cores = buffers.getBuffer(QuantumRenderTypes.BEAM_CORE);
         for (LaserBeam beam : beams) {
             int bright = LaserNetworks.brightness(beam.flow());
-            if (bright == 0) continue;
+            if (bright == 0) {
+                if (beam.live()) BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), 0.008f, 0.62f, 0.78f, 1.0f, 0.30f);
+                continue;
+            }
             BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), 0.012f + 0.006f * bright,
                     0.70f, 0.85f, 1.0f, 0.55f + 0.06f * bright);
         }

@@ -23,6 +23,17 @@ public interface LaserNode {
         return List.of();
     }
 
+    /** Lets go of a linked block that's gone. */
+    default void forget(BlockPos target) {}
+
+    /**
+     * Whether light leaving this node starts a fresh run at its own range: a mirror refocuses it; a
+     * photodetector only lets it through, so the light goes on with what range it had left.
+     */
+    default boolean refocuses() {
+        return true;
+    }
+
     /** How far one straight run of this node's light reaches before it fades. */
     int range();
 

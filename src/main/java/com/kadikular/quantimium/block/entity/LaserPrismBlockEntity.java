@@ -58,6 +58,21 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
         return Link.ADDED;
     }
 
+    /** Lets go of every link. How many there were. */
+    public int clearLinks() {
+        int had = targets.size();
+        if (had > 0) {
+            targets.clear();
+            changed();
+        }
+        return had;
+    }
+
+    @Override
+    public void forget(BlockPos target) {
+        if (targets.remove(target)) changed();
+    }
+
     private void changed() {
         setChanged();
         if (level != null) {

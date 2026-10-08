@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A photodetector: light passes through it and out of its face, and it gives a redstone signal for how
- * much. Placed, it faces the way you were looking; a wrench, or a sneaking empty hand, on a face turns it.
+ * much. Placed, it faces you; a wrench, or a sneaking empty hand, on a face turns it.
  */
 public class PhotodetectorBlock extends BaseEntityBlock {
     public static final MapCodec<PhotodetectorBlock> CODEC = simpleCodec(PhotodetectorBlock::new);
@@ -55,7 +55,7 @@ public class PhotodetectorBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection());
+        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
     }
 
     @Override

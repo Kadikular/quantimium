@@ -28,8 +28,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A laser mirror: whatever light reaches it leaves by its face. Place it facing where the light should
- * go; a wrench, or a sneaking empty hand, on any face points it there.
+ * A laser mirror: whatever light reaches it leaves by its face. Placed, it faces you; a wrench, or a sneaking empty hand, on any face points it there.
  */
 public class LaserMirrorBlock extends BaseEntityBlock {
     public static final MapCodec<LaserMirrorBlock> CODEC = simpleCodec(LaserMirrorBlock::new);
@@ -53,7 +52,7 @@ public class LaserMirrorBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection());
+        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
     }
 
     @Override

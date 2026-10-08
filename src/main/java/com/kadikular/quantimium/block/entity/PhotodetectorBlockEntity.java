@@ -77,6 +77,12 @@ public class PhotodetectorBlockEntity extends BlockEntity implements LaserNode, 
         return true;
     }
 
+    /** It only lets light through: the light goes on with the range it had left. */
+    @Override
+    public boolean refocuses() {
+        return false;
+    }
+
     /** It only watches: it takes nothing of what passes. */
     @Override
     public double tax() {
