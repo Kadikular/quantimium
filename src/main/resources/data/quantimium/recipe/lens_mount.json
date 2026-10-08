@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": "quantimium:anomalite_shard",
+    "G": "quantimium:quantum_attuned_glass",
+    "M": "quantimium:laser_mirror"
+  },
+  "pattern": [
+    " S ",
+    "GMG",
+    " S "
+  ],
+  "result": {
+    "id": "quantimium:lens_mount",
+    "count": 1
+  }
+}

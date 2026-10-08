@@ -125,3 +125,8 @@ laser_prism: "Sends the light that reaches it to each block it's linked to, in a
 laser_linker: "Links a Laser Prism to the blocks its light should reach."
 cavity_mirror: "Two facing each other across a clear gap hold light: a laser network's battery, which leaks a little."
 photodetector: "Light passes through it, and it gives a redstone signal for how much."
+lens_mount: "Holds lenses in a beam's way: light leaving it breaks, hurts or brings things back."
+collector: "Light passes through it; what a Pickup lens brings back up the beam stops here."
+harvest_lens: "A lens: the beam breaks the block it ends on."
+damage_lens: "A lens: the beam hurts what stands in it."
+pickup_lens: "A lens: items in the beam, and what it breaks, go back up it to a Collector."

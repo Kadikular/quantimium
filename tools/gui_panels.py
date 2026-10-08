@@ -355,6 +355,18 @@ def laser_emitter(flash: bool) -> Panel:
     return panel
 
 
+def lens_mount() -> Panel:
+    """A Lens Mount: what its light will do across the top, its four lenses in a row in brackets, and a
+    note under them that light meets them left to right (LensMountScreen, LensMountMenu.LENS_*)."""
+    panel = Panel(HIGH)
+    panel.region("info", (8, 20, 160, 9))
+    panel.grid((53, 35), 4, 1, "lenses")
+    panel.brackets(45, 27, 86, 32)
+    panel.region("order", (8, 56, 160, 9))
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -439,6 +451,7 @@ PANELS = {
     "reactor_me_port": reactor_me_port,
     "laser_emitter": lambda: laser_emitter(False),
     "flash_emitter": lambda: laser_emitter(True),
+    "lens_mount": lens_mount,
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,

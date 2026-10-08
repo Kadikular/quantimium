@@ -72,6 +72,8 @@
     "quantimium:laser_emitter_2",
     "quantimium:laser_emitter_3",
     "quantimium:laser_mirror",
+    "quantimium:collector",
+    "quantimium:lens_mount",
     "quantimium:laser_prism",
     "quantimium:cavity_mirror",
     "quantimium:photodetector"

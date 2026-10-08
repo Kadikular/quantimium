@@ -56,6 +56,10 @@ public final class ModTags {
             Registries.BLOCK,
             Identifier.fromNamespaceAndPath(Quantimium.MODID, "unrealised_ore_facades/deepslate"));
 
+    /** Blocks a Harvest lens never breaks: Anomalite (for the rift lens), and what withers can't break. */
+    public static final TagKey<Block> LASER_UNBREAKABLE = TagKey.create(
+            Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_unbreakable"));
+
     /** Matter that remains visible and interactive inside the Mirror Phase. */
     public static final TagKey<Block> ANOMALITE = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "anomalite"));

@@ -1,0 +1,27 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "quantimium:block/lens_mount"
+  },
+  "facing=south": {
+   "model": "quantimium:block/lens_mount",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "quantimium:block/lens_mount",
+   "y": 270
+  },
+  "facing=east": {
+   "model": "quantimium:block/lens_mount",
+   "y": 90
+  },
+  "facing=up": {
+   "model": "quantimium:block/lens_mount",
+   "x": 270
+  },
+  "facing=down": {
+   "model": "quantimium:block/lens_mount",
+   "x": 90
+  }
+ }
+}

@@ -2,7 +2,7 @@
 navigation:
   title: Field Regulator
   parent: blocks/index.md
-  position: 15
+  position: 16
   icon: quantimium:field_regulator
 item_ids:
 - quantimium:field_regulator

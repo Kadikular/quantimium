@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Foundry
   parent: blocks/index.md
-  position: 50
+  position: 52
   icon: quantimium:quantum_foundry_controller
 ---
 

@@ -2,7 +2,7 @@
 navigation:
   title: Decoherence Projector
   parent: blocks/index.md
-  position: 12
+  position: 13
   icon: quantimium:decoherence_projector
 item_ids:
 - quantimium:decoherence_projector

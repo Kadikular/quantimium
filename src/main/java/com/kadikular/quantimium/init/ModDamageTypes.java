@@ -16,5 +16,9 @@ public final class ModDamageTypes {
     public static final ResourceKey<DamageType> VEILED = ResourceKey.create(Registries.DAMAGE_TYPE,
             Identifier.fromNamespaceAndPath(Quantimium.MODID, "veiled"));
 
+    /** A beam through a Damage lens. */
+    public static final ResourceKey<DamageType> LASER = ResourceKey.create(Registries.DAMAGE_TYPE,
+            Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser"));
+
     private ModDamageTypes() {}
 }

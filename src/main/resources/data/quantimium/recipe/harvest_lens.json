@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:quantum_attuned_glass",
+    "quantimium:anomalite_shard",
+    "minecraft:iron_pickaxe"
+  ],
+  "result": {
+    "id": "quantimium:harvest_lens",
+    "count": 1
+  }
+}

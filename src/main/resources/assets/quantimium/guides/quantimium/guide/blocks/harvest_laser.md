@@ -2,7 +2,7 @@
 navigation:
   title: Harvest Laser
   parent: blocks/index.md
-  position: 23
+  position: 24
   icon: quantimium:harvest_laser
 item_ids:
 - quantimium:harvest_laser

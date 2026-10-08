@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -61,6 +62,8 @@ public final class LaserNetworks {
     private final Map<BlockPos, long[]> carried = new HashMap<>();
     /** The nodes to recheck on each tick of {@link #RECHECK_TICKS}, so a tick looks only at its own. */
     private List<List<LaserNode>> rechecks = List.of();
+    /** Each beam with lenses, by its node and index: what it does, and what it has towards it. */
+    private final Map<LensAction.Key, LensAction> actions = new LinkedHashMap<>();
 
     private LaserNetworks(ServerLevel level) {
         this.level = level;
@@ -121,23 +124,29 @@ public final class LaserNetworks {
      * A block a beam charges: where, from which face, through which beams from a source (each as its
      * node and face index), and what fraction of what leaves the source arrives.
      */
-    private record Sink(BlockPos pos, Direction face, List<Route> routes, @Nullable LaserNode buffer,
-                        @Nullable BlockCapabilityCache<EnergyHandler, @Nullable Direction> energy) {}
+    private record Sink(@Nullable BlockPos pos, Direction face, List<Route> routes, @Nullable LaserNode buffer,
+                        @Nullable BlockCapabilityCache<EnergyHandler, @Nullable Direction> energy, @Nullable LensAction action) {}
 
     /** One source's best way to a block: the source (and its place in the network's list), the beams from it, and what arrives of what leaves it. */
     private record Route(BlockPos source, int index, List<Hop> path, double efficiency) {}
 
     /** Adds {@code source}'s route to the block at {@code pos}, if it's that source's best. */
-    private void route(Map<BlockPos, Sink> sinks, BlockPos pos, Direction face, @Nullable LaserNode buffer,
+    private void route(Map<Object, Sink> sinks, BlockPos pos, Direction face, @Nullable LaserNode buffer,
                        BlockPos source, int index, List<Hop> path, double efficiency) {
-        Sink sink = sinks.get(pos);
+        route(sinks, pos, pos, face, buffer, null, source, index, path, efficiency);
+    }
+
+    /** Adds {@code source}'s route to a sink (a block, or a beam's lens action, by {@code key}), if it's that source's best. */
+    private void route(Map<Object, Sink> sinks, Object key, @Nullable BlockPos pos, Direction face, @Nullable LaserNode buffer,
+                       @Nullable LensAction action, BlockPos source, int index, List<Hop> path, double efficiency) {
+        Sink sink = sinks.get(key);
         List<Route> routes = sink == null ? new ArrayList<>() : new ArrayList<>(sink.routes());
         routes.removeIf(route -> route.source().equals(source) && route.efficiency() < efficiency);
         if (routes.stream().noneMatch(route -> route.source().equals(source))) routes.add(new Route(source, index, List.copyOf(path), efficiency));
         // The block's energy, looked up once and kept: the cache follows the block if it changes.
         BlockCapabilityCache<EnergyHandler, @Nullable Direction> energy = sink != null ? sink.energy()
-                : buffer != null ? null : BlockCapabilityCache.create(Capabilities.Energy.BLOCK, level, pos, face);
-        sinks.put(pos, new Sink(pos, face, routes, buffer, energy));
+                : buffer != null || action != null || pos == null ? null : BlockCapabilityCache.create(Capabilities.Energy.BLOCK, level, pos, face);
+        sinks.put(key, new Sink(pos, face, routes, buffer, energy, action));
     }
 
     /**
@@ -177,6 +186,7 @@ public final class LaserNetworks {
             }
             waiting = still;
         }
+        lensUp();
         for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) carried.put(entry.getKey(), new long[entry.getValue().size()]);
         List<List<LaserNode>> buckets = new ArrayList<>();
         for (int i = 0; i < RECHECK_TICKS; i++) buckets.add(new ArrayList<>());
@@ -188,7 +198,7 @@ public final class LaserNetworks {
         for (LaserNode start : nodes.values()) {
             if (start.relays() || claimed.contains(start.nodePos())) continue;
             List<LaserNode> sources = new ArrayList<>();
-            Map<BlockPos, Sink> sinks = new LinkedHashMap<>();
+            Map<Object, Sink> sinks = new LinkedHashMap<>();
             // The sources joined to this one through shared relays share the network.
             for (LaserNode source : component(start)) {
                 if (source.relays()) continue;
@@ -214,7 +224,92 @@ public final class LaserNetworks {
             }
         }
         beams.put(node.nodePos(), traced);
-        node.showBeams(traced);
+    }
+
+    /**
+     * What lenses each beam carries: a relay's light carries what reached it and its own lenses after.
+     * Then each beam with lenses gets its action (kept from before, if it was there), with the nearest
+     * Collector up the beam; and every node shows its beams.
+     */
+    private void lensUp() {
+        Map<BlockPos, Integer> in = new HashMap<>();
+        Map<BlockPos, Integer> out = new HashMap<>();
+        for (LaserNode node : nodes.values()) {
+            if (node.relays()) out.put(node.nodePos(), Lens.after(Lens.NONE, node.lenses()));
+        }
+        // Lenses only add up, so this settles; a round per node at most.
+        boolean changed = true;
+        for (int round = 0; changed && round <= nodes.size(); round++) {
+            changed = false;
+            for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
+                int carrying = out.getOrDefault(entry.getKey(), Lens.NONE);
+                if (carrying == Lens.NONE) continue;
+                for (LaserBeam beam : entry.getValue()) {
+                    if (beam.end() != LaserBeam.End.NODE) continue;
+                    LaserNode next = nodes.get(beam.hit());
+                    if (next == null || !next.relays()) continue;
+                    int joined = Lens.join(in.getOrDefault(beam.hit(), Lens.NONE), carrying);
+                    if (joined == in.getOrDefault(beam.hit(), Lens.NONE)) continue;
+                    in.put(beam.hit(), joined);
+                    out.put(beam.hit(), Lens.after(joined, next.lenses()));
+                    changed = true;
+                }
+            }
+        }
+        Map<LensAction.Key, LensAction> was = new HashMap<>(actions);
+        actions.clear();
+        for (LaserNode node : nodes.values()) {
+            BlockPos pos = node.nodePos();
+            int lenses = out.getOrDefault(pos, Lens.NONE);
+            List<LaserBeam> list = beams.getOrDefault(pos, List.of());
+            if (lenses != Lens.NONE) {
+                List<LaserBeam> lensed = new ArrayList<>(list.size());
+                BlockPos collector = collectorFor(pos);
+                for (int i = 0; i < list.size(); i++) {
+                    LaserBeam beam = list.get(i).withLenses(lenses);
+                    lensed.add(beam);
+                    LensAction.Key key = new LensAction.Key(pos, i);
+                    LensAction action = was.getOrDefault(key, new LensAction(key));
+                    action.update(beam, lenses, collector);
+                    actions.put(key, action);
+                }
+                list = lensed;
+                beams.put(pos, list);
+            }
+            node.showBeams(list);
+        }
+    }
+
+    /** The nearest Collector up the light reaching {@code pos}, through relays: where Pickup sends what it brings back. */
+    @Nullable
+    private BlockPos collectorFor(BlockPos pos) {
+        Map<BlockPos, List<BlockPos>> feeding = new HashMap<>();
+        beams.forEach((from, list) -> {
+            for (LaserBeam beam : list) {
+                if (beam.end() == LaserBeam.End.NODE) feeding.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(from);
+            }
+        });
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> seen = new HashSet<>();
+        queue.add(pos);
+        seen.add(pos);
+        while (!queue.isEmpty()) {
+            BlockPos at = queue.poll();
+            LaserNode node = nodes.get(at);
+            if (node == null) continue;
+            if (node.collects()) return at;
+            if (!node.relays() && !at.equals(pos)) continue;
+            for (BlockPos up : feeding.getOrDefault(at, List.of())) {
+                if (seen.add(up)) queue.add(up);
+            }
+        }
+        return null;
+    }
+
+    /** Gives {@code stack} to the Collector at {@code pos}; what it couldn't take. */
+    ItemStack collect(BlockPos pos, ItemStack stack) {
+        LaserNode node = nodes.get(pos);
+        return node != null && node.collects() ? node.collect(stack) : stack;
     }
 
     /** The most range left in any light reaching {@code pos} from a node already traced; -1 if none has yet. */
@@ -289,7 +384,7 @@ public final class LaserNetworks {
     }
 
     /** The blocks {@code source}'s light reaches, by the fewest relays; adds those it reaches best. */
-    private void reach(LaserNode source, int index, Map<BlockPos, Sink> sinks) {
+    private void reach(LaserNode source, int index, Map<Object, Sink> sinks) {
         record Visit(BlockPos node, List<Hop> path, int relays, double efficiency) {}
         ArrayDeque<Visit> queue = new ArrayDeque<>();
         Set<BlockPos> seen = new HashSet<>();
@@ -305,6 +400,11 @@ public final class LaserNetworks {
                 LaserNode from = relay ? nodes.get(visit.node()) : null;
                 path.add(new Hop(visit.node(), i, from, carried.get(visit.node()),
                         from == null ? null : lost.computeIfAbsent(visit.node(), key -> new long[1])));
+                // A beam with lenses asks for what its action costs, as a block would.
+                LensAction action = actions.get(new LensAction.Key(visit.node(), i));
+                if (action != null) {
+                    route(sinks, action.key(), beam.hit(), beam.face(), null, action, source.nodePos(), index, path, visit.efficiency());
+                }
                 if (beam.end() == LaserBeam.End.SINK) {
                     route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
                 } else if (beam.end() == LaserBeam.End.NODE) {
@@ -360,6 +460,7 @@ public final class LaserNetworks {
         }
         if (dirty) rebuild();
         for (Network network : networks) move(network);
+        for (LensAction action : actions.values()) action.act(level, this);
         if (time % SETTLE_TICKS == 0) settle();
     }
 
@@ -439,7 +540,8 @@ public final class LaserNetworks {
             for (int r = 0; r < routes.size(); r++) {
                 if (ask[r] <= 0) continue;
                 int source = routes.get(r).index();
-                give[r] = Math.min(left[source], (long) Math.floor(ask[r] * scale[source]));
+                // Up, so the last FE of a small ask still arrives after the tax; never more than the source has left.
+                give[r] = Math.min(left[source], (long) Math.ceil(ask[r] * scale[source]));
                 deliver += (long) Math.floor(give[r] * routes.get(r).efficiency());
             }
             if (deliver <= 0) continue;
@@ -463,6 +565,7 @@ public final class LaserNetworks {
     /** What the block would take, up to {@code cap}. */
     private long demand(Sink sink, int cap) {
         if (cap <= 0) return 0;
+        if (sink.action() != null) return Math.min(cap, sink.action().demand());
         if (sink.buffer() != null) return Math.min(cap, sink.buffer().room());
         EnergyHandler handler = sink.energy() == null ? null : sink.energy().getCapability();
         if (handler == null) return 0;
@@ -473,6 +576,7 @@ public final class LaserNetworks {
 
     /** Gives the block up to {@code amount}; what it took. */
     private long put(Sink sink, int amount) {
+        if (sink.action() != null) return sink.action().fill(amount);
         if (sink.buffer() != null) {
             long got = Math.min(amount, sink.buffer().room());
             sink.buffer().fill(got);

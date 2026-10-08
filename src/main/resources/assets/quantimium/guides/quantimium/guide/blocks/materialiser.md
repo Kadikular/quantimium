@@ -2,7 +2,7 @@
 navigation:
   title: Materialiser
   parent: blocks/index.md
-  position: 31
+  position: 33
   icon: quantimium:materialiser
 item_ids:
 - quantimium:materialiser

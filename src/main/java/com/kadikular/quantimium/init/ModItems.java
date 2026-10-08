@@ -238,6 +238,17 @@ public class ModItems {
             "photodetector", ModBlocks.PHOTODETECTOR);
     public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_prism", ModBlocks.LASER_PRISM);
+    public static final DeferredItem<BlockItem> LENS_MOUNT_ITEM = ITEMS.registerSimpleBlockItem(
+            "lens_mount", ModBlocks.LENS_MOUNT);
+    public static final DeferredItem<BlockItem> COLLECTOR_ITEM = ITEMS.registerSimpleBlockItem(
+            "collector", ModBlocks.COLLECTOR);
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARVEST_LENS = ITEMS.registerItem(
+            "harvest_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.HARVEST));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> DAMAGE_LENS = ITEMS.registerItem(
+            "damage_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.DAMAGE));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> PICKUP_LENS = ITEMS.registerItem(
+            "pickup_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PICKUP));
+
     public static final DeferredItem<com.kadikular.quantimium.item.LaserLinkerItem> LASER_LINKER = ITEMS.registerItem(
             "laser_linker", props -> new com.kadikular.quantimium.item.LaserLinkerItem(props.stacksTo(1)));
     public static final DeferredItem<BlockItem> CATALYST_BAY_ITEM = ITEMS.registerSimpleBlockItem(

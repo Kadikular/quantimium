@@ -242,7 +242,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (partnerHolds && worldPosition.relative(facing(), gap + 1).compareTo(worldPosition) < 0) return shownBeams;
         List<LaserBeam> all = new ArrayList<>(shownBeams);
         long flow = (long) Math.pow(10, shownCharge - 1);
-        all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true));
+        all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true, com.kadikular.quantimium.laser.Lens.NONE));
         return all;
     }
 

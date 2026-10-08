@@ -2,7 +2,7 @@
 navigation:
   title: Fold Rail
   parent: blocks/index.md
-  position: 22
+  position: 23
   icon: quantimium:fold_rail
 ---
 

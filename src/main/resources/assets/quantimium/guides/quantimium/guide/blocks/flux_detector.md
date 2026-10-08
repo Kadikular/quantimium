@@ -2,7 +2,7 @@
 navigation:
   title: Flux Detector
   parent: blocks/index.md
-  position: 17
+  position: 18
   icon: quantimium:flux_detector
 item_ids:
 - quantimium:flux_detector

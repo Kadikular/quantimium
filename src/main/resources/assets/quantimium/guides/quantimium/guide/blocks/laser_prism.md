@@ -2,7 +2,7 @@
 navigation:
   title: Laser Prism
   parent: blocks/index.md
-  position: 29
+  position: 30
   icon: quantimium:laser_prism
 item_ids:
 - quantimium:laser_prism

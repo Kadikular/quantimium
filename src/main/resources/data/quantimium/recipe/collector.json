@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "H": "minecraft:hopper",
+    "M": "quantimium:laser_mirror",
+    "G": "minecraft:glass_pane"
+  },
+  "pattern": [
+    "IHI",
+    "GMG",
+    "III"
+  ],
+  "result": {
+    "id": "quantimium:collector",
+    "count": 1
+  }
+}

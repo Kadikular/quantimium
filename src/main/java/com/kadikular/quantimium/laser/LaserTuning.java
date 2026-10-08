@@ -46,4 +46,23 @@ public final class LaserTuning {
 
     /** What the flash emitter makes from burning: a furnace's fuel ticks, this much FE each. */
     public static final int FLASH_FE_PER_BURN_TICK = 40;
+
+    // ---- lenses ----
+
+    /** How far from its mount a Harvest lens's beam can break a block. */
+    public static final int HARVEST_REACH = 16;
+    /** FE to break a block, for each point of its hardness (stone is 1.5, obsidian 50); at least one point's worth. */
+    public static final long HARVEST_FE_PER_HARDNESS = 400;
+    /** Ticks between blocks a Harvest lens breaks, however much power it has. */
+    public static final int HARVEST_COOLDOWN = 10;
+    /** What a Damage lens's beam deals each hit, in half-hearts. */
+    public static final float DAMAGE_PER_HIT = 4.0f;
+    /** FE for each hit on each thing in the beam. */
+    public static final long DAMAGE_FE_PER_HIT = 2_000;
+    /** Ticks between hits. */
+    public static final int DAMAGE_INTERVAL = 10;
+    /** FE to carry one stack back up the beam. */
+    public static final long PICKUP_FE_PER_STACK = 200;
+    /** Ticks between the beam's sweeps for items lying in it. */
+    public static final int PICKUP_INTERVAL = 10;
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Lasers' block art: the emitters (flash, I, II, III) and the mirror, with their models and blockstates.
+Lasers' block art: the emitters (flash, I, II, III), the mirror, the Lens Mount and Collector, and the
+lenses, with their models and blockstates.
 
 Follows the style guide's grammar: tier is read from the stone (cobble for low, deepslate for mid,
 navy obsidian for high), flux is azure in straight 1px lines, and the lens is the one bright thing on
@@ -179,6 +180,58 @@ def detector_face(lit: bool) -> Image.Image:
     return img
 
 
+def lens_mount_face() -> Image.Image:
+    """A violet-rimmed window onto four lens slots: violet is for what changes a beam."""
+    img = stone(("1e1630", "2a2042", "3a2d5a"), 61)
+    for x in range(16):
+        for y in range(16):
+            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+            if 4.6 < d < 6.2:
+                img.putpixel((x, y), hx("9a7bff"))
+            elif d <= 4.6:
+                img.putpixel((x, y), hx("120c22"))
+    # The four lenses, seen edge-on as a stack: four pale bars.
+    for i, y in enumerate((5, 7, 9, 11)):
+        for x in range(5, 11):
+            img.putpixel((x, y - 1 + (i % 2 == 0)), hx("c8b8ff") if x in (5, 10) else hx("e4dcff"))
+    return img
+
+
+def collector_face() -> Image.Image:
+    """A grille that light passes and items catch on: a green-trimmed mesh."""
+    img = stone(("1c2a22", "26382e", "32493c"), 71)
+    for x in range(2, 14):
+        for y in range(2, 14):
+            img.putpixel((x, y), hx("0d1712"))
+    for i in range(2, 14, 3):
+        for j in range(2, 14):
+            img.putpixel((i, j), hx("5be38a"))
+            img.putpixel((j, i), hx("5be38a"))
+    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        img.putpixel((x, y), hx("c8f5d8"))
+    return img
+
+
+def lens_item(colour: str) -> Image.Image:
+    """A lens: a ground-glass disc in a dark rim, tinted by what it does, with a bright glint."""
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    tint = hx(colour)
+    for x in range(16):
+        for y in range(16):
+            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+            if d < 6.6:
+                img.putpixel((x, y), hx("1b1e38"))
+            if d < 5.4:
+                shade = 0.65 + 0.35 * (1 - d / 5.4)
+                img.putpixel((x, y), tuple(min(255, int(c * shade)) for c in tint[:3]) + (230,))
+    for x, y in ((5, 4), (4, 5), (5, 5), (6, 4)):
+        img.putpixel((x, y), hx("ffffff"))
+    return img
+
+
+LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a"}
+
+
 def cube(textures: dict, front_key: str) -> dict:
     faces = {}
     for face in ("north", "south", "east", "west", "up", "down"):
@@ -246,6 +299,25 @@ def main() -> None:
             json.dump({"variants": variants}, handle, indent=1)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
+    for name, face, tones, seed in (("lens_mount", lens_mount_face, ("1e1630", "2a2042", "3a2d5a"), 62),
+                                    ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72)):
+        face().save(os.path.join(TEX, f"{name}_face.png"))
+        stone(tones, seed).save(os.path.join(TEX, f"{name}_side.png"))
+        model = cube({"front": f"quantimium:block/{name}_face", "back": f"quantimium:block/{name}_side",
+                      "side": f"quantimium:block/{name}_side"}, "front")
+        with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
+            json.dump(model, handle, indent=2)
+        with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
+            json.dump({"variants": {f"facing={f}": dict({"model": f"quantimium:block/{name}"}, **r) for f, r in ROTATIONS.items()}},
+                      handle, indent=1)
+        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}"}}, handle, indent=2)
+    for name, colour in LENSES.items():
+        lens_item(colour).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
+        with open(os.path.join(ASSETS, "models", "item", f"{name}.json"), "w") as handle:
+            json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"quantimium:item/{name}"}}, handle, indent=2)
+        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:item/{name}"}}, handle, indent=2)
     prism_face().save(os.path.join(TEX, "laser_prism.png"))
     with open(os.path.join(MODELS, "laser_prism.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/laser_prism"}}, handle, indent=2)

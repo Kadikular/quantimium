@@ -142,6 +142,13 @@ public class Quantimium {
                 (be, context) -> be.energy()
         );
 
+        // What a Collector caught, for pipes and hoppers to take.
+        event.registerBlockEntity(
+                Capabilities.Item.BLOCK,
+                ModBlockEntities.COLLECTOR_BE.get(),
+                (be, context) -> be.getOutside()
+        );
+
         // Laser emitters take power on every face; the flash emitter takes fuel too.
         event.registerBlockEntity(
                 Capabilities.Energy.BLOCK,

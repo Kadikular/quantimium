@@ -73,4 +73,22 @@ public interface LaserNode {
 
     /** The network has traced this node's beams, or worked out what flows along them: for rendering. */
     void showBeams(List<LaserBeam> beams);
+
+    /** The lenses this node holds, in the order light meets them: a Lens Mount's. */
+    default List<Lens> lenses() {
+        return List.of();
+    }
+
+    /**
+     * Whether items a beam brings back stop here: a Collector. Pickup sends them to the nearest one up
+     * the beam.
+     */
+    default boolean collects() {
+        return false;
+    }
+
+    /** Takes what it can of {@code stack}, a Collector; what's left. */
+    default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack) {
+        return stack;
+    }
 }

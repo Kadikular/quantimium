@@ -14,11 +14,14 @@ navigation:
 - <ItemLink id="quantimium:anomalite_shard" />
 - <ItemLink id="quantimium:anomaly_fragment" />
 - <ItemLink id="quantimium:basic_decoherence_matrix" />
+- <ItemLink id="quantimium:damage_lens" />
 - <ItemLink id="quantimium:decoherence_lance" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
+- <ItemLink id="quantimium:harvest_lens" />
 - <ItemLink id="quantimium:laser_linker" />
 - <ItemLink id="quantimium:mirror_lens" />
+- <ItemLink id="quantimium:pickup_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />
 - <ItemLink id="quantimium:rift_residue" />
 - <ItemLink id="quantimium:rift_seed" />

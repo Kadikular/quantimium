@@ -2,7 +2,7 @@
 navigation:
   title: Rift Seed
   parent: items/index.md
-  position: 13
+  position: 16
   icon: quantimium:rift_seed
 item_ids:
 - quantimium:rift_seed

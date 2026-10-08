@@ -103,6 +103,31 @@ out of its face, and it takes nothing for it. It doesn't refocus the light, so t
 far as it had left. It lights up while light passes, and gives a redstone
 signal, and a comparator reading, for how much: 1 for a trickle, two more for each tenfold, up to 15.
 
+## Lenses
+
+A <ItemLink id="quantimium:lens_mount" /> is a mirror that holds lenses: light that reaches
+it leaves by its face, refocused, through its four lens slots, left to right. The beam is still a beam:
+it carries power to whatever it ends on, as before, and does what its lenses say along the way. Open
+the mount with an empty hand; sneak-click or wrench a face to point it there.
+
+A beam does **one action**, changed by any number of **modifiers**. Light leaving a mount carries every
+lens it's met so far, so mounts in a row add their lenses up; where two actions meet, the later one
+wins. Each lensed beam is tinted by what it does.
+
+An action spends power from the beam, asked for through the network like any block's: it only works
+while the beam is lit, and an emitter pays only while there's something to do.
+
+| Lens | Kind | What it does | Costs |
+| --- | --- | --- | --- |
+| <ItemLink id="quantimium:harvest_lens" /> | Action | Breaks the block the beam ends on, as a diamond pickaxe would, if it's within 16 blocks of the mount; one block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness |
+| <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. | 2,000 FE a hit |
+| <ItemLink id="quantimium:pickup_lens" /> | Modifier | What the action frees, and items lying in the beam, go back up it to the nearest Collector. With no Collector, drops fall where they are. | 200 FE a stack |
+
+A <ItemLink id="quantimium:collector" /> passes light, out of its face, as a mirror does, and
+catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from.
+Nothing can be put in from outside. Put it between the emitter and the mount:
+emitter, Collector, Lens Mount with Harvest and Pickup, then the blocks to break.
+
 ## What stops light
 
 Anything solid in the way stops a beam: it ends on that block, and charges
@@ -115,7 +140,7 @@ block beyond it gets nothing.
 
 ## Networks
 
-Emitters, mirrors, prisms, cavities and photodetectors joined by light make one network. Power goes where it's asked for: every block
+Emitters, mirrors, prisms, cavities, photodetectors, Lens Mounts and Collectors joined by light make one network. Power goes where it's asked for: every block
 the network's light reaches is charged as far as the network's emitters have power, shared between
 the emitters whose light reaches it in proportion to what each has. An emitter only ever pays for the
 blocks its own light reaches. Light reaches a block by the fewest mirrors it can.

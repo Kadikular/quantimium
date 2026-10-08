@@ -2,7 +2,7 @@
 navigation:
   title: Reactor Energy Port
   parent: blocks/index.md
-  position: 55
+  position: 57
   icon: quantimium:reactor_energy_port
 ---
 

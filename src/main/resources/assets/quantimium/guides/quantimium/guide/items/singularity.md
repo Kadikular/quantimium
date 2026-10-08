@@ -2,7 +2,7 @@
 navigation:
   title: Singularity
   parent: items/index.md
-  position: 15
+  position: 18
   icon: quantimium:singularity
 item_ids:
 - quantimium:singularity
