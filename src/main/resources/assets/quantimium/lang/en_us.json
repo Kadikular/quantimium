@@ -915,7 +915,7 @@
   "block.quantimium.laser_mirror": "Laser Mirror",
   "block.quantimium.laser_prism": "Laser Prism",
   "block.quantimium.cavity_mirror": "Cavity Mirror",
-  "block.quantimium.cavity_mirror.tip": "Gives up to %s FE/t out of its back. Facing a Laser Mirror or another Cavity Mirror, it holds %s FE per block of gap; alone, it's a mirror.",
+  "block.quantimium.cavity_mirror.tip": "Gives up to %s FE/t out of its back. Facing a Laser Mirror or another Cavity Mirror, it holds %s FE per block of gap; alone, it's a mirror out of its front.",
   "block.quantimium.laser_emitter.tip": "Sends up to %s FE/t, %s blocks.",
   "block.quantimium.flash_emitter.tip": "Burns furnace fuel, or takes FE.",
   "block.quantimium.photodetector": "Photodetector",

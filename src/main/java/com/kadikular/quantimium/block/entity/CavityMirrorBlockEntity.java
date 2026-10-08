@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * One mirror of an optical cavity. A Cavity Mirror facing another mirror (a Laser Mirror, or a second
  * Cavity Mirror) across a clear gap holds light between them, as a laser's cavity does. Unpaired, it
- * passes light on out of its back, as a Laser Mirror does. Light that reaches either mirror from outside charges it;
+ * passes light on out of its front, towards where its partner would stand, as a Laser Mirror does. Light that reaches either mirror from outside charges it;
  * light leaves through its back, the output coupler, for blocks that ask for it. Each holds
  * {@link LaserTuning#CAVITY_FE_PER_BLOCK} for each block of gap, and loses a little every tick, as flux.
  * A mirror that loses its partner, or is broken, lets all its light go as flux.
@@ -180,9 +180,13 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return worldPosition;
     }
 
-    /** Light leaves by the back while its output is on: what it held when paired, or what reaches it when not. */
+    /**
+     * Paired, what it holds leaves by the back while its output is on. Unpaired, it's a mirror: light that
+     * reaches it leaves by the front, towards where its partner would stand.
+     */
     @Override
     public Set<Direction> outputs() {
+        if (!paired()) return Set.of(facing());
         return output ? Set.of(facing().getOpposite()) : Set.of();
     }
 
@@ -191,7 +195,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return LaserTuning.RELAY_RANGE;
     }
 
-    /** Unpaired, it's a mirror: light passes through it, out of its back. */
+    /** Unpaired, it's a mirror: light passes through it, out of its front. */
     @Override
     public boolean relays() {
         return !paired();

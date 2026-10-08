@@ -70,7 +70,8 @@ as a real laser's cavity does: a battery for a laser network. Only one end needs
 Each Cavity Mirror holds {{c:LaserTuning.CAVITY_FE_PER_BLOCK}} FE for each block of gap, and takes or
 gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t; a Laser Mirror at the other end holds nothing.
 
-With nothing facing it, a Cavity Mirror is just a mirror: light that reaches it leaves by its back.
+With nothing facing it, a Cavity Mirror is just a mirror: light that reaches it leaves by its front,
+towards where its partner would stand. Once paired, what it holds leaves by its back instead.
 
 - Light that reaches a cavity mirror from outside charges it, but only with what the network's
   emitters have left over once its blocks are served. One cavity never fills another.

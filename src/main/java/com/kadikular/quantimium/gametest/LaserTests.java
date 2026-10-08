@@ -491,13 +491,13 @@ public final class LaserTests {
     // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void anUnpairedCavityMirrorPassesLightOn(GameTestHelper helper) {
-        // Alone, light reaching it leaves by its back, as a Laser Mirror's does by its face.
+        // Alone, light reaching it leaves by its front, as a Laser Mirror's does.
         emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
-        var mirror = cavityMirror(helper, new BlockPos(7, Y, 8), Direction.SOUTH);
+        var mirror = cavityMirror(helper, new BlockPos(7, Y, 8), Direction.NORTH);
         FoldCoreBlockEntity core = sink(helper, new BlockPos(7, Y, 3));
         helper.succeedWhen(() -> {
             helper.assertTrue(!mirror.paired(), "nothing faces it");
-            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "light out of its back");
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "light out of its front");
             TestSupport.clearField(helper);
         });
     }
