@@ -163,7 +163,18 @@ made and what's missing, and asking for one anvil too many says how much more ir
 is paid for from the core's power, at the Reactor's price. What it could make never shows as stock:
 those counts share their sources, and AE2 would plan to use the same iron twice.
 
-Use the port to choose how (sneak to go back):
+Use the port to open its screen, where it's set up like a
+storage bus:
+
+- **Priority**, for its storage and its patterns, in steps of 1, 10 and 100.
+- **Storing**: off by default. On, the network can store items in the Reactor as in a drive, at the
+  port's priority, as far as there's room in the horizon.
+- **Filter**, two lists of 27 entries, each a whitelist or a
+  blacklist: the *pattern* list says which things it offers patterns for; the *storage* list says which
+  held items the network sees, takes and stores. An empty list filters nothing. Set an entry by clicking
+  it with an item or dragging one in from JEI; shift-click it to match one of the item's tags instead.
+
+The screen's mode button chooses how it offers what it can make:
 
 - **Both** (the default): whole trees for speed, and every recipe as a step for AE2 to fall back on.
 - **Whole trees**: one pattern for each thing it can make, planned from the stock of the moment, with

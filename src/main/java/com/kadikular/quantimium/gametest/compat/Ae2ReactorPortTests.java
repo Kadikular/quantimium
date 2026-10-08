@@ -377,6 +377,41 @@ public final class Ae2ReactorPortTests {
         });
     }
 
+    // covers: reactor.me_port.settings
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_settings", timeoutTicks = 300)
+    public static void itIsSetUpLikeAStorageBus(GameTestHelper helper) {
+        // A log and a diamond held. The storage list hides the log; the network may store items here, at a
+        // priority above the drive's, so a stick it's given goes into the Reactor; the pattern list offers
+        // planks only.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        horizon.take(LOG, 1);
+        horizon.take(ItemResource.of(Items.DIAMOND), 1);
+        horizon.recountNow();
+        ReactorMePortBlockEntity port = helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class);
+        port.toggleStorageAllow();
+        port.setFilterSlot(ReactorMePortBlockEntity.STORAGE_FILTER_START, new ItemStack(Items.OAK_LOG));
+        port.setFilterSlot(0, new ItemStack(Items.OAK_PLANKS));
+        port.toggleAcceptsItems();
+        port.addPriority(10);
+        boolean[] stored = {false};
+        helper.succeedWhen(() -> {
+            var storage = grid(helper).getStorageService().getInventory();
+            helper.assertValueEqual(storage.getAvailableStacks().get(LOG_KEY), 0L, "the log is hidden");
+            helper.assertValueEqual(storage.getAvailableStacks().get(AEItemKey.of(Items.DIAMOND)), 1L, "the diamond isn't");
+            helper.assertValueEqual(storage.extract(LOG_KEY, 1, Actionable.SIMULATE, IActionSource.empty()), 0L,
+                    "nor can it be taken");
+            if (!stored[0]) {
+                helper.assertValueEqual(storage.insert(AEItemKey.of(Items.STICK), 3, Actionable.MODULATE, IActionSource.empty()), 3L,
+                        "three sticks stored");
+                stored[0] = true;
+            }
+            helper.assertValueEqual(horizon.getLedger().count(ItemResource.of(Items.STICK)), 3L, "in the Reactor, its priority above the drive's");
+            helper.assertTrue(!port.getAvailablePatterns().isEmpty(), "planks are offered");
+            helper.assertTrue(port.getAvailablePatterns().stream().allMatch(pattern ->
+                    pattern.getPrimaryOutput().what().equals(PLANKS_KEY)), "and nothing else");
+        });
+    }
+
     // covers: reactor.me_port.loops
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_loop", timeoutTicks = 300)
     public static void aStorageBusOnItsOwnMaterialiserPortCountsNothingTwice(GameTestHelper helper) {

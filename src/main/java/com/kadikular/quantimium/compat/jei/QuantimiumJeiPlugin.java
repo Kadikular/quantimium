@@ -111,6 +111,7 @@ public class QuantimiumJeiPlugin implements IModPlugin {
         // The Superposition Crafter only exists with AE2; its screen class is only touched then.
         if (ModList.get().isLoaded("ae2")) {
             GhostFilterTargets.register(registration, com.kadikular.quantimium.compat.ae2.client.SuperpositionCrafterScreen.class);
+            GhostFilterTargets.register(registration, com.kadikular.quantimium.compat.ae2.client.ReactorMePortScreen.class);
         }
     }
 

@@ -183,6 +183,16 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         return taken;
     }
 
+    /** Takes {@code amount} of {@code item} into the horizon, as far as there's room. How many it took. */
+    public long store(ItemResource item, long amount) {
+        long fits = Math.min(amount, room());
+        if (fits <= 0) return 0;
+        ledger.add(item, fits);
+        ledgerVersion++;
+        setChanged();
+        return fits;
+    }
+
     public int ledgerVersion() {
         return ledgerVersion;
     }

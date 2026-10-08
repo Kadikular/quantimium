@@ -78,6 +78,9 @@ public final class Ae2Content {
     public static final DeferredHolder<MenuType<?>, MenuType<SuperpositionCrafterMenu>> SUPERPOSITION_CRAFTER_MENU =
             MENUS.register("me_superposition_crafter_menu", () -> IMenuTypeExtension.create(SuperpositionCrafterMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<ReactorMePortMenu>> REACTOR_ME_PORT_MENU =
+            MENUS.register("reactor_me_port_menu", () -> IMenuTypeExtension.create(ReactorMePortMenu::new));
+
     private Ae2Content() {}
 
     public static void init(IEventBus modBus) {

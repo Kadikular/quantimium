@@ -328,6 +328,18 @@ def catalyst_bay() -> Panel:
     return panel
 
 
+def reactor_me_port() -> Panel:
+    """The ME Superposition Port: four lines of readout, then the priority and its six step buttons
+    (ReactorMePortScreen); the filter view is the Superposition Crafter's."""
+    panel = Panel(HIGH)
+    panel.region("info", (8, 18, 160, 40))
+    panel.well(7, 57, 46, 12)
+    panel.region("priority", (8, 59, 44, 9))
+    panel.region("steps", (56, 59, 119, 14))
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -409,6 +421,8 @@ PANELS = {
     "catalyst_bay": catalyst_bay,
     # The same 27 ghost slots as the Superposition Crafter's filter.
     "catalyst_bay_filter": superposition_crafter_filter,
+    "reactor_me_port": reactor_me_port,
+    "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,
     "fold_core": fold_core,

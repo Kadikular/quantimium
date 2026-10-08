@@ -70,7 +70,8 @@ import java.util.Map;
  * counted as network stock, and a Materialiser Port this network reads through a storage bus goes dark.
  */
 public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
-        implements IInWorldGridNodeHost, IActionHost, IStorageProvider, ICraftingProvider, ReactorNetwork {
+        implements IInWorldGridNodeHost, IActionHost, IStorageProvider, ICraftingProvider, ReactorNetwork,
+        net.minecraft.world.MenuProvider {
 
     private static final IGridNodeListener<ReactorMePortBlockEntity> LISTENER = new IGridNodeListener<>() {
         @Override
@@ -99,6 +100,25 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     @Nullable
     private ReactorRecipes patternsFrom;
     private Mode mode = Mode.BOTH;
+
+    /** Entries in each of the filter's two lists: patterns (by what they make), then storage (what's shown). */
+    public static final int FILTER_SLOTS = 27;
+    public static final int STORAGE_FILTER_START = FILTER_SLOTS;
+    /** Ghost stacks, never real items: what to offer patterns for, then which held items the network sees. */
+    private final net.minecraft.world.SimpleContainer filter = new net.minecraft.world.SimpleContainer(FILTER_SLOTS * 2) {
+        @Override
+        public void setChanged() {
+            super.setChanged();
+            filtersChanged();
+        }
+    };
+    /** Whether each list is a whitelist: patterns start as one (empty, it offers everything), storage too. */
+    private boolean patternsAllow = true;
+    private boolean storageAllow = true;
+    /** The priority of its storage and its patterns, as a storage bus's. */
+    private int priority;
+    /** Whether the network may store items in the Reactor, as in a drive. Off unless chosen. */
+    private boolean acceptsItems;
     /** What patterns have made, waiting to go to the network: never from inside a push. */
     private final List<GenericStack> pending = new ArrayList<>();
 
@@ -161,10 +181,145 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     @Override
     public void mountInventories(IStorageMounts mounts) {
-        mounts.mount(offer);
+        mounts.mount(offer, priority);
     }
 
-    /** The Reactor's held items as a storage: seen and taken, never filled (Input ports do that). */
+    @Override
+    public int getPatternPriority() {
+        return priority;
+    }
+
+    // ---- settings ----
+
+    public net.minecraft.world.SimpleContainer getFilter() {
+        return filter;
+    }
+
+    public int priority() {
+        return priority;
+    }
+
+    public void addPriority(int delta) {
+        priority = (int) Math.clamp((long) priority + delta, -999_999L, 999_999L);
+        IStorageProvider.requestUpdate(mainNode);
+        ICraftingProvider.requestUpdate(mainNode);
+        setChanged();
+        sync();
+    }
+
+    public boolean patternsAllow() {
+        return patternsAllow;
+    }
+
+    public boolean storageAllow() {
+        return storageAllow;
+    }
+
+    public boolean acceptsItems() {
+        return acceptsItems;
+    }
+
+    public void togglePatternsAllow() {
+        patternsAllow = !patternsAllow;
+        filtersChanged();
+    }
+
+    public void toggleStorageAllow() {
+        storageAllow = !storageAllow;
+        filtersChanged();
+    }
+
+    public void toggleAcceptsItems() {
+        acceptsItems = !acceptsItems;
+        setChanged();
+        sync();
+    }
+
+    /** Sets entry {@code slot} (patterns 0-26, storage 27-53) to plain {@code stack}, or clears it. */
+    public void setFilterSlot(int slot, net.minecraft.world.item.ItemStack stack) {
+        if (slot >= 0 && slot < filter.getContainerSize()) filter.setItem(slot, com.kadikular.quantimium.recipe.FilterEntry.of(stack));
+    }
+
+    /** Shift-click: steps the entry through its item's tags and back. */
+    public void cycleFilterTag(int slot) {
+        if (slot < 0 || slot >= filter.getContainerSize()) return;
+        var entry = filter.getItem(slot);
+        if (!entry.isEmpty()) filter.setItem(slot, com.kadikular.quantimium.recipe.FilterEntry.cycle(entry));
+    }
+
+    /** What may be offered patterns for, and which held items the network sees, as the lists stand. */
+    private com.kadikular.quantimium.recipe.RecipeFilter patternFilter = com.kadikular.quantimium.recipe.RecipeFilter.NONE;
+    private com.kadikular.quantimium.recipe.RecipeFilter storageFilter = com.kadikular.quantimium.recipe.RecipeFilter.NONE;
+
+    private void filtersChanged() {
+        patternFilter = com.kadikular.quantimium.recipe.RecipeFilter.of(filter, FILTER_SLOTS, patternsAllow, false);
+        // The storage list sits in the second half: read as a filter's outputs, whitelist or blacklist.
+        var storage = new net.minecraft.world.SimpleContainer(FILTER_SLOTS);
+        for (int i = 0; i < FILTER_SLOTS; i++) storage.setItem(i, filter.getItem(STORAGE_FILTER_START + i));
+        storageFilter = com.kadikular.quantimium.recipe.RecipeFilter.of(storage, FILTER_SLOTS, storageAllow, false);
+        patternsFrom = null;
+        IStorageProvider.requestUpdate(mainNode);
+        setChanged();
+        sync();
+    }
+
+    private boolean shows(ItemResource item) {
+        return storageFilter.offers(item.toStack(1));
+    }
+
+    private void sync() {
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.quantimium.reactor_me_port");
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+                                                                        net.minecraft.world.entity.player.Player player) {
+        return new ReactorMePortMenu(containerId, inventory, this);
+    }
+
+    public static final int DATA_COUNT = 7;
+
+    /**
+     * What the screen shows: whether it's linked and online, how many kinds held are shown, how many
+     * patterns, the priority (two halves), the mode and the switches. Server side.
+     */
+    public final net.minecraft.world.inventory.ContainerData data = new net.minecraft.world.inventory.ContainerData() {
+        @Override
+        public int get(int index) {
+            HorizonCoreBlockEntity horizon = core();
+            return switch (index) {
+                case 0 -> horizon == null ? 0 : grid() == null ? 1 : 2;
+                case 1 -> horizon == null ? 0 : (int) Math.min(Integer.MAX_VALUE,
+                        horizon.getLedger().view().keySet().stream().filter(ReactorMePortBlockEntity.this::shows).count());
+                case 2 -> patterns.size();
+                case 3 -> priority & 0xFFFF;
+                case 4 -> (priority >>> 16) & 0xFFFF;
+                case 5 -> mode.ordinal();
+                case 6 -> (patternsAllow ? 1 : 0) | (storageAllow ? 2 : 0) | (acceptsItems ? 4 : 0);
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int index, int value) {}
+
+        @Override
+        public int getCount() {
+            return DATA_COUNT;
+        }
+    };
+
+    /**
+     * The Reactor's held items as a storage, through the storage list: seen and taken, and filled too if
+     * the network may store items in it.
+     */
     private final class OfferStorage implements MEStorage {
         @Nullable
         private HorizonCoreBlockEntity visibleCore() {
@@ -176,7 +331,9 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         public void getAvailableStacks(KeyCounter out) {
             HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null) return;
-            horizon.getLedger().view().forEach((item, amount) -> out.add(AEItemKey.of(item), amount));
+            horizon.getLedger().view().forEach((item, amount) -> {
+                if (shows(item)) out.add(AEItemKey.of(item), amount);
+            });
         }
 
         @Override
@@ -184,6 +341,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null || !(what instanceof AEItemKey key) || amount <= 0) return 0;
             ItemResource item = key.toResource();
+            if (!shows(item)) return 0;
             long available = Math.min(amount, horizon.getLedger().count(item));
             if (available <= 0) return 0;
             return mode == Actionable.MODULATE ? horizon.withdraw(item, available) : available;
@@ -191,7 +349,13 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
         @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-            return 0;
+            HorizonCoreBlockEntity horizon = visibleCore();
+            if (!acceptsItems || horizon == null || !horizon.accepts() || !(what instanceof AEItemKey key) || amount <= 0) return 0;
+            ItemResource item = key.toResource();
+            if (!shows(item)) return 0;
+            long fits = Math.min(amount, horizon.room());
+            if (fits > 0 && mode == Actionable.MODULATE) horizon.store(item, fits);
+            return fits;
         }
 
         @Override
@@ -241,6 +405,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         mode = all[(mode.ordinal() + (back ? all.length - 1 : 1)) % all.length];
         patternsFrom = null;
         setChanged();
+        sync();
         return mode;
     }
 
@@ -291,7 +456,10 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             if (counts != queuedFrom) {
                 queuedFrom = counts;
                 counts.counts().forEach((item, amount) -> {
-                    if (amount > 0 && !trees.containsKey(item) && !recipes.producersOf(item).isEmpty()) queue(item, false);
+                    if (amount > 0 && !trees.containsKey(item) && !recipes.producersOf(item).isEmpty()
+                            && patternFilter.offers(item.toStack(1))) {
+                        queue(item, false);
+                    }
                 });
             }
             Map<ItemResource, Long> stock = horizon.stockWithNetworks(server);
@@ -307,6 +475,15 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             for (int i = 0; i < TREES_PER_TICK && !toPlan.isEmpty(); i++) {
                 ItemResource item = toPlan.poll();
                 queued.remove(item);
+                if (!patternFilter.offers(item.toStack(1))) {
+                    ReactorTreePattern gone = trees.remove(item);
+                    if (gone != null) {
+                        retired.add(gone);
+                        patternsChanged = true;
+                    }
+                    continue;
+                }
+                // A tree that can't be planned now keeps its last pattern: AE2 says what's missing.
                 ReactorTreePattern tree = planTree(horizon, stock, item);
                 if (tree == null) continue;
                 ReactorTreePattern old = trees.put(item, tree);
@@ -325,6 +502,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             if (mode.steps()) {
                 Map<net.minecraft.resources.Identifier, IPatternDetails> byId = new java.util.LinkedHashMap<>();
                 for (ReactorRecipes.Producer producer : recipes.producers()) {
+                    if (!patternFilter.offers(producer.shape().primaryOutput())) continue;
                     byId.putIfAbsent(producer.shape().id(),
                             new SuperpositionPattern(producer.shape(), 1, Ae2Content.REACTOR_ME_PORT_ITEM.get(), true));
                 }
@@ -507,6 +685,13 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         out.store("Grid", CompoundTag.CODEC, tag);
         out.store("Pending", GenericStack.CODEC.listOf(), List.copyOf(pending));
         out.putString("Mode", mode.name());
+        List<net.minecraft.world.item.ItemStack> entries = new ArrayList<>();
+        for (int i = 0; i < filter.getContainerSize(); i++) entries.add(filter.getItem(i));
+        out.store("Filter", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC.listOf(), entries);
+        out.putBoolean("PatternsAllow", patternsAllow);
+        out.putBoolean("StorageAllow", storageAllow);
+        out.putInt("Priority", priority);
+        out.putBoolean("AcceptsItems", acceptsItems);
     }
 
     @Override
@@ -521,5 +706,18 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         } catch (IllegalArgumentException e) {
             mode = Mode.BOTH;
         }
+        List<net.minecraft.world.item.ItemStack> entries =
+                in.read("Filter", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        for (int i = 0; i < filter.getContainerSize(); i++) {
+            filter.getItems().set(i, i < entries.size() ? entries.get(i) : net.minecraft.world.item.ItemStack.EMPTY);
+        }
+        patternsAllow = in.getBooleanOr("PatternsAllow", true);
+        storageAllow = in.getBooleanOr("StorageAllow", true);
+        priority = in.getIntOr("Priority", 0);
+        acceptsItems = in.getBooleanOr("AcceptsItems", false);
+        patternFilter = com.kadikular.quantimium.recipe.RecipeFilter.of(filter, FILTER_SLOTS, patternsAllow, false);
+        var storage = new net.minecraft.world.SimpleContainer(FILTER_SLOTS);
+        for (int i = 0; i < FILTER_SLOTS; i++) storage.setItem(i, filter.getItem(STORAGE_FILTER_START + i));
+        storageFilter = com.kadikular.quantimium.recipe.RecipeFilter.of(storage, FILTER_SLOTS, storageAllow, false);
     }
 }

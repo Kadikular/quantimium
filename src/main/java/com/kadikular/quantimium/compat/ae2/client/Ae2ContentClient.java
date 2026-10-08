@@ -19,6 +19,7 @@ public final class Ae2ContentClient {
     public static void registerScreens(RegisterMenuScreensEvent event) {
         if (!ModList.get().isLoaded("ae2")) return;
         event.register(Ae2Content.SUPERPOSITION_CRAFTER_MENU.get(), SuperpositionCrafterScreen::new);
+        event.register(Ae2Content.REACTOR_ME_PORT_MENU.get(), ReactorMePortScreen::new);
     }
 
     @SubscribeEvent
