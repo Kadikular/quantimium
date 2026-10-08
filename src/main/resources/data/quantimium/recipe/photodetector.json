@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass_pane",
+    "R": "minecraft:redstone",
+    "M": "quantimium:laser_mirror",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    " G ",
+    "RMR",
+    " I "
+  ],
+  "result": {
+    "id": "quantimium:photodetector",
+    "count": 1
+  }
+}

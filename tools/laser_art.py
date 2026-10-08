@@ -139,6 +139,46 @@ def linker() -> Image.Image:
     return img
 
 
+def cavity_face(lit: bool) -> Image.Image:
+    """A half-silvered plate: silver with a mesh of darker pixels, rimmed in azure, glowing when charged."""
+    img = stone(("1b1e38", "262a4a", "323760"), 41)
+    for x in range(2, 14):
+        for y in range(2, 14):
+            silver = hx("c8dcff") if lit else hx("8a9ab8")
+            img.putpixel((x, y), silver if (x + y) % 2 else (hx("7fb2ff") if lit else hx("5c6884")))
+    for i in range(1, 15):
+        for x, y in ((i, 1), (i, 14), (1, i), (14, i)):
+            img.putpixel((x, y), hx("3485ff") if lit else hx("1f2742"))
+    return img
+
+
+def coupler(lit: bool) -> Image.Image:
+    """The cavity mirror's back: a small output lens."""
+    img = stone(("1b1e38", "262a4a", "323760"), 42)
+    for x in range(16):
+        for y in range(16):
+            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+            if d < 3.6:
+                img.putpixel((x, y), hx("0b0d18"))
+            if d < 2.4:
+                img.putpixel((x, y), hx("7fb2ff") if lit else hx("1f2742"))
+    return img
+
+
+def detector_face(lit: bool) -> Image.Image:
+    """A photodetector's face: a square sensor with a redstone pip in each corner."""
+    img = stone(("2b2b33", "3b3b45", "4d4d59"), 51)
+    for x in range(4, 12):
+        for y in range(4, 12):
+            img.putpixel((x, y), hx("7fb2ff") if lit else hx("10131f"))
+    for x in range(5, 11):
+        img.putpixel((x, 7), hx("c8dcff") if lit else hx("1f2742"))
+        img.putpixel((x, 8), hx("c8dcff") if lit else hx("1f2742"))
+    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        img.putpixel((x, y), hx("ff3b3b") if lit else hx("6b1414"))
+    return img
+
+
 def cube(textures: dict, front_key: str) -> dict:
     faces = {}
     for face in ("north", "south", "east", "west", "up", "down"):
@@ -185,6 +225,27 @@ def main() -> None:
                   handle, indent=1)
     with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_mirror"}}, handle, indent=2)
+    for name, face, back_of, side_seed in (("cavity_mirror", cavity_face, coupler, 43), ("photodetector", detector_face, None, 52)):
+        stone(("1b1e38", "262a4a", "323760") if name == "cavity_mirror" else ("2b2b33", "3b3b45", "4d4d59"), side_seed).save(
+            os.path.join(TEX, f"{name}_side.png"))
+        for lit in (False, True):
+            tag = "_lit" if lit else ""
+            face(lit).save(os.path.join(TEX, f"{name}_front{tag}.png"))
+            if back_of:
+                back_of(lit).save(os.path.join(TEX, f"{name}_back{tag}.png"))
+            model = cube({"front": f"quantimium:block/{name}_front{tag}",
+                          "back": f"quantimium:block/{name}_back{tag}" if back_of else f"quantimium:block/{name}_front{tag}",
+                          "side": f"quantimium:block/{name}_side"}, "front")
+            with open(os.path.join(MODELS, f"{name}{tag}.json"), "w") as handle:
+                json.dump(model, handle, indent=2)
+        variants = {}
+        for facing, rot in ROTATIONS.items():
+            for lit in (False, True):
+                variants[f"facing={facing},lit={str(lit).lower()}"] = dict({"model": f"quantimium:block/{name}{'_lit' if lit else ''}"}, **rot)
+        with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
+            json.dump({"variants": variants}, handle, indent=1)
+        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
     prism_face().save(os.path.join(TEX, "laser_prism.png"))
     with open(os.path.join(MODELS, "laser_prism.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/laser_prism"}}, handle, indent=2)

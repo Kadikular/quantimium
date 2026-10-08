@@ -189,6 +189,14 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("laser_prism_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserPrismBlockEntity::new, ModBlocks.LASER_PRISM.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity>> CAVITY_MIRROR_BE =
+            BLOCK_ENTITIES.register("cavity_mirror_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity::new, ModBlocks.CAVITY_MIRROR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.PhotodetectorBlockEntity>> PHOTODETECTOR_BE =
+            BLOCK_ENTITIES.register("photodetector_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.PhotodetectorBlockEntity::new, ModBlocks.PHOTODETECTOR.get()));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

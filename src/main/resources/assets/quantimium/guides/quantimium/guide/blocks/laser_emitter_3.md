@@ -2,7 +2,7 @@
 navigation:
   title: Laser Emitter III
   parent: blocks/index.md
-  position: 25
+  position: 26
   icon: quantimium:laser_emitter_3
 item_ids:
 - quantimium:laser_emitter_3

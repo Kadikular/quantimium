@@ -2,7 +2,7 @@
 navigation:
   title: Flux Maintainer
   parent: blocks/index.md
-  position: 16
+  position: 17
   icon: quantimium:flux_maintainer
 item_ids:
 - quantimium:flux_maintainer

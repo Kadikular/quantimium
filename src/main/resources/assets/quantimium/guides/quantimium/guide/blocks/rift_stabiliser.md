@@ -2,7 +2,7 @@
 navigation:
   title: Rift Stabiliser
   parent: blocks/index.md
-  position: 60
+  position: 62
   icon: quantimium:rift_stabiliser
 ---
 

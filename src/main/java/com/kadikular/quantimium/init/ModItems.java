@@ -230,6 +230,10 @@ public class ModItems {
             "laser_emitter_3", ModBlocks.LASER_EMITTER_3);
     public static final DeferredItem<BlockItem> LASER_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_mirror", ModBlocks.LASER_MIRROR);
+    public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
+            "cavity_mirror", ModBlocks.CAVITY_MIRROR);
+    public static final DeferredItem<BlockItem> PHOTODETECTOR_ITEM = ITEMS.registerSimpleBlockItem(
+            "photodetector", ModBlocks.PHOTODETECTOR);
     public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_prism", ModBlocks.LASER_PRISM);
     public static final DeferredItem<com.kadikular.quantimium.item.LaserLinkerItem> LASER_LINKER = ITEMS.registerItem(

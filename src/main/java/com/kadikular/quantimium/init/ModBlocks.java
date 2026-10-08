@@ -17,6 +17,8 @@ import com.kadikular.quantimium.block.LitReactorPlinthBlock;
 import com.kadikular.quantimium.block.LaserEmitterBlock;
 import com.kadikular.quantimium.block.LaserMirrorBlock;
 import com.kadikular.quantimium.block.LaserPrismBlock;
+import com.kadikular.quantimium.block.CavityMirrorBlock;
+import com.kadikular.quantimium.block.PhotodetectorBlock;
 import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.block.ReactorPortBlock;
 import com.kadikular.quantimium.block.CreativeEnergyCellBlock;
@@ -68,6 +70,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -707,6 +710,11 @@ public class ModBlocks {
     public static final DeferredBlock<Block> LASER_PRISM = BLOCKS.register(
             "laser_prism", id -> new LaserPrismBlock(laserBlock(id, MapColor.COLOR_LIGHT_BLUE).sound(SoundType.AMETHYST)));
 
+    public static final DeferredBlock<Block> CAVITY_MIRROR = BLOCKS.register(
+            "cavity_mirror", id -> new CavityMirrorBlock(laserBlock(id, MapColor.QUARTZ)));
+    public static final DeferredBlock<Block> PHOTODETECTOR = BLOCKS.register(
+            "photodetector", id -> new PhotodetectorBlock(laserBlock(id, MapColor.COLOR_GRAY)));
+
     private static BlockBehaviour.Properties laserBlock(Identifier id, MapColor color) {
         return BlockBehaviour.Properties.of()
                 .setId(ResourceKey.create(Registries.BLOCK, id))
@@ -714,7 +722,7 @@ public class ModBlocks {
                 .strength(3.5f, 6.0f)
                 .requiresCorrectToolForDrops()
                 .sound(SoundType.METAL)
-                .lightLevel(state -> state.hasProperty(LaserEmitterBlock.LIT) && state.getValue(LaserEmitterBlock.LIT) ? 7 : 0);
+                .lightLevel(state -> state.hasProperty(BlockStateProperties.LIT) && state.getValue(BlockStateProperties.LIT) ? 7 : 0);
     }
 
     public static final DeferredBlock<Block> ANOMALITE_LATTICE = BLOCKS.register(

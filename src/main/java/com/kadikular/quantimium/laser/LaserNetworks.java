@@ -12,6 +12,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public final class LaserNetworks {
      * A block a beam charges: where, from which face, through which beams from a source (each as its
      * node and face index), and what fraction of what leaves the source arrives.
      */
-    private record Sink(BlockPos pos, Direction face, List<Hop> path, double efficiency) {}
+    private record Sink(BlockPos pos, Direction face, List<Hop> path, double efficiency, @Nullable LaserNode buffer) {}
 
     /** A beam on a sink's path: its node, which of the node's beams, and the relay it leaves from (null at the source). */
     private record Hop(BlockPos node, int beam, boolean relay) {}
@@ -192,10 +193,10 @@ public final class LaserNetworks {
 
     /** The blocks {@code source}'s light reaches, by the fewest relays; adds those it reaches best. */
     private void reach(LaserNode source, Map<BlockPos, Sink> sinks) {
-        record Visit(BlockPos node, List<Hop> path, int relays) {}
+        record Visit(BlockPos node, List<Hop> path, int relays, double efficiency) {}
         ArrayDeque<Visit> queue = new ArrayDeque<>();
         Set<BlockPos> seen = new HashSet<>();
-        queue.add(new Visit(source.nodePos(), List.of(), 0));
+        queue.add(new Visit(source.nodePos(), List.of(), 0, 1.0));
         seen.add(source.nodePos());
         while (!queue.isEmpty()) {
             Visit visit = queue.poll();
@@ -206,15 +207,23 @@ public final class LaserNetworks {
                 List<Hop> path = new ArrayList<>(visit.path());
                 path.add(new Hop(visit.node(), i, relay));
                 if (beam.end() == LaserBeam.End.SINK) {
-                    double efficiency = Math.pow(1.0 - LaserTuning.HOP_TAX, visit.relays());
+                    double efficiency = visit.efficiency();
                     Sink sink = sinks.get(beam.hit());
                     if (sink == null || sink.efficiency() < efficiency) {
-                        sinks.put(beam.hit(), new Sink(beam.hit(), beam.face().getOpposite(), List.copyOf(path), efficiency));
+                        sinks.put(beam.hit(), new Sink(beam.hit(), beam.face().getOpposite(), List.copyOf(path), efficiency, null));
                     }
                 } else if (beam.end() == LaserBeam.End.NODE) {
                     LaserNode next = nodes.get(beam.hit());
+                    // A cavity takes light from emitters, never from another cavity.
+                    if (next != null && next.buffers() && !source.buffers()) {
+                        double efficiency = visit.efficiency();
+                        Sink sink = sinks.get(beam.hit());
+                        if (sink == null || sink.efficiency() < efficiency) {
+                            sinks.put(beam.hit(), new Sink(beam.hit(), beam.face().getOpposite(), List.copyOf(path), efficiency, next));
+                        }
+                    }
                     if (next != null && next.relays() && seen.add(beam.hit())) {
-                        queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1));
+                        queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
                     }
                 }
             }
@@ -256,60 +265,118 @@ public final class LaserNetworks {
         if (time % SETTLE_TICKS == 0) settle();
     }
 
-    /** Moves this tick's power: what the sinks would take, scaled to what the sources have. */
+    /**
+     * Moves this tick's power. Blocks are charged first, from emitters and then cavities, scaled to what
+     * the network has; what emitters have left over then fills its cavities.
+     */
     private void move(Network network) {
-        long supply = 0;
-        long[] available = new long[network.sources().size()];
+        List<LaserNode> sources = network.sources();
+        long[] available = new long[sources.size()];
+        long fromEmitters = 0;
+        long fromCavities = 0;
         for (int i = 0; i < available.length; i++) {
-            LaserNode source = network.sources().get(i);
+            LaserNode source = sources.get(i);
             available[i] = source.enabled() ? Math.max(0, source.available()) : 0;
-            supply += available[i];
+            if (source.buffers()) fromCavities += available[i];
+            else fromEmitters += available[i];
         }
+        long supply = fromEmitters + fromCavities;
         if (supply <= 0 || network.sinks().isEmpty()) return;
 
-        int cap = (int) Math.min(Integer.MAX_VALUE, supply);
-        long[] demand = new long[network.sinks().size()];
+        // Blocks first.
+        long cost = charge(network, supply, false);
+        long[] taken = new long[sources.size()];
+        long emittersLeft = fromEmitters - take(sources, available, taken, cost, false);
+        if (cost > fromEmitters) take(sources, available, taken, cost - fromEmitters, true);
+        // Then cavities, with what the emitters have left.
+        if (emittersLeft > 0) {
+            long fill = charge(network, emittersLeft, true);
+            take(sources, available, taken, fill, false);
+        }
+        for (int i = 0; i < taken.length; i++) {
+            if (taken[i] > 0) sources.get(i).draw(taken[i]);
+        }
+    }
+
+    /**
+     * Charges the network's blocks (or with {@code cavities}, its cavities) with up to {@code budget}
+     * leaving the sources, shared by what each asks for. What it cost the sources.
+     */
+    private long charge(Network network, long budget, boolean cavities) {
+        int cap = (int) Math.min(Integer.MAX_VALUE, budget);
+        List<Sink> sinks = network.sinks();
+        long[] demand = new long[sinks.size()];
         double required = 0;
         for (int i = 0; i < demand.length; i++) {
-            Sink sink = network.sinks().get(i);
-            if (!pathOpen(sink)) continue;
-            EnergyHandler handler = level.getCapability(Capabilities.Energy.BLOCK, sink.pos(), sink.face());
-            if (handler == null) continue;
-            try (Transaction simulation = Transaction.openRoot()) {
-                demand[i] = handler.insert(cap, simulation);
+            Sink sink = sinks.get(i);
+            if ((sink.buffer() != null) != cavities || !pathOpen(sink)) continue;
+            if (sink.buffer() != null) {
+                demand[i] = Math.min(cap, sink.buffer().room());
+            } else {
+                EnergyHandler handler = level.getCapability(Capabilities.Energy.BLOCK, sink.pos(), sink.face());
+                if (handler == null) continue;
+                try (Transaction simulation = Transaction.openRoot()) {
+                    demand[i] = handler.insert(cap, simulation);
+                }
             }
             required += demand[i] / sink.efficiency();
         }
-        if (required <= 0) return;
-        double share = Math.min(1.0, supply / required);
-
-        long cost = 0;
-        for (int i = 0; i < demand.length; i++) {
+        if (required <= 0) return 0;
+        double share = Math.min(1.0, budget / required);
+        long left = budget;
+        for (int i = 0; i < demand.length && left > 0; i++) {
             if (demand[i] <= 0) continue;
-            Sink sink = network.sinks().get(i);
-            int want = (int) Math.floor(demand[i] * share);
+            Sink sink = sinks.get(i);
+            // Never more than the budget has left, rounding included: nothing is sent that isn't paid for.
+            int want = (int) Math.min(Math.floor(demand[i] * share), Math.floor(left * sink.efficiency()));
             if (want <= 0) continue;
-            EnergyHandler handler = level.getCapability(Capabilities.Energy.BLOCK, sink.pos(), sink.face());
-            if (handler == null) continue;
-            int got;
-            try (Transaction transaction = Transaction.openRoot()) {
-                got = handler.insert(want, transaction);
-                transaction.commit();
+            long got;
+            if (sink.buffer() != null) {
+                got = want;
+                sink.buffer().fill(got);
+            } else {
+                EnergyHandler handler = level.getCapability(Capabilities.Energy.BLOCK, sink.pos(), sink.face());
+                if (handler == null) continue;
+                try (Transaction transaction = Transaction.openRoot()) {
+                    got = handler.insert(want, transaction);
+                    transaction.commit();
+                }
             }
             if (got <= 0) continue;
-            long sent = (long) Math.ceil(got / sink.efficiency());
-            cost += sent;
+            long sent = Math.min(left, (long) Math.ceil(got / sink.efficiency()));
+            left -= sent;
             account(sink, sent);
         }
-        if (cost <= 0) return;
-        // Taken from each source in proportion to what it had; the last one takes the rounding.
-        long left = cost;
-        for (int i = 0; i < available.length && left > 0; i++) {
-            long take = i == available.length - 1 ? left : Math.min(left, Math.round((double) cost * available[i] / supply));
-            take = Math.min(take, available[i]);
-            if (take > 0) network.sources().get(i).draw(take);
-            left -= take;
+        return budget - left;
+    }
+
+    /**
+     * Takes {@code amount} from the emitters (or the cavities), each in proportion to what it has,
+     * adding to {@code taken}. How much it found.
+     */
+    private static long take(List<LaserNode> sources, long[] available, long[] taken, long amount, boolean cavities) {
+        long pool = 0;
+        for (int i = 0; i < available.length; i++) {
+            if (sources.get(i).buffers() == cavities) pool += available[i] - taken[i];
         }
+        if (pool <= 0 || amount <= 0) return 0;
+        long left = Math.min(amount, pool);
+        long want = left;
+        for (int i = 0; i < available.length && left > 0; i++) {
+            if (sources.get(i).buffers() != cavities) continue;
+            long has = available[i] - taken[i];
+            long share = Math.min(has, Math.min(left, (long) Math.ceil((double) want * has / pool)));
+            taken[i] += share;
+            left -= share;
+        }
+        // Rounding leftovers from whoever still has some.
+        for (int i = 0; i < available.length && left > 0; i++) {
+            if (sources.get(i).buffers() != cavities) continue;
+            long share = Math.min(left, available[i] - taken[i]);
+            taken[i] += share;
+            left -= share;
+        }
+        return want - left;
     }
 
     /** Whether every relay on the way to this sink is switched on. */
@@ -327,7 +394,8 @@ public final class LaserNetworks {
         double power = sent;
         for (Hop hop : sink.path()) {
             if (hop.relay()) {
-                double tax = power * LaserTuning.HOP_TAX;
+                LaserNode relay = nodes.get(hop.node());
+                double tax = power * (relay == null ? LaserTuning.HOP_TAX : relay.tax());
                 lost.merge(hop.node(), Math.round(tax), Long::sum);
                 power -= tax;
             }

@@ -229,4 +229,84 @@ public final class LaserTests {
         helper.assertValueEqual(prism.toggleLink(at.north(1)), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.Link.REMOVED, "unlinked");
         helper.succeed();
     }
+
+    private static com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity cavityMirror(GameTestHelper helper, BlockPos pos, Direction facing) {
+        helper.setBlock(pos, ModBlocks.CAVITY_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, facing));
+        return helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+    }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 200)
+    public static void aCavityStoresLightAndGivesItBack(GameTestHelper helper) {
+        // An emitter fills one mirror of a four-block cavity; the core behind its back is charged from it,
+        // even after the emitter is switched off.
+        LaserEmitterBlockEntity emitter = emitter(helper, new BlockPos(5, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        var b = cavityMirror(helper, new BlockPos(10, Y, 8), Direction.WEST);
+        long[] held = {0};
+        long[] charged = {0};
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(a.paired() && b.paired(), "the two mirrors face each other across the gap");
+            helper.assertValueEqual(a.capacity(), 4 * LaserTuning.CAVITY_FE_PER_BLOCK, "four blocks of gap");
+            helper.assertTrue(a.stored() > 0, "light held: " + a.stored());
+            held[0] = a.stored();
+            // Off goes the emitter, and on goes a core behind the mirror's back.
+            while (emitter.redstone() != RedstoneMode.WITHOUT_SIGNAL) emitter.cycleRedstone();
+            helper.setBlock(new BlockPos(5, Y + 1, 3), Blocks.REDSTONE_BLOCK);
+            sink(helper, new BlockPos(1, Y, 8));
+        });
+        helper.runAfterDelay(120, () -> {
+            FoldCoreBlockEntity core = helper.getBlockEntity(new BlockPos(1, Y, 8), FoldCoreBlockEntity.class);
+            charged[0] = core.getEnergyStorage().getEnergyStored();
+            helper.assertTrue(charged[0] > 0, "the core charged from the cavity alone");
+            helper.assertTrue(a.stored() < held[0], "the cavity gave it");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aCavityLeaksAndABrokenOneLetsItsLightGo(GameTestHelper helper) {
+        TestSupport.clearField(helper);
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        cavityMirror(helper, new BlockPos(10, Y, 8), Direction.WEST);
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(a.paired(), "paired");
+            a.fill(300_000);
+        });
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(a.stored() < 300_000, "it leaks: " + a.stored());
+            var chunk = helper.getLevel().getChunkAt(helper.absolutePos(new BlockPos(5, Y, 8)));
+            double before = chunk.getData(com.kadikular.quantimium.init.ModAttachments.CHUNK_FLUX).pendingFlux();
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            double after = chunk.getData(com.kadikular.quantimium.init.ModAttachments.CHUNK_FLUX).pendingFlux();
+            helper.assertTrue(after > before, "broken, its light goes into the field: " + before + " to " + after);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.photodetector
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPhotodetectorReadsWhatPassesUntaxed(GameTestHelper helper) {
+        emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos detector = new BlockPos(7, Y, 8);
+        helper.setBlock(detector, ModBlocks.PHOTODETECTOR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.PhotodetectorBlock.FACING, Direction.EAST));
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 8));
+        long[] before = {-1};
+        helper.runAfterDelay(40, () -> before[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(60, () -> {
+            var reader = helper.getBlockEntity(detector, com.kadikular.quantimium.block.entity.PhotodetectorBlockEntity.class);
+            // Its reading is the last second's average, which may still be catching up with a beam just lit.
+            helper.assertTrue(reader.passing() > 0, "light passing");
+            helper.assertValueEqual(reader.signal(), com.kadikular.quantimium.block.entity.PhotodetectorBlockEntity.signalFor(reader.passing()),
+                    "the signal for what passes");
+            helper.assertValueEqual(helper.getLevel().getSignal(helper.absolutePos(detector.above()), Direction.UP) > 0
+                    || helper.getLevel().hasNeighborSignal(helper.absolutePos(detector.above())), true, "a redstone signal");
+            long gained = core.getEnergyStorage().getEnergyStored() - before[0];
+            helper.assertValueEqual(gained, 20L * LaserTuning.Tier.ONE.rate, "nothing taken on the way");
+            helper.succeed();
+        });
+    }
 }

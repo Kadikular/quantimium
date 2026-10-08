@@ -16,6 +16,13 @@ public final class LaserTuning {
     public static final int PRISM_RANGE = 24;
     public static final int PRISM_LINKS = 8;
 
+    /** An optical cavity: the longest gap between its two mirrors, what each holds per block of gap, its rate in and out, and its leak. */
+    public static final int CAVITY_MAX_GAP = 16;
+    public static final long CAVITY_FE_PER_BLOCK = 100_000;
+    public static final long CAVITY_RATE = 32_000;
+    /** The share of what a cavity mirror holds that leaks away each tick, as flux. */
+    public static final double CAVITY_LEAK = 0.0002;
+
     /** Emitter tiers: the most they send a tick, how far a run reaches, what they hold, and what they burn idle. */
     public enum Tier {
         FLASH(100, 8, 20_000, 0),

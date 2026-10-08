@@ -42,6 +42,24 @@ public interface LaserNode {
     /** For a source: takes {@code fe} it sent this tick. */
     default void draw(long fe) {}
 
+    /** For a cavity: it stores light, charged by emitters' spare power and given out to blocks. */
+    default boolean buffers() {
+        return false;
+    }
+
+    /** For a cavity: how much it can take this tick. */
+    default long room() {
+        return 0;
+    }
+
+    /** For a cavity: takes {@code fe} in. */
+    default void fill(long fe) {}
+
+    /** What this relay takes of what passes, as flux: a mirror's tax, or nothing for a photodetector. */
+    default double tax() {
+        return LaserTuning.HOP_TAX;
+    }
+
     /** The network has traced this node's beams, or worked out what flows along them: for rendering. */
     void showBeams(List<LaserBeam> beams);
 }

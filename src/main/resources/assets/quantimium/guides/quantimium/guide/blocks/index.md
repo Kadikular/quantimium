@@ -17,6 +17,7 @@ navigation:
 - <ItemLink id="quantimium:basic_quantum_crafter" />
 - <ItemLink id="quantimium:budding_anomalite" />
 - <ItemLink id="quantimium:catalyst_bay" />
+- <ItemLink id="quantimium:cavity_mirror" />
 - <ItemLink id="quantimium:creative_energy_cell" />
 - <ItemLink id="quantimium:decoherence_projector" />
 - <ItemLink id="quantimium:entangled_dock" />
@@ -40,6 +41,7 @@ navigation:
 - <ItemLink id="quantimium:materialiser" />
 - <ItemLink id="quantimium:me_superposition_crafter" />
 - <ItemLink id="quantimium:observation_chamber" />
+- <ItemLink id="quantimium:photodetector" />
 - <ItemLink id="quantimium:pod_charge_module" />
 - <ItemLink id="quantimium:pod_cradle" />
 - <ItemLink id="quantimium:pod_hardening_module" />
