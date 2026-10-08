@@ -34,13 +34,15 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
     private static final Identifier FILTER_TEXTURE = Identifier.fromNamespaceAndPath(
             Quantimium.MODID, "textures/gui/container/reactor_me_port_filter.png");
 
+    /** The readout down the left; the priority box on the right (tools/gui_panels.py reactor_me_port). */
     private static final int INFO_X = 8;
-    private static final int INFO_Y = 19;
-    private static final int LINE_HEIGHT = 9;
-    /** The priority row: its label, then six step buttons (tools/gui_panels.py reactor_me_port). */
-    private static final int PRIORITY_Y = 62;
-    private static final int STEP_X = 56;
-    private static final int STEP_WIDTH = 19;
+    private static final int INFO_Y = 20;
+    private static final int LINE_HEIGHT = 11;
+    private static final int PRIORITY_X = 92;
+    private static final int PRIORITY_VALUE_Y = 30;
+    private static final int STEP_Y = 45;
+    private static final int STEP_WIDTH = 26;
+    private static final int STEP_HEIGHT = 13;
 
     private final List<Button> steps = new ArrayList<>();
 
@@ -52,11 +54,15 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
     protected void init() {
         super.init();
         steps.clear();
-        for (int i = 0; i < ReactorMePortMenu.PRIORITY_STEPS.length; i++) {
+        // Two rows of three: +1 +10 +100 over -1 -10 -100.
+        int[] order = {3, 4, 5, 2, 1, 0};
+        for (int at = 0; at < order.length; at++) {
+            int i = order[at];
             int step = ReactorMePortMenu.PRIORITY_STEPS[i];
             int id = ReactorMePortMenu.BUTTON_PRIORITY + i;
             Button button = Button.builder(Component.literal(step > 0 ? "+" + step : String.valueOf(step)), b -> press(id))
-                    .bounds(leftPos + STEP_X + i * (STEP_WIDTH + 1), topPos + PRIORITY_Y - 3, STEP_WIDTH, 14).build();
+                    .bounds(leftPos + PRIORITY_X + (at % 3) * (STEP_WIDTH + 1),
+                            topPos + STEP_Y + (at / 3) * (STEP_HEIGHT + 1), STEP_WIDTH, STEP_HEIGHT).build();
             steps.add(addRenderableWidget(button));
         }
     }
@@ -199,18 +205,21 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
         for (Button step : steps) step.visible = !menu.isFilterView();
         if (menu.isFilterView()) return;
         List<Component> lines = List.of(
-                Component.translatable("gui.quantimium.reactor_me_port.mode",
-                        Component.translatable("message.quantimium.reactor_me_port.mode." + modeKey() + ".short")),
+                Component.translatable("message.quantimium.reactor_me_port.mode." + modeKey() + ".short"),
                 Component.translatable("gui.quantimium.reactor_me_port.shows", String.format(Locale.ROOT, "%,d", menu.shownKinds())),
                 Component.translatable("gui.quantimium.reactor_me_port.patterns", String.format(Locale.ROOT, "%,d", menu.patternCount())),
-                Component.translatable(menu.acceptsItems() ? "gui.quantimium.reactor_me_port.accepts.on"
-                        : "gui.quantimium.reactor_me_port.accepts.off"));
+                Component.translatable(menu.acceptsItems() ? "gui.quantimium.reactor_me_port.stores.on"
+                        : "gui.quantimium.reactor_me_port.stores.off"));
         for (int i = 0; i < lines.size(); i++) {
             graphics.text(font, lines.get(i), leftPos + INFO_X, topPos + INFO_Y + i * LINE_HEIGHT,
                     i == 0 ? textColour() : dimColour(), false);
         }
-        graphics.text(font, Component.translatable("gui.quantimium.reactor_me_port.priority", menu.priority()),
-                leftPos + INFO_X, topPos + PRIORITY_Y, textColour(), false);
+        graphics.text(font, Component.translatable("gui.quantimium.reactor_me_port.priority"),
+                leftPos + PRIORITY_X, topPos + INFO_Y, dimColour(), false);
+        String value = String.format(Locale.ROOT, "%,d", menu.priority());
+        int boxWidth = 3 * STEP_WIDTH + 2;
+        graphics.text(font, Component.literal(value), leftPos + PRIORITY_X + (boxWidth - font.width(value)) / 2,
+                topPos + PRIORITY_VALUE_Y + 2, textColour(), false);
     }
 
     /** A small # on entries standing for a tag rather than an item. */

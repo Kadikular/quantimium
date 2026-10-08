@@ -151,7 +151,8 @@ those counts share their sources, and AE2 would plan to use the same iron twice.
 [[mechanic:reactor.me_port.settings]] Use the port to open its screen, where it's set up like a
 storage bus:
 
-- **Priority**, for its storage and its patterns, in steps of 1, 10 and 100.
+- **Priority**, for its storage and its patterns, in steps of 1, 10 and 100. Broken, the port puts
+  anything it made and hadn't yet handed to the network back into the Reactor.
 - **Storing**: off by default. On, the network can store items in the Reactor as in a drive, at the
   port's priority, as far as there's room in the horizon.
 - **Filter**, two lists of {{c:ReactorMePortBlockEntity.FILTER_SLOTS}} entries, each a whitelist or a

@@ -638,13 +638,21 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 .withStyle(net.minecraft.ChatFormatting.DARK_AQUA);
     }
 
-    /** Broken, it drops what it made and hadn't yet handed to the network. */
+    /**
+     * Broken, it puts what it made and hadn't yet handed to the network into the Reactor it serves
+     * (millions of items on the floor help no one); with no Reactor, it drops them.
+     */
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
         if (level == null) return;
+        HorizonCoreBlockEntity horizon = core();
         for (GenericStack stack : pending) {
             if (!(stack.what() instanceof AEItemKey item)) continue;
+            if (horizon != null) {
+                horizon.take(item.toResource(), (int) Math.min(Integer.MAX_VALUE, stack.amount()));
+                continue;
+            }
             long left = stack.amount();
             while (left > 0) {
                 int count = (int) Math.min(left, item.getReadOnlyStack().getMaxStackSize());
