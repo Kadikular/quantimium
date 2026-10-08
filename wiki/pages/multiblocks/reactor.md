@@ -20,8 +20,9 @@ Fold. With nothing inside to hold the volume open it collapses into a [[item:sin
 [[mechanic:reactor.singularity_holds]] The Singularity *is* the horizon: everything a Reactor holds is
 held in it. Seat it in a [[block:horizon_core]] by using it on the core. Sneak-use the core with an
 empty hand to take it out, or break the core and it drops; either way it carries everything with it,
-and seated in another core it has it all back. Its tooltip says it's safe. Carrying one that holds
-something earns *Should you be holding that?*
+and seated in another core it has it all back. Its tooltip says it's safe. Like a Sophon, a dropped
+Singularity never despawns and doesn't burn, in fire or lava; only the void takes it. Carrying one that
+holds something earns *Should you be holding that?*
 
 ## Building it
 
@@ -146,18 +147,21 @@ those counts share their sources, and AE2 would plan to use the same iron twice.
 
 [[mechanic:reactor.me_port.modes]] Use the port to choose how (sneak to go back):
 
-- **Whole trees** (the default): one pattern for each thing it can make, planned from the stock of the
-  moment, with the raw things it uses up as inputs. An anvil of Matter is one pattern, 31 Matter in,
-  and AE2 sends it once: fast, even on a crafting CPU without co-processors. A tree whose inputs have
-  gone from the network is planned again within a second, and every tree is looked over again now and
-  then, so a better route turns up. A tree replaced while a crafting job is running stays offered until
-  no CPU is busy, so the job still finds it.
+- **Both** (the default): whole trees for speed, and every recipe as a step for AE2 to fall back on.
+- **Whole trees**: one pattern for each thing it can make, planned from the stock of the moment, with
+  the raw things it uses up as inputs. An anvil of Matter is one pattern, 31 Matter in, and AE2 sends
+  it once: fast, even on a crafting CPU without co-processors. A tree is planned as if one of every tool
+  it needs were on hand, so it asks AE2 for a knife or a press, which AE2 makes once and reuses, rather
+  than making one on every run. A tree whose inputs have gone from the network is planned again within
+  a second, and every tree is looked over again now and then, so a better route turns up. A tree
+  replaced while a crafting job is running stays offered until no CPU is busy, so the job still finds
+  it. Each run is one of the thing, so what a run leaves over (spare planks, say) goes to the network
+  rather than into the next run.
 - **Steps**: one pattern for each recipe, as the [ME Superposition Crafter](../machines/me-superposition-crafter.md)
   offers. AE2 plans the tree itself and runs each step, using whatever intermediates are in storage. A
   crafting CPU sends one step every few ticks unless it has co-processors. AE2 chooses its own routes
   through every recipe the catalysts know, not the Reactor's least wasteful one, and when no route works
   it lists what one of them was missing, which can look unrelated to what you asked for.
-- **Both**: AE2 picks between them.
 
 [[mechanic:reactor.me_port.tools]] A tool a recipe keeps, such as an Inscriber's press, is an input
 of its pattern that comes back after each run, so AE2 hands it over and uses it again: one press prints
@@ -174,7 +178,7 @@ network's own items aren't listed again on the core's screen.
 [[mechanic:reactor.me_port.loops]] A storage bus on one of the Reactor's own Materialiser Ports, on
 the same network, would show the network the Reactor twice, and let the Reactor count its own
 holdings back in as network stock. So that port goes dark while the ME port is linked: it shows that
-network nothing, and the Flux Meter (or Jade) on it says so. The ME port shows everything the bus would have. And while the Reactor reads or takes
+network nothing, its socket goes unlit, and the Flux Meter (or Jade) on it says so. The ME port shows everything the bus would have. And while the Reactor reads or takes
 from the network, its own ports show nothing at all, so no route the Reactor can't see makes it count
 or take anything twice either.
 

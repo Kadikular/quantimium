@@ -351,9 +351,11 @@ def main() -> None:
     for port in ("input", "output", "energy", "materialiser", "me"):
         # A port is the plinth with a flat socket laid over every face (tools/reactor_art.py draws it).
         port_parts = list(parts)
-        for formed in (False, True):
-            port_parts.append({"when": {"formed": str(formed).lower()},
-                               "apply": {"model": f"quantimium:block/reactor_{port}_port_overlay" + ("_active" if formed else "")}})
+        # A dark port (a Materialiser Port an ME network reads twice) shows its socket unlit.
+        port_parts.append({"when": {"OR": [{"formed": "false"}, {"dark": "true"}]},
+                           "apply": {"model": f"quantimium:block/reactor_{port}_port_overlay"}})
+        port_parts.append({"when": {"formed": "true", "dark": "false"},
+                           "apply": {"model": f"quantimium:block/reactor_{port}_port_overlay_active"}})
         with open(os.path.join(ASSETS, "blockstates", f"reactor_{port}_port.json"), "w") as handle:
             json.dump({"multipart": port_parts}, handle, indent=1)
         for formed in (False, True):

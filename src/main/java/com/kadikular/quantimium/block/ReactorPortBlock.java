@@ -21,12 +21,19 @@ public class ReactorPortBlock extends BaseEntityBlock {
     /** {@code ME}: the ME Superposition Port, which only exists with AE2 (compat.ae2). */
     public enum Kind { INPUT, OUTPUT, ENERGY, MATERIALISER, ME }
 
+    /**
+     * A Materialiser Port a linked ME network reads through a storage bus: it shows that network
+     * nothing, and shows its socket unlit. Always false on other ports.
+     */
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty DARK =
+            net.minecraft.world.level.block.state.properties.BooleanProperty.create("dark");
+
     private final Kind kind;
 
     public ReactorPortBlock(Properties properties, Kind kind) {
         super(properties);
         this.kind = kind;
-        registerDefaultState(stateDefinition.any().setValue(QuantumFoundryStructure.FORMED, false)
+        registerDefaultState(stateDefinition.any().setValue(QuantumFoundryStructure.FORMED, false).setValue(DARK, false)
                 .setValue(ReactorTraces.NORTH, 0).setValue(ReactorTraces.EAST, 0)
                 .setValue(ReactorTraces.SOUTH, 0).setValue(ReactorTraces.WEST, 0));
     }
@@ -48,7 +55,7 @@ public class ReactorPortBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(QuantumFoundryStructure.FORMED, ReactorTraces.NORTH, ReactorTraces.EAST, ReactorTraces.SOUTH,
+        builder.add(QuantumFoundryStructure.FORMED, DARK, ReactorTraces.NORTH, ReactorTraces.EAST, ReactorTraces.SOUTH,
                 ReactorTraces.WEST);
     }
 

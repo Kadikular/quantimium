@@ -196,9 +196,15 @@ def _state_models(block: str, props: Dict[str, str]) -> List[Tuple[str, int, int
             best = best[0]
         return [(best["model"], best.get("x", 0), best.get("y", 0))]
     parts = []
+    def matches(when) -> bool:
+        if "OR" in when:
+            return any(matches(each) for each in when["OR"])
+        # A property a scene doesn't set is at its default: false for the booleans the game adds later.
+        return all(str(props.get(k, "false")) in str(v).split("|") for k, v in when.items())
+
     for part in state["multipart"]:
         when = part.get("when")
-        if when is None or all(str(props.get(k, "")) in str(v).split("|") for k, v in when.items()):
+        if when is None or matches(when):
             apply = part["apply"][0] if isinstance(part["apply"], list) else part["apply"]
             parts.append((apply["model"], apply.get("x", 0), apply.get("y", 0)))
     return parts

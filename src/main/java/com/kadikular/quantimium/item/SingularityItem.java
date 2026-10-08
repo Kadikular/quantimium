@@ -28,6 +28,20 @@ import java.util.function.Consumer;
  */
 public class SingularityItem extends Item {
 
+    /** Like a Sophon, it can't burn, blow up or wear away: only the void takes it. */
+    @Override
+    public boolean canBeHurtBy(ItemStack stack, net.minecraft.world.damagesource.DamageSource source) {
+        return source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD)
+                || source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL);
+    }
+
+    /** Never despawns where it's dropped. */
+    @Override
+    public int getEntityLifespan(ItemStack stack, net.minecraft.world.level.Level level) {
+        return Integer.MAX_VALUE;
+    }
+
+
     public SingularityItem(Properties properties) {
         super(properties);
     }

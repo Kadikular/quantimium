@@ -98,7 +98,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     private List<IPatternDetails> patterns = List.of();
     @Nullable
     private ReactorRecipes patternsFrom;
-    private Mode mode = Mode.TREES;
+    private Mode mode = Mode.BOTH;
     /** What patterns have made, waiting to go to the network: never from inside a push. */
     private final List<GenericStack> pending = new ArrayList<>();
 
@@ -209,12 +209,12 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     /** How the Reactor's making is offered to the network: set by using the port. */
     public enum Mode {
+        /** Both (the default): whole trees for speed, and every recipe as a step for AE2 to fall back on. */
+        BOTH,
         /** One pattern a thing it can make, the whole tree in one run. */
         TREES,
         /** One pattern a recipe; AE2 plans the tree and runs each step. */
-        STEPS,
-        /** Both: AE2 picks. */
-        BOTH;
+        STEPS;
 
         boolean trees() {
             return this != STEPS;
@@ -227,6 +227,12 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     public Mode mode() {
         return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
+        patternsFrom = null;
+        setChanged();
     }
 
     /** The next mode, or the one before; the patterns follow on the next tick. */
@@ -339,15 +345,31 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                                                ItemResource item) {
         Map<ItemResource, Long> without = new HashMap<>(stock);
         without.remove(item);
-        ReactorPlanner.Result result = horizon.plan(without, item, 1);
-        if (!result.planned()) return null;
-        ReactorPlanner.Plan plan = result.plan();
+        // A tool the tree would make for itself, it plans as if one were on hand: the pattern then asks
+        // for one, which AE2 makes once and hands over run after run, instead of every run making its own.
+        ReactorPlanner.Plan plan = null;
+        for (int pass = 0; pass < 3; pass++) {
+            ReactorPlanner.Result result = horizon.plan(without, item, 1);
+            if (!result.planned()) return null;
+            plan = result.plan();
+            boolean lent = false;
+            for (ReactorPlanner.Step step : plan.steps()) {
+                for (net.minecraft.world.item.crafting.Ingredient tool : step.shape().tools()) {
+                    if (without.keySet().stream().anyMatch(have -> tool.test(have.toStack(1)))) continue;
+                    List<net.minecraft.world.item.ItemStack> options = com.kadikular.quantimium.recipe.RecipeCompat.stacks(tool);
+                    if (options.isEmpty() || tool.test(item.toStack(1))) continue;
+                    without.put(ItemResource.of(options.getFirst()), 1L);
+                    lent = true;
+                }
+            }
+            if (!lent) break;
+        }
         List<ItemResource> kept = new ArrayList<>();
         List<ReactorTreePattern.Worn> worn = new ArrayList<>();
         for (ReactorPlanner.Step step : plan.steps()) {
             for (net.minecraft.world.item.crafting.Ingredient tool : step.shape().tools()) {
                 if (step.shape().wears().stream().anyMatch(wears -> wears == tool)) {
-                    // A knife on hand is any knife, handed back worn; one the tree has to make stays as planned.
+                    // Any knife, handed back worn; one the tree still had to make stays as planned.
                     if (without.keySet().stream().noneMatch(have -> tool.test(have.toStack(1)))) continue;
                     int uses = (int) Math.min(Integer.MAX_VALUE, step.runs());
                     int same = -1;
@@ -495,9 +517,9 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         pending.clear();
         pending.addAll(in.read("Pending", GenericStack.CODEC.listOf()).orElse(List.of()));
         try {
-            mode = Mode.valueOf(in.getStringOr("Mode", Mode.TREES.name()));
+            mode = Mode.valueOf(in.getStringOr("Mode", Mode.BOTH.name()));
         } catch (IllegalArgumentException e) {
-            mode = Mode.TREES;
+            mode = Mode.BOTH;
         }
     }
 }

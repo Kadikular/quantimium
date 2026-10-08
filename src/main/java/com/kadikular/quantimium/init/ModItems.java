@@ -202,7 +202,7 @@ public class ModItems {
             "fold_core", ModBlocks.FOLD_CORE);
 
     public static final DeferredItem<SingularityItem> SINGULARITY = ITEMS.registerItem("singularity",
-            props -> new SingularityItem(props.stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
+            props -> new SingularityItem(props.stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
 
     public static final DeferredItem<BlockItem> HORIZON_CORE_ITEM = ITEMS.registerSimpleBlockItem(
             "horizon_core", ModBlocks.HORIZON_CORE);

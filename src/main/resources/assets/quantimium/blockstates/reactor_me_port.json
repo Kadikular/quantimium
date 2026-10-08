@@ -1946,7 +1946,14 @@
   },
   {
    "when": {
-    "formed": "false"
+    "OR": [
+     {
+      "formed": "false"
+     },
+     {
+      "dark": "true"
+     }
+    ]
    },
    "apply": {
     "model": "quantimium:block/reactor_me_port_overlay"
@@ -1954,7 +1961,8 @@
   },
   {
    "when": {
-    "formed": "true"
+    "formed": "true",
+    "dark": "false"
    },
    "apply": {
     "model": "quantimium:block/reactor_me_port_overlay_active"

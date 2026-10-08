@@ -57,6 +57,8 @@ public final class Ae2ReactorPortTests {
         drive.insertItem(0, new ItemStack(item("ae2:item_storage_cell_1k")), false);
         horizon.revalidate(helper.getLevel());
         horizon.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        // Whole trees only, unless a test says otherwise: what AE2 picks between two kinds isn't the point.
+        helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class).setMode(ReactorMePortBlockEntity.Mode.TREES);
         return horizon;
     }
 
@@ -324,6 +326,31 @@ public final class Ae2ReactorPortTests {
         });
     }
 
+    // covers: reactor.me_port.tools
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_one_knife", timeoutTicks = 600)
+    public static void aTreeNeedingAKnifeHasOneMadeNotOneARun(GameTestHelper helper) {
+        // No knife held: a job for 12 anchors (three runs) has one knife made, and wears it three times.
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        helper.setBlock(CELL.north(), block("ae2:1k_crafting_storage"));
+        horizon.take(ItemResource.of(item("ae2:certus_quartz_crystal")), 40);
+        horizon.take(ItemResource.of(Items.IRON_INGOT), 64);
+        horizon.take(ItemResource.of(Items.STICK), 16);
+        horizon.recountNow();
+        AEItemKey anchor = AEItemKey.of(item("ae2:cable_anchor"));
+        Object[] job = new Object[2];
+        helper.succeedWhen(() -> craft(helper, job, anchor, 12, () -> {
+            var storage = grid(helper).getStorageService();
+            helper.assertTrue(storage.getCachedInventory().get(anchor) >= 12, "the anchors");
+            long knives = 0;
+            for (var entry : storage.getCachedInventory()) {
+                if (entry.getKey() instanceof AEItemKey key && key.is(item("ae2:certus_quartz_cutting_knife"))) {
+                    knives += entry.getLongValue();
+                }
+            }
+            helper.assertValueEqual(knives, 1L, "one knife made, worn, and back");
+        }));
+    }
+
     // covers: reactor.me_port.trees
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_stale", timeoutTicks = 400)
     public static void aTreeWhoseInputsHaveGoneIsPlannedAgain(GameTestHelper helper) {
@@ -375,6 +402,8 @@ public final class Ae2ReactorPortTests {
                         .fluxMeterLine();
                 helper.assertTrue(line != null && line.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
                         && t.getKey().equals("message.quantimium.reactor_port.dark"), "and says so");
+                helper.assertTrue(helper.getBlockState(materialiser).getValue(com.kadikular.quantimium.block.ReactorPortBlock.DARK),
+                        "and shows its socket unlit");
                 helper.assertValueEqual(storage.getInventory().getAvailableStacks().get(LOG_KEY), 1L, "the log, seen once");
                 // Recounted again and again, it never grows on itself.
                 helper.assertValueEqual(horizon.recountNow().count(ItemResource.of(Items.OAK_PLANKS)), 4L, "four planks, not eight");

@@ -362,7 +362,12 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         lit.clear();
         lit.addAll(nowLit);
         layout = next;
-        darkPorts = findDarkPorts(server);
+        Set<BlockPos> dark = findDarkPorts(server);
+        for (BlockPos pos : next.ports()) setDark(server, pos, dark.contains(pos));
+        for (BlockPos pos : darkPorts) {
+            if (!dark.contains(pos)) setDark(server, pos, false);
+        }
+        darkPorts = dark;
         refreshRecipes(server);
     }
 
@@ -710,6 +715,14 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
             }
         }
         return ports;
+    }
+
+    private static void setDark(ServerLevel server, BlockPos pos, boolean dark) {
+        BlockState state = server.getBlockState(pos);
+        if (state.hasProperty(com.kadikular.quantimium.block.ReactorPortBlock.DARK)
+                && state.getValue(com.kadikular.quantimium.block.ReactorPortBlock.DARK) != dark) {
+            server.setBlock(pos, state.setValue(com.kadikular.quantimium.block.ReactorPortBlock.DARK, dark), Block.UPDATE_CLIENTS);
+        }
     }
 
     private static void setFormed(ServerLevel server, BlockPos pos, boolean formed) {
