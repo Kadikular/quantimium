@@ -34,6 +34,7 @@ public class ReactorPortBlock extends BaseEntityBlock {
         super(properties);
         this.kind = kind;
         registerDefaultState(stateDefinition.any().setValue(QuantumFoundryStructure.FORMED, false).setValue(DARK, false)
+                .setValue(ReactorTraces.BUSY, false)
                 .setValue(ReactorTraces.NORTH, 0).setValue(ReactorTraces.EAST, 0)
                 .setValue(ReactorTraces.SOUTH, 0).setValue(ReactorTraces.WEST, 0));
     }
@@ -55,7 +56,7 @@ public class ReactorPortBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(QuantumFoundryStructure.FORMED, DARK, ReactorTraces.NORTH, ReactorTraces.EAST, ReactorTraces.SOUTH,
+        builder.add(QuantumFoundryStructure.FORMED, DARK, ReactorTraces.BUSY, ReactorTraces.NORTH, ReactorTraces.EAST, ReactorTraces.SOUTH,
                 ReactorTraces.WEST);
     }
 

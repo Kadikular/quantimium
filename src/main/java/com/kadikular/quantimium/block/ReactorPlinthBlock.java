@@ -18,13 +18,13 @@ public class ReactorPlinthBlock extends ReactorPartBlock {
     public ReactorPlinthBlock(Properties properties) {
         super(properties);
         registerDefaultState(defaultBlockState().setValue(ReactorTraces.NORTH, 0).setValue(ReactorTraces.EAST, 0)
-                .setValue(ReactorTraces.SOUTH, 0).setValue(ReactorTraces.WEST, 0));
+                .setValue(ReactorTraces.SOUTH, 0).setValue(ReactorTraces.WEST, 0).setValue(ReactorTraces.BUSY, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(ReactorTraces.NORTH, ReactorTraces.EAST, ReactorTraces.SOUTH, ReactorTraces.WEST);
+        builder.add(ReactorTraces.NORTH, ReactorTraces.EAST, ReactorTraces.SOUTH, ReactorTraces.WEST, ReactorTraces.BUSY);
     }
 
     @Nullable

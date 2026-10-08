@@ -187,7 +187,8 @@ def _state_models(block: str, props: Dict[str, str]) -> List[Tuple[str, int, int
         best = None
         for key, value in state["variants"].items():
             wanted = dict(part.split("=") for part in key.split(",") if part)
-            if all(props.get(k) == v for k, v in wanted.items()):
+            # The Reactor's busy and dark are false unless a scene says otherwise.
+            if all(props.get(k, "false" if k in ("busy", "dark") else None) == v for k, v in wanted.items()):
                 best = value
                 break
         if best is None:

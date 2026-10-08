@@ -1,489 +1,975 @@
 {
  "variants": {
-  "formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0000_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0000_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0000_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0000_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0001_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0001_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0001_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0001_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0002_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0002_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0002_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0002_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0010_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0010_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0010_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0010_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0011_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0011_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0011_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0011_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0012_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0012_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0012_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0012_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0020_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0020_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0020_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0020_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0021_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0021_lit"
   },
-  "formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0021_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0021_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0022_lit"
   },
-  "formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0022_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0022_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0022_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0100_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0100_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0100_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0100_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0101_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0101_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0101_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0101_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0102_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0102_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0102_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0102_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0110_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0110_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0110_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0110_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0111_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0111_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0111_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0111_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0112_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0112_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0112_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0112_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0120_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0120_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0120_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0120_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0121_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0121_lit"
   },
-  "formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0121_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0121_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0122_lit"
   },
-  "formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0122_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0122_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0122_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0200_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0200_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0200_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0200_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0201_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0201_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0201_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0201_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0202_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0202_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0202_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0202_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0210_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0210_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0210_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0210_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0211_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0211_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0211_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0211_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0212_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0212_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0212_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0212_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0220_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/0220_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0220_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/0220_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0221_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/0221_lit"
   },
-  "formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0221_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/0221_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0222_lit"
   },
-  "formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/0222_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0222_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=0,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/0222_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1000_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1000_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1000_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1000_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1001_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1001_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1001_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1001_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1002_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1002_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1002_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1002_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1010_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1010_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1010_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1010_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1011_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1011_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1011_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1011_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1012_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1012_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1012_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1012_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1020_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1020_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1020_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1020_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1021_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1021_lit"
   },
-  "formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1021_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1021_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1022_lit"
   },
-  "formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1022_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1022_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1022_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1100_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1100_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1100_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1100_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1101_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1101_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1101_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1101_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1102_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1102_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1102_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1102_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1110_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1110_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1110_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1110_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1111_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1111_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1111_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1111_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1112_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1112_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1112_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1112_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1120_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1120_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1120_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1120_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1121_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1121_lit"
   },
-  "formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1121_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1121_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1122_lit"
   },
-  "formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1122_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1122_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1122_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1200_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1200_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1200_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1200_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1201_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1201_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1201_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1201_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1202_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1202_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1202_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1202_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1210_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1210_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1210_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1210_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1211_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1211_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1211_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1211_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1212_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1212_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1212_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1212_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1220_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/1220_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1220_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/1220_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1221_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/1221_lit"
   },
-  "formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1221_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/1221_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1222_lit"
   },
-  "formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/1222_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1222_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=1,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/1222_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2000_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2000_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2000_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2000_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2001_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2001_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2001_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2001_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2002_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2002_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2002_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2002_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2010_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2010_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2010_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2010_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2011_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2011_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2011_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2011_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2012_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2012_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2012_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2012_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2020_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2020_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2020_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2020_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2021_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2021_lit"
   },
-  "formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2021_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2021_lit"
+  },
+  "busy=true,formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2022_lit"
   },
-  "formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2022_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2022_lit"
+  },
+  "busy=true,formed=false,trace_east=0,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2022_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2100_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2100_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2100_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2100_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2101_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2101_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2101_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2101_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2102_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2102_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2102_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2102_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2110_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2110_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2110_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2110_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2111_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2111_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2111_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2111_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2112_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2112_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2112_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2112_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2120_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2120_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2120_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2120_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2121_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2121_lit"
   },
-  "formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2121_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2121_lit"
+  },
+  "busy=true,formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2122_lit"
   },
-  "formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2122_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
+  "busy=false,formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2122_lit"
+  },
+  "busy=true,formed=false,trace_east=1,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2122_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2200_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2200_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2200_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2200_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2201_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2201_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2201_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2201_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2202_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2202_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2202_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=0,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2202_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2210_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2210_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2210_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2210_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2211_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2211_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2211_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2211_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2212_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2212_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2212_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=1,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2212_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2220_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
    "model": "quantimium:block/reactor_traces/2220_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2220_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=0": {
+   "model": "quantimium:block/reactor_traces/2220_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2221_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
    "model": "quantimium:block/reactor_traces/2221_lit"
   },
-  "formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2221_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=1": {
+   "model": "quantimium:block/reactor_traces/2221_lit"
+  },
+  "busy=true,formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2222_lit"
   },
-  "formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
+  "busy=false,formed=true,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2222_lit"
+  },
+  "busy=false,formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
+   "model": "quantimium:block/reactor_traces/2222_lit"
+  },
+  "busy=true,formed=false,trace_east=2,trace_north=2,trace_south=2,trace_west=2": {
    "model": "quantimium:block/reactor_traces/2222_lit"
   }
  }

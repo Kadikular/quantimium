@@ -310,10 +310,11 @@ def main() -> None:
     for values in itertools.product(range(3), repeat=4):
         edges = dict(zip("nesw", values))
         key = name(edges)
-        for formed, tag in ((True, "_lit"), (False, "")):
+        # Unlit; lit and still (an idle Reactor); lit with signals running (a busy one).
+        for formed, tag in ((True, "_lit"), (True, "_still"), (False, "")):
             image = draw(edges, formed)
             path_png = os.path.join(TEX, f"{key}{tag}.png")
-            if formed:
+            if tag == "_lit":
                 animate(image).save(path_png)
                 with open(path_png + ".mcmeta", "w") as handle:
                     json.dump({"animation": {"frametime": PULSE_FRAMETIME, "interpolate": False}}, handle)
@@ -335,16 +336,24 @@ def main() -> None:
             }
             with open(os.path.join(MODELS, f"{key}{tag}.json"), "w") as handle:
                 json.dump(model, handle, indent=2)
-            condition = {"formed": str(formed).lower(), "trace_north": str(edges["n"]), "trace_east": str(edges["e"]),
-                         "trace_south": str(edges["s"]), "trace_west": str(edges["w"])}
+            traces = {"trace_north": str(edges["n"]), "trace_east": str(edges["e"]),
+                      "trace_south": str(edges["s"]), "trace_west": str(edges["w"])}
             model_id = f"quantimium:block/reactor_traces/{key}{tag}"
-            variants[",".join(f"{k}={v}" for k, v in sorted(condition.items()))] = {"model": model_id}
-            parts.append({"when": condition, "apply": {"model": model_id}})
+            # The plinth's states: busy only matters lit; ports and bays have no busy and stay still when lit.
+            busies = {"_lit": ["true"], "_still": ["false"], "": ["false", "true"]}[tag]
+            for busy in busies:
+                condition = dict(traces, formed=str(formed).lower(), busy=busy)
+                variants[",".join(f"{k}={v}" for k, v in sorted(condition.items()))] = {"model": model_id}
+            when = dict(traces, formed=str(formed).lower())
+            if formed:
+                when["busy"] = "true" if tag == "_lit" else "false"
+            parts.append({"when": when, "apply": {"model": model_id}})
 
     with open(os.path.join(ASSETS, "blockstates", "reactor_plinth.json"), "w") as handle:
         json.dump({"variants": variants}, handle, indent=1)
     # The Lit Reactor Plinth: the same traces, always lit.
-    lit_variants = {key: {"model": value["model"].removesuffix("_lit") + "_lit"} for key, value in variants.items()}
+    lit_variants = {key: {"model": value["model"].removesuffix("_lit").removesuffix("_still") + "_lit"}
+                    for key, value in variants.items()}
     with open(os.path.join(ASSETS, "blockstates", "lit_reactor_plinth.json"), "w") as handle:
         json.dump({"variants": lit_variants}, handle, indent=1)
     write_bay(parts)

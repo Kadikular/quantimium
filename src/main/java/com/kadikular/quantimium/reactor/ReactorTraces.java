@@ -17,6 +17,9 @@ public final class ReactorTraces {
     public static final IntegerProperty EAST = IntegerProperty.create("trace_east", 0, 2);
     public static final IntegerProperty SOUTH = IntegerProperty.create("trace_south", 0, 2);
     public static final IntegerProperty WEST = IntegerProperty.create("trace_west", 0, 2);
+    /** Lit traces carry running signals while the Reactor is working, and glow still while it's idle. */
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty BUSY =
+            net.minecraft.world.level.block.state.properties.BooleanProperty.create("busy");
 
     private ReactorTraces() {}
 

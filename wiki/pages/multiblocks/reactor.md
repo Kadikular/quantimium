@@ -34,7 +34,8 @@ holds something earns *Should you be holding that?*
 
 - a disc of [[block:reactor_plinth]] 11 blocks across, its corners rounded off, with the
   [[block:horizon_core]] on its centre. The plinth's circuit traces run on from block to block
-  wherever it's built, and light up when the Reactor forms;
+  wherever it's built, and light up when the Reactor forms. While it's working (taking items in,
+  handing them out, making something) signals run along them; idle, they glow still;
 - **Ring Emitters** on the plinth around the core, in facing pairs four blocks out: east and west,
   north and south, or diagonally three out each way. Each whole pair drives one ring, and each ring
   quadruples what the horizon holds: {{c:HorizonCoreBlockEntity.BASE_CAPACITY}} items with one ring,
@@ -74,7 +75,9 @@ now isn't listed. Sort it by count or by name and search it; the tooltip splits 
 could be made.
 
 [[mechanic:reactor.counts.live]] It recounts whenever what it holds or its catalysts change, at most
-once a second, off the server thread. The counts are estimates of how many you could have *if you took
+once a second, off the server thread. Something no recipe uses or makes is just counted as it is, with
+no recount, and only what some recipe could use counts from a linked network, so a busy network's
+churn sets nothing off. The counts are estimates of how many you could have *if you took
 only that*; two things made from the same iron can't both be had.
 
 [[mechanic:reactor.counts.loops]] Matter is never counted back into a form it came from. If ingots

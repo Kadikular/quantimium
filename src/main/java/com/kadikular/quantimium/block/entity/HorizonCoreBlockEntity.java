@@ -8,10 +8,12 @@ import com.kadikular.quantimium.flux.QuantumFlux;
 import com.kadikular.quantimium.reactor.ReactorCounter;
 import com.kadikular.quantimium.reactor.ReactorLedger;
 import com.kadikular.quantimium.reactor.ReactorPlanner;
+import com.kadikular.quantimium.reactor.ReactorGraph;
 import com.kadikular.quantimium.reactor.ReactorNetwork;
 import com.kadikular.quantimium.reactor.ReactorRecipes;
 import com.kadikular.quantimium.recipe.RecipeFilter;
 import com.kadikular.quantimium.reactor.ReactorStructure;
+import com.kadikular.quantimium.reactor.ReactorTraces;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -91,6 +93,8 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     private java.util.concurrent.CompletableFuture<ReactorCounter.Counts[]> recount;
     private int countedVersion = -1;
     private java.util.Map<ItemResource, Long> countedNetwork = java.util.Map.of();
+    /** What was held when the counts in hand were made, to tell what's changed since. */
+    private java.util.Map<ItemResource, Long> countedLedger = java.util.Map.of();
     /** The network stock the counts in hand were made with, and the one the recount under way uses. */
     private java.util.Map<ItemResource, Long> countsNetwork = java.util.Map.of();
     private java.util.Map<ItemResource, Long> recountNetwork = java.util.Map.of();
@@ -171,6 +175,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         if (amount <= 0) return;
         ledger.add(item, amount);
         ledgerVersion++;
+        markBusy();
         setChanged();
     }
 
@@ -209,6 +214,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         long taken = ledger.remove(item, Math.min(amount, availableCount(item)));
         if (taken > 0) {
             ledgerVersion++;
+            markBusy();
             setChanged();
         }
         return taken;
@@ -220,6 +226,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         if (fits <= 0) return 0;
         ledger.add(item, fits);
         ledgerVersion++;
+        markBusy();
         setChanged();
         return fits;
     }
@@ -299,6 +306,30 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         core.recount(server);
         core.payUpkeep();
         core.syncLook();
+        core.showBusy(server);
+    }
+
+    /** How long the floor's signals keep running after the last thing the Reactor did. */
+    private static final int BUSY_TICKS = 60;
+    private long busyUntil = Long.MIN_VALUE;
+    private boolean shownBusy;
+
+    /** Something went in, came out or was made: the floor's signals run for a while. */
+    private void markBusy() {
+        if (level != null) busyUntil = level.getGameTime() + BUSY_TICKS;
+    }
+
+    /** Sets the floor running or still when that changes: a block update for each part, so only then. */
+    private void showBusy(ServerLevel server) {
+        boolean busy = isActive() && server.getGameTime() < busyUntil;
+        if (busy == shownBusy) return;
+        shownBusy = busy;
+        for (BlockPos part : layout.formed() ? layout.parts() : List.<BlockPos>of()) {
+            BlockState state = server.getBlockState(part);
+            if (state.hasProperty(ReactorTraces.BUSY) && state.getValue(ReactorTraces.BUSY) != busy) {
+                server.setBlock(part, state.setValue(ReactorTraces.BUSY, busy), Block.UPDATE_CLIENTS);
+            }
+        }
     }
 
     private void payUpkeep() {
@@ -466,6 +497,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
             ownCounts = both[1];
             countedNetwork = network;
             countsNetwork = network;
+            countedLedger = ledger.snapshot();
         }
         countedVersion = ledgerVersion;
         countedRecipes = recipes;
@@ -510,6 +542,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         java.util.Map<ItemResource, Long> network = isFormed() ? networkStock(server) : java.util.Map.of();
         boolean stale = countedVersion != ledgerVersion || countedRecipes != recipes || !network.equals(countedNetwork);
         if (!stale) return;
+        if (countedRecipes == recipes && network.equals(countedNetwork) && isFormed() && patchInert()) return;
         lastRecount = server.getGameTime();
         countedVersion = ledgerVersion;
         countedRecipes = recipes;
@@ -522,8 +555,44 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         recountNetwork = network;
         ReactorRecipes graphOf = recipes;
         java.util.Map<ItemResource, Long> stock = ledger.snapshot();
+        countedLedger = stock;
         recount = java.util.concurrent.CompletableFuture.supplyAsync(
                 () -> countBoth(graphOf, stock, network), ReactorCounter.EXECUTOR);
+    }
+
+    /**
+     * The quick way: if everything held that has changed since the last count is inert (no recipe uses
+     * or makes it), its count is simply what's held now, and nothing else moves. Whether it could.
+     */
+    private boolean patchInert() {
+        ReactorGraph graph = recipes.graph();
+        java.util.Map<ItemResource, Long> now = ledger.view();
+        java.util.Set<ItemResource> changed = new java.util.HashSet<>();
+        now.forEach((item, amount) -> {
+            if (!amount.equals(countedLedger.get(item))) changed.add(item);
+        });
+        countedLedger.keySet().forEach(item -> {
+            if (!now.containsKey(item)) changed.add(item);
+        });
+        for (ItemResource item : changed) {
+            if (!graph.inert(item)) return false;
+        }
+        counts = patched(counts, changed, now);
+        ownCounts = patched(ownCounts, changed, now);
+        countedLedger = ledger.snapshot();
+        countedVersion = ledgerVersion;
+        return true;
+    }
+
+    private static ReactorCounter.Counts patched(ReactorCounter.Counts counts, java.util.Set<ItemResource> changed,
+                                                 java.util.Map<ItemResource, Long> held) {
+        java.util.Map<ItemResource, Long> map = new java.util.LinkedHashMap<>(counts.counts());
+        for (ItemResource item : changed) {
+            long amount = held.getOrDefault(item, 0L);
+            if (amount > 0) map.put(item, amount);
+            else map.remove(item);
+        }
+        return new ReactorCounter.Counts(map, counts.reachable(), counts.groups(), counts.gaining(), 0);
     }
 
     // ---- networks ----
@@ -558,8 +627,13 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         java.util.Map<ItemResource, Long> stock = new java.util.HashMap<>();
         drawing++;
         try {
+            ReactorGraph graph = recipes.graph();
             for (ReactorNetwork network : networks(server)) {
-                network.stock().forEach((item, amount) -> stock.merge(item, amount, Long::sum));
+                // Only what some recipe could use: the rest changes no count, and a busy network's churn
+                // in it would only set off recounts.
+                network.stock().forEach((item, amount) -> {
+                    if (!graph.inert(item)) stock.merge(item, amount, Long::sum);
+                });
             }
         } finally {
             drawing--;
@@ -633,6 +707,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     public boolean pay(long fe) {
         if (!(level instanceof ServerLevel server) || !isActive() || energy.getEnergyStored() < fe) return false;
         energy.consume(fe);
+        markBusy();
         if (fe > 0) QuantumFlux.emitFromEnergy(server, worldPosition, fe);
         setChanged();
         return true;
@@ -738,6 +813,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         plan.consumed().forEach(ledger::remove);
         plan.leftovers().forEach(ledger::add);
         ledgerVersion++;
+        markBusy();
         energy.consume(fe);
         if (fe > 0) QuantumFlux.emitFromEnergy(server, worldPosition, fe);
         if (!plan.steps().isEmpty()) {

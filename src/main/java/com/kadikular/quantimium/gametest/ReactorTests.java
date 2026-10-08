@@ -204,6 +204,62 @@ public final class ReactorTests {
         });
     }
 
+    // covers: reactor.counts.live
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 100)
+    public static void anItemNoRecipeTouchesIsCountedWithoutARecount(GameTestHelper helper) {
+        // A crafting table and a log; then something no recipe uses or makes comes in. Its count
+        // is patched in place, with no recount, and matches what a full recount says.
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        bay(helper, CORE.below().east(2), Items.CRAFTING_TABLE);
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        core.take(ItemResource.of(Items.OAK_LOG), 1);
+        // Something no recipe in the pack touches: a test pack's mods use dragon eggs, so the first of these.
+        ItemResource[] egg = new ItemResource[1];
+        helper.runAfterDelay(2, () -> {
+            for (var candidate : List.of(Items.STRUCTURE_VOID, Items.JIGSAW, Items.DEBUG_STICK, Items.DRAGON_EGG)) {
+                if (core.getRecipes().graph().inert(ItemResource.of(candidate))) {
+                    egg[0] = ItemResource.of(candidate);
+                    break;
+                }
+            }
+            helper.assertTrue(egg[0] != null, "something no recipe touches");
+            helper.assertTrue(!core.getRecipes().graph().inert(ItemResource.of(Items.OAK_LOG)), "but planks come of a log");
+            core.recountNow();
+            core.take(egg[0], 3);
+        });
+        helper.runAfterDelay(50, () -> {
+            var patched = core.getCounts();
+            helper.assertValueEqual(patched.count(egg[0]), 3L, "three counted");
+            helper.assertValueEqual(patched.nanos(), 0L, "by the patch, not a recount");
+            var full = core.recountNow();
+            helper.assertValueEqual(full.counts(), patched.counts(), "the same as a full recount");
+            helper.succeed();
+        });
+    }
+
+    // covers: reactor.structure
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 200)
+    public static void theFloorsSignalsRunWhileItWorks(GameTestHelper helper) {
+        // Idle, the traces glow still; something made sets them running, and they settle a few seconds on.
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        bay(helper, CORE.below().east(2), Items.CRAFTING_TABLE);
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        BlockPos floor = CORE.below().north(2);
+        helper.runAfterDelay(2, () -> {
+            helper.assertFalse(helper.getBlockState(floor).getValue(com.kadikular.quantimium.reactor.ReactorTraces.BUSY), "still while idle");
+            core.getLedger().add(ItemResource.of(Items.OAK_LOG), 1);
+            helper.assertTrue(core.request(ItemResource.of(Items.OAK_PLANKS), 4).planned(), "planks made");
+        });
+        helper.runAfterDelay(5, () -> helper.assertTrue(
+                helper.getBlockState(floor).getValue(com.kadikular.quantimium.reactor.ReactorTraces.BUSY), "running while it works"));
+        helper.runAfterDelay(120, () -> {
+            helper.assertFalse(helper.getBlockState(floor).getValue(com.kadikular.quantimium.reactor.ReactorTraces.BUSY), "still again after");
+            helper.succeed();
+        });
+    }
+
     // covers: reactor.input
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)
     public static void twoInputPortsAtTheLimitLoseNothing(GameTestHelper helper) {

@@ -36,12 +36,26 @@ public final class ReactorGraph {
     /** The ingredients that might take each item: the counter still tests each one against the stack. */
     final Map<Item, int[]> ingredientsByItem;
 
+    /** Everything some recipe makes. */
+    private final java.util.Set<ItemResource> outputs;
+
     private ReactorGraph(List<Recipe> recipes, List<Ingredient> ingredients, int[][] users,
                          Map<Item, int[]> ingredientsByItem) {
         this.recipes = recipes;
         this.ingredients = ingredients;
         this.users = users;
         this.ingredientsByItem = ingredientsByItem;
+        java.util.Set<ItemResource> made = new java.util.HashSet<>();
+        for (Recipe recipe : recipes) java.util.Collections.addAll(made, recipe.outputs());
+        this.outputs = java.util.Set.copyOf(made);
+    }
+
+    /**
+     * Whether no recipe could use or make {@code item}: its count is only ever what's held, so a change
+     * to it changes nothing else. Uses the same index the counter matches by, so the two always agree.
+     */
+    public boolean inert(ItemResource item) {
+        return !ingredientsByItem.containsKey(item.getItem()) && !outputs.contains(item);
     }
 
     public int size() {
