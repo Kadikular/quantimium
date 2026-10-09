@@ -71,6 +71,8 @@ public final class LaserNetworks {
     private final Map<BlockPos, Light> lights = new HashMap<>();
     /** The light reaching each cavity, which it remembers when it's filled. */
     private final Map<BlockPos, Light> cavityIn = new HashMap<>();
+    /** The nodes light ran through at the last settle. */
+    private Set<BlockPos> litNow = Set.of();
 
     private LaserNetworks(ServerLevel level) {
         this.level = level;
@@ -331,14 +333,14 @@ public final class LaserNetworks {
                     for (int i = 0; i < list.size(); i++) {
                         LensAction.Key key = new LensAction.Key(pos, i, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(list.get(i), stream, collectors, senders, null);
+                        action.update(list.get(i), stream, collectors, senders, null, light.reach());
                         actions.put(key, action);
                     }
                     // An area prism's light works on its area: one action each, as beam -1.
                     if (node.area() != null) {
                         LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(null, stream, collectors, senders, node.area());
+                        action.update(null, stream, collectors, senders, node.area(), light.reach());
                         actions.put(key, action);
                     }
                 }
@@ -481,14 +483,18 @@ public final class LaserNetworks {
             if (node.area() == null) continue;
             Light light = lights.get(node.nodePos());
             List<LaserBeam> shown = new ArrayList<>();
-            if (light != null) {
+            // Only while light is reaching it at all.
+            if (light != null && litNow.contains(node.nodePos())) {
                 Set<BlockPos> seen = new HashSet<>();
                 for (LensAction action : actions.values()) {
                     if (!action.key().node().equals(node.nodePos()) || action.key().beam() != -1) continue;
                     BlockPos target = action.working(level);
                     if (target == null || !seen.add(target)) continue;
-                    shown.add(LaserBeam.traceTo(level, node.nodePos(), target, LaserTuning.AREA_REACH + LaserTuning.AREA_MAX)
-                            .withLenses(light.packed()).withLive(true).withFlow(1_000));
+                    // Into the middle of the block it's working on.
+                    net.minecraft.world.phys.Vec3 to = target.getCenter().subtract(node.nodePos().getCenter());
+                    Direction face = Direction.getApproximateNearest(to.x, to.y, to.z);
+                    shown.add(new LaserBeam(node.nodePos(), face, target, (int) Math.ceil(to.length()), null, LaserBeam.End.OPEN,
+                            1_000, true, light.packed()));
                 }
             }
             node.showBeams(shown);
@@ -922,6 +928,7 @@ public final class LaserNetworks {
             fe[0] = 0;
         });
         Set<BlockPos> live = live();
+        litNow = live;
         blind(live);
         for (LaserNode node : nodes.values()) {
             if (node.area() != null) continue;

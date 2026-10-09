@@ -33,6 +33,7 @@ navigation:
 - <ItemLink id="quantimium:singularity" />
 - <ItemLink id="quantimium:sophon" />
 - <ItemLink id="quantimium:spectroscope" />
+- <ItemLink id="quantimium:speed_lens" />
 - <ItemLink id="quantimium:tesseract" />
 - <ItemLink id="quantimium:tether" />
 - <ItemLink id="quantimium:unrealised_matter" />

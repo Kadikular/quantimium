@@ -42,9 +42,18 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
      * One action the light carries, its modifiers (bits of {@link Lens}), and who pays for it; how many
      * Amplify lenses it's met, and what a Filter lens lets it act on (null for everything).
      */
-    public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter) {
+    public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed) {
         public Stream(Lens action, int modifiers, Set<BlockPos> payers) {
-            this(action, modifiers, payers, 0, null);
+            this(action, modifiers, payers, 0, null, 0);
+        }
+
+        public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter) {
+            this(action, modifiers, payers, amps, filter, 0);
+        }
+
+        /** How many times faster it works: 1, 2, 4 or 8. */
+        public int pace() {
+            return 1 << speed;
         }
 
         public boolean has(Lens modifier) {
@@ -52,11 +61,15 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
         }
 
         Stream paidBy(Set<BlockPos> payers) {
-            return new Stream(action, modifiers, payers, amps, filter);
+            return new Stream(action, modifiers, payers, amps, filter, speed);
         }
 
         Stream with(int modifiers, int amps, @Nullable LensFilter filter) {
-            return new Stream(action, modifiers, payers, amps, filter);
+            return new Stream(action, modifiers, payers, amps, filter, speed);
+        }
+
+        Stream faster() {
+            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1));
         }
     }
 
@@ -96,7 +109,8 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                     payers.addAll(stream.payers());
                     // Joined, the same action does the most either side did; a filter from one side is kept.
                     streams.put(stream.action(), new Stream(stream.action(), had.modifiers() | stream.modifiers(), Set.copyOf(payers),
-                            Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter()));
+                            Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter(),
+                            Math.max(had.speed(), stream.speed())));
                 }
             }
         }
@@ -132,7 +146,8 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
             if (lens.action) {
                 Stream had = streams.get(lens);
                 int modifiers = (had == null ? 0 : had.modifiers()) | (pickup ? 1 << Lens.PICKUP.ordinal() : 0);
-                streams.put(lens, new Stream(lens, modifiers, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter()));
+                streams.put(lens, new Stream(lens, modifiers, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
+                        had == null ? 0 : had.speed()));
             } else switch (lens) {
                 case PICKUP -> {
                     pickup = true;
@@ -145,6 +160,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                 case UV -> uv = true;
                 case FILTER -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(), use.filter() == null ? LensFilter.EMPTY : use.filter()));
+                case SPEED -> streams.replaceAll((action, stream) -> stream.faster());
                 case AMPLIFY -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.AMPLIFY.ordinal(), Math.min(LaserTuning.AMPLIFY_LENSES, stream.amps() + 1), stream.filter()));
                 default -> {}
@@ -182,6 +198,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
             entry.putInt("Action", stream.action().ordinal());
             entry.putInt("Modifiers", stream.modifiers());
             entry.putInt("Amps", stream.amps());
+            entry.putInt("Speed", stream.speed());
             if (stream.filter() != null) {
                 LensFilter.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, stream.filter()).result().ifPresent(filter -> entry.put("Filter", filter));
             }
@@ -201,7 +218,8 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
             if (action < 0 || action >= Lens.values().length) continue;
             LensFilter filter = stream.get("Filter") == null ? null
                     : LensFilter.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, stream.get("Filter")).result().orElse(null);
-            streams.add(new Stream(Lens.values()[action], stream.getIntOr("Modifiers", 0), Set.of(source), stream.getIntOr("Amps", 0), filter));
+            streams.add(new Stream(Lens.values()[action], stream.getIntOr("Modifiers", 0), Set.of(source), stream.getIntOr("Amps", 0), filter,
+                    stream.getIntOr("Speed", 0)));
         }
         return new Light(tag.getIntOr("Range", LaserTuning.RELAY_RANGE), tag.getIntOr("Boosts", 0), tag.getBooleanOr("Pickup", false),
                 List.copyOf(streams), Set.of(source), -1, tag.getBooleanOr("Uv", false));
@@ -219,7 +237,8 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
         if (range < other.range || boosts < other.boosts || (other.pickup && !pickup) || (other.uv && !uv)) return false;
         for (Stream theirs : other.streams) {
             Stream mine = streams.stream().filter(stream -> stream.action() == theirs.action()).findFirst().orElse(null);
-            if (mine == null || (mine.modifiers() & theirs.modifiers()) != theirs.modifiers() || mine.amps() < theirs.amps()) return false;
+            if (mine == null || (mine.modifiers() & theirs.modifiers()) != theirs.modifiers() || mine.amps() < theirs.amps()
+                    || mine.speed() < theirs.speed()) return false;
         }
         return true;
     }

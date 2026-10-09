@@ -61,11 +61,12 @@ public final class LaserTuning {
     public static final double AREA_COST = 1.5;
     /** Blocks an area prism's action looks through a tick for the next to work on. */
     public static final int AREA_SCAN = 64;
-    /** The largest an area may be on each side, and how far from its prism its middle may be. */
-    public static final int AREA_MAX = 16;
-    public static final int AREA_REACH = 24;
-    /** Range lenses that count: each doubles a run's reach. */
-    public static final int RANGE_LENSES = 2;
+    /** The largest an area may be on each side. Only what the prism's light reaches, and sees, is worked. */
+    public static final int AREA_MAX = 257;
+    /** Range lenses that count: each doubles a run's reach, up to {@link #MAX_RANGE}. Light with an action goes 8, 16, 32, 64, 128. */
+    public static final int RANGE_LENSES = 4;
+    /** Speed lenses that count: each doubles how fast an action works, to eight times. */
+    public static final int SPEED_LENSES = 3;
     /** The farthest any run of light reaches, Range lenses and all. */
     public static final int MAX_RANGE = 128;
     /** How far a run of light with an action reaches (Pickup counts), before Range lenses. */

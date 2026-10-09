@@ -699,4 +699,81 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.mirror.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void anAreaPrismBehindAnUnpoweredMirrorDoesNothing(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.COBBLESTONE, 16));
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.EAST));
+        var mirror = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
+        mirror.cycleMode();
+        helper.assertTrue(mirror.mode() == com.kadikular.quantimium.laser.RelayMode.WITH_SIGNAL, "needs a signal");
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.PLACE_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(9, Y, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.setArea(helper.absolutePos(new BlockPos(11, Y, 7)), helper.absolutePos(new BlockPos(13, Y, 9)));
+        helper.runAfterDelay(70, () -> {
+            for (int x = 11; x <= 13; x++) for (int z = 7; z <= 9; z++) helper.assertBlockPresent(Blocks.AIR, new BlockPos(x, Y, z));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.speed
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void speedLensesCutFaster(GameTestHelper helper) {
+        // Two rows of stone: the one with three Speed lenses is through it while the plain one isn't.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
+        emitter(helper, new BlockPos(1, Y, 10), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 10), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.SPEED_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        for (int x = 5; x <= 9; x++) {
+            helper.setBlock(new BlockPos(x, Y, 4), Blocks.STONE);
+            helper.setBlock(new BlockPos(x, Y, 10), Blocks.STONE);
+        }
+        helper.runAfterDelay(40, () -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 10));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(9, Y, 4));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.light.range
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 40)
+    public static void fourRangeLensesTakeActionLightTo128(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.RANGE_LENS.get(),
+                ModItems.RANGE_LENS.get(), ModItems.RANGE_LENS.get());
+        // The fourth in a second mount: four slots hold Harvest and three.
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.RANGE_LENS.get());
+        helper.setBlock(new BlockPos(16, Y, 8), Blocks.BEDROCK);
+        helper.runAfterDelay(25, () -> {
+            String text = String.join(" ", com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
+                    .describe(helper.absolutePos(new BlockPos(5, Y, 8))).stream().map(net.minecraft.network.chat.Component::getString).toList());
+            helper.assertTrue(text.contains("128 blocks a run"), "8 doubled four times: " + text);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
+    public static void anUnlitAreaPrismShowsNoBeams(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, false);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        prism.setArea(helper.absolutePos(new BlockPos(9, Y, 7)), helper.absolutePos(new BlockPos(9, Y, 9)));
+        helper.runAfterDelay(50, () -> {
+            helper.assertTrue(prism.syncedBeams().isEmpty(), "no light, no beams: " + prism.syncedBeams());
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(9, Y, 8));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

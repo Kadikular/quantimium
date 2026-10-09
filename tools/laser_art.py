@@ -245,7 +245,8 @@ def spectroscope() -> Image.Image:
 
 
 LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
-          "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8"}
+          "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
+          "speed_lens": "ffa0d0"}
 
 
 def sender_face() -> Image.Image:

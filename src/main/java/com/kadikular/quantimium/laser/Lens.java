@@ -21,7 +21,9 @@ public enum Lens {
     /** Harder cutting (a diamond pickaxe's) and harder hits, for more power. */
     AMPLIFY(false, 0xFFFFE070),
     /** Places blocks a Sender up the beam sends, where the beam ends. */
-    PLACE(true, 0xFF4AC8C8);
+    PLACE(true, 0xFF4AC8C8),
+    /** Its actions work twice as fast: cutting, placing. */
+    SPEED(false, 0xFFFFA0D0);
 
     private static final Lens[] VALUES = values();
 

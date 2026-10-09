@@ -31,12 +31,13 @@ import java.util.Set;
 /**
  * An Area Prism: light that reaches it spreads its actions over an area, set with the Laser Linker in
  * area mode: Harvest cuts each block there in turn, Damage hurts and Pickup gathers what's in it,
- * Placement fills each free space resting on something. The light goes no further, and work in an
- * area costs {@link LaserTuning#AREA_COST} times as much. A Filter lens says what counts.
+ * Placement fills each free space resting on something; only what the light reaching it reaches, and can
+ * see from it. The light goes no further, and work in an area costs {@link LaserTuning#AREA_COST} times as
+ * much. A Filter lens says what counts.
  */
 public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
 
-    public enum Placed { SET, TOO_BIG, TOO_FAR }
+    public enum Placed { SET, TOO_BIG }
 
     @Nullable
     private BoundingBox area;
@@ -53,7 +54,6 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         if (box.getXSpan() > LaserTuning.AREA_MAX || box.getYSpan() > LaserTuning.AREA_MAX || box.getZSpan() > LaserTuning.AREA_MAX) {
             return Placed.TOO_BIG;
         }
-        if (box.getCenter().getCenter().distanceTo(worldPosition.getCenter()) > LaserTuning.AREA_REACH) return Placed.TOO_FAR;
         area = box;
         changed();
         return Placed.SET;

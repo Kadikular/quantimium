@@ -154,7 +154,9 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             return new Vec3[] {centre.add(dir.scale(0.5)), centre.add(dir.scale(length + 0.5))};
         }
         Vec3 dir = aim.getCenter().subtract(centre).normalize();
-        double reach = hit == null ? length + 0.5 : Math.max(0.5, hit.getCenter().distanceTo(centre) - 0.5);
+        // Faded short of what it aimed at, it stops at its range; past it, at the middle of what it aimed at.
+        double reach = hit == null ? Math.min(length + 0.5, aim.getCenter().distanceTo(centre))
+                : Math.max(0.5, hit.getCenter().distanceTo(centre) - 0.5);
         return new Vec3[] {centre.add(dir.scale(0.5)), centre.add(dir.scale(reach))};
     }
 

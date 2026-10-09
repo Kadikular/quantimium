@@ -146,7 +146,8 @@ Pickup is the exception: it stays on the light, and every action added after it 
 | <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, or one light passes through just before it (a crop on farmland, grass), as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
 | <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. With Pickup, what it kills drops straight back up the beam. | 1,000 FE a hit, when it lands |
 | <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops a Collector up the beam has room for; with none, it waits. | 200 FE a stack, when it's carried |
-| <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far; two count, for four times as far. | none |
+| <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far, up to 128 blocks: four count, so light with an action goes 8, 16, 32, 64, 128. | none |
+| <ItemLink id="quantimium:speed_lens" /> | Modifier | Its actions work twice as fast: a Harvest beam waits half as long between blocks, Placement too, and an Area Prism looks through its area twice as fast. Three count, for eight times. | none |
 | <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. Use it in the air to set it. | none |
 | <ItemLink id="quantimium:amplify_lens" /> | Modifier | Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to 3. | a cut costs one more share for each; a hit doubles |
 | <ItemLink id="quantimium:uv_lens" /> | Modifier | Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light. | none |
@@ -160,7 +161,7 @@ A drop no Collector's filter will take doesn't hold the harvest up: it falls whe
 **How far light reaches.** A run of light reaches as far as its source's:
 mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
 8 blocks a run instead, and the power it carries goes no farther. Each Range
-lens doubles a run, up to 128 blocks. Where light joins, the farther reach wins.
+lens doubles a run, up to 128 blocks; four count. Where light joins, the farther reach wins.
 
 **Joining light.** Light from two sides joined at a mirror or prism does
 everything either side did: Harvest light from one emitter and Damage light from another, joined, both
@@ -190,12 +191,13 @@ do there (a Collector's faces hand things out, a Sender's take them in), and whi
 pull from, what's beside them, once a second.
 
 An <ItemLink id="quantimium:area_prism" /> spreads the actions of light reaching it over an
-area, up to 16 blocks a side, its middle within 24
-blocks: Harvest cuts each block there in turn, Damage hurts and Pickup gathers whatever's in it,
-Placement fills each free space resting on a block. It works only on what it can see, along a clear
-line of light from the prism, and shows a beam to what it's working on. Work in an area costs
+area of any size: Harvest cuts each block there in turn, Damage hurts and Pickup gathers whatever's in it,
+Placement fills each free space resting on a block. It works only on what the light reaching it
+reaches (8 blocks for light with an action, more with Range lenses) and can see, along a clear line from
+the prism, and while it's working it shows a beam into what it's working on. Work in an area costs
 1.5 times as much. Use the <ItemLink id="quantimium:laser_linker" /> in the air to switch it to area mode, use it on two
-corners, then on the prism; sneak-click the prism with an empty hand to clear its area.
+corners, then on the prism; the area shows as you pick it, and holding the Linker shows the area of any
+prism you look at. Sneak-click the prism with an empty hand to clear its area.
 
 Work that happens at once (a hit, an item carried, a block placed) is paid for first each tick, so
 machines on the same light can't starve it; blocks are charged from what's left.
