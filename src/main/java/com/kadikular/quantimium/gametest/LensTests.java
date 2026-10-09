@@ -776,4 +776,63 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.mirror.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void placementBehindAnUnpoweredMirrorStaysOffAfterAJoin(GameTestHelper helper) {
+        // A: emitter, mirror needing a signal (none), Sender, Placement mount, into a join mirror.
+        // B: emitter, Harvest + Pickup mount, into the same join. The join's light goes on into an Area Prism.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        helper.setBlock(new BlockPos(3, Y, 4), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.EAST));
+        var off = helper.getBlockEntity(new BlockPos(3, Y, 4), com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
+        off.cycleMode();
+        sender(helper, new BlockPos(5, Y, 4), Direction.EAST, new ItemStack(Items.COBBLESTONE, 16));
+        mount(helper, new BlockPos(7, Y, 4), Direction.EAST, ModItems.PLACE_LENS.get());
+        emitter(helper, new BlockPos(9, Y, 0), Direction.SOUTH, true);
+        mount(helper, new BlockPos(9, Y, 2), Direction.SOUTH, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        mirror(helper, new BlockPos(9, Y, 4), Direction.SOUTH);
+        helper.setBlock(new BlockPos(9, Y, 7), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(9, Y, 7), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.setArea(helper.absolutePos(new BlockPos(11, Y, 9)), helper.absolutePos(new BlockPos(13, Y, 11)));
+        helper.runAfterDelay(90, () -> {
+            for (int x = 11; x <= 13; x++) for (int z = 9; z <= 11; z++) helper.assertBlockPresent(Blocks.AIR, new BlockPos(x, Y, z));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.sender, laser.mirror.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void aSenderBehindAnUnpoweredMirrorShipsNothing(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        helper.setBlock(new BlockPos(3, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(new BlockPos(3, Y, 8), com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class).cycleMode();
+        sender(helper, new BlockPos(5, Y, 8), Direction.EAST, new ItemStack(Items.DIAMOND, 5));
+        CollectorBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(13, Y, 8), Blocks.BEDROCK);
+        helper.runAfterDelay(70, () -> {
+            helper.assertValueEqual(count(collector, Items.DIAMOND), 0, "nothing shipped while the light's switched off");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.place
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void placementEmptiesABucketAndSendsItBack(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        var sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.WATER_BUCKET));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PLACE_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.WATER, new BlockPos(8, Y, 8));
+            boolean empty = false;
+            for (int slot = 0; slot < 9; slot++) empty |= sender.getItems().getStackInSlot(slot).is(Items.BUCKET);
+            helper.assertTrue(empty, "the empty bucket came back to the Sender");
+            TestSupport.finishLasers(helper);
+            helper.setBlock(new BlockPos(8, Y, 8), Blocks.AIR);
+        });
+    }
 }

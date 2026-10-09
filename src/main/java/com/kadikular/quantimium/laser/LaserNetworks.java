@@ -414,7 +414,8 @@ public final class LaserNetworks {
         for (LaserNode node : nodes.values()) {
             if (!node.sends()) continue;
             Light light = lights.get(node.nodePos());
-            if (light == null) continue;
+            // Only while light runs to it: a switched-off mirror before it stops it too.
+            if (light == null || !litNow.contains(node.nodePos())) continue;
             List<BlockPos> down = downFor(node.nodePos());
             if (down.isEmpty()) continue;
             ItemStack offered = node.send(stack -> roomFor(down, stack), 64, true);
@@ -435,7 +436,7 @@ public final class LaserNetworks {
         return left;
     }
 
-    /** Every Collector down the light leaving {@code pos}, through relays, nearest first; not past an Isolator. */
+    /** Every Collector down the light leaving {@code pos}, through switched-on relays, nearest first; not past an Isolator. */
     private List<BlockPos> downFor(BlockPos pos) {
         List<BlockPos> found = new ArrayList<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
@@ -447,7 +448,7 @@ public final class LaserNetworks {
             for (LaserBeam beam : beams.getOrDefault(at, List.of())) {
                 if (beam.end() != LaserBeam.End.NODE || !seen.add(beam.hit())) continue;
                 LaserNode next = nodes.get(beam.hit());
-                if (next == null || !next.relays() || next.isolates()) continue;
+                if (next == null || !next.relays() || next.isolates() || !next.enabled()) continue;
                 if (next.collects()) found.add(beam.hit());
                 queue.add(beam.hit());
             }
@@ -540,6 +541,11 @@ public final class LaserNetworks {
             if (nodes.get(pos) instanceof com.kadikular.quantimium.block.entity.CollectorBlockEntity collector && collector.accepts(stack)) return true;
         }
         return false;
+    }
+
+    /** Whether the Collectors at {@code positions} would take all of {@code stack} between them. */
+    boolean roomForAll(List<BlockPos> positions, ItemStack stack) {
+        return simulateCollect(positions, stack).isEmpty();
     }
 
     /** Whether any of the Collectors at {@code positions} would take some of {@code stack}. */

@@ -130,7 +130,7 @@ public final class LensAction {
                 // Items are small: anything within nearly a block of the beam's line counts.
                 for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
                         && (stream.filter() == null || stream.filter().lets(item.getItem())))) {
-                    carry(networks, item);
+                    carry(networks, item, true);
                 }
             }
             case PLACE -> place(level, networks);
@@ -154,10 +154,24 @@ public final class LensAction {
         ItemStack offered = networks.take(senders, stack -> placeable(level, stack, at), 1, true);
         if (offered.isEmpty()) return;
         ItemStack taken = networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, offered), 1, false);
-        if (taken.isEmpty() || !(taken.getItem() instanceof net.minecraft.world.item.BlockItem item)) return;
-        net.minecraft.world.InteractionResult result = item.place(new net.minecraft.world.item.context.BlockPlaceContext(
-                level, null, net.minecraft.world.InteractionHand.MAIN_HAND, taken, at));
-        if (!result.consumesAction()) {
+        if (taken.isEmpty()) return;
+        boolean done;
+        if (taken.getItem() instanceof net.minecraft.world.item.BucketItem bucket) {
+            // A bucket of water or lava empties where the block would go, as a dispenser empties one; the bucket goes back.
+            BlockPos spot = at.getBlockPos().relative(at.getDirection());
+            done = bucket.emptyContents(null, level, spot, at, taken);
+            if (done) {
+                ItemStack empty = networks.returnTo(senders, new ItemStack(Items.BUCKET));
+                if (!empty.isEmpty()) Block.popResource(level, spot, empty);
+                taken = ItemStack.EMPTY;
+            }
+        } else if (taken.getItem() instanceof net.minecraft.world.item.BlockItem item) {
+            done = item.place(new net.minecraft.world.item.context.BlockPlaceContext(
+                    level, null, net.minecraft.world.InteractionHand.MAIN_HAND, taken, at)).consumesAction();
+        } else {
+            done = false;
+        }
+        if (!done) {
             // It wouldn't go after all: back where it came from.
             ItemStack back = networks.returnTo(senders, taken);
             if (!back.isEmpty()) Block.popResource(level, at.getBlockPos().relative(at.getDirection()), back);
@@ -183,8 +197,12 @@ public final class LensAction {
 
     /** Whether {@code stack} would go in where {@code at} says, and the stream's filter lets it. */
     private boolean placeable(ServerLevel level, ItemStack stack, net.minecraft.world.phys.BlockHitResult at) {
-        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem item)) return false;
         if (stream.filter() != null && !stream.filter().lets(stack)) return false;
+        if (stack.getItem() instanceof net.minecraft.world.item.BucketItem bucket) {
+            return bucket.getContent() != net.minecraft.world.level.material.Fluids.EMPTY
+                    && level.getBlockState(at.getBlockPos().relative(at.getDirection())).canBeReplaced();
+        }
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem item)) return false;
         var context = new net.minecraft.world.item.context.BlockPlaceContext(level, null, net.minecraft.world.InteractionHand.MAIN_HAND, stack.copyWithCount(1), at);
         if (!context.canPlace()) return false;
         BlockState state = item.getBlock().getStateForPlacement(context);
@@ -296,12 +314,12 @@ public final class LensAction {
     }
 
     /**
-     * Whether the Collectors up the beam have room for what breaking the block would drop. A drop every
-     * Collector's filter turns away doesn't hold the cut up: it falls where the block was.
+     * Whether the Collectors up the beam have room for all of what breaking the block would drop. A drop
+     * every Collector's filter turns away doesn't hold the cut up: it falls where the block was.
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
         for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool())) {
-            if (networks.anyAccepts(collectors, drop) && !networks.roomFor(collectors, drop)) return false;
+            if (networks.anyAccepts(collectors, drop) && !networks.roomForAll(collectors, drop)) return false;
         }
         return true;
     }
@@ -326,14 +344,15 @@ public final class LensAction {
     private void gatherDrops(ServerLevel level, LaserNetworks networks, LivingEntity killed) {
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, killed.getBoundingBox().inflate(1.5),
                 item -> item.isAlive() && item.tickCount <= 1)) {
-            carry(networks, item);
+            // All of it: the filter chose what to hit, not what it drops.
+            carry(networks, item, false);
         }
     }
 
-    /** Carries an item up the beam, if a Collector has room and the stream's sources can pay. */
-    private void carry(LaserNetworks networks, ItemEntity item) {
+    /** Carries an item up the beam, if a Collector has room and the stream's sources can pay; with {@code filtered}, only what its filter lets. */
+    private void carry(LaserNetworks networks, ItemEntity item, boolean filtered) {
         ItemStack stack = item.getItem();
-        if (stream.filter() != null && !stream.filter().lets(stack)) return;
+        if (filtered && stream.filter() != null && !stream.filter().lets(stack)) return;
         if (!networks.roomFor(collectors, stack) || !networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK)) return;
         ItemStack left = networks.collect(collectors, stack.copy());
         networks.workDone(this);
