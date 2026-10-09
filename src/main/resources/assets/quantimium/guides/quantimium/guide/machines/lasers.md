@@ -67,7 +67,9 @@ Link it with the <ItemLink id="quantimium:laser_linker" />: use the Linker on th
 pick it, then on each block its light should reach, once to link it and again to unlink it. A prism
 links up to 8 blocks, within 24 blocks. Sneak-use
 the Linker in the air to let the prism go, and sneak-click the prism with an empty hand to let go of
-all its links. A link to a block that's been removed, even one light passes through such as grass, is let go of by itself. Holding the Linker, or a wrench, shows every beam faintly,
+all its links. A link to a block that's been removed, even one light passes through such as grass, is let go of by itself.
+Use an empty hand on a prism to make it keep those links instead: it goes on aiming at the
+spot, so a Harvest lens's light breaks whatever comes back there. Holding the Linker, or a wrench, shows every beam faintly,
 even ones carrying nothing, so you can see where light would go.
 
 ## Optical cavities
@@ -119,9 +121,9 @@ while the beam is lit, and an emitter pays only while there's something to do.
 
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
-| <ItemLink id="quantimium:harvest_lens" /> | Action | Breaks the block the beam ends on, as a diamond pickaxe would, if it's within 16 blocks of the mount; one block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness |
-| <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. | 2,000 FE a hit |
-| <ItemLink id="quantimium:pickup_lens" /> | Modifier | What the action frees, and items lying in the beam, go back up it to the nearest Collector. With no Collector, drops fall where they are. | 200 FE a stack |
+| <ItemLink id="quantimium:harvest_lens" /> | Action | Breaks the block the beam ends on, as a diamond pickaxe would, if it's within 8 blocks of the mount; one block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness |
+| <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam within 8 blocks of the mount, players included, every 0.5 s. With Pickup, what it kills drops straight back up the beam. | 2,000 FE a hit |
+| <ItemLink id="quantimium:pickup_lens" /> | Modifier | What the action frees, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next, and light joined at a mirror reaches back up every side. With no Collector, drops fall where they are. | 200 FE a stack |
 
 A <ItemLink id="quantimium:collector" /> passes light, out of its face, as a mirror does, and
 catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from.

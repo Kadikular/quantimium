@@ -36,6 +36,8 @@ import java.util.Set;
 public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
 
     private final List<BlockPos> targets = new ArrayList<>();
+    /** Whether it keeps its aim on a linked spot after the block there is gone: for a Harvest lens's light, which breaks it again when something comes back. */
+    private boolean keepsLinks;
     private List<LaserBeam> shownBeams = List.of();
 
     public LaserPrismBlockEntity(BlockPos pos, BlockState state) {
@@ -66,6 +68,21 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
             changed();
         }
         return had;
+    }
+
+    public boolean keepsLinksToGone() {
+        return keepsLinks;
+    }
+
+    /** Switches between letting go of links to blocks that are gone, and keeping them. */
+    public void toggleKeepsLinks() {
+        keepsLinks = !keepsLinks;
+        changed();
+    }
+
+    @Override
+    public boolean keepsLinks() {
+        return keepsLinks;
     }
 
     @Override
@@ -142,6 +159,7 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         out.store("Targets", BlockPos.CODEC.listOf(), List.copyOf(targets));
+        out.putBoolean("KeepsLinks", keepsLinks);
     }
 
     @Override
@@ -149,6 +167,7 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
         super.loadAdditional(in);
         targets.clear();
         in.read("Targets", BlockPos.CODEC.listOf()).ifPresent(targets::addAll);
+        keepsLinks = in.getBooleanOr("KeepsLinks", false);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 
@@ -171,6 +190,8 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
         long passing = 0;
         for (LaserBeam beam : shownBeams) passing += beam.flow();
         return Component.translatable("message.quantimium.laser.prism", targets.size(), LaserTuning.PRISM_LINKS,
-                String.format(java.util.Locale.ROOT, "%,d", passing)).withStyle(passing > 0 ? ChatFormatting.DARK_AQUA : ChatFormatting.GRAY);
+                String.format(java.util.Locale.ROOT, "%,d", passing)).withStyle(passing > 0 ? ChatFormatting.DARK_AQUA : ChatFormatting.GRAY)
+                .append(Component.translatable(keepsLinks ? "message.quantimium.laser_prism.keeps" : "message.quantimium.laser_prism.forgets")
+                        .withStyle(ChatFormatting.GRAY));
     }
 }

@@ -160,9 +160,9 @@ public final class LaserNetworks {
         Map<BlockPos, List<LaserBeam>> before = new HashMap<>(beams);
         beams.clear();
         carried.clear();
-        // What the relays lost so far still goes into the field.
+        // What the relays still standing lost so far goes into the field.
         lost.forEach((pos, fe) -> {
-            if (fe[0] > 0) QuantumFlux.emitFromEnergy(level, pos, fe[0]);
+            if (fe[0] > 0 && nodes.containsKey(pos)) QuantumFlux.emitFromEnergy(level, pos, fe[0]);
         });
         lost.clear();
         ranges.clear();
@@ -219,9 +219,14 @@ public final class LaserNetworks {
         List<LaserBeam> was = before.getOrDefault(node.nodePos(), List.of());
         for (int i = 0; i < traced.size(); i++) {
             LaserBeam beam = traced.get(i);
+            LaserBeam same = null;
             for (LaserBeam old : was) {
-                if (old.sameRun(beam)) traced.set(i, beam.withFlow(old.flow()).withLive(old.live()));
+                if (old.sameRun(beam)) same = old;
             }
+            // A beam that now runs differently (a block broken at its end) keeps how bright it was until
+            // the next settle says otherwise, so it doesn't blink out meanwhile.
+            if (same == null && i < was.size() && was.get(i).face() == beam.face()) same = was.get(i);
+            if (same != null) traced.set(i, beam.withFlow(same.flow()).withLive(same.live()));
         }
         beams.put(node.nodePos(), traced);
     }
@@ -264,13 +269,13 @@ public final class LaserNetworks {
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
             if (lenses != Lens.NONE) {
                 List<LaserBeam> lensed = new ArrayList<>(list.size());
-                BlockPos collector = collectorFor(pos);
+                List<BlockPos> collectors = collectorsFor(pos);
                 for (int i = 0; i < list.size(); i++) {
                     LaserBeam beam = list.get(i).withLenses(lenses);
                     lensed.add(beam);
                     LensAction.Key key = new LensAction.Key(pos, i);
                     LensAction action = was.getOrDefault(key, new LensAction(key));
-                    action.update(beam, lenses, collector);
+                    action.update(beam, lenses, collectors);
                     actions.put(key, action);
                 }
                 list = lensed;
@@ -280,9 +285,13 @@ public final class LaserNetworks {
         }
     }
 
-    /** The nearest Collector up the light reaching {@code pos}, through relays: where Pickup sends what it brings back. */
-    @Nullable
-    private BlockPos collectorFor(BlockPos pos) {
+    /**
+     * Every Collector up the light reaching {@code pos}, through relays, nearest first: where Pickup sends
+     * what it brings back, each taking what the ones before couldn't. Light from two sides joined at a
+     * mirror reaches back up both.
+     */
+    private List<BlockPos> collectorsFor(BlockPos pos) {
+        List<BlockPos> found = new ArrayList<>();
         Map<BlockPos, List<BlockPos>> feeding = new HashMap<>();
         beams.forEach((from, list) -> {
             for (LaserBeam beam : list) {
@@ -297,19 +306,24 @@ public final class LaserNetworks {
             BlockPos at = queue.poll();
             LaserNode node = nodes.get(at);
             if (node == null) continue;
-            if (node.collects()) return at;
+            if (node.collects()) found.add(at);
             if (!node.relays() && !at.equals(pos)) continue;
             for (BlockPos up : feeding.getOrDefault(at, List.of())) {
                 if (seen.add(up)) queue.add(up);
             }
         }
-        return null;
+        return found;
     }
 
-    /** Gives {@code stack} to the Collector at {@code pos}; what it couldn't take. */
-    ItemStack collect(BlockPos pos, ItemStack stack) {
-        LaserNode node = nodes.get(pos);
-        return node != null && node.collects() ? node.collect(stack) : stack;
+    /** Gives {@code stack} to the Collectors at {@code positions}, in order; what none could take. */
+    ItemStack collect(List<BlockPos> positions, ItemStack stack) {
+        ItemStack left = stack;
+        for (BlockPos pos : positions) {
+            if (left.isEmpty()) break;
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.collects()) left = node.collect(left);
+        }
+        return left;
     }
 
     /** The most range left in any light reaching {@code pos} from a node already traced; -1 if none has yet. */
@@ -333,7 +347,7 @@ public final class LaserNetworks {
         for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, range));
         for (BlockPos target : List.copyOf(node.targets())) {
             // A link to a block that's gone is let go.
-            if (level.isLoaded(target) && level.getBlockState(target).isAir()) {
+            if (!node.keepsLinks() && level.isLoaded(target) && level.getBlockState(target).isAir()) {
                 node.forget(target);
                 continue;
             }
@@ -344,6 +358,7 @@ public final class LaserNetworks {
 
     /** Whether one of the node's links is to a block that's gone: light passes through both, so its beam alone doesn't show it. */
     private boolean linkGone(LaserNode node) {
+        if (node.keepsLinks()) return false;
         for (BlockPos target : node.targets()) {
             if (level.isLoaded(target) && level.getBlockState(target).isAir()) return true;
         }

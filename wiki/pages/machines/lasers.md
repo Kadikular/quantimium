@@ -59,7 +59,9 @@ them could send. It refocuses and taxes light as a mirror does.
 pick it, then on each block its light should reach, once to link it and again to unlink it. A prism
 links up to {{c:LaserTuning.PRISM_LINKS}} blocks, within {{c:LaserTuning.PRISM_RANGE}} blocks. Sneak-use
 the Linker in the air to let the prism go, and sneak-click the prism with an empty hand to let go of
-all its links. A link to a block that's been removed, even one light passes through such as grass, is let go of by itself. Holding the Linker, or a wrench, shows every beam faintly,
+all its links. A link to a block that's been removed, even one light passes through such as grass, is let go of by itself.
+[[mechanic:laser.prism.keep]] Use an empty hand on a prism to make it keep those links instead: it goes on aiming at the
+spot, so a Harvest lens's light breaks whatever comes back there. Holding the Linker, or a wrench, shows every beam faintly,
 even ones carrying nothing, so you can see where light would go.
 
 ## Optical cavities
@@ -111,9 +113,9 @@ while the beam is lit, and an emitter pays only while there's something to do.
 
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
-| [[item:harvest_lens]] | Action | [[mechanic:laser.lens.harvest]] Breaks the block the beam ends on, as a diamond pickaxe would, if it's within {{c:LaserTuning.HARVEST_REACH}} blocks of the mount; one block every {{c:LaserTuning.HARVEST_COOLDOWN|s}} at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | {{c:LaserTuning.HARVEST_FE_PER_HARDNESS}} FE for each point of hardness |
-| [[item:damage_lens]] | Action | [[mechanic:laser.lens.damage]] Hurts anything living that stands in the beam, players included, every {{c:LaserTuning.DAMAGE_INTERVAL|s}}. | {{c:LaserTuning.DAMAGE_FE_PER_HIT}} FE a hit |
-| [[item:pickup_lens]] | Modifier | [[mechanic:laser.lens.pickup]] What the action frees, and items lying in the beam, go back up it to the nearest Collector. With no Collector, drops fall where they are. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack |
+| [[item:harvest_lens]] | Action | [[mechanic:laser.lens.harvest]] Breaks the block the beam ends on, as a diamond pickaxe would, if it's within {{c:LaserTuning.ACTION_REACH}} blocks of the mount; one block every {{c:LaserTuning.HARVEST_COOLDOWN|s}} at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | {{c:LaserTuning.HARVEST_FE_PER_HARDNESS}} FE for each point of hardness |
+| [[item:damage_lens]] | Action | [[mechanic:laser.lens.damage]] Hurts anything living that stands in the beam within {{c:LaserTuning.ACTION_REACH}} blocks of the mount, players included, every {{c:LaserTuning.DAMAGE_INTERVAL|s}}. With Pickup, what it kills drops straight back up the beam. | {{c:LaserTuning.DAMAGE_FE_PER_HIT}} FE a hit |
+| [[item:pickup_lens]] | Modifier | [[mechanic:laser.lens.pickup]] What the action frees, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next, and light joined at a mirror reaches back up every side. With no Collector, drops fall where they are. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack |
 
 [[mechanic:laser.collector]] A [[block:collector]] passes light, out of its face, as a mirror does, and
 catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from.

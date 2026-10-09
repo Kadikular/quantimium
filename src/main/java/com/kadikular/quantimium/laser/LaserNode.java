@@ -74,6 +74,11 @@ public interface LaserNode {
     /** The network has traced this node's beams, or worked out what flows along them: for rendering. */
     void showBeams(List<LaserBeam> beams);
 
+    /** Whether a link to a block that's gone is kept (a prism set to), rather than let go. */
+    default boolean keepsLinks() {
+        return false;
+    }
+
     /** The lenses this node holds, in the order light meets them: a Lens Mount's. */
     default List<Lens> lenses() {
         return List.of();

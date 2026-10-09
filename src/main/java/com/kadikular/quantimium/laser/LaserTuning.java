@@ -49,8 +49,8 @@ public final class LaserTuning {
 
     // ---- lenses ----
 
-    /** How far from its mount a Harvest lens's beam can break a block. */
-    public static final int HARVEST_REACH = 16;
+    /** How far from its mount a beam's action reaches: a Harvest lens breaks, a Damage lens hurts, and Pickup gathers. */
+    public static final int ACTION_REACH = 8;
     /** FE to break a block, for each point of its hardness (stone is 1.5, obsidian 50); at least one point's worth. */
     public static final long HARVEST_FE_PER_HARDNESS = 400;
     /** Ticks between blocks a Harvest lens breaks, however much power it has. */

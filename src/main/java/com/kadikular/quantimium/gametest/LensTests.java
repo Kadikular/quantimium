@@ -160,4 +160,64 @@ public final class LensTests {
             TestSupport.clearField(helper);
         });
     }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void pickupFillsTheNextCollectorWhenOneIsFull(GameTestHelper helper) {
+        // Two emitters, each through its own Collector, joined at a mirror: when one Collector is full,
+        // what Pickup brings back goes up the other side.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity west = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
+        CollectorBlockEntity north = collector(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.EAST));
+        mount(helper, new BlockPos(8, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
+        for (CollectorBlockEntity full : java.util.List.of(west, north)) {
+            for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) full.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        }
+        // Room in the west one only: whichever side is tried first, the diamonds must end up there.
+        west.getItems().setStackInSlot(4, ItemStack.EMPTY);
+        ItemEntity item = new ItemEntity(helper.getLevel(), helper.absoluteVec(new BlockPos(12, Y, 8).getCenter()).x,
+                helper.absolutePos(new BlockPos(12, Y, 8)).getY() + 0.3, helper.absoluteVec(new BlockPos(12, Y, 8).getCenter()).z,
+                new ItemStack(Items.DIAMOND, 2));
+        item.setDeltaMovement(0, 0, 0);
+        item.setNoGravity(true);
+        helper.getLevel().addFreshEntity(item);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(west, Items.DIAMOND), 2, "the diamonds went up the side with room");
+            TestSupport.clearField(helper);
+        });
+    }
+
+    // covers: laser.lens.damage
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void aDamageLensReachesOnlySoFar(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get());
+        // Twelve blocks along: past the action's reach, in the beam all the same.
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(15, Y, 8));
+        float full = pig.getHealth();
+        helper.runAfterDelay(70, () -> {
+            helper.assertValueEqual(pig.getHealth(), full, "out of reach, unhurt");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.keep
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
+    public static void aPrismSetToKeepLinksKeepsThem(GameTestHelper helper) {
+        BlockPos target = new BlockPos(12, Y, 12);
+        helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.LASER_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(7, Y, 8), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
+        prism.toggleKeepsLinks();
+        helper.setBlock(target, Blocks.STONE);
+        prism.toggleLink(helper.absolutePos(target));
+        helper.runAfterDelay(10, () -> helper.setBlock(target, Blocks.AIR));
+        helper.runAfterDelay(45, () -> {
+            helper.assertValueEqual(prism.targets().size(), 1, "still aiming at the spot");
+            helper.succeed();
+        });
+    }
 }

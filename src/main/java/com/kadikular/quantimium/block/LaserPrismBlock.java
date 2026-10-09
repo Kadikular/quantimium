@@ -34,7 +34,18 @@ public class LaserPrismBlock extends BaseEntityBlock {
     protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
                                                                    net.minecraft.world.entity.player.Player player,
                                                                    net.minecraft.world.phys.BlockHitResult hit) {
-        if (!player.isSecondaryUseActive()) return net.minecraft.world.InteractionResult.PASS;
+        if (!player.isSecondaryUseActive()) {
+            // An empty hand switches whether it keeps its links to blocks that are gone.
+            if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserPrismBlockEntity prism) {
+                prism.toggleKeepsLinks();
+                player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable(prism.keepsLinksToGone()
+                        ? "message.quantimium.laser_prism.mode_keep" : "message.quantimium.laser_prism.mode_forget")
+                        .withStyle(net.minecraft.ChatFormatting.AQUA));
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME, net.minecraft.sounds.SoundSource.BLOCKS,
+                        0.6f, prism.keepsLinksToGone() ? 1.2f : 0.9f);
+            }
+            return net.minecraft.world.InteractionResult.SUCCESS;
+        }
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserPrismBlockEntity prism) {
             int had = prism.clearLinks();
             player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.laser_prism.cleared", had)
