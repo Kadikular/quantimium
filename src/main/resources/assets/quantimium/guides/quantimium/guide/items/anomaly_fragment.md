@@ -2,7 +2,7 @@
 navigation:
   title: Anomaly Fragments
   parent: items/index.md
-  position: 4
+  position: 5
   icon: quantimium:anomaly_fragment
 item_ids:
 - quantimium:anomaly_fragment

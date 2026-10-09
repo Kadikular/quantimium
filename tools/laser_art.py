@@ -244,7 +244,33 @@ def spectroscope() -> Image.Image:
     return img
 
 
-LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff"}
+LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
+          "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8"}
+
+
+def splitter_face() -> Image.Image:
+    """A silver plate cut into four by a cross: light leaving every way it's set to."""
+    img = mirror_face()
+    for i in range(2, 14):
+        img.putpixel((i, 7), hx("2b2b33"))
+        img.putpixel((i, 8), hx("2b2b33"))
+        img.putpixel((7, i), hx("2b2b33"))
+        img.putpixel((8, i), hx("2b2b33"))
+    for x, y in ((7, 7), (8, 8), (7, 8), (8, 7)):
+        img.putpixel((x, y), hx("c8dcff"))
+    return img
+
+
+def isolator_face() -> Image.Image:
+    """A dark plate behind a grey bar: light through, nothing else."""
+    img = stone(("1b1b1e", "26262b", "33333a"), 81)
+    for x in range(2, 14):
+        for y in range(2, 14):
+            img.putpixel((x, y), hx("3b3b45") if (x + y) % 4 else hx("4d4d59"))
+    for x in range(2, 14):
+        for y in (7, 8):
+            img.putpixel((x, y), hx("8a8a96"))
+    return img
 
 
 def cube(textures: dict, front_key: str) -> dict:
@@ -315,7 +341,9 @@ def main() -> None:
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
     for name, face, tones, seed in (("lens_mount", lens_mount_face, ("1e1630", "2a2042", "3a2d5a"), 62),
-                                    ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72)):
+                                    ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
+                                    ("splitter", splitter_face, ("2b2b33", "3b3b45", "4d4d59"), 82),
+                                    ("isolator", isolator_face, ("1b1b1e", "26262b", "33333a"), 92)):
         face().save(os.path.join(TEX, f"{name}_face.png"))
         stone(tones, seed).save(os.path.join(TEX, f"{name}_side.png"))
         model = cube({"front": f"quantimium:block/{name}_face", "back": f"quantimium:block/{name}_side",

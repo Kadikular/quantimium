@@ -90,8 +90,26 @@ public interface LaserNode {
     }
 
     /** The lenses this node holds, in the order light meets them: a Lens Mount's. */
-    default List<Lens> lenses() {
+    default List<LensUse> lenses() {
         return List.of();
+    }
+
+    /** One action that light through this relay was let through for is done: a pulse mirror closes. */
+    default void pulseDone() {}
+
+    /** Whether light through it loses everything it did, and items can't pass it: an Isolator. */
+    default boolean isolates() {
+        return false;
+    }
+
+    /** Whether this sends items down the beam, from its slots: a Sender. */
+    default boolean sends() {
+        return false;
+    }
+
+    /** Takes up to one stack the {@code wants} predicate accepts from a Sender's slots (or with {@code simulate}, says what it would). */
+    default net.minecraft.world.item.ItemStack send(java.util.function.Predicate<net.minecraft.world.item.ItemStack> wants, int max, boolean simulate) {
+        return net.minecraft.world.item.ItemStack.EMPTY;
     }
 
     /**

@@ -186,6 +186,12 @@ public class ModBlockEntities {
                     new BlockEntityType<>(LaserEmitterBlockEntity::new, ModBlocks.FLASH_EMITTER.get(),
                             ModBlocks.LASER_EMITTER_1.get(), ModBlocks.LASER_EMITTER_2.get(), ModBlocks.LASER_EMITTER_3.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SplitterBlockEntity>> SPLITTER_BE =
+            BLOCK_ENTITIES.register("splitter_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.SplitterBlockEntity::new, ModBlocks.SPLITTER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.IsolatorBlockEntity>> ISOLATOR_BE =
+            BLOCK_ENTITIES.register("isolator_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.IsolatorBlockEntity::new, ModBlocks.ISOLATOR.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LensMountBlockEntity>> LENS_MOUNT_BE =
             BLOCK_ENTITIES.register("lens_mount_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LensMountBlockEntity::new, ModBlocks.LENS_MOUNT.get()));

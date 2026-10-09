@@ -240,7 +240,7 @@ public final class LaserNetworks {
             if (node == null || !node.relays()) continue;
             Light in = incoming(node);
             if (in == null) continue;
-            Light out = node.refocuses() ? in.refocused().through(node.lenses()) : in;
+            Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
             if (out.equals(lights.get(at))) continue;
             lights.put(at, out);
             traceAt(node, out.reach(), before);
@@ -363,7 +363,8 @@ public final class LaserNetworks {
             // A Collector counts if its own light comes from one of the stream's sources: on the stream's own side of a join.
             Light light = lights.get(at);
             if (node.collects() && light != null && !java.util.Collections.disjoint(light.feeders(), payers)) found.add(at);
-            if (!node.relays() && !at.equals(pos)) continue;
+            // Nothing passes back up through an Isolator.
+            if ((!node.relays() || node.isolates()) && !at.equals(pos)) continue;
             for (BlockPos up : feeding.getOrDefault(at, List.of())) {
                 if (seen.add(up)) queue.add(up);
             }
@@ -380,6 +381,17 @@ public final class LaserNetworks {
             if (node != null && node.collects()) left = node.collect(left, false);
         }
         return left;
+    }
+
+    /** An action finished one piece of work: every relay on the way that let light through for one pulse closes. */
+    void workDone(LensAction action) {
+        ActionSink at = actionSinks.get(action.key());
+        if (at == null) return;
+        for (Route route : at.sink().routes()) {
+            for (Hop hop : route.path()) {
+                if (hop.relay() != null) hop.relay().pulseDone();
+            }
+        }
     }
 
     /** Whether any of the Collectors at {@code positions} would take some of {@code stack}. */
@@ -748,6 +760,7 @@ public final class LaserNetworks {
             fe[0] = 0;
         });
         Set<BlockPos> live = live();
+        blind(live);
         for (LaserNode node : nodes.values()) {
             BlockPos pos = node.nodePos();
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
@@ -762,6 +775,35 @@ public final class LaserNetworks {
             node.showBeams(flowing);
         }
         carried.values().forEach(sum -> java.util.Arrays.fill(sum, 0));
+    }
+
+    /**
+     * Light carrying power at eye height blinds: anything living whose eyes are in a lit beam can't see for
+     * {@link LaserTuning#BLIND_TICKS}, unless it's looking through a Mirror Lens. Checked as the beams settle.
+     */
+    private void blind(Set<BlockPos> live) {
+        for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
+            if (!live.contains(entry.getKey())) continue;
+            long[] sums = carried.getOrDefault(entry.getKey(), new long[0]);
+            List<LaserBeam> list = entry.getValue();
+            for (int i = 0; i < list.size(); i++) {
+                if (i >= sums.length || sums[i] <= 0) continue;
+                net.minecraft.world.phys.Vec3[] ends = list.get(i).ends();
+                net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(ends[0], ends[1]).inflate(0.5);
+                for (net.minecraft.world.entity.LivingEntity entity : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, box)) {
+                    if (com.kadikular.quantimium.item.MirrorLensItem.isWorn(entity)) continue;
+                    if (distanceToSegment(entity.getEyePosition(), ends[0], ends[1]) > LaserTuning.BLIND_REACH) continue;
+                    entity.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.BLINDNESS, LaserTuning.BLIND_TICKS));
+                }
+            }
+        }
+    }
+
+    private static double distanceToSegment(net.minecraft.world.phys.Vec3 point, net.minecraft.world.phys.Vec3 a, net.minecraft.world.phys.Vec3 b) {
+        net.minecraft.world.phys.Vec3 ab = b.subtract(a);
+        double length = ab.lengthSqr();
+        double t = length == 0 ? 0 : Math.clamp(point.subtract(a).dot(ab) / length, 0, 1);
+        return point.distanceTo(a.add(ab.scale(t)));
     }
 
     /**

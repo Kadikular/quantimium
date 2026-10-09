@@ -316,6 +316,26 @@ public final class Config {
 
     static {
         BUILDER.pop();
+        BUILDER.push("lasers");
+    }
+
+    public static final ModConfigSpec.DoubleValue CAVITY_LEAK = BUILDER
+            .comment("Fraction of what an optical cavity holds that it loses each tick, as flux. 0 turns leaking off (the default for now); 0.00002 loses 0.002% a tick.")
+            .defineInRange("cavityLeakPerTick", 0.0, 0.0, 0.01);
+
+    public static final ModConfigSpec.IntValue CAVITY_LEAK_CAP = BUILDER
+            .comment("The most FE a tick one Cavity Mirror loses to its leak, however much it holds.")
+            .defineInRange("cavityLeakCapFePerTick", 20, 0, 1_000_000);
+
+    static {
+        BUILDER.pop();
+    }
+
+    /** What a Cavity Mirror holding {@code stored} loses this tick: a fraction of it, up to the cap. */
+    public static double cavityLeak(long stored) {
+        double fraction = SPEC.isLoaded() ? CAVITY_LEAK.get() : 0.0;
+        int cap = SPEC.isLoaded() ? CAVITY_LEAK_CAP.get() : 20;
+        return Math.min(cap, stored * fraction);
     }
 
     public static final ModConfigSpec SPEC = BUILDER.build();

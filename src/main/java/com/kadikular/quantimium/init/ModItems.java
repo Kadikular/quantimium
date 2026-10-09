@@ -238,6 +238,10 @@ public class ModItems {
             "photodetector", ModBlocks.PHOTODETECTOR);
     public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_prism", ModBlocks.LASER_PRISM);
+    public static final DeferredItem<BlockItem> SPLITTER_ITEM = ITEMS.registerSimpleBlockItem(
+            "splitter", ModBlocks.SPLITTER);
+    public static final DeferredItem<BlockItem> ISOLATOR_ITEM = ITEMS.registerSimpleBlockItem(
+            "isolator", ModBlocks.ISOLATOR);
     public static final DeferredItem<BlockItem> LENS_MOUNT_ITEM = ITEMS.registerSimpleBlockItem(
             "lens_mount", ModBlocks.LENS_MOUNT);
     public static final DeferredItem<BlockItem> COLLECTOR_ITEM = ITEMS.registerSimpleBlockItem(
@@ -250,6 +254,14 @@ public class ModItems {
             "pickup_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PICKUP));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> RANGE_LENS = ITEMS.registerItem(
             "range_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.RANGE));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> FILTER_LENS = ITEMS.registerItem(
+            "filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1)));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> UV_LENS = ITEMS.registerItem(
+            "uv_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UV));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> AMPLIFY_LENS = ITEMS.registerItem(
+            "amplify_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.AMPLIFY));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> PLACE_LENS = ITEMS.registerItem(
+            "place_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PLACE));
 
     public static final DeferredItem<com.kadikular.quantimium.item.SpectroscopeItem> SPECTROSCOPE = ITEMS.registerItem(
             "spectroscope", props -> new com.kadikular.quantimium.item.SpectroscopeItem(props.stacksTo(1)));

@@ -2,7 +2,7 @@
 navigation:
   title: Anomalite Shard
   parent: items/index.md
-  position: 3
+  position: 4
   icon: quantimium:anomalite_shard
 item_ids:
 - quantimium:anomalite_shard

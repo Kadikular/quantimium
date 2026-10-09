@@ -100,10 +100,13 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
     }
 
     @Override
-    public List<Lens> lenses() {
-        List<Lens> lenses = new ArrayList<>(SLOTS);
+    public List<com.kadikular.quantimium.laser.LensUse> lenses() {
+        List<com.kadikular.quantimium.laser.LensUse> lenses = new ArrayList<>(SLOTS);
         for (int slot = 0; slot < SLOTS; slot++) {
-            if (lensSlots.getStackInSlot(slot).getItem() instanceof LensItem lens) lenses.add(lens.lens());
+            ItemStack stack = lensSlots.getStackInSlot(slot);
+            if (stack.getItem() instanceof LensItem lens) {
+                lenses.add(new com.kadikular.quantimium.laser.LensUse(lens.lens(), stack.get(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get())));
+            }
         }
         return lenses;
     }
@@ -192,7 +195,7 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
     @Override
     @Nullable
     public MutableComponent fluxMeterLine() {
-        List<Lens> lenses = lenses();
+        List<Lens> lenses = lenses().stream().map(com.kadikular.quantimium.laser.LensUse::lens).toList();
         if (lenses.isEmpty()) return Component.translatable("message.quantimium.lens_mount.empty").withStyle(ChatFormatting.GRAY);
         MutableComponent names = Component.empty();
         for (int i = 0; i < lenses.size(); i++) {

@@ -13,7 +13,15 @@ public enum Lens {
     /** What the actions free, and items lying in the beam, go back up it to a Collector. */
     PICKUP(false, 0xFF5BE38A),
     /** Doubles how far a run of the light reaches. */
-    RANGE(false, 0xFF7FB2FF);
+    RANGE(false, 0xFF7FB2FF),
+    /** Lets the actions it changes act only on what it lists. */
+    FILTER(false, 0xFFE8E0C0),
+    /** Light no one sees but with a wrench in hand; it stays on the light. */
+    UV(false, 0xFF9A7BFF),
+    /** Harder cutting (a diamond pickaxe's) and harder hits, for more power. */
+    AMPLIFY(false, 0xFFFFE070),
+    /** Places blocks a Sender up the beam sends, where the beam ends. */
+    PLACE(true, 0xFF4AC8C8);
 
     private static final Lens[] VALUES = values();
 

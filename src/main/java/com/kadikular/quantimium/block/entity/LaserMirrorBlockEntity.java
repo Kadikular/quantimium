@@ -34,9 +34,55 @@ import java.util.Set;
 public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
 
     private List<LaserBeam> shownBeams = List.of();
+    private com.kadikular.quantimium.laser.RelayMode mode = com.kadikular.quantimium.laser.RelayMode.IGNORED;
+    /** Whether a redstone signal reaches it, as last told. */
+    private boolean powered;
+    /** In pulse mode: whether it's letting light through, and since when. */
+    private boolean pulseOpen;
+    private long pulseAt;
 
     public LaserMirrorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.LASER_MIRROR_BE.get(), pos, state);
+        this(ModBlockEntities.LASER_MIRROR_BE.get(), pos, state);
+    }
+
+    /** For blocks built on the mirror: the Splitter, the Isolator. */
+    protected LaserMirrorBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
+    }
+
+    public com.kadikular.quantimium.laser.RelayMode mode() {
+        return mode;
+    }
+
+    /** Steps to the next way of listening to redstone. */
+    public void cycleMode() {
+        mode = mode.next();
+        pulseOpen = false;
+        setChanged();
+    }
+
+    /** The block next to it changed: a signal arriving opens a pulse. */
+    public void onSignal(boolean signal) {
+        if (signal && !powered && mode == com.kadikular.quantimium.laser.RelayMode.PULSE && level != null) {
+            pulseOpen = true;
+            pulseAt = level.getGameTime();
+        }
+        powered = signal;
+    }
+
+    @Override
+    public boolean enabled() {
+        return switch (mode) {
+            case IGNORED -> true;
+            case WITH_SIGNAL -> powered;
+            case WITHOUT_SIGNAL -> !powered;
+            case PULSE -> pulseOpen && level != null && level.getGameTime() - pulseAt <= com.kadikular.quantimium.laser.RelayMode.PULSE_TICKS;
+        };
+    }
+
+    @Override
+    public void pulseDone() {
+        pulseOpen = false;
     }
 
     public Direction facing() {
@@ -80,7 +126,16 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, Fl
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && !level.isClientSide()) LaserNetworks.add(level, this);
+        if (level != null && !level.isClientSide()) {
+            powered = level.hasNeighborSignal(worldPosition);
+            LaserNetworks.add(level, this);
+        }
+    }
+
+    @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
+        super.saveAdditional(out);
+        out.putInt("Mode", mode.ordinal());
     }
 
     @Override
@@ -98,6 +153,7 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, Fl
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
+        mode = com.kadikular.quantimium.laser.RelayMode.byOrdinal(in.getIntOr("Mode", 0));
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 
@@ -119,8 +175,10 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, Fl
     public MutableComponent fluxMeterLine() {
         long passing = 0;
         for (LaserBeam beam : shownBeams) passing += beam.flow();
-        if (passing <= 0) return Component.translatable("message.quantimium.laser.mirror.dark").withStyle(ChatFormatting.GRAY);
-        return Component.translatable("message.quantimium.laser.mirror.passing", String.format(java.util.Locale.ROOT, "%,d", passing))
-                .withStyle(ChatFormatting.DARK_AQUA);
+        MutableComponent line = passing <= 0 ? Component.translatable("message.quantimium.laser.mirror.dark").withStyle(ChatFormatting.GRAY)
+                : Component.translatable("message.quantimium.laser.mirror.passing", String.format(java.util.Locale.ROOT, "%,d", passing))
+                        .withStyle(ChatFormatting.DARK_AQUA);
+        if (mode != com.kadikular.quantimium.laser.RelayMode.IGNORED) line.append(Component.literal("; ").append(mode.label()).withStyle(ChatFormatting.GRAY));
+        return line;
     }
 }

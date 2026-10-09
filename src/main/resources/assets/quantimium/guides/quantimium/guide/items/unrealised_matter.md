@@ -2,7 +2,7 @@
 navigation:
   title: Unrealised Matter
   parent: items/index.md
-  position: 24
+  position: 27
   icon: quantimium:unrealised_matter
 item_ids:
 - quantimium:unrealised_matter

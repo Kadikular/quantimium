@@ -20,8 +20,6 @@ public final class LaserTuning {
     public static final int CAVITY_MAX_GAP = 16;
     public static final long CAVITY_FE_PER_BLOCK = 10_000_000;
     public static final long CAVITY_RATE = 512_000;
-    /** The share of what a cavity mirror holds that leaks away each tick, as flux. */
-    public static final double CAVITY_LEAK = 0.00002;
 
     /** Emitter tiers: the most they send a tick, how far a run reaches, what they hold, and what they burn idle. */
     public enum Tier {
@@ -49,6 +47,16 @@ public final class LaserTuning {
 
     // ---- lenses ----
 
+    /** Amplify lenses that count: the first lets a Harvest beam cut as a diamond pickaxe; each doubles a hit. */
+    public static final int AMPLIFY_LENSES = 3;
+    /** FE to place a block from a Sender. */
+    public static final long PLACE_FE = 200;
+    /** Ticks between blocks a Placement beam places. */
+    public static final int PLACE_COOLDOWN = 10;
+    /** How long light carrying power blinds what looks into it: fifteen seconds. */
+    public static final int BLIND_TICKS = 300;
+    /** How near the beam's line an eye must be. */
+    public static final double BLIND_REACH = 0.35;
     /** Range lenses that count: each doubles a run's reach. */
     public static final int RANGE_LENSES = 2;
     /** The farthest any run of light reaches, Range lenses and all. */

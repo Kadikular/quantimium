@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:laser_mirror",
+    "minecraft:obsidian"
+  ],
+  "result": {
+    "id": "quantimium:isolator",
+    "count": 1
+  }
+}

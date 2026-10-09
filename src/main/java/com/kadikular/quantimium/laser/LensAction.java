@@ -83,20 +83,24 @@ public final class LensAction {
             case HARVEST -> harvest(level, networks, pickup);
             case DAMAGE -> {
                 if (phase != 0) return;
-                targets = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive() && onBeam(entity.getBoundingBox(), 0.25));
+                targets = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive() && onBeam(entity.getBoundingBox(), 0.25)
+                        && (stream.filter() == null || stream.filter().living().lets(entity)));
+                // Each Amplify lens doubles the hit, and what it costs.
+                int scale = 1 << stream.amps();
                 for (LivingEntity entity : targets) {
-                    if (!networks.pay(this, LaserTuning.DAMAGE_FE_PER_HIT)) break;
-                    if (entity.hurtServer(level, level.damageSources().source(ModDamageTypes.LASER), LaserTuning.DAMAGE_PER_HIT)
-                            && pickup && !entity.isAlive()) {
+                    if (!networks.pay(this, LaserTuning.DAMAGE_FE_PER_HIT * scale)) break;
+                    if (entity.hurtServer(level, level.damageSources().source(ModDamageTypes.LASER), LaserTuning.DAMAGE_PER_HIT * scale)) {
+                        networks.workDone(this);
                         // Killed, with Pickup: what it drops goes straight back up the beam, wherever it lands.
-                        gatherDrops(level, networks, entity);
+                        if (pickup && !entity.isAlive()) gatherDrops(level, networks, entity);
                     }
                 }
             }
             case PICKUP -> {
                 if (phase != 0 || collectors.isEmpty()) return;
                 // Items are small: anything within nearly a block of the beam's line counts.
-                for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45))) {
+                for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
+                        && (stream.filter() == null || stream.filter().lets(item.getItem())))) {
                     carry(networks, item);
                 }
             }
@@ -113,7 +117,7 @@ public final class LensAction {
             if (cutting != null) level.destroyBlockProgress(crackId(), cutting, -1);
             cutting = target;
             cut = 0;
-            cutCost = target == null ? 0 : harvestCost(level, target);
+            cutCost = target == null ? 0 : harvestCost(level, target) * (1 + stream.amps());
         }
         if (target == null) {
             want = 0;
@@ -127,6 +131,7 @@ public final class LensAction {
         if (cut >= cutCost && cooldown <= 0) {
             level.destroyBlockProgress(crackId(), target, -1);
             breakBlock(level, networks, target, pickup);
+            networks.workDone(this);
             cooldown = LaserTuning.HARVEST_COOLDOWN;
             cutting = null;
             cut = 0;
@@ -146,7 +151,15 @@ public final class LensAction {
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null) return null;
         if (state.is(ModTags.LASER_UNBREAKABLE)) return null;
+        // Plain, it cuts as an iron pickaxe: what needs better waits for an Amplify lens.
+        if (state.requiresCorrectToolForDrops() && !tool().isCorrectToolForDrops(state)) return null;
+        if (stream.filter() != null && !stream.filter().lets(state, Block.getDrops(state, level, pos, null, null, tool()))) return null;
         return pos;
+    }
+
+    /** What it cuts as: an iron pickaxe, or with an Amplify lens a diamond one. */
+    private ItemStack tool() {
+        return new ItemStack(stream.amps() > 0 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
     }
 
     private static long harvestCost(ServerLevel level, BlockPos pos) {
@@ -156,16 +169,16 @@ public final class LensAction {
 
     /** Whether the Collectors up the beam have room for what breaking the block would drop. */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
-        for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, new ItemStack(Items.DIAMOND_PICKAXE))) {
+        for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool())) {
             if (!networks.roomFor(collectors, drop)) return false;
         }
         return true;
     }
 
-    /** Breaks it as a diamond pickaxe would, the drops going back up the beam with Pickup. */
+    /** Breaks it as its pickaxe would, the drops going back up the beam with Pickup. */
     private void breakBlock(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean pickup) {
         BlockState state = level.getBlockState(pos);
-        List<ItemStack> drops = new ArrayList<>(Block.getDrops(state, level, pos, null, null, new ItemStack(Items.DIAMOND_PICKAXE)));
+        List<ItemStack> drops = new ArrayList<>(Block.getDrops(state, level, pos, null, null, tool()));
         level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
         level.removeBlock(pos, false);
         for (ItemStack drop : drops) {
@@ -189,8 +202,10 @@ public final class LensAction {
     /** Carries an item up the beam, if a Collector has room and the stream's sources can pay. */
     private void carry(LaserNetworks networks, ItemEntity item) {
         ItemStack stack = item.getItem();
+        if (stream.filter() != null && !stream.filter().lets(stack)) return;
         if (!networks.roomFor(collectors, stack) || !networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK)) return;
         ItemStack left = networks.collect(collectors, stack.copy());
+        networks.workDone(this);
         if (left.isEmpty()) item.discard();
         else item.setItem(left);
     }

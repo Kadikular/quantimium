@@ -55,6 +55,19 @@ sent it, so a Flash Emitter's light goes 8 blocks a run however many mirrors it 
 Each mirror a beam passes takes 1% of what passes, and that becomes flux
 where the mirror stands.
 
+Use an empty hand on a mirror to step through how it listens to
+redstone: it ignores it, passes light only with a signal, only without one, or in **pulse** mode, where
+each signal it gets lets light through until one action down the beam is done (a block cut, a hit, an
+item carried) or two seconds pass. A pulse mirror before a Harvest lens breaks one block per pulse.
+
+A <ItemLink id="quantimium:splitter" /> is a mirror with as many faces as you set: light that
+reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six
+straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output.
+
+An <ItemLink id="quantimium:isolator" /> is a mirror that lets only power through: light
+leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through it, so
+Pickup's items stop short of it.
+
 ## Prisms
 
 A <ItemLink id="quantimium:laser_prism" /> sends the light that reaches it to each block
@@ -95,9 +108,9 @@ towards where its partner would stand. Once paired, what it holds leaves by its 
 - With two Cavity Mirrors, the light bounces between them, so what either holds evens out between
   them: both glow, and both can give it out.
 - Light reaching the Laser Mirror at the far end is passed into the cavity, so that end can feed it.
-- A cavity leaks: each tick it loses 0% of what it holds, and that
-  becomes flux where it stands. Break a charged mirror, or block its gap, and the light it held all goes
-  into the field at once.
+- A cavity can leak: a pack can set it to lose a share of what it holds
+  each tick, up to a cap, as flux where it stands. Out of the box it doesn't leak. Break a charged
+  mirror, or block its gap, and the light it held all goes into the field at once.
 
 The held light glows in one beam across the gap, brighter the more there is.
 
@@ -128,10 +141,13 @@ Pickup is the exception: it stays on the light, and every action added after it 
 
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
-| <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, as a diamond pickaxe would, and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
+| <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
 | <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. With Pickup, what it kills drops straight back up the beam. | 1,000 FE a hit, when it lands |
 | <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops a Collector up the beam has room for; with none, it waits. | 200 FE a stack, when it's carried |
 | <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far; two count, for four times as far. | none |
+| <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. Use it in the air to set it. | none |
+| <ItemLink id="quantimium:amplify_lens" /> | Modifier | Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to 3. | a cut costs one more share for each; a hit doubles |
+| <ItemLink id="quantimium:uv_lens" /> | Modifier | Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light. | none |
 
 **How far light reaches.** A run of light reaches as far as its source's:
 mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
@@ -160,6 +176,9 @@ The <ItemLink id="quantimium:spectroscope" /> splits light into what it carries,
 spectroscope's prism does. Use it on any laser block to read the light leaving it: how far a run
 reaches and from how many sources, each action with its modifiers, who pays and how many Collectors it
 can reach, and each beam's length, end and power.
+
+**Don't look into the beam.** Light carrying power blinds anything whose eyes
+are in it, for 15 s. The <ItemLink id="quantimium:mirror_lens" /> protects the wearer.
 
 ## What stops light
 

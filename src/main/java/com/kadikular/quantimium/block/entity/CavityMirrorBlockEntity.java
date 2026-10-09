@@ -120,7 +120,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (level.getGameTime() % 20 == Math.floorMod(pos.hashCode(), 20)) mirror.checkPartner(server);
         mirror.share(server);
         if (mirror.stored > 0) {
-            double leak = mirror.stored * LaserTuning.CAVITY_LEAK;
+            double leak = com.kadikular.quantimium.Config.cavityLeak(mirror.stored);
             mirror.leaked += leak;
             mirror.stored -= (long) Math.ceil(leak);
             if (mirror.stored < 0) mirror.stored = 0;

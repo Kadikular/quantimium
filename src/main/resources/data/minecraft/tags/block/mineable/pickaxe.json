@@ -72,6 +72,8 @@
     "quantimium:laser_emitter_2",
     "quantimium:laser_emitter_3",
     "quantimium:laser_mirror",
+    "quantimium:isolator",
+    "quantimium:splitter",
     "quantimium:collector",
     "quantimium:lens_mount",
     "quantimium:laser_prism",

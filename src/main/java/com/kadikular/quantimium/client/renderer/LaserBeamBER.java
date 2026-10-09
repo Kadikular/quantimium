@@ -50,6 +50,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         PoseStack.Pose pose = poses.last();
         VertexConsumer halo = buffers.getBuffer(QuantumRenderTypes.FIELD_GLOW);
         for (LaserBeam beam : beams) {
+            if (hidden(beam, aiming)) continue;
             int bright = LaserNetworks.brightness(beam.flow());
             float[] tint = halo(beam);
             if (bright == 0) {
@@ -66,6 +67,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         // Cores after every halo: one render type at a time.
         VertexConsumer cores = buffers.getBuffer(QuantumRenderTypes.BEAM_CORE);
         for (LaserBeam beam : beams) {
+            if (hidden(beam, aiming)) continue;
             int bright = LaserNetworks.brightness(beam.flow());
             float[] tint = core(beam);
             if (bright == 0) {
@@ -75,6 +77,11 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), (0.012f + 0.006f * bright) * view.widthScale(beam),
                     tint[0], tint[1], tint[2], 0.55f + 0.06f * bright);
         }
+    }
+
+    /** UV light shows only to someone holding a wrench or the Linker. */
+    private static boolean hidden(LaserBeam beam, boolean aiming) {
+        return !aiming && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.UV);
     }
 
     private static final float[] AZURE_HALO = {0.40f, 0.62f, 1.0f};

@@ -8,6 +8,7 @@ navigation:
 
 # Items
 
+- <ItemLink id="quantimium:amplify_lens" />
 - <ItemLink id="quantimium:anomalite_cell" />
 - <ItemLink id="quantimium:anomalite_dust" />
 - <ItemLink id="quantimium:anomalite_emitter" />
@@ -16,12 +17,14 @@ navigation:
 - <ItemLink id="quantimium:basic_decoherence_matrix" />
 - <ItemLink id="quantimium:damage_lens" />
 - <ItemLink id="quantimium:decoherence_lance" />
+- <ItemLink id="quantimium:filter_lens" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
 - <ItemLink id="quantimium:harvest_lens" />
 - <ItemLink id="quantimium:laser_linker" />
 - <ItemLink id="quantimium:mirror_lens" />
 - <ItemLink id="quantimium:pickup_lens" />
+- <ItemLink id="quantimium:place_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />
 - <ItemLink id="quantimium:range_lens" />
 - <ItemLink id="quantimium:rift_residue" />
@@ -33,4 +36,5 @@ navigation:
 - <ItemLink id="quantimium:tesseract" />
 - <ItemLink id="quantimium:tether" />
 - <ItemLink id="quantimium:unrealised_matter" />
+- <ItemLink id="quantimium:uv_lens" />
 - <ItemLink id="quantimium:veil_thread" />

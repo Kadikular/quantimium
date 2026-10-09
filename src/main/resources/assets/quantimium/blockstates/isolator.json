@@ -1,0 +1,27 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "quantimium:block/isolator"
+  },
+  "facing=south": {
+   "model": "quantimium:block/isolator",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "quantimium:block/isolator",
+   "y": 270
+  },
+  "facing=east": {
+   "model": "quantimium:block/isolator",
+   "y": 90
+  },
+  "facing=up": {
+   "model": "quantimium:block/isolator",
+   "x": 270
+  },
+  "facing=down": {
+   "model": "quantimium:block/isolator",
+   "x": 90
+  }
+ }
+}

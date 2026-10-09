@@ -276,10 +276,13 @@ public final class LaserTests {
         });
     }
 
-    // covers: laser.cavity
-    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    // covers: laser.cavity, laser.cavity.leak
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_cavity_leak", timeoutTicks = 100)
     public static void aCavityLeaksAndABrokenOneLetsItsLightGo(GameTestHelper helper) {
         TestSupport.finishLasers(helper);
+        // Leaking is off unless the config turns it on: on, here, alone in its batch.
+        double leakWas = com.kadikular.quantimium.Config.CAVITY_LEAK.get();
+        com.kadikular.quantimium.Config.CAVITY_LEAK.set(0.00002);
         var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
         cavityMirror(helper, new BlockPos(10, Y, 8), Direction.WEST);
         helper.runAfterDelay(25, () -> {
@@ -296,6 +299,7 @@ public final class LaserTests {
             helper.assertTrue(after > before, "broken, its light goes into the field: " + before + " to " + after);
             // The other one lets its light go too: break it before clearing, so none is left for the next test.
             helper.setBlock(new BlockPos(10, Y, 8), Blocks.AIR);
+            com.kadikular.quantimium.Config.CAVITY_LEAK.set(leakWas);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

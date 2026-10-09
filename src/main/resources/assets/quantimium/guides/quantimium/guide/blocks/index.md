@@ -34,6 +34,7 @@ navigation:
 - <ItemLink id="quantimium:fold_rail" />
 - <ItemLink id="quantimium:harvest_laser" />
 - <ItemLink id="quantimium:horizon_core" />
+- <ItemLink id="quantimium:isolator" />
 - <ItemLink id="quantimium:laser_emitter_1" />
 - <ItemLink id="quantimium:laser_emitter_2" />
 - <ItemLink id="quantimium:laser_emitter_3" />
@@ -75,6 +76,7 @@ navigation:
 - <ItemLink id="quantimium:rift_lens" />
 - <ItemLink id="quantimium:rift_stabiliser" />
 - <ItemLink id="quantimium:ring_emitter" />
+- <ItemLink id="quantimium:splitter" />
 - <ItemLink id="quantimium:stabilised_portal_frame" />
 - <ItemLink id="quantimium:superposition_pod" />
 - <ItemLink id="quantimium:tesseract_stabilizer" />

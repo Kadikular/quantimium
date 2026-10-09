@@ -2,7 +2,7 @@
 navigation:
   title: Anomalite Cell
   parent: items/index.md
-  position: 0
+  position: 1
   icon: quantimium:anomalite_cell
 item_ids:
 - quantimium:anomalite_cell

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A laser mirror: whatever light reaches it leaves by its face. Placed, it faces you; a wrench, or a sneaking empty hand, on any face points it there.
+ * An empty hand steps through how it listens to redstone.
  */
 public class LaserMirrorBlock extends BaseEntityBlock {
     public static final MapCodec<LaserMirrorBlock> CODEC = simpleCodec(LaserMirrorBlock::new);
@@ -80,8 +81,25 @@ public class LaserMirrorBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!player.isSecondaryUseActive()) return InteractionResult.PASS;
-        return point(state, level, pos, hit.getDirection());
+        if (player.isSecondaryUseActive()) return point(state, level, pos, hit.getDirection());
+        return cycleMode(level, pos, player);
+    }
+
+    /** An empty hand steps through how it listens to redstone: ignored, with a signal, without one, pulse. */
+    protected static InteractionResult cycleMode(Level level, BlockPos pos, Player player) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserMirrorBlockEntity mirror) {
+            mirror.cycleMode();
+            player.sendOverlayMessage(mirror.mode().label().copy().withStyle(net.minecraft.ChatFormatting.AQUA));
+            level.playSound(null, pos, SoundEvents.COMPARATOR_CLICK, SoundSource.BLOCKS, 0.6f, 1.0f + 0.1f * mirror.mode().ordinal());
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighbourBlock,
+                                   @Nullable net.minecraft.world.level.redstone.Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighbourBlock, orientation, movedByPiston);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserMirrorBlockEntity mirror) mirror.onSignal(level.hasNeighborSignal(pos));
     }
 
     /** Points the mirror out of the face clicked. */

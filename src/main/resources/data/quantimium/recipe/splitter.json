@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:laser_mirror",
+    "quantimium:laser_mirror",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "quantimium:splitter",
+    "count": 1
+  }
+}
