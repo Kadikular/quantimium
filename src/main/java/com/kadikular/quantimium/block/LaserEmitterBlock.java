@@ -95,7 +95,8 @@ public class LaserEmitterBlock extends BaseEntityBlock implements com.kadikular.
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
-        if (!stack.is(ModTags.TOOLS_WRENCH)) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
+        if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
         return toggle(level, pos, hit.getDirection());
     }
 

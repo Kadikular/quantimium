@@ -11,6 +11,12 @@ import java.util.List;
 /** A block whose beams the client draws: the beams as the server last showed them. */
 public interface LaserBeamView {
 
+    /** How much wider than usual to draw {@code beam}: a cavity's held light glows wider. */
+    default float widthScale(LaserBeam beam) {
+        return 1.0f;
+    }
+
+
     List<LaserBeam> syncedBeams();
 
     /** Whether two sets of beams look the same: same shape, and the same step of brightness. */

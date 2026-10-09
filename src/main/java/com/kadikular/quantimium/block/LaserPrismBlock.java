@@ -30,6 +30,16 @@ public class LaserPrismBlock extends BaseEntityBlock {
     }
 
     /** Sneaking with an empty hand lets go of every link. */
+    /** Anything in hand (the Linker, the Spectroscope) does its own thing; only an empty hand uses the prism. */
+    @Override
+    protected net.minecraft.world.InteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state,
+                                                              net.minecraft.world.level.Level level, BlockPos pos,
+                                                              net.minecraft.world.entity.player.Player player,
+                                                              net.minecraft.world.InteractionHand hand,
+                                                              net.minecraft.world.phys.BlockHitResult hit) {
+        return stack.isEmpty() ? net.minecraft.world.InteractionResult.TRY_WITH_EMPTY_HAND : net.minecraft.world.InteractionResult.PASS;
+    }
+
     @Override
     protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
                                                                    net.minecraft.world.entity.player.Player player,

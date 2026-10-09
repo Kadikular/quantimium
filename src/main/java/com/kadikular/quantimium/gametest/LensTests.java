@@ -388,4 +388,51 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.light.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void aCavityOfHarvestLightWithNothingToCutOnlyLeaks(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
+        var a = cavityAt(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
+        var b = cavityAt(helper, new BlockPos(6, Y, 9), Direction.NORTH);
+        long[] at = {0, 0};
+        helper.runAfterDelay(80, () -> {
+            // Filled with harvest light; now take the emitter away and watch what the pair holds.
+            helper.setBlock(new BlockPos(1, Y, 4), Blocks.AIR);
+            helper.setBlock(new BlockPos(0, Y, 4), Blocks.AIR);
+            at[0] = a.stored() + b.stored();
+        });
+        helper.runAfterDelay(140, () -> {
+            at[1] = a.stored() + b.stored();
+            long lost = at[0] - at[1];
+            // 60 ticks of leak at most, rounded up each tick on each mirror.
+            long leak = (long) Math.ceil(at[0] * com.kadikular.quantimium.laser.LaserTuning.CAVITY_LEAK * 60) + 120;
+            helper.assertTrue(at[0] > 0, "it was filled");
+            helper.assertTrue(a.held() != null, "with harvest light");
+            helper.assertTrue(lost <= leak, "it only leaks: lost " + lost + " of " + at[0] + ", leak " + leak);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    private static com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity cavityAt(GameTestHelper helper, BlockPos pos, Direction facing) {
+        helper.setBlock(pos, ModBlocks.CAVITY_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, facing));
+        return helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+    }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void withPickupItOnlyCutsWhatItCanCarryAway(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.runAfterDelay(60, () -> {
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(9, Y, 8));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

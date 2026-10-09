@@ -29,7 +29,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         if (beams.isEmpty()) return;
         Vec3 centre = node.getBlockPos().getCenter();
         boolean aiming = aiming();
-        LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, beams, aiming));
+        LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, node, beams, aiming));
     }
 
     /** Holding the Laser Linker or a wrench shows even dark beams, faintly: where light would go. */
@@ -45,8 +45,8 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         return false;
     }
 
-    private static void draw(PoseStack poses, MultiBufferSource buffers, Vec3 camera, float time, Vec3 centre, List<LaserBeam> beams,
-                             boolean aiming) {
+    private static void draw(PoseStack poses, MultiBufferSource buffers, Vec3 camera, float time, Vec3 centre, LaserBeamView view,
+                             List<LaserBeam> beams, boolean aiming) {
         PoseStack.Pose pose = poses.last();
         VertexConsumer halo = buffers.getBuffer(QuantumRenderTypes.FIELD_GLOW);
         for (LaserBeam beam : beams) {
@@ -60,7 +60,8 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             }
             Vec3[] line = line(centre, beam, camera);
             float flicker = 0.92f + 0.08f * Mth.sin(time * 0.7f + beam.face().ordinal());
-            BeamRibbon.draw(halo, pose, Vec3.ZERO, line, 0.05f + 0.025f * bright, tint[0], tint[1], tint[2], 0.12f + 0.03f * bright * flicker);
+            BeamRibbon.draw(halo, pose, Vec3.ZERO, line, (0.05f + 0.025f * bright) * view.widthScale(beam), tint[0], tint[1], tint[2],
+                    0.12f + 0.03f * bright * flicker);
         }
         // Cores after every halo: one render type at a time.
         VertexConsumer cores = buffers.getBuffer(QuantumRenderTypes.BEAM_CORE);
@@ -71,7 +72,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
                 if (beam.live()) BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), 0.008f, tint[0], tint[1], tint[2], 0.30f);
                 continue;
             }
-            BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), 0.012f + 0.006f * bright,
+            BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), (0.012f + 0.006f * bright) * view.widthScale(beam),
                     tint[0], tint[1], tint[2], 0.55f + 0.06f * bright);
         }
     }

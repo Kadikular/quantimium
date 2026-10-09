@@ -59,6 +59,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     private List<LaserBeam> shownBeams = List.of();
     /** On the client: how bright the light held looks, for the glow between the mirrors. */
     private int shownCharge;
+    /** On the client: the look of the light held (see {@link com.kadikular.quantimium.laser.Light#packed}), for the glow's tint. */
+    private int shownLenses;
 
     public CavityMirrorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CAVITY_MIRROR_BE.get(), pos, state);
@@ -145,7 +147,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         stored = Math.min(capacity(), total / 2);
         partner.stored = Math.min(partner.capacity(), total - stored);
         // The light mixes as it bounces: both hold what either did.
-        if (!java.util.Objects.equals(held, partner.held)) {
+        if (!sameLight(held, partner.held)) {
             com.kadikular.quantimium.laser.Light mixed = held == null ? partner.held
                     : partner.held == null ? held : com.kadikular.quantimium.laser.Light.join(held, partner.held);
             if (mixed != null) {
@@ -156,6 +158,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         }
         setChanged();
         partner.setChanged();
+    }
+
+    /** Whether two mirrors' light does the same, whoever pays for it. */
+    private static boolean sameLight(@Nullable com.kadikular.quantimium.laser.Light a, @Nullable com.kadikular.quantimium.laser.Light b) {
+        if (a == null || b == null) return a == b;
+        return a.covers(b) && b.covers(a);
     }
 
     /** Empty, it forgets what its light did: the next light to fill it decides. */
@@ -212,8 +220,10 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (level != null && state.getValue(CavityMirrorBlock.LIT) != lit) {
             level.setBlock(worldPosition, state.setValue(CavityMirrorBlock.LIT, lit), Block.UPDATE_CLIENTS);
         }
-        if (charge != shownCharge) {
+        int lenses = held == null ? com.kadikular.quantimium.laser.Lens.NONE : held.packed();
+        if (charge != shownCharge || lenses != shownLenses) {
             shownCharge = charge;
+            shownLenses = lenses;
             sync();
         }
     }
@@ -280,6 +290,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (!same) sync();
     }
 
+    /** The glow of the light held is twice as wide as a beam carrying as much. */
+    @Override
+    public float widthScale(LaserBeam beam) {
+        return beam.end() == LaserBeam.End.OPEN && beam.aim() == null && beam.face() == facing() && beam.length() == gap ? 2.0f : 1.0f;
+    }
+
     /** Its output, and the light held, drawn across the whole gap: by this one, or the lower of two Cavity Mirrors. */
     @Override
     public List<LaserBeam> syncedBeams() {
@@ -287,7 +303,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (partnerHolds && worldPosition.relative(facing(), gap + 1).compareTo(worldPosition) < 0) return shownBeams;
         List<LaserBeam> all = new ArrayList<>(shownBeams);
         long flow = (long) Math.pow(10, shownCharge - 1);
-        all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true, com.kadikular.quantimium.laser.Lens.NONE));
+        all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true, shownLenses));
         return all;
     }
 
@@ -346,6 +362,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         output = in.getBooleanOr("Output", true);
         held = in.read("Light", CompoundTag.CODEC).map(tag -> com.kadikular.quantimium.laser.Light.load(tag, worldPosition)).orElse(null);
         shownCharge = in.getIntOr("Charge", 0);
+        shownLenses = in.getIntOr("Lenses", 0);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 
@@ -354,6 +371,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         CompoundTag tag = saveWithoutMetadata(registries);
         tag.put("Beams", LaserBeamView.save(shownBeams));
         tag.putInt("Charge", shownCharge);
+        tag.putInt("Lenses", shownLenses);
         return tag;
     }
 

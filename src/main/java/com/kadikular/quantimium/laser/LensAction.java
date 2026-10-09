@@ -119,6 +119,11 @@ public final class LensAction {
             want = 0;
             return;
         }
+        // With Pickup, it only cuts what it can carry away: no room up the beam for the drops, it waits.
+        if (pickup && !roomForDrops(level, networks, target)) {
+            want = 0;
+            return;
+        }
         if (cut >= cutCost && cooldown <= 0) {
             level.destroyBlockProgress(crackId(), target, -1);
             breakBlock(level, networks, target, pickup);
@@ -147,6 +152,14 @@ public final class LensAction {
     private static long harvestCost(ServerLevel level, BlockPos pos) {
         float hardness = level.getBlockState(pos).getDestroySpeed(level, pos);
         return (long) Math.ceil(Math.max(1.0f, hardness) * LaserTuning.HARVEST_FE_PER_HARDNESS);
+    }
+
+    /** Whether the Collectors up the beam have room for what breaking the block would drop. */
+    private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
+        for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, new ItemStack(Items.DIAMOND_PICKAXE))) {
+            if (!networks.roomFor(collectors, drop)) return false;
+        }
+        return true;
     }
 
     /** Breaks it as a diamond pickaxe would, the drops going back up the beam with Pickup. */
