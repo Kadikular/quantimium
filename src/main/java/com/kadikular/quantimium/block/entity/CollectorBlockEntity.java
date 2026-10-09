@@ -39,9 +39,10 @@ import java.util.Set;
  * further along brings back up the beam stops here, in its nine slots, for pipes and hoppers to take.
  * Nothing can be put in from outside.
  */
-public class CollectorBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
+public class CollectorBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, net.minecraft.world.MenuProvider {
 
     public static final int SLOTS = 9;
+    public static final int FILTER_SLOTS = 9;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOTS) {
         @Override
@@ -50,6 +51,16 @@ public class CollectorBlockEntity extends BlockEntity implements LaserNode, Flux
         }
     };
     private final ResourceHandler<ItemResource> outside = RestrictedItems.takeOnly(items);
+    /** Ghost entries, never real items: what it catches, or with a blacklist, what it lets go on up the beam. */
+    private final net.minecraft.world.SimpleContainer filter = new net.minecraft.world.SimpleContainer(FILTER_SLOTS) {
+        @Override
+        public void setChanged() {
+            super.setChanged();
+            CollectorBlockEntity.this.setChanged();
+        }
+    };
+    /** Whitelist (catch only these) or blacklist (catch all but these). An empty filter catches everything. */
+    private boolean allow = true;
     private List<LaserBeam> shownBeams = List.of();
 
     public CollectorBlockEntity(BlockPos pos, BlockState state) {
@@ -95,10 +106,59 @@ public class CollectorBlockEntity extends BlockEntity implements LaserNode, Flux
     }
 
     @Override
-    public ItemStack collect(ItemStack stack) {
+    public ItemStack collect(ItemStack stack, boolean simulate) {
+        // What its filter turns away goes on up the beam, to the next Collector.
+        if (!accepts(stack)) return stack;
         ItemStack left = stack;
-        for (int slot = 0; slot < SLOTS && !left.isEmpty(); slot++) left = items.insertItem(slot, left, false);
+        for (int slot = 0; slot < SLOTS && !left.isEmpty(); slot++) left = items.insertItem(slot, left, simulate);
         return left;
+    }
+
+    /** Whether its filter lets it catch {@code stack}. */
+    public boolean accepts(ItemStack stack) {
+        boolean listed = false;
+        boolean any = false;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (entry.isEmpty()) continue;
+            any = true;
+            if (com.kadikular.quantimium.recipe.FilterEntry.matches(entry, stack)) listed = true;
+        }
+        return !any || listed == allow;
+    }
+
+    public net.minecraft.world.SimpleContainer getFilter() {
+        return filter;
+    }
+
+    public boolean allows() {
+        return allow;
+    }
+
+    public void toggleMode() {
+        allow = !allow;
+        setChanged();
+    }
+
+    public void setFilterSlot(int slot, ItemStack stack) {
+        if (slot >= 0 && slot < FILTER_SLOTS) filter.setItem(slot, com.kadikular.quantimium.recipe.FilterEntry.of(stack));
+    }
+
+    public void cycleFilterTag(int slot) {
+        if (slot < 0 || slot >= FILTER_SLOTS) return;
+        ItemStack entry = filter.getItem(slot);
+        if (!entry.isEmpty()) filter.setItem(slot, com.kadikular.quantimium.recipe.FilterEntry.cycle(entry));
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.quantimium.collector");
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+                                                                         net.minecraft.world.entity.player.Player player) {
+        return new com.kadikular.quantimium.menu.CollectorMenu(containerId, inventory, this);
     }
 
     @Override
@@ -146,12 +206,19 @@ public class CollectorBlockEntity extends BlockEntity implements LaserNode, Flux
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         items.serialize(out.child("Items"));
+        List<ItemStack> entries = new java.util.ArrayList<>();
+        for (int i = 0; i < FILTER_SLOTS; i++) entries.add(filter.getItem(i));
+        out.store("Filter", ItemStack.OPTIONAL_CODEC.listOf(), entries);
+        out.putBoolean("Allow", allow);
     }
 
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         in.child("Items").ifPresent(items::deserialize);
+        List<ItemStack> entries = in.read("Filter", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        for (int i = 0; i < FILTER_SLOTS; i++) filter.getItems().set(i, i < entries.size() ? entries.get(i) : ItemStack.EMPTY);
+        allow = in.getBooleanOr("Allow", true);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 

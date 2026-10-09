@@ -23,11 +23,13 @@ navigation:
 - <ItemLink id="quantimium:mirror_lens" />
 - <ItemLink id="quantimium:pickup_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />
+- <ItemLink id="quantimium:range_lens" />
 - <ItemLink id="quantimium:rift_residue" />
 - <ItemLink id="quantimium:rift_seed" />
 - <ItemLink id="quantimium:semi_stable_tesseract" />
 - <ItemLink id="quantimium:singularity" />
 - <ItemLink id="quantimium:sophon" />
+- <ItemLink id="quantimium:spectroscope" />
 - <ItemLink id="quantimium:tesseract" />
 - <ItemLink id="quantimium:tether" />
 - <ItemLink id="quantimium:unrealised_matter" />

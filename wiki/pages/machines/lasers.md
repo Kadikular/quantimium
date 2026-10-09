@@ -4,8 +4,8 @@
 
 Laser emitters send power as light. A beam crosses open air, glass and anything you can walk
 through (grass, torches, flowers), and charges the first block it meets that takes power, from any
-mod. Mirrors turn the light around corners, and prisms split and join it at any angle. This is the first part of Quantimium's lasers; lenses that
-turn a beam's end into a tool, and items carried by light, come later.
+mod. Mirrors turn the light around corners, and prisms split and join it at any angle; lenses give it
+something to do. Items carried by light come later.
 
 !!! info "Badges"
     Badges like [[mechanic:laser.power]] show whether an in-game test backs the rule next to them. See
@@ -42,7 +42,8 @@ redstone: not at all, on only with a signal, or off with a signal.
 
 [[mechanic:laser.mirror]] A [[block:laser_mirror]] sends every beam that reaches it out of its face.
 Placed, it faces you; sneak-click or wrench a face to point it there. It refocuses
-the light, so a run from a mirror reaches {{c:LaserTuning.RELAY_RANGE}} blocks whatever sent it.
+the light to its source's range: a run from a mirror reaches as far as a run from the emitter that
+sent it, so a Flash Emitter's light goes 8 blocks a run however many mirrors it passes.
 Each mirror a beam passes takes {{c:LaserTuning.HOP_TAX|pct}} of what passes, and that becomes flux
 where the mirror stands.
 
@@ -61,8 +62,10 @@ links up to {{c:LaserTuning.PRISM_LINKS}} blocks, within {{c:LaserTuning.PRISM_R
 the Linker in the air to let the prism go, and sneak-click the prism with an empty hand to let go of
 all its links. A link to a block that's been removed, even one light passes through such as grass, is let go of by itself.
 [[mechanic:laser.prism.keep]] Use an empty hand on a prism to make it keep those links instead: it goes on aiming at the
-spot, so a Harvest lens's light breaks whatever comes back there. Holding the Linker, or a wrench, shows every beam faintly,
-even ones carrying nothing, so you can see where light would go.
+spot, so a Harvest lens's light breaks whatever comes back there.
+
+Holding the Linker, or a wrench, shows every beam faintly, even ones carrying nothing, so you can see
+where light would go.
 
 ## Optical cavities
 
@@ -90,6 +93,11 @@ towards where its partner would stand. Once paired, what it holds leaves by its 
 
 The held light glows in one beam across the gap, brighter the more there is.
 
+[[mechanic:laser.light.cavity]] **A cavity keeps what its light does.** Fill it with Harvest light and
+the light it gives out harvests too; it reaches as far as the light that filled it. The cavity pays for
+what its light does, from what it holds. Light from different sides mixes in it: it does all of it,
+until it's empty and the next light to fill it decides.
+
 ## Photodetectors
 
 [[mechanic:laser.photodetector]] A [[block:photodetector]] sits in a beam: light passes through it and
@@ -102,25 +110,48 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 [[mechanic:laser.lens.mount]] A [[block:lens_mount]] is a mirror that holds lenses: light that reaches
 it leaves by its face, refocused, through its four lens slots, left to right. The beam is still a beam:
 it carries power to whatever it ends on, as before, and does what its lenses say along the way. Open
-the mount with an empty hand; sneak-click or wrench a face to point it there.
+the mount with an empty hand; sneak-click or wrench a face to point it there. Each lensed beam is
+tinted by what it does.
 
-A beam does **one action**, changed by any number of **modifiers**. Light leaving a mount carries every
-lens it's met so far, so mounts in a row add their lenses up; where two actions meet, the later one
-wins. Each lensed beam is tinted by what it does.
-
-An action spends power from the beam, asked for through the network like any block's: it only works
-while the beam is lit, and an emitter pays only while there's something to do.
+**Actions** give light something to do, and light can carry several: Harvest and Damage on one beam
+both work. An action stays on the light until the beam ends. **Modifiers** change the actions the light
+carries when it meets them, so their order matters: a modifier before an action doesn't change it.
+Pickup is the exception: it stays on the light, and every action added after it gets it too.
 
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
-| [[item:harvest_lens]] | Action | [[mechanic:laser.lens.harvest]] Breaks the block the beam ends on, as a diamond pickaxe would, if it's within {{c:LaserTuning.ACTION_REACH}} blocks of the mount; one block every {{c:LaserTuning.HARVEST_COOLDOWN|s}} at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | {{c:LaserTuning.HARVEST_FE_PER_HARDNESS}} FE for each point of hardness |
-| [[item:damage_lens]] | Action | [[mechanic:laser.lens.damage]] Hurts anything living that stands in the beam within {{c:LaserTuning.ACTION_REACH}} blocks of the mount, players included, every {{c:LaserTuning.DAMAGE_INTERVAL|s}}. With Pickup, what it kills drops straight back up the beam. | {{c:LaserTuning.DAMAGE_FE_PER_HIT}} FE a hit |
-| [[item:pickup_lens]] | Modifier | [[mechanic:laser.lens.pickup]] What the action frees, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next, and light joined at a mirror reaches back up every side. With no Collector, drops fall where they are. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack |
+| [[item:harvest_lens]] | Action | [[mechanic:laser.lens.harvest]] Cuts the block the beam ends on, as a diamond pickaxe would, and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every {{c:LaserTuning.HARVEST_COOLDOWN|s}} at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | {{c:LaserTuning.HARVEST_FE_PER_HARDNESS}} FE for each point of hardness, as it cuts |
+| [[item:damage_lens]] | Action | [[mechanic:laser.lens.damage]] Hurts anything living that stands in the beam, players included, every {{c:LaserTuning.DAMAGE_INTERVAL|s}}. With Pickup, what it kills drops straight back up the beam. | {{c:LaserTuning.DAMAGE_FE_PER_HIT}} FE a hit, when it lands |
+| [[item:pickup_lens]] | Modifier, and an action of its own | [[mechanic:laser.lens.pickup]] What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack, when it's carried |
+| [[item:range_lens]] | Modifier | Each run of the light reaches twice as far; two count, for four times as far. | none |
+
+[[mechanic:laser.light.range]] **How far light reaches.** A run of light reaches as far as its source's:
+mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
+{{c:LaserTuning.ACTION_REACH}} blocks a run instead, and the power it carries goes no farther. Each Range
+lens doubles a run, up to {{c:LaserTuning.MAX_RANGE}} blocks. Where light joins, the farther reach wins.
+
+[[mechanic:laser.light.join]] **Joining light.** Light from two sides joined at a mirror or prism does
+everything either side did: Harvest light from one emitter and Damage light from another, joined, both
+work from there on. A modifier from before the join stays with its own side's actions; one after
+changes them all.
+
+[[mechanic:laser.light.payers]] **Who pays.** An action is paid for by the sources whose light reached
+the lens that gave it, and only for work done: a cut as it's made, a hit when it lands, an item as it's
+carried. Harvest light joined with plain light is still paid for by its own emitter alone; a Harvest
+lens after the join is paid for by both. Actions only work while their light is lit.
 
 [[mechanic:laser.collector]] A [[block:collector]] passes light, out of its face, as a mirror does, and
-catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from.
-Nothing can be put in from outside. Put it between the emitter and the mount:
-emitter, Collector, Lens Mount with Harvest and Pickup, then the blocks to break.
+catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from,
+or take from it yourself. Put it between the emitter and the mount: emitter, Collector, Lens Mount with
+Harvest and Pickup, then the blocks to break. What one Collector can't take goes on up the beam to the
+next. A stream from one side of a join goes up its own side, or to Collectors after the join.
+[[mechanic:laser.collector.filter]] Open it to set a filter, nine entries, as a whitelist or a blacklist,
+with tags: what it turns away goes on up the beam.
+
+[[mechanic:laser.spectroscope]] The [[item:spectroscope]] splits light into what it carries, as a real
+spectroscope's prism does. Use it on any laser block to read the light leaving it: how far a run
+reaches and from how many sources, each action with its modifiers, who pays and how many Collectors it
+can reach, and each beam's length, end and power.
 
 ## What stops light
 
@@ -129,8 +160,8 @@ it only if it takes power. Light passes air, glass, glass panes, and blocks with
 A beam is checked again every {{c:LaserNetworks.RECHECK_TICKS|s}} or so, so building across it cuts it
 off within a moment, and clearing it lets the light through again.
 
-[[mechanic:laser.range]] A run of light only reaches so far: an emitter's range, or a mirror's. A
-block beyond it gets nothing.
+[[mechanic:laser.range]] A run of light only reaches so far: its source's range, or less for light with an
+action, or more with Range lenses. A block beyond it gets nothing.
 
 ## Networks
 

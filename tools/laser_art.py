@@ -229,7 +229,22 @@ def lens_item(colour: str) -> Image.Image:
     return img
 
 
-LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a"}
+def spectroscope() -> Image.Image:
+    """A brass tube with a prism at its far end, splitting a line of light into three colours."""
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for i in range(3, 12):
+        for w in range(-1, 2):
+            img.putpixel((i, 15 - i + w), hx("b5893a") if w else hx("e0b45c"))
+    for x, y in ((11, 3), (12, 3), (12, 4), (13, 4), (12, 2), (13, 3)):
+        img.putpixel((x, y), hx("c8dcff"))
+    for i, colour in enumerate(("ff4a4a", "5be38a", "7fb2ff")):
+        img.putpixel((14, 1 + i), hx(colour))
+        img.putpixel((15, i), hx(colour))
+    img.putpixel((3, 12), hx("3a2a14"))
+    return img
+
+
+LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff"}
 
 
 def cube(textures: dict, front_key: str) -> dict:
@@ -325,6 +340,11 @@ def main() -> None:
         json.dump({"variants": {"": {"model": "quantimium:block/laser_prism"}}}, handle, indent=1)
     with open(os.path.join(ITEMS, "laser_prism.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_prism"}}, handle, indent=2)
+    spectroscope().save(os.path.join(ASSETS, "textures", "item", "spectroscope.png"))
+    with open(os.path.join(ASSETS, "models", "item", "spectroscope.json"), "w") as handle:
+        json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": "quantimium:item/spectroscope"}}, handle, indent=2)
+    with open(os.path.join(ITEMS, "spectroscope.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:item/spectroscope"}}, handle, indent=2)
     linker().save(os.path.join(ASSETS, "textures", "item", "laser_linker.png"))
     with open(os.path.join(ASSETS, "models", "item", "laser_linker.json"), "w") as handle:
         json.dump({"parent": "minecraft:item/handheld", "textures": {"layer0": "quantimium:item/laser_linker"}}, handle, indent=2)

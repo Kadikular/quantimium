@@ -2,7 +2,7 @@
 navigation:
   title: Rift Residue
   parent: items/index.md
-  position: 15
+  position: 16
   icon: quantimium:rift_residue
 item_ids:
 - quantimium:rift_residue

@@ -130,3 +130,5 @@ collector: "Light passes through it; what a Pickup lens brings back up the beam 
 harvest_lens: "A lens: the beam breaks the block it ends on."
 damage_lens: "A lens: the beam hurts what stands in it."
 pickup_lens: "A lens: items in the beam, and what it breaks, go back up it to a Collector."
+range_lens: "A lens: each run of the light reaches twice as far."
+spectroscope: "Splits the light leaving a laser block into what it carries: reach, actions, who pays."

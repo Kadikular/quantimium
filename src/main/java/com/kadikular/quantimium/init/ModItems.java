@@ -248,6 +248,11 @@ public class ModItems {
             "damage_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.DAMAGE));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> PICKUP_LENS = ITEMS.registerItem(
             "pickup_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PICKUP));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> RANGE_LENS = ITEMS.registerItem(
+            "range_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.RANGE));
+
+    public static final DeferredItem<com.kadikular.quantimium.item.SpectroscopeItem> SPECTROSCOPE = ITEMS.registerItem(
+            "spectroscope", props -> new com.kadikular.quantimium.item.SpectroscopeItem(props.stacksTo(1)));
 
     public static final DeferredItem<com.kadikular.quantimium.item.LaserLinkerItem> LASER_LINKER = ITEMS.registerItem(
             "laser_linker", props -> new com.kadikular.quantimium.item.LaserLinkerItem(props.stacksTo(1)));

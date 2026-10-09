@@ -79,6 +79,16 @@ public interface LaserNode {
         return false;
     }
 
+    /** The light a source gives out: plain light at its range, or for a cavity, what it was filled with. */
+    default Light emits() {
+        return Light.from(nodePos(), range());
+    }
+
+    /** A cavity filled with {@code light}: whether it now remembers more of what light does. */
+    default boolean absorb(Light light) {
+        return false;
+    }
+
     /** The lenses this node holds, in the order light meets them: a Lens Mount's. */
     default List<Lens> lenses() {
         return List.of();
@@ -92,8 +102,8 @@ public interface LaserNode {
         return false;
     }
 
-    /** Takes what it can of {@code stack}, a Collector; what's left. */
-    default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack) {
+    /** Takes what it can of {@code stack}, a Collector (or with {@code simulate}, says what it would); what's left. */
+    default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack, boolean simulate) {
         return stack;
     }
 }

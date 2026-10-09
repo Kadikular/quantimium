@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "tools",
+  "ingredients": [
+    "minecraft:spyglass",
+    "quantimium:anomalite_shard",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "quantimium:spectroscope",
+    "count": 1
+  }
+}

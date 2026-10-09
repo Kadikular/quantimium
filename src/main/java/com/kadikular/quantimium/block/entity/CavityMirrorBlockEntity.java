@@ -48,6 +48,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     /** Whether the partner is a Cavity Mirror too, so both hold the light; a Laser Mirror holds none. */
     private boolean partnerHolds;
     private double leaked;
+    /**
+     * What the light it holds does, besides carry power: whatever the light that filled it did since it
+     * was last empty. It gives that light out, and pays for what it does. Null for plain light.
+     */
+    @Nullable
+    private com.kadikular.quantimium.laser.Light held;
     /** Whether light leaves by the back; a wrench turns it off, so the cavity only stores. */
     private boolean output = true;
     private List<LaserBeam> shownBeams = List.of();
@@ -118,6 +124,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
             if (mirror.stored < 0) mirror.stored = 0;
             mirror.setChanged();
         }
+        mirror.forgetIfEmpty();
         if (level.getGameTime() % 20 == 0) {
             if (mirror.leaked >= 1) QuantumFlux.emitFromEnergy(server, pos, (long) mirror.leaked);
             mirror.leaked = 0;
@@ -137,8 +144,46 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (Math.abs(stored - partner.stored) <= 1) return;
         stored = Math.min(capacity(), total / 2);
         partner.stored = Math.min(partner.capacity(), total - stored);
+        // The light mixes as it bounces: both hold what either did.
+        if (!java.util.Objects.equals(held, partner.held)) {
+            com.kadikular.quantimium.laser.Light mixed = held == null ? partner.held
+                    : partner.held == null ? held : com.kadikular.quantimium.laser.Light.join(held, partner.held);
+            if (mixed != null) {
+                held = mixed.reEmitted(worldPosition);
+                partner.held = mixed.reEmitted(partner.worldPosition);
+                LaserNetworks.changed(server);
+            }
+        }
         setChanged();
         partner.setChanged();
+    }
+
+    /** Empty, it forgets what its light did: the next light to fill it decides. */
+    private void forgetIfEmpty() {
+        if (stored > 0 || held == null) return;
+        held = null;
+        setChanged();
+        if (level != null) LaserNetworks.changed(level);
+    }
+
+    @Override
+    public com.kadikular.quantimium.laser.Light emits() {
+        return held != null ? held.reEmitted(worldPosition) : com.kadikular.quantimium.laser.Light.from(worldPosition, range());
+    }
+
+    @Override
+    public boolean absorb(com.kadikular.quantimium.laser.Light light) {
+        if (held != null && held.covers(light)) return false;
+        if (held == null && light.streams().isEmpty() && light.boosts() == 0 && light.range() == range()) return false;
+        held = (held == null ? light : com.kadikular.quantimium.laser.Light.join(held, light)).reEmitted(worldPosition);
+        setChanged();
+        return true;
+    }
+
+    /** What its light does, for readouts; null for plain light. */
+    @Nullable
+    public com.kadikular.quantimium.laser.Light held() {
+        return held;
     }
 
     private void checkPartner(ServerLevel server) {
@@ -289,6 +334,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         out.putInt("Gap", gap);
         out.putBoolean("PartnerHolds", partnerHolds);
         out.putBoolean("Output", output);
+        if (held != null) out.store("Light", CompoundTag.CODEC, held.save());
     }
 
     @Override
@@ -298,6 +344,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         gap = in.getIntOr("Gap", 0);
         partnerHolds = in.getBooleanOr("PartnerHolds", true);
         output = in.getBooleanOr("Output", true);
+        held = in.read("Light", CompoundTag.CODEC).map(tag -> com.kadikular.quantimium.laser.Light.load(tag, worldPosition)).orElse(null);
         shownCharge = in.getIntOr("Charge", 0);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }

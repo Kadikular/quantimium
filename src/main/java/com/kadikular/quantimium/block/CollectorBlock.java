@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A Collector: light passes through it and leaves by its face, as through a mirror, and what a Pickup
  * lens brings back up the beam stops here, for pipes and hoppers to take. Placed, it faces you; a
- * wrench, or a sneaking empty hand, on any face points it there.
+ * wrench, or a sneaking empty hand, on any face points it there; an empty hand opens it.
  */
 public class CollectorBlock extends BaseEntityBlock {
     public static final MapCodec<CollectorBlock> CODEC = simpleCodec(CollectorBlock::new);
@@ -81,8 +81,9 @@ public class CollectorBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!player.isSecondaryUseActive()) return InteractionResult.PASS;
-        return point(state, level, pos, hit.getDirection());
+        if (player.isSecondaryUseActive()) return point(state, level, pos, hit.getDirection());
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof CollectorBlockEntity collector) player.openMenu(collector, pos);
+        return InteractionResult.SUCCESS;
     }
 
     /** Points the mirror out of the face clicked. */

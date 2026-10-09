@@ -70,7 +70,7 @@ public final class LensTests {
             helper.assertBlockPresent(Blocks.AIR, stone);
             helper.assertTrue(!helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(stone)).inflate(2),
                     item -> item.getItem().is(Items.COBBLESTONE)).isEmpty(), "it dropped cobblestone");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -98,7 +98,7 @@ public final class LensTests {
         helper.succeedWhen(() -> {
             helper.assertBlockPresent(ModBlocks.FOLD_CORE.get(), new BlockPos(9, Y, 8));
             helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "charged through the lenses");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -111,7 +111,7 @@ public final class LensTests {
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.COBBLESTONE), 1, "the cobblestone came back up the beam");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -126,7 +126,7 @@ public final class LensTests {
         helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.COBBLESTONE), 1, "harvested and brought back");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -144,7 +144,7 @@ public final class LensTests {
         helper.getLevel().addFreshEntity(item);
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.DIAMOND), 3, "the diamonds came back up the beam");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -157,7 +157,7 @@ public final class LensTests {
         float full = pig.getHealth();
         helper.succeedWhen(() -> {
             helper.assertTrue(!pig.isAlive() || pig.getHealth() < full, "the pig was hurt");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -186,7 +186,7 @@ public final class LensTests {
         helper.getLevel().addFreshEntity(item);
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(west, Items.DIAMOND), 2, "the diamonds went up the side with room");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
         });
     }
 
@@ -200,7 +200,7 @@ public final class LensTests {
         float full = pig.getHealth();
         helper.runAfterDelay(70, () -> {
             helper.assertValueEqual(pig.getHealth(), full, "out of reach, unhurt");
-            TestSupport.clearField(helper);
+            TestSupport.finishLasers(helper);
             helper.succeed();
         });
     }
@@ -217,6 +217,174 @@ public final class LensTests {
         helper.runAfterDelay(10, () -> helper.setBlock(target, Blocks.AIR));
         helper.runAfterDelay(45, () -> {
             helper.assertValueEqual(prism.targets().size(), 1, "still aiming at the spot");
+            helper.succeed();
+        });
+    }
+
+    private static void mirror(GameTestHelper helper, BlockPos pos, Direction facing) {
+        helper.setBlock(pos, ModBlocks.LASER_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, facing));
+    }
+
+    // covers: laser.light.range
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
+    public static void aMirrorRefocusesToItsSourcesRange(GameTestHelper helper) {
+        // A Flash Emitter reaches 8 a run; through a mirror its light reaches 8 again, not the mirror's 32.
+        helper.setBlock(new BlockPos(1, Y, 2), ModBlocks.FLASH_EMITTER.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.SOUTH));
+        helper.setBlock(new BlockPos(1, Y, 1), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        mirror(helper, new BlockPos(1, Y, 6), Direction.EAST);
+        helper.setBlock(new BlockPos(9, Y, 6), ModBlocks.FOLD_CORE.get());
+        helper.setBlock(new BlockPos(13, Y, 6), Blocks.AIR);
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(9, Y, 6), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
+                    "7 blocks on: within the flash's 8");
+            helper.setBlock(new BlockPos(9, Y, 6), Blocks.AIR);
+            helper.setBlock(new BlockPos(12, Y, 6), ModBlocks.FOLD_CORE.get());
+        });
+        helper.runAfterDelay(55, () -> {
+            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(12, Y, 6), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0,
+                    "10 blocks on: beyond it");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.light.range
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void lightWithAnActionReachesEightARangeLensDoublesIt(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(14, Y, 4), Blocks.STONE);
+        emitter(helper, new BlockPos(1, Y, 10), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 10), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.RANGE_LENS.get());
+        helper.setBlock(new BlockPos(14, Y, 10), Blocks.STONE);
+        // Lit beams end inside the test, never in a neighbour's.
+        helper.setBlock(new BlockPos(16, Y, 10), Blocks.BEDROCK);
+        helper.runAfterDelay(70, () -> {
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(14, Y, 4));
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(14, Y, 10));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.light.join
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void harvestAndDamageLightJoinedBothWork(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 6), Direction.EAST, ModItems.HARVEST_LENS.get());
+        emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
+        mount(helper, new BlockPos(6, Y, 3), Direction.SOUTH, ModItems.DAMAGE_LENS.get());
+        mirror(helper, new BlockPos(6, Y, 6), Direction.EAST);
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(9, Y, 6));
+        float full = pig.getHealth();
+        helper.setBlock(new BlockPos(12, Y, 6), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(12, Y, 6));
+            helper.assertTrue(!pig.isAlive() || pig.getHealth() < full, "and the pig was hurt");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.light.payers
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void onlyTheSourcesBehindALensPayForIt(GameTestHelper helper) {
+        // Harvest light from the west joins plain light from the north: only the west emitter pays to cut.
+        LaserEmitterBlockEntity west = emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 6), Direction.EAST, ModItems.HARVEST_LENS.get());
+        LaserEmitterBlockEntity north = emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
+        mirror(helper, new BlockPos(6, Y, 6), Direction.EAST);
+        // A row of obsidian: long cuts, so both would be sending for a while if both paid.
+        for (int x = 8; x <= 13; x++) helper.setBlock(new BlockPos(x, Y, 6), Blocks.OBSIDIAN);
+        helper.runAfterDelay(45, () -> {
+            helper.assertTrue(west.sending() > 0, "the harvest light's own emitter pays: " + west.sending());
+            helper.assertValueEqual(north.sending(), 0L, "the plain light's doesn't");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.light.payers
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void anActionAddedAfterAJoinIsPaidForByBoth(GameTestHelper helper) {
+        LaserEmitterBlockEntity west = emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        LaserEmitterBlockEntity north = emitter(helper, new BlockPos(5, Y, 1), Direction.SOUTH, true);
+        mirror(helper, new BlockPos(5, Y, 6), Direction.EAST);
+        mount(helper, new BlockPos(7, Y, 6), Direction.EAST, ModItems.HARVEST_LENS.get());
+        for (int x = 9; x <= 14; x++) helper.setBlock(new BlockPos(x, Y, 6), Blocks.OBSIDIAN);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(west.sending() > 0 && north.sending() > 0, "both pay: " + west.sending() + " and " + north.sending());
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.light.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void aCavityFilledWithHarvestLightGivesItOut(GameTestHelper helper) {
+        // Harvest light fills a cavity; the cavity's own light, out of its back, breaks the stone, and the
+        // cavity pays for it.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(6, Y, 4), ModBlocks.CAVITY_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, Direction.SOUTH));
+        mirror(helper, new BlockPos(6, Y, 8), Direction.NORTH);
+        var cavity = helper.getBlockEntity(new BlockPos(6, Y, 4), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+        helper.setBlock(new BlockPos(6, Y, 1), Blocks.STONE);
+        helper.setBlock(new BlockPos(6, Y, 0), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(cavity.held() != null && cavity.held().streams().stream()
+                    .anyMatch(stream -> stream.action() == com.kadikular.quantimium.laser.Lens.HARVEST), "it holds harvest light");
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(6, Y, 1));
+            helper.setBlock(new BlockPos(6, Y, 4), Blocks.AIR);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void pickupBeforeDamageStillGathersItsDrops(GameTestHelper helper) {
+        // Pickup stays on the light: Damage added after it gets it too.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.DAMAGE_LENS.get());
+        var zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(9, Y, 8));
+        zombie.setHealth(1.0f);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!zombie.isAlive(), "killed");
+            helper.assertTrue(count(collector, Items.ROTTEN_FLESH) > 0 || helper.getLevel().getEntitiesOfClass(ItemEntity.class,
+                    new AABB(helper.absolutePos(new BlockPos(9, Y, 8))).inflate(3)).isEmpty(), "its drops came back, if it dropped any");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.collector.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aCollectorsFilterSendsTheRestOnUp(GameTestHelper helper) {
+        // The nearer Collector catches only stone; the cobblestone goes on up to the farther one.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity far = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        CollectorBlockEntity near = collector(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        near.setFilterSlot(0, new ItemStack(Items.STONE));
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(far, Items.COBBLESTONE), 1, "past the filter, to the farther one");
+            helper.assertValueEqual(count(near, Items.COBBLESTONE), 0, "not caught by the nearer");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.spectroscope
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 40)
+    public static void theSpectroscopeReadsWhatLightCarries(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.RANGE_LENS.get());
+        helper.setBlock(new BlockPos(16, Y, 8), Blocks.BEDROCK);
+        helper.runAfterDelay(25, () -> {
+            var lines = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).describe(helper.absolutePos(new BlockPos(3, Y, 8)));
+            String text = String.join("\n", lines.stream().map(net.minecraft.network.chat.Component::getString).toList());
+            helper.assertTrue(text.contains("16 blocks a run"), "reach, doubled: " + text);
+            helper.assertTrue(text.contains("Harvest Lens"), "its action: " + text);
+            TestSupport.finishLasers(helper);
             helper.succeed();
         });
     }

@@ -76,7 +76,9 @@ public class ModCreativeTabs {
                         output.accept(ModItems.HARVEST_LENS.get());
                         output.accept(ModItems.DAMAGE_LENS.get());
                         output.accept(ModItems.PICKUP_LENS.get());
+                        output.accept(ModItems.RANGE_LENS.get());
                         output.accept(ModItems.LASER_LINKER.get());
+                        output.accept(ModItems.SPECTROSCOPE.get());
                         output.accept(ModItems.BUDDING_ANOMALITE_ITEM.get());
                         output.accept(ModItems.STABILISED_PORTAL_FRAME_ITEM.get());
                         output.accept(ModItems.ANOMALITE_SHARD.get());

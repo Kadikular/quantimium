@@ -6,6 +6,7 @@ import com.kadikular.quantimium.laser.Lens;
 import com.kadikular.quantimium.menu.LensMountMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -69,12 +70,22 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
-        int packed = Lens.after(Lens.NONE, menu.getBlockEntity().lenses());
-        Lens action = Lens.action(packed);
-        Component does = action == null ? Component.translatable("gui.quantimium.lens_mount.no_action")
-                : Component.translatable("gui.quantimium.lens_mount.action",
-                        Component.translatable("item.quantimium." + action.name().toLowerCase(java.util.Locale.ROOT) + "_lens"));
+        // What these lenses alone do to plain light: its actions, and what changes them.
+        com.kadikular.quantimium.laser.Light light = com.kadikular.quantimium.laser.Light
+                .from(menu.getBlockEntity().getBlockPos(), 32).through(menu.getBlockEntity().lenses());
+        MutableComponent actions = Component.empty();
+        for (com.kadikular.quantimium.laser.Light.Stream stream : light.streams()) {
+            if (!actions.getSiblings().isEmpty()) actions.append(", ");
+            actions.append(name(stream.action()));
+        }
+        MutableComponent does = light.streams().isEmpty() ? Component.translatable("gui.quantimium.lens_mount.no_action")
+                : Component.translatable("gui.quantimium.lens_mount.action", actions);
+        if (light.boosts() > 0) does.append(Component.translatable("gui.quantimium.lens_mount.range", 1 << light.boosts()));
         graphics.text(font, does, leftPos + TEXT_X, topPos + TEXT_Y, textColour(), false);
         graphics.text(font, Component.translatable("gui.quantimium.lens_mount.order"), leftPos + TEXT_X, topPos + ORDER_Y, dimColour(), false);
+    }
+
+    private static Component name(Lens lens) {
+        return Component.translatable("item.quantimium." + lens.name().toLowerCase(java.util.Locale.ROOT) + "_lens");
     }
 }

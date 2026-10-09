@@ -49,7 +49,11 @@ public final class LaserTuning {
 
     // ---- lenses ----
 
-    /** How far from its mount a beam's action reaches: a Harvest lens breaks, a Damage lens hurts, and Pickup gathers. */
+    /** Range lenses that count: each doubles a run's reach. */
+    public static final int RANGE_LENSES = 2;
+    /** The farthest any run of light reaches, Range lenses and all. */
+    public static final int MAX_RANGE = 128;
+    /** How far a run of light with an action reaches (Pickup counts), before Range lenses. */
     public static final int ACTION_REACH = 8;
     /** FE to break a block, for each point of its hardness (stone is 1.5, obsidian 50); at least one point's worth. */
     public static final long HARVEST_FE_PER_HARDNESS = 400;
@@ -57,8 +61,8 @@ public final class LaserTuning {
     public static final int HARVEST_COOLDOWN = 10;
     /** What a Damage lens's beam deals each hit, in half-hearts. */
     public static final float DAMAGE_PER_HIT = 4.0f;
-    /** FE for each hit on each thing in the beam. */
-    public static final long DAMAGE_FE_PER_HIT = 2_000;
+    /** FE for each hit on each thing in the beam, paid when it lands: within what an Emitter I sends in a tick. */
+    public static final long DAMAGE_FE_PER_HIT = 1_000;
     /** Ticks between hits. */
     public static final int DAMAGE_INTERVAL = 10;
     /** FE to carry one stack back up the beam. */

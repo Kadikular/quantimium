@@ -183,6 +183,23 @@ public final class TestSupport {
         }
     }
 
+    /**
+     * Ends a laser test cleanly: every emitter and its creative cell taken away, cavities emptied, then
+     * the field cleared. A test's blocks stand until its batch is done, and lit light would go on putting
+     * flux into the field (and rifts after it) for the tests that follow.
+     */
+    public static void finishLasers(GameTestHelper helper) {
+        helper.forEveryBlockInStructure(pos -> {
+            var state = helper.getBlockState(pos);
+            if (state.getBlock() instanceof com.kadikular.quantimium.block.LaserEmitterBlock
+                    || state.getBlock() instanceof com.kadikular.quantimium.block.CavityMirrorBlock
+                    || state.is(com.kadikular.quantimium.init.ModBlocks.CREATIVE_ENERGY_CELL.get())) {
+                helper.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR);
+            }
+        });
+        clearField(helper);
+    }
+
     public static void fill(QuantumEnergyStorage storage) {
         storage.setEnergy(storage.getMaxEnergyStored());
     }
