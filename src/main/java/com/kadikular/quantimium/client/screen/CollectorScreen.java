@@ -131,9 +131,7 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
-        if (menu.isFilterView()) {
-            graphics.text(font, Component.translatable("gui.quantimium.collector.filter.note"), leftPos + 8, topPos + 22, dimColour(), false);
-        }
+
     }
 
     /** A small # on entries standing for a tag rather than an item. */

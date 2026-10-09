@@ -44,7 +44,12 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
                             case PASSIVE -> Items.WHEAT;
                             case PLAYERS -> Items.PLAYER_HEAD;
                             case NOT_PLAYERS -> Items.SKELETON_SKULL;
-                        })));
+                        })),
+                Tab.of(() -> Component.literal("G"), () -> press(FilterLensMenu.BUTTON_GROWN),
+                                () -> List.of(Component.translatable(menu.filter().grown() ? "gui.quantimium.filter_lens.grown.on"
+                                                : "gui.quantimium.filter_lens.grown.off"),
+                                        Component.translatable("gui.quantimium.filter_lens.grown.tip")))
+                        .icon(() -> new ItemStack(menu.filter().grown() ? Items.WHEAT : Items.WHEAT_SEEDS)));
     }
 
     private void press(int button) {

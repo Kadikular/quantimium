@@ -54,7 +54,8 @@ item carried) or two seconds pass. A pulse mirror before a Harvest lens breaks o
 
 [[mechanic:laser.splitter]] A [[block:splitter]] is a mirror with as many faces as you set: light that
 reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six
-straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output.
+straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output;
+each output face shows the split plate.
 
 [[mechanic:laser.isolator]] An [[block:isolator]] is a mirror that lets only power through: light
 leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through it, so
@@ -128,7 +129,8 @@ tinted by what it does.
 
 **Actions** give light something to do, and light can carry several: Harvest and Damage on one beam
 both work. An action stays on the light until the beam ends. **Modifiers** change the actions the light
-carries when it meets them, so their order matters: a modifier before an action doesn't change it.
+carries: in one mount, every action in it, whatever order the slots are in; and every action the light
+brought from mounts before. A later mount's actions aren't changed by an earlier mount's modifiers.
 Pickup is the exception: it stays on the light, and every action added after it gets it too.
 
 | Lens | Kind | What it does | Costs |
@@ -137,14 +139,15 @@ Pickup is the exception: it stays on the light, and every action added after it 
 | [[item:damage_lens]] | Action | [[mechanic:laser.lens.damage]] Hurts anything living that stands in the beam, players included, every {{c:LaserTuning.DAMAGE_INTERVAL|s}}. With Pickup, what it kills drops straight back up the beam. | {{c:LaserTuning.DAMAGE_FE_PER_HIT}} FE a hit, when it lands |
 | [[item:pickup_lens]] | Modifier, and an action of its own | [[mechanic:laser.lens.pickup]] What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops a Collector up the beam has room for; with none, it waits. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack, when it's carried |
 | [[item:range_lens]] | Modifier | Each run of the light reaches twice as far; two count, for four times as far. | none |
-| [[item:filter_lens]] | Modifier | [[mechanic:laser.lens.filter]] The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. Use it in the air to set it. | none |
+| [[item:filter_lens]] | Modifier | [[mechanic:laser.lens.filter]] The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. Use it in the air to set it. | none |
 | [[item:amplify_lens]] | Modifier | [[mechanic:laser.lens.amplify]] Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to {{c:LaserTuning.AMPLIFY_LENSES}}. | a cut costs one more share for each; a hit doubles |
 | [[item:uv_lens]] | Modifier | Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light. | none |
 | [[item:place_lens]] | Action | [[mechanic:laser.lens.place]] Places a block a Sender up the beam sends, in the space where the beam ends, as you would against the block it ends on; one every {{c:LaserTuning.PLACE_COOLDOWN|s}} at most. Seeds count: on farmland they're sown. A Filter lens before it says what it places. | {{c:LaserTuning.PLACE_FE}} FE a block, when it's placed |
 
 **A wheat field.** Point a beam down at farmland through a Collector, a Sender of seeds, and a mount
-with Harvest, Pickup, a Filter lens set to wheat, then Placement. Only ripe wheat is cut, it comes back
-up to the Collector, and the spot is sown again. Spread it over a whole field with an Area Prism.
+with Harvest, Pickup, Placement and a Filter lens set to fully grown. Only ripe wheat is cut, it comes
+back up to the Collector, and the spot is sown again. Spread it over a whole field with an Area Prism.
+A drop no Collector's filter will take doesn't hold the harvest up: it falls where the crop was.
 
 [[mechanic:laser.light.range]] **How far light reaches.** A run of light reaches as far as its source's:
 mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
@@ -181,8 +184,9 @@ pull from, what's beside them, once a second.
 [[mechanic:laser.area_prism]] An [[block:area_prism]] spreads the actions of light reaching it over an
 area, up to {{c:LaserTuning.AREA_MAX}} blocks a side, its middle within {{c:LaserTuning.AREA_REACH}}
 blocks: Harvest cuts each block there in turn, Damage hurts and Pickup gathers whatever's in it,
-Placement fills each free space resting on a block. Work in an area costs {{c:LaserTuning.AREA_COST}}
-times as much. Use the [[item:laser_linker]] in the air to switch it to area mode, use it on two
+Placement fills each free space resting on a block. It works only on what it can see, along a clear
+line of light from the prism, and shows a beam to what it's working on. Work in an area costs
+{{c:LaserTuning.AREA_COST}} times as much. Use the [[item:laser_linker]] in the air to switch it to area mode, use it on two
 corners, then on the prism; sneak-click the prism with an empty hand to clear its area.
 
 Work that happens at once (a hit, an item carried, a block placed) is paid for first each tick, so

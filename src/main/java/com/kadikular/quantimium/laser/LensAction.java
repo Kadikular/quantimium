@@ -44,6 +44,10 @@ public final class LensAction {
     /** How far through the area it's looked, and the block it's found to work on next. */
     private int cursor;
     private int placeCooldown;
+    /** For an area prism's action: the block it last placed, and until when it shows a beam there. */
+    @Nullable
+    private BlockPos placed;
+    private long placedShownUntil;
 
     /** The block being cut, what it costs, and the FE gone into it so far. */
     @Nullable
@@ -87,8 +91,13 @@ public final class LensAction {
         return took;
     }
 
+    /** The level, while it acts: for sight lines from inside entity filters. */
+    @Nullable
+    private ServerLevel sightLevel;
+
     /** Once a tick, after power has moved. */
     void act(ServerLevel level, LaserNetworks networks) {
+        sightLevel = level;
         boolean pickup = stream.has(Lens.PICKUP) && !collectors.isEmpty();
         int phase = Math.floorMod(key.hashCode() + (int) level.getGameTime(), LaserTuning.DAMAGE_INTERVAL);
         switch (key.action()) {
@@ -96,7 +105,7 @@ public final class LensAction {
             case DAMAGE -> {
                 if (phase != 0) return;
                 targets = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive() && onBeam(entity.getBoundingBox(), 0.25)
-                        && (stream.filter() == null || stream.filter().living().lets(entity)));
+                        && (stream.filter() == null || stream.filter().letsHit(entity)));
                 // Each Amplify lens doubles the hit, and what it costs.
                 int scale = 1 << stream.amps();
                 for (LivingEntity entity : targets) {
@@ -149,6 +158,8 @@ public final class LensAction {
         networks.pay(this, cost);
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN;
+        placed = at.getBlockPos().relative(at.getDirection());
+        placedShownUntil = level.getGameTime() + LaserTuning.PLACE_COOLDOWN;
         LaserNetworks.changed(level);
     }
 
@@ -179,7 +190,7 @@ public final class LensAction {
             cursor = (cursor + 1) % areaVolume();
             if (!level.isLoaded(pos) || !level.getBlockState(pos).canBeReplaced()) continue;
             BlockPos below = pos.below();
-            if (level.getBlockState(below).isAir()) continue;
+            if (level.getBlockState(below).isAir() || !inSight(level, pos)) continue;
             var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(below), net.minecraft.core.Direction.UP, below, false);
             if (!networks.take(senders, stack -> placeable(level, stack, hit), 1, true).isEmpty()) return hit;
         }
@@ -240,11 +251,11 @@ public final class LensAction {
     @Nullable
     private BlockPos harvestTarget(ServerLevel level) {
         if (area != null) {
-            if (cutting != null && area.isInside(cutting) && cuttable(level, cutting)) return cutting;
+            if (cutting != null && area.isInside(cutting) && cuttable(level, cutting) && inSight(level, cutting)) return cutting;
             for (int i = 0; i < LaserTuning.AREA_SCAN; i++) {
                 BlockPos pos = areaPos(cursor);
                 cursor = (cursor + 1) % areaVolume();
-                if (level.isLoaded(pos) && cuttable(level, pos)) return pos;
+                if (level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)) return pos;
             }
             return null;
         }
@@ -275,10 +286,13 @@ public final class LensAction {
         return (long) Math.ceil(Math.max(1.0f, hardness) * LaserTuning.HARVEST_FE_PER_HARDNESS);
     }
 
-    /** Whether the Collectors up the beam have room for what breaking the block would drop. */
+    /**
+     * Whether the Collectors up the beam have room for what breaking the block would drop. A drop every
+     * Collector's filter turns away doesn't hold the cut up: it falls where the block was.
+     */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
         for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool())) {
-            if (!networks.roomFor(collectors, drop)) return false;
+            if (networks.anyAccepts(collectors, drop) && !networks.roomFor(collectors, drop)) return false;
         }
         return true;
     }
@@ -323,6 +337,24 @@ public final class LensAction {
         return -1 - (key.hashCode() & 0x3FFFFFFF);
     }
 
+    /** Whether the area prism can see {@code pos}: a clear line of light from it, ending there. */
+    private boolean inSight(ServerLevel level, BlockPos pos) {
+        LaserBeam line = LaserBeam.traceTo(level, key.node(), pos, LaserTuning.AREA_REACH + LaserTuning.AREA_MAX);
+        return pos.equals(line.hit());
+    }
+
+    /** What an area prism's action is working on just now, for the beam it shows: or null. */
+    @Nullable
+    BlockPos working(ServerLevel level) {
+        if (area == null) return null;
+        return switch (key.action()) {
+            case HARVEST -> cutting;
+            case PLACE -> placed != null && level.getGameTime() <= placedShownUntil ? placed : null;
+            case DAMAGE -> targets.isEmpty() ? null : targets.getFirst().blockPosition();
+            default -> null;
+        };
+    }
+
     /** Round the beam, or the area, to look for things in it. */
     private AABB box() {
         if (area != null) return AABB.of(area);
@@ -332,7 +364,8 @@ public final class LensAction {
 
     /** Whether a box comes within {@code slack} of the beam's line, or for an area, is in it. */
     private boolean onBeam(AABB box, double slack) {
-        if (area != null) return box.intersects(AABB.of(area));
+        if (area != null) return box.intersects(AABB.of(area)) && sightLevel != null
+                && inSight(sightLevel, BlockPos.containing(box.getCenter()));
         Vec3[] ends = beam.ends();
         AABB near = box.inflate(slack);
         return near.clip(ends[0], ends[1]).isPresent() || near.contains(ends[0]) || near.contains(ends[1]);

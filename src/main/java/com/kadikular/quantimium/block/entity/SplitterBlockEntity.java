@@ -45,10 +45,27 @@ public class SplitterBlockEntity extends LaserMirrorBlockEntity {
         }
         setChanged();
         if (level != null) {
+            showOutputs();
             LaserNetworks.changed(level);
             if (!level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
         return true;
+    }
+
+    /** The block shows which faces light leaves by. */
+    private void showOutputs() {
+        if (level == null || level.isClientSide()) return;
+        BlockState state = getBlockState();
+        if (!(state.getBlock() instanceof com.kadikular.quantimium.block.SplitterBlock)) return;
+        BlockState shown = state;
+        for (Direction face : Direction.values()) shown = shown.setValue(com.kadikular.quantimium.block.SplitterBlock.OUTPUTS.get(face), outputs.contains(face));
+        if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        showOutputs();
     }
 
     @Override

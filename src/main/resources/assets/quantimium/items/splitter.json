@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/splitter"
+    "model": "quantimium:block/splitter_item"
   }
 }

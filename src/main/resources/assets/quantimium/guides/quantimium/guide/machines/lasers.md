@@ -62,7 +62,8 @@ item carried) or two seconds pass. A pulse mirror before a Harvest lens breaks o
 
 A <ItemLink id="quantimium:splitter" /> is a mirror with as many faces as you set: light that
 reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six
-straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output.
+straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output;
+each output face shows the split plate.
 
 An <ItemLink id="quantimium:isolator" /> is a mirror that lets only power through: light
 leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through it, so
@@ -136,7 +137,8 @@ tinted by what it does.
 
 **Actions** give light something to do, and light can carry several: Harvest and Damage on one beam
 both work. An action stays on the light until the beam ends. **Modifiers** change the actions the light
-carries when it meets them, so their order matters: a modifier before an action doesn't change it.
+carries: in one mount, every action in it, whatever order the slots are in; and every action the light
+brought from mounts before. A later mount's actions aren't changed by an earlier mount's modifiers.
 Pickup is the exception: it stays on the light, and every action added after it gets it too.
 
 | Lens | Kind | What it does | Costs |
@@ -145,14 +147,15 @@ Pickup is the exception: it stays on the light, and every action added after it 
 | <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. With Pickup, what it kills drops straight back up the beam. | 1,000 FE a hit, when it lands |
 | <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops a Collector up the beam has room for; with none, it waits. | 200 FE a stack, when it's carried |
 | <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far; two count, for four times as far. | none |
-| <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. Use it in the air to set it. | none |
+| <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. Use it in the air to set it. | none |
 | <ItemLink id="quantimium:amplify_lens" /> | Modifier | Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to 3. | a cut costs one more share for each; a hit doubles |
 | <ItemLink id="quantimium:uv_lens" /> | Modifier | Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light. | none |
 | <ItemLink id="quantimium:place_lens" /> | Action | Places a block a Sender up the beam sends, in the space where the beam ends, as you would against the block it ends on; one every 0.5 s at most. Seeds count: on farmland they're sown. A Filter lens before it says what it places. | 200 FE a block, when it's placed |
 
 **A wheat field.** Point a beam down at farmland through a Collector, a Sender of seeds, and a mount
-with Harvest, Pickup, a Filter lens set to wheat, then Placement. Only ripe wheat is cut, it comes back
-up to the Collector, and the spot is sown again. Spread it over a whole field with an Area Prism.
+with Harvest, Pickup, Placement and a Filter lens set to fully grown. Only ripe wheat is cut, it comes
+back up to the Collector, and the spot is sown again. Spread it over a whole field with an Area Prism.
+A drop no Collector's filter will take doesn't hold the harvest up: it falls where the crop was.
 
 **How far light reaches.** A run of light reaches as far as its source's:
 mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
@@ -189,8 +192,9 @@ pull from, what's beside them, once a second.
 An <ItemLink id="quantimium:area_prism" /> spreads the actions of light reaching it over an
 area, up to 16 blocks a side, its middle within 24
 blocks: Harvest cuts each block there in turn, Damage hurts and Pickup gathers whatever's in it,
-Placement fills each free space resting on a block. Work in an area costs 1.5
-times as much. Use the <ItemLink id="quantimium:laser_linker" /> in the air to switch it to area mode, use it on two
+Placement fills each free space resting on a block. It works only on what it can see, along a clear
+line of light from the prism, and shows a beam to what it's working on. Work in an area costs
+1.5 times as much. Use the <ItemLink id="quantimium:laser_linker" /> in the air to switch it to area mode, use it on two
 corners, then on the prism; sneak-click the prism with an empty hand to clear its area.
 
 Work that happens at once (a hit, an item carried, a block placed) is paid for first each tick, so

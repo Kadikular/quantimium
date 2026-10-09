@@ -371,7 +371,6 @@ def main() -> None:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
     for name, face, tones, seed in (("lens_mount", lens_mount_face, ("1e1630", "2a2042", "3a2d5a"), 62),
                                     ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
-                                    ("splitter", splitter_face, ("2b2b33", "3b3b45", "4d4d59"), 82),
                                     ("isolator", isolator_face, ("1b1b1e", "26262b", "33333a"), 92),
                                     ("sender", sender_face, ("162a2a", "1f3838", "294949"), 76)):
         face().save(os.path.join(TEX, f"{name}_face.png"))
@@ -391,6 +390,28 @@ def main() -> None:
             json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"quantimium:item/{name}"}}, handle, indent=2)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:item/{name}"}}, handle, indent=2)
+    # The splitter: plain casing, with the split plate on each face light leaves by.
+    splitter_face().save(os.path.join(TEX, "splitter_face.png"))
+    stone(("2b2b33", "3b3b45", "4d4d59"), 82).save(os.path.join(TEX, "splitter_side.png"))
+    with open(os.path.join(MODELS, "splitter.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/splitter_side", "particle": "quantimium:block/splitter_side"}}, handle, indent=2)
+    planes = {"north": ([0, 0, -0.01], [16, 16, -0.01]), "south": ([0, 0, 16.01], [16, 16, 16.01]),
+              "west": ([-0.01, 0, 0], [-0.01, 16, 16]), "east": ([16.01, 0, 0], [16.01, 16, 16]),
+              "down": ([0, -0.01, 0], [16, -0.01, 16]), "up": ([0, 16.01, 0], [16, 16.01, 16])}
+    for face, (start, end) in planes.items():
+        with open(os.path.join(MODELS, f"splitter_out_{face}.json"), "w") as handle:
+            json.dump({"textures": {"plate": "quantimium:block/splitter_face", "particle": "quantimium:block/splitter_side"},
+                       "elements": [{"from": start, "to": end,
+                                     "faces": {face: {"uv": [0, 0, 16, 16], "texture": "#plate"}}}]}, handle, indent=2)
+    multipart = [{"apply": {"model": "quantimium:block/splitter"}}]
+    multipart += [{"when": {face: "true"}, "apply": {"model": f"quantimium:block/splitter_out_{face}"}} for face in planes]
+    with open(os.path.join(STATES, "splitter.json"), "w") as handle:
+        json.dump({"multipart": multipart}, handle, indent=1)
+    with open(os.path.join(MODELS, "splitter_item.json"), "w") as handle:
+        json.dump(cube({"front": "quantimium:block/splitter_face", "back": "quantimium:block/splitter_side",
+                        "side": "quantimium:block/splitter_face"}, "front"), handle, indent=2)
+    with open(os.path.join(ITEMS, "splitter.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/splitter_item"}}, handle, indent=2)
     area_prism_face().save(os.path.join(TEX, "area_prism.png"))
     with open(os.path.join(MODELS, "area_prism.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/area_prism"}}, handle, indent=2)

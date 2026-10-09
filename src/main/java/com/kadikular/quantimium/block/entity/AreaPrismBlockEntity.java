@@ -40,6 +40,8 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
 
     @Nullable
     private BoundingBox area;
+    /** Beams to what its actions are working on, as the network last showed them. */
+    private List<LaserBeam> shownBeams = List.of();
 
     public AreaPrismBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.AREA_PRISM_BE.get(), pos, state);
@@ -97,11 +99,15 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     }
 
     @Override
-    public void showBeams(List<LaserBeam> beams) {}
+    public void showBeams(List<LaserBeam> beams) {
+        boolean same = LaserBeamView.sameLook(shownBeams, beams);
+        shownBeams = beams;
+        if (!same && level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
 
     @Override
     public List<LaserBeam> syncedBeams() {
-        return List.of();
+        return shownBeams;
     }
 
     @Override
@@ -132,11 +138,14 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         area = in.read("Area", BoundingBox.CODEC).orElse(null);
+        in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveWithoutMetadata(registries);
+        CompoundTag tag = saveWithoutMetadata(registries);
+        tag.put("Beams", LaserBeamView.save(shownBeams));
+        return tag;
     }
 
     @Override

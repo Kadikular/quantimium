@@ -23,8 +23,9 @@ import java.util.Set;
  *
  * <p>Each <b>stream</b> is one action, its modifiers, and the sources that pay for it: those whose light
  * reached the lens that gave it. Joined light keeps both sides' streams; the same action from two sides
- * becomes one, paid by both. A modifier applies to the streams already there, so one before a join stays
- * on its own side, except Pickup, which stays on the light and gives every action added after it Pickup too.
+ * becomes one, paid by both. A modifier changes the actions the light carries by the time it leaves its
+ * mount (that mount's own included), so one before a join stays on its own side; except Pickup, which
+ * stays on the light and gives every action added after it Pickup too.
  * Pickup is also a stream of its own, paid for like an action: it gathers items lying in the beam.
  *
  * @param range   the reach of a run of plain light from its source, before any Range lens
@@ -108,14 +109,19 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
     }
 
     /**
-     * The light after a mount's lenses, in order. An action lens gives the light that action, paid for by
-     * every source feeding it here (a stream it had for that action is replaced, keeping its modifiers).
-     * A modifier changes the streams already there: Filter sets what they act on, Amplify strengthens
+     * The light after a mount's lenses. An action lens gives the light that action, paid for by every
+     * source feeding it here (a stream it had for that action is replaced, keeping its modifiers). A
+     * modifier changes every stream there, the mount's own actions included: Filter sets what they act on, Amplify strengthens
      * them. Pickup goes on every stream there and every one added after, and gathers of its own; Range
      * doubles the reach; UV hides the light from here on.
      */
     public Light through(List<LensUse> lenses) {
         if (lenses.isEmpty()) return this;
+        // In one mount its modifiers change every action in it, whatever the slots' order: its actions first.
+        List<LensUse> ordered = new java.util.ArrayList<>(lenses.size());
+        for (LensUse use : lenses) if (use.lens().action) ordered.add(use);
+        for (LensUse use : lenses) if (!use.lens().action) ordered.add(use);
+        lenses = ordered;
         Map<Lens, Stream> streams = new EnumMap<>(Lens.class);
         for (Stream stream : this.streams) streams.put(stream.action(), stream);
         boolean pickup = this.pickup;

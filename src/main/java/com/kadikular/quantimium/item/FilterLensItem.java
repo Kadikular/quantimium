@@ -49,5 +49,6 @@ public class FilterLensItem extends LensItem {
                     .withStyle(ChatFormatting.AQUA));
         }
         tooltip.accept(Component.translatable("item.quantimium.filter_lens.living." + filter.living().getSerializedName()).withStyle(ChatFormatting.AQUA));
+        if (filter.grown()) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.grown.on").withStyle(ChatFormatting.AQUA));
     }
 }

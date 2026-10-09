@@ -589,7 +589,7 @@ public final class LensTests {
     // covers: laser.lens.place, laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void aWheatFieldCutRipeAndReplanted(GameTestHelper helper) {
-        // Down onto farmland: Harvest with Pickup, filtered to wheat, then Placement of seeds from the Sender.
+        // Down onto farmland: Harvest with Pickup, filtered to fully grown, and Placement of seeds from the Sender.
         BlockPos crop = new BlockPos(8, Y, 8);
         helper.setBlock(crop.below(), Blocks.FARMLAND);
         helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7));
@@ -598,7 +598,9 @@ public final class LensTests {
         CollectorBlockEntity collector = collector(helper, new BlockPos(8, Y + 5, 8), Direction.DOWN);
         sender(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN, new ItemStack(Items.WHEAT_SEEDS, 8));
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 3, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
-        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.WHEAT))));
+        // Fully grown only: ripe crops are cut, and the seeds it sows aren't.
+        mount.getLensSlots().setStackInSlot(2, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
+                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
         mount.getLensSlots().setStackInSlot(3, new ItemStack(ModItems.PLACE_LENS.get()));
         helper.succeedWhen(() -> {
             helper.assertTrue(count(collector, Items.WHEAT) > 0, "the ripe wheat came back up the beam");
@@ -634,6 +636,67 @@ public final class LensTests {
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.DIAMOND), 5, "the diamonds went down the beam");
             TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.splitter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aSplitterFaceAddedByHandSendsLight(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        BlockPos at = new BlockPos(5, Y, 6);
+        helper.setBlock(at, ModBlocks.SPLITTER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(5, Y, 11), ModBlocks.FOLD_CORE.get());
+        var player = TestSupport.player(helper, new BlockPos(5, Y, 9), net.minecraft.world.level.GameType.SURVIVAL);
+        player.setShiftKeyDown(true);
+        BlockPos abs = helper.absolutePos(at);
+        var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(0, 0, 0.5), Direction.SOUTH, abs, false);
+        helper.getLevel().getBlockState(abs).useWithoutItem(helper.getLevel(), player, hit);
+        var splitter = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.SplitterBlockEntity.class);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(splitter.outputs().contains(Direction.SOUTH), "the face was added: " + splitter.outputs());
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(5, Y, 11), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
+                    "and sends: " + splitter.syncedBeams());
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void aFullyGrownFilterSparesWhatsStillGrowing(GameTestHelper helper) {
+        BlockPos crop = new BlockPos(8, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 3));
+        helper.setBlock(new BlockPos(8, Y + 5, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        helper.setBlock(new BlockPos(8, Y + 4, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
+                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        helper.runAfterDelay(70, () -> {
+            helper.assertBlockPresent(Blocks.WHEAT, crop);
+            helper.assertBlockPresent(Blocks.FARMLAND, crop.below());
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anAreaPrismOnlyWorksWhereItCanSee(GameTestHelper helper) {
+        // A wall of bedrock between the prism and one stone: that one stays.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(9, Y, 12), Blocks.STONE);
+        for (int x = 6; x <= 8; x++) helper.setBlock(new BlockPos(x, Y, 11), Blocks.BEDROCK);
+        for (int x = 6; x <= 8; x++) helper.setBlock(new BlockPos(x, Y, 10), Blocks.BEDROCK);
+        prism.setArea(helper.absolutePos(new BlockPos(9, Y, 8)), helper.absolutePos(new BlockPos(9, Y, 12)));
+        helper.runAfterDelay(90, () -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 8));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(9, Y, 12));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
         });
     }
 }

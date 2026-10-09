@@ -1,27 +1,57 @@
 {
- "variants": {
-  "facing=north": {
-   "model": "quantimium:block/splitter"
+ "multipart": [
+  {
+   "apply": {
+    "model": "quantimium:block/splitter"
+   }
   },
-  "facing=south": {
-   "model": "quantimium:block/splitter",
-   "y": 180
+  {
+   "when": {
+    "north": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/splitter_out_north"
+   }
   },
-  "facing=west": {
-   "model": "quantimium:block/splitter",
-   "y": 270
+  {
+   "when": {
+    "south": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/splitter_out_south"
+   }
   },
-  "facing=east": {
-   "model": "quantimium:block/splitter",
-   "y": 90
+  {
+   "when": {
+    "west": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/splitter_out_west"
+   }
   },
-  "facing=up": {
-   "model": "quantimium:block/splitter",
-   "x": 270
+  {
+   "when": {
+    "east": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/splitter_out_east"
+   }
   },
-  "facing=down": {
-   "model": "quantimium:block/splitter",
-   "x": 90
+  {
+   "when": {
+    "down": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/splitter_out_down"
+   }
+  },
+  {
+   "when": {
+    "up": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/splitter_out_up"
+   }
   }
- }
+ ]
 }

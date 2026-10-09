@@ -75,8 +75,8 @@ public class SenderBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
-        // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
-        if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
+        // The laser tools (the Linker, the Spectroscope) do their own thing; anything else opens it.
+        if (!stack.is(ModTags.TOOLS_WRENCH)) return LaserTools.isOne(stack) ? InteractionResult.PASS : InteractionResult.TRY_WITH_EMPTY_HAND;
         return point(state, level, pos, hit.getDirection());
     }
 

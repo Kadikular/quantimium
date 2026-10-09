@@ -475,6 +475,26 @@ public final class LaserNetworks {
         return true;
     }
 
+    /** Each area prism shows a beam to whatever its actions are working on. */
+    private void showAreaWork() {
+        for (LaserNode node : nodes.values()) {
+            if (node.area() == null) continue;
+            Light light = lights.get(node.nodePos());
+            List<LaserBeam> shown = new ArrayList<>();
+            if (light != null) {
+                Set<BlockPos> seen = new HashSet<>();
+                for (LensAction action : actions.values()) {
+                    if (!action.key().node().equals(node.nodePos()) || action.key().beam() != -1) continue;
+                    BlockPos target = action.working(level);
+                    if (target == null || !seen.add(target)) continue;
+                    shown.add(LaserBeam.traceTo(level, node.nodePos(), target, LaserTuning.AREA_REACH + LaserTuning.AREA_MAX)
+                            .withLenses(light.packed()).withLive(true).withFlow(1_000));
+                }
+            }
+            node.showBeams(shown);
+        }
+    }
+
     /** Up to {@code max} of the first thing {@code wants} accepts, from the Senders at {@code positions} in order. */
     ItemStack take(List<BlockPos> positions, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate) {
         for (BlockPos pos : positions) {
@@ -506,6 +526,14 @@ public final class LaserNetworks {
             if (open(route) && left[route.index()] > 0) can += left[route.index()] * route.efficiency();
         }
         return can >= fe;
+    }
+
+    /** Whether any of the Collectors at {@code positions} would catch {@code stack} at all, room or not: its filter lets it. */
+    boolean anyAccepts(List<BlockPos> positions, ItemStack stack) {
+        for (BlockPos pos : positions) {
+            if (nodes.get(pos) instanceof com.kadikular.quantimium.block.entity.CollectorBlockEntity collector && collector.accepts(stack)) return true;
+        }
+        return false;
     }
 
     /** Whether any of the Collectors at {@code positions} would take some of {@code stack}. */
@@ -726,6 +754,7 @@ public final class LaserNetworks {
         for (Network network : networks) refill(network);
         for (LensAction action : actions.values()) action.act(level, this);
         if (time % SETTLE_TICKS == 10) ship();
+        if (time % 5 == 0) showAreaWork();
         for (Network network : networks) move(network);
         if (time % SETTLE_TICKS == 0) settle();
     }
@@ -895,6 +924,7 @@ public final class LaserNetworks {
         Set<BlockPos> live = live();
         blind(live);
         for (LaserNode node : nodes.values()) {
+            if (node.area() != null) continue;
             BlockPos pos = node.nodePos();
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
             long[] sum = carried.getOrDefault(pos, new long[0]);

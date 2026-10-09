@@ -25,11 +25,17 @@ import java.util.List;
  * @param entries ghost entries, as a Collector's filter's
  * @param allow   whitelist (only these) or blacklist (all but these)
  * @param living  what living things it lets an action reach
+ * @param grown   only what's fully grown: a Harvest beam cuts only crops (and anything else that grows)
+ *                that are ripe, and nothing that doesn't grow; a Damage beam spares the young
  */
-public record LensFilter(List<ItemStack> entries, boolean allow, Living living) {
+public record LensFilter(List<ItemStack> entries, boolean allow, Living living, boolean grown) {
+
+    public LensFilter(List<ItemStack> entries, boolean allow, Living living) {
+        this(entries, allow, living, false);
+    }
 
     public static final int SLOTS = 9;
-    public static final LensFilter EMPTY = new LensFilter(List.of(), true, Living.ANY);
+    public static final LensFilter EMPTY = new LensFilter(List.of(), true, Living.ANY, false);
 
     /** Which living things an action may reach. */
     public enum Living implements StringRepresentable {
@@ -60,13 +66,15 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living) 
     public static final Codec<LensFilter> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ItemStack.OPTIONAL_CODEC.listOf().fieldOf("entries").forGetter(LensFilter::entries),
             Codec.BOOL.fieldOf("allow").forGetter(LensFilter::allow),
-            Living.CODEC.fieldOf("living").forGetter(LensFilter::living)
+            Living.CODEC.fieldOf("living").forGetter(LensFilter::living),
+            Codec.BOOL.optionalFieldOf("grown", false).forGetter(LensFilter::grown)
     ).apply(instance, LensFilter::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LensFilter> STREAM_CODEC = StreamCodec.composite(
             ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list()), LensFilter::entries,
             ByteBufCodecs.BOOL, LensFilter::allow,
             ByteBufCodecs.idMapper(i -> Living.values()[Math.floorMod(i, Living.values().length)], Living::ordinal).cast(), LensFilter::living,
+            ByteBufCodecs.BOOL, LensFilter::grown,
             LensFilter::new);
 
     public LensFilter {
@@ -90,10 +98,28 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living) 
      * item or any drop is. So "wheat" lets only ripe wheat through: unripe, it drops only seeds.
      */
     public boolean lets(BlockState state, List<ItemStack> drops) {
+        if (grown && !ripe(state)) return false;
         if (!hasEntries()) return true;
         boolean listed = listed(new ItemStack(state.getBlock().asItem()));
         for (ItemStack drop : drops) listed |= listed(drop);
         return listed == allow;
+    }
+
+    /** Whether the block grows and is fully grown: at the top of its age. */
+    private static boolean ripe(BlockState state) {
+        if (state.getBlock() instanceof net.minecraft.world.level.block.CropBlock crop) return crop.isMaxAge(state);
+        for (var property : state.getProperties()) {
+            if (property instanceof net.minecraft.world.level.block.state.properties.IntegerProperty age && property.getName().equals("age")) {
+                return state.getValue(age) >= age.getPossibleValues().stream().mapToInt(Integer::intValue).max().orElse(0);
+            }
+        }
+        return false;
+    }
+
+    /** Whether it lets a hit land on {@code entity}: its kind, and with Grown, never the young. */
+    public boolean letsHit(Entity entity) {
+        if (grown && entity instanceof net.minecraft.world.entity.AgeableMob mob && mob.isBaby()) return false;
+        return living.lets(entity);
     }
 
     private boolean listed(ItemStack stack) {
@@ -104,14 +130,14 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living) 
         List<ItemStack> list = new ArrayList<>(entries);
         while (list.size() < SLOTS) list.add(ItemStack.EMPTY);
         list.set(slot, stack.isEmpty() ? ItemStack.EMPTY : FilterEntry.of(stack));
-        return new LensFilter(list, allow, living);
+        return new LensFilter(list, allow, living, grown);
     }
 
     public LensFilter cycledTag(int slot) {
         if (slot >= entries.size() || entries.get(slot).isEmpty()) return this;
         List<ItemStack> list = new ArrayList<>(entries);
         list.set(slot, FilterEntry.cycle(list.get(slot)));
-        return new LensFilter(list, allow, living);
+        return new LensFilter(list, allow, living, grown);
     }
 
     public ItemStack entry(int slot) {
