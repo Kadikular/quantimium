@@ -101,4 +101,15 @@ public class CollectorBlock extends BaseEntityBlock {
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CollectorBlockEntity(pos, state);
     }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                                                    net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        return level.isClientSide() ? null : (lvl, pos, st, be) -> {
+            if (be instanceof com.kadikular.quantimium.block.entity.ItemRelayBlockEntity relay) {
+                com.kadikular.quantimium.block.entity.ItemRelayBlockEntity.serverTick(lvl, pos, st, relay);
+            }
+        };
+    }
 }

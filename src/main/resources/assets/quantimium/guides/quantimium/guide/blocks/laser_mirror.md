@@ -2,7 +2,7 @@
 navigation:
   title: Laser Mirror
   parent: blocks/index.md
-  position: 30
+  position: 31
   icon: quantimium:laser_mirror
 item_ids:
 - quantimium:laser_mirror

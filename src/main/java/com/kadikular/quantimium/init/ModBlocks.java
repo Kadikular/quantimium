@@ -724,12 +724,16 @@ public class ModBlocks {
             "cavity_mirror", id -> new CavityMirrorBlock(laserBlock(id, MapColor.QUARTZ)));
     public static final DeferredBlock<Block> PHOTODETECTOR = BLOCKS.register(
             "photodetector", id -> new PhotodetectorBlock(laserBlock(id, MapColor.COLOR_GRAY)));
+    public static final DeferredBlock<Block> AREA_PRISM = BLOCKS.register(
+            "area_prism", id -> new com.kadikular.quantimium.block.AreaPrismBlock(laserBlock(id, MapColor.COLOR_PURPLE).sound(SoundType.AMETHYST)));
     public static final DeferredBlock<Block> SPLITTER = BLOCKS.register(
             "splitter", id -> new com.kadikular.quantimium.block.SplitterBlock(laserBlock(id, MapColor.QUARTZ)));
     public static final DeferredBlock<Block> ISOLATOR = BLOCKS.register(
             "isolator", id -> new com.kadikular.quantimium.block.IsolatorBlock(laserBlock(id, MapColor.COLOR_BLACK)));
     public static final DeferredBlock<Block> LENS_MOUNT = BLOCKS.register(
             "lens_mount", id -> new com.kadikular.quantimium.block.LensMountBlock(laserBlock(id, MapColor.COLOR_PURPLE)));
+    public static final DeferredBlock<Block> SENDER = BLOCKS.register(
+            "sender", id -> new com.kadikular.quantimium.block.SenderBlock(laserBlock(id, MapColor.COLOR_CYAN)));
     public static final DeferredBlock<Block> COLLECTOR = BLOCKS.register(
             "collector", id -> new com.kadikular.quantimium.block.CollectorBlock(laserBlock(id, MapColor.COLOR_GREEN)));
 

@@ -12,6 +12,7 @@ navigation:
 - <ItemLink id="quantimium:anomalite_lattice" />
 - <ItemLink id="quantimium:anomaly_containment_hall" />
 - <ItemLink id="quantimium:anomaly_siphon" />
+- <ItemLink id="quantimium:area_prism" />
 - <ItemLink id="quantimium:array_pylon" />
 - <ItemLink id="quantimium:basic_anomaly_siphon" />
 - <ItemLink id="quantimium:basic_quantum_crafter" />
@@ -76,6 +77,7 @@ navigation:
 - <ItemLink id="quantimium:rift_lens" />
 - <ItemLink id="quantimium:rift_stabiliser" />
 - <ItemLink id="quantimium:ring_emitter" />
+- <ItemLink id="quantimium:sender" />
 - <ItemLink id="quantimium:splitter" />
 - <ItemLink id="quantimium:stabilised_portal_frame" />
 - <ItemLink id="quantimium:superposition_pod" />

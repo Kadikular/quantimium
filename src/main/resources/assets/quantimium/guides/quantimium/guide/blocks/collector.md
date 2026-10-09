@@ -2,7 +2,7 @@
 navigation:
   title: Collector
   parent: blocks/index.md
-  position: 10
+  position: 11
   icon: quantimium:collector
 item_ids:
 - quantimium:collector

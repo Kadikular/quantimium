@@ -64,6 +64,8 @@
     "quantimium:laser_emitter_2",
     "quantimium:laser_emitter_3",
     "quantimium:laser_mirror",
+    "quantimium:sender",
+    "quantimium:area_prism",
     "quantimium:isolator",
     "quantimium:splitter",
     "quantimium:collector",

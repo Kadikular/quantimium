@@ -248,6 +248,35 @@ LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be
           "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8"}
 
 
+def sender_face() -> Image.Image:
+    """The Collector's grille in teal, with an arrow out through it: things leave down the beam."""
+    img = stone(("162a2a", "1f3838", "294949"), 75)
+    for x in range(2, 14):
+        for y in range(2, 14):
+            img.putpixel((x, y), hx("0d1717"))
+    for i in range(2, 14, 3):
+        for j in range(2, 14):
+            img.putpixel((i, j), hx("2f8f8f"))
+            img.putpixel((j, i), hx("2f8f8f"))
+    for i in range(4):
+        for j in range(-i, i + 1):
+            img.putpixel((7 + j, 4 + i), hx("4ac8c8"))
+    for y in range(8, 12):
+        img.putpixel((7, y), hx("4ac8c8"))
+        img.putpixel((8, y), hx("4ac8c8"))
+    return img
+
+
+def area_prism_face() -> Image.Image:
+    """The prism's facets under a fine square grid: light spread over an area."""
+    img = prism_face()
+    for i in range(2, 14, 4):
+        for j in range(2, 14):
+            img.putpixel((i, j), hx("9a7bff"))
+            img.putpixel((j, i), hx("9a7bff"))
+    return img
+
+
 def splitter_face() -> Image.Image:
     """A silver plate cut into four by a cross: light leaving every way it's set to."""
     img = mirror_face()
@@ -343,7 +372,8 @@ def main() -> None:
     for name, face, tones, seed in (("lens_mount", lens_mount_face, ("1e1630", "2a2042", "3a2d5a"), 62),
                                     ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
                                     ("splitter", splitter_face, ("2b2b33", "3b3b45", "4d4d59"), 82),
-                                    ("isolator", isolator_face, ("1b1b1e", "26262b", "33333a"), 92)):
+                                    ("isolator", isolator_face, ("1b1b1e", "26262b", "33333a"), 92),
+                                    ("sender", sender_face, ("162a2a", "1f3838", "294949"), 76)):
         face().save(os.path.join(TEX, f"{name}_face.png"))
         stone(tones, seed).save(os.path.join(TEX, f"{name}_side.png"))
         model = cube({"front": f"quantimium:block/{name}_face", "back": f"quantimium:block/{name}_side",
@@ -361,6 +391,13 @@ def main() -> None:
             json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"quantimium:item/{name}"}}, handle, indent=2)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:item/{name}"}}, handle, indent=2)
+    area_prism_face().save(os.path.join(TEX, "area_prism.png"))
+    with open(os.path.join(MODELS, "area_prism.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/area_prism"}}, handle, indent=2)
+    with open(os.path.join(STATES, "area_prism.json"), "w") as handle:
+        json.dump({"variants": {"": {"model": "quantimium:block/area_prism"}}}, handle, indent=1)
+    with open(os.path.join(ITEMS, "area_prism.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/area_prism"}}, handle, indent=2)
     prism_face().save(os.path.join(TEX, "laser_prism.png"))
     with open(os.path.join(MODELS, "laser_prism.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/laser_prism"}}, handle, indent=2)

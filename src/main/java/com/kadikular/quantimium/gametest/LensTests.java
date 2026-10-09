@@ -564,4 +564,76 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    private static com.kadikular.quantimium.block.entity.SenderBlockEntity sender(GameTestHelper helper, BlockPos pos, Direction facing, ItemStack... stock) {
+        helper.setBlock(pos, ModBlocks.SENDER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.SenderBlock.FACING, facing));
+        var sender = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.SenderBlockEntity.class);
+        for (int i = 0; i < stock.length; i++) sender.getItems().setStackInSlot(i, stock[i]);
+        return sender;
+    }
+
+    // covers: laser.lens.place, laser.sender
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aPlacementBeamPlacesWhatASenderSends(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        var sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.COBBLESTONE, 4));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PLACE_LENS.get());
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.DIRT);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.COBBLESTONE, new BlockPos(10, Y, 8));
+            helper.assertTrue(sender.getItems().getStackInSlot(0).getCount() < 4, "taken from the Sender");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.place, laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void aWheatFieldCutRipeAndReplanted(GameTestHelper helper) {
+        // Down onto farmland: Harvest with Pickup, filtered to wheat, then Placement of seeds from the Sender.
+        BlockPos crop = new BlockPos(8, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7));
+        helper.setBlock(new BlockPos(8, Y + 7, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        helper.setBlock(new BlockPos(8, Y + 6, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
+        CollectorBlockEntity collector = collector(helper, new BlockPos(8, Y + 5, 8), Direction.DOWN);
+        sender(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN, new ItemStack(Items.WHEAT_SEEDS, 8));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 3, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.WHEAT))));
+        mount.getLensSlots().setStackInSlot(3, new ItemStack(ModItems.PLACE_LENS.get()));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(count(collector, Items.WHEAT) > 0, "the ripe wheat came back up the beam");
+            helper.assertBlockPresent(Blocks.WHEAT, crop);
+            helper.assertTrue(helper.getBlockState(crop).getValue(net.minecraft.world.level.block.CropBlock.AGE) < 7, "and it's been replanted");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void anAreaPrismCutsEveryBlockInItsArea(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        for (int x = 9; x <= 11; x++) for (int z = 7; z <= 9; z++) helper.setBlock(new BlockPos(x, Y, z), Blocks.STONE);
+        helper.assertTrue(prism.setArea(helper.absolutePos(new BlockPos(9, Y, 7)), helper.absolutePos(new BlockPos(11, Y, 9)))
+                == com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.Placed.SET, "the area is set");
+        helper.succeedWhen(() -> {
+            for (int x = 9; x <= 11; x++) for (int z = 7; z <= 9; z++) helper.assertBlockPresent(Blocks.AIR, new BlockPos(x, Y, z));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.sender
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aSenderShipsDownTheBeamToACollector(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.DIAMOND, 5));
+        CollectorBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(14, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.DIAMOND), 5, "the diamonds went down the beam");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

@@ -57,6 +57,13 @@ public final class LaserTuning {
     public static final int BLIND_TICKS = 300;
     /** How near the beam's line an eye must be. */
     public static final double BLIND_REACH = 0.35;
+    /** How much more a cut or a placement costs, done by an area prism. */
+    public static final double AREA_COST = 1.5;
+    /** Blocks an area prism's action looks through a tick for the next to work on. */
+    public static final int AREA_SCAN = 64;
+    /** The largest an area may be on each side, and how far from its prism its middle may be. */
+    public static final int AREA_MAX = 16;
+    public static final int AREA_REACH = 24;
     /** Range lenses that count: each doubles a run's reach. */
     public static final int RANGE_LENSES = 2;
     /** The farthest any run of light reaches, Range lenses and all. */

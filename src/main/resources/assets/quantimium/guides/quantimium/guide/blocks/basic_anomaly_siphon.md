@@ -2,7 +2,7 @@
 navigation:
   title: Basic Anomaly Siphon
   parent: blocks/index.md
-  position: 5
+  position: 6
   icon: quantimium:basic_anomaly_siphon
 item_ids:
 - quantimium:basic_anomaly_siphon

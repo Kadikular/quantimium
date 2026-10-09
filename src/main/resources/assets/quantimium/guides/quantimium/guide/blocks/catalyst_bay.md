@@ -2,7 +2,7 @@
 navigation:
   title: Catalyst Bay
   parent: blocks/index.md
-  position: 8
+  position: 9
   icon: quantimium:catalyst_bay
 ---
 

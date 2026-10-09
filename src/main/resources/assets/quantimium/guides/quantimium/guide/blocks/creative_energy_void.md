@@ -2,7 +2,7 @@
 navigation:
   title: Creative Energy Void
   parent: blocks/index.md
-  position: 12
+  position: 13
   icon: quantimium:creative_energy_void
 item_ids:
 - quantimium:creative_energy_void

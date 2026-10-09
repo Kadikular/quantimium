@@ -238,12 +238,16 @@ public class ModItems {
             "photodetector", ModBlocks.PHOTODETECTOR);
     public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_prism", ModBlocks.LASER_PRISM);
+    public static final DeferredItem<BlockItem> AREA_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
+            "area_prism", ModBlocks.AREA_PRISM);
     public static final DeferredItem<BlockItem> SPLITTER_ITEM = ITEMS.registerSimpleBlockItem(
             "splitter", ModBlocks.SPLITTER);
     public static final DeferredItem<BlockItem> ISOLATOR_ITEM = ITEMS.registerSimpleBlockItem(
             "isolator", ModBlocks.ISOLATOR);
     public static final DeferredItem<BlockItem> LENS_MOUNT_ITEM = ITEMS.registerSimpleBlockItem(
             "lens_mount", ModBlocks.LENS_MOUNT);
+    public static final DeferredItem<BlockItem> SENDER_ITEM = ITEMS.registerSimpleBlockItem(
+            "sender", ModBlocks.SENDER);
     public static final DeferredItem<BlockItem> COLLECTOR_ITEM = ITEMS.registerSimpleBlockItem(
             "collector", ModBlocks.COLLECTOR);
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARVEST_LENS = ITEMS.registerItem(

@@ -2,7 +2,7 @@
 navigation:
   title: Array Pylon
   parent: blocks/index.md
-  position: 4
+  position: 5
   icon: quantimium:array_pylon
 ---
 

@@ -36,6 +36,14 @@ public final class LensAction {
     private Light.Stream stream;
     /** Where what it brings back goes: the Collectors up its own stream's light, nearest first. */
     private List<BlockPos> collectors = List.of();
+    /** Where what it places comes from: the Senders up its own stream's light, nearest first. */
+    private List<BlockPos> senders = List.of();
+    /** For an area prism's action: the blocks it works on, instead of the beam's end; null for a beam's. */
+    @Nullable
+    private net.minecraft.world.level.levelgen.structure.BoundingBox area;
+    /** How far through the area it's looked, and the block it's found to work on next. */
+    private int cursor;
+    private int placeCooldown;
 
     /** The block being cut, what it costs, and the FE gone into it so far. */
     @Nullable
@@ -56,10 +64,14 @@ public final class LensAction {
         return key;
     }
 
-    void update(LaserBeam beam, Light.Stream stream, List<BlockPos> collectors) {
+    void update(@Nullable LaserBeam beam, Light.Stream stream, List<BlockPos> collectors, List<BlockPos> senders,
+                @Nullable net.minecraft.world.level.levelgen.structure.BoundingBox area) {
         this.beam = beam;
         this.stream = stream;
         this.collectors = List.copyOf(collectors);
+        this.senders = List.copyOf(senders);
+        if (!java.util.Objects.equals(this.area, area)) cursor = 0;
+        this.area = area;
     }
 
     /** What it asks of the network this tick: only a cut in progress asks; the rest pay as they act. */
@@ -104,8 +116,86 @@ public final class LensAction {
                     carry(networks, item);
                 }
             }
+            case PLACE -> place(level, networks);
             default -> {}
         }
+    }
+
+    // ---- placing ----
+
+    /** Places a block a Sender up the beam sends, in the space where the beam ends (or the next free one in an area). */
+    private void place(ServerLevel level, LaserNetworks networks) {
+        if (placeCooldown > 0) {
+            placeCooldown--;
+            return;
+        }
+        if (senders.isEmpty()) return;
+        long cost = area == null ? LaserTuning.PLACE_FE : Math.round(LaserTuning.PLACE_FE * LaserTuning.AREA_COST);
+        if (!networks.canPay(this, cost)) return;
+        net.minecraft.world.phys.BlockHitResult at = area == null ? placeHit(level) : nextAreaSpot(level, networks);
+        if (at == null) return;
+        ItemStack offered = networks.take(senders, stack -> placeable(level, stack, at), 1, true);
+        if (offered.isEmpty()) return;
+        ItemStack taken = networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, offered), 1, false);
+        if (taken.isEmpty() || !(taken.getItem() instanceof net.minecraft.world.item.BlockItem item)) return;
+        net.minecraft.world.InteractionResult result = item.place(new net.minecraft.world.item.context.BlockPlaceContext(
+                level, null, net.minecraft.world.InteractionHand.MAIN_HAND, taken, at));
+        if (!result.consumesAction()) {
+            // It wouldn't go after all: back where it came from.
+            ItemStack back = networks.returnTo(senders, taken);
+            if (!back.isEmpty()) Block.popResource(level, at.getBlockPos().relative(at.getDirection()), back);
+            return;
+        }
+        networks.pay(this, cost);
+        networks.workDone(this);
+        placeCooldown = LaserTuning.PLACE_COOLDOWN;
+        LaserNetworks.changed(level);
+    }
+
+    /** Where a beam places: against the block it ends on, from its side. */
+    @Nullable
+    private net.minecraft.world.phys.BlockHitResult placeHit(ServerLevel level) {
+        if (beam == null || beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return null;
+        BlockPos spot = beam.hit().relative(beam.face().getOpposite());
+        if (!level.getBlockState(spot).canBeReplaced()) return null;
+        return new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(beam.hit()), beam.face().getOpposite(), beam.hit(), false);
+    }
+
+    /** Whether {@code stack} would go in where {@code at} says, and the stream's filter lets it. */
+    private boolean placeable(ServerLevel level, ItemStack stack, net.minecraft.world.phys.BlockHitResult at) {
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem item)) return false;
+        if (stream.filter() != null && !stream.filter().lets(stack)) return false;
+        var context = new net.minecraft.world.item.context.BlockPlaceContext(level, null, net.minecraft.world.InteractionHand.MAIN_HAND, stack.copyWithCount(1), at);
+        if (!context.canPlace()) return false;
+        BlockState state = item.getBlock().getStateForPlacement(context);
+        return state != null && state.canSurvive(level, context.getClickedPos());
+    }
+
+    /** The next free space in the area something could be placed in: one resting on a block below it. */
+    @Nullable
+    private net.minecraft.world.phys.BlockHitResult nextAreaSpot(ServerLevel level, LaserNetworks networks) {
+        for (int i = 0; i < LaserTuning.AREA_SCAN; i++) {
+            BlockPos pos = areaPos(cursor);
+            cursor = (cursor + 1) % areaVolume();
+            if (!level.isLoaded(pos) || !level.getBlockState(pos).canBeReplaced()) continue;
+            BlockPos below = pos.below();
+            if (level.getBlockState(below).isAir()) continue;
+            var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(below), net.minecraft.core.Direction.UP, below, false);
+            if (!networks.take(senders, stack -> placeable(level, stack, hit), 1, true).isEmpty()) return hit;
+        }
+        return null;
+    }
+
+    private int areaVolume() {
+        return area == null ? 1 : area.getXSpan() * area.getYSpan() * area.getZSpan();
+    }
+
+    /** The {@code index}th block of the area, row by row, bottom up. */
+    private BlockPos areaPos(int index) {
+        int x = area.getXSpan();
+        int z = area.getZSpan();
+        int i = Math.floorMod(index, areaVolume());
+        return new BlockPos(area.minX() + i % x, area.minY() + i / (x * z), area.minZ() + (i / x) % z);
     }
 
     /** Puts power into cutting the block the beam ends on; breaks it when the cut is through. */
@@ -117,7 +207,7 @@ public final class LensAction {
             if (cutting != null) level.destroyBlockProgress(crackId(), cutting, -1);
             cutting = target;
             cut = 0;
-            cutCost = target == null ? 0 : harvestCost(level, target) * (1 + stream.amps());
+            cutCost = target == null ? 0 : Math.round(harvestCost(level, target) * (1 + stream.amps()) * (area == null ? 1.0 : LaserTuning.AREA_COST));
         }
         if (target == null) {
             want = 0;
@@ -142,19 +232,37 @@ public final class LensAction {
         want = Math.max(0, cutCost - cut);
     }
 
-    /** The block a Harvest beam would break: what it ends on, if it can be broken. */
+    /**
+     * The block a Harvest beam would break: one light passes through just before its end (a crop on
+     * farmland, grass), or else what it ends on, if it can be broken. In an area, the one being cut, or
+     * the next that can be.
+     */
     @Nullable
     private BlockPos harvestTarget(ServerLevel level) {
+        if (area != null) {
+            if (cutting != null && area.isInside(cutting) && cuttable(level, cutting)) return cutting;
+            for (int i = 0; i < LaserTuning.AREA_SCAN; i++) {
+                BlockPos pos = areaPos(cursor);
+                cursor = (cursor + 1) % areaVolume();
+                if (level.isLoaded(pos) && cuttable(level, pos)) return pos;
+            }
+            return null;
+        }
         if (beam == null || beam.hit() == null) return null;
         if (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK) return null;
-        BlockPos pos = beam.hit();
+        BlockPos before = beam.hit().relative(beam.face().getOpposite());
+        if (beam.length() > 0 && !level.getBlockState(before).isAir() && cuttable(level, before)) return before;
+        return cuttable(level, beam.hit()) ? beam.hit() : null;
+    }
+
+    /** Whether a Harvest beam may break the block at {@code pos}. */
+    private boolean cuttable(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null) return null;
-        if (state.is(ModTags.LASER_UNBREAKABLE)) return null;
+        if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null) return false;
+        if (state.is(ModTags.LASER_UNBREAKABLE)) return false;
         // Plain, it cuts as an iron pickaxe: what needs better waits for an Amplify lens.
-        if (state.requiresCorrectToolForDrops() && !tool().isCorrectToolForDrops(state)) return null;
-        if (stream.filter() != null && !stream.filter().lets(state, Block.getDrops(state, level, pos, null, null, tool()))) return null;
-        return pos;
+        if (state.requiresCorrectToolForDrops() && !tool().isCorrectToolForDrops(state)) return false;
+        return stream.filter() == null || stream.filter().lets(state, Block.getDrops(state, level, pos, null, null, tool()));
     }
 
     /** What it cuts as: an iron pickaxe, or with an Amplify lens a diamond one. */
@@ -215,14 +323,16 @@ public final class LensAction {
         return -1 - (key.hashCode() & 0x3FFFFFFF);
     }
 
-    /** Round the beam, to look for things in it. */
+    /** Round the beam, or the area, to look for things in it. */
     private AABB box() {
+        if (area != null) return AABB.of(area);
         Vec3[] ends = beam.ends();
         return new AABB(ends[0], ends[1]).inflate(1.0);
     }
 
-    /** Whether a box comes within {@code slack} of the beam's line. */
+    /** Whether a box comes within {@code slack} of the beam's line, or for an area, is in it. */
     private boolean onBeam(AABB box, double slack) {
+        if (area != null) return box.intersects(AABB.of(area));
         Vec3[] ends = beam.ends();
         AABB near = box.inflate(slack);
         return near.clip(ends[0], ends[1]).isPresent() || near.contains(ends[0]) || near.contains(ends[1]);

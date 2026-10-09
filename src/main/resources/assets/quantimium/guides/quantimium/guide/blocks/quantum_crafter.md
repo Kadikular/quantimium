@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Crafter
   parent: blocks/index.md
-  position: 49
+  position: 50
   icon: quantimium:quantum_crafter
 item_ids:
 - quantimium:quantum_crafter

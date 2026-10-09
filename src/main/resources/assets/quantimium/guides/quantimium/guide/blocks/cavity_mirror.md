@@ -2,7 +2,7 @@
 navigation:
   title: Cavity Mirror
   parent: blocks/index.md
-  position: 9
+  position: 10
   icon: quantimium:cavity_mirror
 item_ids:
 - quantimium:cavity_mirror

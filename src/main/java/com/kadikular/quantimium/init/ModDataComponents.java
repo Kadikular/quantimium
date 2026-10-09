@@ -32,6 +32,12 @@ public final class ModDataComponents {
                     builder -> builder.persistent(com.kadikular.quantimium.laser.LensFilter.CODEC)
                             .networkSynchronized(com.kadikular.quantimium.laser.LensFilter.STREAM_CODEC));
 
+    /** The Laser Linker's area mode and the corners picked. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.kadikular.quantimium.laser.LinkerArea>> LINKER_AREA =
+            COMPONENTS.registerComponentType("linker_area",
+                    builder -> builder.persistent(com.kadikular.quantimium.laser.LinkerArea.CODEC)
+                            .networkSynchronized(com.kadikular.quantimium.laser.LinkerArea.STREAM_CODEC));
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Direction>> BOUND_SIDE =
             COMPONENTS.registerComponentType("bound_side",
                     builder -> builder.persistent(Direction.CODEC).networkSynchronized(Direction.STREAM_CODEC));

@@ -97,6 +97,17 @@ public interface LaserNode {
     /** One action that light through this relay was let through for is done: a pulse mirror closes. */
     default void pulseDone() {}
 
+    /** For an area prism: the blocks the actions of light reaching it work on; null for any other node. */
+    @org.jetbrains.annotations.Nullable
+    default net.minecraft.world.level.levelgen.structure.BoundingBox area() {
+        return null;
+    }
+
+    /** Puts back what a Sender sent but couldn't be used; what didn't fit. */
+    default net.minecraft.world.item.ItemStack takeBack(net.minecraft.world.item.ItemStack stack) {
+        return stack;
+    }
+
     /** Whether light through it loses everything it did, and items can't pass it: an Isolator. */
     default boolean isolates() {
         return false;

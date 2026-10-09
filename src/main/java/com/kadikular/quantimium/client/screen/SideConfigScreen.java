@@ -142,9 +142,12 @@ public final class SideConfigScreen implements QuantumOverlay {
         Level level = Minecraft.getInstance().level;
         if (level == null) return Direction.NORTH;
         BlockState state = level.getBlockState(pos);
-        return state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
-                ? state.getValue(BlockStateProperties.HORIZONTAL_FACING)
-                : Direction.NORTH;
+        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) return state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        // Blocks that face any way (laser blocks): named from their facing when it's level.
+        if (state.hasProperty(BlockStateProperties.FACING) && state.getValue(BlockStateProperties.FACING).getAxis().isHorizontal()) {
+            return state.getValue(BlockStateProperties.FACING);
+        }
+        return Direction.NORTH;
     }
 
     @Override

@@ -142,11 +142,16 @@ public class Quantimium {
                 (be, context) -> be.energy()
         );
 
-        // What a Collector caught, for pipes and hoppers to take.
+        // A Collector hands out what it caught, a Sender takes in what it sends, face by face as set.
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,
                 ModBlockEntities.COLLECTOR_BE.get(),
-                (be, context) -> be.getOutside()
+                (be, context) -> be.automation(context)
+        );
+        event.registerBlockEntity(
+                Capabilities.Item.BLOCK,
+                ModBlockEntities.SENDER_BE.get(),
+                (be, context) -> be.automation(context)
         );
 
         // Laser emitters take power on every face; the flash emitter takes fuel too.

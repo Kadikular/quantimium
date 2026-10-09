@@ -326,11 +326,19 @@ public final class LaserNetworks {
                 list = lensed;
                 beams.put(pos, list);
                 for (Light.Stream stream : light.streams()) {
-                    List<BlockPos> collectors = collectorsFor(pos, stream.payers());
+                    List<BlockPos> collectors = upFor(pos, stream.payers(), LaserNode::collects);
+                    List<BlockPos> senders = upFor(pos, stream.payers(), LaserNode::sends);
                     for (int i = 0; i < list.size(); i++) {
                         LensAction.Key key = new LensAction.Key(pos, i, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(list.get(i), stream, collectors);
+                        action.update(list.get(i), stream, collectors, senders, null);
+                        actions.put(key, action);
+                    }
+                    // An area prism's light works on its area: one action each, as beam -1.
+                    if (node.area() != null) {
+                        LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
+                        LensAction action = was.getOrDefault(key, new LensAction(key));
+                        action.update(null, stream, collectors, senders, node.area());
                         actions.put(key, action);
                     }
                 }
@@ -340,11 +348,12 @@ public final class LaserNetworks {
     }
 
     /**
-     * Every Collector up the light reaching {@code pos}, through relays, nearest first, whose light comes
-     * from one of {@code payers}: where Pickup sends what it brings back, each taking what the ones before
-     * couldn't. A stream from one side of a join reaches back up its own side, and the shared part.
+     * Every node {@code wanted} picks (a Collector, a Sender) up the light reaching {@code pos}, through
+     * relays, nearest first, whose light comes from one of {@code payers}: where Pickup sends what it
+     * brings back, or where Placement takes from, each standing in for the ones before. A stream from one
+     * side of a join reaches back up its own side, and the shared part.
      */
-    private List<BlockPos> collectorsFor(BlockPos pos, Set<BlockPos> payers) {
+    private List<BlockPos> upFor(BlockPos pos, Set<BlockPos> payers, java.util.function.Predicate<LaserNode> wanted) {
         List<BlockPos> found = new ArrayList<>();
         Map<BlockPos, List<BlockPos>> feeding = new HashMap<>();
         beams.forEach((from, list) -> {
@@ -362,7 +371,7 @@ public final class LaserNetworks {
             if (node == null) continue;
             // A Collector counts if its own light comes from one of the stream's sources: on the stream's own side of a join.
             Light light = lights.get(at);
-            if (node.collects() && light != null && !java.util.Collections.disjoint(light.feeders(), payers)) found.add(at);
+            if (wanted.test(node) && light != null && !java.util.Collections.disjoint(light.feeders(), payers)) found.add(at);
             // Nothing passes back up through an Isolator.
             if ((!node.relays() || node.isolates()) && !at.equals(pos)) continue;
             for (BlockPos up : feeding.getOrDefault(at, List.of())) {
@@ -392,6 +401,111 @@ public final class LaserNetworks {
                 if (hop.relay() != null) hop.relay().pulseDone();
             }
         }
+    }
+
+    /**
+     * Once a second, each Sender with light reaching it sends a stack down the beam to the nearest
+     * Collector further along with room for it, through relays but not past an Isolator. The light
+     * reaching the Sender pays to carry it.
+     */
+    private void ship() {
+        for (LaserNode node : nodes.values()) {
+            if (!node.sends()) continue;
+            Light light = lights.get(node.nodePos());
+            if (light == null) continue;
+            List<BlockPos> down = downFor(node.nodePos());
+            if (down.isEmpty()) continue;
+            ItemStack offered = node.send(stack -> roomFor(down, stack), 64, true);
+            if (offered.isEmpty() || !payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) continue;
+            int room = offered.getCount() - simulateCollect(down, offered).getCount();
+            ItemStack sent = node.send(stack -> ItemStack.isSameItemSameComponents(stack, offered), room, false);
+            ItemStack left = collect(down, sent);
+            if (!left.isEmpty()) node.takeBack(left);
+        }
+    }
+
+    private ItemStack simulateCollect(List<BlockPos> positions, ItemStack stack) {
+        ItemStack left = stack;
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.collects() && !left.isEmpty()) left = node.collect(left, true);
+        }
+        return left;
+    }
+
+    /** Every Collector down the light leaving {@code pos}, through relays, nearest first; not past an Isolator. */
+    private List<BlockPos> downFor(BlockPos pos) {
+        List<BlockPos> found = new ArrayList<>();
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> seen = new HashSet<>();
+        queue.add(pos);
+        seen.add(pos);
+        while (!queue.isEmpty()) {
+            BlockPos at = queue.poll();
+            for (LaserBeam beam : beams.getOrDefault(at, List.of())) {
+                if (beam.end() != LaserBeam.End.NODE || !seen.add(beam.hit())) continue;
+                LaserNode next = nodes.get(beam.hit());
+                if (next == null || !next.relays() || next.isolates()) continue;
+                if (next.collects()) found.add(beam.hit());
+                queue.add(beam.hit());
+            }
+        }
+        return found;
+    }
+
+    /** Pays {@code fe} from what the sources at {@code feeders} have left this tick, by what each has; nothing if they haven't enough. */
+    private boolean payFrom(Set<BlockPos> feeders, long fe) {
+        long can = 0;
+        for (Network network : networks) {
+            for (int i = 0; i < network.sources().size(); i++) {
+                if (feeders.contains(network.sources().get(i).nodePos())) can += network.left()[i];
+            }
+        }
+        if (can < fe) return false;
+        long owed = fe;
+        for (Network network : networks) {
+            for (int i = 0; i < network.sources().size() && owed > 0; i++) {
+                if (!feeders.contains(network.sources().get(i).nodePos())) continue;
+                long part = Math.min(owed, Math.min(network.left()[i], (long) Math.ceil((double) fe * network.left()[i] / can)));
+                network.left()[i] -= part;
+                network.sources().get(i).draw(part);
+                owed -= part;
+            }
+        }
+        return true;
+    }
+
+    /** Up to {@code max} of the first thing {@code wants} accepts, from the Senders at {@code positions} in order. */
+    ItemStack take(List<BlockPos> positions, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate) {
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            if (node == null || !node.sends()) continue;
+            ItemStack got = node.send(wants, max, simulate);
+            if (!got.isEmpty()) return got;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** Puts back into the Senders at {@code positions} what one sent but couldn't be used; what none took. */
+    ItemStack returnTo(List<BlockPos> positions, ItemStack stack) {
+        ItemStack left = stack;
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.sends() && !left.isEmpty()) left = node.takeBack(left);
+        }
+        return left;
+    }
+
+    /** Whether the sources paying for {@code action} have {@code fe} left between them this tick. */
+    boolean canPay(LensAction action, long fe) {
+        ActionSink at = actionSinks.get(action.key());
+        if (at == null) return false;
+        long[] left = at.network().left();
+        double can = 0;
+        for (Route route : at.sink().routes()) {
+            if (open(route) && left[route.index()] > 0) can += left[route.index()] * route.efficiency();
+        }
+        return can >= fe;
     }
 
     /** Whether any of the Collectors at {@code positions} would take some of {@code stack}. */
@@ -527,6 +641,15 @@ public final class LaserNetworks {
         while (!queue.isEmpty()) {
             Visit visit = queue.poll();
             boolean relay = visit.relays() > 0;
+            LaserNode at = nodes.get(visit.node());
+            Light here = lights.get(visit.node());
+            if (at != null && at.area() != null && here != null && !visit.path().isEmpty()) {
+                for (Light.Stream stream : here.streams()) {
+                    if (!stream.payers().contains(source.nodePos())) continue;
+                    LensAction action = actions.get(new LensAction.Key(visit.node(), -1, stream.action()));
+                    if (action != null) route(sinks, action.key(), null, Direction.UP, null, action, source.nodePos(), index, visit.path(), visit.efficiency());
+                }
+            }
             List<LaserBeam> out = beams.getOrDefault(visit.node(), List.of());
             for (int i = 0; i < out.size(); i++) {
                 LaserBeam beam = out.get(i);
@@ -598,8 +721,12 @@ public final class LaserNetworks {
             }
         }
         if (dirty) rebuild();
-        for (Network network : networks) move(network);
+        // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
+        // first, so machines taking everything can't starve it; blocks are charged from what's left.
+        for (Network network : networks) refill(network);
         for (LensAction action : actions.values()) action.act(level, this);
+        if (time % SETTLE_TICKS == 10) ship();
+        for (Network network : networks) move(network);
         if (time % SETTLE_TICKS == 0) settle();
     }
 
@@ -608,15 +735,21 @@ public final class LaserNetworks {
      * emitters couldn't give; what emitters have left over then fills cavities. Each block draws only on
      * the sources whose light reaches it.
      */
+    /** What each of the network's sources has to give this tick. */
+    private static void refill(Network network) {
+        List<LaserNode> sources = network.sources();
+        long[] left = network.left();
+        for (int i = 0; i < left.length; i++) {
+            LaserNode source = sources.get(i);
+            left[i] = source.enabled() ? Math.max(0, source.available()) : 0;
+        }
+    }
+
     private void move(Network network) {
         List<LaserNode> sources = network.sources();
         long[] left = network.left();
         long supply = 0;
-        for (int i = 0; i < left.length; i++) {
-            LaserNode source = sources.get(i);
-            left[i] = source.enabled() ? Math.max(0, source.available()) : 0;
-            supply += left[i];
-        }
+        for (long has : left) supply += has;
         if (supply <= 0 || network.sinks().isEmpty()) return;
         long[] had = left.clone();
         charge(network, left, false, false);

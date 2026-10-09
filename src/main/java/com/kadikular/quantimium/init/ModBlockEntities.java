@@ -186,6 +186,9 @@ public class ModBlockEntities {
                     new BlockEntityType<>(LaserEmitterBlockEntity::new, ModBlocks.FLASH_EMITTER.get(),
                             ModBlocks.LASER_EMITTER_1.get(), ModBlocks.LASER_EMITTER_2.get(), ModBlocks.LASER_EMITTER_3.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.AreaPrismBlockEntity>> AREA_PRISM_BE =
+            BLOCK_ENTITIES.register("area_prism_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.AreaPrismBlockEntity::new, ModBlocks.AREA_PRISM.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SplitterBlockEntity>> SPLITTER_BE =
             BLOCK_ENTITIES.register("splitter_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.SplitterBlockEntity::new, ModBlocks.SPLITTER.get()));
@@ -195,6 +198,9 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LensMountBlockEntity>> LENS_MOUNT_BE =
             BLOCK_ENTITIES.register("lens_mount_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LensMountBlockEntity::new, ModBlocks.LENS_MOUNT.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SenderBlockEntity>> SENDER_BE =
+            BLOCK_ENTITIES.register("sender_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.SenderBlockEntity::new, ModBlocks.SENDER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.CollectorBlockEntity>> COLLECTOR_BE =
             BLOCK_ENTITIES.register("collector_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.CollectorBlockEntity::new, ModBlocks.COLLECTOR.get()));

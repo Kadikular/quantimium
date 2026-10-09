@@ -70,6 +70,10 @@ public class ModMenuTypes {
             MENUS.register("collector_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.CollectorMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.SenderMenu>> SENDER_MENU =
+            MENUS.register("sender_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.SenderMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.FilterLensMenu>> FILTER_LENS_MENU =
             MENUS.register("filter_lens_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.FilterLensMenu::new));

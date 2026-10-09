@@ -2,7 +2,7 @@
 navigation:
   title: Horizon Core
   parent: blocks/index.md
-  position: 25
+  position: 26
   icon: quantimium:horizon_core
 ---
 

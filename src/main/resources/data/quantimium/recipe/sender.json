@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "D": "minecraft:dispenser",
+    "M": "quantimium:laser_mirror",
+    "G": "minecraft:glass_pane"
+  },
+  "pattern": [
+    "IDI",
+    "GMG",
+    "III"
+  ],
+  "result": {
+    "id": "quantimium:sender",
+    "count": 1
+  }
+}

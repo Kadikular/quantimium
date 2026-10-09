@@ -2,7 +2,7 @@
 navigation:
   title: Budding Anomalite
   parent: blocks/index.md
-  position: 7
+  position: 8
   icon: quantimium:budding_anomalite
 item_ids:
 - quantimium:budding_anomalite
