@@ -221,6 +221,12 @@ public final class LensTests {
         });
     }
 
+    private static void prism(GameTestHelper helper, BlockPos pos, BlockPos... targets) {
+        helper.setBlock(pos, ModBlocks.LASER_PRISM.get());
+        var prism = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
+        for (BlockPos target : targets) prism.toggleLink(helper.absolutePos(target));
+    }
+
     private static void mirror(GameTestHelper helper, BlockPos pos, Direction facing) {
         helper.setBlock(pos, ModBlocks.LASER_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, facing));
     }
@@ -833,6 +839,31 @@ public final class LensTests {
             helper.assertTrue(empty, "the empty bucket came back to the Sender");
             TestSupport.finishLasers(helper);
             helper.setBlock(new BlockPos(8, Y, 8), Blocks.AIR);
+        });
+    }
+
+    // covers: laser.mirror.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aSwitchedOffMirrorPassesNothingOn(GameTestHelper helper) {
+        // One: emitter, Harvest + Speed mount, a mirror needing a signal (none), then a shared mirror into a prism.
+        // Two: an emitter straight into the shared mirror. The prism's light must be plain, and cut nothing.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.SPEED_LENS.get());
+        helper.setBlock(new BlockPos(5, Y, 4), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(new BlockPos(5, Y, 4), com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class).cycleMode();
+        emitter(helper, new BlockPos(8, Y, 0), Direction.SOUTH, true);
+        mirror(helper, new BlockPos(8, Y, 4), Direction.SOUTH);
+        BlockPos stone = new BlockPos(12, Y, 12);
+        helper.setBlock(stone, Blocks.STONE);
+        prism(helper, new BlockPos(8, Y, 8), stone);
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockPresent(Blocks.STONE, stone);
+            String light = String.join(" ", com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
+                    .describe(helper.absolutePos(new BlockPos(8, Y, 8))).stream().map(net.minecraft.network.chat.Component::getString).toList());
+            helper.assertTrue(light.contains("Plain light"), "plain light from the prism: " + light);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
         });
     }
 }

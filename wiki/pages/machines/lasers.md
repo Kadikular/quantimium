@@ -50,7 +50,8 @@ where the mirror stands.
 [[mechanic:laser.mirror.redstone]] Use an empty hand on a mirror to step through how it listens to
 redstone: it ignores it, passes light only with a signal, only without one, or in **pulse** mode, where
 each signal it gets lets light through until one action down the beam is done (a block cut, a hit, an
-item carried) or two seconds pass. A pulse mirror before a Harvest lens breaks one block per pulse.
+item carried) or two seconds pass. A pulse mirror before a Harvest lens breaks one block per pulse. Switched off, a mirror passes no light at all: nothing the light did reaches past it, and what's beyond
+gets only the light that reaches it some other way. An emitter switched off by redstone gives out none.
 
 [[mechanic:laser.splitter]] A [[block:splitter]] is a mirror with as many faces as you set: light that
 reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six

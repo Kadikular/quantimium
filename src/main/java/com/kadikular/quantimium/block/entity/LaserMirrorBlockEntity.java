@@ -59,6 +59,7 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, Fl
         mode = mode.next();
         pulseOpen = false;
         setChanged();
+        if (level != null) LaserNetworks.changed(level);
     }
 
     /** The block next to it changed: a signal arriving opens a pulse. */
@@ -78,6 +79,11 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, Fl
             case WITHOUT_SIGNAL -> !powered;
             case PULSE -> pulseOpen && level != null && level.getGameTime() - pulseAt <= com.kadikular.quantimium.laser.RelayMode.PULSE_TICKS;
         };
+    }
+
+    @Override
+    public boolean switches() {
+        return mode != com.kadikular.quantimium.laser.RelayMode.IGNORED;
     }
 
     @Override

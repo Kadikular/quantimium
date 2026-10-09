@@ -71,6 +71,8 @@ public final class LaserNetworks {
     private final Map<BlockPos, Light> lights = new HashMap<>();
     /** The light reaching each cavity, which it remembers when it's filled. */
     private final Map<BlockPos, Light> cavityIn = new HashMap<>();
+    /** What redstone can switch, and whether each was on when the network was last built. */
+    private Map<LaserNode, Boolean> switched = Map.of();
     /** The nodes light ran through at the last settle. */
     private Set<BlockPos> litNow = Set.of();
 
@@ -227,8 +229,19 @@ public final class LaserNetworks {
         // Light from each source, then on through each relay it reaches, at the reach of the light that
         // gets there; again wherever more light arrives. Light only adds up, so this settles.
         ArrayDeque<BlockPos> work = new ArrayDeque<>();
+        // What redstone switches, and how each stood now: watched each tick, rebuilt when one changes.
+        Map<LaserNode, Boolean> watching = new LinkedHashMap<>();
+        for (LaserNode node : nodes.values()) {
+            if (node.switches()) watching.put(node, node.enabled());
+        }
+        switched = watching;
         for (LaserNode node : nodes.values()) {
             if (node.relays()) continue;
+            // A switched-off source gives out no light: none of its reach, nor what it does.
+            if (!node.enabled()) {
+                traceAt(node, node.range(), before);
+                continue;
+            }
             Light light = node.emits();
             lights.put(node.nodePos(), light);
             traceAt(node, light.reach(), before);
@@ -239,7 +252,8 @@ public final class LaserNetworks {
         while (!work.isEmpty() && steps++ < cap) {
             BlockPos at = work.poll();
             LaserNode node = nodes.get(at);
-            if (node == null || !node.relays()) continue;
+            // A switched-off relay passes nothing on: the light beyond it is only what reaches it some other way.
+            if (node == null || !node.relays() || !node.enabled()) continue;
             Light in = incoming(node);
             if (in == null) continue;
             Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
@@ -744,6 +758,15 @@ public final class LaserNetworks {
         if (nodes.isEmpty()) return;
         long time = level.getGameTime();
         // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
+        // Something redstone switches has been switched: what light carries changes.
+        if (!dirty) {
+            for (Map.Entry<LaserNode, Boolean> entry : switched.entrySet()) {
+                if (entry.getKey().enabled() != entry.getValue()) {
+                    dirty = true;
+                    break;
+                }
+            }
+        }
         if (!dirty) {
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
                 List<LaserBeam> was = beams.get(node.nodePos());

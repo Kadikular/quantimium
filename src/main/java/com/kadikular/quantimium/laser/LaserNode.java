@@ -94,6 +94,11 @@ public interface LaserNode {
         return List.of();
     }
 
+    /** Whether redstone can switch it on and off: the network then watches it, and lets no light through it while it's off. */
+    default boolean switches() {
+        return false;
+    }
+
     /** One action that light through this relay was let through for is done: a pulse mirror closes. */
     default void pulseDone() {}
 

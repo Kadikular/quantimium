@@ -131,6 +131,7 @@ public class LaserEmitterBlockEntity extends BlockEntity implements LaserNode, M
     public void cycleRedstone() {
         redstone = redstone.next();
         setChanged();
+        if (level != null) LaserNetworks.changed(level);
     }
 
     /** What its beams sent a tick, on average over the last second. */
@@ -193,6 +194,11 @@ public class LaserEmitterBlockEntity extends BlockEntity implements LaserNode, M
     @Override
     public boolean enabled() {
         return level != null && redstone.allows(level, worldPosition);
+    }
+
+    @Override
+    public boolean switches() {
+        return redstone != com.kadikular.quantimium.util.RedstoneMode.IGNORED;
     }
 
     @Override
