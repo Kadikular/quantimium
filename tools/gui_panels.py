@@ -392,6 +392,15 @@ def collector_filter() -> Panel:
     return panel
 
 
+def area_prism() -> Panel:
+    """An Area Prism: no slots; what its area is, written across the top, and a note under it (AreaPrismScreen)."""
+    panel = Panel(HIGH)
+    panel.region("area", (8, 24, 160, 9))
+    panel.region("reach", (8, 40, 160, 9))
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -478,6 +487,7 @@ PANELS = {
     "flash_emitter": lambda: laser_emitter(True),
     "lens_mount": lens_mount,
     "collector": collector,
+    "area_prism": area_prism,
     "collector_filter": collector_filter,
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,

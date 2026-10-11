@@ -41,6 +41,8 @@ public final class LensAction {
     /** For an area prism's action: the blocks it works on, instead of the beam's end; null for a beam's. */
     @Nullable
     private net.minecraft.world.level.levelgen.structure.BoundingBox area;
+    /** Which of the box's blocks are in the area: all of a picked area or a cube's; a sphere's, not its corners. */
+    private java.util.function.Predicate<BlockPos> within = pos -> true;
     /** How far through the area it's looked, and the block it's found to work on next. */
     private int cursor;
     /** Blocks looked at in a row with nothing to do, and till when it rests after a whole fruitless sweep. */
@@ -340,7 +342,7 @@ public final class LensAction {
         for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
             BlockPos pos = areaPos(cursor);
             cursor = (cursor + 1) % areaVolume();
-            if (level.isLoaded(pos) && level.getBlockEntity(pos) != null
+            if (within.test(pos) && level.isLoaded(pos) && level.getBlockEntity(pos) != null
                     && level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, pos, null) != null && inSight(level, pos)) {
                 missed = 0;
                 return pos;
@@ -432,7 +434,7 @@ public final class LensAction {
             BlockPos pos = areaPos(cursor);
             cursor = (cursor + 1) % areaVolume();
             if (fruitless()) return null;
-            if (!level.isLoaded(pos) || !level.getBlockState(pos).canBeReplaced()) continue;
+            if (!within.test(pos) || !level.isLoaded(pos) || !level.getBlockState(pos).canBeReplaced()) continue;
             BlockPos below = pos.below();
             if (level.getBlockState(below).isAir() || !inSight(level, pos)) continue;
             var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(below), net.minecraft.core.Direction.UP, below, false);
@@ -454,6 +456,11 @@ public final class LensAction {
 
     private int areaVolume() {
         return area == null ? 1 : area.getXSpan() * area.getYSpan() * area.getZSpan();
+    }
+
+    /** For an area prism's action: which blocks of its box are in its area. */
+    void within(java.util.function.Predicate<BlockPos> within) {
+        this.within = within;
     }
 
     /** The {@code index}th block of the area, row by row, bottom up. */
@@ -512,7 +519,7 @@ public final class LensAction {
             for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
                 BlockPos pos = areaPos(cursor);
                 cursor = (cursor + 1) % areaVolume();
-                if (level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)) {
+                if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)) {
                     missed = 0;
                     return pos;
                 }
@@ -741,7 +748,7 @@ public final class LensAction {
 
     /** Whether a box comes within {@code slack} of the beam's line, or for an area, is in it. */
     private boolean onBeam(AABB box, double slack) {
-        if (area != null) return box.intersects(AABB.of(area)) && sightLevel != null
+        if (area != null) return box.intersects(AABB.of(area)) && within.test(BlockPos.containing(box.getCenter())) && sightLevel != null
                 && inSight(sightLevel, BlockPos.containing(box.getCenter()));
         Vec3[] ends = beam.ends();
         AABB near = box.inflate(slack);

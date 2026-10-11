@@ -42,7 +42,10 @@ public class AreaPrismBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!player.isSecondaryUseActive()) return InteractionResult.PASS;
+        if (!player.isSecondaryUseActive()) {
+            if (!level.isClientSide() && level.getBlockEntity(pos) instanceof AreaPrismBlockEntity prism) player.openMenu(prism, pos);
+            return InteractionResult.SUCCESS;
+        }
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof AreaPrismBlockEntity prism) {
             prism.clearArea();
             player.sendOverlayMessage(Component.translatable("message.quantimium.area_prism.cleared").withStyle(ChatFormatting.AQUA));

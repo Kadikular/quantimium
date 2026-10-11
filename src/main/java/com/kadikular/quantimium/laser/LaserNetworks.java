@@ -398,6 +398,7 @@ public final class LaserNetworks {
                         LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
                         action.update(null, stream, collectors, senders, node.area(), light.reach(), light.marks(), 0);
+                        action.within(node::inArea);
                         actions.put(key, action);
                     }
                 }

@@ -123,6 +123,11 @@ public interface LaserNode {
         showBeams(beams);
     }
 
+    /** For an area prism: whether {@code pos}, in its area's box, is in its area (a sphere's box has corners that aren't). */
+    default boolean inArea(BlockPos pos) {
+        return true;
+    }
+
     /** Puts back what a Sender sent but couldn't be used; what didn't fit. */
     default net.minecraft.world.item.ItemStack takeBack(net.minecraft.world.item.ItemStack stack) {
         return stack;

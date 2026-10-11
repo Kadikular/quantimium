@@ -1230,4 +1230,27 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // covers: laser.area_prism.shape
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void anAreaPrismSphereLeavesItsBoxsCorners(GameTestHelper helper) {
+        // Up off the floor, so the sphere holds only the two stones.
+        emitter(helper, new BlockPos(1, Y + 4, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y + 4, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        BlockPos at = new BlockPos(8, Y + 4, 8);
+        helper.setBlock(at, ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.cycleShape();
+        prism.cycleShape();
+        prism.setRadius(3);
+        helper.assertTrue(prism.shape() == com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.Shape.SPHERE, "a sphere");
+        helper.setBlock(at.east(3), Blocks.STONE);
+        helper.setBlock(at.east(3).south(3), Blocks.STONE);
+        helper.runAfterDelay(100, () -> {
+            helper.assertBlockPresent(Blocks.AIR, at.east(3));
+            helper.assertBlockPresent(Blocks.STONE, at.east(3).south(3));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

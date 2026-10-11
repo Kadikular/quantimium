@@ -35,7 +35,20 @@ import java.util.Set;
  * see from it. The light goes no further, and work in an area costs {@link LaserTuning#AREA_COST} times as
  * much. A Filter lens says what counts.
  */
-public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
+public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, net.minecraft.world.MenuProvider {
+
+    /** What its area is: the one picked with the Linker, or a cube or sphere of a radius round it. */
+    public enum Shape {
+        PICKED, CUBE, SPHERE;
+
+        public Shape next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+    }
+
+    public static final int MAX_RADIUS = LaserTuning.MAX_RANGE;
+    private Shape shape = Shape.PICKED;
+    private int radius = 4;
 
     public enum Placed { SET, TOO_BIG }
 
@@ -77,7 +90,43 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     @Override
     @Nullable
     public BoundingBox area() {
-        return area;
+        if (shape == Shape.PICKED) return area;
+        return new BoundingBox(worldPosition.getX() - radius, worldPosition.getY() - radius, worldPosition.getZ() - radius,
+                worldPosition.getX() + radius, worldPosition.getY() + radius, worldPosition.getZ() + radius);
+    }
+
+    @Override
+    public boolean inArea(BlockPos pos) {
+        return shape != Shape.SPHERE || pos.distSqr(worldPosition) <= (radius + 0.5) * (radius + 0.5);
+    }
+
+    public Shape shape() {
+        return shape;
+    }
+
+    public int radius() {
+        return radius;
+    }
+
+    public void cycleShape() {
+        shape = shape.next();
+        changed();
+    }
+
+    public void setRadius(int radius) {
+        this.radius = Math.clamp(radius, 1, MAX_RADIUS);
+        changed();
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.quantimium.area_prism");
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+                                                                         net.minecraft.world.entity.player.Player player) {
+        return new com.kadikular.quantimium.menu.AreaPrismMenu(containerId, inventory, this);
     }
 
     @Override
@@ -153,12 +202,16 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         if (area != null) out.store("Area", BoundingBox.CODEC, area);
+        out.putInt("Shape", shape.ordinal());
+        out.putInt("Radius", radius);
     }
 
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         area = in.read("Area", BoundingBox.CODEC).orElse(null);
+        shape = Shape.values()[Math.floorMod(in.getIntOr("Shape", 0), Shape.values().length)];
+        radius = Math.clamp(in.getIntOr("Radius", 4), 1, MAX_RADIUS);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
         in.read("Points", CompoundTag.CODEC).ifPresent(tag -> {
             List<net.minecraft.world.phys.Vec3> read = new java.util.ArrayList<>();
@@ -195,6 +248,10 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     @Override
     @Nullable
     public MutableComponent fluxMeterLine() {
+        if (shape != Shape.PICKED) {
+            return Component.translatable("message.quantimium.area_prism." + shape.name().toLowerCase(java.util.Locale.ROOT), radius)
+                    .withStyle(ChatFormatting.DARK_AQUA);
+        }
         if (area == null) return Component.translatable("message.quantimium.area_prism.none").withStyle(ChatFormatting.GRAY);
         return Component.translatable("message.quantimium.area_prism.area", area.getXSpan(), area.getYSpan(), area.getZSpan())
                 .withStyle(ChatFormatting.DARK_AQUA);
