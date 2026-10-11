@@ -111,6 +111,8 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
                 if (hasSettings(slot) && com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(event.x(), event.y(),
                         leftPos + LensMountMenu.SLOT_X[slot] - 1, topPos + LensMountMenu.BUTTON_Y, LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H)) {
                     if (minecraft != null && minecraft.gameMode != null) {
+                        // The settings screen opens where the pointer is, not at the middle of the window.
+                        FilterLensScreen.keepCursor(minecraft.mouseHandler.xpos(), minecraft.mouseHandler.ypos());
                         minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
                                 net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
                         minecraft.gameMode.handleInventoryButtonClick(menu.containerId, slot);

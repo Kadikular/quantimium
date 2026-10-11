@@ -23,6 +23,8 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     public static final int BUTTON_MODE = 0;
     public static final int BUTTON_LIVING = 1;
     public static final int BUTTON_GROWN = 2;
+    public static final int BUTTON_KEEP_MORE = 3;
+    public static final int BUTTON_KEEP_FEWER = 4;
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 35;
     public static final int FILTER_END = LensFilter.SLOTS;
@@ -137,9 +139,11 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     @Override
     public boolean clickMenuButton(Player who, int id) {
         LensFilter filter = filter();
-        if (id == BUTTON_MODE) set(new LensFilter(filter.entries(), !filter.allow(), filter.living(), filter.grown()));
-        else if (id == BUTTON_LIVING) set(new LensFilter(filter.entries(), filter.allow(), filter.living().next(), filter.grown()));
-        else if (id == BUTTON_GROWN) set(new LensFilter(filter.entries(), filter.allow(), filter.living(), !filter.grown()));
+        if (id == BUTTON_MODE) set(new LensFilter(filter.entries(), !filter.allow(), filter.living(), filter.grown(), filter.keep()));
+        else if (id == BUTTON_LIVING) set(new LensFilter(filter.entries(), filter.allow(), filter.living().next(), filter.grown(), filter.keep()));
+        else if (id == BUTTON_GROWN) set(new LensFilter(filter.entries(), filter.allow(), filter.living(), !filter.grown(), filter.keep()));
+        else if (id == BUTTON_KEEP_MORE) set(filter.withKeep(filter.keep() + 1));
+        else if (id == BUTTON_KEEP_FEWER) set(filter.withKeep(filter.keep() - 1));
         else return false;
         return true;
     }

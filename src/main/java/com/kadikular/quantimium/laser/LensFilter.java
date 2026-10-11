@@ -27,15 +27,26 @@ import java.util.List;
  * @param living  what living things it lets an action reach
  * @param grown   only what's fully grown: a Harvest beam cuts only crops (and anything else that grows)
  *                that are ripe, and nothing that doesn't grow; a Damage beam spares the young
+ * @param keep    how many of what a Damage beam would hit it spares: it hits only those beyond that many
  */
-public record LensFilter(List<ItemStack> entries, boolean allow, Living living, boolean grown) {
+public record LensFilter(List<ItemStack> entries, boolean allow, Living living, boolean grown, int keep) {
+
+    public static final int MAX_KEEP = 64;
 
     public LensFilter(List<ItemStack> entries, boolean allow, Living living) {
-        this(entries, allow, living, false);
+        this(entries, allow, living, false, 0);
+    }
+
+    public LensFilter(List<ItemStack> entries, boolean allow, Living living, boolean grown) {
+        this(entries, allow, living, grown, 0);
+    }
+
+    public LensFilter withKeep(int keep) {
+        return new LensFilter(entries, allow, living, grown, Math.clamp(keep, 0, MAX_KEEP));
     }
 
     public static final int SLOTS = 9;
-    public static final LensFilter EMPTY = new LensFilter(List.of(), true, Living.ANY, false);
+    public static final LensFilter EMPTY = new LensFilter(List.of(), true, Living.ANY, false, 0);
 
     /** Which living things an action may reach. */
     public enum Living implements StringRepresentable {
@@ -67,7 +78,8 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living, 
             ItemStack.OPTIONAL_CODEC.listOf().fieldOf("entries").forGetter(LensFilter::entries),
             Codec.BOOL.fieldOf("allow").forGetter(LensFilter::allow),
             Living.CODEC.fieldOf("living").forGetter(LensFilter::living),
-            Codec.BOOL.optionalFieldOf("grown", false).forGetter(LensFilter::grown)
+            Codec.BOOL.optionalFieldOf("grown", false).forGetter(LensFilter::grown),
+            Codec.INT.optionalFieldOf("keep", 0).forGetter(LensFilter::keep)
     ).apply(instance, LensFilter::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LensFilter> STREAM_CODEC = StreamCodec.composite(
@@ -75,6 +87,7 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living, 
             ByteBufCodecs.BOOL, LensFilter::allow,
             ByteBufCodecs.idMapper(i -> Living.values()[Math.floorMod(i, Living.values().length)], Living::ordinal).cast(), LensFilter::living,
             ByteBufCodecs.BOOL, LensFilter::grown,
+            ByteBufCodecs.VAR_INT, LensFilter::keep,
             LensFilter::new);
 
     public LensFilter {
@@ -131,14 +144,14 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living, 
         List<ItemStack> list = new ArrayList<>(entries);
         while (list.size() < SLOTS) list.add(ItemStack.EMPTY);
         list.set(slot, stack.isEmpty() ? ItemStack.EMPTY : FilterEntry.of(stack));
-        return new LensFilter(list, allow, living, grown);
+        return new LensFilter(list, allow, living, grown, keep);
     }
 
     public LensFilter cycledTag(int slot) {
         if (slot >= entries.size() || entries.get(slot).isEmpty()) return this;
         List<ItemStack> list = new ArrayList<>(entries);
         list.set(slot, FilterEntry.cycle(list.get(slot)));
-        return new LensFilter(list, allow, living, grown);
+        return new LensFilter(list, allow, living, grown, keep);
     }
 
     public ItemStack entry(int slot) {

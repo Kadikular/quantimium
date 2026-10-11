@@ -389,12 +389,15 @@ public final class LaserNetworks {
 
     /**
      * Every node {@code wanted} picks (a Collector, a Sender) up the light reaching {@code pos}, through
-     * relays, nearest first, whose light comes from one of {@code payers}: where Pickup sends what it
-     * brings back, or where Placement takes from, each standing in for the ones before. A stream from one
-     * side of a join reaches back up its own side, and the shared part.
+     * relays and cavities, nearest first, whose light comes from one of {@code payers}: where Pickup sends
+     * what it brings back, or where Placement takes from, each standing in for the ones before. A stream
+     * from one side of a join reaches back up its own side, and the shared part; past a cavity, up the
+     * light that filled it.
      */
     private List<BlockPos> upFor(BlockPos pos, Set<BlockPos> payers, java.util.function.Predicate<LaserNode> wanted) {
         List<BlockPos> found = new ArrayList<>();
+        // A cavity's light came from the sources that filled it: up past it, their light counts as the stream's own.
+        Set<BlockPos> ours = new HashSet<>(payers);
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> seen = new HashSet<>();
         queue.add(pos);
@@ -405,9 +408,13 @@ public final class LaserNetworks {
             if (node == null) continue;
             // A Collector counts if its own light comes from one of the stream's sources: on the stream's own side of a join.
             Light light = lights.get(at);
-            if (wanted.test(node) && light != null && !java.util.Collections.disjoint(light.feeders(), payers)) found.add(at);
-            // Nothing passes back up through an Isolator.
-            if ((!node.relays() || node.isolates()) && !at.equals(pos)) continue;
+            if (wanted.test(node) && light != null && !java.util.Collections.disjoint(light.feeders(), ours)) found.add(at);
+            if (node.buffers()) {
+                Light filled = cavityIn.get(at);
+                if (filled != null) ours.addAll(filled.feeders());
+            }
+            // Nothing passes back up through an Isolator, or past a source; a cavity, it does.
+            if (((!node.relays() && !node.buffers()) || node.isolates()) && !at.equals(pos)) continue;
             for (BlockPos up : into.getOrDefault(at, List.of())) {
                 if (seen.add(up)) queue.add(up);
             }
@@ -799,7 +806,7 @@ public final class LaserNetworks {
         for (Network network : networks) refill(network);
         for (LensAction action : actions.values()) action.act(level, this);
         if (time % SETTLE_TICKS == 10) ship();
-        if (time % 5 == 0) showAreaWork();
+        if (time % 2 == 0) showAreaWork();
         for (Network network : networks) move(network);
         if (time % SETTLE_TICKS == 0) settle();
     }

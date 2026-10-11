@@ -62,10 +62,12 @@ public final class LensAction {
     private long cutCost;
     private long cut;
     private int cooldown;
-    /** FE the cut wants this tick. */
+    /** FE the cut, or the next hits, want this tick. */
     private long want;
+    /** FE charged towards the next hits: a hit can cost more than a tick's light, so it charges up, and keeps what it has. */
+    private long charged;
     /** What it saw in the beam at its last sweep. */
-    private List<LivingEntity> targets = List.of();
+    private List<LivingEntity> targets = new ArrayList<>();
 
     LensAction(Key key) {
         this.key = key;
@@ -94,8 +96,9 @@ public final class LensAction {
     /** Takes up to {@code fe} into the cut; what it took. */
     long fill(long fe) {
         long took = Math.min(fe, want);
-        if (took > 0) lastWorked = now;
-        cut += took;
+        if (took > 0 && key.action() == Lens.HARVEST) lastWorked = now;
+        if (key.action() == Lens.DAMAGE) charged += took;
+        else cut += took;
         want -= took;
         return took;
     }
@@ -112,22 +115,7 @@ public final class LensAction {
         int phase = Math.floorMod(key.hashCode() + (int) level.getGameTime(), LaserTuning.DAMAGE_INTERVAL);
         switch (key.action()) {
             case HARVEST -> harvest(level, networks, pickup);
-            case DAMAGE -> {
-                if (phase != 0) return;
-                targets = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive() && onBeam(entity.getBoundingBox(), 0.25)
-                        && (stream.filter() == null || stream.filter().letsHit(entity)));
-                // Each Amplify lens doubles the hit, and what it costs.
-                int scale = 1 << stream.amps();
-                for (LivingEntity entity : targets) {
-                    if (!networks.pay(this, LaserTuning.DAMAGE_FE_PER_HIT * scale)) break;
-                    if (entity.hurtServer(level, level.damageSources().source(ModDamageTypes.LASER), LaserTuning.DAMAGE_PER_HIT * scale)) {
-                        networks.workDone(this);
-                        lastWorked = now;
-                        // Killed, with Pickup: what it drops goes straight back up the beam, wherever it lands.
-                        if (pickup && !entity.isAlive()) gatherDrops(level, networks, entity);
-                    }
-                }
-            }
+            case DAMAGE -> damage(level, networks, phase == 0, pickup);
             case PICKUP -> {
                 if (phase != 0 || collectors.isEmpty()) return;
                 // Items are small: anything within nearly a block of the beam's line counts.
@@ -139,6 +127,37 @@ public final class LensAction {
             case PLACE -> place(level, networks);
             default -> {}
         }
+    }
+
+    // ---- hitting ----
+
+    /**
+     * Charges up for the next hits while there's something to hit, and hits each sweep with what it's
+     * charged: each Amplify lens doubles a hit, and what it costs, so a hit can take more than one tick's
+     * light to charge. What's charged is kept, never lost, up to one round of hits.
+     */
+    private void damage(ServerLevel level, LaserNetworks networks, boolean sweep, boolean pickup) {
+        int scale = 1 << stream.amps();
+        long hit = LaserTuning.DAMAGE_FE_PER_HIT * scale;
+        if (sweep) {
+            List<LivingEntity> found = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive()
+                    && onBeam(entity.getBoundingBox(), 0.25) && (stream.filter() == null || stream.filter().letsHit(entity)));
+            // A Filter's keep count: that many are spared, and only those beyond it are hit.
+            int keep = stream.filter() == null ? 0 : stream.filter().keep();
+            targets = found.size() <= keep ? new ArrayList<>() : new ArrayList<>(found.subList(0, found.size() - keep));
+            for (LivingEntity entity : targets) {
+                if (charged < hit) break;
+                if (entity.hurtServer(level, level.damageSources().source(ModDamageTypes.LASER), LaserTuning.DAMAGE_PER_HIT * scale)) {
+                    charged -= hit;
+                    networks.workDone(this);
+                    lastWorked = now;
+                    // Killed, with Pickup: what it drops goes straight back up the beam, wherever it lands.
+                    if (pickup && !entity.isAlive()) gatherDrops(level, networks, entity);
+                }
+            }
+        }
+        targets.removeIf(entity -> !entity.isAlive());
+        want = Math.max(0, hit * targets.size() - charged);
     }
 
     // ---- placing ----
@@ -402,7 +421,8 @@ public final class LensAction {
         return switch (key.action()) {
             case HARVEST -> cutting;
             case PLACE -> placed;
-            case DAMAGE -> targets.isEmpty() ? null : targets.getFirst().blockPosition();
+            // Where what it's hitting is now, so the beam follows it.
+            case DAMAGE -> targets.isEmpty() ? null : BlockPos.containing(targets.getFirst().getBoundingBox().getCenter());
             default -> null;
         };
     }

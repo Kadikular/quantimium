@@ -23,8 +23,28 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/collector_filter.png");
 
+    /** Where the pointer was when a Lens Mount's button opened this, to put it back: or NaN. */
+    private static double keptX = Double.NaN;
+    private static double keptY = Double.NaN;
+
     public FilterLensScreen(FilterLensMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
+    }
+
+    /** Opening from another screen recentres the pointer; this one puts it back where it was. */
+    public static void keepCursor(double x, double y) {
+        keptX = x;
+        keptY = y;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        if (!Double.isNaN(keptX) && minecraft != null) {
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(minecraft.getWindow().handle(), keptX, keptY);
+            keptX = Double.NaN;
+            keptY = Double.NaN;
+        }
     }
 
     @Override
@@ -49,7 +69,15 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
                                 () -> List.of(Component.translatable(menu.filter().grown() ? "gui.quantimium.filter_lens.grown.on"
                                                 : "gui.quantimium.filter_lens.grown.off"),
                                         Component.translatable("gui.quantimium.filter_lens.grown.tip")))
-                        .icon(() -> new ItemStack(menu.filter().grown() ? Items.WHEAT : Items.WHEAT_SEEDS)));
+                        .icon(() -> new ItemStack(menu.filter().grown() ? Items.WHEAT : Items.WHEAT_SEEDS)),
+                Tab.of(() -> Component.literal("+"), () -> press(FilterLensMenu.BUTTON_KEEP_MORE),
+                                () -> List.of(Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()),
+                                        Component.translatable("gui.quantimium.filter_lens.keep.more")))
+                        .icon(() -> new ItemStack(Items.TOTEM_OF_UNDYING)),
+                Tab.of(() -> Component.literal("-"), () -> press(FilterLensMenu.BUTTON_KEEP_FEWER),
+                                () -> List.of(Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()),
+                                        Component.translatable("gui.quantimium.filter_lens.keep.fewer")))
+                        .icon(() -> new ItemStack(Items.BONE)));
     }
 
     private void press(int button) {
@@ -111,6 +139,9 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         graphics.text(font, Component.translatable("gui.quantimium.filter_lens.note"), leftPos + 8, topPos + 22, dimColour(), false);
+        if (menu.filter().keep() > 0) {
+            graphics.text(font, Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()), leftPos + 8, topPos + 56, textColour(), false);
+        }
     }
 
     @Override

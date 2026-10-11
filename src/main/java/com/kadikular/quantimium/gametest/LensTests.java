@@ -904,4 +904,59 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.lens.amplify, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void anAmplifiedHitChargesUpOverTicks(GameTestHelper helper) {
+        // An Emitter I sends 2,000 FE a tick; an amplified hit costs 2,000, more than arrives in one: it charges, then lands.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get(), ModItems.AMPLIFY_LENS.get());
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.setArea(helper.absolutePos(new BlockPos(7, Y, 6)), helper.absolutePos(new BlockPos(10, Y + 1, 10)));
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(8, Y, 8));
+        float full = pig.getHealth();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!pig.isAlive() || pig.getHealth() < full, "the pig was hit");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void aKeepCountSparesThatMany(GameTestHelper helper) {
+        // Three pigs, keep two: one is hit, two aren't.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withKeep(2)));
+        java.util.List<Pig> pigs = new java.util.ArrayList<>();
+        for (int x = 5; x <= 9; x += 2) pigs.add(helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(x, Y, 8)));
+        float full = pigs.getFirst().getHealth();
+        helper.runAfterDelay(100, () -> {
+            long hurt = pigs.stream().filter(pig -> !pig.isAlive() || pig.getHealth() < full).count();
+            helper.assertValueEqual(hurt, 1L, "only the one beyond the two kept");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.pickup, laser.light.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void pickupComesBackPastACavity(GameTestHelper helper) {
+        // Harvest + Pickup light fills a cavity; the cavity's own light cuts the stone, and the drop comes
+        // back past it to the Collector up the light that filled it.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.CAVITY_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, Direction.SOUTH));
+        mirror(helper, new BlockPos(7, Y, 12), Direction.NORTH);
+        helper.setBlock(new BlockPos(7, Y, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(7, Y, 0), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.COBBLESTONE), 1, "back past the cavity");
+            helper.setBlock(new BlockPos(7, Y, 8), Blocks.AIR);
+            TestSupport.finishLasers(helper);
+        });
+    }
 }
