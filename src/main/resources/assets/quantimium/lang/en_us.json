@@ -996,6 +996,8 @@
   "item.quantimium.precision_lens.tip": "Harvest cuts with Silk Touch: blocks come away whole.",
   "item.quantimium.harmonic_lens": "Harmonic Lens",
   "item.quantimium.harmonic_lens.tip": "Harvest cuts with Fortune, Damage hits with Looting: a level for each lens, up to three.",
+  "item.quantimium.smelting_lens": "Smelting Lens",
+  "item.quantimium.smelting_lens.tip": "With Pickup, what comes back up the beam is smelted on the way: sand comes back as glass.",
   "item.quantimium.unrealising_lens": "Unrealising Lens",
   "item.quantimium.unrealising_lens.tip": "Ore a Harvest beam cuts comes away as Unrealised Matter, one to a block, with no history yet. A pack can turn this off.",
   "item.quantimium.interact_lens": "Interact Lens",

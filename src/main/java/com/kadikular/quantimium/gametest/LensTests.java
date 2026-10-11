@@ -1292,6 +1292,67 @@ public final class LensTests {
         });
     }
 
+    private static ItemStack firstOf(CollectorBlockEntity collector, Item item) {
+        for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) {
+            ItemStack stack = collector.getItems().getStackInSlot(slot);
+            if (stack.is(item)) return stack;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void smeltingHarvestCutsSandIntoGlass(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.SAND);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.GLASS), 1, "glass, not sand");
+            helper.assertValueEqual(count(collector, Items.SAND), 0, "no sand");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void smeltingPickupSmeltsWhatLiesInTheBeam(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get());
+        BlockPos at = new BlockPos(10, Y, 8);
+        ItemEntity iron = new ItemEntity(helper.getLevel(), helper.absoluteVec(at.getCenter()).x, helper.absolutePos(at).getY() + 0.5,
+                helper.absoluteVec(at.getCenter()).z, new ItemStack(Items.RAW_IRON, 64));
+        iron.setDeltaMovement(0, 0, 0);
+        iron.setNoGravity(true);
+        helper.getLevel().addFreshEntity(iron);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.IRON_INGOT), 64, "a stack of ingots, from a stack of raw iron");
+            helper.assertValueEqual(count(collector, Items.RAW_IRON), 0, "no raw iron");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void smeltingGivesUnrealisedMatterItsSmelting(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
+                ModItems.UNREALISING_LENS.get(), ModItems.SMELTING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.IRON_ORE);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            ItemStack matter = firstOf(collector, ModItems.UNREALISED_MATTER.get());
+            helper.assertFalse(matter.isEmpty(), "Unrealised Matter came back");
+            helper.assertValueEqual(com.kadikular.quantimium.unrealised.MatterHistory.of(matter).steps(),
+                    java.util.List.of(com.kadikular.quantimium.unrealised.MatterSteps.idOf(net.minecraft.world.item.crafting.RecipeType.SMELTING)),
+                    "smelted, still unrealised");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.area_prism.shape
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
     public static void anAreaPrismSphereLeavesItsBoxsCorners(GameTestHelper helper) {

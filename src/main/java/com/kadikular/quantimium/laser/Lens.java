@@ -37,7 +37,9 @@ public enum Lens {
     /** Harvest cuts with Fortune, a level for each, up to three. */
     HARMONIC(false, 0xFFFFD0F0),
     /** Ore cut comes away as Unrealised Matter. */
-    UNREALISE(false, 0xFFB070FF);
+    UNREALISE(false, 0xFFB070FF),
+    /** With Pickup, what comes back up the beam is smelted on the way. */
+    SMELT(false, 0xFFFF8040);
 
     /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
     public static final int MIRRORED_MARK = 30;

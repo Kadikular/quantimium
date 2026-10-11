@@ -37,6 +37,7 @@ navigation:
 - <ItemLink id="quantimium:rift_seed" />
 - <ItemLink id="quantimium:semi_stable_tesseract" />
 - <ItemLink id="quantimium:singularity" />
+- <ItemLink id="quantimium:smelting_lens" />
 - <ItemLink id="quantimium:sophon" />
 - <ItemLink id="quantimium:spectroscope" />
 - <ItemLink id="quantimium:speed_lens" />

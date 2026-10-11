@@ -201,7 +201,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                         stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(), use.filter() == null ? LensFilter.EMPTY : use.filter()));
                 case SPEED -> streams.replaceAll((action, stream) -> stream.faster());
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
-                case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
+                case PRECISION, UNREALISE, SMELT -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case AMPLIFY -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.AMPLIFY.ordinal(), Math.min(LaserTuning.AMPLIFY_LENSES, stream.amps() + 1), stream.filter()));
