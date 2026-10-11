@@ -97,11 +97,12 @@ public record LensFilter(List<ItemStack> entries, boolean allow, Living living, 
      * Whether it lets a Harvest beam break this block, which would drop {@code drops}: listed if its
      * item or any drop is. So "wheat" lets only ripe wheat through: unripe, it drops only seeds.
      */
-    public boolean lets(BlockState state, List<ItemStack> drops) {
+    public boolean lets(BlockState state, java.util.function.Supplier<List<ItemStack>> drops) {
+        // Cheap first: ripeness, then the block's own item; what it drops only if that's still undecided.
         if (grown && !ripe(state)) return false;
         if (!hasEntries()) return true;
         boolean listed = listed(new ItemStack(state.getBlock().asItem()));
-        for (ItemStack drop : drops) listed |= listed(drop);
+        if (!listed) for (ItemStack drop : drops.get()) listed |= listed(drop);
         return listed == allow;
     }
 

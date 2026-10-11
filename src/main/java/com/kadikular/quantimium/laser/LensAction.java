@@ -43,6 +43,9 @@ public final class LensAction {
     private net.minecraft.world.level.levelgen.structure.BoundingBox area;
     /** How far through the area it's looked, and the block it's found to work on next. */
     private int cursor;
+    /** Blocks looked at in a row with nothing to do, and till when it rests after a whole fruitless sweep. */
+    private int missed;
+    private long restUntil;
     private int placeCooldown;
     /** For an area prism's action: the block it last placed, and until when it shows a beam there. */
     @Nullable
@@ -101,7 +104,7 @@ public final class LensAction {
     @Nullable
     private ServerLevel sightLevel;
 
-    /** Once a tick, after power has moved. */
+    /** Once a tick, before blocks are charged: work done at once pays first, and a cut asks for its next share. */
     void act(ServerLevel level, LaserNetworks networks) {
         sightLevel = level;
         now = level.getGameTime();
@@ -183,7 +186,8 @@ public final class LensAction {
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
         placed = at.getBlockPos().relative(at.getDirection());
         lastWorked = now;
-        LaserNetworks.changed(level);
+        // A beam now ends on what it placed; an area's beams don't change.
+        if (area == null) LaserNetworks.changed(level);
     }
 
     /** Where a beam places: against the block it ends on, from its side. */
@@ -212,16 +216,29 @@ public final class LensAction {
     /** The next free space in the area something could be placed in: one resting on a block below it. */
     @Nullable
     private net.minecraft.world.phys.BlockHitResult nextAreaSpot(ServerLevel level, LaserNetworks networks) {
+        if (now < restUntil) return null;
         for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
             BlockPos pos = areaPos(cursor);
             cursor = (cursor + 1) % areaVolume();
+            if (fruitless()) return null;
             if (!level.isLoaded(pos) || !level.getBlockState(pos).canBeReplaced()) continue;
             BlockPos below = pos.below();
             if (level.getBlockState(below).isAir() || !inSight(level, pos)) continue;
             var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(below), net.minecraft.core.Direction.UP, below, false);
-            if (!networks.take(senders, stack -> placeable(level, stack, hit), 1, true).isEmpty()) return hit;
+            if (!networks.take(senders, stack -> placeable(level, stack, hit), 1, true).isEmpty()) {
+                missed = 0;
+                return hit;
+            }
         }
         return null;
+    }
+
+    /** Counts one more block with nothing to do; after a whole sweep of them, it rests a while. Whether it's resting now. */
+    private boolean fruitless() {
+        if (++missed < areaVolume()) return false;
+        missed = 0;
+        restUntil = now + LaserTuning.AREA_REST;
+        return true;
     }
 
     private int areaVolume() {
@@ -279,10 +296,15 @@ public final class LensAction {
     private BlockPos harvestTarget(ServerLevel level) {
         if (area != null) {
             if (cutting != null && area.isInside(cutting) && cuttable(level, cutting) && inSight(level, cutting)) return cutting;
+            if (now < restUntil) return null;
             for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
                 BlockPos pos = areaPos(cursor);
                 cursor = (cursor + 1) % areaVolume();
-                if (level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)) return pos;
+                if (level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)) {
+                    missed = 0;
+                    return pos;
+                }
+                if (fruitless()) return null;
             }
             return null;
         }
@@ -300,7 +322,7 @@ public final class LensAction {
         if (state.is(ModTags.LASER_UNBREAKABLE)) return false;
         // Plain, it cuts as an iron pickaxe: what needs better waits for an Amplify lens.
         if (state.requiresCorrectToolForDrops() && !tool().isCorrectToolForDrops(state)) return false;
-        return stream.filter() == null || stream.filter().lets(state, Block.getDrops(state, level, pos, null, null, tool()));
+        return stream.filter() == null || stream.filter().lets(state, () -> Block.getDrops(state, level, pos, null, null, tool()));
     }
 
     /** What it cuts as: an iron pickaxe, or with an Amplify lens a diamond one. */
@@ -337,7 +359,8 @@ public final class LensAction {
             }
             if (!left.isEmpty()) Block.popResource(level, pos, left);
         }
-        LaserNetworks.changed(level);
+        // A beam now reaches on past where the block was; an area's beams don't change.
+        if (area == null) LaserNetworks.changed(level);
     }
 
     /** Items a kill just dropped, near where it fell. */

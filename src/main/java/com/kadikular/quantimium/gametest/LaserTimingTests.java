@@ -18,8 +18,9 @@ import java.util.List;
 
 /**
  * Tick timings of laser networks: everything the level's laser manager does in a tick (rechecking
- * beams, moving power, settling), for a base's worth of beams. Each scenario runs alone in its batch,
- * so the level holds only its own nodes.
+ * beams, moving power, lens actions, settling), for a base's worth of beams. Each scenario runs alone in
+ * its batch, and switches its lasers off when it's done: the manager is the level's, so lit lasers left
+ * standing would be timed with the next.
  */
 public final class LaserTimingTests {
 
@@ -40,7 +41,7 @@ public final class LaserTimingTests {
                     long taking = 0;
                     for (CreativeEnergyVoidBlockEntity drain : voids) taking += drain.taking();
                     return String.format(java.util.Locale.ROOT, "%,d FE/t delivered", taking);
-                }, () -> {});
+                }, () -> TestSupport.finishLasers(helper));
     }
 
     @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_grid_idle", timeoutTicks = TickTiming.TIMEOUT_TICKS)
@@ -54,7 +55,7 @@ public final class LaserTimingTests {
         helper.onEachTick(() -> cores.forEach(core -> TestSupport.fill(core.getEnergyStorage())));
         TickTiming.measure(helper, new Scenario("laser.grid_idle", "Laser networks",
                         "As busy, with every block full: nothing asks for power", 40),
-                LaserNetworks.of(helper.getLevel()), () -> cores.size() + " full blocks", () -> {});
+                LaserNetworks.of(helper.getLevel()), () -> cores.size() + " full blocks", () -> TestSupport.finishLasers(helper));
     }
 
     /**
@@ -93,5 +94,80 @@ public final class LaserTimingTests {
     private static void emitter(GameTestHelper helper, BlockPos pos, Block block, Direction facing) {
         helper.setBlock(pos, block.defaultBlockState().setValue(LaserEmitterBlock.FACING, facing));
         helper.setBlock(pos.relative(facing.getOpposite()), ModBlocks.CREATIVE_ENERGY_CELL.get());
+    }
+
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_quarry", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void areaQuarry(GameTestHelper helper) {
+        // An Emitter III through a Collector and a mount (Harvest, Amplify, Speed, Pickup) into an Area Prism
+        // over an 8x1x8 floor of stone, put back as fast as it's cut; the Collector emptied each tick.
+        emitter(helper, new BlockPos(1, Y + 2, 2), ModBlocks.LASER_EMITTER_3.get(), Direction.EAST);
+        helper.setBlock(new BlockPos(3, Y + 2, 2), ModBlocks.COLLECTOR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.CollectorBlock.FACING, Direction.EAST));
+        var collector = helper.getBlockEntity(new BlockPos(3, Y + 2, 2), com.kadikular.quantimium.block.entity.CollectorBlockEntity.class);
+        helper.setBlock(new BlockPos(5, Y + 2, 2), ModBlocks.LENS_MOUNT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        var mount = helper.getBlockEntity(new BlockPos(5, Y + 2, 2), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
+        mount.getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        mount.getLensSlots().setStackInSlot(1, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.AMPLIFY_LENS.get()));
+        mount.getLensSlots().setStackInSlot(2, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.SPEED_LENS.get()));
+        mount.getLensSlots().setStackInSlot(3, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.PICKUP_LENS.get()));
+        helper.setBlock(new BlockPos(7, Y + 2, 2), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(7, Y + 2, 2), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.setArea(helper.absolutePos(new BlockPos(4, Y, 5)), helper.absolutePos(new BlockPos(11, Y, 12)));
+        int[] cut = {0};
+        helper.onEachTick(() -> {
+            for (int x = 4; x <= 11; x++) {
+                for (int z = 5; z <= 12; z++) {
+                    BlockPos at = new BlockPos(x, Y, z);
+                    if (helper.getBlockState(at).isAir()) {
+                        helper.setBlock(at, net.minecraft.world.level.block.Blocks.STONE);
+                        cut[0]++;
+                    }
+                }
+            }
+            for (int slot = 0; slot < 9; slot++) collector.getItems().setStackInSlot(slot, net.minecraft.world.item.ItemStack.EMPTY);
+        });
+        TickTiming.measure(helper, new Scenario("laser.area_quarry", "Laser networks",
+                        "An Area Prism quarrying an 8x8 floor of stone with Harvest, Amplify, Speed and Pickup, put back as fast as it's cut", 60),
+                LaserNetworks.of(helper.getLevel()), () -> cut[0] + " blocks cut", () -> TestSupport.finishLasers(helper));
+    }
+
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_farm_idle", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void areaFarmWaiting(GameTestHelper helper) {
+        // An Area Prism, filtered to fully grown, over a 9x9 field of wheat that never ripens: it looks, and finds nothing.
+        for (int x = 4; x <= 12; x++) {
+            for (int z = 4; z <= 12; z++) {
+                helper.setBlock(new BlockPos(x, Y - 1, z), net.minecraft.world.level.block.Blocks.FARMLAND);
+                helper.setBlock(new BlockPos(x, Y, z), net.minecraft.world.level.block.Blocks.WHEAT);
+            }
+        }
+        emitter(helper, new BlockPos(1, Y + 4, 8), ModBlocks.LASER_EMITTER_2.get(), Direction.EAST);
+        helper.setBlock(new BlockPos(3, Y + 4, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        var mount = helper.getBlockEntity(new BlockPos(3, Y + 4, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
+        mount.getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        var grown = new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FILTER_LENS.get());
+        grown.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), new com.kadikular.quantimium.laser.LensFilter(
+                java.util.List.of(), true, com.kadikular.quantimium.laser.LensFilter.Living.ANY, true));
+        mount.getLensSlots().setStackInSlot(1, grown);
+        mount.getLensSlots().setStackInSlot(2, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()));
+        helper.setBlock(new BlockPos(8, Y + 4, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(8, Y + 4, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.setArea(helper.absolutePos(new BlockPos(4, Y, 4)), helper.absolutePos(new BlockPos(12, Y, 12)));
+        Runnable restore = noRandomTicks(helper);
+        TickTiming.measure(helper, new Scenario("laser.area_farm_waiting", "Laser networks",
+                        "An Area Prism over 81 unripe crops, filtered to fully grown: looking, with nothing to cut", 40),
+                LaserNetworks.of(helper.getLevel()), () -> "81 crops", () -> {
+                    restore.run();
+                    TestSupport.finishLasers(helper);
+                });
+    }
+
+    /** Crops mustn't grow while it's timed: random ticks off, put back after. */
+    private static Runnable noRandomTicks(GameTestHelper helper) {
+        var rules = helper.getLevel().getGameRules();
+        int was = rules.get(net.minecraft.world.level.gamerules.GameRules.RANDOM_TICK_SPEED);
+        rules.set(net.minecraft.world.level.gamerules.GameRules.RANDOM_TICK_SPEED, 0, helper.getLevel().getServer());
+        return () -> rules.set(net.minecraft.world.level.gamerules.GameRules.RANDOM_TICK_SPEED, was, helper.getLevel().getServer());
     }
 }

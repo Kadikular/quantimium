@@ -38,6 +38,10 @@ import java.util.WeakHashMap;
  * <p>Power goes where it's asked for. Every source sends only what the blocks its beams reach can take,
  * shared between the network's sources in proportion to what each has. Each relay a beam passes on
  * the way takes {@link LaserTuning#HOP_TAX} of what passes, and that becomes flux where the relay stands.
+ *
+ * <p>What light carries besides power ({@link Light}: its reach, and the actions its lenses gave it) is
+ * worked out as it's traced, from the sources out; each action ({@link LensAction}) is a sink of its own,
+ * paid for by the sources behind its lens.
  */
 @EventBusSubscriber(modid = Quantimium.MODID)
 public final class LaserNetworks {
@@ -52,6 +56,8 @@ public final class LaserNetworks {
     private final ServerLevel level;
     private final Map<BlockPos, LaserNode> nodes = new LinkedHashMap<>();
     private final Map<BlockPos, List<LaserBeam>> beams = new HashMap<>();
+    /** For each node, the nodes with a beam ending on it: kept as beams are traced, so nothing scans every beam to find what reaches a node. */
+    private final Map<BlockPos, List<BlockPos>> into = new HashMap<>();
     /** How far each node's light reaches: its own range, or for a node that doesn't refocus, what's left of the light reaching it. */
     private final Map<BlockPos, Integer> ranges = new HashMap<>();
     private List<Network> networks = List.of();
@@ -84,6 +90,12 @@ public final class LaserNetworks {
         return LEVELS.computeIfAbsent(level, key -> new LaserNetworks(level));
     }
 
+    /** A level going away takes its networks with it: each holds its level, so the weak map alone wouldn't let go. */
+    @SubscribeEvent
+    public static void onLevelUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload event) {
+        if (event.getLevel() instanceof Level level) LEVELS.remove(level);
+    }
+
     // ---- nodes come and go ----
 
     public static void add(Level level, LaserNode node) {
@@ -109,6 +121,7 @@ public final class LaserNetworks {
         if (nodes.get(pos) == node) {
             nodes.remove(pos);
             beams.remove(pos);
+            into.values().forEach(list -> list.remove(pos));
             carried.remove(pos);
             dirty = true;
         }
@@ -216,6 +229,7 @@ public final class LaserNetworks {
         // doesn't make the second's average look like nothing passed.
         Map<BlockPos, long[]> carriedBefore = new HashMap<>(carried);
         beams.clear();
+        into.clear();
         carried.clear();
         // What the relays still standing lost so far goes into the field.
         lost.forEach((pos, fe) -> {
@@ -310,6 +324,16 @@ public final class LaserNetworks {
     private void traceAt(LaserNode node, int range, Map<BlockPos, List<LaserBeam>> before) {
         ranges.put(node.nodePos(), range);
         List<LaserBeam> traced = trace(node, range);
+        // What this node's beams end on, now: off the index for the old beams, on for the new.
+        for (LaserBeam old : beams.getOrDefault(node.nodePos(), List.of())) {
+            if (old.end() == LaserBeam.End.NODE) {
+                List<BlockPos> list = into.get(old.hit());
+                if (list != null) list.remove(node.nodePos());
+            }
+        }
+        for (LaserBeam beam : traced) {
+            if (beam.end() == LaserBeam.End.NODE) into.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(node.nodePos());
+        }
         List<LaserBeam> was = before.getOrDefault(node.nodePos(), List.of());
         for (int i = 0; i < traced.size(); i++) {
             LaserBeam beam = traced.get(i);
@@ -371,12 +395,6 @@ public final class LaserNetworks {
      */
     private List<BlockPos> upFor(BlockPos pos, Set<BlockPos> payers, java.util.function.Predicate<LaserNode> wanted) {
         List<BlockPos> found = new ArrayList<>();
-        Map<BlockPos, List<BlockPos>> feeding = new HashMap<>();
-        beams.forEach((from, list) -> {
-            for (LaserBeam beam : list) {
-                if (beam.end() == LaserBeam.End.NODE) feeding.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(from);
-            }
-        });
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> seen = new HashSet<>();
         queue.add(pos);
@@ -390,7 +408,7 @@ public final class LaserNetworks {
             if (wanted.test(node) && light != null && !java.util.Collections.disjoint(light.feeders(), payers)) found.add(at);
             // Nothing passes back up through an Isolator.
             if ((!node.relays() || node.isolates()) && !at.equals(pos)) continue;
-            for (BlockPos up : feeding.getOrDefault(at, List.of())) {
+            for (BlockPos up : into.getOrDefault(at, List.of())) {
                 if (seen.add(up)) queue.add(up);
             }
         }
@@ -606,10 +624,10 @@ public final class LaserNetworks {
     private Light incoming(LaserNode node) {
         BlockPos pos = node.nodePos();
         Light joined = null;
-        for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
-            Light light = lights.get(entry.getKey());
+        for (BlockPos from : new HashSet<>(into.getOrDefault(pos, List.of()))) {
+            Light light = lights.get(from);
             if (light == null) continue;
-            for (LaserBeam beam : entry.getValue()) {
+            for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
                 if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit())) continue;
                 joined = Light.join(joined, node.refocuses() ? light : light.passedOn(beam.length()));
             }
@@ -786,11 +804,6 @@ public final class LaserNetworks {
         if (time % SETTLE_TICKS == 0) settle();
     }
 
-    /**
-     * Moves this tick's power. Blocks are charged first from emitters, then from cavities for what the
-     * emitters couldn't give; what emitters have left over then fills cavities. Each block draws only on
-     * the sources whose light reaches it.
-     */
     /** What each of the network's sources has to give this tick. */
     private static void refill(Network network) {
         List<LaserNode> sources = network.sources();
@@ -801,6 +814,11 @@ public final class LaserNetworks {
         }
     }
 
+    /**
+     * Moves this tick's power, from what the sources have left once work done at once has paid. Blocks are
+     * charged first from emitters, then from cavities for what the emitters couldn't give; what emitters
+     * have left over then fills cavities. Each block draws only on the sources whose light reaches it.
+     */
     private void move(Network network) {
         List<LaserNode> sources = network.sources();
         long[] left = network.left();
