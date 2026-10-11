@@ -197,6 +197,8 @@ public final class TestSupport {
                 helper.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR);
             }
         });
+        // What the relays lost this last second goes in now, so it's cleared with the rest.
+        com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).flushLosses();
         clearField(helper);
     }
 

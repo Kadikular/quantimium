@@ -142,8 +142,10 @@ public final class LensAction {
         if (sweep) {
             List<LivingEntity> found = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive()
                     && onBeam(entity.getBoundingBox(), 0.25) && (stream.filter() == null || stream.filter().letsHit(entity)));
-            // A Filter's keep count: that many are spared, and only those beyond it are hit.
+            // A Filter's keep count: that many are spared, and only those beyond it are hit. Always the same
+            // ones spared (the oldest), so a hit is finished on one rather than spread over the herd.
             int keep = stream.filter() == null ? 0 : stream.filter().keep();
+            if (keep > 0) found = found.stream().sorted(java.util.Comparator.comparingInt(LivingEntity::getId).reversed()).toList();
             targets = found.size() <= keep ? new ArrayList<>() : new ArrayList<>(found.subList(0, found.size() - keep));
             for (LivingEntity entity : targets) {
                 if (charged < hit) break;

@@ -127,6 +127,14 @@ public final class LaserNetworks {
         }
     }
 
+    /** Puts what the relays have lost to the hop tax into the field now, rather than at the next settle: for tests, before they clear it. */
+    public void flushLosses() {
+        lost.forEach((pos, fe) -> {
+            if (fe[0] > 0 && nodes.containsKey(pos)) QuantumFlux.emitFromEnergy(level, pos, fe[0]);
+            fe[0] = 0;
+        });
+    }
+
     /** The beams leaving {@code pos}, as last traced, with what they carried: for readouts. */
     public List<LaserBeam> beamsOf(BlockPos pos) {
         return beams.getOrDefault(pos, List.of());
