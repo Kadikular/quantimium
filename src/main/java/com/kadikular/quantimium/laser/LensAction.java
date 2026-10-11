@@ -145,6 +145,9 @@ public final class LensAction {
             case INSERT, EXTRACT -> {
                 if (!mirrored()) move(level, networks, key.action() == Lens.INSERT);
             }
+            case INTERACT -> {
+                if (!mirrored()) interact(level, networks);
+            }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
             case PHANTOM -> want = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
             default -> {}
@@ -183,6 +186,85 @@ public final class LensAction {
         }
         targets.removeIf(entity -> !entity.isAlive());
         want = Math.max(0, hit * targets.size() - charged);
+    }
+
+    // ---- interacting ----
+
+    /**
+     * Uses one thing a Sender up the beam sends (or an empty hand, with none) on what the beam ends on, as a
+     * player would: set to use, a right click on the block (a door, a lever, an item on a block; an empty
+     * bucket fills from the fluid it ends on); set to hit, a swing at the first thing living in the beam.
+     * What's left in hand after goes back up the beam to a Collector, or to the Sender.
+     */
+    private void interact(ServerLevel level, LaserNetworks networks) {
+        if (placeCooldown > 0) {
+            placeCooldown--;
+            return;
+        }
+        if (beam == null || !networks.canPay(this, LaserTuning.PLACE_FE)) return;
+        ItemStack held = senders.isEmpty() ? ItemStack.EMPTY : networks.take(senders, this::lets, 1, false);
+        LaserHand hand = handFor(level);
+        hand.hold(held);
+        boolean done = stream.hits() ? swing(level, hand) : use(level, hand, held);
+        // Whatever it holds now: a filled bucket, what's left of a stack, a worn sword.
+        ItemStack after = hand.letGo();
+        for (ItemStack extra : List.copyOf(hand.getInventory().getNonEquipmentItems())) settle(level, networks, extra);
+        hand.getInventory().clearContent();
+        settle(level, networks, after);
+        if (!done) return;
+        networks.pay(this, LaserTuning.PLACE_FE);
+        networks.workDone(this);
+        placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
+        placed = beam.hit();
+        lastWorked = now;
+        LaserNetworks.changed(level);
+    }
+
+    /** Puts what the hand held back where it belongs: up to a Collector, else to the Sender, else on the ground. */
+    private void settle(ServerLevel level, LaserNetworks networks, ItemStack stack) {
+        if (stack.isEmpty()) return;
+        ItemStack left = collectors.isEmpty() ? stack : networks.collect(collectors, stack);
+        if (!left.isEmpty()) left = networks.returnTo(senders, left);
+        if (!left.isEmpty()) Block.popResource(level, beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from(), left);
+    }
+
+    /** A right click on the block the beam ends on. */
+    private boolean use(ServerLevel level, LaserHand hand, ItemStack held) {
+        if (beam.hit() == null) return false;
+        // Something light passes, just before the end (a lever, a button, a crop), is what it uses; else what it ends on.
+        BlockPos before = beam.hit().relative(beam.face().getOpposite());
+        BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
+        BlockState state = level.getBlockState(pos);
+        // An empty bucket fills from a fluid's source.
+        if (held.is(Items.BUCKET) && state.getBlock() instanceof net.minecraft.world.level.block.BucketPickup pickup && !state.getFluidState().isEmpty()) {
+            ItemStack filled = pickup.pickupBlock(hand, level, pos, state);
+            if (filled.isEmpty()) return false;
+            hand.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, filled);
+            return true;
+        }
+        var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(beam.face().getOpposite(), 0.5),
+                beam.face().getOpposite(), pos, false);
+        net.minecraft.world.InteractionResult result = hand.gameMode.useItemOn(hand, level, held, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+        return result.consumesAction();
+    }
+
+    /** A swing at the first thing living in the beam, with what's in hand. */
+    private boolean swing(ServerLevel level, LaserHand hand) {
+        List<LivingEntity> found = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive() && entity != hand
+                && onBeam(entity.getBoundingBox(), 0.25) && !inMirror(entity) && (stream.filter() == null || stream.filter().letsHit(entity)));
+        if (found.isEmpty()) return false;
+        hand.attack(found.getFirst());
+        return true;
+    }
+
+    /** A stand-in player at the beam, facing the way it goes. */
+    private LaserHand handFor(ServerLevel level) {
+        LaserHand hand = LaserHand.of(level);
+        BlockPos at = beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from();
+        hand.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        hand.setYRot(beam.face().toYRot());
+        hand.setXRot(beam.face() == net.minecraft.core.Direction.UP ? -90 : beam.face() == net.minecraft.core.Direction.DOWN ? 90 : 0);
+        return hand;
     }
 
     // ---- inventories ----
@@ -634,7 +716,7 @@ public final class LensAction {
         if (area == null || level.getGameTime() - lastWorked > LaserTuning.PLACE_COOLDOWN) return null;
         return switch (key.action()) {
             case HARVEST -> cutting;
-            case PLACE, INSERT, EXTRACT -> placed;
+            case PLACE, INSERT, EXTRACT, INTERACT -> placed;
             // Where what it's hitting is now, so the beam follows it.
             case DAMAGE -> targets.isEmpty() ? null : BlockPos.containing(targets.getFirst().getBoundingBox().getCenter());
             default -> null;

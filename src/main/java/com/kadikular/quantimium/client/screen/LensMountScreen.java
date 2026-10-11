@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
@@ -95,13 +96,21 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
                 int dx = x + 5 + i * 3;
                 graphics.fill(dx, y + 4, dx + 2, y + 6, dot);
             }
-            if (over) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.lens_mount.settings")), mouseX, mouseY);
+            if (over) {
+                ItemStack lens = menu.getBlockEntity().getLensSlots().getStackInSlot(slot);
+                Component tip = lens.getItem() instanceof com.kadikular.quantimium.item.InteractLensItem
+                        ? Component.translatable(com.kadikular.quantimium.item.InteractLensItem.hits(lens)
+                                ? "gui.quantimium.lens_mount.interact.hits" : "gui.quantimium.lens_mount.interact.uses")
+                        : Component.translatable("gui.quantimium.lens_mount.settings");
+                graphics.setComponentTooltipForNextFrame(font, List.of(tip), mouseX, mouseY);
+            }
         }
     }
 
-    /** Whether the lens in {@code slot} has settings of its own: a Filter lens. */
+    /** Whether the lens in {@code slot} has settings of its own: a Filter lens, an Interact lens. */
     private boolean hasSettings(int slot) {
-        return menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem() instanceof com.kadikular.quantimium.item.FilterLensItem;
+        var item = menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem();
+        return item instanceof com.kadikular.quantimium.item.FilterLensItem || item instanceof com.kadikular.quantimium.item.InteractLensItem;
     }
 
     @Override
@@ -112,7 +121,9 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
                         leftPos + LensMountMenu.SLOT_X[slot] - 1, topPos + LensMountMenu.BUTTON_Y, LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H)) {
                     if (minecraft != null && minecraft.gameMode != null) {
                         // The settings screen opens where the pointer is, not at the middle of the window.
-                        FilterLensScreen.keepCursor(minecraft.mouseHandler.xpos(), minecraft.mouseHandler.ypos());
+                        if (!(menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem() instanceof com.kadikular.quantimium.item.InteractLensItem)) {
+                            FilterLensScreen.keepCursor(minecraft.mouseHandler.xpos(), minecraft.mouseHandler.ypos());
+                        }
                         minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
                                 net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
                         minecraft.gameMode.handleInventoryButtonClick(menu.containerId, slot);

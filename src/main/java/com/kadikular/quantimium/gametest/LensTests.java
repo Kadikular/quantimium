@@ -1134,4 +1134,54 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void anInteractBeamFlipsALever(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACING, Direction.WEST)
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.WALL));
+        helper.succeedWhen(() -> {
+            helper.assertBlockProperty(new BlockPos(8, Y, 8), net.minecraft.world.level.block.LeverBlock.POWERED, true);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void anInteractBeamFillsABucket(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        sender(helper, new BlockPos(5, Y, 8), Direction.EAST, new ItemStack(Items.BUCKET));
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.WATER);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.WATER_BUCKET), 1, "a bucket of water, back up the beam");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anInteractBeamSetToHitSwingsTheSword(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        var sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.DIAMOND_SWORD));
+        ItemStack lens = new ItemStack(ModItems.INTERACT_LENS.get());
+        com.kadikular.quantimium.item.InteractLensItem.toggle(lens);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        mount.getLensSlots().setStackInSlot(0, lens);
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(8, Y, 8));
+        float full = pig.getHealth();
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!pig.isAlive() || full - pig.getHealth() >= 6.0f, "hit as hard as a diamond sword: " + pig.getHealth());
+            boolean back = false;
+            for (int slot = 0; slot < 9; slot++) back |= sender.getItems().getStackInSlot(slot).is(Items.DIAMOND_SWORD);
+            helper.assertTrue(back, "the sword went back to the Sender");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

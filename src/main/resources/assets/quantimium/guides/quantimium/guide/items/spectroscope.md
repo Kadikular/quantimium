@@ -2,7 +2,7 @@
 navigation:
   title: Spectroscope
   parent: items/index.md
-  position: 25
+  position: 28
   icon: quantimium:spectroscope
 item_ids:
 - quantimium:spectroscope

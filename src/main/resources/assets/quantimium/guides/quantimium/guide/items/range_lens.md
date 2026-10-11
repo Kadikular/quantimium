@@ -2,7 +2,7 @@
 navigation:
   title: Range Lens
   parent: items/index.md
-  position: 19
+  position: 22
   icon: quantimium:range_lens
 item_ids:
 - quantimium:range_lens

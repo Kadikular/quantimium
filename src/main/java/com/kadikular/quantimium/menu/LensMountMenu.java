@@ -51,7 +51,14 @@ public class LensMountMenu extends AbstractContainerMenu {
     @Override
     public boolean clickMenuButton(Player player, int id) {
         if (id < 0 || id >= LensMountBlockEntity.SLOTS) return false;
-        if (!(mount.getLensSlots().getStackInSlot(id).getItem() instanceof com.kadikular.quantimium.item.FilterLensItem)) return false;
+        ItemStack lens = mount.getLensSlots().getStackInSlot(id);
+        // An Interact lens's one setting, use or hit, switches in place.
+        if (lens.getItem() instanceof com.kadikular.quantimium.item.InteractLensItem) {
+            com.kadikular.quantimium.item.InteractLensItem.toggle(lens);
+            mount.lensChanged();
+            return true;
+        }
+        if (!(lens.getItem() instanceof com.kadikular.quantimium.item.FilterLensItem)) return false;
         if (player instanceof net.minecraft.server.level.ServerPlayer server) {
             net.minecraft.core.BlockPos pos = mount.getBlockPos();
             server.openMenu(new net.minecraft.world.SimpleMenuProvider((containerId, inventory, who) -> new FilterLensMenu(containerId, inventory, mount, id),

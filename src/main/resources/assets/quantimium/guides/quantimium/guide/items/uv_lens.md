@@ -2,7 +2,7 @@
 navigation:
   title: UV Lens
   parent: items/index.md
-  position: 30
+  position: 33
   icon: quantimium:uv_lens
 item_ids:
 - quantimium:uv_lens

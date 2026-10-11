@@ -32,6 +32,11 @@ public final class ModDataComponents {
                     builder -> builder.persistent(com.kadikular.quantimium.laser.LensFilter.CODEC)
                             .networkSynchronized(com.kadikular.quantimium.laser.LensFilter.STREAM_CODEC));
 
+    /** An Interact lens set to hit, rather than use. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> INTERACT_HITS =
+            COMPONENTS.registerComponentType("interact_hits",
+                    builder -> builder.persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
+
     /** The Laser Linker's area mode and the corners picked. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.kadikular.quantimium.laser.LinkerArea>> LINKER_AREA =
             COMPONENTS.registerComponentType("linker_area",

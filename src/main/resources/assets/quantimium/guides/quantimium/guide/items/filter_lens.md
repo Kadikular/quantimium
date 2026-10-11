@@ -2,7 +2,7 @@
 navigation:
   title: Filter Lens
   parent: items/index.md
-  position: 9
+  position: 10
   icon: quantimium:filter_lens
 item_ids:
 - quantimium:filter_lens

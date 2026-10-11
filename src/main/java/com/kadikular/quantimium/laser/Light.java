@@ -66,7 +66,11 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
      * One action the light carries, its modifiers (bits of {@link Lens}), and who pays for it; how many
      * Amplify lenses it's met, and what a Filter lens lets it act on (null for everything).
      */
-    public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed) {
+    public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits) {
+        public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed) {
+            this(action, modifiers, payers, amps, filter, speed, false);
+        }
+
         public Stream(Lens action, int modifiers, Set<BlockPos> payers) {
             this(action, modifiers, payers, 0, null, 0);
         }
@@ -85,15 +89,15 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
         }
 
         Stream paidBy(Set<BlockPos> payers) {
-            return new Stream(action, modifiers, payers, amps, filter, speed);
+            return new Stream(action, modifiers, payers, amps, filter, speed, hits);
         }
 
         Stream with(int modifiers, int amps, @Nullable LensFilter filter) {
-            return new Stream(action, modifiers, payers, amps, filter, speed);
+            return new Stream(action, modifiers, payers, amps, filter, speed, hits);
         }
 
         Stream faster() {
-            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1));
+            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), hits);
         }
     }
 
@@ -134,7 +138,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                     // Joined, the same action does the most either side did; a filter from one side is kept.
                     streams.put(stream.action(), new Stream(stream.action(), had.modifiers() | stream.modifiers(), Set.copyOf(payers),
                             Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter(),
-                            Math.max(had.speed(), stream.speed())));
+                            Math.max(had.speed(), stream.speed()), had.hits() || stream.hits()));
                 }
             }
         }
@@ -171,7 +175,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                 Stream had = streams.get(lens);
                 int modifiers = (had == null ? 0 : had.modifiers()) | (pickup ? 1 << Lens.PICKUP.ordinal() : 0);
                 streams.put(lens, new Stream(lens, modifiers, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
-                        had == null ? 0 : had.speed()));
+                        had == null ? 0 : had.speed(), use.hits()));
             } else switch (lens) {
                 case PICKUP -> {
                     pickup = true;

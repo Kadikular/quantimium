@@ -17,10 +17,13 @@ navigation:
 - <ItemLink id="quantimium:basic_decoherence_matrix" />
 - <ItemLink id="quantimium:damage_lens" />
 - <ItemLink id="quantimium:decoherence_lance" />
+- <ItemLink id="quantimium:extract_lens" />
 - <ItemLink id="quantimium:filter_lens" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
 - <ItemLink id="quantimium:harvest_lens" />
+- <ItemLink id="quantimium:insert_lens" />
+- <ItemLink id="quantimium:interact_lens" />
 - <ItemLink id="quantimium:laser_linker" />
 - <ItemLink id="quantimium:mirror_lens" />
 - <ItemLink id="quantimium:phantom_lens" />

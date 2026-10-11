@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:quantum_attuned_glass",
+    "quantimium:anomalite_shard",
+    "minecraft:lever",
+    "minecraft:iron_sword"
+  ],
+  "result": {
+    "id": "quantimium:interact_lens",
+    "count": 1
+  }
+}

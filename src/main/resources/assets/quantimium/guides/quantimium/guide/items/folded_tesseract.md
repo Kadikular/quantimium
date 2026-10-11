@@ -2,7 +2,7 @@
 navigation:
   title: Folded Tesseract
   parent: items/index.md
-  position: 11
+  position: 12
   icon: quantimium:folded_tesseract
 item_ids:
 - quantimium:folded_tesseract

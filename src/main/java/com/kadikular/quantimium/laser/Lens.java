@@ -29,7 +29,9 @@ public enum Lens {
     /** Puts what Senders up the beam send into the inventory it ends on. */
     INSERT(true, 0xFF6FA8FF),
     /** Takes from the inventory it ends on, back up the beam to Collectors. */
-    EXTRACT(true, 0xFFFFC46F);
+    EXTRACT(true, 0xFFFFC46F),
+    /** Uses what a Sender sends, or an empty hand, on what the beam ends on: a right click, or a hit. */
+    INTERACT(true, 0xFFC0FF7F);
 
     /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
     public static final int MIRRORED_MARK = 30;
