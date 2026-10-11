@@ -133,7 +133,8 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 A <ItemLink id="quantimium:lens_mount" /> is a mirror that holds lenses: light that reaches
 it leaves by its face, refocused, through its four lens slots, left to right. The beam is still a beam:
 it carries power to whatever it ends on, as before, and does what its lenses say along the way. Open
-the mount with an empty hand; sneak-click or wrench a face to point it there. Each lensed beam is
+the mount with an empty hand; sneak-click or wrench a face to point it there. Under each lens is a
+button for that lens's own settings (a Filter lens's, say), lit when it has any. Each lensed beam is
 tinted by what it does.
 
 **Actions** give light something to do, and light can carry several: Harvest and Damage on one beam
@@ -146,7 +147,7 @@ Pickup is the exception: it stays on the light, and every action added after it 
 | --- | --- | --- | --- |
 | <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, or one light passes through just before it (a crop on farmland, grass), as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
 | <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. With Pickup, what it kills drops straight back up the beam. | 1,000 FE a hit, when it lands |
-| <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops a Collector up the beam has room for; with none, it waits. | 200 FE a stack, when it's carried |
+| <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the Collectors up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | 200 FE a stack, when it's carried |
 | <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far, up to 128 blocks: four count, so light with an action goes 8, 16, 32, 64, 128. | none |
 | <ItemLink id="quantimium:speed_lens" /> | Modifier | Its actions work twice as fast: a Harvest beam waits half as long between blocks, Placement too, and an Area Prism looks through its area twice as fast. Three count, for eight times. | none |
 | <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. It decides what each action works on (which blocks Harvest cuts, what Damage hits, which items Pickup gathers from the ground, what Placement places), not what happens to the drops: a cut block's drops, and a kill's, all come back with Pickup. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. Use it in the air to set it. | none |
@@ -157,9 +158,9 @@ Pickup is the exception: it stays on the light, and every action added after it 
 **A wheat field.** Point a beam down at farmland through a Collector, a Sender of seeds, and a mount
 with Harvest, Pickup, Placement and a Filter lens set to fully grown. Only ripe wheat is cut, it comes
 back up to the Collector, and the spot is sown again. Spread it over a whole field with an Area Prism.
-A cut waits until the Collectors up the beam have room for all of its drops; a drop no Collector's
-filter will take doesn't hold it up, and falls where the crop was. Use Fully grown rather than a "wheat"
-entry here: an entry also stops Pickup gathering the seeds that fall.
+A cut waits until the Collectors up the beam would take all of its drops, seeds included, so give the
+seeds somewhere to go. Use Fully grown rather than a "wheat" entry here: an entry also stops Pickup
+gathering items from the ground.
 
 **How far light reaches.** A run of light reaches as far as its source's:
 mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches

@@ -75,6 +75,15 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         return lensSlots;
     }
 
+    /** A lens's settings changed where it sits: its light changes, and clients see it. */
+    public void lensChanged() {
+        setChanged();
+        if (level != null && !level.isClientSide()) {
+            LaserNetworks.changed(level);
+            sync();
+        }
+    }
+
     public Direction facing() {
         return getBlockState().getValue(LensMountBlock.FACING);
     }

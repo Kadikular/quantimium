@@ -356,13 +356,21 @@ def laser_emitter(flash: bool) -> Panel:
 
 
 def lens_mount() -> Panel:
-    """A Lens Mount: what its light will do across the top, its four lenses in a row in brackets, and a
-    note under them that light meets them left to right (LensMountScreen, LensMountMenu.LENS_*)."""
+    """A Lens Mount: what its light will do across the top; its four lenses spaced along an engraved line
+    of light, arrows in, between and out, left to right; and a settings button under each lens
+    (LensMountScreen, LensMountMenu.SLOT_X, LENS_Y, BUTTON_Y)."""
     panel = Panel(HIGH)
     panel.region("info", (8, 20, 160, 9))
-    panel.grid((53, 35), 4, 1, "lenses")
-    panel.brackets(45, 27, 86, 32)
-    panel.region("order", (8, 56, 160, 9))
+    xs = (32, 64, 96, 128)
+    y = 34
+    panel.arrow(12, y + 8, 18)
+    for a, b in zip(xs, xs[1:]):
+        panel.arrow(a + 18, y + 8, b - a - 19)
+    panel.arrow(xs[-1] + 18, y + 8, 164 - xs[-1] - 18)
+    for i, x in enumerate(xs):
+        panel.slot(x, y)
+        panel.well(x - 1, 55, 18, 10)
+        panel.region(f"button{i}", (x - 1, 55, 18, 10))
     panel.player()
     return panel
 

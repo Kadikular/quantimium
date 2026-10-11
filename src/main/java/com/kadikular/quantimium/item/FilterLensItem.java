@@ -34,7 +34,10 @@ public class FilterLensItem extends LensItem {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (player instanceof ServerPlayer server) {
             server.openMenu(new SimpleMenuProvider((id, inventory, who) -> new FilterLensMenu(id, inventory, hand),
-                    Component.translatable("item.quantimium.filter_lens")), buf -> buf.writeBoolean(hand == InteractionHand.MAIN_HAND));
+                    Component.translatable("item.quantimium.filter_lens")), buf -> {
+                buf.writeByte(FilterLensMenu.IN_HAND);
+                buf.writeBoolean(hand == InteractionHand.MAIN_HAND);
+            });
         }
         return InteractionResult.SUCCESS;
     }

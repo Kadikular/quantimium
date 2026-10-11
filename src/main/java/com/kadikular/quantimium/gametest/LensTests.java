@@ -882,4 +882,26 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void aFilterLensSetInItsMountTakesEffect(GameTestHelper helper) {
+        // Set to Fully grown through the mount's screen: the unripe wheat stays, where unset it was cut.
+        BlockPos crop = new BlockPos(8, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 2));
+        helper.setBlock(new BlockPos(8, Y + 5, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        helper.setBlock(new BlockPos(8, Y + 4, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.FILTER_LENS.get()));
+        var player = TestSupport.player(helper, new BlockPos(6, Y, 6));
+        var menu = new com.kadikular.quantimium.menu.FilterLensMenu(1, player.getInventory(), mount, 1);
+        menu.clickMenuButton(player, com.kadikular.quantimium.menu.FilterLensMenu.BUTTON_GROWN);
+        helper.runAfterDelay(70, () -> {
+            helper.assertBlockPresent(Blocks.WHEAT, crop);
+            helper.assertTrue(com.kadikular.quantimium.item.FilterLensItem.filterOf(mount.getLensSlots().getStackInSlot(1)).grown(), "set on the lens in the mount");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

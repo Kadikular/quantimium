@@ -1008,7 +1008,7 @@
   "gui.quantimium.lens_mount.action": "Its light: %s",
   "gui.quantimium.lens_mount.no_action": "Its light: no action",
   "gui.quantimium.lens_mount.range": "; reaches %sx as far",
-  "gui.quantimium.lens_mount.order": "Light meets them left to right.",
+  "gui.quantimium.lens_mount.settings": "This lens's settings",
   "message.quantimium.cavity.unpaired": "Not a cavity: face a Laser Mirror or Cavity Mirror across a clear gap. Passing light on, as a mirror",
   "message.quantimium.cavity.holds": "Holds %s of %s FE across a %s-block gap",
   "message.quantimium.cavity.no_output": ", output off",

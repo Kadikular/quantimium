@@ -14,8 +14,12 @@ import net.minecraft.world.item.ItemStack;
 /** A Lens Mount: its four lenses in a row, in the order light meets them. Layout: tools/gui_panels.py lens_mount. */
 public class LensMountMenu extends AbstractContainerMenu {
 
-    public static final int LENS_X = 53;
-    public static final int LENS_Y = 35;
+    /** Each lens's slot, spaced along the line of light; its settings button under it. */
+    public static final int[] SLOT_X = {32, 64, 96, 128};
+    public static final int LENS_Y = 34;
+    public static final int BUTTON_Y = 55;
+    public static final int BUTTON_W = 18;
+    public static final int BUTTON_H = 10;
 
     private final LensMountBlockEntity mount;
 
@@ -27,7 +31,7 @@ public class LensMountMenu extends AbstractContainerMenu {
         super(ModMenuTypes.LENS_MOUNT_MENU.get(), containerId);
         this.mount = mount;
         for (int slot = 0; slot < LensMountBlockEntity.SLOTS; slot++) {
-            addSlot(new SlotItemHandler(mount.getLensSlots(), slot, LENS_X + slot * 18, LENS_Y));
+            addSlot(new SlotItemHandler(mount.getLensSlots(), slot, SLOT_X[slot], LENS_Y));
         }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -41,6 +45,23 @@ public class LensMountMenu extends AbstractContainerMenu {
 
     public LensMountBlockEntity getBlockEntity() {
         return mount;
+    }
+
+    /** Button {@code id} (0 to 3) opens the settings of the lens in that slot, if it has any. */
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (id < 0 || id >= LensMountBlockEntity.SLOTS) return false;
+        if (!(mount.getLensSlots().getStackInSlot(id).getItem() instanceof com.kadikular.quantimium.item.FilterLensItem)) return false;
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            net.minecraft.core.BlockPos pos = mount.getBlockPos();
+            server.openMenu(new net.minecraft.world.SimpleMenuProvider((containerId, inventory, who) -> new FilterLensMenu(containerId, inventory, mount, id),
+                    net.minecraft.network.chat.Component.translatable("item.quantimium.filter_lens")), buf -> {
+                buf.writeByte(FilterLensMenu.IN_MOUNT);
+                buf.writeBlockPos(pos);
+                buf.writeByte(id);
+            });
+        }
+        return true;
     }
 
     @Override

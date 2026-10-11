@@ -76,7 +76,7 @@ public class ModMenuTypes {
 
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.FilterLensMenu>> FILTER_LENS_MENU =
             MENUS.register("filter_lens_menu", () ->
-                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.FilterLensMenu::new));
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.FilterLensMenu::fromNetwork));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FoldCoreMenu>> FOLD_CORE_MENU =
             MENUS.register("fold_core_menu", () ->

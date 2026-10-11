@@ -212,8 +212,22 @@ def collector_face() -> Image.Image:
     return img
 
 
-def lens_item(colour: str) -> Image.Image:
-    """A lens: a ground-glass disc in a dark rim, tinted by what it does, with a bright glint."""
+# A small mark etched in each lens, so they're told apart in a mount at a glance (5x5, '#' set).
+GLYPHS = {
+    "harvest_lens": ["###..", "..#..", ".#.#.", "#...#", "....."],   # a pick's head
+    "damage_lens": ["....#", "...#.", "#.#..", ".#...", "#.#.."],    # a blade
+    "pickup_lens": ["..#..", ".###.", "#.#.#", "..#..", "..#.."],    # coming back up
+    "range_lens": ["..#..", "...#.", "#####", "...#.", "..#.."],     # going out, farther
+    "filter_lens": ["#####", ".###.", "..#..", "..#..", "..#.."],    # a funnel
+    "uv_lens": [".###.", "#...#", "#.#.#", "#...#", ".###."],        # an eye, shut to most
+    "amplify_lens": ["..#..", "..#..", "#####", "..#..", "..#.."],   # more
+    "place_lens": ["#####", "#...#", "#...#", "#...#", "#####"],     # a block
+    "speed_lens": ["#..#.", ".#..#", "..#..", ".#..#", "#..#."],     # quicker
+}
+
+
+def lens_item(colour: str, glyph=None) -> Image.Image:
+    """A lens: a ground-glass disc in a dark rim, tinted by what it does, with a bright glint and its mark."""
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     tint = hx(colour)
     for x in range(16):
@@ -226,6 +240,13 @@ def lens_item(colour: str) -> Image.Image:
                 img.putpixel((x, y), tuple(min(255, int(c * shade)) for c in tint[:3]) + (230,))
     for x, y in ((5, 4), (4, 5), (5, 5), (6, 4)):
         img.putpixel((x, y), hx("ffffff"))
+    if glyph:
+        # Etched darker into the glass, a little low and right of the glint.
+        mark = tuple(int(c * 0.35) for c in tint[:3]) + (255,)
+        for row, line in enumerate(glyph):
+            for col, cell in enumerate(line):
+                if cell == "#":
+                    img.putpixel((6 + col, 6 + row), mark)
     return img
 
 
@@ -300,6 +321,24 @@ def isolator_face() -> Image.Image:
     for x in range(2, 14):
         for y in (7, 8):
             img.putpixel((x, y), hx("8a8a96"))
+    return img
+
+
+def creative_void() -> Image.Image:
+    """The Creative Energy Void: the Cell's magenta frame round a dark well that light falls into."""
+    img = Image.new("RGBA", (16, 16), hx("1b0f24"))
+    frame = hx("c040d0")
+    for i in range(16):
+        for j in (0, 15):
+            img.putpixel((i, j), frame)
+            img.putpixel((j, i), frame)
+    for x in range(1, 15):
+        for y in range(1, 15):
+            d = max(abs(x - 7.5), abs(y - 7.5))
+            shade = max(0.0, min(1.0, (d - 1.5) / 5.0))
+            img.putpixel((x, y), tuple(int(a + (b - a) * shade) for a, b in zip((4, 0, 8), (70, 30, 90))) + (255,))
+    for x, y in ((7, 7), (8, 8), (7, 8), (8, 7)):
+        img.putpixel((x, y), hx("000000"))
     return img
 
 
@@ -386,7 +425,7 @@ def main() -> None:
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}"}}, handle, indent=2)
     for name, colour in LENSES.items():
-        lens_item(colour).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
+        lens_item(colour, GLYPHS.get(name)).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
         with open(os.path.join(ASSETS, "models", "item", f"{name}.json"), "w") as handle:
             json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"quantimium:item/{name}"}}, handle, indent=2)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
@@ -432,6 +471,7 @@ def main() -> None:
         json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": "quantimium:item/spectroscope"}}, handle, indent=2)
     with open(os.path.join(ITEMS, "spectroscope.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:item/spectroscope"}}, handle, indent=2)
+    creative_void().save(os.path.join(TEX, "creative_energy_void.png"))
     linker().save(os.path.join(ASSETS, "textures", "item", "laser_linker.png"))
     with open(os.path.join(ASSETS, "models", "item", "laser_linker.json"), "w") as handle:
         json.dump({"parent": "minecraft:item/handheld", "textures": {"layer0": "quantimium:item/laser_linker"}}, handle, indent=2)

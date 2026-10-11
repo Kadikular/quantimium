@@ -13,15 +13,15 @@ import net.minecraft.world.entity.player.Inventory;
 import java.util.List;
 
 /**
- * A Lens Mount: its four lenses in a row, in the order light meets them, and what the light leaving
- * it will do. No power bar: it takes what its lenses spend from the beam. Layout: tools/gui_panels.py lens_mount.
+ * A Lens Mount: its four lenses spaced along a line of light, left to right, each with a button under
+ * it to open its settings (lit when it has any), and what the light leaving it will do. No power bar: it
+ * takes what its lenses spend from the beam. Layout: tools/gui_panels.py lens_mount.
  */
 public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
 
     private static final Identifier PANEL = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/lens_mount.png");
     private static final int TEXT_X = 8;
     private static final int TEXT_Y = 20;
-    private static final int ORDER_Y = 56;
 
     public LensMountScreen(LensMountMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -82,7 +82,44 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
                 : Component.translatable("gui.quantimium.lens_mount.action", actions);
         if (light.boosts() > 0) does.append(Component.translatable("gui.quantimium.lens_mount.range", 1 << light.boosts()));
         graphics.text(font, does, leftPos + TEXT_X, topPos + TEXT_Y, textColour(), false);
-        graphics.text(font, Component.translatable("gui.quantimium.lens_mount.order"), leftPos + TEXT_X, topPos + ORDER_Y, dimColour(), false);
+        // Each lens's settings button: three dots, lit when it has settings to open, and brighter under the pointer.
+        for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
+            int x = leftPos + LensMountMenu.SLOT_X[slot] - 1;
+            int y = topPos + LensMountMenu.BUTTON_Y;
+            boolean has = hasSettings(slot);
+            boolean over = has && com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(mouseX, mouseY, x, y,
+                    LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H);
+            if (over) graphics.fill(x, y, x + LensMountMenu.BUTTON_W - 1, y + LensMountMenu.BUTTON_H - 1, 0x30FFFFFF);
+            int dot = !has ? 0xFF2A2E4A : over ? 0xFFE4DCFF : 0xFF9A7BFF;
+            for (int i = 0; i < 3; i++) {
+                int dx = x + 5 + i * 3;
+                graphics.fill(dx, y + 4, dx + 2, y + 6, dot);
+            }
+            if (over) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.lens_mount.settings")), mouseX, mouseY);
+        }
+    }
+
+    /** Whether the lens in {@code slot} has settings of its own: a Filter lens. */
+    private boolean hasSettings(int slot) {
+        return menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem() instanceof com.kadikular.quantimium.item.FilterLensItem;
+    }
+
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (activeOverlay() == null && event.button() == 0) {
+            for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
+                if (hasSettings(slot) && com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(event.x(), event.y(),
+                        leftPos + LensMountMenu.SLOT_X[slot] - 1, topPos + LensMountMenu.BUTTON_Y, LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H)) {
+                    if (minecraft != null && minecraft.gameMode != null) {
+                        minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                                net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
+                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, slot);
+                    }
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 
     private static Component name(Lens lens) {

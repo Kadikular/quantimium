@@ -125,7 +125,8 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 [[mechanic:laser.lens.mount]] A [[block:lens_mount]] is a mirror that holds lenses: light that reaches
 it leaves by its face, refocused, through its four lens slots, left to right. The beam is still a beam:
 it carries power to whatever it ends on, as before, and does what its lenses say along the way. Open
-the mount with an empty hand; sneak-click or wrench a face to point it there. Each lensed beam is
+the mount with an empty hand; sneak-click or wrench a face to point it there. Under each lens is a
+button for that lens's own settings (a Filter lens's, say), lit when it has any. Each lensed beam is
 tinted by what it does.
 
 **Actions** give light something to do, and light can carry several: Harvest and Damage on one beam
