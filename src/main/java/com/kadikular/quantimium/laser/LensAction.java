@@ -314,12 +314,12 @@ public final class LensAction {
     }
 
     /**
-     * Whether the Collectors up the beam have room for all of what breaking the block would drop. A drop
-     * every Collector's filter turns away doesn't hold the cut up: it falls where the block was.
+     * Whether the Collectors up the beam would take all of what breaking the block would drop: room for it,
+     * and filters that let it in. With Pickup, nothing is cut that would be left lying.
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
         for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool())) {
-            if (networks.anyAccepts(collectors, drop) && !networks.roomForAll(collectors, drop)) return false;
+            if (!networks.roomForAll(collectors, drop)) return false;
         }
         return true;
     }

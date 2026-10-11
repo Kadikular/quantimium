@@ -866,4 +866,20 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void withPickupItCutsNothingItsCollectorsWouldRefuse(GameTestHelper helper) {
+        // The Collector takes only sandstone: dirt from a grass block would be left lying, so it isn't cut.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        CollectorBlockEntity collector = collector(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        collector.setFilterSlot(0, new ItemStack(Items.SANDSTONE));
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.GRASS_BLOCK);
+        helper.runAfterDelay(60, () -> {
+            helper.assertBlockPresent(Blocks.GRASS_BLOCK, new BlockPos(9, Y, 8));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

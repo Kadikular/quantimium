@@ -549,14 +549,6 @@ public final class LaserNetworks {
         return can >= fe;
     }
 
-    /** Whether any of the Collectors at {@code positions} would catch {@code stack} at all, room or not: its filter lets it. */
-    boolean anyAccepts(List<BlockPos> positions, ItemStack stack) {
-        for (BlockPos pos : positions) {
-            if (nodes.get(pos) instanceof com.kadikular.quantimium.block.entity.CollectorBlockEntity collector && collector.accepts(stack)) return true;
-        }
-        return false;
-    }
-
     /** Whether the Collectors at {@code positions} would take all of {@code stack} between them. */
     boolean roomForAll(List<BlockPos> positions, ItemStack stack) {
         return simulateCollect(positions, stack).isEmpty();
