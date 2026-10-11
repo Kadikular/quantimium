@@ -413,6 +413,15 @@ public final class LensAction {
         return pos.equals(line.hit());
     }
 
+    /** Exactly where in what it's working on the beam goes: the middle of what it's hitting, or of the block. */
+    @Nullable
+    net.minecraft.world.phys.Vec3 workingPoint(ServerLevel level) {
+        BlockPos block = working(level);
+        if (block == null) return null;
+        if (key.action() == Lens.DAMAGE && !targets.isEmpty()) return targets.getFirst().getBoundingBox().getCenter();
+        return block.getCenter();
+    }
+
     /** What an area prism's action is working on just now, for the beam it shows: or null. */
     @Nullable
     BlockPos working(ServerLevel level) {

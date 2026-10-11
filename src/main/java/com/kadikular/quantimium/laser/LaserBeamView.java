@@ -11,6 +11,11 @@ import java.util.List;
 /** A block whose beams the client draws: the beams as the server last showed them. */
 public interface LaserBeamView {
 
+    /** Where {@code beam} starts and stops, for drawing: its own ends, unless the block knows better (an area prism's beam into a moving entity). */
+    default net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        return beam.ends();
+    }
+
     /** How much wider than usual to draw {@code beam}: a cavity's held light glows wider. */
     default float widthScale(LaserBeam beam) {
         return 1.0f;

@@ -523,13 +523,16 @@ public final class LaserNetworks {
             if (node.area() == null) continue;
             Light light = lights.get(node.nodePos());
             List<LaserBeam> shown = new ArrayList<>();
+            List<net.minecraft.world.phys.Vec3> points = new ArrayList<>();
             // Only while light is reaching it at all.
             if (light != null && litNow.contains(node.nodePos())) {
                 Set<BlockPos> seen = new HashSet<>();
                 for (LensAction action : actions.values()) {
                     if (!action.key().node().equals(node.nodePos()) || action.key().beam() != -1) continue;
                     BlockPos target = action.working(level);
-                    if (target == null || !seen.add(target)) continue;
+                    net.minecraft.world.phys.Vec3 point = action.workingPoint(level);
+                    if (target == null || point == null || !seen.add(target)) continue;
+                    points.add(point);
                     // Into the middle of the block it's working on.
                     net.minecraft.world.phys.Vec3 to = target.getCenter().subtract(node.nodePos().getCenter());
                     Direction face = Direction.getApproximateNearest(to.x, to.y, to.z);
@@ -537,7 +540,7 @@ public final class LaserNetworks {
                             1_000, true, light.packed()));
                 }
             }
-            node.showBeams(shown);
+            node.showWork(shown, points);
         }
     }
 

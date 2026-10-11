@@ -43,6 +43,8 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     private BoundingBox area;
     /** Beams to what its actions are working on, as the network last showed them. */
     private List<LaserBeam> shownBeams = List.of();
+    /** Exactly where each shown beam ends: the middle of what it's hitting, which moves. */
+    private List<net.minecraft.world.phys.Vec3> points = List.of();
 
     public AreaPrismBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.AREA_PRISM_BE.get(), pos, state);
@@ -111,6 +113,25 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     }
 
     @Override
+    public void showWork(List<LaserBeam> beams, List<net.minecraft.world.phys.Vec3> ends) {
+        boolean moved = !ends.equals(points);
+        points = List.copyOf(ends);
+        boolean same = LaserBeamView.sameLook(shownBeams, beams);
+        shownBeams = beams;
+        if ((!same || moved) && level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        int i = shownBeams.indexOf(beam);
+        net.minecraft.world.phys.Vec3[] ends = beam.ends();
+        if (i < 0 || i >= points.size()) return ends;
+        net.minecraft.world.phys.Vec3 centre = worldPosition.getCenter();
+        net.minecraft.world.phys.Vec3 to = points.get(i);
+        return new net.minecraft.world.phys.Vec3[] {centre.add(to.subtract(centre).normalize().scale(0.5)), to};
+    }
+
+    @Override
     public void onLoad() {
         super.onLoad();
         if (level != null && !level.isClientSide()) LaserNetworks.add(level, this);
@@ -139,12 +160,30 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         super.loadAdditional(in);
         area = in.read("Area", BoundingBox.CODEC).orElse(null);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
+        in.read("Points", CompoundTag.CODEC).ifPresent(tag -> {
+            List<net.minecraft.world.phys.Vec3> read = new java.util.ArrayList<>();
+            for (var entry : tag.getListOrEmpty("List")) {
+                if (entry instanceof CompoundTag point) read.add(new net.minecraft.world.phys.Vec3(point.getDoubleOr("X", 0), point.getDoubleOr("Y", 0), point.getDoubleOr("Z", 0)));
+            }
+            points = read;
+        });
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = saveWithoutMetadata(registries);
         tag.put("Beams", LaserBeamView.save(shownBeams));
+        net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+        for (net.minecraft.world.phys.Vec3 point : points) {
+            CompoundTag entry = new CompoundTag();
+            entry.putDouble("X", point.x);
+            entry.putDouble("Y", point.y);
+            entry.putDouble("Z", point.z);
+            list.add(entry);
+        }
+        CompoundTag wrapped = new CompoundTag();
+        wrapped.put("List", list);
+        tag.put("Points", wrapped);
         return tag;
     }
 

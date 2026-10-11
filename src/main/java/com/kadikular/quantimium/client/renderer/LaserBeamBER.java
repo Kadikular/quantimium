@@ -55,11 +55,11 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             float[] tint = halo(beam);
             if (bright == 0) {
                 // Live but carrying nothing: a dim line, checking. Dark, it shows only while aiming.
-                if (beam.live()) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(centre, beam, camera), 0.04f, tint[0], tint[1], tint[2], 0.10f);
-                else if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(centre, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
+                if (beam.live()) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.04f, tint[0], tint[1], tint[2], 0.10f);
+                else if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
                 continue;
             }
-            Vec3[] line = line(centre, beam, camera);
+            Vec3[] line = line(view, beam, camera);
             float flicker = 0.92f + 0.08f * Mth.sin(time * 0.7f + beam.face().ordinal());
             BeamRibbon.draw(halo, pose, Vec3.ZERO, line, (0.05f + 0.025f * bright) * view.widthScale(beam), tint[0], tint[1], tint[2],
                     0.12f + 0.03f * bright * flicker);
@@ -71,10 +71,10 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             int bright = LaserNetworks.brightness(beam.flow());
             float[] tint = core(beam);
             if (bright == 0) {
-                if (beam.live()) BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), 0.008f, tint[0], tint[1], tint[2], 0.30f);
+                if (beam.live()) BeamRibbon.draw(cores, pose, Vec3.ZERO, line(view, beam, camera), 0.008f, tint[0], tint[1], tint[2], 0.30f);
                 continue;
             }
-            BeamRibbon.draw(cores, pose, Vec3.ZERO, line(centre, beam, camera), (0.012f + 0.006f * bright) * view.widthScale(beam),
+            BeamRibbon.draw(cores, pose, Vec3.ZERO, line(view, beam, camera), (0.012f + 0.006f * bright) * view.widthScale(beam),
                     tint[0], tint[1], tint[2], 0.55f + 0.06f * bright);
         }
     }
@@ -102,8 +102,8 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
     }
 
     /** From the node's side to what the beam ends on, or to where it fades; camera-relative. */
-    private static Vec3[] line(Vec3 centre, LaserBeam beam, Vec3 camera) {
-        Vec3[] ends = beam.ends();
+    private static Vec3[] line(LaserBeamView view, LaserBeam beam, Vec3 camera) {
+        Vec3[] ends = view.endsOf(beam);
         return new Vec3[] {ends[0].subtract(camera), ends[1].subtract(camera)};
     }
 
@@ -112,7 +112,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
     public AABB getRenderBoundingBox(T node) {
         AABB box = new AABB(node.getBlockPos());
         for (LaserBeam beam : node.syncedBeams()) {
-            Vec3[] ends = beam.ends();
+            Vec3[] ends = node.endsOf(beam);
             box = box.minmax(new AABB(ends[1], ends[1]));
         }
         return box.inflate(0.5);

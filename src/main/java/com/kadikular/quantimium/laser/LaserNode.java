@@ -108,6 +108,11 @@ public interface LaserNode {
         return null;
     }
 
+    /** An area prism: the beams it shows to what it's working on, and exactly where each ends. */
+    default void showWork(java.util.List<LaserBeam> beams, java.util.List<net.minecraft.world.phys.Vec3> points) {
+        showBeams(beams);
+    }
+
     /** Puts back what a Sender sent but couldn't be used; what didn't fit. */
     default net.minecraft.world.item.ItemStack takeBack(net.minecraft.world.item.ItemStack stack) {
         return stack;
