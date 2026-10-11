@@ -2,7 +2,7 @@
 navigation:
   title: Tether
   parent: items/index.md
-  position: 31
+  position: 33
   icon: quantimium:tether
 item_ids:
 - quantimium:tether

@@ -547,13 +547,17 @@ public final class LensAction {
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null) return false;
         if (state.is(ModTags.LASER_UNBREAKABLE)) return false;
         // Plain, it cuts as an iron pickaxe: what needs better waits for an Amplify lens.
-        if (state.requiresCorrectToolForDrops() && !tool().isCorrectToolForDrops(state)) return false;
-        return stream.filter() == null || stream.filter().lets(state, () -> Block.getDrops(state, level, pos, null, null, tool()));
+        if (state.requiresCorrectToolForDrops() && !tool(level).isCorrectToolForDrops(state)) return false;
+        return stream.filter() == null || stream.filter().lets(state, () -> Block.getDrops(state, level, pos, null, null, tool(level)));
     }
 
-    /** What it cuts as: an iron pickaxe, or with an Amplify lens a diamond one. */
-    private ItemStack tool() {
-        return new ItemStack(stream.amps() > 0 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
+    /** What it cuts as: an iron pickaxe, or with an Amplify lens a diamond one; with Silk Touch for Precision, Fortune for each Harmonic lens. */
+    private ItemStack tool(ServerLevel level) {
+        ItemStack tool = new ItemStack(stream.amps() > 0 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
+        var enchantments = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+        if (stream.has(Lens.PRECISION)) tool.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH), 1);
+        if (stream.fortune() > 0) tool.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FORTUNE), stream.fortune());
+        return tool;
     }
 
     private long harvestCost(ServerLevel level, BlockPos pos) {
@@ -608,7 +612,12 @@ public final class LensAction {
             return List.of(new ItemStack(com.kadikular.quantimium.init.ModItems.ANOMALITE_SHARD.get(),
                     com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.SHARDS));
         }
-        return Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool());
+        // Unrealising: ore comes away as Unrealised Matter, one to a block, with no history yet.
+        if (stream.has(Lens.UNREALISE) && com.kadikular.quantimium.Config.unrealisingLens()
+                && level.getBlockState(pos).is(net.neoforged.neoforge.common.Tags.Blocks.ORES)) {
+            return List.of(new ItemStack(com.kadikular.quantimium.init.ModItems.UNREALISED_MATTER.get()));
+        }
+        return Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool(level));
     }
 
     private boolean mirrored() {

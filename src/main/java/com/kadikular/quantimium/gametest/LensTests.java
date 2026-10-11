@@ -1184,4 +1184,50 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // covers: laser.lens.precision
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void precisionCutsWithSilkTouch(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.PRECISION_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.STONE), 1, "stone, not cobblestone");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.harmonic
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void harmonicCutsWithFortune(GameTestHelper helper) {
+        // Fortune III on eight lapis ore: more than plain cutting could ever give (9 a block at most).
+        // Fortune is chance: this fails by bad luck about once in a few hundred runs.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.HARMONIC_LENS.get(),
+                ModItems.SPEED_LENS.get());
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARMONIC_LENS.get(), ModItems.HARMONIC_LENS.get(), ModItems.RANGE_LENS.get());
+        for (int x = 8; x <= 15; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.LAPIS_ORE);
+        helper.succeedWhen(() -> {
+            for (int x = 8; x <= 15; x++) helper.assertBlockPresent(Blocks.AIR, new BlockPos(x, Y, 8));
+            int lapis = count(collector, Items.LAPIS_LAZULI);
+            helper.assertTrue(lapis > 72, "more than plain cutting gives: " + lapis);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.unrealise
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void unrealisingTurnsOreIntoMatter(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.UNREALISING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.COAL_ORE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, ModItems.UNREALISED_MATTER.get()), 1, "Unrealised Matter, not coal");
+            helper.assertValueEqual(count(collector, Items.COAL), 0, "no coal");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

@@ -264,6 +264,12 @@ public class ModItems {
             "uv_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UV));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> AMPLIFY_LENS = ITEMS.registerItem(
             "amplify_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.AMPLIFY));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> PRECISION_LENS = ITEMS.registerItem(
+            "precision_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PRECISION));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARMONIC_LENS = ITEMS.registerItem(
+            "harmonic_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.HARMONIC));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> UNREALISING_LENS = ITEMS.registerItem(
+            "unrealising_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UNREALISE));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INTERACT_LENS = ITEMS.registerItem(
             "interact_lens", props -> new com.kadikular.quantimium.item.InteractLensItem(props.stacksTo(1)));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INSERT_LENS = ITEMS.registerItem(

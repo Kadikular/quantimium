@@ -21,6 +21,7 @@ navigation:
 - <ItemLink id="quantimium:filter_lens" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
+- <ItemLink id="quantimium:harmonic_lens" />
 - <ItemLink id="quantimium:harvest_lens" />
 - <ItemLink id="quantimium:insert_lens" />
 - <ItemLink id="quantimium:interact_lens" />
@@ -29,6 +30,7 @@ navigation:
 - <ItemLink id="quantimium:phantom_lens" />
 - <ItemLink id="quantimium:pickup_lens" />
 - <ItemLink id="quantimium:place_lens" />
+- <ItemLink id="quantimium:precision_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />
 - <ItemLink id="quantimium:range_lens" />
 - <ItemLink id="quantimium:rift_residue" />
@@ -41,5 +43,6 @@ navigation:
 - <ItemLink id="quantimium:tesseract" />
 - <ItemLink id="quantimium:tether" />
 - <ItemLink id="quantimium:unrealised_matter" />
+- <ItemLink id="quantimium:unrealising_lens" />
 - <ItemLink id="quantimium:uv_lens" />
 - <ItemLink id="quantimium:veil_thread" />

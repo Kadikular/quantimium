@@ -66,9 +66,14 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
      * One action the light carries, its modifiers (bits of {@link Lens}), and who pays for it; how many
      * Amplify lenses it's met, and what a Filter lens lets it act on (null for everything).
      */
-    public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits) {
+    public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits,
+                         int fortune) {
         public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed) {
-            this(action, modifiers, payers, amps, filter, speed, false);
+            this(action, modifiers, payers, amps, filter, speed, false, 0);
+        }
+
+        public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits) {
+            this(action, modifiers, payers, amps, filter, speed, hits, 0);
         }
 
         public Stream(Lens action, int modifiers, Set<BlockPos> payers) {
@@ -89,15 +94,20 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
         }
 
         Stream paidBy(Set<BlockPos> payers) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, hits);
+            return new Stream(action, modifiers, payers, amps, filter, speed, hits, fortune);
         }
 
         Stream with(int modifiers, int amps, @Nullable LensFilter filter) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, hits);
+            return new Stream(action, modifiers, payers, amps, filter, speed, hits, fortune);
         }
 
         Stream faster() {
-            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), hits);
+            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), hits, fortune);
+        }
+
+        Stream luckier() {
+            return new Stream(action, modifiers | 1 << Lens.HARMONIC.ordinal(), payers, amps, filter, speed, hits,
+                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1));
         }
     }
 
@@ -138,7 +148,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                     // Joined, the same action does the most either side did; a filter from one side is kept.
                     streams.put(stream.action(), new Stream(stream.action(), had.modifiers() | stream.modifiers(), Set.copyOf(payers),
                             Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter(),
-                            Math.max(had.speed(), stream.speed()), had.hits() || stream.hits()));
+                            Math.max(had.speed(), stream.speed()), had.hits() || stream.hits(), Math.max(had.fortune(), stream.fortune())));
                 }
             }
         }
@@ -175,7 +185,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                 Stream had = streams.get(lens);
                 int modifiers = (had == null ? 0 : had.modifiers()) | (pickup ? 1 << Lens.PICKUP.ordinal() : 0);
                 streams.put(lens, new Stream(lens, modifiers, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
-                        had == null ? 0 : had.speed(), use.hits()));
+                        had == null ? 0 : had.speed(), use.hits(), had == null ? 0 : had.fortune()));
             } else switch (lens) {
                 case PICKUP -> {
                     pickup = true;
@@ -190,6 +200,9 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                 case FILTER -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(), use.filter() == null ? LensFilter.EMPTY : use.filter()));
                 case SPEED -> streams.replaceAll((action, stream) -> stream.faster());
+                case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
+                case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
+                        stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case AMPLIFY -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.AMPLIFY.ordinal(), Math.min(LaserTuning.AMPLIFY_LENSES, stream.amps() + 1), stream.filter()));
                 default -> {}
@@ -230,6 +243,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
             entry.putInt("Modifiers", stream.modifiers());
             entry.putInt("Amps", stream.amps());
             entry.putInt("Speed", stream.speed());
+            entry.putInt("Fortune", stream.fortune());
             if (stream.filter() != null) {
                 LensFilter.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, stream.filter()).result().ifPresent(filter -> entry.put("Filter", filter));
             }
@@ -250,7 +264,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
             LensFilter filter = stream.get("Filter") == null ? null
                     : LensFilter.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, stream.get("Filter")).result().orElse(null);
             streams.add(new Stream(Lens.values()[action], stream.getIntOr("Modifiers", 0), Set.of(source), stream.getIntOr("Amps", 0), filter,
-                    stream.getIntOr("Speed", 0)));
+                    stream.getIntOr("Speed", 0), false, stream.getIntOr("Fortune", 0)));
         }
         return new Light(tag.getIntOr("Range", LaserTuning.RELAY_RANGE), tag.getIntOr("Boosts", 0), tag.getBooleanOr("Pickup", false),
                 List.copyOf(streams), Set.of(source), -1, tag.getIntOr("Marks", 0));

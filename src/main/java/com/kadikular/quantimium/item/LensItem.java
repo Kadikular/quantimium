@@ -9,6 +9,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.Locale;
+import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.function.Consumer;
 
 /** A lens, for a Lens Mount: an action or a modifier for the beams leaving it. */
@@ -30,7 +31,7 @@ public class LensItem extends Item {
         super.appendHoverText(stack, context, display, tooltip, flag);
         tooltip.accept(Component.translatable(lens.action ? "item.quantimium.lens.action" : "item.quantimium.lens.modifier")
                 .withStyle(ChatFormatting.DARK_AQUA));
-        tooltip.accept(Component.translatable("item.quantimium." + lens.name().toLowerCase(Locale.ROOT) + "_lens.tip")
+        tooltip.accept(Component.translatable(BuiltInRegistries.ITEM.getKey(stack.getItem()).toLanguageKey("item") + ".tip")
                 .withStyle(ChatFormatting.GRAY));
     }
 }

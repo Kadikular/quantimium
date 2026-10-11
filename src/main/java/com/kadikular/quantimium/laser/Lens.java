@@ -31,7 +31,13 @@ public enum Lens {
     /** Takes from the inventory it ends on, back up the beam to Collectors. */
     EXTRACT(true, 0xFFFFC46F),
     /** Uses what a Sender sends, or an empty hand, on what the beam ends on: a right click, or a hit. */
-    INTERACT(true, 0xFFC0FF7F);
+    INTERACT(true, 0xFFC0FF7F),
+    /** Harvest cuts with Silk Touch. */
+    PRECISION(false, 0xFFE0F0FF),
+    /** Harvest cuts with Fortune, a level for each, up to three. */
+    HARMONIC(false, 0xFFFFD0F0),
+    /** Ore cut comes away as Unrealised Matter. */
+    UNREALISE(false, 0xFFB070FF);
 
     /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
     public static final int MIRRORED_MARK = 30;

@@ -67,6 +67,8 @@ public final class LaserTuning {
     public static final int AREA_MAX = 257;
     /** Range lenses that count: each doubles a run's reach, up to {@link #MAX_RANGE}. Light with an action goes 8, 16, 32, 64, 128. */
     public static final int RANGE_LENSES = 4;
+    /** Harmonic lenses that count: a level of Fortune each. */
+    public static final int HARMONIC_LENSES = 3;
     /** Speed lenses that count: each doubles how fast an action works, to eight times. */
     public static final int SPEED_LENSES = 3;
     /** The farthest any run of light reaches, Range lenses and all. */

@@ -227,6 +227,9 @@ GLYPHS = {
     "insert_lens": ["..#..", "..#..", "#.#.#", ".###.", "#####"],    # into a box
     "extract_lens": ["#####", ".###.", "#.#.#", "..#..", "..#.."],   # out of a box
     "interact_lens": [".##..", "#.#..", "..###", "..#.#", "..###"],  # a hand on a lever
+    "precision_lens": [".....", "..#..", ".#.#.", "..#..", "....."],  # a fine point
+    "harmonic_lens": ["#...#", "#.#.#", "#.#.#", "#.#.#", "#...#"],   # many overtones
+    "unrealising_lens": ["#.#.#", ".#.#.", "#.#.#", ".#.#.", "#.#.#"],  # not yet one thing
 }
 
 
@@ -272,7 +275,8 @@ def spectroscope() -> Image.Image:
 LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
           "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
           "speed_lens": "ffa0d0", "phantom_lens": "b8c4d8",
-          "insert_lens": "6fa8ff", "extract_lens": "ffc46f", "interact_lens": "c0ff7f"}
+          "insert_lens": "6fa8ff", "extract_lens": "ffc46f", "interact_lens": "c0ff7f",
+          "precision_lens": "e0f0ff", "harmonic_lens": "ffd0f0", "unrealising_lens": "b070ff"}
 
 
 def sender_face() -> Image.Image:

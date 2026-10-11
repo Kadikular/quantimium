@@ -327,12 +327,20 @@ public final class Config {
             .comment("The most FE a tick one Cavity Mirror loses to its leak, however much it holds.")
             .defineInRange("cavityLeakCapFePerTick", 20, 0, 1_000_000);
 
+    public static final ModConfigSpec.BooleanValue UNREALISING_LENS = BUILDER
+            .comment("Whether the Unrealising lens turns ore a Harvest beam cuts into Unrealised Matter. Off, ore comes away as it would anyway: for packs where Matter would duplicate ores.")
+            .define("unrealisingLens", true);
+
     public static final ModConfigSpec.IntValue PHANTOM_FE_PER_BLOCK = BUILDER
             .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on.")
             .defineInRange("phantomFePerBlock", 5, 0, 100_000);
 
     static {
         BUILDER.pop();
+    }
+
+    public static boolean unrealisingLens() {
+        return !SPEC.isLoaded() || UNREALISING_LENS.get();
     }
 
     public static int phantomFePerBlock() {
