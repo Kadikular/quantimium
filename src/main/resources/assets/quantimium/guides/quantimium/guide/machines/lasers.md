@@ -153,9 +153,9 @@ Pickup is the exception: it stays on the light, and every action added after it 
 | <ItemLink id="quantimium:insert_lens" /> | Action | Puts what Senders up the beam send into the inventory the beam ends on, a stack (as much as fits) each 0.5 s; with an Area Prism, each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
 | <ItemLink id="quantimium:extract_lens" /> | Action | Takes from the inventory the beam ends on, as much of a stack as the Collectors up the beam have room for, back up to them; with an Area Prism, from each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
 | <ItemLink id="quantimium:precision_lens" /> | Modifier | Harvest cuts with Silk Touch: blocks come away whole. | none |
-| <ItemLink id="quantimium:harmonic_lens" /> | Modifier | Harvest cuts with Fortune, a level for each, up to 3. | none |
+| <ItemLink id="quantimium:harmonic_lens" /> | Modifier | Harvest cuts with Fortune, and Damage hits with Looting, a level for each, up to 3. | none |
 | <ItemLink id="quantimium:unrealising_lens" /> | Modifier | Ore a Harvest beam cuts (anything in `#c:ores`) comes away as <ItemLink id="quantimium:unrealised_matter" />, one to a block, with no history yet. A pack can turn it off in the config, where Matter would duplicate ores. | none |
-| <ItemLink id="quantimium:phantom_lens" /> | Modifier | Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Filter set to ores, just the ore in the ground); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (5 by default) for each block it passes through; for an Area Prism, for each block between it and what it works on |
+| <ItemLink id="quantimium:phantom_lens" /> | Modifier | Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Filter set to ores, just the ore in the ground; with Pickup, it passes over what no Collector up the beam would take); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (5 by default) for each block it passes through; for an Area Prism, for each block between it and what it works on |
 | <ItemLink id="quantimium:speed_lens" /> | Modifier | Its actions work twice as fast: a Harvest beam waits half as long between blocks, Placement too, and an Area Prism looks through its area twice as fast. Three count, for eight times. | none |
 | <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. It decides what each action works on (which blocks Harvest cuts, what Damage hits, which items Pickup gathers from the ground, what Placement places), not what happens to the drops: a cut block's drops, and a kill's, all come back with Pickup. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. A **keep** count spares that many of what a Damage beam would hit: it hits only those beyond it, so a pen keeps its breeding pair. Use it in the air to set it. | none |
 | <ItemLink id="quantimium:amplify_lens" /> | Modifier | Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to 3. | a cut costs one more share for each; a hit doubles |
@@ -236,13 +236,15 @@ doesn't refocus the light or take anything for it. Light in the mirror:
 
 - acts only on what's in the mirror. Harvest takes a fully grown <ItemLink id="quantimium:anomalite_crystal" /> apart, on the
   mirror's side, for its shards, as a <ItemLink id="quantimium:harvest_laser" /> does, and the tear leaks anomaly and now and
-  then a mirror mite the same way. Damage hits only the Veiled and mirror mites. Placement does nothing.
+  then a mirror mite the same way. Without Pickup the shards fall on the mirror's side: only a phased
+  player sees them or can take them, and only mirrored Pickup light carries them off. Damage hits only the
+  Veiled and mirror mites. Placement does nothing.
 - draws <ItemLink id="quantimium:veil_thread" /> with Pickup: through a Containment Hall's glass, into the cell where a Veiled
   is held, it draws a thread at a Harvest Laser's pace, one draw to a hall at a time, and the thread goes
   up the beam to a Collector.
 - charges nothing of the real world: a machine just stops it.
 - is stopped by solid blocks as any light is: blocks are solid in the mirror too.
-- can only be seen through a <ItemLink id="quantimium:mirror_lens" />.
+- can only be seen from in the mirror, or through a <ItemLink id="quantimium:mirror_lens" />.
 
 Light passes a Containment Hall's attuned glass, as it does any glass.
 

@@ -84,6 +84,7 @@ public class CollectorBlockEntity extends ItemRelayBlockEntity {
     public void toggleMode() {
         allow = !allow;
         setChanged();
+        sync();
     }
 
     public void setFilterSlot(int slot, ItemStack stack) {

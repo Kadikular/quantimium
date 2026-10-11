@@ -151,6 +151,19 @@ public final class MirrorPhaseInteractions {
         drop.getPersistentData().putBoolean(MIRROR_DROP, true);
     }
 
+    /** Drops {@code stack} at {@code pos} on the mirror's side, where only a phased player sees it or can take it. */
+    public static void dropInMirror(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos pos,
+                                    net.minecraft.world.item.ItemStack stack) {
+        ItemEntity drop = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.25, pos.getZ() + 0.5, stack);
+        drop.setDefaultPickUpDelay();
+        drop.setData(com.kadikular.quantimium.init.ModAttachments.MIRROR_ONLY, true);
+        level.addFreshEntity(drop);
+    }
+
+    public static boolean mirrorOnly(ItemEntity item) {
+        return item.getData(com.kadikular.quantimium.init.ModAttachments.MIRROR_ONLY);
+    }
+
     /** Marks mirror-harvest drops as owned by the phased breaker. */
     @SubscribeEvent
     public static void onBlockDrops(BlockDropsEvent event) {
@@ -171,8 +184,13 @@ public final class MirrorPhaseInteractions {
      */
     @SubscribeEvent
     public static void onItemPickup(ItemEntityPickupEvent.Pre event) {
-        if (!MirrorPhase.isPhased(event.getPlayer())) return;
         ItemEntity item = event.getItemEntity();
+        // What lies on the mirror's side is anyone's there, and nobody's outside it.
+        if (mirrorOnly(item)) {
+            event.setCanPickup(MirrorPhase.isPhased(event.getPlayer()) ? TriState.TRUE : TriState.FALSE);
+            return;
+        }
+        if (!MirrorPhase.isPhased(event.getPlayer())) return;
         if (item.getItem().has(ModDataComponents.SOPHON.get())) {
             event.setCanPickup(TriState.TRUE);
             return;

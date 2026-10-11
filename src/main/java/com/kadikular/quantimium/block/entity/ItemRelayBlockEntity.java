@@ -101,6 +101,7 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     public void cycleMode() {
         mode = mode.next();
         setChanged();
+        sync();
         invalidateCapabilities();
         if (level != null) LaserNetworks.changed(level);
     }
@@ -373,6 +374,11 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
         mode = Mode.values()[Math.floorMod(in.getIntOr("RelayMode", startingMode().ordinal()), Mode.values().length)];
         in.read("SideConfigs", CompoundTag.CODEC).ifPresent(tag -> sideConfigs = PROFILE.sanitize(SideConfig.loadAll(tag.getListOrEmpty("List"))));
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
+    }
+
+    /** Sends what the screen shows (the mode, the filter's allow or deny) to the clients watching, at once. */
+    protected void sync() {
+        if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     @Override

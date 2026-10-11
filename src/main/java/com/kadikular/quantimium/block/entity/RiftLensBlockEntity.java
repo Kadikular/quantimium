@@ -89,6 +89,13 @@ public class RiftLensBlockEntity extends BlockEntity implements LaserNode, Laser
         return 0;
     }
 
+    /** Its light leaves from the tear in its middle, not its face. */
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        net.minecraft.world.phys.Vec3[] ends = beam.ends();
+        return new net.minecraft.world.phys.Vec3[] {worldPosition.getCenter(), ends[1]};
+    }
+
     @Override
     public boolean rifts() {
         return true;

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:harmonic_lens" scale="2" />
 
-A lens: Harvest cuts with Fortune, a level each.
+A lens: Harvest cuts with Fortune, Damage hits with Looting, a level each.
 
 ## Recipes
 

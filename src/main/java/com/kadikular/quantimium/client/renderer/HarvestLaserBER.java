@@ -24,8 +24,8 @@ public class HarvestLaserBER extends SubmittingBER<HarvestLaserBlockEntity> {
     private static final double ORB_OFFSET = -1.0 / 16.0;
     private static final int BEAM_SEGMENTS = 12;
     /** The tear is the Mirror Rift's shape, cut down to fit in the ring. */
-    private static final float TEAR_SCALE = 0.24f;
-    private static final MirrorRiftRenderer.Tint TEAR_TINT =
+    static final float TEAR_SCALE = 0.24f;
+    static final MirrorRiftRenderer.Tint TEAR_TINT =
             new MirrorRiftRenderer.Tint(0.62f, 0.16f, 0.82f, 0.55f, 0.16f);
 
     public HarvestLaserBER(BlockEntityRendererProvider.Context context) {

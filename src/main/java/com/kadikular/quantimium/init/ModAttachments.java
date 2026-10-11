@@ -70,6 +70,16 @@ public final class ModAttachments {
                     .serialize(codecSerializer(SophonRegistry.CODEC, registry -> !registry.isEmpty()))
                     .build());
 
+    /**
+     * An item lying on the mirror's side, cut there by mirrored light: only the mirror sees it, and only
+     * a phased player can take it. Synced, so a client outside the mirror can leave it undrawn.
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> MIRROR_ONLY =
+            ATTACHMENT_TYPES.register("mirror_only", () -> AttachmentType.builder(() -> false)
+                    .serialize(codecSerializer(Codec.BOOL, only -> only))
+                    .sync(net.minecraft.network.codec.ByteBufCodecs.BOOL)
+                    .build());
+
     private static final String VALUE_KEY = "value";
 
     /**

@@ -79,9 +79,9 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         }
     }
 
-    /** UV light shows only to someone holding a wrench or the Linker; light in the mirror, only through a Mirror Lens. */
+    /** UV light shows only to someone holding a wrench or the Linker; light in the mirror, only in it or through a Mirror Lens. */
     private static boolean hidden(LaserBeam beam, boolean aiming) {
-        if ((beam.marks() & com.kadikular.quantimium.laser.Light.MIRRORED) != 0) {
+        if ((beam.marks() & com.kadikular.quantimium.laser.Light.MIRRORED) != 0 && !com.kadikular.quantimium.client.ClientPhaseState.isActive()) {
             var player = net.minecraft.client.Minecraft.getInstance().player;
             if (player == null || !com.kadikular.quantimium.item.MirrorLensItem.isWorn(player)) return true;
         }
@@ -105,10 +105,15 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         return new float[] {0.45f + 0.55f * halo[0], 0.45f + 0.55f * halo[1], 0.45f + 0.55f * halo[2]};
     }
 
-    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. */
+    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. Light into a Rift Lens goes on to its tear. */
     private static Vec3[] line(LaserBeamView view, LaserBeam beam, Vec3 camera) {
         Vec3[] ends = view.endsOf(beam);
-        return new Vec3[] {ends[0].subtract(camera), ends[1].subtract(camera)};
+        Vec3 end = ends[1];
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        if (beam.hit() != null && level != null && level.getBlockState(beam.hit()).getBlock() instanceof com.kadikular.quantimium.block.RiftLensBlock) {
+            end = beam.hit().getCenter();
+        }
+        return new Vec3[] {ends[0].subtract(camera), end.subtract(camera)};
     }
 
     /** Beams reach as far as they go. */

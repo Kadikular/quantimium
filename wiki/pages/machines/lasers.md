@@ -145,9 +145,9 @@ Pickup is the exception: it stays on the light, and every action added after it 
 | [[item:insert_lens]] | Action | [[mechanic:laser.lens.insert]] Puts what Senders up the beam send into the inventory the beam ends on, a stack (as much as fits) each {{c:LaserTuning.PLACE_COOLDOWN|s}}; with an Area Prism, each inventory in its area in turn. A Filter lens says what. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack |
 | [[item:extract_lens]] | Action | [[mechanic:laser.lens.extract]] Takes from the inventory the beam ends on, as much of a stack as the Collectors up the beam have room for, back up to them; with an Area Prism, from each inventory in its area in turn. A Filter lens says what. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack |
 | [[item:precision_lens]] | Modifier | [[mechanic:laser.lens.precision]] Harvest cuts with Silk Touch: blocks come away whole. | none |
-| [[item:harmonic_lens]] | Modifier | [[mechanic:laser.lens.harmonic]] Harvest cuts with Fortune, a level for each, up to {{c:LaserTuning.HARMONIC_LENSES}}. | none |
+| [[item:harmonic_lens]] | Modifier | [[mechanic:laser.lens.harmonic]] Harvest cuts with Fortune, and Damage hits with Looting, a level for each, up to {{c:LaserTuning.HARMONIC_LENSES}}. | none |
 | [[item:unrealising_lens]] | Modifier | [[mechanic:laser.lens.unrealise]] Ore a Harvest beam cuts (anything in `#c:ores`) comes away as [[item:unrealised_matter]], one to a block, with no history yet. A pack can turn it off in the config, where Matter would duplicate ores. | none |
-| [[item:phantom_lens]] | Modifier | [[mechanic:laser.lens.phantom]] Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Filter set to ores, just the ore in the ground); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (5 by default) for each block it passes through; for an Area Prism, for each block between it and what it works on |
+| [[item:phantom_lens]] | Modifier | [[mechanic:laser.lens.phantom]] Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Filter set to ores, just the ore in the ground; with Pickup, it passes over what no Collector up the beam would take); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (5 by default) for each block it passes through; for an Area Prism, for each block between it and what it works on |
 | [[item:speed_lens]] | Modifier | [[mechanic:laser.lens.speed]] Its actions work twice as fast: a Harvest beam waits half as long between blocks, Placement too, and an Area Prism looks through its area twice as fast. Three count, for eight times. | none |
 | [[item:filter_lens]] | Modifier | [[mechanic:laser.lens.filter]] The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. It decides what each action works on (which blocks Harvest cuts, what Damage hits, which items Pickup gathers from the ground, what Placement places), not what happens to the drops: a cut block's drops, and a kill's, all come back with Pickup. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. A **keep** count spares that many of what a Damage beam would hit: it hits only those beyond it, so a pen keeps its breeding pair. Use it in the air to set it. | none |
 | [[item:amplify_lens]] | Modifier | [[mechanic:laser.lens.amplify]] Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to {{c:LaserTuning.AMPLIFY_LENSES}}. | a cut costs one more share for each; a hit doubles |
@@ -228,13 +228,15 @@ doesn't refocus the light or take anything for it. Light in the mirror:
 
 - acts only on what's in the mirror. Harvest takes a fully grown [[block:anomalite_crystal]] apart, on the
   mirror's side, for its shards, as a [[block:harvest_laser]] does, and the tear leaks anomaly and now and
-  then a mirror mite the same way. Damage hits only the Veiled and mirror mites. Placement does nothing.
+  then a mirror mite the same way. Without Pickup the shards fall on the mirror's side: only a phased
+  player sees them or can take them, and only mirrored Pickup light carries them off. Damage hits only the
+  Veiled and mirror mites. Placement does nothing.
 - draws [[item:veil_thread]] with Pickup: through a Containment Hall's glass, into the cell where a Veiled
   is held, it draws a thread at a Harvest Laser's pace, one draw to a hall at a time, and the thread goes
   up the beam to a Collector.
 - charges nothing of the real world: a machine just stops it.
 - is stopped by solid blocks as any light is: blocks are solid in the mirror too.
-- can only be seen through a [[item:mirror_lens]].
+- can only be seen from in the mirror, or through a [[item:mirror_lens]].
 
 Light passes a Containment Hall's attuned glass, as it does any glass.
 

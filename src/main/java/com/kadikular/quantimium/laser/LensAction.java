@@ -129,13 +129,12 @@ public final class LensAction {
             case DAMAGE -> damage(level, networks, phase == 0, pickup);
             case PICKUP -> {
                 // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
-                if (mirrored()) {
-                    drawThread(level, networks);
-                    return;
-                }
+                if (mirrored()) drawThread(level, networks);
                 if (phase != 0 || collectors.isEmpty()) return;
-                // Items are small: anything within nearly a block of the beam's line counts.
+                // Items are small: anything within nearly a block of the beam's line counts. Each light takes
+                // only what lies on its own side.
                 for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
+                        && com.kadikular.quantimium.event.MirrorPhaseInteractions.mirrorOnly(item) == mirrored()
                         && (stream.filter() == null || stream.filter().lets(item.getItem())))) {
                     carry(networks, item, true);
                 }
@@ -175,9 +174,13 @@ public final class LensAction {
             int keep = stream.filter() == null ? 0 : stream.filter().keep();
             if (keep > 0) found = found.stream().sorted(java.util.Comparator.comparingInt(LivingEntity::getId).reversed()).toList();
             targets = found.size() <= keep ? new ArrayList<>() : new ArrayList<>(found.subList(0, found.size() - keep));
+            // With Harmonic lenses it hits as a hand holding Looting would, so what it kills drops more.
+            LaserHand looter = stream.fortune() > 0 && !targets.isEmpty() ? lootingHand(level) : null;
+            var source = looter == null ? level.damageSources().source(ModDamageTypes.LASER)
+                    : level.damageSources().source(ModDamageTypes.LASER, looter);
             for (LivingEntity entity : targets) {
                 if (charged < hit) break;
-                if (entity.hurtServer(level, level.damageSources().source(ModDamageTypes.LASER), LaserTuning.DAMAGE_PER_HIT * scale)) {
+                if (entity.hurtServer(level, source, LaserTuning.DAMAGE_PER_HIT * scale)) {
                     charged -= hit;
                     networks.workDone(this);
                     lastWorked = now;
@@ -185,9 +188,22 @@ public final class LensAction {
                     if (pickup && !entity.isAlive()) gatherDrops(level, networks, entity);
                 }
             }
+            if (looter != null) looter.letGo();
         }
         targets.removeIf(entity -> !entity.isAlive());
         want = Math.max(0, hit * targets.size() - charged);
+    }
+
+    /** The laser's hand, at the beam's source, holding a blade with Looting for each Harmonic lens. */
+    private LaserHand lootingHand(ServerLevel level) {
+        LaserHand hand = LaserHand.of(level);
+        BlockPos at = beam != null ? beam.from() : key.node();
+        hand.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        ItemStack blade = new ItemStack(Items.STICK);
+        blade.enchant(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING), stream.fortune());
+        hand.hold(blade);
+        return hand;
     }
 
     // ---- interacting ----
@@ -474,7 +490,7 @@ public final class LensAction {
     /** Puts power into cutting the block the beam ends on; breaks it when the cut is through. */
     private void harvest(ServerLevel level, LaserNetworks networks, boolean pickup) {
         if (cooldown > 0) cooldown--;
-        BlockPos target = harvestTarget(level);
+        BlockPos target = harvestTarget(level, networks, pickup);
         if (target == null || !target.equals(cutting)) {
             // A new block, or none: the cut on the old one is lost, as a player's would be.
             if (cutting != null) level.destroyBlockProgress(crackId(), cutting, -1);
@@ -509,17 +525,18 @@ public final class LensAction {
     /**
      * The block a Harvest beam would break: one light passes through just before its end (a crop on
      * farmland, grass), or else what it ends on, if it can be broken. In an area, the one being cut, or
-     * the next that can be.
+     * the next that can be. With Pickup, an area or Phantom light passes over what it couldn't carry away.
      */
     @Nullable
-    private BlockPos harvestTarget(ServerLevel level) {
+    private BlockPos harvestTarget(ServerLevel level, LaserNetworks networks, boolean pickup) {
         if (area != null) {
             if (cutting != null && area.isInside(cutting) && cuttable(level, cutting) && inSight(level, cutting)) return cutting;
             if (now < restUntil) return null;
             for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
                 BlockPos pos = areaPos(cursor);
                 cursor = (cursor + 1) % areaVolume();
-                if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)) {
+                if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)
+                        && (!pickup || roomForDrops(level, networks, pos))) {
                     missed = 0;
                     return pos;
                 }
@@ -533,7 +550,8 @@ public final class LensAction {
         if ((marks & Light.PHANTOM) != 0 || mirrored()) {
             if (mirrored() && beam.hit() != null && cuttable(level, beam.hit())) return beam.hit();
             for (BlockPos pos : beam.path()) {
-                if (level.isLoaded(pos) && !level.getBlockState(pos).isAir() && cuttable(level, pos)) return pos;
+                if (level.isLoaded(pos) && !level.getBlockState(pos).isAir() && cuttable(level, pos)
+                        && (!pickup || roomForDrops(level, networks, pos))) return pos;
             }
             return null;
         }
@@ -607,7 +625,10 @@ public final class LensAction {
             if (pickup && networks.roomFor(collectors, drop) && networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK)) {
                 left = networks.collect(collectors, drop);
             }
-            if (!left.isEmpty()) Block.popResource(level, pos, left);
+            if (left.isEmpty()) continue;
+            // Cut on the mirror's side, it falls there: only the mirror sees it, or can take it.
+            if (mirrored()) com.kadikular.quantimium.event.MirrorPhaseInteractions.dropInMirror(level, pos, left);
+            else Block.popResource(level, pos, left);
         }
         // A beam now reaches on past where the block was; an area's beams don't change.
         if (area == null) LaserNetworks.changed(level);

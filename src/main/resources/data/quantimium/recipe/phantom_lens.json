@@ -4,7 +4,6 @@
   "ingredients": [
     "quantimium:quantum_attuned_glass",
     "quantimium:anomalite_shard",
-    "minecraft:phantom_membrane",
     "minecraft:ender_pearl"
   ],
   "result": {

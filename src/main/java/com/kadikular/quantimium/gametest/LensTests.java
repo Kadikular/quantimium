@@ -992,6 +992,24 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.phantom
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void phantomPickupPassesOverWhatItCantCarry(GameTestHelper helper) {
+        // A Collector for dirt only: the sandstone first in the way stays, and the dirt behind it is cut.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        collector.setFilterSlot(0, new ItemStack(Items.DIRT));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.PHANTOM_LENS.get());
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.SANDSTONE);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.DIRT);
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.DIRT), 1, "the dirt came back");
+            helper.assertBlockPresent(Blocks.SANDSTONE, new BlockPos(7, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     private static void rift(GameTestHelper helper, BlockPos pos, Direction.Axis axis) {
         helper.setBlock(pos, com.kadikular.quantimium.block.RiftLensBlock.turnedTo(ModBlocks.RIFT_LENS.get().defaultBlockState(), axis,
                 helper.getLevel(), helper.absolutePos(pos)));
@@ -1035,6 +1053,32 @@ public final class LensTests {
                     "the crystal's shards came back");
             helper.assertBlockNotPresent(ModBlocks.ANOMALITE_CRYSTAL.get(), new BlockPos(10, Y, 8));
             TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.rift
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void mirroredHarvestWithoutPickupDropsInTheMirror(GameTestHelper helper) {
+        // No Pickup: the shards fall on the mirror's side, for a phased player only.
+        helper.setBlock(new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_3.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(0, Y, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        rift(helper, new BlockPos(5, Y, 8), Direction.Axis.X);
+        helper.setBlock(new BlockPos(8, Y - 1, 8), ModBlocks.FOLD_CORE.get());
+        helper.setBlock(new BlockPos(8, Y, 8), ModBlocks.ANOMALITE_CRYSTAL.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.FACING, Direction.UP)
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.AGE, 3));
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            var shards = helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                    new net.minecraft.world.phys.AABB(helper.absolutePos(new BlockPos(8, Y, 8))).inflate(2),
+                    item -> item.getItem().is(ModItems.ANOMALITE_SHARD.get()));
+            helper.assertFalse(shards.isEmpty(), "the shards fell");
+            for (var shard : shards) {
+                helper.assertTrue(com.kadikular.quantimium.event.MirrorPhaseInteractions.mirrorOnly(shard), "on the mirror's side");
+            }
+            TestSupport.finishLasers(helper);
+            shards.forEach(net.minecraft.world.entity.Entity::discard);
         });
     }
 
@@ -1214,6 +1258,23 @@ public final class LensTests {
             int lapis = count(collector, Items.LAPIS_LAZULI);
             helper.assertTrue(lapis > 72, "more than plain cutting gives: " + lapis);
             TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.harmonic
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void harmonicDamageHitsWithLooting(GameTestHelper helper) {
+        // Hit as by a hand holding Looting: the kill is the laser's, so what drops is looted.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get(), ModItems.HARMONIC_LENS.get());
+        var zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(7, Y, 8));
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(zombie.getLastHurtByPlayer() instanceof com.kadikular.quantimium.laser.LaserHand,
+                    "hit by the laser's hand: " + zombie.getLastHurtByPlayer());
+            helper.assertTrue(zombie.getLastHurtByPlayer().getMainHandItem().isEmpty(), "which lets go after");
+            TestSupport.finishLasers(helper);
+            zombie.discard();
         });
     }
 

@@ -23,5 +23,11 @@ public abstract class EntityRenderDispatcherMixin {
         if (entity instanceof LivingEntity living && MirrorWispRenderer.hidesBody(living)) {
             cir.setReturnValue(false);
         }
+        // An item on the mirror's side shows only to a phased viewer.
+        if (entity instanceof net.minecraft.world.entity.item.ItemEntity item
+                && com.kadikular.quantimium.event.MirrorPhaseInteractions.mirrorOnly(item)
+                && !com.kadikular.quantimium.client.ClientPhaseState.isActive()) {
+            cir.setReturnValue(false);
+        }
     }
 }
