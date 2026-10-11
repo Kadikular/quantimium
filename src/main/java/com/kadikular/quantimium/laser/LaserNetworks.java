@@ -331,7 +331,8 @@ public final class LaserNetworks {
     /** Traces {@code node}'s beams at {@code range}; a beam that runs as it did keeps its brightness, so a change elsewhere doesn't make it flicker. */
     private void traceAt(LaserNode node, int range, Map<BlockPos, List<LaserBeam>> before) {
         ranges.put(node.nodePos(), range);
-        List<LaserBeam> traced = trace(node, range);
+        Light light = lights.get(node.nodePos());
+        List<LaserBeam> traced = trace(node, range, light == null ? 0 : light.marks());
         // What this node's beams end on, now: off the index for the old beams, on for the new.
         for (LaserBeam old : beams.getOrDefault(node.nodePos(), List.of())) {
             if (old.end() == LaserBeam.End.NODE) {
@@ -373,20 +374,24 @@ public final class LaserNetworks {
                 for (LaserBeam beam : list) lensed.add(beam.withLenses(light.packed()));
                 list = lensed;
                 beams.put(pos, list);
-                for (Light.Stream stream : light.streams()) {
+                List<Light.Stream> streams = new ArrayList<>(light.streams());
+                // Phantom light pays an upkeep, as an action of its own, by everyone whose light it is.
+                if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
+                for (Light.Stream stream : streams) {
                     List<BlockPos> collectors = upFor(pos, stream.payers(), LaserNode::collects);
                     List<BlockPos> senders = upFor(pos, stream.payers(), LaserNode::sends);
                     for (int i = 0; i < list.size(); i++) {
                         LensAction.Key key = new LensAction.Key(pos, i, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(list.get(i), stream, collectors, senders, null, light.reach());
+                        int solids = stream.action() == Lens.PHANTOM ? list.get(i).solidsThrough(level) : 0;
+                        action.update(list.get(i), stream, collectors, senders, null, light.reach(), light.marks(), solids);
                         actions.put(key, action);
                     }
                     // An area prism's light works on its area: one action each, as beam -1.
-                    if (node.area() != null) {
+                    if (node.area() != null && stream.action() != Lens.PHANTOM) {
                         LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(null, stream, collectors, senders, node.area(), light.reach());
+                        action.update(null, stream, collectors, senders, node.area(), light.reach(), light.marks(), 0);
                         actions.put(key, action);
                     }
                 }
@@ -657,16 +662,16 @@ public final class LaserNetworks {
         return ranges.getOrDefault(node.nodePos(), node.range());
     }
 
-    private List<LaserBeam> trace(LaserNode node, int range) {
+    private List<LaserBeam> trace(LaserNode node, int range, int marks) {
         List<LaserBeam> traced = new ArrayList<>();
-        for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, range));
+        for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, range, marks));
         for (BlockPos target : List.copyOf(node.targets())) {
             // A link to a block that's gone is let go.
             if (!node.keepsLinks() && level.isLoaded(target) && level.getBlockState(target).isAir()) {
                 node.forget(target);
                 continue;
             }
-            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, range));
+            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, range, marks));
         }
         return traced;
     }
@@ -742,7 +747,9 @@ public final class LaserNetworks {
                 // Each action this beam carries is paid for by its stream's sources, as a block's power is.
                 Light light = lights.get(visit.node());
                 if (light != null) {
-                    for (Light.Stream stream : light.streams()) {
+                    List<Light.Stream> streams = new ArrayList<>(light.streams());
+                    if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
+                    for (Light.Stream stream : streams) {
                         if (!stream.payers().contains(source.nodePos())) continue;
                         LensAction action = actions.get(new LensAction.Key(visit.node(), i, stream.action()));
                         if (action != null) {

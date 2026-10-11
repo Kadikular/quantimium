@@ -23,7 +23,12 @@ public enum Lens {
     /** Places blocks a Sender up the beam sends, where the beam ends. */
     PLACE(true, 0xFF4AC8C8),
     /** Its actions work twice as fast: cutting, placing. */
-    SPEED(false, 0xFFFFA0D0);
+    SPEED(false, 0xFFFFA0D0),
+    /** Light passes through blocks; only laser blocks, and blocks that take power, stop it. Costs for each block. */
+    PHANTOM(false, 0xFFB8C4D8);
+
+    /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
+    public static final int MIRRORED_MARK = 30;
 
     private static final Lens[] VALUES = values();
 

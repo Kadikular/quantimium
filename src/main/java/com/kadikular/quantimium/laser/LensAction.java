@@ -54,6 +54,10 @@ public final class LensAction {
     private long lastWorked = Long.MIN_VALUE;
     /** How far the light carrying it reaches: an area prism works only that far. */
     private int reach = LaserTuning.ACTION_REACH;
+    /** The marks of the light carrying it ({@link Light#PHANTOM}, {@link Light#MIRRORED}). */
+    private int marks;
+    /** For Phantom light's upkeep: the solid blocks its beam passes through. */
+    private int solids;
     private long now;
 
     /** The block being cut, what it costs, and the FE gone into it so far. */
@@ -78,8 +82,10 @@ public final class LensAction {
     }
 
     void update(@Nullable LaserBeam beam, Light.Stream stream, List<BlockPos> collectors, List<BlockPos> senders,
-                @Nullable net.minecraft.world.level.levelgen.structure.BoundingBox area, int reach) {
+                @Nullable net.minecraft.world.level.levelgen.structure.BoundingBox area, int reach, int marks, int solids) {
         this.reach = reach;
+        this.marks = marks;
+        this.solids = solids;
         this.beam = beam;
         this.stream = stream;
         this.collectors = List.copyOf(collectors);
@@ -98,7 +104,7 @@ public final class LensAction {
         long took = Math.min(fe, want);
         if (took > 0 && key.action() == Lens.HARVEST) lastWorked = now;
         if (key.action() == Lens.DAMAGE) charged += took;
-        else cut += took;
+        else if (key.action() == Lens.HARVEST) cut += took;
         want -= took;
         return took;
     }
@@ -125,6 +131,8 @@ public final class LensAction {
                 }
             }
             case PLACE -> place(level, networks);
+            // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
+            case PHANTOM -> want = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
             default -> {}
         }
     }
@@ -175,6 +183,8 @@ public final class LensAction {
         if (!networks.canPay(this, cost)) return;
         net.minecraft.world.phys.BlockHitResult at = area == null ? placeHit(level) : nextAreaSpot(level, networks);
         if (at == null) return;
+        cost += throughCost(level, at.getBlockPos().relative(at.getDirection()));
+        if (!networks.canPay(this, cost)) return;
         ItemStack offered = networks.take(senders, stack -> placeable(level, stack, at), 1, true);
         if (offered.isEmpty()) return;
         ItemStack taken = networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, offered), 1, false);
@@ -283,7 +293,8 @@ public final class LensAction {
             if (cutting != null) level.destroyBlockProgress(crackId(), cutting, -1);
             cutting = target;
             cut = 0;
-            cutCost = target == null ? 0 : Math.round(harvestCost(level, target) * (1 + stream.amps()) * (area == null ? 1.0 : LaserTuning.AREA_COST));
+            cutCost = target == null ? 0 : Math.round(harvestCost(level, target) * (1 + stream.amps()) * (area == null ? 1.0 : LaserTuning.AREA_COST))
+                    + throughCost(level, target);
         }
         if (target == null) {
             want = 0;
@@ -329,7 +340,15 @@ public final class LensAction {
             }
             return null;
         }
-        if (beam == null || beam.hit() == null) return null;
+        if (beam == null) return null;
+        // Phantom light goes through what it cuts: the first block on its way it may cut (the ore, with a Filter).
+        if ((marks & Light.PHANTOM) != 0) {
+            for (BlockPos pos : beam.path()) {
+                if (level.isLoaded(pos) && !level.getBlockState(pos).isAir() && cuttable(level, pos)) return pos;
+            }
+            return null;
+        }
+        if (beam.hit() == null) return null;
         if (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK) return null;
         BlockPos before = beam.hit().relative(beam.face().getOpposite());
         if (beam.length() > 0 && !level.getBlockState(before).isAir() && cuttable(level, before)) return before;
@@ -411,8 +430,14 @@ public final class LensAction {
 
     /** Whether the area prism can see {@code pos}: a clear line of light from it, ending there, within its light's reach. */
     private boolean inSight(ServerLevel level, BlockPos pos) {
-        LaserBeam line = LaserBeam.traceTo(level, key.node(), pos, reach);
+        LaserBeam line = LaserBeam.traceTo(level, key.node(), pos, reach, marks);
         return pos.equals(line.hit());
+    }
+
+    /** For an area prism's Phantom light: what working on {@code pos} costs for the blocks it goes through to get there. */
+    private long throughCost(ServerLevel level, BlockPos pos) {
+        if (area == null || (marks & Light.PHANTOM) == 0) return 0;
+        return (long) LaserBeam.traceTo(level, key.node(), pos, reach, marks).solidsThrough(level) * com.kadikular.quantimium.Config.phantomFePerBlock();
     }
 
     /** Exactly where in what it's working on the beam goes: the middle of what it's hitting, or of the block. */

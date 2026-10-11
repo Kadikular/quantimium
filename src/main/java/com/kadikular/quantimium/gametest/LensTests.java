@@ -959,4 +959,36 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // covers: laser.lens.phantom
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void phantomLightGoesThroughWallsToWhatItCharges(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.PHANTOM_LENS.get());
+        for (int x = 5; x <= 7; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(10, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
+                    "charged through three blocks of stone");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.phantom
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void phantomHarvestCutsOnlyTheOreInTheGround(GameTestHelper helper) {
+        // Through stone to the ore behind it, with a Filter to ores: the ore goes, the stone round it stays.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PHANTOM_LENS.get());
+        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COAL))));
+        for (int x = 5; x <= 9; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.COAL_ORE);
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(7, Y, 8));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(6, Y, 8));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(8, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

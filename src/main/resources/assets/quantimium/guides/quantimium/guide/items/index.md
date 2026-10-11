@@ -23,6 +23,7 @@ navigation:
 - <ItemLink id="quantimium:harvest_lens" />
 - <ItemLink id="quantimium:laser_linker" />
 - <ItemLink id="quantimium:mirror_lens" />
+- <ItemLink id="quantimium:phantom_lens" />
 - <ItemLink id="quantimium:pickup_lens" />
 - <ItemLink id="quantimium:place_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />

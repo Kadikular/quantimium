@@ -2,7 +2,7 @@
 navigation:
   title: Speed Lens
   parent: items/index.md
-  position: 25
+  position: 26
   icon: quantimium:speed_lens
 item_ids:
 - quantimium:speed_lens

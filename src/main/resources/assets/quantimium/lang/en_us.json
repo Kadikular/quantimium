@@ -971,6 +971,8 @@
   "item.quantimium.uv_lens.tip": "Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light.",
   "item.quantimium.amplify_lens": "Amplify Lens",
   "item.quantimium.amplify_lens.tip": "Harvest cuts as a diamond pickaxe; each one doubles a Damage hit, up to three. Costs more power.",
+  "item.quantimium.phantom_lens": "Phantom Lens",
+  "item.quantimium.phantom_lens.tip": "Light passes through blocks: only laser blocks, and blocks that take power, stop it. Costs a little for each block it passes through. It stays on the light.",
   "item.quantimium.speed_lens": "Speed Lens",
   "item.quantimium.speed_lens.tip": "Its actions work twice as fast: cutting and placing, on a beam or an Area Prism. Three count, for eight times.",
   "item.quantimium.place_lens": "Placement Lens",

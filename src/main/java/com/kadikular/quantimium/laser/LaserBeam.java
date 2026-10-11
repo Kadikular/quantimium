@@ -66,10 +66,15 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
      * other block, or on a laser node, or where a chunk isn't loaded.
      */
     public static LaserBeam trace(Level level, BlockPos from, Direction direction, int range) {
+        return trace(level, from, direction, range, 0);
+    }
+
+    /** As {@link #trace(Level, BlockPos, Direction, int)}, for light with {@code marks} ({@link Light#PHANTOM}, {@link Light#MIRRORED}). */
+    public static LaserBeam trace(Level level, BlockPos from, Direction direction, int range, int marks) {
         BlockPos.MutableBlockPos at = from.mutable();
         for (int step = 0; step < range; step++) {
             at.move(direction);
-            LaserBeam ended = endsAt(level, from, direction, null, step, at.immutable());
+            LaserBeam ended = endsAt(level, from, direction, null, step, at.immutable(), marks);
             if (ended != null) return ended;
         }
         return new LaserBeam(from, direction, null, range, null, End.OPEN, 0, false, Lens.NONE);
@@ -81,6 +86,11 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
      * or on the target.
      */
     public static LaserBeam traceTo(Level level, BlockPos from, BlockPos target, int range) {
+        return traceTo(level, from, target, range, 0);
+    }
+
+    /** As {@link #traceTo(Level, BlockPos, BlockPos, int)}, for light with {@code marks}. */
+    public static LaserBeam traceTo(Level level, BlockPos from, BlockPos target, int range, int marks) {
         Vec3 start = from.getCenter();
         Vec3 delta = target.getCenter().subtract(start);
         Direction face = Direction.getApproximateNearest(delta.x, delta.y, delta.z);
@@ -108,10 +118,10 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             BlockPos pos = new BlockPos(x, y, z);
             int length = (int) Math.round(pos.getCenter().distanceTo(start)) - 1;
             if (pos.equals(target)) {
-                LaserBeam ended = endsAt(level, from, face, target, length, pos);
+                LaserBeam ended = endsAt(level, from, face, target, length, pos, marks);
                 return ended != null ? ended : new LaserBeam(from, face, target, length, pos, End.BLOCKED, 0, false, Lens.NONE);
             }
-            LaserBeam ended = endsAt(level, from, face, target, length, pos);
+            LaserBeam ended = endsAt(level, from, face, target, length, pos, marks);
             if (ended != null) return ended;
         }
         return new LaserBeam(from, face, target, range, null, End.OPEN, 0, false, Lens.NONE);
@@ -119,13 +129,63 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
 
     /** What the light does at {@code pos}: ends there (and how), or null to go on through. */
     @Nullable
-    private static LaserBeam endsAt(Level level, BlockPos from, Direction face, @Nullable BlockPos aim, int length, BlockPos pos) {
+    private static LaserBeam endsAt(Level level, BlockPos from, Direction face, @Nullable BlockPos aim, int length, BlockPos pos, int marks) {
         if (!level.isLoaded(pos)) return new LaserBeam(from, face, aim, length, null, End.OPEN, 0, false, Lens.NONE);
         if (level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
         BlockState state = level.getBlockState(pos);
         if (passes(level, pos, state)) return null;
-        boolean takes = level.getCapability(Capabilities.Energy.BLOCK, pos, face.getOpposite()) != null;
+        // In the mirror, light charges nothing of the real world: a block that takes power just stops it.
+        boolean takes = (marks & Light.MIRRORED) == 0 && level.getCapability(Capabilities.Energy.BLOCK, pos, face.getOpposite()) != null;
+        // Phantom light goes through anything but a laser block, or a block it charges.
+        if ((marks & Light.PHANTOM) != 0 && !takes) return null;
         return new LaserBeam(from, face, aim, length, pos, takes ? End.SINK : End.BLOCKED, 0, false, Lens.NONE);
+    }
+
+    /** The marks this beam's light carries, from its look. */
+    public int marks() {
+        return (Lens.has(lenses, Lens.PHANTOM) ? Light.PHANTOM : 0) | ((lenses & 1 << Lens.MIRRORED_MARK) != 0 ? Light.MIRRORED : 0);
+    }
+
+    /** Every block this beam passes on its way, not counting what it ends on. */
+    public java.util.List<BlockPos> path() {
+        java.util.List<BlockPos> cells = new java.util.ArrayList<>();
+        if (aim == null) {
+            for (int step = 1; step <= length; step++) cells.add(from.relative(face, step));
+            return cells;
+        }
+        Vec3 start = from.getCenter();
+        Vec3 delta = aim.getCenter().subtract(start);
+        int x = from.getX(), y = from.getY(), z = from.getZ();
+        int stepX = (int) Math.signum(delta.x), stepY = (int) Math.signum(delta.y), stepZ = (int) Math.signum(delta.z);
+        double tDeltaX = stepX == 0 ? Double.MAX_VALUE : Math.abs(1.0 / delta.x);
+        double tDeltaY = stepY == 0 ? Double.MAX_VALUE : Math.abs(1.0 / delta.y);
+        double tDeltaZ = stepZ == 0 ? Double.MAX_VALUE : Math.abs(1.0 / delta.z);
+        double tMaxX = tDeltaX * 0.5, tMaxY = tDeltaY * 0.5, tMaxZ = tDeltaZ * 0.5;
+        for (int steps = 0; steps < length * 3 + 3; steps++) {
+            if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+                x += stepX;
+                tMaxX += tDeltaX;
+            } else if (tMaxY < tMaxZ) {
+                y += stepY;
+                tMaxY += tDeltaY;
+            } else {
+                z += stepZ;
+                tMaxZ += tDeltaZ;
+            }
+            BlockPos pos = new BlockPos(x, y, z);
+            if (pos.equals(hit) || pos.equals(aim) || pos.getCenter().distanceTo(start) > length + 1) break;
+            cells.add(pos);
+        }
+        return cells;
+    }
+
+    /** How many blocks light wouldn't otherwise pass this beam goes through: what Phantom light pays for. */
+    public int solidsThrough(Level level) {
+        int solids = 0;
+        for (BlockPos pos : path()) {
+            if (level.isLoaded(pos) && !passes(level, pos, level.getBlockState(pos))) solids++;
+        }
+        return solids;
     }
 
     /** Whether light goes through this block. */
@@ -138,7 +198,7 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
 
     /** Traces this beam again the same way: light from a face, or aimed at a block. */
     public LaserBeam retrace(Level level, int range) {
-        return aim == null ? trace(level, from, face, range) : traceTo(level, from, aim, range);
+        return aim == null ? trace(level, from, face, range, marks()) : traceTo(level, from, aim, range, marks());
     }
 
     /** Whether this beam still runs as it did: every block it crosses still lets light through, and it ends on the same thing. */
