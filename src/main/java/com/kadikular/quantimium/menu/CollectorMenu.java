@@ -20,6 +20,8 @@ import net.minecraft.world.item.ItemStack;
 public class CollectorMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
     public static final int BUTTON_MODE = 0;
+    /** Collect, send or both. */
+    public static final int BUTTON_RELAY = 1;
     public static final int GRID_X = 62;
     public static final int GRID_Y = 17;
     public static final int FILTER_X = 8;
@@ -115,6 +117,10 @@ public class CollectorMenu extends AbstractContainerMenu implements GhostFilterM
     public boolean clickMenuButton(Player player, int id) {
         if (id == BUTTON_MODE) {
             collector.toggleMode();
+            return true;
+        }
+        if (id == BUTTON_RELAY) {
+            collector.cycleMode();
             return true;
         }
         return false;

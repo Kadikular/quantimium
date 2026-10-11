@@ -35,38 +35,8 @@ public class SenderBlockEntity extends ItemRelayBlockEntity {
     }
 
     @Override
-    protected boolean takesFromOutside() {
-        return true;
-    }
-
-    @Override
-    public boolean sends() {
-        return true;
-    }
-
-    /** Up to {@code max} of the first thing {@code wants} accepts: from its slots, or through a bound Tesseract in one. */
-    @Override
-    public ItemStack send(Predicate<ItemStack> wants, int max, boolean simulate) {
-        for (int slot = 0; slot < SLOTS; slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (stack.isEmpty()) continue;
-            if (EntangledLinks.isLink(stack)) {
-                IItemHandler linked = EntangledLinks.resolve(level, worldPosition, stack);
-                if (linked == null) continue;
-                for (int i = 0; i < linked.getSlots(); i++) {
-                    ItemStack there = linked.getStackInSlot(i);
-                    if (!there.isEmpty() && wants.test(there)) return linked.extractItem(i, max, simulate);
-                }
-                continue;
-            }
-            if (wants.test(stack)) return items.extractItem(slot, max, simulate);
-        }
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public ItemStack takeBack(ItemStack stack) {
-        return insert(stack, false);
+    protected Mode startingMode() {
+        return Mode.SEND;
     }
 
     @Override

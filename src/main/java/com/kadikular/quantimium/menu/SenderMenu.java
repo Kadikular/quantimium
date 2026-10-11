@@ -32,8 +32,17 @@ public class SenderMenu extends AbstractContainerMenu {
         for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
     }
 
+    public static final int BUTTON_RELAY = 0;
+
     public SenderBlockEntity getBlockEntity() {
         return sender;
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (id != BUTTON_RELAY) return false;
+        sender.cycleMode();
+        return true;
     }
 
     @Override

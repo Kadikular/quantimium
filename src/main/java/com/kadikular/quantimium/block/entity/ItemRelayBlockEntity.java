@@ -42,9 +42,10 @@ import java.util.Set;
 
 /**
  * A laser block with nine slots, which light passes through and out of its face as through a mirror: the
- * Collector, which catches what comes back up the beam, and the Sender, which sends things down it. Its
- * faces are set as a machine's are: which take items in or hand them out, and which pull from or push to
- * what's beside them, once a second.
+ * Collector and the Sender, each set to catch what comes back up the beam, send what it holds down it, or
+ * both (a Collector of seeds in both feeds them straight back down to be sown). Its faces are set as a
+ * machine's are: which take items in or hand them out, and which pull from or push to what's beside them,
+ * once a second.
  */
 public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, MenuProvider, SideConfigurable {
 
@@ -63,6 +64,16 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
             setChanged();
         }
     };
+    /** What it does with items: catches what comes back up the beam, sends what it holds down it, or both. */
+    public enum Mode {
+        COLLECT, SEND, BOTH;
+
+        public Mode next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+    }
+
+    private Mode mode = startingMode();
     private final IItemHandler[] sided = new IItemHandler[6];
     private List<SideConfig> sideConfigs;
     private List<LaserBeam> shownBeams = List.of();
@@ -79,13 +90,79 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     /** How every face starts: a Collector's hand things out, a Sender's take things in. */
     protected abstract SideMode defaultMode();
 
+    /** What it does with items when placed: a Collector collects, a Sender sends. */
+    protected abstract Mode startingMode();
+
+    public Mode mode() {
+        return mode;
+    }
+
+    /** Steps to the next of collect, send, both. */
+    public void cycleMode() {
+        mode = mode.next();
+        setChanged();
+        invalidateCapabilities();
+        if (level != null) LaserNetworks.changed(level);
+    }
+
+    /** Whether it catches {@code stack} when it comes back up the beam: a Collector's filter says. */
+    protected boolean acceptsItem(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public boolean collects() {
+        return mode != Mode.SEND;
+    }
+
+    @Override
+    public ItemStack collect(ItemStack stack, boolean simulate) {
+        // What it turns away goes on up the beam, to the next.
+        if (!collects() || !acceptsItem(stack)) return stack;
+        return insert(stack, simulate);
+    }
+
+    @Override
+    public boolean sends() {
+        return mode != Mode.COLLECT;
+    }
+
+    /** Up to {@code max} of the first thing {@code wants} accepts: from its slots, or through a bound Tesseract in one. */
+    @Override
+    public ItemStack send(java.util.function.Predicate<ItemStack> wants, int max, boolean simulate) {
+        if (!sends()) return ItemStack.EMPTY;
+        for (int slot = 0; slot < SLOTS; slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (stack.isEmpty()) continue;
+            if (com.kadikular.quantimium.recipe.EntangledLinks.isLink(stack)) {
+                IItemHandler linked = com.kadikular.quantimium.recipe.EntangledLinks.resolve(level, worldPosition, stack);
+                if (linked == null) continue;
+                for (int i = 0; i < linked.getSlots(); i++) {
+                    ItemStack there = linked.getStackInSlot(i);
+                    if (!there.isEmpty() && wants.test(there)) return linked.extractItem(i, max, simulate);
+                }
+                continue;
+            }
+            if (wants.test(stack)) return items.extractItem(slot, max, simulate);
+        }
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public ItemStack takeBack(ItemStack stack) {
+        return insert(stack, false);
+    }
+
+    /** Whether pipes and hoppers may put things in, on faces that take them: when it sends. */
+    protected boolean takesFromOutside() {
+        return sends();
+    }
+
     /** Whether {@code stack} may sit in {@code slot}. */
     protected boolean accepts(int slot, ItemStack stack) {
         return true;
     }
 
-    /** Whether pipes and hoppers may put things in, on faces that take them. */
-    protected abstract boolean takesFromOutside();
 
     public ItemStackHandler getItems() {
         return items;
@@ -280,6 +357,7 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
         super.saveAdditional(out);
         items.serialize(out.child("Items"));
         out.store("SideConfigs", CompoundTag.CODEC, sidesTag());
+        out.putInt("RelayMode", mode.ordinal());
     }
 
     private CompoundTag sidesTag() {
@@ -292,6 +370,7 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         in.child("Items").ifPresent(items::deserialize);
+        mode = Mode.values()[Math.floorMod(in.getIntOr("RelayMode", startingMode().ordinal()), Mode.values().length)];
         in.read("SideConfigs", CompoundTag.CODEC).ifPresent(tag -> sideConfigs = PROFILE.sanitize(SideConfig.loadAll(tag.getListOrEmpty("List"))));
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }

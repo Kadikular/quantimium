@@ -51,20 +51,13 @@ public class CollectorBlockEntity extends ItemRelayBlockEntity {
     }
 
     @Override
-    protected boolean takesFromOutside() {
-        return false;
+    protected Mode startingMode() {
+        return Mode.COLLECT;
     }
 
     @Override
-    public boolean collects() {
-        return true;
-    }
-
-    @Override
-    public ItemStack collect(ItemStack stack, boolean simulate) {
-        // What its filter turns away goes on up the beam, to the next Collector.
-        if (!accepts(stack)) return stack;
-        return insert(stack, simulate);
+    protected boolean acceptsItem(ItemStack stack) {
+        return accepts(stack);
     }
 
     /** Whether its filter lets it catch {@code stack}. */

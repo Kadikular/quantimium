@@ -1076,4 +1076,29 @@ public final class LensTests {
             TestSupport.removeHall(helper, hallAt);
         });
     }
+
+    // covers: laser.collector.mode
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void aCollectorSetToBothFeedsSeedsBackDown(GameTestHelper helper) {
+        // One block for both: it catches the harvest, and its seeds go back down to be sown.
+        BlockPos crop = new BlockPos(8, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7));
+        helper.setBlock(new BlockPos(8, Y + 6, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        helper.setBlock(new BlockPos(8, Y + 5, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
+        CollectorBlockEntity both = collector(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN);
+        both.cycleMode();
+        both.cycleMode();
+        helper.assertTrue(both.mode() == com.kadikular.quantimium.block.entity.ItemRelayBlockEntity.Mode.BOTH, "set to both");
+        LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
+                ModItems.PLACE_LENS.get());
+        mount.getLensSlots().setStackInSlot(3, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
+                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(count(both, Items.WHEAT) > 0, "the wheat came back");
+            helper.assertBlockPresent(Blocks.WHEAT, crop);
+            helper.assertTrue(helper.getBlockState(crop).getValue(net.minecraft.world.level.block.CropBlock.AGE) < 7, "sown again from what came back");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

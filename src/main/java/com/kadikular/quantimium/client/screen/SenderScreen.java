@@ -26,9 +26,19 @@ public class SenderScreen extends QuantumMachineScreen<SenderMenu> {
 
     @Override
     protected List<Tab> createTabs() {
-        return List.of(Tab.of("S", () -> ClientPacketDistributor.sendToServer(new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos())),
+        return List.of(
+                Tab.of(() -> Component.literal(switch (menu.getBlockEntity().mode()) { case COLLECT -> "C"; case SEND -> "S"; case BOTH -> "B"; }),
+                                () -> press(SenderMenu.BUTTON_RELAY),
+                                () -> List.of(Component.translatable("gui.quantimium.item_relay.mode." + menu.getBlockEntity().mode().name().toLowerCase(java.util.Locale.ROOT)),
+                                        Component.translatable("gui.quantimium.item_relay.mode.tip")))
+                        .icon(() -> new ItemStack(switch (menu.getBlockEntity().mode()) { case COLLECT -> Items.HOPPER; case SEND -> Items.DISPENSER; case BOTH -> Items.DROPPER; })),
+                Tab.of("S", () -> ClientPacketDistributor.sendToServer(new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos())),
                         List.of(Component.translatable("gui.quantimium.item_relay.sides"), Component.translatable("gui.quantimium.sender.sides.tip")))
                 .icon(new ItemStack(Items.HOPPER)));
+    }
+
+    private void press(int button) {
+        if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
     }
 
     public void openSideConfig(OpenSideConfigPayload payload) {

@@ -48,6 +48,11 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
                                         Component.translatable("gui.quantimium.collector.mode.tip")))
                         .icon(() -> new ItemStack(collector().allows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
                         .visible(menu::isFilterView),
+                Tab.of(() -> Component.literal(switch (collector().mode()) { case COLLECT -> "C"; case SEND -> "S"; case BOTH -> "B"; }),
+                                () -> press(CollectorMenu.BUTTON_RELAY),
+                                () -> List.of(Component.translatable("gui.quantimium.item_relay.mode." + collector().mode().name().toLowerCase(java.util.Locale.ROOT)),
+                                        Component.translatable("gui.quantimium.item_relay.mode.tip")))
+                        .icon(() -> new ItemStack(switch (collector().mode()) { case COLLECT -> Items.HOPPER; case SEND -> Items.DISPENSER; case BOTH -> Items.DROPPER; })),
                 Tab.of("S", () -> net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
                                         new com.kadikular.quantimium.network.RequestSideConfigPayload(collector().getBlockPos())),
                                 List.of(Component.translatable("gui.quantimium.item_relay.sides"), Component.translatable("gui.quantimium.collector.sides.tip")))

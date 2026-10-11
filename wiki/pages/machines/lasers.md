@@ -184,6 +184,11 @@ a stack at a time to the nearest Collector down the beam with room, not past an 
 reaching it pays to carry it, and only while it's lit: a switched-off mirror before it, or on the way,
 stops it. A bound Tesseract in a slot sends from the inventory it links to.
 
+[[mechanic:laser.collector.mode]] Each can be set, on its screen, to **collect**, **send** or **both**: a
+Collector starts collecting and a Sender sending, but either does either. In both, what comes back up
+the beam can go straight back down: a Collector of seeds on a wheat field catches the harvest and sows
+the field again from it, with no Sender.
+
 Open a Collector or Sender and use the **Faces** tab to set, face by face, what pipes and hoppers may
 do there (a Collector's faces hand things out, a Sender's take them in), and which faces push to, or
 pull from, what's beside them, once a second.
