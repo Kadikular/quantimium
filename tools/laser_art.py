@@ -224,6 +224,8 @@ GLYPHS = {
     "place_lens": ["#####", "#...#", "#...#", "#...#", "#####"],     # a block
     "speed_lens": ["#..#.", ".#..#", "..#..", ".#..#", "#..#."],     # quicker
     "phantom_lens": ["#.#.#", ".....", "#.#.#", ".....", "#.#.#"],   # there and not there
+    "insert_lens": ["..#..", "..#..", "#.#.#", ".###.", "#####"],    # into a box
+    "extract_lens": ["#####", ".###.", "#.#.#", "..#..", "..#.."],   # out of a box
 }
 
 
@@ -268,7 +270,8 @@ def spectroscope() -> Image.Image:
 
 LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
           "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
-          "speed_lens": "ffa0d0", "phantom_lens": "b8c4d8"}
+          "speed_lens": "ffa0d0", "phantom_lens": "b8c4d8",
+          "insert_lens": "6fa8ff", "extract_lens": "ffc46f"}
 
 
 def sender_face() -> Image.Image:

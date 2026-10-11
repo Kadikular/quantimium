@@ -25,7 +25,11 @@ public enum Lens {
     /** Its actions work twice as fast: cutting, placing. */
     SPEED(false, 0xFFFFA0D0),
     /** Light passes through blocks; only laser blocks, and blocks that take power, stop it. Costs for each block. */
-    PHANTOM(false, 0xFFB8C4D8);
+    PHANTOM(false, 0xFFB8C4D8),
+    /** Puts what Senders up the beam send into the inventory it ends on. */
+    INSERT(true, 0xFF6FA8FF),
+    /** Takes from the inventory it ends on, back up the beam to Collectors. */
+    EXTRACT(true, 0xFFFFC46F);
 
     /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
     public static final int MIRRORED_MARK = 30;

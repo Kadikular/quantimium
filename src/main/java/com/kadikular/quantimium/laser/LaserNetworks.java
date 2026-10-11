@@ -485,6 +485,11 @@ public final class LaserNetworks {
         }
     }
 
+    /** What the Collectors at {@code positions} wouldn't take of {@code stack}, between them. */
+    ItemStack simulateCollectPublic(List<BlockPos> positions, ItemStack stack) {
+        return simulateCollect(positions, stack);
+    }
+
     private ItemStack simulateCollect(List<BlockPos> positions, ItemStack stack) {
         ItemStack left = stack;
         for (BlockPos pos : positions) {

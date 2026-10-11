@@ -1101,4 +1101,37 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // covers: laser.lens.insert
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void anInsertBeamFillsTheChestItEndsOn(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.IRON_INGOT, 20));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INSERT_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
+        helper.succeedWhen(() -> {
+            var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+            helper.assertValueEqual(chest.countItem(Items.IRON_INGOT), 20, "all of it, in the chest");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.extract
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void anExtractBeamEmptiesTheChestBackUp(GameTestHelper helper) {
+        // Filtered to gold: the gold comes back to the Collector; the iron stays.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.GOLD_INGOT))));
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
+        var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        chest.setItem(0, new ItemStack(Items.IRON_INGOT, 8));
+        chest.setItem(1, new ItemStack(Items.GOLD_INGOT, 8));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.GOLD_INGOT), 8, "the gold came back");
+            helper.assertValueEqual(chest.countItem(Items.IRON_INGOT), 8, "the iron stayed");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

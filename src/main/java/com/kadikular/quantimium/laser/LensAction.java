@@ -138,9 +138,12 @@ public final class LensAction {
                     carry(networks, item, true);
                 }
             }
-            // Nothing in the mirror to place.
+            // Nothing in the mirror to place, fill or empty.
             case PLACE -> {
                 if (!mirrored()) place(level, networks);
+            }
+            case INSERT, EXTRACT -> {
+                if (!mirrored()) move(level, networks, key.action() == Lens.INSERT);
             }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
             case PHANTOM -> want = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
@@ -180,6 +183,89 @@ public final class LensAction {
         }
         targets.removeIf(entity -> !entity.isAlive());
         want = Math.max(0, hit * targets.size() - charged);
+    }
+
+    // ---- inventories ----
+
+    /**
+     * Insert: a stack of what the Senders up the beam send, as much as fits, into the inventory the beam
+     * ends on. Extract: a stack out of it, as much as the Collectors up the beam have room for. In an
+     * area, each inventory there in turn. A Filter says what; one stack each wait.
+     */
+    private void move(ServerLevel level, LaserNetworks networks, boolean in) {
+        if (placeCooldown > 0) {
+            placeCooldown--;
+            return;
+        }
+        if (in ? senders.isEmpty() : collectors.isEmpty()) return;
+        if (!networks.canPay(this, LaserTuning.PICKUP_FE_PER_STACK)) return;
+        BlockPos at = area == null ? inventoryAtEnd(level) : nextAreaInventory(level);
+        if (at == null) return;
+        net.minecraft.core.Direction side = area == null ? beam.face().getOpposite() : null;
+        net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(
+                level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
+        if (handler == null) return;
+        boolean moved = in ? insertInto(networks, handler) : extractFrom(networks, handler);
+        if (!moved) return;
+        networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK);
+        networks.workDone(this);
+        placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
+        placed = at;
+        lastWorked = now;
+    }
+
+    private boolean insertInto(LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
+        ItemStack offered = networks.take(senders, stack -> lets(stack)
+                && net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, stack.copy(), true).getCount() < stack.getCount(), 64, true);
+        if (offered.isEmpty()) return false;
+        int fits = offered.getCount() - net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, offered.copy(), true).getCount();
+        ItemStack taken = networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, offered), fits, false);
+        if (taken.isEmpty()) return false;
+        ItemStack left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, taken, false);
+        if (!left.isEmpty()) networks.returnTo(senders, left);
+        return true;
+    }
+
+    private boolean extractFrom(LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
+        for (int slot = 0; slot < handler.getSlots(); slot++) {
+            ItemStack there = handler.extractItem(slot, 64, true);
+            if (there.isEmpty() || !lets(there) || !networks.roomFor(collectors, there)) continue;
+            int room = there.getCount() - networks.simulateCollectPublic(collectors, there).getCount();
+            ItemStack taken = handler.extractItem(slot, room, false);
+            ItemStack left = networks.collect(collectors, taken);
+            if (!left.isEmpty()) net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, left, false);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean lets(ItemStack stack) {
+        return stream.filter() == null || stream.filter().lets(stack);
+    }
+
+    /** The inventory a beam ends on, if it ends on one. */
+    @Nullable
+    private BlockPos inventoryAtEnd(ServerLevel level) {
+        if (beam == null || beam.hit() == null || beam.end() == LaserBeam.End.OPEN) return null;
+        return level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, beam.hit(), beam.face().getOpposite()) == null
+                ? null : beam.hit();
+    }
+
+    /** The next inventory in the area it can see, looking on from the last. */
+    @Nullable
+    private BlockPos nextAreaInventory(ServerLevel level) {
+        if (now < restUntil) return null;
+        for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
+            BlockPos pos = areaPos(cursor);
+            cursor = (cursor + 1) % areaVolume();
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) != null
+                    && level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, pos, null) != null && inSight(level, pos)) {
+                missed = 0;
+                return pos;
+            }
+            if (fruitless()) return null;
+        }
+        return null;
     }
 
     // ---- placing ----
@@ -548,7 +634,7 @@ public final class LensAction {
         if (area == null || level.getGameTime() - lastWorked > LaserTuning.PLACE_COOLDOWN) return null;
         return switch (key.action()) {
             case HARVEST -> cutting;
-            case PLACE -> placed;
+            case PLACE, INSERT, EXTRACT -> placed;
             // Where what it's hitting is now, so the beam follows it.
             case DAMAGE -> targets.isEmpty() ? null : BlockPos.containing(targets.getFirst().getBoundingBox().getCenter());
             default -> null;

@@ -264,6 +264,10 @@ public class ModItems {
             "uv_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UV));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> AMPLIFY_LENS = ITEMS.registerItem(
             "amplify_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.AMPLIFY));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INSERT_LENS = ITEMS.registerItem(
+            "insert_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.INSERT));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> EXTRACT_LENS = ITEMS.registerItem(
+            "extract_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.EXTRACT));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> PHANTOM_LENS = ITEMS.registerItem(
             "phantom_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PHANTOM));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> SPEED_LENS = ITEMS.registerItem(
