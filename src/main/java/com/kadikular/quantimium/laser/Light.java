@@ -25,7 +25,8 @@ import java.util.Set;
  * reached the lens that gave it. Joined light keeps both sides' streams; the same action from two sides
  * becomes one, paid by both. A modifier changes the actions the light already carries when it meets it:
  * those in slots before it in its mount, and those from mounts before; never one added after it, so a
- * Filter must come after the Harvest it filters. One before a join stays on its own side.
+ * Filter must come after the Harvest it filters. Pickup is the exception: it stays on the light, and
+ * actions added after it get it too. One before a join stays on its own side.
  * Pickup is also a stream of its own, paid for like an action: it gathers items lying in the beam. So is
  * Smelting, which acts only where the light carries nothing else (see {@link #acting()}).
  *
@@ -177,7 +178,9 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             Lens lens = use.lens();
             if (lens.action) {
                 Stream had = streams.get(lens);
-                streams.put(lens, new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
+                // Pickup is the exception to order: an action added after it gets it too.
+                int pickup = streams.containsKey(Lens.PICKUP) ? 1 << Lens.PICKUP.ordinal() : 0;
+                streams.put(lens, new Stream(lens, (had == null ? 0 : had.modifiers()) | pickup, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
                         had == null ? 0 : had.speed(), use.hits(), had == null ? 0 : had.fortune()));
             } else switch (lens) {
                 case PICKUP -> {

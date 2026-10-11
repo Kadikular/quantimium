@@ -118,11 +118,12 @@ public final class LensTests {
     // covers: laser.lens.mount, laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void mountsInARowAddTheirLensesUp(GameTestHelper helper) {
-        // Harvest in the first mount, Pickup in the second: the light leaving the second does both.
+        // Pickup in the first mount, Harvest in the second: the light leaving the second does both. Pickup,
+        // unlike other modifiers, goes on actions added after it too.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
-        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
-        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
         helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.COBBLESTONE), 1, "harvested and brought back");
@@ -1263,6 +1264,27 @@ public final class LensTests {
             helper.assertTrue(sheep.isSheared(), "sheared");
             TestSupport.finishLasers(helper);
             sheep.discard();
+        });
+    }
+
+    // covers: laser.lens.interact, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void anAreaInteractFeedsTheHerd(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y + 2, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y + 2, 8), Direction.EAST, new ItemStack(Items.WHEAT, 4));
+        mount(helper, new BlockPos(5, Y + 2, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        BlockPos at = new BlockPos(9, Y + 2, 8);
+        helper.setBlock(at, ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.cycleShape();
+        prism.setRadius(3);
+        var one = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(8, Y, 6));
+        var two = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(11, Y, 10));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(one.isInLove() && two.isInLove(), "both fed");
+            TestSupport.finishLasers(helper);
+            one.discard();
+            two.discard();
         });
     }
 

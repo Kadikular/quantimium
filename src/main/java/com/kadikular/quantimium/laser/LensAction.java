@@ -217,14 +217,15 @@ public final class LensAction {
      * Uses one thing a Sender up the beam sends (or an empty hand, with none) on what the beam ends on, as a
      * player would: set to use, a right click on the block (a door, a lever, an item on a block; an empty
      * bucket fills from the fluid it ends on); set to hit, a swing at the first thing living in the beam.
-     * What's left in hand after goes back up the beam to a Collector, or to the Sender.
+     * In an area, the same on what's living there, or on its blocks in turn. What's left in hand after goes
+     * back up the beam to a Collector, or to the Sender.
      */
     private void interact(ServerLevel level, LaserNetworks networks) {
         if (placeCooldown > 0) {
             placeCooldown--;
             return;
         }
-        if (beam == null || !networks.canPay(this, LaserTuning.PLACE_FE)) return;
+        if ((beam == null && area == null) || (area != null && now < restUntil) || !networks.canPay(this, LaserTuning.PLACE_FE)) return;
         ItemStack held = senders.isEmpty() ? ItemStack.EMPTY : networks.take(senders, this::lets, 1, false);
         LaserHand hand = handFor(level);
         hand.hold(held);
@@ -238,9 +239,10 @@ public final class LensAction {
         networks.pay(this, LaserTuning.PLACE_FE);
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
-        placed = beam.hit();
+        if (area == null) placed = beam.hit();
         lastWorked = now;
-        LaserNetworks.changed(level);
+        // A door opened, a block changed: the beam may reach on, or not. An area's beams don't change.
+        if (area == null) LaserNetworks.changed(level);
     }
 
     /** Puts what the hand held back where it belongs: up to a Collector, else to the Sender, else on the ground. */
@@ -248,12 +250,19 @@ public final class LensAction {
         if (stack.isEmpty()) return;
         ItemStack left = collectors.isEmpty() ? stack : networks.collect(collectors, stack);
         if (!left.isEmpty()) left = networks.returnTo(senders, left);
-        if (!left.isEmpty()) Block.popResource(level, beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from(), left);
+        if (!left.isEmpty()) Block.popResource(level, handSpot(), left);
+    }
+
+    /** Where the stand-in player stands: before what the beam ends on, or in an area, by what it's working on. */
+    private BlockPos handSpot() {
+        if (area != null) return placed != null && area.isInside(placed) ? placed.above() : key.node();
+        return beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from();
     }
 
     /** A right click: with something in hand, on the first thing living in the beam that takes it; else on the block the beam ends on. */
     private boolean use(ServerLevel level, LaserHand hand, ItemStack held) {
         if (!held.isEmpty() && useOnLiving(level, hand)) return true;
+        if (area != null) return useInArea(level, hand, held);
         if (beam.hit() == null) return false;
         // Something light passes, just before the end (a lever, a button, a crop), is what it uses; else what it ends on.
         BlockPos before = beam.hit().relative(beam.face().getOpposite());
@@ -283,9 +292,42 @@ public final class LensAction {
                 && onBeam(entity.getBoundingBox(), 0.25) && !inMirror(entity) && (stream.filter() == null || stream.filter().letsHit(entity)));
         for (LivingEntity entity : found) {
             Vec3 at = entity.getBoundingBox().getCenter().subtract(entity.position());
-            if (hand.interactOn(entity, net.minecraft.world.InteractionHand.MAIN_HAND, at).consumesAction()) return true;
+            if (hand.interactOn(entity, net.minecraft.world.InteractionHand.MAIN_HAND, at).consumesAction()) {
+                touching(entity);
+                return true;
+            }
         }
         return false;
+    }
+
+    /** A right click on the next block of the area that takes one, from the side facing the prism; after a sweep with none, a rest. */
+    private boolean useInArea(ServerLevel level, LaserHand hand, ItemStack held) {
+        for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
+            BlockPos pos = areaPos(cursor);
+            cursor = (cursor + 1) % areaVolume();
+            if (within.test(pos) && level.isLoaded(pos) && !level.getBlockState(pos).isAir() && inSight(level, pos)) {
+                net.minecraft.core.Direction face = net.minecraft.core.Direction.getApproximateNearest(Vec3.atCenterOf(key.node()).subtract(Vec3.atCenterOf(pos)));
+                hand.setPos(pos.relative(face).getX() + 0.5, pos.relative(face).getY(), pos.relative(face).getZ() + 0.5);
+                var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(face, 0.5), face, pos, false);
+                if (hand.gameMode.useItemOn(hand, level, held, net.minecraft.world.InteractionHand.MAIN_HAND, hit).consumesAction()) {
+                    missed = 0;
+                    placed = pos;
+                    touched = null;
+                    return true;
+                }
+            }
+            if (fruitless()) return false;
+        }
+        return false;
+    }
+
+    /** What an area's Interact last worked on that moves: its beam follows it. */
+    @Nullable
+    private net.minecraft.world.entity.Entity touched;
+
+    private void touching(net.minecraft.world.entity.Entity entity) {
+        touched = entity;
+        placed = entity.blockPosition();
     }
 
     /** A swing at the first thing living in the beam, with what's in hand. */
@@ -294,14 +336,16 @@ public final class LensAction {
                 && onBeam(entity.getBoundingBox(), 0.25) && !inMirror(entity) && (stream.filter() == null || stream.filter().letsHit(entity)));
         if (found.isEmpty()) return false;
         hand.attack(found.getFirst());
+        touching(found.getFirst());
         return true;
     }
 
     /** A stand-in player at the beam, facing the way it goes. */
     private LaserHand handFor(ServerLevel level) {
         LaserHand hand = LaserHand.of(level);
-        BlockPos at = beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from();
+        BlockPos at = handSpot();
         hand.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        if (beam == null) return hand;
         hand.setYRot(beam.face().toYRot());
         hand.setXRot(beam.face() == net.minecraft.core.Direction.UP ? -90 : beam.face() == net.minecraft.core.Direction.DOWN ? 90 : 0);
         return hand;
@@ -927,6 +971,7 @@ public final class LensAction {
         BlockPos block = working(level);
         if (block == null) return null;
         if (key.action() == Lens.DAMAGE && !targets.isEmpty()) return targets.getFirst().getBoundingBox().getCenter();
+        if (key.action() == Lens.INTERACT && touched != null && touched.isAlive()) return touched.getBoundingBox().getCenter();
         return block.getCenter();
     }
 
@@ -937,7 +982,8 @@ public final class LensAction {
         if (area == null || level.getGameTime() - lastWorked > LaserTuning.PLACE_COOLDOWN) return null;
         return switch (key.action()) {
             case HARVEST -> cutting;
-            case PLACE, INSERT, EXTRACT, INTERACT -> placed;
+            case PLACE, INSERT, EXTRACT -> placed;
+            case INTERACT -> touched != null && touched.isAlive() ? touched.blockPosition() : placed;
             // Where what it's hitting is now, so the beam follows it.
             case DAMAGE -> targets.isEmpty() ? null : BlockPos.containing(targets.getFirst().getBoundingBox().getCenter());
             default -> null;

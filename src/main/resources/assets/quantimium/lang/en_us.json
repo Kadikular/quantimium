@@ -1022,7 +1022,7 @@
   "item.quantimium.damage_lens": "Damage Lens",
   "item.quantimium.damage_lens.tip": "Hurts anything that stands in the beam, players included. Light with an action reaches 8 blocks a run.",
   "item.quantimium.pickup_lens": "Pickup Lens",
-  "item.quantimium.pickup_lens.tip": "Items lying in the beam, and what the actions before it free, go back up it to the nearest Collector.",
+  "item.quantimium.pickup_lens.tip": "Items lying in the beam, and what its actions free, before it or after, go back up it to the nearest Collector.",
   "item.quantimium.range_lens": "Range Lens",
   "item.quantimium.range_lens.tip": "Doubles how far each run of the light reaches, up to 128 blocks. Four count: light with an action goes 8, 16, 32, 64, 128.",
   "item.quantimium.spectroscope": "Spectroscope",
