@@ -304,9 +304,9 @@ public class HarvestLaserBlockEntity extends BlockEntity implements QuantumEnerg
         return line;
     }
 
-    /** The hall whose cell {@code cell} is, if it's holding a Veiled. */
+    /** The hall whose cell {@code cell} is, if it's holding a Veiled: also for mirrored laser light reaching in. */
     @Nullable
-    private static ContainmentHallBlockEntity hallHolding(Level level, BlockPos cell) {
+    public static ContainmentHallBlockEntity hallHolding(Level level, BlockPos cell) {
         for (int below = 1; below <= ContainmentHallStructure.WALL_HEIGHT; below++) {
             if (level.getBlockEntity(cell.below(below)) instanceof ContainmentHallBlockEntity hall) {
                 return hall.isOccupied() ? hall : null;
@@ -381,15 +381,25 @@ public class HarvestLaserBlockEntity extends BlockEntity implements QuantumEnerg
                 SoundSource.BLOCKS, 1.0f, 0.8f + level.getRandom().nextFloat() * 0.2f);
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
 
-        if (QuantumFlux.chunkContained(level, ringPos)) return;
+        if (!leakFromTear(level, ringPos)) return;
+        lastLeak = level.getGameTime();
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    /**
+     * What a crystal taken apart through a tear at {@code ringPos} lets back through: anomaly, and now
+     * and then a mirror mite, by the chunk's anomaly, never in a contained chunk or with too many about.
+     * Whether a mite got out.
+     */
+    public static boolean leakFromTear(ServerLevel level, BlockPos ringPos) {
+        if (QuantumFlux.chunkContained(level, ringPos)) return false;
         QuantumFlux.emit(level, ringPos, 0.0, ANOMALY_PER_HARVEST);
         FluxBand band = QuantumFlux.chunkAnomalyBand(level, ringPos);
-        if (level.getRandom().nextInt(1000) >= MITE_PER_MILLE[band.ordinal()]) return;
-        if (level.getEntitiesOfClass(MirrorEndermite.class, new AABB(ringPos).inflate(MITE_CAP_RADIUS)).size() >= MITE_CAP) return;
-        if (MirrorMiteSpawner.spawnNear(level, ringPos, mite -> mite.setBreached(true)) == null) return;
-        lastLeak = level.getGameTime();
+        if (level.getRandom().nextInt(1000) >= MITE_PER_MILLE[band.ordinal()]) return false;
+        if (level.getEntitiesOfClass(MirrorEndermite.class, new AABB(ringPos).inflate(MITE_CAP_RADIUS)).size() >= MITE_CAP) return false;
+        if (MirrorMiteSpawner.spawnNear(level, ringPos, mite -> mite.setBreached(true)) == null) return false;
         level.playSound(null, ringPos, SoundEvents.ENDERMITE_AMBIENT, SoundSource.HOSTILE, 0.8f, 0.7f);
-        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        return true;
     }
 
     /** Shuts the tear it was holding open; for when the laser stops or goes. */

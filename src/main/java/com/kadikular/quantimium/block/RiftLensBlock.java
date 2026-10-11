@@ -44,11 +44,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * its middle, and through that hole it reaches the crystal on the other side. The ring does nothing
  * alone; the laser opens and closes it.
  *
+ * <p>Laser light along its axis goes through the tear into the mirror, or back out of it: see
+ * {@link com.kadikular.quantimium.block.entity.RiftLensBlockEntity}.
+ *
  * <p>It grows a strut to whatever holds it: any solid face beside it in the ring's own plane, or
  * another ring turned the same way, so it stands on a floor, hangs from a ceiling, sits on a wall or
  * stacks with its neighbours.
  */
-public class RiftLensBlock extends Block {
+public class RiftLensBlock extends net.minecraft.world.level.block.BaseEntityBlock {
 
     public static final MapCodec<RiftLensBlock> CODEC = simpleCodec(RiftLensBlock::new);
     /** The way a beam passes through it. */
@@ -87,7 +90,7 @@ public class RiftLensBlock extends Block {
     }
 
     @Override
-    protected MapCodec<? extends Block> codec() {
+    protected MapCodec<? extends net.minecraft.world.level.block.BaseEntityBlock> codec() {
         return CODEC;
     }
 
@@ -244,5 +247,15 @@ public class RiftLensBlock extends Block {
             }
             return shape;
         });
+    }
+
+    @Override
+    protected net.minecraft.world.level.block.RenderShape getRenderShape(BlockState state) {
+        return net.minecraft.world.level.block.RenderShape.MODEL;
+    }
+
+    @Override
+    public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new com.kadikular.quantimium.block.entity.RiftLensBlockEntity(pos, state);
     }
 }

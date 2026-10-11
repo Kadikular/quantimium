@@ -943,6 +943,8 @@
   "gui.quantimium.sender.status.tip": "To a Placement lens further along, or a Collector down the beam. A bound Tesseract in a slot sends from what it links to.",
   "block.quantimium.isolator": "Laser Isolator",
   "message.quantimium.splitter.outputs": "Light leaves by: %s",
+  "message.quantimium.rift_lens.closed": "No light through it",
+  "message.quantimium.rift_lens.passing": "Light through it, into the mirror or out of it",
   "message.quantimium.relay_mode.ignored": "Ignores redstone",
   "message.quantimium.relay_mode.with_signal": "Passes light only with a redstone signal",
   "message.quantimium.relay_mode.without_signal": "Passes light only without a redstone signal",

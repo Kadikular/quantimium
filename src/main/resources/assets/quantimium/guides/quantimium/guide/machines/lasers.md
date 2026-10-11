@@ -216,6 +216,24 @@ can reach, and each beam's length, end and power.
 **Don't look into the beam.** Light carrying power blinds anything whose eyes
 are in it, for 15 s. The <ItemLink id="quantimium:mirror_lens" /> protects the wearer.
 
+## Into the mirror
+
+Laser light along a <ItemLink id="quantimium:rift_lens" />'s axis goes through the tear in its middle
+into the mirror, and through another rift back out of it. The tear opens while lit light passes. A rift
+doesn't refocus the light or take anything for it. Light in the mirror:
+
+- acts only on what's in the mirror. Harvest takes a fully grown <ItemLink id="quantimium:anomalite_crystal" /> apart, on the
+  mirror's side, for its shards, as a <ItemLink id="quantimium:harvest_laser" /> does, and the tear leaks anomaly and now and
+  then a mirror mite the same way. Damage hits only the Veiled and mirror mites. Placement does nothing.
+- draws <ItemLink id="quantimium:veil_thread" /> with Pickup: through a Containment Hall's glass, into the cell where a Veiled
+  is held, it draws a thread at a Harvest Laser's pace, one draw to a hall at a time, and the thread goes
+  up the beam to a Collector.
+- charges nothing of the real world: a machine just stops it.
+- is stopped by solid blocks as any light is: blocks are solid in the mirror too.
+- can only be seen through a <ItemLink id="quantimium:mirror_lens" />.
+
+Light passes a Containment Hall's attuned glass, as it does any glass.
+
 ## What stops light
 
 Anything solid in the way stops a beam: it ends on that block, and charges

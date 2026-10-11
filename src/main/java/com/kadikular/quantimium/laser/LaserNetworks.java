@@ -127,6 +127,11 @@ public final class LaserNetworks {
         }
     }
 
+    /** For tests: every Veil Thread being drawn by mirrored Pickup is {@code ticksLeft} ticks from done. */
+    public void nearlyDrawn(int ticksLeft) {
+        for (LensAction action : actions.values()) action.nearlyDrawn(ticksLeft);
+    }
+
     /** Puts what the relays have lost to the hop tax into the field now, rather than at the next settle: for tests, before they clear it. */
     public void flushLosses() {
         lost.forEach((pos, fe) -> {
@@ -279,6 +284,7 @@ public final class LaserNetworks {
             Light in = incoming(node);
             if (in == null) continue;
             Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
+            if (node.rifts()) out = out.throughRift();
             if (out.equals(lights.get(at))) continue;
             lights.put(at, out);
             traceAt(node, out.reach(), before);
@@ -664,7 +670,14 @@ public final class LaserNetworks {
 
     private List<LaserBeam> trace(LaserNode node, int range, int marks) {
         List<LaserBeam> traced = new ArrayList<>();
-        for (Direction face : node.outputs()) traced.add(LaserBeam.trace(level, node.nodePos(), face, range, marks));
+        // The ways light is travelling as it arrives, for a node that passes it straight on.
+        Set<Direction> arriving = java.util.EnumSet.noneOf(Direction.class);
+        for (BlockPos from : into.getOrDefault(node.nodePos(), List.of())) {
+            for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
+                if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit())) arriving.add(beam.face());
+            }
+        }
+        for (Direction face : node.outputsFor(arriving)) traced.add(LaserBeam.trace(level, node.nodePos(), face, range, marks));
         for (BlockPos target : List.copyOf(node.targets())) {
             // A link to a block that's gone is let go.
             if (!node.keepsLinks() && level.isLoaded(target) && level.getBlockState(target).isAir()) {

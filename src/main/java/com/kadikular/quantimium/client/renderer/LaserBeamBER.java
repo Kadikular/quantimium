@@ -79,8 +79,12 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         }
     }
 
-    /** UV light shows only to someone holding a wrench or the Linker. */
+    /** UV light shows only to someone holding a wrench or the Linker; light in the mirror, only through a Mirror Lens. */
     private static boolean hidden(LaserBeam beam, boolean aiming) {
+        if ((beam.marks() & com.kadikular.quantimium.laser.Light.MIRRORED) != 0) {
+            var player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player == null || !com.kadikular.quantimium.item.MirrorLensItem.isWorn(player)) return true;
+        }
         return !aiming && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.UV);
     }
 

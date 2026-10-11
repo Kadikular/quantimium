@@ -186,6 +186,9 @@ public class ModBlockEntities {
                     new BlockEntityType<>(LaserEmitterBlockEntity::new, ModBlocks.FLASH_EMITTER.get(),
                             ModBlocks.LASER_EMITTER_1.get(), ModBlocks.LASER_EMITTER_2.get(), ModBlocks.LASER_EMITTER_3.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.RiftLensBlockEntity>> RIFT_LENS_BE =
+            BLOCK_ENTITIES.register("rift_lens_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.RiftLensBlockEntity::new, ModBlocks.RIFT_LENS.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.AreaPrismBlockEntity>> AREA_PRISM_BE =
             BLOCK_ENTITIES.register("area_prism_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.AreaPrismBlockEntity::new, ModBlocks.AREA_PRISM.get()));

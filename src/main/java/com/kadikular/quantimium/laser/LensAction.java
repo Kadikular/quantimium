@@ -68,6 +68,8 @@ public final class LensAction {
     private int cooldown;
     /** FE the cut, or the next hits, want this tick. */
     private long want;
+    /** FE drawn towards the next Veil Thread, by mirrored Pickup from a held Veiled. */
+    private long threadCut;
     /** FE charged towards the next hits: a hit can cost more than a tick's light, so it charges up, and keeps what it has. */
     private long charged;
     /** What it saw in the beam at its last sweep. */
@@ -105,6 +107,7 @@ public final class LensAction {
         if (took > 0 && key.action() == Lens.HARVEST) lastWorked = now;
         if (key.action() == Lens.DAMAGE) charged += took;
         else if (key.action() == Lens.HARVEST) cut += took;
+        else if (key.action() == Lens.PICKUP) threadCut += took;
         want -= took;
         return took;
     }
@@ -123,6 +126,11 @@ public final class LensAction {
             case HARVEST -> harvest(level, networks, pickup);
             case DAMAGE -> damage(level, networks, phase == 0, pickup);
             case PICKUP -> {
+                // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
+                if (mirrored()) {
+                    drawThread(level, networks);
+                    return;
+                }
                 if (phase != 0 || collectors.isEmpty()) return;
                 // Items are small: anything within nearly a block of the beam's line counts.
                 for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
@@ -130,7 +138,10 @@ public final class LensAction {
                     carry(networks, item, true);
                 }
             }
-            case PLACE -> place(level, networks);
+            // Nothing in the mirror to place.
+            case PLACE -> {
+                if (!mirrored()) place(level, networks);
+            }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
             case PHANTOM -> want = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
             default -> {}
@@ -149,7 +160,8 @@ public final class LensAction {
         long hit = LaserTuning.DAMAGE_FE_PER_HIT * scale;
         if (sweep) {
             List<LivingEntity> found = level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive()
-                    && onBeam(entity.getBoundingBox(), 0.25) && (stream.filter() == null || stream.filter().letsHit(entity)));
+                    && onBeam(entity.getBoundingBox(), 0.25) && inMirror(entity) == mirrored()
+                    && (stream.filter() == null || stream.filter().letsHit(entity)));
             // A Filter's keep count: that many are spared, and only those beyond it are hit. Always the same
             // ones spared (the oldest), so a hit is finished on one rather than spread over the herd.
             int keep = stream.filter() == null ? 0 : stream.filter().keep();
@@ -342,7 +354,9 @@ public final class LensAction {
         }
         if (beam == null) return null;
         // Phantom light goes through what it cuts: the first block on its way it may cut (the ore, with a Filter).
-        if ((marks & Light.PHANTOM) != 0) {
+        // Mirrored light reaches the crystal it can see in the mirror, wherever on its way.
+        if ((marks & Light.PHANTOM) != 0 || mirrored()) {
+            if (mirrored() && beam.hit() != null && cuttable(level, beam.hit())) return beam.hit();
             for (BlockPos pos : beam.path()) {
                 if (level.isLoaded(pos) && !level.getBlockState(pos).isAir() && cuttable(level, pos)) return pos;
             }
@@ -355,9 +369,13 @@ public final class LensAction {
         return cuttable(level, beam.hit()) ? beam.hit() : null;
     }
 
-    /** Whether a Harvest beam may break the block at {@code pos}. */
+    /** Whether a Harvest beam may break the block at {@code pos}: in the mirror, only a fully grown Anomalite crystal. */
     private boolean cuttable(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
+        if (mirrored()) {
+            return state.is(com.kadikular.quantimium.init.ModBlocks.ANOMALITE_CRYSTAL.get())
+                    && state.getValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.AGE) >= 3;
+        }
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null) return false;
         if (state.is(ModTags.LASER_UNBREAKABLE)) return false;
         // Plain, it cuts as an iron pickaxe: what needs better waits for an Amplify lens.
@@ -370,7 +388,12 @@ public final class LensAction {
         return new ItemStack(stream.amps() > 0 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
     }
 
-    private static long harvestCost(ServerLevel level, BlockPos pos) {
+    private long harvestCost(ServerLevel level, BlockPos pos) {
+        // A crystal takes as long to take apart as a Harvest Laser's does.
+        if (mirrored()) {
+            return (long) com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.FE_PER_TICK
+                    * com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.HARVEST_TICKS;
+        }
         float hardness = level.getBlockState(pos).getDestroySpeed(level, pos);
         return (long) Math.ceil(Math.max(1.0f, hardness) * LaserTuning.HARVEST_FE_PER_HARDNESS);
     }
@@ -380,7 +403,7 @@ public final class LensAction {
      * and filters that let it in. With Pickup, nothing is cut that would be left lying.
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
-        for (ItemStack drop : Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool())) {
+        for (ItemStack drop : drops(level, pos)) {
             if (!networks.roomForAll(collectors, drop)) return false;
         }
         return true;
@@ -389,9 +412,17 @@ public final class LensAction {
     /** Breaks it as its pickaxe would, the drops going back up the beam with Pickup. */
     private void breakBlock(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean pickup) {
         BlockState state = level.getBlockState(pos);
-        List<ItemStack> drops = new ArrayList<>(Block.getDrops(state, level, pos, null, null, tool()));
-        level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
-        level.removeBlock(pos, false);
+        List<ItemStack> drops = new ArrayList<>(drops(level, pos));
+        if (mirrored()) {
+            // On the mirror's side: the real world hears only the light, and the tear leaks as a Harvest Laser's does.
+            com.kadikular.quantimium.phase.OverlayBlockEdit.allow(() -> com.kadikular.quantimium.phase.MirrorSounds.breakQuietly(level, pos));
+            com.kadikular.quantimium.phase.MirrorSounds.play(level, pos, net.minecraft.sounds.SoundEvents.AMETHYST_CLUSTER_BREAK,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 0.9f);
+            com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.leakFromTear(level, area == null ? beam.from() : key.node());
+        } else {
+            level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
+            level.removeBlock(pos, false);
+        }
         for (ItemStack drop : drops) {
             ItemStack left = drop;
             if (pickup && networks.roomFor(collectors, drop) && networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK)) {
@@ -401,6 +432,67 @@ public final class LensAction {
         }
         // A beam now reaches on past where the block was; an area's beams don't change.
         if (area == null) LaserNetworks.changed(level);
+    }
+
+    /** What breaking it gives: a crystal its shards, as a Harvest Laser's; anything else, what its pickaxe would get. */
+    private List<ItemStack> drops(ServerLevel level, BlockPos pos) {
+        if (mirrored()) {
+            return List.of(new ItemStack(com.kadikular.quantimium.init.ModItems.ANOMALITE_SHARD.get(),
+                    com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.SHARDS));
+        }
+        return Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool());
+    }
+
+    private boolean mirrored() {
+        return (marks & Light.MIRRORED) != 0;
+    }
+
+    /** Whether {@code entity} is of the mirror: the Veiled, a mirror mite. Mirrored light hits only those; real light, everything else. */
+    private static boolean inMirror(LivingEntity entity) {
+        return entity instanceof com.kadikular.quantimium.entity.Veiled || entity instanceof com.kadikular.quantimium.entity.MirrorEndermite;
+    }
+
+    // ---- Veil Thread ----
+
+    /** For tests: a thread being drawn is {@code ticksLeft} ticks of drawing from done. */
+    void nearlyDrawn(int ticksLeft) {
+        if (key.action() != Lens.PICKUP || !mirrored()) return;
+        long whole = (long) com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.THREAD_FE_PER_TICK
+                * com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.THREAD_TICKS;
+        threadCut = Math.max(threadCut, whole - (long) ticksLeft * com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.THREAD_FE_PER_TICK);
+    }
+
+    /**
+     * Mirrored Pickup whose light reaches into a Containment Hall's cell, through its glass, draws Veil
+     * Thread out of the Veiled held there, as a Harvest Laser does: one hall to one draw at a time, at the
+     * same rate, the thread going up the beam to a Collector.
+     */
+    private void drawThread(ServerLevel level, LaserNetworks networks) {
+        com.kadikular.quantimium.block.entity.ContainmentHallBlockEntity hall = null;
+        if (beam != null) {
+            List<BlockPos> reached = new ArrayList<>(beam.path());
+            if (beam.hit() != null) reached.add(beam.hit());
+            for (BlockPos pos : reached) {
+                hall = com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.hallHolding(level, pos);
+                if (hall != null) break;
+            }
+        }
+        ItemStack thread = new ItemStack(com.kadikular.quantimium.init.ModItems.VEIL_THREAD.get());
+        if (hall == null || !networks.roomForAll(collectors, thread) || !hall.claimThread(key.node(), now)) {
+            want = 0;
+            return;
+        }
+        long whole = (long) com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.THREAD_FE_PER_TICK
+                * com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.THREAD_TICKS;
+        if (threadCut >= whole) {
+            threadCut = 0;
+            networks.collect(collectors, thread);
+            networks.workDone(this);
+            lastWorked = now;
+            level.playSound(null, key.node(), net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE, net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 0.6f);
+        }
+        // Drawn at a Harvest Laser's pace: so much a tick, however much light there is.
+        want = Math.min(com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.THREAD_FE_PER_TICK, whole - threadCut);
     }
 
     /** Items a kill just dropped, near where it fell. */

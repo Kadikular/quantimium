@@ -208,6 +208,24 @@ can reach, and each beam's length, end and power.
 [[mechanic:laser.blind]] **Don't look into the beam.** Light carrying power blinds anything whose eyes
 are in it, for {{c:LaserTuning.BLIND_TICKS|s}}. The [[item:mirror_lens]] protects the wearer.
 
+## Into the mirror
+
+[[mechanic:laser.rift]] Laser light along a [[block:rift_lens]]'s axis goes through the tear in its middle
+into the mirror, and through another rift back out of it. The tear opens while lit light passes. A rift
+doesn't refocus the light or take anything for it. Light in the mirror:
+
+- acts only on what's in the mirror. Harvest takes a fully grown [[block:anomalite_crystal]] apart, on the
+  mirror's side, for its shards, as a [[block:harvest_laser]] does, and the tear leaks anomaly and now and
+  then a mirror mite the same way. Damage hits only the Veiled and mirror mites. Placement does nothing.
+- draws [[item:veil_thread]] with Pickup: through a Containment Hall's glass, into the cell where a Veiled
+  is held, it draws a thread at a Harvest Laser's pace, one draw to a hall at a time, and the thread goes
+  up the beam to a Collector.
+- charges nothing of the real world: a machine just stops it.
+- is stopped by solid blocks as any light is: blocks are solid in the mirror too.
+- can only be seen through a [[item:mirror_lens]].
+
+Light passes a Containment Hall's attuned glass, as it does any glass.
+
 ## What stops light
 
 [[mechanic:laser.blocked]] Anything solid in the way stops a beam: it ends on that block, and charges

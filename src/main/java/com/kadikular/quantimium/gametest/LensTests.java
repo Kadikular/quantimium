@@ -991,4 +991,89 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    private static void rift(GameTestHelper helper, BlockPos pos, Direction.Axis axis) {
+        helper.setBlock(pos, com.kadikular.quantimium.block.RiftLensBlock.turnedTo(ModBlocks.RIFT_LENS.get().defaultBlockState(), axis,
+                helper.getLevel(), helper.absolutePos(pos)));
+    }
+
+    // covers: laser.rift
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void lightThroughARiftIsMirroredAndChargesNothing(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        rift(helper, new BlockPos(4, Y, 8), Direction.Axis.X);
+        helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.runAfterDelay(60, () -> {
+            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(4, Y, 8)));
+            helper.assertTrue(!beams.isEmpty() && (beams.getFirst().marks() & com.kadikular.quantimium.laser.Light.MIRRORED) != 0,
+                    "light leaves the rift in the mirror: " + beams);
+            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(9, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0,
+                    "and charges nothing of the real world");
+            helper.assertBlockProperty(new BlockPos(4, Y, 8), com.kadikular.quantimium.block.RiftLensBlock.OPEN, true);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.rift
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void mirroredHarvestTakesACrystalApart(GameTestHelper helper) {
+        // Through a rift, Harvest light takes a grown crystal apart for its shards, back up to the Collector.
+        LaserEmitterBlockEntity emitter = emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        rift(helper, new BlockPos(7, Y, 8), Direction.Axis.X);
+        helper.setBlock(new BlockPos(10, Y - 1, 8), ModBlocks.FOLD_CORE.get());
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.ANOMALITE_CRYSTAL.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.FACING, Direction.UP)
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.AGE, 3));
+        helper.setBlock(new BlockPos(13, Y, 8), Blocks.BEDROCK);
+        // A crystal takes a while: an Emitter III's worth of light, so the test needn't wait 15 seconds.
+        helper.setBlock(new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_3.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.EAST));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, ModItems.ANOMALITE_SHARD.get()), com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.SHARDS,
+                    "the crystal's shards came back");
+            helper.assertBlockNotPresent(ModBlocks.ANOMALITE_CRYSTAL.get(), new BlockPos(10, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.rift
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void mirroredDamageHitsOnlyWhatsOfTheMirror(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get());
+        rift(helper, new BlockPos(5, Y, 8), Direction.Axis.X);
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(7, Y, 8));
+        var mite = helper.spawnWithNoFreeWill(com.kadikular.quantimium.init.ModEntities.MIRROR_ENDERMITE.get(), new BlockPos(10, Y, 8));
+        float pigFull = pig.getHealth();
+        float miteFull = mite.getHealth();
+        helper.setBlock(new BlockPos(14, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!mite.isAlive() || mite.getHealth() < miteFull, "the mirror mite is hit");
+            helper.assertValueEqual(pig.getHealth(), pigFull, "the pig isn't");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.rift
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lens_thread", timeoutTicks = 120)
+    public static void mirroredPickupDrawsVeilThreadFromAHeldVeiled(GameTestHelper helper) {
+        BlockPos hallAt = new BlockPos(8, 2, 8);
+        var hall = TestSupport.readyHall(helper, hallAt, 1, 16);
+        hall.contain();
+        // West into the hall's east wall: emitter, Collector, a Pickup mount, then a rift seated on the glass.
+        BlockPos row = hallAt.above(2);
+        emitter(helper, row.east(7), Direction.WEST, true);
+        CollectorBlockEntity collector = collector(helper, row.east(5), Direction.WEST);
+        mount(helper, row.east(4), Direction.WEST, ModItems.PICKUP_LENS.get());
+        rift(helper, row.east(2), Direction.Axis.X);
+        helper.runAfterDelay(30, () -> com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).nearlyDrawn(5));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, ModItems.VEIL_THREAD.get()), 1, "a thread, up the beam");
+            helper.assertTrue(hall.isOccupied(), "the Veiled is still held");
+            TestSupport.finishLasers(helper);
+            TestSupport.removeHall(helper, hallAt);
+        });
+    }
 }

@@ -56,6 +56,10 @@ public final class ModTags {
             Registries.BLOCK,
             Identifier.fromNamespaceAndPath(Quantimium.MODID, "unrealised_ore_facades/deepslate"));
 
+    /** Blocks laser light passes through, besides glass and what has no collision: a hall's attuned glass. */
+    public static final TagKey<Block> LASER_CLEAR = TagKey.create(
+            Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_clear"));
+
     /** Blocks a Harvest lens never breaks: Anomalite (for the rift lens), and what withers can't break. */
     public static final TagKey<Block> LASER_UNBREAKABLE = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_unbreakable"));

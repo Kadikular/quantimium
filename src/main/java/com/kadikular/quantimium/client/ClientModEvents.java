@@ -112,6 +112,8 @@ public class ClientModEvents {
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.PHOTODETECTOR_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.RIFT_LENS_BE.get(),
+                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.AREA_PRISM_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SPLITTER_BE.get(),

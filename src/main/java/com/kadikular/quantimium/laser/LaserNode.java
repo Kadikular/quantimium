@@ -94,6 +94,16 @@ public interface LaserNode {
         return List.of();
     }
 
+    /** The faces light leaves by, given the ways it's travelling as it arrives: its outputs, unless it passes light straight on (a rift). */
+    default Set<Direction> outputsFor(Set<Direction> arriving) {
+        return outputs();
+    }
+
+    /** Whether light through it goes into the mirror, or back out of it: a Rift Lens. */
+    default boolean rifts() {
+        return false;
+    }
+
     /** Whether redstone can switch it on and off: the network then watches it, and lets no light through it while it's off. */
     default boolean switches() {
         return false;
