@@ -1288,6 +1288,38 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anInteractBeamLeavesFedAnimalsAlone(GameTestHelper helper) {
+        // One pig waiting to breed again, one already in love: neither takes a carrot, and the carrots stay in the
+        // Sender rather than going on up to the Collector.
+        emitter(helper, new BlockPos(0, Y + 2, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(2, Y + 2, 8), Direction.EAST);
+        var sender = sender(helper, new BlockPos(3, Y + 2, 8), Direction.EAST, new ItemStack(Items.CARROT, 4));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y + 2, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
+                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        BlockPos at = new BlockPos(9, Y + 2, 8);
+        helper.setBlock(at, ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.cycleShape();
+        prism.setRadius(3);
+        Pig resting = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(8, Y, 6));
+        resting.setAge(6000);
+        Pig loving = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(11, Y, 10));
+        loving.setInLoveTime(600);
+        helper.runAfterDelay(80, () -> {
+            int carrots = 0;
+            for (int slot = 0; slot < 9; slot++) carrots += sender.getItems().getStackInSlot(slot).is(Items.CARROT) ? sender.getItems().getStackInSlot(slot).getCount() : 0;
+            helper.assertValueEqual(carrots, 4, "no carrot eaten");
+            helper.assertValueEqual(count(collector, Items.CARROT), 0, "none went to the Collector");
+            TestSupport.finishLasers(helper);
+            resting.discard();
+            loving.discard();
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.order
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aFilterChangesOnlyTheLensesBeforeIt(GameTestHelper helper) {

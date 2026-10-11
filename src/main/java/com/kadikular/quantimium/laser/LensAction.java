@@ -232,9 +232,9 @@ public final class LensAction {
         boolean done = stream.hits() ? swing(level, hand) : use(level, hand, held);
         // Whatever it holds now: a filled bucket, what's left of a stack, a worn sword.
         ItemStack after = hand.letGo();
-        for (ItemStack extra : List.copyOf(hand.getInventory().getNonEquipmentItems())) settle(level, networks, extra);
+        for (ItemStack extra : List.copyOf(hand.getInventory().getNonEquipmentItems())) settle(level, networks, extra, held);
         hand.getInventory().clearContent();
-        settle(level, networks, after);
+        settle(level, networks, after, held);
         if (!done) return;
         networks.pay(this, LaserTuning.PLACE_FE);
         networks.workDone(this);
@@ -245,11 +245,17 @@ public final class LensAction {
         if (area == null) LaserNetworks.changed(level);
     }
 
-    /** Puts what the hand held back where it belongs: up to a Collector, else to the Sender, else on the ground. */
-    private void settle(ServerLevel level, LaserNetworks networks, ItemStack stack) {
+    /**
+     * Puts what the hand held back where it belongs: what's still what was sent (food nobody ate, a worn
+     * sword) back to the Sender first; anything new (a filled bucket) up to a Collector first; else the
+     * other; else on the ground.
+     */
+    private void settle(ServerLevel level, LaserNetworks networks, ItemStack stack, ItemStack sent) {
         if (stack.isEmpty()) return;
-        ItemStack left = collectors.isEmpty() ? stack : networks.collect(collectors, stack);
-        if (!left.isEmpty()) left = networks.returnTo(senders, left);
+        boolean same = stack.is(sent.getItem());
+        ItemStack left = same ? networks.returnTo(senders, stack) : stack;
+        if (!left.isEmpty() && !collectors.isEmpty()) left = networks.collect(collectors, left);
+        if (!same && !left.isEmpty()) left = networks.returnTo(senders, left);
         if (!left.isEmpty()) Block.popResource(level, handSpot(), left);
     }
 
