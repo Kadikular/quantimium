@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:smelting_lens" scale="2" />
 
-A lens: with Pickup, what comes back up the beam is smelted on the way.
+A lens: what the actions before it free or move is smelted; alone, it smelts what the beam ends on.
 
 ## Recipes
 

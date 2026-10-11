@@ -23,7 +23,7 @@ public final class LaserTuning {
 
     /** Emitter tiers: the most they send a tick, how far a run reaches, what they hold, and what they burn idle. */
     public enum Tier {
-        FLASH(100, 8, 20_000, 0),
+        FLASH(200, 8, 20_000, 0),
         ONE(2_000, 16, 200_000, 2),
         TWO(32_000, 32, 3_200_000, 16),
         THREE(512_000, 64, 51_200_000, 128);
@@ -43,7 +43,7 @@ public final class LaserTuning {
     }
 
     /** What the flash emitter makes from burning: a furnace's fuel ticks, this much FE each. */
-    public static final int FLASH_FE_PER_BURN_TICK = 40;
+    public static final int FLASH_FE_PER_BURN_TICK = 100;
 
     // ---- lenses ----
 

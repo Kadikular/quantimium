@@ -41,6 +41,16 @@ public enum Lens {
     /** With Pickup, what comes back up the beam is smelted on the way. */
     SMELT(false, 0xFFFF8040);
 
+    /** The lens item's translation key: its name, but for the two named for what they do to things. */
+    public String itemKey() {
+        String name = switch (this) {
+            case UNREALISE -> "unrealising";
+            case SMELT -> "smelting";
+            default -> name().toLowerCase(java.util.Locale.ROOT);
+        };
+        return "item.quantimium." + name + "_lens";
+    }
+
     /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
     public static final int MIRRORED_MARK = 30;
 

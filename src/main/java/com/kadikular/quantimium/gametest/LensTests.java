@@ -118,11 +118,11 @@ public final class LensTests {
     // covers: laser.lens.mount, laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void mountsInARowAddTheirLensesUp(GameTestHelper helper) {
-        // Pickup in the first mount, Harvest in the second: the light leaving the second does both.
+        // Harvest in the first mount, Pickup in the second: the light leaving the second does both.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
-        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
-        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
         helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.COBBLESTONE), 1, "harvested and brought back");
@@ -1226,6 +1226,140 @@ public final class LensTests {
             for (int slot = 0; slot < 9; slot++) back |= sender.getItems().getStackInSlot(slot).is(Items.DIAMOND_SWORD);
             helper.assertTrue(back, "the sword went back to the Sender");
             TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anInteractBeamFeedsOnlyTheGrownCow(GameTestHelper helper) {
+        // A Filter for grown ones: the calf in front is passed over, the cow behind it is fed.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.WHEAT, 4));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
+                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        var calf = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(8, Y, 8));
+        calf.setAge(-24000);
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(10, Y, 8));
+        helper.setBlock(new BlockPos(13, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(cow.isInLove(), "the cow was fed");
+            helper.assertTrue(calf.getAge() <= -23900, "the calf wasn't: " + calf.getAge());
+            TestSupport.finishLasers(helper);
+            calf.discard();
+            cow.discard();
+        });
+    }
+
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anInteractBeamShearsASheep(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.SHEARS));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        var sheep = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(9, Y, 8));
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(sheep.isSheared(), "sheared");
+            TestSupport.finishLasers(helper);
+            sheep.discard();
+        });
+    }
+
+    // covers: laser.lens.order
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aFilterChangesOnlyTheLensesBeforeIt(GameTestHelper helper) {
+        // Filter (coal only), then Harvest: the filter came first, so Harvest cuts the stone anyway.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount.getLensSlots().setStackInSlot(0, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COAL))));
+        mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.HARVEST_LENS.get()));
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(7, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void smeltingWithoutPickupDropsGlass(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.SMELTING_LENS.get());
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.SAND);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            var items = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(helper.absolutePos(new BlockPos(7, Y, 8))).inflate(2));
+            helper.assertTrue(items.stream().anyMatch(item -> item.getItem().is(Items.GLASS)), "glass on the ground: " + items);
+            helper.assertTrue(items.stream().noneMatch(item -> item.getItem().is(Items.SAND)), "no sand");
+            TestSupport.finishLasers(helper);
+            items.forEach(ItemEntity::discard);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void smeltingAloneTurnsSandToGlassInPlace(GameTestHelper helper) {
+        // Glass lets the light on, so the next sand is smelted too.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.SMELTING_LENS.get());
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.SAND);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.SAND);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.GLASS, new BlockPos(7, Y, 8));
+            helper.assertBlockPresent(Blocks.GLASS, new BlockPos(8, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void smeltingInsertFillsTheChestWithIngots(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.RAW_IRON, 20));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INSERT_LENS.get(), ModItems.SMELTING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
+        helper.succeedWhen(() -> {
+            var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+            helper.assertValueEqual(chest.countItem(Items.IRON_INGOT), 20, "ingots, in the chest");
+            helper.assertValueEqual(chest.countItem(Items.RAW_IRON), 0, "no raw iron");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void smeltingExtractBringsIngotsBackUp(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get(), ModItems.SMELTING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
+        var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        chest.setItem(0, new ItemStack(Items.RAW_IRON, 20));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.IRON_INGOT), 20, "ingots, up the beam");
+            helper.assertValueEqual(chest.countItem(Items.RAW_IRON), 0, "the chest emptied");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void smeltingDamageCooksWhatItKills(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get(), ModItems.SMELTING_LENS.get());
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(7, Y, 8));
+        // One hit's worth of health: a hit's knockback could carry it out of the beam.
+        pig.setHealth(1.0f);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertFalse(pig.isAlive(), "the pig is dead");
+            var items = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(helper.absolutePos(new BlockPos(7, Y, 8))).inflate(3));
+            helper.assertTrue(items.stream().anyMatch(item -> item.getItem().is(Items.COOKED_PORKCHOP)), "cooked: " + items);
+            helper.assertTrue(items.stream().noneMatch(item -> item.getItem().is(Items.PORKCHOP)), "nothing raw");
+            TestSupport.finishLasers(helper);
+            items.forEach(ItemEntity::discard);
         });
     }
 

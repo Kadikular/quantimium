@@ -23,20 +23,20 @@ import java.util.Set;
  *
  * <p>Each <b>stream</b> is one action, its modifiers, and the sources that pay for it: those whose light
  * reached the lens that gave it. Joined light keeps both sides' streams; the same action from two sides
- * becomes one, paid by both. A modifier changes the actions the light carries by the time it leaves its
- * mount (that mount's own included), so one before a join stays on its own side; except Pickup, which
- * stays on the light and gives every action added after it Pickup too.
- * Pickup is also a stream of its own, paid for like an action: it gathers items lying in the beam.
+ * becomes one, paid by both. A modifier changes the actions the light already carries when it meets it:
+ * those in slots before it in its mount, and those from mounts before; never one added after it, so a
+ * Filter must come after the Harvest it filters. One before a join stays on its own side.
+ * Pickup is also a stream of its own, paid for like an action: it gathers items lying in the beam. So is
+ * Smelting, which acts only where the light carries nothing else (see {@link #acting()}).
  *
  * @param range   the reach of a run of plain light from its source, before any Range lens
  * @param boosts  Range lenses met, up to {@link LaserTuning#RANGE_LENSES}
- * @param pickup  whether actions added from here on get Pickup
  * @param streams what the light does, one stream per action
  * @param feeders the sources whose light this is: emitters, or cavities giving out what they hold
  * @param left    for light through a photodetector, which doesn't refocus: blocks it has left; -1 otherwise
  * @param marks   what stays on the light once it's met it ({@link #UV}, {@link #PHANTOM}, {@link #MIRRORED})
  */
-public record Light(int range, int boosts, boolean pickup, List<Stream> streams, Set<BlockPos> feeders, int left, int marks) {
+public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks) {
 
     /** Seen only with a wrench or the Linker in hand. */
     public static final int UV = 1;
@@ -59,7 +59,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
 
     /** The light through a rift: into the mirror, or back out of it. */
     public Light throughRift() {
-        return new Light(range, boosts, pickup, streams, feeders, left, marks ^ MIRRORED);
+        return new Light(range, boosts, streams, feeders, left, marks ^ MIRRORED);
     }
 
     /**
@@ -113,7 +113,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
 
     /** Plain light from a source. */
     public static Light from(BlockPos source, int range) {
-        return new Light(range, 0, false, List.of(), Set.of(source), -1, 0);
+        return new Light(range, 0, List.of(), Set.of(source), -1, 0);
     }
 
     /** How far a run of this light reaches. */
@@ -125,12 +125,12 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
 
     /** The light refocused, by a mirror: a fresh run at its own reach. */
     public Light refocused() {
-        return left < 0 ? this : new Light(range, boosts, pickup, streams, feeders, -1, marks);
+        return left < 0 ? this : new Light(range, boosts, streams, feeders, -1, marks);
     }
 
     /** This light gone {@code length} blocks into a run and on through something that doesn't refocus it. */
     public Light passedOn(int length) {
-        return new Light(range, boosts, pickup, streams, feeders, Math.max(0, reach() - length - 1), marks);
+        return new Light(range, boosts, streams, feeders, Math.max(0, reach() - length - 1), marks);
     }
 
     /** Light from two sides, joined: the longer reach, every stream, the same action paid for by both. */
@@ -156,7 +156,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
         feeders.addAll(b.feeders);
         // Through a photodetector a side has only so far left: the joined light reaches as far as the farther side.
         int left = a.left < 0 && b.left < 0 ? -1 : Math.max(a.reach(), b.reach());
-        return new Light(Math.max(a.range, b.range), Math.max(a.boosts, b.boosts), a.pickup || b.pickup,
+        return new Light(Math.max(a.range, b.range), Math.max(a.boosts, b.boosts),
                 List.copyOf(streams.values()), Set.copyOf(feeders), left, a.marks | b.marks);
     }
 
@@ -169,26 +169,18 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
      */
     public Light through(List<LensUse> lenses) {
         if (lenses.isEmpty()) return this;
-        // In one mount its modifiers change every action in it, whatever the slots' order: its actions first.
-        List<LensUse> ordered = new java.util.ArrayList<>(lenses.size());
-        for (LensUse use : lenses) if (use.lens().action) ordered.add(use);
-        for (LensUse use : lenses) if (!use.lens().action) ordered.add(use);
-        lenses = ordered;
         Map<Lens, Stream> streams = new EnumMap<>(Lens.class);
         for (Stream stream : this.streams) streams.put(stream.action(), stream);
-        boolean pickup = this.pickup;
         int marks = this.marks;
         int boosts = this.boosts;
         for (LensUse use : lenses) {
             Lens lens = use.lens();
             if (lens.action) {
                 Stream had = streams.get(lens);
-                int modifiers = (had == null ? 0 : had.modifiers()) | (pickup ? 1 << Lens.PICKUP.ordinal() : 0);
-                streams.put(lens, new Stream(lens, modifiers, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
+                streams.put(lens, new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
                         had == null ? 0 : had.speed(), use.hits(), had == null ? 0 : had.fortune()));
             } else switch (lens) {
                 case PICKUP -> {
-                    pickup = true;
                     streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << Lens.PICKUP.ordinal(), stream.amps(), stream.filter()));
                     // Pickup is an action of its own too: gathering what lies in the beam.
                     Stream had = streams.get(Lens.PICKUP);
@@ -201,26 +193,38 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
                         stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(), use.filter() == null ? LensFilter.EMPTY : use.filter()));
                 case SPEED -> streams.replaceAll((action, stream) -> stream.faster());
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
-                case PRECISION, UNREALISE, SMELT -> streams.replaceAll((action, stream) ->
+                case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
+                case SMELT -> {
+                    streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << Lens.SMELT.ordinal(), stream.amps(), stream.filter()));
+                    // Smelting is an action of its own too, where there's no other: on what the beam ends on.
+                    Stream had = streams.get(Lens.SMELT);
+                    streams.put(Lens.SMELT, new Stream(Lens.SMELT, 1 << Lens.SMELT.ordinal(), feeders, 0, had == null ? null : had.filter()));
+                }
                 case AMPLIFY -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.AMPLIFY.ordinal(), Math.min(LaserTuning.AMPLIFY_LENSES, stream.amps() + 1), stream.filter()));
                 default -> {}
             }
         }
-        return new Light(range, boosts, pickup, List.copyOf(streams.values()), feeders, left, marks);
+        return new Light(range, boosts, List.copyOf(streams.values()), feeders, left, marks);
+    }
+
+    /** The streams that act: all of them, but Smelting's own only where the light carries nothing else. */
+    public List<Stream> acting() {
+        if (streams.stream().noneMatch(stream -> stream.action() == Lens.SMELT)
+                || streams.stream().allMatch(stream -> stream.action() == Lens.SMELT)) return streams;
+        return streams.stream().filter(stream -> stream.action() != Lens.SMELT).toList();
     }
 
     /** What an Isolator lets through: power, at the light's reach, and nothing it did; still in the mirror, if it was. */
     public Light isolated() {
-        return new Light(range, boosts, false, List.of(), feeders, left, marks & MIRRORED);
+        return new Light(range, boosts, List.of(), feeders, left, marks & MIRRORED);
     }
 
     /** For the beam's look: a bit for each action it carries, and for each modifier any stream has. */
     public int packed() {
         int packed = 0;
         for (Stream stream : streams) packed |= 1 << stream.action().ordinal() | stream.modifiers();
-        if (pickup) packed |= 1 << Lens.PICKUP.ordinal();
         if (boosts > 0) packed |= 1 << Lens.RANGE.ordinal();
         if (uv()) packed |= 1 << Lens.UV.ordinal();
         if (phantom()) packed |= 1 << Lens.PHANTOM.ordinal();
@@ -235,7 +239,6 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
         CompoundTag tag = new CompoundTag();
         tag.putInt("Range", range);
         tag.putInt("Boosts", boosts);
-        tag.putBoolean("Pickup", pickup);
         ListTag list = new ListTag();
         for (Stream stream : streams) {
             CompoundTag entry = new CompoundTag();
@@ -266,7 +269,7 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
             streams.add(new Stream(Lens.values()[action], stream.getIntOr("Modifiers", 0), Set.of(source), stream.getIntOr("Amps", 0), filter,
                     stream.getIntOr("Speed", 0), false, stream.getIntOr("Fortune", 0)));
         }
-        return new Light(tag.getIntOr("Range", LaserTuning.RELAY_RANGE), tag.getIntOr("Boosts", 0), tag.getBooleanOr("Pickup", false),
+        return new Light(tag.getIntOr("Range", LaserTuning.RELAY_RANGE), tag.getIntOr("Boosts", 0),
                 List.copyOf(streams), Set.of(source), -1, tag.getIntOr("Marks", 0));
     }
 
@@ -274,12 +277,12 @@ public record Light(int range, int boosts, boolean pickup, List<Stream> streams,
     public Light reEmitted(BlockPos source) {
         List<Stream> mine = new ArrayList<>();
         for (Stream stream : streams) mine.add(stream.paidBy(Set.of(source)));
-        return new Light(range, boosts, pickup, List.copyOf(mine), Set.of(source), -1, marks);
+        return new Light(range, boosts, List.copyOf(mine), Set.of(source), -1, marks);
     }
 
     /** Whether this has everything {@code other} has, payers aside: what a cavity checks before it remembers more. */
     public boolean covers(Light other) {
-        if (range < other.range || boosts < other.boosts || (other.pickup && !pickup) || (other.marks & ~marks) != 0) return false;
+        if (range < other.range || boosts < other.boosts || (other.marks & ~marks) != 0) return false;
         for (Stream theirs : other.streams) {
             Stream mine = streams.stream().filter(stream -> stream.action() == theirs.action()).findFirst().orElse(null);
             if (mine == null || (mine.modifiers() & theirs.modifiers()) != theirs.modifiers() || mine.amps() < theirs.amps()

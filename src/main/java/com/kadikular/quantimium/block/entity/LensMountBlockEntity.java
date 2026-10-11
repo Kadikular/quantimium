@@ -210,7 +210,7 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         MutableComponent names = Component.empty();
         for (int i = 0; i < lenses.size(); i++) {
             if (i > 0) names.append(", ");
-            names.append(Component.translatable("item.quantimium." + lenses.get(i).name().toLowerCase(java.util.Locale.ROOT) + "_lens"));
+            names.append(Component.translatable(lenses.get(i).itemKey()));
         }
         return Component.translatable("message.quantimium.lens_mount.holds", names).withStyle(ChatFormatting.DARK_AQUA);
     }

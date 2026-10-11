@@ -165,19 +165,19 @@ public final class LaserNetworks {
         if (light.streams().isEmpty()) {
             lines.add(net.minecraft.network.chat.Component.translatable("message.quantimium.spectroscope.plain").withStyle(body));
         }
-        for (Light.Stream stream : light.streams()) {
+        for (Light.Stream stream : light.acting()) {
             net.minecraft.network.chat.MutableComponent modifiers = net.minecraft.network.chat.Component.empty();
             for (Lens lens : Lens.values()) {
                 if (lens.action || lens == stream.action() || !stream.has(lens)) continue;
                 modifiers.append(" + ").append(net.minecraft.network.chat.Component.translatable(
-                        "item.quantimium." + lens.name().toLowerCase(java.util.Locale.ROOT) + "_lens"));
+                        lens.itemKey()));
             }
             int collectors = 0;
             for (LensAction action : actions.values()) {
                 if (action.key().node().equals(pos) && action.key().action() == stream.action()) collectors = action.collectors().size();
             }
             lines.add(net.minecraft.network.chat.Component.translatable("message.quantimium.spectroscope.stream",
-                    net.minecraft.network.chat.Component.translatable("item.quantimium." + stream.action().name().toLowerCase(java.util.Locale.ROOT) + "_lens"),
+                    net.minecraft.network.chat.Component.translatable(stream.action().itemKey()),
                     modifiers, stream.payers().size(), collectors).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
         }
         for (LaserBeam beam : beamsOf(pos)) {
@@ -380,7 +380,7 @@ public final class LaserNetworks {
                 for (LaserBeam beam : list) lensed.add(beam.withLenses(light.packed()));
                 list = lensed;
                 beams.put(pos, list);
-                List<Light.Stream> streams = new ArrayList<>(light.streams());
+                List<Light.Stream> streams = new ArrayList<>(light.acting());
                 // Phantom light pays an upkeep, as an action of its own, by everyone whose light it is.
                 if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
                 for (Light.Stream stream : streams) {
@@ -750,7 +750,7 @@ public final class LaserNetworks {
             LaserNode at = nodes.get(visit.node());
             Light here = lights.get(visit.node());
             if (at != null && at.area() != null && here != null && !visit.path().isEmpty()) {
-                for (Light.Stream stream : here.streams()) {
+                for (Light.Stream stream : here.acting()) {
                     if (!stream.payers().contains(source.nodePos())) continue;
                     LensAction action = actions.get(new LensAction.Key(visit.node(), -1, stream.action()));
                     if (action != null) route(sinks, action.key(), null, Direction.UP, null, action, source.nodePos(), index, visit.path(), visit.efficiency());
@@ -766,7 +766,7 @@ public final class LaserNetworks {
                 // Each action this beam carries is paid for by its stream's sources, as a block's power is.
                 Light light = lights.get(visit.node());
                 if (light != null) {
-                    List<Light.Stream> streams = new ArrayList<>(light.streams());
+                    List<Light.Stream> streams = new ArrayList<>(light.acting());
                     if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
                     for (Light.Stream stream : streams) {
                         if (!stream.payers().contains(source.nodePos())) continue;

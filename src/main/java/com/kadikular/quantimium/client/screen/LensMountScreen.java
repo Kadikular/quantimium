@@ -75,7 +75,7 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
         com.kadikular.quantimium.laser.Light light = com.kadikular.quantimium.laser.Light
                 .from(menu.getBlockEntity().getBlockPos(), 32).through(menu.getBlockEntity().lenses());
         MutableComponent actions = Component.empty();
-        for (com.kadikular.quantimium.laser.Light.Stream stream : light.streams()) {
+        for (com.kadikular.quantimium.laser.Light.Stream stream : light.acting()) {
             if (!actions.getSiblings().isEmpty()) actions.append(", ");
             actions.append(name(stream.action()));
         }
@@ -136,6 +136,6 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
     }
 
     private static Component name(Lens lens) {
-        return Component.translatable("item.quantimium." + lens.name().toLowerCase(java.util.Locale.ROOT) + "_lens");
+        return Component.translatable(lens.itemKey());
     }
 }
