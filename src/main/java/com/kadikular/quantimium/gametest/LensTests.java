@@ -1774,6 +1774,41 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.crushing, laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void crushingAndSmeltingBeforeHarvestWorkTheBlockFirst(GameTestHelper helper) {
+        // Crushing, Smelting, Harvest, Precision: they change no action before them, so they work on the sandstone
+        // itself, to sand, to glass; only then is it cut, whole, with Silk Touch, and the glass comes back.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get(),
+                ModItems.HARVEST_LENS.get(), ModItems.PRECISION_LENS.get());
+        mount(helper, new BlockPos(6, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.SANDSTONE);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.GLASS), 1, "the glass came back");
+            helper.assertValueEqual(count(collector, Items.SANDSTONE) + count(collector, Items.SAND), 0, "never cut as sandstone or sand");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.insert, laser.lens.speed
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
+    public static void anInsertBeamMovesEightAtATime(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.IRON_INGOT, 64));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INSERT_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
+        var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        helper.runAfterDelay(45, () -> {
+            int moved = chest.countItem(Items.IRON_INGOT);
+            helper.assertTrue(moved > 0 && moved % 8 == 0 && moved <= 40, "eight a move: " + moved);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.crushing, laser.light.join
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void crushingAndSmeltingFromTwoBeamsCrushFirst(GameTestHelper helper) {

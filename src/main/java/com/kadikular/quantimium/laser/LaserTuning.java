@@ -93,6 +93,8 @@ public final class LaserTuning {
     public static final long CRUSH_FE_PER_ITEM = 25;
     /** FE a Smelting lens takes for each item it smelts on the way up. */
     public static final long SMELT_FE_PER_ITEM = 25;
+    /** Items Insert or Extract moves at once; each Speed lens doubles it (16, 32, 64). */
+    public static final int MOVE_ITEMS = 8;
     /** FE to carry one stack back up the beam. */
     public static final long PICKUP_FE_PER_STACK = 200;
     /** Ticks between the beam's sweeps for items lying in it. */

@@ -98,6 +98,13 @@ public final class LensAction {
         this.area = area;
     }
 
+    /** Smelting and Crushing working on the world on this light: what they'd still change, Harvest leaves to them. */
+    private List<Lens> worldSteps = List.of();
+
+    void worldSteps(List<Lens> steps) {
+        worldSteps = steps;
+    }
+
     /** What it asks of the network this tick: only a cut in progress asks; the rest pay as they act. */
     long demand() {
         return want;
@@ -389,7 +396,7 @@ public final class LensAction {
             return;
         }
         if (in ? senders.isEmpty() : collectors.isEmpty()) return;
-        long most = LaserTuning.PICKUP_FE_PER_STACK + 64 * ((stream.has(Lens.SMELT) ? LaserTuning.SMELT_FE_PER_ITEM : 0)
+        long most = LaserTuning.PICKUP_FE_PER_STACK + moveMost() * ((stream.has(Lens.SMELT) ? LaserTuning.SMELT_FE_PER_ITEM : 0)
                 + (stream.has(Lens.CRUSH) ? LaserTuning.CRUSH_FE_PER_ITEM : 0));
         if (!networks.canPay(this, most)) return;
         BlockPos at = area == null ? inventoryAtEnd(level) : nextAreaInventory(level);
@@ -414,7 +421,7 @@ public final class LensAction {
      */
     private long insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
         ItemStack offered = networks.take(senders, stack -> lets(stack)
-                && arriving(level, stack, 1).stream().allMatch(each -> fits(handler, each) == each.getCount()), 64, true);
+                && arriving(level, stack, 1).stream().allMatch(each -> fits(handler, each) == each.getCount()), moveMost(), true);
         if (offered.isEmpty()) return -1;
         Processing.Made made = made(level, offered);
         int count = 1;
@@ -436,7 +443,7 @@ public final class LensAction {
     /** Out of the inventory, up to a Collector: crushed and smelted on the way with those lenses. What that cost, or -1 for none moved. */
     private long extractFrom(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
         for (int slot = 0; slot < handler.getSlots(); slot++) {
-            ItemStack there = handler.extractItem(slot, 64, true);
+            ItemStack there = handler.extractItem(slot, moveMost(), true);
             if (there.isEmpty() || !lets(there)) continue;
             Processing.Made made = made(level, there);
             int room;
@@ -458,6 +465,11 @@ public final class LensAction {
             return made.fe() * taken.getCount();
         }
         return -1;
+    }
+
+    /** The most Insert or Extract moves at once: {@link LaserTuning#MOVE_ITEMS}, doubled for each Speed lens. */
+    private int moveMost() {
+        return LaserTuning.MOVE_ITEMS << stream.speed();
     }
 
     /** {@code count} of {@code stack} as it would arrive: crushed and smelted, with those lenses, where they can be. */
@@ -632,6 +644,12 @@ public final class LensAction {
                     + throughCost(level, target);
         }
         if (target == null) {
+            want = 0;
+            return;
+        }
+        // Smelting or Crushing before it on the light do their work on the block first: sandstone becomes glass, then it's cut.
+        if (area == null && !worldSteps.isEmpty() && !level.getBlockState(target).getBlock().asItem().equals(Items.AIR)
+                && Processing.ofOne(level, key.node(), new ItemStack(level.getBlockState(target).getBlock().asItem()), worldSteps).changed()) {
             want = 0;
             return;
         }

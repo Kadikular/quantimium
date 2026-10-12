@@ -68,7 +68,7 @@ public final class Processing {
         SMELTED.clear();
     }
 
-    /** What one of {@code stack} becomes, through each of {@code steps} in turn: those that change nothing are free. */
+    /** What one of {@code stack} becomes, through each of {@code steps} in turn: those that change nothing are free, and so are all of them if it ends as it began. */
     public static Made ofOne(ServerLevel level, BlockPos at, ItemStack stack, List<Lens> steps) {
         List<ItemStack> forms = List.of(stack.copyWithCount(1));
         long fe = 0;
@@ -79,6 +79,8 @@ public final class Processing {
             forms = made;
             fe += smelting ? LaserTuning.SMELT_FE_PER_ITEM : LaserTuning.CRUSH_FE_PER_ITEM;
         }
+        // Back where it started (glass crushed to sand and smelted again): nothing happened, and nothing's paid.
+        if (forms.size() == 1 && ItemStack.matches(forms.getFirst(), stack.copyWithCount(1))) return new Made(forms, 0);
         return new Made(forms, fe);
     }
 

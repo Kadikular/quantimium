@@ -387,6 +387,8 @@ public final class LaserNetworks {
                 list = lensed;
                 beams.put(pos, list);
                 List<Light.Stream> streams = new ArrayList<>(light.acting());
+                // What Smelting and Crushing do to the world here first: a Harvest waits for them.
+                List<Lens> worldSteps = streams.stream().filter(stream -> stream.inWorld()).findFirst().map(Light.Stream::steps).orElse(List.of());
                 // Phantom light pays an upkeep, as an action of its own, by everyone whose light it is.
                 if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
                 for (Light.Stream stream : streams) {
@@ -397,6 +399,7 @@ public final class LaserNetworks {
                         LensAction action = was.getOrDefault(key, new LensAction(key));
                         int solids = stream.action() == Lens.PHANTOM ? list.get(i).solidsThrough(level) : 0;
                         action.update(list.get(i), stream, collectors, senders, null, light.reach(), light.marks(), solids);
+                        action.worldSteps(worldSteps);
                         actions.put(key, action);
                     }
                     // An area prism's light works on its area: one action each, as beam -1.
