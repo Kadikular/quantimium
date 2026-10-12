@@ -71,9 +71,7 @@ public class SolarEmitterBlockEntity extends BlockEntity implements LaserNode, L
         solar.sun = skyLight(level, pos);
         solar.feeds = solar.into(level) != null;
         solar.giving = solar.feeds ? 0 : Math.min(LaserTuning.SOLAR_CHAIN_MAX, solar.chain(level, new HashSet<>()));
-        boolean day = solar.sun > 0;
-        if (state.getValue(SolarEmitterBlock.DAY) != day) level.setBlock(pos, state.setValue(SolarEmitterBlock.DAY, day), Block.UPDATE_CLIENTS);
-        else if (was != solar.sun) level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        if (was != solar.sun) level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
     }
 
     /** How bright the sky is above it, 0 to 15, the way a daylight detector reads it. */

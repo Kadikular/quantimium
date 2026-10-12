@@ -7,14 +7,6 @@
   },
   {
    "when": {
-    "day": "true"
-   },
-   "apply": {
-    "model": "quantimium:block/solar_emitter_light"
-   }
-  },
-  {
-   "when": {
     "output": "north"
    },
    "apply": {

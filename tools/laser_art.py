@@ -167,14 +167,6 @@ def laser_focus() -> Image.Image:
     return img
 
 
-def solar_light() -> Image.Image:
-    """Sunlight on its way down to the focus: warm and faint."""
-    img = Image.new("RGBA", (16, 16), (255, 246, 214, 52))
-    for i in range(16):
-        img.putpixel((i, i), (255, 250, 232, 80))
-    return img
-
-
 def solar_glass() -> Image.Image:
     """The Solar Emitter's lens: pale, faintly blue glass, firmer at its rim, with a highlight across it."""
     img = Image.new("RGBA", (16, 16), (210, 232, 255, 70))
@@ -608,10 +600,8 @@ def solar_emitter() -> None:
     """
     laser_focus().save(os.path.join(TEX, "laser_focus.png"))
     solar_glass().save(os.path.join(TEX, "solar_emitter_glass.png"))
-    solar_light().save(os.path.join(TEX, "solar_emitter_light.png"))
     t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
-         "glass": "quantimium:block/solar_emitter_glass", "light": "quantimium:block/solar_emitter_light",
-         "particle": "quantimium:block/laser_mirror_steel"}
+         "glass": "quantimium:block/solar_emitter_glass", "particle": "quantimium:block/laser_mirror_steel"}
 
     def cube(start, end, texture, cull=None):
         faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
@@ -631,22 +621,13 @@ def solar_emitter() -> None:
     body.append(focus)
     with open(os.path.join(MODELS, "solar_emitter.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": body}, handle, indent=2)
-    # By day: sunlight stepping down from the glass into the focus, drawn full-bright.
-    funnel = []
-    for lo, hi, y0 in ((3, 13, 12), (4, 12, 11), (5, 11, 10)):
-        step = cube([lo, y0, lo], [hi, y0 + 1, hi], "#light")
-        step["shade"] = False
-        step["neoforge_data"] = {"block_light": 15, "sky_light": 15}
-        funnel.append(step)
-    with open(os.path.join(MODELS, "solar_emitter_light.json"), "w") as handle:
-        json.dump({"render_type": "minecraft:translucent", "textures": t, "elements": funnel}, handle, indent=2)
     with open(os.path.join(MODELS, "laser_emitter_nozzle.json"), "w") as handle:
         json.dump({"textures": t, "elements": emitter_nozzle()}, handle, indent=2)
     with open(os.path.join(MODELS, "solar_emitter_item.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
                    "elements": body + emitter_nozzle()}, handle, indent=2)
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "down": {"x": 90}}
-    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}}, {"when": {"day": "true"}, "apply": {"model": "quantimium:block/solar_emitter_light"}}]
+    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}}]
     parts += [{"when": {"output": side}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
     with open(os.path.join(STATES, "solar_emitter.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)

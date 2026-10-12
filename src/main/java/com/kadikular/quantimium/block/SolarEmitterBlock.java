@@ -44,15 +44,12 @@ import org.jetbrains.annotations.Nullable;
 public class SolarEmitterBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
     public static final MapCodec<SolarEmitterBlock> CODEC = simpleCodec(SolarEmitterBlock::new);
     public static final EnumProperty<Direction> OUTPUT = EnumProperty.create("output", Direction.class, direction -> direction != Direction.UP);
-    /** Whether the sky gives it any light: its funnel of light shows. */
-    public static final net.minecraft.world.level.block.state.properties.BooleanProperty DAY =
-            net.minecraft.world.level.block.state.properties.BooleanProperty.create("day");
 
     private static final VoxelShape SHAPE = Block.box(1, 0, 1, 15, 14, 15);
 
     public SolarEmitterBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(OUTPUT, Direction.NORTH).setValue(DAY, false));
+        registerDefaultState(stateDefinition.any().setValue(OUTPUT, Direction.NORTH));
     }
 
     @Override
@@ -62,7 +59,7 @@ public class SolarEmitterBlock extends BaseEntityBlock implements com.kadikular.
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(OUTPUT, DAY);
+        builder.add(OUTPUT);
     }
 
     /** Shining the way you face, so a row placed walking forward chains on. */
