@@ -55,9 +55,6 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
     public static final EnumProperty<Direction> OUTPUT = EnumProperty.create("output", Direction.class);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
-    /** How far in front of the hub the plate's face is, in pixels: where light meets it. */
-    private static final double PLATE_FACE = 2.5;
-
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
     static {
@@ -198,11 +195,10 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         }
     }
 
-    /** The middle of the plate's face: half way between where light comes in and where it goes out (facing the one side, flat). */
+    /** The middle of the plate's face, which is the block's middle: beams run straight to it and away. */
     @Override
     public Vec3 beamPoint(BlockState state, BlockPos pos) {
-        Vec3 normal = Vec3.atLowerCornerOf(state.getValue(INPUT).getUnitVec3i()).add(Vec3.atLowerCornerOf(state.getValue(OUTPUT).getUnitVec3i())).normalize();
-        return pos.getCenter().add(normal.scale(PLATE_FACE / 16.0));
+        return pos.getCenter();
     }
 
     @Override

@@ -414,10 +414,11 @@ DIRS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0, 0
 
 def laser_mirror() -> None:
     """
-    The Laser Mirror: a steel stand (a 12x12 base, a boss, a 2x2 column and a 2x2x2 hub at the middle)
-    on the block it was placed against, and a 10x10 silver plate tilted at 45 degrees in front of the hub,
-    facing half way between where light comes in and where it goes out. The stand is drawn for a floor
-    and turned to each mount; the plate is drawn between up and north and turned to each of its 12 ways.
+    The Laser Mirror: a 10x10 silver plate whose face's middle is the block's middle, so beams meet it
+    there and run straight; behind the plate a 2x2x2 hub, and a 2x2 post from the hub down to a boss and
+    a 12x12 base on the block it stands on. The hub sits behind the plate whichever way it faces, so the
+    post stands under the hub, not always in the middle. Each way the plate can face is drawn for a
+    mirror standing on the floor, and the whole of it turned to each mount.
     """
     steel(31).save(os.path.join(TEX, "laser_mirror_steel.png"))
     mirror_plate().save(os.path.join(TEX, "laser_mirror_plate.png"))
@@ -430,79 +431,112 @@ def laser_mirror() -> None:
                  for f in ("north", "south", "east", "west", "up", "down")}
         if cull:
             faces[cull]["cullface"] = cull
-        return {"from": start, "to": end, "faces": faces}
+        return {"from": [round(v, 4) for v in start], "to": [round(v, 4) for v in end], "faces": faces}
 
-    stand = [box([2, 0, 2], [14, 1, 14], "down"), box([5, 1, 5], [11, 2, 11]), box([7, 2, 7], [9, 7, 9]), box([7, 7, 7], [9, 9, 9])]
+    root = 2 ** 0.5
 
-    def plate(sign: int):
-        # Two pixels in front of the hub along its tilt, so it never cuts the hub or column.
-        off = 2 / 2 ** 0.5
-        cy, cz = 8 + off, 8 - sign * off
-        element = box([3, cy - 0.5, cz - 5], [13, cy + 0.5, cz + 5])
-        element["faces"]["up"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-        element["rotation"] = {"origin": [8, cy, cz], "axis": "x", "angle": -45 * sign, "rescale": False}
+    def plate(normal):
+        """The plate, its face's middle at the block's middle, facing {normal} (a floor mirror's, never down)."""
+        nx, ny, nz = normal
+        length = (nx * nx + ny * ny + nz * nz) ** 0.5
+        ux, uy, uz = nx / length, ny / length, nz / length
+        # The plate's middle, half its thickness behind the face.
+        cx, cy, cz = 8 - ux * 0.5, 8 - uy * 0.5, 8 - uz * 0.5
+        if ny and not nx and not nz:
+            element = box([3, cy - 0.5, 3], [13, cy + 0.5, 13])
+            element["faces"]["up"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+            return element
+        if not ny and (nx == 0 or nz == 0):
+            # Flat, facing a side: drawn facing north, the face on the plate's north side.
+            if nz:
+                element = box([3, 3, cz - 0.5], [13, 13, cz + 0.5])
+            else:
+                element = box([cx - 0.5, 3, 3], [cx + 0.5, 13, 13])
+            face = {(0, 0, -1): "north", (0, 0, 1): "south", (-1, 0, 0): "west", (1, 0, 0): "east"}[(nx, ny, nz)]
+            element["faces"][face] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+            return element
+        if ny:
+            # Tilted between up and a side: a lying plate turned 45 degrees about the side's axis.
+            if nz:
+                element = box([3, cy - 0.5, cz - 5], [13, cy + 0.5, cz + 5])
+                # A positive turn about x faces up and south.
+                element["rotation"] = {"origin": [cx, cy, cz], "axis": "x", "angle": 45 if nz > 0 else -45, "rescale": False}
+            else:
+                element = box([cx - 5, cy - 0.5, 3], [cx + 5, cy + 0.5, 13])
+                # A positive turn about z faces up and west.
+                element["rotation"] = {"origin": [cx, cy, cz], "axis": "z", "angle": 45 if nx < 0 else -45, "rescale": False}
+            element["faces"]["up"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+            return element
+        # Upright between two sides: a standing plate facing north, turned about y.
+        element = box([cx - 5, 3, cz - 0.5], [cx + 5, 13, cz + 0.5])
+        element["faces"]["north" if nz < 0 else "south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+        # A positive turn about y takes north to north-west (and south to south-east).
+        if nz < 0:
+            angle = 45 if nx < 0 else -45
+        else:
+            angle = 45 if nx > 0 else -45
+        element["rotation"] = {"origin": [cx, cy, cz], "axis": "y", "angle": angle, "rescale": False}
         return element
+
+    def stand(normal):
+        """The base and boss on the floor, the hub behind the plate, and a post from the boss up under the hub."""
+        nx, ny, nz = normal
+        length = (nx * nx + ny * ny + nz * nz) ** 0.5
+        # Just inside the plate's back, so no faces meet flush.
+        hx, hy, hz = 8 - nx / length * 1.9, 8 - ny / length * 1.9, 8 - nz / length * 1.9
+        parts = [box([2, 0, 2], [14, 1, 14], "down"), box([4, 1, 4], [12, 2, 12])]
+        parts.append(box([hx - 1, hy - 1, hz - 1], [hx + 1, hy + 1, hz + 1]))
+        if hy - 1 > 2:
+            parts.append(box([hx - 1, 2, hz - 1], [hx + 1, hy - 1, hz + 1]))
+        return parts
 
     def write(name, elements):
         with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
             json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements}, handle, indent=2)
 
-    def upright():
-        # Standing, facing north and west: a positive turn about y takes north to north-west.
-        off = 2 / 2 ** 0.5
-        cx, cz = 8 - off, 8 - off
-        element = box([3, 3, cz - 0.5], [13, 13, cz + 0.5])
-        element["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-        element["rotation"] = {"origin": [cx, 8, cz], "axis": "y", "angle": 45, "rescale": False}
-        element["from"][0] += cx - 8
-        element["to"][0] += cx - 8
-        return element
-
-    write("laser_mirror_plate_upright", [upright()])
-
-    def flat_plate():
-        # Flat, facing north, two pixels in front of the hub.
-        element = box([3, 3, 5.5], [13, 13, 6.5])
-        element["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-        return element
-
-    write("laser_mirror_plate_flat", [flat_plate()])
-    flat_turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
-    write("laser_mirror_stand", stand)
-    # Facing up and north: a positive turn about x would face it up and south.
-    write("laser_mirror_plate", [plate(1)])
-    write("laser_mirror_item", stand + [plate(-1)])
-
-    mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180},
-              "east": {"x": 90, "y": 270}}
-    parts = [{"when": {"mount": m}, "apply": dict({"model": "quantimium:block/laser_mirror_stand"}, **r)} for m, r in mounts.items()]
-    names = {v: k for k, v in DIRS.items()}
-    done = set()
+    # The ways a floor mirror's plate can face: flat, to up or a side; tilted, up and a side; upright, two sides.
+    floor_normals = {}
     for a in DIRS:
         for b in DIRS:
-            pair = frozenset((a, b))
-            if a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0 or pair in done:
+            if "down" in (a, b):
                 continue
-            done.add(pair)
-            # Between a side and up or down: the tilted plate. Between two sides: the upright one, turned about y.
-            horizontal = "up" not in pair and "down" not in pair
-            base = ("north", "west") if horizontal else ("up", "north")
-            model = "laser_mirror_plate_upright" if horizontal else "laser_mirror_plate"
-            rotation = None
-            for rx in ((0,) if horizontal else (0, 90, 180, 270)):
-                for ry in (0, 90, 180, 270):
-                    turned = {names[_rotated(DIRS[base[0]], rx, ry)], names[_rotated(DIRS[base[1]], rx, ry)]}
-                    if turned == {a, b} and rotation is None:
-                        rotation = {k: v for k, v in (("x", rx), ("y", ry)) if v}
-            assert rotation is not None, (a, b)
-            parts.append({"when": {"OR": [{"input": a, "output": b}, {"input": b, "output": a}]},
-                          "apply": dict({"model": f"quantimium:block/{model}"}, **rotation)})
-    for side, rotation in flat_turns.items():
-        parts.append({"when": {"input": side, "output": side}, "apply": dict({"model": "quantimium:block/laser_mirror_plate_flat"}, **rotation)})
+            va, vb = DIRS[a], DIRS[b]
+            if a != b and sum(p * q for p, q in zip(va, vb)) != 0:
+                continue
+            key = "_".join(sorted({a, b}))
+            floor_normals[key] = tuple(p + q for p, q in zip(va, vb)) if a != b else va
+    for key, normal in floor_normals.items():
+        write(f"laser_mirror_{key}", stand(normal) + [plate(normal)])
+    write("laser_mirror_item", stand(DIRS["south"]) + [plate(DIRS["south"])])
+
+    mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
+    names = {v: k for k, v in DIRS.items()}
+
+    def back_to_floor(direction, rx, ry):
+        # The direction on a floor mirror that turning by (rx, ry) takes to {direction}.
+        for name, vector in DIRS.items():
+            if names[_rotated(vector, rx, ry)] == direction:
+                return name
+        raise AssertionError(direction)
+
+    parts = []
+    for mount, (rx, ry) in mounts.items():
+        for a in DIRS:
+            for b in DIRS:
+                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0):
+                    continue
+                key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
+                assert key in floor_normals, (mount, a, b, key)
+                parts.append({"when": {"mount": mount, "input": a, "output": b},
+                              "apply": dict({"model": f"quantimium:block/laser_mirror_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
     with open(os.path.join(STATES, "laser_mirror.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
     with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_mirror_item"}}, handle, indent=2)
+    for stale in ("laser_mirror_stand", "laser_mirror_plate", "laser_mirror_plate_upright", "laser_mirror_plate_flat"):
+        path = os.path.join(MODELS, f"{stale}.json")
+        if os.path.exists(path):
+            os.remove(path)
 
 
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}

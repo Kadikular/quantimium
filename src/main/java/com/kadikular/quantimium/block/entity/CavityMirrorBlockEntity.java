@@ -301,6 +301,17 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return beam.end() == LaserBeam.End.OPEN && beam.aim() == null && beam.face() == facing() && beam.length() == gap ? 2.0f : 1.0f;
     }
 
+    /** The light held runs on into a flat Laser Mirror at the far end, to its plate in the block's middle. */
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        net.minecraft.world.phys.Vec3[] ends = beam.ends();
+        if (level == null || beam.end() != LaserBeam.End.OPEN || beam.aim() != null || beam.face() != facing() || beam.length() != gap) return ends;
+        BlockPos far = worldPosition.relative(facing(), gap + 1);
+        BlockState there = level.getBlockState(far);
+        if (there.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) ends[1] = anchor.beamPoint(there, far);
+        return ends;
+    }
+
     /** Its output, and the light held, drawn across the whole gap: by this one, or the lower of two Cavity Mirrors. */
     @Override
     public List<LaserBeam> syncedBeams() {

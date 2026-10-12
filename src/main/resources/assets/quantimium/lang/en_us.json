@@ -848,6 +848,8 @@
   "direction.quantimium.east": "east",
   "direction.quantimium.south": "south",
   "direction.quantimium.west": "west",
+  "direction.quantimium.up": "up",
+  "direction.quantimium.down": "down",
   "message.quantimium.fold.no_core": "There's no Fold Core here",
   "message.quantimium.fold.front_edge": "Can't fold: the bottom front edge needs rails out to a pylon, the same distance each side",
   "message.quantimium.fold.corner_edges": "Can't fold: from the front corner pylons, rails must run up and back to a pylon",
