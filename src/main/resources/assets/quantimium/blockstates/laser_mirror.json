@@ -272,6 +272,65 @@
     "model": "quantimium:block/laser_mirror_plate_upright",
     "y": 180
    }
+  },
+  {
+   "when": {
+    "input": "north",
+    "output": "north"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_flat"
+   }
+  },
+  {
+   "when": {
+    "input": "east",
+    "output": "east"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_flat",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "input": "south",
+    "output": "south"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_flat",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "input": "west",
+    "output": "west"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_flat",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "input": "up",
+    "output": "up"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_flat",
+    "x": 270
+   }
+  },
+  {
+   "when": {
+    "input": "down",
+    "output": "down"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_flat",
+    "x": 90
+   }
   }
  ]
 }

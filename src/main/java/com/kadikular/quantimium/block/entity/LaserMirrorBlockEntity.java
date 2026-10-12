@@ -25,8 +25,8 @@ import java.util.Set;
 
 /**
  * A Laser Mirror's light: it turns light between its two sides, both ways, as a mirror would: what comes
- * in by one leaves by the other, refocused, so its range starts again. Light from anywhere else stops on
- * it. Off while a redstone signal reaches it.
+ * in by one leaves by the other, refocused, so its range starts again; flat, it goes back the way it came.
+ * Light from anywhere else stops on it. Off while a redstone signal reaches it.
  */
 public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView {
 
@@ -51,7 +51,7 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
 
     @Override
     public Set<Direction> outputs() {
-        return Set.of(input(), output());
+        return java.util.EnumSet.of(input(), output());
     }
 
     /** Light coming in by either side turns out of the other; any other light stops here. */

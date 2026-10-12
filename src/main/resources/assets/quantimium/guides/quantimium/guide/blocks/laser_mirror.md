@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_mirror" scale="2" />
 
-A silver plate on a stand: turns light through a right angle, both ways.
+A silver plate on a stand: turns light through a right angle, both ways, or sends it straight back.
 
 ## Recipes
 

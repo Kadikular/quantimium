@@ -44,7 +44,9 @@ import java.util.Map;
  * stands on the block it was placed against (its mount), for good. Its plate faces half way between two
  * sides at right angles, neither its mount: one set with a sneaking click, by hand or wrench, the other
  * with a plain click. Light in by either leaves by the other; light from anywhere else hits the back or
- * edge of the plate and stops. A redstone signal turns it off. (INPUT and OUTPUT name the two sides.)
+ * edge of the plate and stops. Both sides the same (a plain click on the side already set) and it's flat,
+ * facing that side: light bounces straight back, and facing a Cavity Mirror it closes the cavity. A
+ * redstone signal turns it off. (INPUT and OUTPUT name the two sides.)
  */
 public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com.kadikular.quantimium.item.BlockTooltip {
     public static final MapCodec<LaserMirrorBlock> CODEC = simpleCodec(LaserMirrorBlock::new);
@@ -84,16 +86,21 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         builder.add(MOUNT, INPUT, OUTPUT, POWERED);
     }
 
-    /** Whether light coming in by {@code input} may leave by {@code output} on a mirror standing on {@code mount}. */
+    /** Whether light coming in by {@code input} may leave by {@code output} on a mirror standing on {@code mount}: at right angles, or straight back (flat). */
     public static boolean turns(Direction mount, Direction input, Direction output) {
-        return input != mount && output != mount && output.getAxis() != input.getAxis();
+        return input != mount && output != mount && (output == input || output.getAxis() != input.getAxis());
+    }
+
+    /** Whether it's flat, facing one side: light bounces straight back. */
+    public static boolean flat(BlockState state) {
+        return state.getValue(INPUT) == state.getValue(OUTPUT);
     }
 
     /** An output for light in by {@code input}: away from the mount if that's at right angles, else the first that is. */
     private static Direction outputFor(Direction mount, Direction input) {
-        if (turns(mount, input, mount.getOpposite())) return mount.getOpposite();
-        for (Direction output : Direction.values()) if (turns(mount, input, output)) return output;
-        return mount.getOpposite();
+        if (input != mount.getOpposite()) return mount.getOpposite();
+        for (Direction output : Direction.values()) if (output.getAxis() != input.getAxis() && output != mount) return output;
+        return input;
     }
 
     /** Stands on what it was placed against, takes light from the side facing you, and sends it away from its mount where it can. */
@@ -151,11 +158,12 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         BlockState next;
         if (input) {
             if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
-            Direction output = state.getValue(OUTPUT);
+            // A flat mirror stays flat, facing the new side.
+            Direction output = flat(state) ? face : state.getValue(OUTPUT);
             next = state.setValue(INPUT, face).setValue(OUTPUT, turns(mount, face, output) ? output : outputFor(mount, face));
         } else {
             if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
-            if (face.getAxis() == state.getValue(INPUT).getAxis()) return refuse(player, "message.quantimium.laser_mirror.straight");
+            if (face == state.getValue(INPUT).getOpposite()) return refuse(player, "message.quantimium.laser_mirror.straight");
             next = state.setValue(OUTPUT, face);
         }
         if (next != state) {
@@ -163,8 +171,9 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, input ? 1.0f : 1.3f);
             LaserNetworks.changed(level);
         }
-        player.sendOverlayMessage(Component.translatable("message.quantimium.laser_mirror.set",
-                direction(next.getValue(INPUT)), direction(next.getValue(OUTPUT))).withStyle(ChatFormatting.AQUA));
+        player.sendOverlayMessage((flat(next) ? Component.translatable("message.quantimium.laser_mirror.flat", direction(next.getValue(INPUT)))
+                : Component.translatable("message.quantimium.laser_mirror.set", direction(next.getValue(INPUT)), direction(next.getValue(OUTPUT))))
+                .withStyle(ChatFormatting.AQUA));
         return InteractionResult.SUCCESS;
     }
 
@@ -189,7 +198,7 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         }
     }
 
-    /** The middle of the plate's face: half way between where light comes in and where it goes out. */
+    /** The middle of the plate's face: half way between where light comes in and where it goes out (facing the one side, flat). */
     @Override
     public Vec3 beamPoint(BlockState state, BlockPos pos) {
         Vec3 normal = Vec3.atLowerCornerOf(state.getValue(INPUT).getUnitVec3i()).add(Vec3.atLowerCornerOf(state.getValue(OUTPUT).getUnitVec3i())).normalize();

@@ -1,0 +1,78 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "steel": "quantimium:block/laser_mirror_steel",
+    "plate": "quantimium:block/laser_mirror_plate",
+    "particle": "quantimium:block/laser_mirror_steel"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        3,
+        5.5
+      ],
+      "to": [
+        13,
+        13,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plate",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#steel",
+          "uv": [
+            5.5,
+            3,
+            6.5,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#steel",
+          "uv": [
+            5.5,
+            3,
+            6.5,
+            13
+          ]
+        },
+        "up": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            5.5,
+            13,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            5.5,
+            13,
+            6.5
+          ]
+        }
+      }
+    }
+  ]
+}

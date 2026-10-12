@@ -117,6 +117,7 @@ public final class LaserTests {
         helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.NORTH), "west to north, on the floor");
         helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.UP, Direction.EAST), "from above, to the east");
         helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.EAST), "not straight on");
+        helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.WEST), "flat, straight back");
         helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.DOWN), "not into its mount");
         helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.DOWN, Direction.NORTH), "not from its mount");
         helper.succeed();
@@ -556,12 +557,12 @@ public final class LaserTests {
     // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
     public static void aCavityMirrorAndALaserRelayMakeACavity(GameTestHelper helper) {
-        // Only one end needs to be a Cavity Mirror: it holds the light, the Laser Mirror holds none.
+        // Only one end needs to be a Cavity Mirror: it holds the light, the Laser Relay holds none.
         var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
         helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.WEST));
         helper.runAfterDelay(25, () -> {
-            helper.assertTrue(a.paired(), "paired with the Laser Mirror");
+            helper.assertTrue(a.paired(), "paired with the Laser Relay");
             helper.assertValueEqual(a.capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks of gap");
             a.fill(20_000);
         });
@@ -570,6 +571,38 @@ public final class LaserTests {
             helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
             TestSupport.finishLasers(helper);
             helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity, laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aFlatLaserMirrorClosesACavity(GameTestHelper helper) {
+        // A Laser Mirror set flat, facing back across the gap: the far end of the cavity. Turning, it isn't.
+        var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(9, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.WEST));
+        var b = cavityMirror(helper, new BlockPos(5, Y, 12), Direction.EAST);
+        helper.setBlock(new BlockPos(9, Y, 12), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(a.paired(), "paired with the flat mirror");
+            helper.assertValueEqual(a.capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks of gap");
+            helper.assertFalse(b.paired(), "a turning mirror closes nothing");
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aFlatMirrorSendsLightBack(GameTestHelper helper) {
+        // Light from the north, turned east by one mirror, into a flat one facing west: it goes straight back west.
+        emitter(helper, new BlockPos(4, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        helper.setBlock(new BlockPos(4, Y, 8), mirror(Direction.DOWN, Direction.NORTH, Direction.EAST));
+        helper.setBlock(new BlockPos(10, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.WEST));
+        helper.succeedWhen(() -> {
+            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(10, Y, 8)));
+            helper.assertTrue(beams.stream().anyMatch(beam -> beam.face() == Direction.WEST && beam.live()), "light leaves the flat mirror west: " + beams);
+            TestSupport.finishLasers(helper);
         });
     }
 

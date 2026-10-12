@@ -52,7 +52,10 @@ A <ItemLink id="quantimium:laser_mirror" /> is a silver plate on a steel stand t
 through a right angle, both ways. It stands on the block it was placed against, for good. Its plate faces
 half way between two sides at right angles, neither the one it stands on: sneak-click a side (by hand or
 with a wrench) to take light there, and click another to send it there. Light in by either side leaves by
-the other; light from anywhere else hits the back of the plate and stops. A redstone signal turns it off.
+the other; light from anywhere else hits the back of the plate and stops. Click the side it already takes
+light from and it's **flat**, facing that side: light goes straight back the way it came, and facing a
+Cavity Mirror across a gap it's the far end of the cavity. It never sends light straight on. A redstone
+signal turns it off.
 
 A <ItemLink id="quantimium:laser_relay" /> sends every beam that reaches it, from any side, out of
 its face. Placed, it faces you; sneak-click or wrench a face to point it there.
@@ -99,11 +102,11 @@ where light would go.
 
 ## Optical cavities
 
-A <ItemLink id="quantimium:cavity_mirror" /> facing a <ItemLink id="quantimium:laser_relay" />, or another Cavity
+A <ItemLink id="quantimium:cavity_mirror" /> facing a flat <ItemLink id="quantimium:laser_mirror" />, a <ItemLink id="quantimium:laser_relay" />, or another Cavity
 Mirror, across a clear gap of up to 16 blocks holds light between them,
 as a real laser's cavity does: a battery for a laser network. Only one end needs to be a Cavity Mirror.
 Each Cavity Mirror holds 10,000,000 FE for each block of gap, and takes or
-gives up to 512,000 FE/t; a Laser Relay at the other end holds nothing.
+gives up to 512,000 FE/t; a Laser Mirror or Relay at the other end holds nothing.
 
 With nothing facing it, a Cavity Mirror is just a relay: light that reaches it leaves by its front,
 towards where its partner would stand. Once paired, what it holds leaves by its back instead.

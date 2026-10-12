@@ -459,6 +459,15 @@ def laser_mirror() -> None:
         return element
 
     write("laser_mirror_plate_upright", [upright()])
+
+    def flat_plate():
+        # Flat, facing north, two pixels in front of the hub.
+        element = box([3, 3, 5.5], [13, 13, 6.5])
+        element["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+        return element
+
+    write("laser_mirror_plate_flat", [flat_plate()])
+    flat_turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
     write("laser_mirror_stand", stand)
     # Facing up and north: a positive turn about x would face it up and south.
     write("laser_mirror_plate", [plate(1)])
@@ -488,6 +497,8 @@ def laser_mirror() -> None:
             assert rotation is not None, (a, b)
             parts.append({"when": {"OR": [{"input": a, "output": b}, {"input": b, "output": a}]},
                           "apply": dict({"model": f"quantimium:block/{model}"}, **rotation)})
+    for side, rotation in flat_turns.items():
+        parts.append({"when": {"input": side, "output": side}, "apply": dict({"model": "quantimium:block/laser_mirror_plate_flat"}, **rotation)})
     with open(os.path.join(STATES, "laser_mirror.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
     with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
