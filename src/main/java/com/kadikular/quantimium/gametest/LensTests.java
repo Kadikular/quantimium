@@ -1793,6 +1793,21 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.crushing
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void crushingBeforeHarvestWorksTheBlockHarvestWaitsOn(GameTestHelper helper) {
+        // Glass just before the bedrock the beam ends on: Harvest picks the glass, so Crushing must work on the
+        // glass too, not the bedrock, or Harvest waits for it forever.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.CRUSHING_LENS.get(), ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.GLASS);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(7, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.lens.insert, laser.lens.speed
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
     public static void anInsertBeamMovesEightAtATime(GameTestHelper helper) {

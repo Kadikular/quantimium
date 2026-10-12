@@ -354,7 +354,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         for (Stream theirs : other.streams) {
             Stream mine = streams.stream().filter(stream -> stream.action() == theirs.action()).findFirst().orElse(null);
             if (mine == null || (mine.modifiers() & theirs.modifiers()) != theirs.modifiers() || mine.amps() < theirs.amps()
-                    || mine.speed() < theirs.speed()) return false;
+                    || mine.speed() < theirs.speed() || !mine.steps().equals(theirs.steps()) || (theirs.inWorld() && !mine.inWorld())) return false;
         }
         return true;
     }

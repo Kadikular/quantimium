@@ -406,7 +406,9 @@ public final class LensAction {
                 level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
         if (handler == null) return;
         // What crushing and smelting on the way cost, or -1 for nothing moved.
-        long processing = in ? insertInto(level, networks, handler) : extractFrom(level, networks, handler);
+        // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
+        BlockPos spill = area == null ? beam.hit().relative(beam.face().getOpposite()) : at.above();
+        long processing = in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
         if (processing < 0) return;
         networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
@@ -419,7 +421,7 @@ public final class LensAction {
      * Into the inventory: what a Sender sends, crushed and smelted on the way with those lenses. What that
      * cost, or -1 for none moved. What makes several things of one goes one at a time.
      */
-    private long insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
+    private long insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler, BlockPos spill) {
         ItemStack offered = networks.take(senders, stack -> lets(stack)
                 && arriving(level, stack, 1).stream().allMatch(each -> fits(handler, each) == each.getCount()), moveMost(), true);
         if (offered.isEmpty()) return -1;
@@ -435,13 +437,13 @@ public final class LensAction {
         for (ItemStack each : arriving(level, taken, taken.getCount())) {
             ItemStack left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, each, false);
             if (!left.isEmpty()) left = networks.returnTo(senders, left);
-            if (!left.isEmpty()) Block.popResource(level, beam.hit().relative(beam.face().getOpposite()), left);
+            if (!left.isEmpty()) Block.popResource(level, spill, left);
         }
         return made.fe() * taken.getCount();
     }
 
     /** Out of the inventory, up to a Collector: crushed and smelted on the way with those lenses. What that cost, or -1 for none moved. */
-    private long extractFrom(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
+    private long extractFrom(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler, BlockPos spill) {
         for (int slot = 0; slot < handler.getSlots(); slot++) {
             ItemStack there = handler.extractItem(slot, moveMost(), true);
             if (there.isEmpty() || !lets(there)) continue;
@@ -451,7 +453,7 @@ public final class LensAction {
                 ItemStack one = made.ofOne().getFirst();
                 ItemStack comes = times(one, there.getCount());
                 if (!networks.roomFor(collectors, comes)) continue;
-                room = (comes.getCount() - networks.simulateCollectPublic(collectors, comes).getCount()) / one.getCount();
+                room = (comes.getCount() - networks.simulateCollect(collectors, comes).getCount()) / one.getCount();
             } else {
                 room = made.ofOne().stream().allMatch(each -> networks.roomForAll(collectors, each)) ? 1 : 0;
             }
@@ -460,7 +462,7 @@ public final class LensAction {
             for (ItemStack each : arriving(level, taken, taken.getCount())) {
                 ItemStack left = networks.collect(collectors, each);
                 if (!left.isEmpty()) left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, left, false);
-                if (!left.isEmpty()) Block.popResource(level, beam.hit().relative(beam.face().getOpposite()), left);
+                if (!left.isEmpty()) Block.popResource(level, spill, left);
             }
             return made.fe() * taken.getCount();
         }
@@ -991,7 +993,9 @@ public final class LensAction {
         }
         if (pos == null) {
             if (beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return false;
-            pos = beam.hit();
+            // As Harvest picks: something light passes just before the end (a glass block, a crop), else the end.
+            BlockPos before = beam.hit().relative(beam.face().getOpposite());
+            pos = beam.length() > 0 && !level.getBlockState(before).isAir() && processable(level, before) ? before : beam.hit();
             if (!processable(level, pos)) return false;
         }
         BlockState state = level.getBlockState(pos);
