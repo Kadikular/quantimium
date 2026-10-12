@@ -73,8 +73,10 @@ public final class LaserNetworks {
     /** Where each action's power comes from: its network and the routes from the sources paying for it. */
     private final Map<LensAction.Key, ActionSink> actionSinks = new HashMap<>();
     private record ActionSink(Network network, Sink sink) {}
-    /** The light leaving each node, as last worked out. */
+    /** The light at each node's core, as last worked out: what leaves it, but for lenses on one face only. */
     private final Map<BlockPos, Light> lights = new HashMap<>();
+    /** The light leaving each node by each face with lenses of its own, worked out as asked and kept till the next rebuild. */
+    private final Map<BlockPos, Map<Direction, Light>> faceLights = new HashMap<>();
     /** The light reaching each cavity, which it remembers when it's filled. */
     private final Map<BlockPos, Light> cavityIn = new HashMap<>();
     /** What redstone can switch, and whether each was on when the network was last built. */
@@ -265,6 +267,7 @@ public final class LaserNetworks {
         lost.clear();
         ranges.clear();
         lights.clear();
+        faceLights.clear();
         cavityIn.clear();
         actionSinks.clear();
         // Light from each source, then on through each relay it reaches, at the reach of the light that
@@ -284,7 +287,7 @@ public final class LaserNetworks {
                 continue;
             }
             Light light = node.emits();
-            lights.put(node.nodePos(), light);
+            setLight(node.nodePos(), light);
             traceAt(node, light.reach(), before);
             hits(node.nodePos(), work);
         }
@@ -302,7 +305,7 @@ public final class LaserNetworks {
             // One that gives out light of its own too (a Solar Emitter): its own joins what it passes on.
             if (node.generates()) out = Light.join(out, node.emits());
             if (out.equals(lights.get(at))) continue;
-            lights.put(at, out);
+            setLight(at, out);
             traceAt(node, out.reach(), before);
             hits(at, work);
         }
@@ -348,6 +351,7 @@ public final class LaserNetworks {
             }
         }
         networks = built;
+        limited = nodes.values().stream().anyMatch(node -> node.relays() && node.passLimit() != Long.MAX_VALUE);
     }
 
     /** Traces {@code node}'s beams at {@code range}; a beam that runs as it did keeps its brightness, so a change elsewhere doesn't make it flicker. */
@@ -389,34 +393,40 @@ public final class LaserNetworks {
         actions.clear();
         for (LaserNode node : nodes.values()) {
             BlockPos pos = node.nodePos();
-            Light light = lights.get(pos);
+            Light core = lights.get(pos);
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
-            if (light != null && light.packed() != Lens.NONE) {
+            if (core != null) {
+                // The Collectors and Senders up each stream's light: the same for every beam it's on.
+                Map<Set<BlockPos>, List<BlockPos>> collectors = new HashMap<>();
+                Map<Set<BlockPos>, List<BlockPos>> senders = new HashMap<>();
                 List<LaserBeam> lensed = new ArrayList<>(list.size());
-                for (LaserBeam beam : list) lensed.add(beam.withLenses(light.packed()));
-                list = lensed;
-                beams.put(pos, list);
-                List<Light.Stream> streams = new ArrayList<>(light.acting());
-                // What Smelting and Crushing do to the world here first: a Harvest waits for them.
-                List<Lens> worldSteps = streams.stream().filter(stream -> stream.inWorld()).findFirst().map(Light.Stream::steps).orElse(List.of());
-                // Phantom light pays an upkeep, as an action of its own, by everyone whose light it is.
-                if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
-                for (Light.Stream stream : streams) {
-                    List<BlockPos> collectors = upFor(pos, stream.payers(), LaserNode::collects);
-                    List<BlockPos> senders = upFor(pos, stream.payers(), LaserNode::sends);
-                    for (int i = 0; i < list.size(); i++) {
+                // Each beam takes the look, and the actions, of its own light: a face with lenses of its own differs.
+                for (int i = 0; i < list.size(); i++) {
+                    LaserBeam beam = list.get(i);
+                    Light light = lightOf(pos, beam);
+                    lensed.add(light == null || light.packed() == Lens.NONE ? beam : beam.withLenses(light.packed()));
+                    if (light == null || light.packed() == Lens.NONE) continue;
+                    for (Light.Stream stream : streamsOf(light)) {
                         LensAction.Key key = new LensAction.Key(pos, i, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        int solids = stream.action() == Lens.PHANTOM ? list.get(i).solidsThrough(level) : 0;
-                        action.update(list.get(i), stream, collectors, senders, null, light.reach(), light.marks(), solids);
-                        action.worldSteps(worldSteps);
+                        int solids = stream.action() == Lens.PHANTOM ? beam.solidsThrough(level) : 0;
+                        action.update(beam, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
+                                senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends)),
+                                null, light.reach(), light.marks(), solids);
+                        action.worldSteps(worldSteps(light));
                         actions.put(key, action);
                     }
-                    // An area prism's light works on its area: one action each, as beam -1.
-                    if (node.area() != null && stream.action() != Lens.PHANTOM) {
+                }
+                list = lensed;
+                beams.put(pos, list);
+                // An area prism's light works on its area: one action each, as beam -1.
+                if (node.area() != null && core.packed() != Lens.NONE) {
+                    for (Light.Stream stream : core.acting()) {
                         LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(null, stream, collectors, senders, node.area(), light.reach(), light.marks(), 0);
+                        action.update(null, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
+                                senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends)),
+                                node.area(), core.reach(), core.marks(), 0);
                         action.within(node::inArea);
                         actions.put(key, action);
                     }
@@ -424,6 +434,18 @@ public final class LaserNetworks {
             }
             node.showBeams(list);
         }
+    }
+
+    /** What acts on {@code light}'s beam: its streams, and Phantom light's upkeep, paid by everyone whose light it is. */
+    private static List<Light.Stream> streamsOf(Light light) {
+        List<Light.Stream> streams = new ArrayList<>(light.acting());
+        if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
+        return streams;
+    }
+
+    /** What Smelting and Crushing do to the world on {@code light}'s beam first: a Harvest waits for them. */
+    private static List<Lens> worldSteps(Light light) {
+        return light.acting().stream().filter(Light.Stream::inWorld).findFirst().map(Light.Stream::steps).orElse(List.of());
     }
 
     /**
@@ -683,10 +705,10 @@ public final class LaserNetworks {
         BlockPos pos = node.nodePos();
         Light joined = null;
         for (BlockPos from : new HashSet<>(into.getOrDefault(pos, List.of()))) {
-            Light light = lights.get(from);
-            if (light == null) continue;
             for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
                 if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit()) || !node.accepts(beam.face())) continue;
+                Light light = lightOf(from, beam);
+                if (light == null) continue;
                 joined = Light.join(joined, node.refocuses() ? light : light.passedOn(beam.length()));
             }
         }
@@ -695,6 +717,36 @@ public final class LaserNetworks {
 
     private int rangeOf(LaserNode node) {
         return ranges.getOrDefault(node.nodePos(), node.range());
+    }
+
+    /** A node's core light is now {@code light}: what its faces' own lenses made of the old one is forgotten. */
+    private void setLight(BlockPos pos, Light light) {
+        lights.put(pos, light);
+        faceLights.remove(pos);
+    }
+
+    /** The light leaving {@code node} by {@code face}: its core light, through that face's own lenses if it has any. */
+    @Nullable
+    private Light faceLight(LaserNode node, Direction face) {
+        Light core = lights.get(node.nodePos());
+        if (core == null) return null;
+        List<LensUse> own = node.lensesFor(face);
+        if (own.isEmpty()) return core;
+        return faceLights.computeIfAbsent(node.nodePos(), key -> new java.util.EnumMap<>(Direction.class)).computeIfAbsent(face, key -> core.through(own));
+    }
+
+    /** The light {@code beam}, leaving the node at {@code pos}, carries: a linked beam, the node's core light. */
+    @Nullable
+    private Light lightOf(BlockPos pos, LaserBeam beam) {
+        LaserNode node = nodes.get(pos);
+        if (node == null || beam.aim() != null) return lights.get(pos);
+        return faceLight(node, beam.face());
+    }
+
+    /** How far {@code beam} of {@code node} reaches: its own light's reach, or the node's range with none. */
+    private int rangeOf(LaserNode node, LaserBeam beam) {
+        Light light = lightOf(node.nodePos(), beam);
+        return light == null ? rangeOf(node) : light.reach();
     }
 
     private List<LaserBeam> trace(LaserNode node, int range, int marks) {
@@ -706,7 +758,11 @@ public final class LaserNetworks {
                 if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit())) arriving.add(beam.face());
             }
         }
-        for (Direction face : node.outputsFor(arriving)) traced.add(LaserBeam.trace(level, node.nodePos(), face, range, marks));
+        for (Direction face : node.outputsFor(arriving)) {
+            // A face with lenses of its own reaches, and passes, as its own light does.
+            Light own = node.lensesFor(face).isEmpty() ? null : faceLight(node, face);
+            traced.add(LaserBeam.trace(level, node.nodePos(), face, own == null ? range : own.reach(), own == null ? marks : own.marks()));
+        }
         for (BlockPos target : List.copyOf(node.targets())) {
             // A link to a block that's gone is let go.
             if (!node.keepsLinks() && level.isLoaded(target) && level.getBlockState(target).isAir()) {
@@ -787,7 +843,7 @@ public final class LaserNetworks {
                 path.add(new Hop(visit.node(), i, from, carried.get(visit.node()),
                         from == null ? null : lost.computeIfAbsent(visit.node(), key -> new long[1])));
                 // Each action this beam carries is paid for by its stream's sources, as a block's power is.
-                Light light = lights.get(visit.node());
+                Light light = lightOf(visit.node(), beam);
                 if (light != null) {
                     List<Light.Stream> streams = new ArrayList<>(light.acting());
                     if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
@@ -852,7 +908,7 @@ public final class LaserNetworks {
                     break;
                 }
                 for (LaserBeam beam : was) {
-                    if (!beam.stillHolds(level, rangeOf(node))) {
+                    if (!beam.stillHolds(level, rangeOf(node, beam))) {
                         dirty = true;
                         break;
                     }
@@ -942,7 +998,7 @@ public final class LaserNetworks {
             any = true;
         }
         if (!any) return;
-        limitPassing(sinks, asks, asked);
+        if (limited) limitPassing(sinks, asks, asked);
         double[] scale = new double[left.length];
         for (int i = 0; i < left.length; i++) scale[i] = asked[i] > 0 ? Math.min(1.0, left[i] / asked[i]) : 0;
         for (int i = 0; i < sinks.size(); i++) {
@@ -967,8 +1023,10 @@ public final class LaserNetworks {
                 if (paid <= 0) continue;
                 left[routes.get(r).index()] -= paid;
                 account(routes.get(r), paid);
-                for (Hop hop : routes.get(r).path()) {
-                    if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) passingLeft(hop.relay())[0] -= paid;
+                if (limited) {
+                    for (Hop hop : routes.get(r).path()) {
+                        if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) passingLeft(hop.relay())[0] -= paid;
+                    }
                 }
             }
         }
@@ -976,6 +1034,8 @@ public final class LaserNetworks {
 
     /** What each relay with a limit (a Solar Emitter) still lets through this tick. */
     private final Map<LaserNode, long[]> passing = new HashMap<>();
+    /** Whether any relay has a limit at all: if none, power is handed out without looking for them. */
+    private boolean limited;
 
     private long[] passingLeft(LaserNode relay) {
         return passing.computeIfAbsent(relay, node -> new long[] {node.passLimit()});

@@ -101,6 +101,14 @@ public interface LaserNode {
 
     /** Whether light through it goes into the mirror, or back out of it: a Rift Lens. */
     /**
+     * Lenses on one output face only (a Relay's emitter with a lens in it): what light leaving by {@code face}
+     * goes through after the block's own. None for most.
+     */
+    default List<LensUse> lensesFor(Direction face) {
+        return List.of();
+    }
+
+    /**
      * Whether light travelling {@code travel} as it arrives gets in: a Mirror takes light only through its two
      * sides, a Rift Lens only along its axis. Light that doesn't get in stops here: it's neither joined to what
      * leaves, nor paid through, nor followed back up.
