@@ -277,7 +277,7 @@ public final class LaserNetworks {
         }
         switched = watching;
         for (LaserNode node : nodes.values()) {
-            if (node.relays()) continue;
+            if (!node.generates()) continue;
             // A switched-off source gives out no light: none of its reach, nor what it does.
             if (!node.enabled()) {
                 traceAt(node, node.range(), before);
@@ -299,6 +299,8 @@ public final class LaserNetworks {
             if (in == null) continue;
             Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
             if (node.rifts()) out = out.throughRift();
+            // One that gives out light of its own too (a Solar Emitter): its own joins what it passes on.
+            if (node.generates()) out = Light.join(out, node.emits());
             if (out.equals(lights.get(at))) continue;
             lights.put(at, out);
             traceAt(node, out.reach(), before);
@@ -328,12 +330,12 @@ public final class LaserNetworks {
         List<Network> built = new ArrayList<>();
         Set<BlockPos> claimed = new HashSet<>();
         for (LaserNode start : nodes.values()) {
-            if (start.relays() || claimed.contains(start.nodePos())) continue;
+            if (!start.generates() || claimed.contains(start.nodePos())) continue;
             List<LaserNode> sources = new ArrayList<>();
             Map<Object, Sink> sinks = new LinkedHashMap<>();
             // The sources joined to this one through shared relays share the network.
             for (LaserNode source : component(start)) {
-                if (source.relays()) continue;
+                if (!source.generates()) continue;
                 claimed.add(source.nodePos());
                 sources.add(source);
                 reach(source, sources.size() - 1, sinks);
@@ -865,6 +867,7 @@ public final class LaserNetworks {
         for (LensAction action : actions.values()) action.act(level, this);
         if (time % SETTLE_TICKS == 10) ship();
         if (time % 2 == 0) showAreaWork();
+        passing.clear();
         for (Network network : networks) move(network);
         if (time % SETTLE_TICKS == 0) settle();
     }
@@ -939,6 +942,7 @@ public final class LaserNetworks {
             any = true;
         }
         if (!any) return;
+        limitPassing(sinks, asks, asked);
         double[] scale = new double[left.length];
         for (int i = 0; i < left.length; i++) scale[i] = asked[i] > 0 ? Math.min(1.0, left[i] / asked[i]) : 0;
         for (int i = 0; i < sinks.size(); i++) {
@@ -963,6 +967,48 @@ public final class LaserNetworks {
                 if (paid <= 0) continue;
                 left[routes.get(r).index()] -= paid;
                 account(routes.get(r), paid);
+                for (Hop hop : routes.get(r).path()) {
+                    if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) passingLeft(hop.relay())[0] -= paid;
+                }
+            }
+        }
+    }
+
+    /** What each relay with a limit (a Solar Emitter) still lets through this tick. */
+    private final Map<LaserNode, long[]> passing = new HashMap<>();
+
+    private long[] passingLeft(LaserNode relay) {
+        return passing.computeIfAbsent(relay, node -> new long[] {node.passLimit()});
+    }
+
+    /**
+     * Routes through a relay with a limit share what it still lets through: where more is asked through it
+     * than that, each of them is asked for less, in proportion. {@code asked} is worked out again to match.
+     */
+    private void limitPassing(List<Sink> sinks, double[][] asks, double[] asked) {
+        Map<LaserNode, Double> through = new HashMap<>();
+        for (int i = 0; i < sinks.size(); i++) {
+            if (asks[i] == null) continue;
+            List<Route> routes = sinks.get(i).routes();
+            for (int r = 0; r < routes.size(); r++) {
+                if (asks[i][r] <= 0) continue;
+                for (Hop hop : routes.get(r).path()) {
+                    if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) through.merge(hop.relay(), asks[i][r], Double::sum);
+                }
+            }
+        }
+        if (through.isEmpty()) return;
+        java.util.Arrays.fill(asked, 0);
+        for (int i = 0; i < sinks.size(); i++) {
+            if (asks[i] == null) continue;
+            List<Route> routes = sinks.get(i).routes();
+            for (int r = 0; r < routes.size(); r++) {
+                if (asks[i][r] <= 0) continue;
+                for (Hop hop : routes.get(r).path()) {
+                    Double total = hop.relay() == null ? null : through.get(hop.relay());
+                    if (total != null && total > 0) asks[i][r] *= Math.min(1.0, Math.max(0, passingLeft(hop.relay())[0]) / total);
+                }
+                asked[routes.get(r).index()] += asks[i][r];
             }
         }
     }
@@ -1088,7 +1134,7 @@ public final class LaserNetworks {
         Set<BlockPos> live = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         for (LaserNode node : nodes.values()) {
-            if (!node.relays() && node.enabled() && node.available() > 0 && live.add(node.nodePos())) queue.add(node.nodePos());
+            if (node.generates() && node.enabled() && node.available() > 0 && live.add(node.nodePos())) queue.add(node.nodePos());
         }
         while (!queue.isEmpty()) {
             for (LaserBeam beam : beams.getOrDefault(queue.poll(), List.of())) {

@@ -109,6 +109,19 @@ public interface LaserNode {
         return true;
     }
 
+    /**
+     * Whether it gives out light, and power, of its own: every source. A Solar Emitter both does and passes on
+     * the light that reaches it, as a relay.
+     */
+    default boolean generates() {
+        return !relays();
+    }
+
+    /** For a relay: the most FE a tick it lets through from other sources (a Solar Emitter's chain limit). */
+    default long passLimit() {
+        return Long.MAX_VALUE;
+    }
+
     default boolean rifts() {
         return false;
     }

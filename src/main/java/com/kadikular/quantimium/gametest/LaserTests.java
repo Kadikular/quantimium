@@ -187,8 +187,38 @@ public final class LaserTests {
             helper.assertTrue(gotThree > 40L * 2 * LaserTuning.SOLAR_FE && gotThree <= 40L * 3 * LaserTuning.SOLAR_FE, "three's worth: " + gotThree);
             helper.assertTrue(gotTen > 40L * 7 * LaserTuning.SOLAR_FE && gotTen <= 40L * LaserTuning.SOLAR_CHAIN_MAX, "eight's worth at most: " + gotTen);
             // The first of a chain feeds the next: its beam shows lit, carrying what it makes.
-            var first = helper.getBlockEntity(new BlockPos(1, Y, 3), com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity.class).syncedBeams();
+            var first = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(1, Y, 3)));
             helper.assertTrue(first.stream().anyMatch(beam -> beam.live() && beam.flow() > 0), "a feeding emitter's beam shows: " + first);
+            helper.setTime(was);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.solar
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_pass", timeoutTicks = 200)
+    public static void aSolarEmitterPassesAnyLightUpToItsLimit(GameTestHelper helper) {
+        // A Laser Emitter I (2,000 FE/t) shining through a Solar Emitter: only 160 FE/t gets out, its own included.
+        // And a Solar into a mirror, into another Solar: the first's light gets through too.
+        long was = noon(helper);
+        emitter(helper, new BlockPos(1, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        solar(helper, new BlockPos(5, Y, 3), Direction.EAST);
+        FoldCoreBlockEntity capped = sink(helper, new BlockPos(9, Y, 3));
+        solar(helper, new BlockPos(2, Y, 12), Direction.EAST);
+        helper.setBlock(new BlockPos(6, Y, 12), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        solar(helper, new BlockPos(6, Y, 9), Direction.NORTH);
+        FoldCoreBlockEntity chained = sink(helper, new BlockPos(6, Y, 6));
+        long[] before = new long[2];
+        helper.runAfterDelay(60, () -> {
+            before[0] = capped.getEnergyStorage().getEnergyStored();
+            before[1] = chained.getEnergyStorage().getEnergyStored();
+        });
+        helper.runAfterDelay(100, () -> {
+            long gotCapped = capped.getEnergyStorage().getEnergyStored() - before[0];
+            long gotChained = chained.getEnergyStorage().getEnergyStored() - before[1];
+            helper.assertTrue(gotCapped > 40L * (LaserTuning.SOLAR_CHAIN_MAX - 20) && gotCapped <= 40L * LaserTuning.SOLAR_CHAIN_MAX,
+                    "no more than the limit through it: " + gotCapped);
+            helper.assertTrue(gotChained > 40L * (LaserTuning.SOLAR_FE + LaserTuning.SOLAR_FE / 2), "both Solars' light, by the mirror: " + gotChained);
             helper.setTime(was);
             TestSupport.finishLasers(helper);
             helper.succeed();

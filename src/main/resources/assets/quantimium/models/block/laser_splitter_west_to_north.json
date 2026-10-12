@@ -3,7 +3,8 @@
   "textures": {
     "steel": "quantimium:block/laser_mirror_steel",
     "plate": "quantimium:block/laser_splitter_plate",
-    "particle": "quantimium:block/laser_mirror_steel"
+    "particle": "quantimium:block/laser_mirror_steel",
+    "focus": "quantimium:block/laser_focus"
   },
   "elements": [
     {
@@ -355,6 +356,74 @@
         "axis": "y",
         "angle": 45,
         "rescale": false
+      }
+    },
+    {
+      "from": [
+        4.2802,
+        7.25,
+        9.3713
+      ],
+      "to": [
+        5.7802,
+        8.75,
+        10.8713
+      ],
+      "faces": {
+        "north": {
+          "texture": "#focus",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#focus",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#focus",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#focus",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#focus",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "down": {
+          "texture": "#focus",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        }
       }
     }
   ],

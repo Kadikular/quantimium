@@ -30,7 +30,7 @@ import java.util.Set;
  * from behind its turn side to what it turns.
  * Light from anywhere else stops on it. Off while a redstone signal reaches it.
  */
-public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView {
+public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView, com.kadikular.quantimium.flux.FluxMeterReadout {
 
     private List<LaserBeam> shownBeams = List.of();
 
@@ -176,5 +176,18 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    /** Which sides are which: a Mirror's two, a Splitter's input and turn sides; what's passing. */
+    @Override
+    public net.minecraft.network.chat.MutableComponent fluxMeterLine() {
+        net.minecraft.network.chat.Component in = net.minecraft.network.chat.Component.translatable("direction.quantimium." + input().getSerializedName());
+        net.minecraft.network.chat.Component out = net.minecraft.network.chat.Component.translatable("direction.quantimium." + output().getSerializedName());
+        String key = splits() ? "message.quantimium.laser_splitter.sides" : input() == output() ? "message.quantimium.laser_mirror.flat_sides"
+                : "message.quantimium.laser_mirror.sides";
+        long passing = level instanceof net.minecraft.server.level.ServerLevel server ? LaserNetworks.of(server).throughput(worldPosition) : 0;
+        Object[] values = input() == output() && !splits() ? new Object[] {in, passing} : new Object[] {in, out, passing};
+        return net.minecraft.network.chat.Component.translatable(key, values)
+                .withStyle(enabled() ? net.minecraft.ChatFormatting.AQUA : net.minecraft.ChatFormatting.GRAY);
     }
 }

@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * nothing. Light from other Solar Emitters shining into it joins its own, up to a chain's worth. A sneaking
  * click on a side, by hand or with a wrench, sends its light out there; never up, through its glass.
  */
-public class SolarEmitterBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
+public class SolarEmitterBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip, com.kadikular.quantimium.laser.BeamAnchor {
     public static final MapCodec<SolarEmitterBlock> CODEC = simpleCodec(SolarEmitterBlock::new);
     public static final EnumProperty<Direction> OUTPUT = EnumProperty.create("output", Direction.class, direction -> direction != Direction.UP);
 
@@ -62,11 +62,17 @@ public class SolarEmitterBlock extends BaseEntityBlock implements com.kadikular.
         builder.add(OUTPUT);
     }
 
-    /** Shining the way you face, so a row placed walking forward chains on. */
+    /** Shining towards you. */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(OUTPUT, context.getHorizontalDirection());
+        return defaultBlockState().setValue(OUTPUT, context.getHorizontalDirection().getOpposite());
+    }
+
+    /** Light into it goes to its focus, in its middle. */
+    @Override
+    public net.minecraft.world.phys.Vec3 beamPoint(BlockState state, BlockPos pos) {
+        return pos.getCenter();
     }
 
     @Override

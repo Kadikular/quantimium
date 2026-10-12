@@ -536,14 +536,33 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
                 continue
             key = "_".join(sorted({a, b}))
             floor_normals[key] = tuple(p + q for p, q in zip(va, vb)) if a != b else va
-    for key, normal in floor_normals.items():
-        # A splitter is never flat.
-        if splits and "_" not in key:
-            continue
-        write(f"{name}_{key}", stand(normal) + [plate(normal)])
+    def marker(into, out):
+        """On a splitter, a light-blue dot on the plate's edge nearest its input side, so you can see where light goes in."""
+        n = [p + q for p, q in zip(DIRS[into], DIRS[out])]
+        along = [p - q for p, q in zip(DIRS[into], DIRS[out])]
+        nl, al = sum(v * v for v in n) ** 0.5, sum(v * v for v in along) ** 0.5
+        middle = [8 + along[k] / al * 3.6 + n[k] / nl * 0.6 for k in range(3)]
+        dot = box([v - 0.75 for v in middle], [v + 0.75 for v in middle])
+        for face in dot["faces"].values():
+            face["texture"] = "#focus"
+            face["uv"] = [7, 7, 9, 9]
+        return dot
+
+    if splits:
+        t["focus"] = "quantimium:block/laser_focus"
+        # Each way round: the dot shows which of the two sides light goes in by.
+        for a in DIRS:
+            for b in DIRS:
+                if "down" in (a, b) or a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0:
+                    continue
+                normal = tuple(p + q for p, q in zip(DIRS[a], DIRS[b]))
+                write(f"{name}_{a}_to_{b}", stand(normal) + [plate(normal), marker(a, b)])
+    else:
+        for key, normal in floor_normals.items():
+            write(f"{name}_{key}", stand(normal) + [plate(normal)])
     # Facing north, the way an inventory icon looks at it.
     item_normal = tuple(p + q for p, q in zip(DIRS["north"], DIRS["up"])) if splits else DIRS["north"]
-    write(f"{name}_item", stand(item_normal) + [plate(item_normal)])
+    write(f"{name}_item", stand(item_normal) + [plate(item_normal)] + ([marker("north", "up")] if splits else []))
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
     names = {v: k for k, v in DIRS.items()}
@@ -561,8 +580,11 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
             for b in DIRS:
                 if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0) or (splits and a == b):
                     continue
-                key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
-                assert key in floor_normals, (mount, a, b, key)
+                if splits:
+                    key = f"{back_to_floor(a, rx, ry)}_to_{back_to_floor(b, rx, ry)}"
+                else:
+                    key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
+                    assert key in floor_normals, (mount, a, b, key)
                 parts.append({"when": {"mount": mount, "input": a, "output": b},
                               "apply": dict({"model": f"quantimium:block/{name}_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
     with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
@@ -609,25 +631,34 @@ def solar_emitter() -> None:
             faces[cull]["cullface"] = cull
         return {"from": start, "to": end, "faces": faces}
 
-    body = [cube([1, 0, 1], [15, 1, 15], "#steel", "down")]
+    body = []
     for x, z in ((1, 1), (13, 1), (1, 13), (13, 13)):
         body.append(cube([x, 1, z], [x + 2, 13, z + 2], "#steel"))
     body.append(cube([1, 13, 1], [15, 14, 15], "#glass"))
-    # The focus stands on a 2x2 post from the base.
-    body.append(cube([7, 1, 7], [9, 6, 9], "#steel"))
     focus = cube([6, 6, 6], [10, 10, 10], "#focus")
     for face in focus["faces"].values():
         face["uv"] = [6, 6, 10, 10]
     body.append(focus)
     with open(os.path.join(MODELS, "solar_emitter.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": body}, handle, indent=2)
+    # The base, and the post the focus stands on; shining down, the emitter takes the post's place and pokes
+    # through a hole in the base.
+    base = [cube([1, 0, 1], [15, 1, 15], "#steel", "down")]
+    holed = [cube([1, 0, 1], [15, 1, 6], "#steel", "down"), cube([1, 0, 10], [15, 1, 15], "#steel", "down"),
+             cube([1, 0, 6], [6, 1, 10], "#steel", "down"), cube([10, 0, 6], [15, 1, 10], "#steel", "down")]
+    post = [cube([7, 1, 7], [9, 6, 9], "#steel")]
+    for name, elements in (("solar_emitter_base", base + post), ("solar_emitter_base_open", holed)):
+        with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
+            json.dump({"textures": t, "elements": elements}, handle, indent=2)
     with open(os.path.join(MODELS, "laser_emitter_nozzle.json"), "w") as handle:
         json.dump({"textures": t, "elements": emitter_nozzle()}, handle, indent=2)
     with open(os.path.join(MODELS, "solar_emitter_item.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
-                   "elements": body + emitter_nozzle()}, handle, indent=2)
+                   "elements": body + base + post + emitter_nozzle()}, handle, indent=2)
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "down": {"x": 90}}
-    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}}]
+    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}},
+             {"when": {"output": "north|east|south|west"}, "apply": {"model": "quantimium:block/solar_emitter_base"}},
+             {"when": {"output": "down"}, "apply": {"model": "quantimium:block/solar_emitter_base_open"}}]
     parts += [{"when": {"output": side}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
     with open(os.path.join(STATES, "solar_emitter.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)

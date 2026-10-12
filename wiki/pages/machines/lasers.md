@@ -35,11 +35,12 @@ has no generator yet. It only starts a new fuel once it has room for what that m
 [[mechanic:laser.solar]] A [[block:solar_emitter]] gathers sunlight through its glass into a small focus
 and sends it out of a simple emitter on one side as light: {{c:LaserTuning.SOLAR_FE}} FE/t in full sun,
 less as the sky dims (it reads the sky as a daylight detector does: dawn, dusk and rain give less), none
-at night or under a roof. It holds nothing. Shine one into another and their light joins: the last of a
-chain gives what they all make, up to {{c:LaserTuning.SOLAR_CHAIN_MAX}} FE/t (eight in full sun), and the
-others give nothing of their own. Its light reaches {{c:LaserTuning.SOLAR_RANGE}} blocks a run. Placed, it
-shines the way you face; sneak-click a side (by hand or with a wrench) to send its light there, but never
-up, through its glass.
+at night or under a roof. It holds nothing. Light that reaches it from any laser (another Solar Emitter,
+a Laser Emitter, by mirrors or not) joins its own and leaves by its emitter, but no more than
+{{c:LaserTuning.SOLAR_CHAIN_MAX}} FE/t leaves it in all, what it makes included: so a row of eight in full
+sun is as much as one row gives. Its light reaches {{c:LaserTuning.SOLAR_RANGE}} blocks a run. Placed, it
+shines towards you; sneak-click a side (by hand or with a wrench) to send its light there, but never up,
+through its glass.
 
 [[mechanic:laser.outputs]] Sneak-click a face with an empty hand, or use any wrench on it, to add an
 output there, or take one away. One emitter can shine from all six faces; it always keeps at least one.
@@ -60,6 +61,7 @@ signal turns it off.
 
 [[mechanic:laser.splitter]] A [[block:laser_splitter]] is a Laser Mirror with a half-silvered plate, set
 the same way (never flat): sneak-click its **input side**, click its **turn side**, at right angles.
+A small light-blue dot on the plate's edge marks its input side, and the Flux Meter or Jade names both.
 Light in by its input side splits: half goes straight on, half turns out of its turn side. Light from
 behind its turn side passes straight through the plate and out of the turn side too; with both coming
 in, they leave by the turn side only, joined: a combiner. Light from any other side stops on it, and so

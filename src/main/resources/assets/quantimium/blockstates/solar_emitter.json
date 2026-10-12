@@ -7,6 +7,22 @@
   },
   {
    "when": {
+    "output": "north|east|south|west"
+   },
+   "apply": {
+    "model": "quantimium:block/solar_emitter_base"
+   }
+  },
+  {
+   "when": {
+    "output": "down"
+   },
+   "apply": {
+    "model": "quantimium:block/solar_emitter_base_open"
+   }
+  },
+  {
+   "when": {
     "output": "north"
    },
    "apply": {
