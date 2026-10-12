@@ -660,9 +660,9 @@ def lens_mount() -> None:
         return element
 
     parts = [box([0, 0, 2], [16, 16, 14])]
-    # Each end: a frame round a 6x6 recess, 2 deep.
+    # Each end: a frame round an 8x8 recess, 2 deep.
     for z0, z1 in ((0, 2), (14, 16)):
-        parts += [box([0, 0, z0], [16, 5, z1]), box([0, 11, z0], [16, 16, z1]), box([0, 5, z0], [5, 11, z1]), box([11, 5, z0], [16, 11, z1])]
+        parts += [box([0, 0, z0], [16, 4, z1]), box([0, 12, z0], [16, 16, z1]), box([0, 4, z0], [4, 12, z1]), box([12, 4, z0], [16, 12, z1])]
     # The way out: half an emitter, its collar and its tip; the way in: half a focus.
     parts += [box([6, 6, 1], [10, 10, 2]), box([7, 7, 0], [9, 9, 1], "#focus", [7, 7, 9, 9]), box([6, 6, 14], [10, 10, 16], "#focus", [6, 6, 10, 10])]
     # The slot panels, a hair proud of each side: a pixel wide, two apart, on the pixel grid; first lens nearest the way in.

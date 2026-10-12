@@ -147,7 +147,8 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         setChanged();
         if (level != null) {
             LaserNetworks.changed(level);
-            if (!level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            // Clients redraw its tip in the lens's colour: told by the server, or at once where it was changed.
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), level.isClientSide() ? Block.UPDATE_IMMEDIATE : Block.UPDATE_CLIENTS);
         }
     }
 
