@@ -1743,6 +1743,37 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.crushing, laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void eachCrushingLensIsAnotherStep(GameTestHelper helper) {
+        // Crushing, Crushing, Smelting: cobblestone to gravel, to sand, to glass.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get(),
+                ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get());
+        floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.COBBLESTONE, 4));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.GLASS), 4, "glass, from cobblestone");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing, laser.lens.phantom
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void phantomCrushingReachesPastWhatItCantCrush(GameTestHelper helper) {
+        // Through dirt it can do nothing with, to the cobblestone behind it.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.CRUSHING_LENS.get(), ModItems.PHANTOM_LENS.get());
+        helper.setBlock(new BlockPos(6, Y, 8), Blocks.DIRT);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.COBBLESTONE);
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.GRAVEL, new BlockPos(8, Y, 8));
+            helper.assertBlockPresent(Blocks.DIRT, new BlockPos(6, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.lens.crushing, laser.light.join
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void crushingAndSmeltingFromTwoBeamsCrushFirst(GameTestHelper helper) {

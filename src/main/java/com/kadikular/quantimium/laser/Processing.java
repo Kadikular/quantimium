@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * What Crushing and Smelting lenses make of things on their way: one, then the other, in the order of
- * their lenses (crushed first where that can't be told, as a crusher feeding a furnace would). Smelting is the furnace's. Crushing is a short stone chain of its own
+ * What Crushing and Smelting lenses make of things on their way: a step for each lens, in their order
+ * (Crushing, Crushing, Smelting makes cobblestone glass). Smelting is the furnace's. Crushing is a short stone chain of its own
  * (stone to cobblestone to gravel to sand), then whatever the pack's crushers do, in the order the
  * config lists their recipe types: their sure outputs only, never the chance ones. Unrealised Matter
  * isn't made anything: it gets the step in its history, as a Quantum Crafter would give it.
@@ -68,12 +68,12 @@ public final class Processing {
         SMELTED.clear();
     }
 
-    /** What one of {@code stack} becomes, crushed if {@code crush} and smelted if {@code smelt}: smelted first if {@code smeltFirst}. */
-    public static Made ofOne(ServerLevel level, BlockPos at, ItemStack stack, boolean crush, boolean smelt, boolean smeltFirst) {
+    /** What one of {@code stack} becomes, through each of {@code steps} in turn: those that change nothing are free. */
+    public static Made ofOne(ServerLevel level, BlockPos at, ItemStack stack, List<Lens> steps) {
         List<ItemStack> forms = List.of(stack.copyWithCount(1));
         long fe = 0;
-        for (boolean smelting : smeltFirst ? new boolean[] {true, false} : new boolean[] {false, true}) {
-            if (smelting ? !smelt : !crush) continue;
+        for (Lens step : steps) {
+            boolean smelting = step == Lens.SMELT;
             List<ItemStack> made = each(forms, form -> smelting ? smelted(level, at, form) : crushed(level, at, form));
             if (made == null) continue;
             forms = made;

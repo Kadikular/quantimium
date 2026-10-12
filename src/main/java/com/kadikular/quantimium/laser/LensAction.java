@@ -901,7 +901,7 @@ public final class LensAction {
     /** What one of {@code stack} becomes with this stream's Crushing and Smelting lenses: nothing, in the mirror. */
     private Processing.Made made(ServerLevel level, ItemStack stack) {
         if (!processes() || stack.isEmpty() || mirrored()) return new Processing.Made(List.of(stack.copyWithCount(1)), 0);
-        return Processing.ofOne(level, key.node(), stack, stream.has(Lens.CRUSH), stream.has(Lens.SMELT), stream.smeltFirst());
+        return Processing.ofOne(level, key.node(), stack, stream.steps());
     }
 
     /**
@@ -911,6 +911,14 @@ public final class LensAction {
     private List<ItemStack> processed(ServerLevel level, ItemStack stack) {
         Processing.Made made = made(level, stack);
         return made.changed() ? Processing.times(made.ofOne(), stack.getCount()) : List.of(stack);
+    }
+
+    /** Whether Smelting or Crushing alone could change the block at {@code pos}, as its item: one it may break, that its filter lets. */
+    private boolean processable(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null || state.is(ModTags.LASER_UNBREAKABLE)) return false;
+        ItemStack as = new ItemStack(state.getBlock().asItem());
+        return !as.isEmpty() && lets(as) && processCost(level, as) > 0;
     }
 
     /** FE for crushing and smelting {@code stack}: nothing when it comes as it is. */
@@ -953,14 +961,25 @@ public final class LensAction {
     }
 
     private boolean processBlock(ServerLevel level, LaserNetworks networks) {
-        if (beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return false;
-        BlockPos pos = beam.hit();
+        BlockPos pos = null;
+        // Phantom light goes through what it can't change, to the first block on its way it can.
+        if ((marks & Light.PHANTOM) != 0) {
+            for (BlockPos on : beam.path()) {
+                if (level.isLoaded(on) && processable(level, on)) {
+                    pos = on;
+                    break;
+                }
+            }
+        }
+        if (pos == null) {
+            if (beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return false;
+            pos = beam.hit();
+            if (!processable(level, pos)) return false;
+        }
         BlockState state = level.getBlockState(pos);
-        if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null || state.is(ModTags.LASER_UNBREAKABLE)) return false;
         ItemStack as = new ItemStack(state.getBlock().asItem());
-        if (as.isEmpty() || !lets(as)) return false;
         long cost = processCost(level, as);
-        if (cost == 0 || !networks.pay(this, cost)) return false;
+        if (!networks.pay(this, cost)) return false;
         List<ItemStack> out = processed(level, as);
         ItemStack first = out.getFirst();
         if (out.size() == 1 && first.getCount() == 1 && first.getItem() instanceof net.minecraft.world.item.BlockItem block) {
