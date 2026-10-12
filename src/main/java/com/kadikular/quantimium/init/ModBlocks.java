@@ -736,10 +736,8 @@ public class ModBlocks {
             "isolator", id -> new com.kadikular.quantimium.block.IsolatorBlock(laserBlock(id, MapColor.COLOR_BLACK)));
     public static final DeferredBlock<Block> LENS_MOUNT = BLOCKS.register(
             "lens_mount", id -> new com.kadikular.quantimium.block.LensMountBlock(laserBlock(id, MapColor.COLOR_PURPLE).noOcclusion()));
-    public static final DeferredBlock<Block> SENDER = BLOCKS.register(
-            "sender", id -> new com.kadikular.quantimium.block.SenderBlock(laserBlock(id, MapColor.COLOR_CYAN)));
-    public static final DeferredBlock<Block> COLLECTOR = BLOCKS.register(
-            "collector", id -> new com.kadikular.quantimium.block.CollectorBlock(laserBlock(id, MapColor.COLOR_GREEN)));
+    public static final DeferredBlock<Block> LASER_PORT = BLOCKS.register(
+            "laser_port", id -> new com.kadikular.quantimium.block.LaserPortBlock(laserBlock(id, MapColor.COLOR_GRAY)));
 
     private static BlockBehaviour.Properties laserBlock(Identifier id, MapColor color) {
         return BlockBehaviour.Properties.of()
@@ -802,6 +800,11 @@ public class ModBlocks {
         // The Laser Distributor (once the Splitter) folded into the Laser Relay before release.
         BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "splitter"),
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_relay"));
+        // The Laser Port and the sending Laser Port became the Laser Port before release; their modes carry over.
+        BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "collector"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
+        BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "sender"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
         BLOCKS.register(eventBus);
     }
 

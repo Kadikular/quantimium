@@ -1,6 +1,15 @@
 package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.block.LaserRelayBlock;
+import com.kadikular.quantimium.init.ModBlockEntities;
+import com.kadikular.quantimium.recipe.FilterEntry;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import java.util.ArrayList;
 import com.kadikular.quantimium.block.entity.simulation.SideAutomationProfile;
 import com.kadikular.quantimium.block.entity.simulation.SideConfig;
 import com.kadikular.quantimium.block.entity.simulation.SideMode;
@@ -41,57 +50,63 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A laser block with nine slots, which light passes through and out of its face as through a mirror: the
- * Collector and the Sender, each set to catch what comes back up the beam, send what it holds down it, or
- * both (a Collector of seeds in both feeds them straight back down to be sown). Its faces are set as a
- * machine's are: which take items in or hand them out, and which pull from or push to what's beside them,
- * once a second.
+ * A Laser Port: nine slots, which light passes through and out of its face as through a mirror. It catches what
+ * comes back up the beam (as its filter allows), sends what it holds down it (to a Placement lens or another port
+ * further along; a bound Tesseract in a slot sends from the inventory it links to), or both: a port of seeds in
+ * both feeds them straight back down to be sown. Its faces are set as a machine's are: which take items in or hand
+ * them out, and which pull from or push to what's beside them, once a second. Pipes and hoppers can only put
+ * things in while it sends.
  */
-public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, MenuProvider, SideConfigurable {
+public class LaserPortBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, MenuProvider, SideConfigurable {
 
     public static final int SLOTS = 9;
+    public static final int FILTER_SLOTS = 9;
     private static final int AUTO_TRANSFER_INTERVAL = 20;
     private static final SideAutomationProfile PROFILE = new SideAutomationProfile(SideAutomationProfile.ALL_SIDES, 0);
 
-    protected final ItemStackHandler items = new ItemStackHandler(SLOTS) {
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return accepts(slot, stack);
-        }
-
+    private final ItemStackHandler items = new ItemStackHandler(SLOTS) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
         }
     };
     /** What it does with items: catches what comes back up the beam, sends what it holds down it, or both. */
-    public enum Mode {
+    public enum Mode implements net.minecraft.util.StringRepresentable {
         COLLECT, SEND, BOTH;
+
+        @Override
+        public String getSerializedName() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
 
         public Mode next() {
             return values()[(ordinal() + 1) % values().length];
         }
     }
 
-    private Mode mode = startingMode();
+    private Mode mode = Mode.COLLECT;
+    /** Ghost entries, never real items: what it catches, or with a blacklist, what it lets go on up the beam. */
+    private final SimpleContainer filter = new SimpleContainer(FILTER_SLOTS) {
+        @Override
+        public void setChanged() {
+            super.setChanged();
+            LaserPortBlockEntity.this.setChanged();
+        }
+    };
+    /** Whitelist (catch only these) or blacklist (catch all but these). An empty filter catches everything. */
+    private boolean allow = true;
     private final IItemHandler[] sided = new IItemHandler[6];
     private List<SideConfig> sideConfigs;
     private List<LaserBeam> shownBeams = List.of();
 
-    protected ItemRelayBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
+    public LaserPortBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.LASER_PORT_BE.get(), pos, state);
         sideConfigs = PROFILE.sanitize(SideConfig.defaults().stream()
-                .map(config -> new SideConfig(config.side(), defaultMode(), SideConfig.ALL_ITEM_INPUTS, SideConfig.ALL_ITEM_OUTPUTS,
+                .map(config -> new SideConfig(config.side(), SideMode.BOTH, SideConfig.ALL_ITEM_INPUTS, SideConfig.ALL_ITEM_OUTPUTS,
                         false, false, SideMode.DISABLED, 0, 0, false, false))
                 .toList());
         for (Direction side : Direction.values()) sided[side.get3DDataValue()] = new Sided(side);
     }
-
-    /** How every face starts: a Collector's hand things out, a Sender's take things in. */
-    protected abstract SideMode defaultMode();
-
-    /** What it does with items when placed: a Collector collects, a Sender sends. */
-    protected abstract Mode startingMode();
 
     public Mode mode() {
         return mode;
@@ -101,14 +116,48 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     public void cycleMode() {
         mode = mode.next();
         setChanged();
+        showMode();
         sync();
         invalidateCapabilities();
         if (level != null) LaserNetworks.changed(level);
     }
 
-    /** Whether it catches {@code stack} when it comes back up the beam: a Collector's filter says. */
-    protected boolean acceptsItem(ItemStack stack) {
-        return true;
+    /** Whether its filter lets it catch {@code stack} when it comes back up the beam. */
+    public boolean acceptsItem(ItemStack stack) {
+        boolean listed = false;
+        boolean any = false;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (entry.isEmpty()) continue;
+            any = true;
+            if (FilterEntry.matches(entry, stack)) listed = true;
+        }
+        return !any || listed == allow;
+    }
+
+    public SimpleContainer getFilter() {
+        return filter;
+    }
+
+    public boolean allows() {
+        return allow;
+    }
+
+    /** Flips the filter between allow and deny. */
+    public void toggleAllow() {
+        allow = !allow;
+        setChanged();
+        sync();
+    }
+
+    public void setFilterSlot(int slot, ItemStack stack) {
+        if (slot >= 0 && slot < FILTER_SLOTS) filter.setItem(slot, FilterEntry.of(stack));
+    }
+
+    public void cycleFilterTag(int slot) {
+        if (slot < 0 || slot >= FILTER_SLOTS) return;
+        ItemStack entry = filter.getItem(slot);
+        if (!entry.isEmpty()) filter.setItem(slot, FilterEntry.cycle(entry));
     }
 
     @Override
@@ -155,13 +204,8 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     }
 
     /** Whether pipes and hoppers may put things in, on faces that take them: when it sends. */
-    protected boolean takesFromOutside() {
+    private boolean takesFromOutside() {
         return sends();
-    }
-
-    /** Whether {@code stack} may sit in {@code slot}. */
-    protected boolean accepts(int slot, ItemStack stack) {
-        return true;
     }
 
 
@@ -175,7 +219,7 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
 
     // ---- automation ----
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, ItemRelayBlockEntity relay) {
+    public static void serverTick(Level level, BlockPos pos, BlockState state, LaserPortBlockEntity relay) {
         if (level.getGameTime() % AUTO_TRANSFER_INTERVAL != Math.floorMod(pos.hashCode(), AUTO_TRANSFER_INTERVAL)) return;
         for (Direction side : Direction.values()) {
             SideConfig config = relay.sideConfigs.get(side.get3DDataValue());
@@ -199,7 +243,7 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     }
 
     /** Puts {@code stack} into its slots, as far as they take it; what's left. */
-    protected ItemStack insert(ItemStack stack, boolean simulate) {
+    private ItemStack insert(ItemStack stack, boolean simulate) {
         ItemStack left = stack;
         for (int slot = 0; slot < SLOTS && !left.isEmpty(); slot++) left = items.insertItem(slot, left, simulate);
         return left;
@@ -329,7 +373,19 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && !level.isClientSide()) LaserNetworks.add(level, this);
+        if (level != null && !level.isClientSide()) {
+            showMode();
+            LaserNetworks.add(level, this);
+        }
+    }
+
+    /** The block shows its mode. */
+    private void showMode() {
+        if (level == null || level.isClientSide()) return;
+        BlockState state = getBlockState();
+        if (state.hasProperty(com.kadikular.quantimium.block.LaserPortBlock.MODE) && state.getValue(com.kadikular.quantimium.block.LaserPortBlock.MODE) != mode) {
+            level.setBlock(worldPosition, state.setValue(com.kadikular.quantimium.block.LaserPortBlock.MODE, mode), Block.UPDATE_CLIENTS);
+        }
     }
 
     @Override
@@ -359,6 +415,10 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
         items.serialize(out.child("Items"));
         out.store("SideConfigs", CompoundTag.CODEC, sidesTag());
         out.putInt("RelayMode", mode.ordinal());
+        List<ItemStack> entries = new ArrayList<>();
+        for (int i = 0; i < FILTER_SLOTS; i++) entries.add(filter.getItem(i));
+        out.store("Filter", ItemStack.OPTIONAL_CODEC.listOf(), entries);
+        out.putBoolean("Allow", allow);
     }
 
     private CompoundTag sidesTag() {
@@ -371,13 +431,16 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         in.child("Items").ifPresent(items::deserialize);
-        mode = Mode.values()[Math.floorMod(in.getIntOr("RelayMode", startingMode().ordinal()), Mode.values().length)];
+        mode = Mode.values()[Math.floorMod(in.getIntOr("RelayMode", Mode.COLLECT.ordinal()), Mode.values().length)];
+        List<ItemStack> entries = in.read("Filter", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        for (int i = 0; i < FILTER_SLOTS; i++) filter.getItems().set(i, i < entries.size() ? entries.get(i) : ItemStack.EMPTY);
+        allow = in.getBooleanOr("Allow", true);
         in.read("SideConfigs", CompoundTag.CODEC).ifPresent(tag -> sideConfigs = PROFILE.sanitize(SideConfig.loadAll(tag.getListOrEmpty("List"))));
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 
     /** Sends what the screen shows (the mode, the filter's allow or deny) to the clients watching, at once. */
-    protected void sync() {
+    private void sync() {
         if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
@@ -386,6 +449,26 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
         CompoundTag tag = saveWithoutMetadata(registries);
         tag.put("Beams", LaserBeamView.save(shownBeams));
         return tag;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.quantimium.laser_port");
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new com.kadikular.quantimium.menu.LaserPortMenu(containerId, inventory, this);
+    }
+
+    /** What it's set to, and how full it is. */
+    @Override
+    @Nullable
+    public MutableComponent fluxMeterLine() {
+        int stacks = 0;
+        for (int slot = 0; slot < SLOTS; slot++) if (!items.getStackInSlot(slot).isEmpty()) stacks++;
+        return Component.translatable("message.quantimium.laser_port.holds", Component.translatable("message.quantimium.laser_port.mode." + mode.name().toLowerCase(java.util.Locale.ROOT)),
+                stacks, SLOTS).withStyle(ChatFormatting.DARK_AQUA);
     }
 
     @Override

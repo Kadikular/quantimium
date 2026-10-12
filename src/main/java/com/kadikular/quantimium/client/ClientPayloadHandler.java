@@ -59,9 +59,7 @@ public final class ClientPayloadHandler {
             screen.openSideConfig(payload);
         } else if (Minecraft.getInstance().screen instanceof QuantumObservationChamberScreen screen) {
             screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.CollectorScreen screen) {
-            screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.SenderScreen screen) {
+        } else if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.LaserPortScreen screen) {
             screen.openSideConfig(payload);
         } else if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.MaterialiserScreen screen) {
             screen.openSideConfig(payload);

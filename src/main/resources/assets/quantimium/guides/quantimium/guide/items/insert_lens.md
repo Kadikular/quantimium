@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:insert_lens" scale="2" />
 
-A lens: puts what Senders send into the inventory the beam ends on.
+A lens: puts what Laser Ports send into the inventory the beam ends on.
 
 ## Recipes
 

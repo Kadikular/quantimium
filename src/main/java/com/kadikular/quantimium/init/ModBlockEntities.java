@@ -198,12 +198,9 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LensMountBlockEntity>> LENS_MOUNT_BE =
             BLOCK_ENTITIES.register("lens_mount_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LensMountBlockEntity::new, ModBlocks.LENS_MOUNT.get()));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SenderBlockEntity>> SENDER_BE =
-            BLOCK_ENTITIES.register("sender_be", () ->
-                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.SenderBlockEntity::new, ModBlocks.SENDER.get()));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.CollectorBlockEntity>> COLLECTOR_BE =
-            BLOCK_ENTITIES.register("collector_be", () ->
-                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.CollectorBlockEntity::new, ModBlocks.COLLECTOR.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserPortBlockEntity>> LASER_PORT_BE =
+            BLOCK_ENTITIES.register("laser_port_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserPortBlockEntity::new, ModBlocks.LASER_PORT.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity>> SOLAR_EMITTER_BE =
             BLOCK_ENTITIES.register("solar_emitter_be", () ->
@@ -234,6 +231,11 @@ public class ModBlockEntities {
         // The Laser Distributor folded into the Laser Relay before release: its block entities load as relays.
         BLOCK_ENTITIES.addAlias(net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, "splitter_be"),
                 net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, "laser_relay_be"));
+        // The Laser Port and the sending Laser Port became the Laser Port.
+        for (String old : new String[] {"collector_be", "sender_be"}) {
+            BLOCK_ENTITIES.addAlias(net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, old),
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, "laser_port_be"));
+        }
         BLOCK_ENTITIES.register(eventBus);
     }
 }

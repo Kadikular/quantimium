@@ -56,11 +56,11 @@ public final class LaserTuning {
 
     /** Amplify lenses that count: the first lets a Harvest beam cut as a diamond pickaxe; each doubles a hit. */
     public static final int AMPLIFY_LENSES = 3;
-    /** FE to place a block from a Sender. */
+    /** FE to place a block from a sending Laser Port. */
     public static final long PLACE_FE = 200;
     /** Ticks between blocks a Placement beam places. */
     public static final int PLACE_COOLDOWN = 10;
-    /** Kinds of thing an Interact beam tries from its Senders in one go, before it gives up till next time. */
+    /** Kinds of thing an Interact beam tries from its sending Laser Ports in one go, before it gives up till next time. */
     public static final int INTERACT_TRIES = 9;
     /** How long light carrying power blinds what looks into it: fifteen seconds. */
     public static final int BLIND_TICKS = 300;

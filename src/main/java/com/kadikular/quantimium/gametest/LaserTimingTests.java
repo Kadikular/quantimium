@@ -98,12 +98,12 @@ public final class LaserTimingTests {
 
     @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_quarry", timeoutTicks = TickTiming.TIMEOUT_TICKS)
     public static void areaQuarry(GameTestHelper helper) {
-        // An Emitter III through a Collector and a mount (Harvest, Amplify, Speed, Pickup) into an Area Prism
-        // over an 8x1x8 floor of stone, put back as fast as it's cut; the Collector emptied each tick.
+        // An Emitter III through a collecting Laser Port and a mount (Harvest, Amplify, Speed, Pickup) into an Area Prism
+        // over an 8x1x8 floor of stone, put back as fast as it's cut; the collecting Laser Port emptied each tick.
         emitter(helper, new BlockPos(1, Y + 2, 2), ModBlocks.LASER_EMITTER_3.get(), Direction.EAST);
-        helper.setBlock(new BlockPos(3, Y + 2, 2), ModBlocks.COLLECTOR.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.CollectorBlock.FACING, Direction.EAST));
-        var collector = helper.getBlockEntity(new BlockPos(3, Y + 2, 2), com.kadikular.quantimium.block.entity.CollectorBlockEntity.class);
+        helper.setBlock(new BlockPos(3, Y + 2, 2), ModBlocks.LASER_PORT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
+        var collector = helper.getBlockEntity(new BlockPos(3, Y + 2, 2), com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
         helper.setBlock(new BlockPos(5, Y + 2, 2), ModBlocks.LENS_MOUNT.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
         var mount = helper.getBlockEntity(new BlockPos(5, Y + 2, 2), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);

@@ -10,7 +10,7 @@ public enum Lens {
     HARVEST(true, 0xFFF0A040),
     /** Hurts what stands in the beam. */
     DAMAGE(true, 0xFFFF4A4A),
-    /** What the actions free, and items lying in the beam, go back up it to a Collector. */
+    /** What the actions free, and items lying in the beam, go back up it to a collecting Laser Port. */
     PICKUP(false, 0xFF5BE38A),
     /** Doubles how far a run of the light reaches. */
     RANGE(false, 0xFF7FB2FF),
@@ -20,17 +20,17 @@ public enum Lens {
     UV(false, 0xFF9A7BFF),
     /** Harder cutting (a diamond pickaxe's) and harder hits, for more power. */
     AMPLIFY(false, 0xFFFFE070),
-    /** Places blocks a Sender up the beam sends, where the beam ends. */
+    /** Places blocks a sending Laser Port up the beam sends, where the beam ends. */
     PLACE(true, 0xFF4AC8C8),
     /** Its actions work twice as fast: cutting, placing. */
     SPEED(false, 0xFFFFA0D0),
     /** Light passes through blocks; only laser blocks, and blocks that take power, stop it. Costs for each block. */
     PHANTOM(false, 0xFFB8C4D8),
-    /** Puts what Senders up the beam send into the inventory it ends on. */
+    /** Puts what sending Laser Ports up the beam send into the inventory it ends on. */
     INSERT(true, 0xFF6FA8FF),
-    /** Takes from the inventory it ends on, back up the beam to Collectors. */
+    /** Takes from the inventory it ends on, back up the beam to collecting Laser Ports. */
     EXTRACT(true, 0xFFFFC46F),
-    /** Uses what a Sender sends, or an empty hand, on what the beam ends on: a right click, or a hit. */
+    /** Uses what a sending Laser Port sends, or an empty hand, on what the beam ends on: a right click, or a hit. */
     INTERACT(true, 0xFFC0FF7F),
     /** Harvest cuts with Silk Touch. */
     PRECISION(false, 0xFFE0F0FF),

@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "quantimium:sender"
+          "name": "quantimium:laser_port"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "quantimium:blocks/sender"
+  "random_sequence": "quantimium:blocks/laser_port"
 }

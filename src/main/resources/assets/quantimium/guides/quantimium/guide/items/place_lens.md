@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:place_lens" scale="2" />
 
-A lens: places blocks a Sender sends, where the beam ends.
+A lens: places blocks a Laser Port sends, where the beam ends.
 
 ## Recipes
 

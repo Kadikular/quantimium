@@ -2,7 +2,7 @@
 navigation:
   title: Laser Isolator
   parent: blocks/index.md
-  position: 27
+  position: 26
   icon: quantimium:isolator
 item_ids:
 - quantimium:isolator

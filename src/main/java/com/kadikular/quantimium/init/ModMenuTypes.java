@@ -66,9 +66,9 @@ public class ModMenuTypes {
             MENUS.register("lens_mount_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LensMountMenu::new));
 
-    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.CollectorMenu>> COLLECTOR_MENU =
-            MENUS.register("collector_menu", () ->
-                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.CollectorMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LaserPortMenu>> LASER_PORT_MENU =
+            MENUS.register("laser_port_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.LaserPortMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.RelayEmitterMenu>> RELAY_EMITTER_MENU =
             MENUS.register("relay_emitter_menu", () ->
@@ -78,9 +78,6 @@ public class ModMenuTypes {
             MENUS.register("area_prism_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.AreaPrismMenu::new));
 
-    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.SenderMenu>> SENDER_MENU =
-            MENUS.register("sender_menu", () ->
-                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.SenderMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.FilterLensMenu>> FILTER_LENS_MENU =
             MENUS.register("filter_lens_menu", () ->

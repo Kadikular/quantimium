@@ -250,10 +250,8 @@ public class ModItems {
             "isolator", ModBlocks.ISOLATOR);
     public static final DeferredItem<BlockItem> LENS_MOUNT_ITEM = ITEMS.registerSimpleBlockItem(
             "lens_mount", ModBlocks.LENS_MOUNT);
-    public static final DeferredItem<BlockItem> SENDER_ITEM = ITEMS.registerSimpleBlockItem(
-            "sender", ModBlocks.SENDER);
-    public static final DeferredItem<BlockItem> COLLECTOR_ITEM = ITEMS.registerSimpleBlockItem(
-            "collector", ModBlocks.COLLECTOR);
+    public static final DeferredItem<BlockItem> LASER_PORT_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_port", ModBlocks.LASER_PORT);
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARVEST_LENS = ITEMS.registerItem(
             "harvest_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.HARVEST));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> DAMAGE_LENS = ITEMS.registerItem(
@@ -371,6 +369,10 @@ public class ModItems {
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "rift_lens"));
         ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "splitter"),
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_relay"));
+        ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "collector"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
+        ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "sender"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
         ITEMS.register(eventBus);
     }
 }

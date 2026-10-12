@@ -22,7 +22,7 @@ import java.util.List;
  * or a blacklist, with tags), and living things by kind. An empty item list lets every item and block
  * through. A block counts by what it drops, so "wheat" means ripe wheat, and a field is cut ripe.
  *
- * @param entries ghost entries, as a Collector's filter's
+ * @param entries ghost entries, as a collecting Laser Port's filter's
  * @param allow   whitelist (only these) or blacklist (all but these)
  * @param living  what living things it lets an action reach
  * @param grown   only what's fully grown: a Harvest beam cuts only crops (and anything else that grows)

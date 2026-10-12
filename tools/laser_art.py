@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Lasers' block art: the emitters (flash, I, II, III), the mirror, the Lens Mount and Collector, and the
+Lasers' block art: the emitters (flash, I, II, III), the mirror, the Lens Mount and Laser Port, and the
 lenses, with their models and blockstates.
 
 Follows the style guide's grammar: tier is read from the stone (cobble for low, deepslate for mid,
@@ -188,21 +188,6 @@ def detector_face(lit: bool) -> Image.Image:
     return img
 
 
-def collector_face() -> Image.Image:
-    """A grille that light passes and items catch on: a green-trimmed mesh."""
-    img = stone(("1c2a22", "26382e", "32493c"), 71)
-    for x in range(2, 14):
-        for y in range(2, 14):
-            img.putpixel((x, y), hx("0d1712"))
-    for i in range(2, 14, 3):
-        for j in range(2, 14):
-            img.putpixel((i, j), hx("5be38a"))
-            img.putpixel((j, i), hx("5be38a"))
-    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
-        img.putpixel((x, y), hx("c8f5d8"))
-    return img
-
-
 # A small mark etched in each lens, so they're told apart in a mount at a glance (5x5, '#' set).
 GLYPHS = {
     "harvest_lens": ["###..", "..#..", ".#.#.", "#...#", "....."],   # a pick's head
@@ -272,23 +257,50 @@ LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be
           "precision_lens": "e0f0ff", "harmonic_lens": "ffd0f0", "unrealising_lens": "b070ff", "smelting_lens": "ff8040", "crushing_lens": "b09070"}
 
 
-def sender_face() -> Image.Image:
-    """The Collector's grille in teal, with an arrow out through it: things leave down the beam."""
-    img = stone(("162a2a", "1f3838", "294949"), 75)
-    for x in range(2, 14):
-        for y in range(2, 14):
-            img.putpixel((x, y), hx("0d1717"))
-    for i in range(2, 14, 3):
-        for j in range(2, 14):
-            img.putpixel((i, j), hx("2f8f8f"))
-            img.putpixel((j, i), hx("2f8f8f"))
-    for i in range(4):
-        for j in range(-i, i + 1):
-            img.putpixel((7 + j, 4 + i), hx("4ac8c8"))
-    for y in range(8, 12):
-        img.putpixel((7, y), hx("4ac8c8"))
-        img.putpixel((8, y), hx("4ac8c8"))
+def lens_item(colour: str, glyph=None) -> Image.Image:
+    """A lens: a ground-glass disc in a dark rim, tinted by what it does, with a bright glint and its mark."""
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    tint = hx(colour)
+    for x in range(16):
+        for y in range(16):
+            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
+            if d < 6.6:
+                img.putpixel((x, y), hx("1b1e38"))
+            if d < 5.4:
+                shade = 0.65 + 0.35 * (1 - d / 5.4)
+                img.putpixel((x, y), tuple(min(255, int(c * shade)) for c in tint[:3]) + (230,))
+    for x, y in ((5, 4), (4, 5), (5, 5), (6, 4)):
+        img.putpixel((x, y), hx("ffffff"))
+    if glyph:
+        # Etched darker into the glass, a little low and right of the glint.
+        mark = tuple(int(c * 0.35) for c in tint[:3]) + (255,)
+        for row, line in enumerate(glyph):
+            for col, cell in enumerate(line):
+                if cell == "#":
+                    img.putpixel((6 + col, 6 + row), mark)
     return img
+
+
+def spectroscope() -> Image.Image:
+    """A brass tube with a prism at its far end, splitting a line of light into three colours."""
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for i in range(3, 12):
+        for w in range(-1, 2):
+            img.putpixel((i, 15 - i + w), hx("b5893a") if w else hx("e0b45c"))
+    for x, y in ((11, 3), (12, 3), (12, 4), (13, 4), (12, 2), (13, 3)):
+        img.putpixel((x, y), hx("c8dcff"))
+    for i, colour in enumerate(("ff4a4a", "5be38a", "7fb2ff")):
+        img.putpixel((14, 1 + i), hx(colour))
+        img.putpixel((15, i), hx(colour))
+    img.putpixel((3, 12), hx("3a2a14"))
+    return img
+
+
+LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
+          "filter_lens": "e8e0c0", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
+          "speed_lens": "ffa0d0", "phantom_lens": "b8c4d8",
+          "insert_lens": "6fa8ff", "extract_lens": "ffc46f", "interact_lens": "c0ff7f",
+          "precision_lens": "e0f0ff", "harmonic_lens": "ffd0f0", "unrealising_lens": "b070ff", "smelting_lens": "ff8040", "crushing_lens": "b09070"}
 
 
 def area_prism_face() -> Image.Image:
@@ -846,6 +858,74 @@ def laser_emitters() -> None:
                 os.remove(path)
 
 
+PORT_MODES = {"collect": ("5be38a",), "send": ("f0a040",), "both": ("5be38a", "f0a040")}
+
+
+def port_side(colours) -> Image.Image:
+    """A Laser Port's side: the steel, with a 3x3 grille in the middle lit in its mode's colour (both: the two in a checker)."""
+    img = steel(31)
+    dark = hx("16171b")
+    for x in range(3, 13):
+        for y in range(3, 13):
+            img.putpixel((x, y), dark)
+    for i in range(3):
+        for j in range(3):
+            colour = hx(colours[(i + j) % len(colours)])
+            for x in range(4 + i * 3, 6 + i * 3):
+                for y in range(4 + j * 3, 6 + j * 3):
+                    img.putpixel((x, y), colour)
+    return img
+
+
+def laser_port() -> None:
+    """
+    The Laser Port: a solid steel block like the Lens Mount, half a focus in the 8x8 recess light comes in by and half
+    an emitter in the one it leaves by, and on each of its four sides a grille lit in its mode's colour: green to
+    collect, amber to send, both in a checker. Drawn shining north, turned to each way it shines.
+    """
+    def box(start, end):
+        element = {"from": start, "to": end, "faces": {}}
+        for axis, (low, high) in enumerate((("west", "east"), ("down", "up"), ("north", "south"))):
+            for name, edge in ((low, start[axis] == 0), (high, end[axis] == 16)):
+                side = edge and axis != 2
+                element["faces"][name] = {"texture": "#side" if side else "#steel"}
+                if edge:
+                    element["faces"][name]["cullface"] = name
+        return element
+
+    parts = [box([0, 0, 2], [16, 16, 14])]
+    for z0, z1 in ((0, 2), (14, 16)):
+        parts += [box([0, 0, z0], [16, 4, z1]), box([0, 12, z0], [16, 16, z1]), box([0, 4, z0], [4, 12, z1]), box([12, 4, z0], [16, 12, z1])]
+    collar = box([6, 6, 1], [10, 10, 2])
+    tip = box([7, 7, 0], [9, 9, 1])
+    for face in tip["faces"].values():
+        face.update({"texture": "#focus", "uv": [7, 7, 9, 9]})
+    focus = box([6, 6, 14], [10, 10, 16])
+    for face in focus["faces"].values():
+        face.update({"texture": "#focus", "uv": [6, 6, 10, 10]})
+    parts += [collar, tip, focus]
+    with open(os.path.join(MODELS, "laser_port.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "textures": {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
+                                                                   "particle": "quantimium:block/laser_mirror_steel"}, "elements": parts}, handle, indent=2)
+    variants = {}
+    for mode, colours in PORT_MODES.items():
+        port_side(colours).save(os.path.join(TEX, f"laser_port_side_{mode}.png"))
+        with open(os.path.join(MODELS, f"laser_port_{mode}.json"), "w") as handle:
+            json.dump({"parent": "quantimium:block/laser_port", "textures": {"side": f"quantimium:block/laser_port_side_{mode}"}}, handle, indent=2)
+        for facing, r in ROTATIONS.items():
+            variants[f"facing={facing},mode={mode}"] = dict({"model": f"quantimium:block/laser_port_{mode}"}, **r)
+    with open(os.path.join(STATES, "laser_port.json"), "w") as handle:
+        json.dump({"variants": variants}, handle, indent=1)
+    with open(os.path.join(ITEMS, "laser_port.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_port_collect"}}, handle, indent=2)
+    for stale in ("textures/block/collector_face.png", "textures/block/collector_side.png", "textures/block/sender_face.png", "textures/block/sender_side.png",
+                  "models/block/collector.json", "models/block/sender.json", "blockstates/collector.json", "blockstates/sender.json",
+                  "items/collector.json", "items/sender.json"):
+        path = os.path.join(ASSETS, stale)
+        if os.path.exists(path):
+            os.remove(path)
+
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -882,19 +962,7 @@ def main() -> None:
     stone(("1b1b1e", "26262b", "33333a"), 92).save(os.path.join(TEX, "isolator_side.png"))
     outputs_block("isolator", "isolator_face", "isolator_side")
     lens_mount()
-    for name, face, tones, seed in (("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
-                                    ("sender", sender_face, ("162a2a", "1f3838", "294949"), 76)):
-        face().save(os.path.join(TEX, f"{name}_face.png"))
-        stone(tones, seed).save(os.path.join(TEX, f"{name}_side.png"))
-        model = cube({"front": f"quantimium:block/{name}_face", "back": f"quantimium:block/{name}_side",
-                      "side": f"quantimium:block/{name}_side"}, "front")
-        with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
-            json.dump(model, handle, indent=2)
-        with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
-            json.dump({"variants": {f"facing={f}": dict({"model": f"quantimium:block/{name}"}, **r) for f, r in ROTATIONS.items()}},
-                      handle, indent=1)
-        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
-            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}"}}, handle, indent=2)
+    laser_port()
     for name, colour in LENSES.items():
         lens_item(colour, GLYPHS.get(name)).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
         with open(os.path.join(ASSETS, "models", "item", f"{name}.json"), "w") as handle:

@@ -2,7 +2,7 @@
 navigation:
   title: Creative Energy Cell
   parent: blocks/index.md
-  position: 12
+  position: 11
   icon: quantimium:creative_energy_cell
 item_ids:
 - quantimium:creative_energy_cell

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:extract_lens" scale="2" />
 
-A lens: takes from the inventory the beam ends on, back up to Collectors.
+A lens: takes from the inventory the beam ends on, back up to Laser Ports.
 
 ## Recipes
 

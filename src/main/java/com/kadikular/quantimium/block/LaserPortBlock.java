@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.block;
 
-import com.kadikular.quantimium.block.entity.SenderBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserPortBlockEntity;
 import com.kadikular.quantimium.init.ModTags;
 import com.kadikular.quantimium.laser.LaserNetworks;
 import com.mojang.serialization.MapCodec;
@@ -28,17 +28,19 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A Sender: light passes through it and leaves by its face, as through a mirror, and what's in it goes
- * down the beam, to a Placement lens or a Collector further along. Placed, it faces you; a
+ * A Laser Port: light passes through it and leaves by its face, as through a mirror; it catches what a Pickup
+ * lens brings back up the beam, sends what it holds down it, or both. Placed, it faces you; a
  * wrench, or a sneaking empty hand, on any face points it there; an empty hand opens it.
  */
-public class SenderBlock extends BaseEntityBlock {
-    public static final MapCodec<SenderBlock> CODEC = simpleCodec(SenderBlock::new);
+public class LaserPortBlock extends BaseEntityBlock {
+    public static final MapCodec<LaserPortBlock> CODEC = simpleCodec(LaserPortBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
+    /** What it does with items, for the model: its grilles light in the mode's colour. */
+    public static final EnumProperty<LaserPortBlockEntity.Mode> MODE = EnumProperty.create("mode", LaserPortBlockEntity.Mode.class);
 
-    public SenderBlock(Properties properties) {
+    public LaserPortBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(MODE, LaserPortBlockEntity.Mode.COLLECT));
     }
 
     @Override
@@ -48,7 +50,7 @@ public class SenderBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, MODE);
     }
 
     @Nullable
@@ -83,7 +85,7 @@ public class SenderBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player.isSecondaryUseActive()) return point(state, level, pos, hit.getDirection());
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof SenderBlockEntity collector) player.openMenu(collector, pos);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserPortBlockEntity port) player.openMenu(port, pos);
         return InteractionResult.SUCCESS;
     }
 
@@ -99,7 +101,7 @@ public class SenderBlock extends BaseEntityBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new SenderBlockEntity(pos, state);
+        return new LaserPortBlockEntity(pos, state);
     }
 
     @Nullable
@@ -107,8 +109,8 @@ public class SenderBlock extends BaseEntityBlock {
     public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                                                     net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
         return level.isClientSide() ? null : (lvl, pos, st, be) -> {
-            if (be instanceof com.kadikular.quantimium.block.entity.ItemRelayBlockEntity relay) {
-                com.kadikular.quantimium.block.entity.ItemRelayBlockEntity.serverTick(lvl, pos, st, relay);
+            if (be instanceof com.kadikular.quantimium.block.entity.LaserPortBlockEntity relay) {
+                com.kadikular.quantimium.block.entity.LaserPortBlockEntity.serverTick(lvl, pos, st, relay);
             }
         };
     }

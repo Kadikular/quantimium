@@ -1,10 +1,10 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
-import com.kadikular.quantimium.block.entity.CollectorBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserPortBlockEntity;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
-import com.kadikular.quantimium.menu.CollectorMenu;
+import com.kadikular.quantimium.menu.LaserPortMenu;
 import com.kadikular.quantimium.recipe.FilterEntry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -19,19 +19,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Two views on one panel: what the Collector has caught, in a dispenser's 3x3 grid, or its filter, nine
- * ghost entries: click one with an item, or drag an item onto it from JEI; shift-click for its tags.
+ * Two views on one panel: what the Laser Port holds, in a dispenser's 3x3 grid, or the filter on what it
+ * catches, nine ghost entries: click one with an item, or drag an item onto it from JEI; shift-click for its tags.
  */
-public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> implements GhostFilterScreen {
+public class LaserPortScreen extends QuantumMachineScreen<LaserPortMenu> implements GhostFilterScreen {
 
-    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/collector.png");
-    private static final Identifier FILTER_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/collector_filter.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port.png");
+    private static final Identifier FILTER_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port_filter.png");
 
-    public CollectorScreen(CollectorMenu menu, Inventory playerInventory, Component title) {
+    public LaserPortScreen(LaserPortMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
     }
 
-    private CollectorBlockEntity collector() {
+    private LaserPortBlockEntity port() {
         return menu.getBlockEntity();
     }
 
@@ -39,23 +39,23 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
     protected List<Tab> createTabs() {
         return List.of(
                 Tab.of("F", () -> menu.setFilterView(!menu.isFilterView()),
-                                List.of(Component.translatable("gui.quantimium.collector.filter"),
-                                        Component.translatable("gui.quantimium.collector.filter.tip")))
+                                List.of(Component.translatable("gui.quantimium.laser_port.filter"),
+                                        Component.translatable("gui.quantimium.laser_port.filter.tip")))
                         .icon(() -> new ItemStack(menu.isFilterView() ? Items.HOPPER : Items.ITEM_FRAME)),
-                Tab.of(() -> Component.literal(collector().allows() ? "W" : "B"), () -> press(CollectorMenu.BUTTON_MODE),
-                                () -> List.of(Component.translatable(collector().allows() ? "gui.quantimium.collector.mode.allow"
-                                                : "gui.quantimium.collector.mode.deny"),
-                                        Component.translatable("gui.quantimium.collector.mode.tip")))
-                        .icon(() -> new ItemStack(collector().allows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
+                Tab.of(() -> Component.literal(port().allows() ? "W" : "B"), () -> press(LaserPortMenu.BUTTON_MODE),
+                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.laser_port.mode.allow"
+                                                : "gui.quantimium.laser_port.mode.deny"),
+                                        Component.translatable("gui.quantimium.laser_port.mode.tip")))
+                        .icon(() -> new ItemStack(port().allows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
                         .visible(menu::isFilterView),
-                Tab.of(() -> Component.literal(switch (collector().mode()) { case COLLECT -> "C"; case SEND -> "S"; case BOTH -> "B"; }),
-                                () -> press(CollectorMenu.BUTTON_RELAY),
-                                () -> List.of(Component.translatable("gui.quantimium.item_relay.mode." + collector().mode().name().toLowerCase(java.util.Locale.ROOT)),
-                                        Component.translatable("gui.quantimium.item_relay.mode.tip")))
-                        .icon(() -> new ItemStack(switch (collector().mode()) { case COLLECT -> Items.HOPPER; case SEND -> Items.DISPENSER; case BOTH -> Items.DROPPER; })),
+                Tab.of(() -> Component.literal(switch (port().mode()) { case COLLECT -> "C"; case SEND -> "S"; case BOTH -> "B"; }),
+                                () -> press(LaserPortMenu.BUTTON_RELAY),
+                                () -> List.of(Component.translatable("gui.quantimium.laser_port.mode." + port().mode().name().toLowerCase(java.util.Locale.ROOT)),
+                                        Component.translatable("gui.quantimium.laser_port.mode.tip")))
+                        .icon(() -> new ItemStack(switch (port().mode()) { case COLLECT -> Items.HOPPER; case SEND -> Items.DISPENSER; case BOTH -> Items.DROPPER; })),
                 Tab.of("S", () -> net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
-                                        new com.kadikular.quantimium.network.RequestSideConfigPayload(collector().getBlockPos())),
-                                List.of(Component.translatable("gui.quantimium.item_relay.sides"), Component.translatable("gui.quantimium.collector.sides.tip")))
+                                        new com.kadikular.quantimium.network.RequestSideConfigPayload(port().getBlockPos())),
+                                List.of(Component.translatable("gui.quantimium.laser_port.sides"), Component.translatable("gui.quantimium.laser_port.sides.tip")))
                         .icon(new ItemStack(Items.HOPPER)));
     }
 
@@ -71,8 +71,8 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
     public List<Rect2i> ghostTargets() {
         List<Rect2i> targets = new ArrayList<>();
         if (!menu.isFilterView()) return targets;
-        for (int i = 0; i < CollectorBlockEntity.FILTER_SLOTS; i++) {
-            targets.add(new Rect2i(leftPos + CollectorMenu.FILTER_X + i * 18, topPos + CollectorMenu.FILTER_Y, 16, 16));
+        for (int i = 0; i < LaserPortBlockEntity.FILTER_SLOTS; i++) {
+            targets.add(new Rect2i(leftPos + LaserPortMenu.FILTER_X + i * 18, topPos + LaserPortMenu.FILTER_Y, 16, 16));
         }
         return targets;
     }
@@ -114,19 +114,21 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
 
     private int listed() {
         int count = 0;
-        for (int i = 0; i < CollectorBlockEntity.FILTER_SLOTS; i++) if (!collector().getFilter().getItem(i).isEmpty()) count++;
+        for (int i = 0; i < LaserPortBlockEntity.FILTER_SLOTS; i++) if (!port().getFilter().getItem(i).isEmpty()) count++;
         return count;
     }
 
     @Override
     protected Component statusLabel() {
-        if (listed() == 0) return Component.translatable("gui.quantimium.collector.status.all");
-        return Component.translatable(collector().allows() ? "gui.quantimium.collector.status.allow" : "gui.quantimium.collector.status.deny", listed());
+        if (port().mode() == LaserPortBlockEntity.Mode.SEND) return Component.translatable("gui.quantimium.laser_port.status.send");
+        if (listed() == 0) return Component.translatable("gui.quantimium.laser_port.status.all");
+        return Component.translatable(port().allows() ? "gui.quantimium.laser_port.status.allow" : "gui.quantimium.laser_port.status.deny", listed());
     }
 
     @Override
     protected List<Component> statusTooltip() {
-        return List.of(Component.translatable("gui.quantimium.collector.status.tip"));
+        return List.of(Component.translatable(port().mode() == LaserPortBlockEntity.Mode.SEND ? "gui.quantimium.laser_port.status.send.tip"
+                : "gui.quantimium.laser_port.status.tip"));
     }
 
     @Override
@@ -144,10 +146,10 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
     protected void renderMachineForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!menu.isFilterView()) return;
         graphics.nextStratum();
-        for (int i = 0; i < CollectorBlockEntity.FILTER_SLOTS; i++) {
-            ItemStack entry = collector().getFilter().getItem(i);
+        for (int i = 0; i < LaserPortBlockEntity.FILTER_SLOTS; i++) {
+            ItemStack entry = port().getFilter().getItem(i);
             if (entry.isEmpty() || FilterEntry.tagOf(entry).isEmpty()) continue;
-            graphics.text(font, "#", leftPos + CollectorMenu.FILTER_X + i * 18 + 11, topPos + CollectorMenu.FILTER_Y - 1, QuantumUiColours.ACCENT, true);
+            graphics.text(font, "#", leftPos + LaserPortMenu.FILTER_X + i * 18 + 11, topPos + LaserPortMenu.FILTER_Y - 1, QuantumUiColours.ACCENT, true);
         }
     }
 
@@ -156,7 +158,7 @@ public class CollectorScreen extends QuantumMachineScreen<CollectorMenu> impleme
     protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
         List<Component> lines = new ArrayList<>(super.getTooltipFromContainerItem(stack));
         int index = hoveredSlot == null ? -1 : menu.slots.indexOf(hoveredSlot);
-        if (index < CollectorMenu.FILTER_START || index >= CollectorMenu.FILTER_END) return lines;
+        if (index < LaserPortMenu.FILTER_START || index >= LaserPortMenu.FILTER_END) return lines;
         lines.add(FilterEntry.tagOf(stack)
                 .map(tag -> Component.translatable("gui.quantimium.me_superposition_crafter.entry.tag", "#" + tag.location()).withStyle(ChatFormatting.AQUA))
                 .orElse(Component.translatable("gui.quantimium.me_superposition_crafter.entry.item").withStyle(ChatFormatting.AQUA)));

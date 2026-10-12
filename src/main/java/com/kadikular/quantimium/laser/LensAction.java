@@ -34,9 +34,9 @@ public final class LensAction {
     private final Key key;
     private LaserBeam beam;
     private Light.Stream stream;
-    /** Where what it brings back goes: the Collectors up its own stream's light, nearest first. */
+    /** Where what it brings back goes: the collecting Laser Ports up its own stream's light, nearest first. */
     private List<BlockPos> collectors = List.of();
-    /** Where what it places comes from: the Senders up its own stream's light, nearest first. */
+    /** Where what it places comes from: the sending Laser Ports up its own stream's light, nearest first. */
     private List<BlockPos> senders = List.of();
     /** For an area prism's action: the blocks it works on, instead of the beam's end; null for a beam's. */
     @Nullable
@@ -221,11 +221,11 @@ public final class LensAction {
     // ---- interacting ----
 
     /**
-     * Uses one thing a Sender up the beam sends (or an empty hand, with none) on what the beam ends on, as a
+     * Uses one thing a sending Laser Port up the beam sends (or an empty hand, with none) on what the beam ends on, as a
      * player would: set to use, a right click on the block (a door, a lever, an item on a block; an empty
      * bucket fills from the fluid it ends on); set to hit, a swing at the first thing living in the beam.
      * In an area, the same on what's living there, or on its blocks in turn. What's left in hand after goes
-     * back up the beam to a Collector, or to the Sender.
+     * back up the beam to a collecting Laser Port, or to the sending Laser Port.
      */
     private void interact(ServerLevel level, LaserNetworks networks) {
         if (placeCooldown > 0) {
@@ -233,9 +233,9 @@ public final class LensAction {
             return;
         }
         if ((beam == null && area == null) || (area != null && now < restUntil) || !networks.canPay(this, LaserTuning.PLACE_FE)) return;
-        // It works with what the Sender holds where it is: the hand holds a copy, and only once using it has
+        // It works with what the sending Laser Port holds where it is: the hand holds a copy, and only once using it has
         // changed it (eaten, filled, worn) is the real one taken and what it became sent on. Unused, nothing moves.
-        // Each kind of thing the Sender holds in turn, till one is used: carrots for the pigs, wheat for the cows, shears.
+        // Each kind of thing the sending Laser Port holds in turn, till one is used: carrots for the pigs, wheat for the cows, shears.
         List<ItemStack> tried = new ArrayList<>();
         ItemStack sent;
         ItemStack after;
@@ -273,7 +273,7 @@ public final class LensAction {
 
     /**
      * Puts what the hand held back where it belongs: what's still what was sent (food nobody ate, a worn
-     * sword) back to the Sender first; anything new (a filled bucket) up to a Collector first; else the
+     * sword) back to the sending Laser Port first; anything new (a filled bucket) up to a collecting Laser Port first; else the
      * other; else on the ground.
      */
     private void settle(ServerLevel level, LaserNetworks networks, ItemStack stack, ItemStack sent) {
@@ -386,8 +386,8 @@ public final class LensAction {
     // ---- inventories ----
 
     /**
-     * Insert: a stack of what the Senders up the beam send, as much as fits, into the inventory the beam
-     * ends on. Extract: a stack out of it, as much as the Collectors up the beam have room for. In an
+     * Insert: a stack of what the sending Laser Ports up the beam send, as much as fits, into the inventory the beam
+     * ends on. Extract: a stack out of it, as much as the collecting Laser Ports up the beam have room for. In an
      * area, each inventory there in turn. A Filter says what; one stack each wait.
      */
     private void move(ServerLevel level, LaserNetworks networks, boolean in) {
@@ -418,7 +418,7 @@ public final class LensAction {
     }
 
     /**
-     * Into the inventory: what a Sender sends, crushed and smelted on the way with those lenses. What that
+     * Into the inventory: what a sending Laser Port sends, crushed and smelted on the way with those lenses. What that
      * cost, or -1 for none moved. What makes several things of one goes one at a time.
      */
     private long insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler, BlockPos spill) {
@@ -442,7 +442,7 @@ public final class LensAction {
         return made.fe() * taken.getCount();
     }
 
-    /** Out of the inventory, up to a Collector: crushed and smelted on the way with those lenses. What that cost, or -1 for none moved. */
+    /** Out of the inventory, up to a collecting Laser Port: crushed and smelted on the way with those lenses. What that cost, or -1 for none moved. */
     private long extractFrom(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler, BlockPos spill) {
         for (int slot = 0; slot < handler.getSlots(); slot++) {
             ItemStack there = handler.extractItem(slot, moveMost(), true);
@@ -516,7 +516,7 @@ public final class LensAction {
 
     // ---- placing ----
 
-    /** Places a block a Sender up the beam sends, in the space where the beam ends (or the next free one in an area). */
+    /** Places a block a sending Laser Port up the beam sends, in the space where the beam ends (or the next free one in an area). */
     private void place(ServerLevel level, LaserNetworks networks) {
         if (placeCooldown > 0) {
             placeCooldown--;
@@ -748,7 +748,7 @@ public final class LensAction {
     }
 
     /**
-     * Whether the Collectors up the beam would take all of what breaking the block would drop: room for it,
+     * Whether the collecting Laser Ports up the beam would take all of what breaking the block would drop: room for it,
      * and filters that let it in. With Pickup, nothing is cut that would be left lying.
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
@@ -836,7 +836,7 @@ public final class LensAction {
     /**
      * Mirrored Pickup whose light reaches into a Containment Hall's cell, through its glass, draws Veil
      * Thread out of the Veiled held there, as a Harvest Laser does: one hall to one draw at a time, at the
-     * same rate, the thread going up the beam to a Collector.
+     * same rate, the thread going up the beam to a collecting Laser Port.
      */
     private void drawThread(ServerLevel level, LaserNetworks networks) {
         com.kadikular.quantimium.block.entity.ContainmentHallBlockEntity hall = null;
@@ -884,7 +884,7 @@ public final class LensAction {
         }
     }
 
-    /** Carries an item up the beam, if a Collector has room and the stream's sources can pay; with {@code filtered}, only what its filter lets. */
+    /** Carries an item up the beam, if a collecting Laser Port has room and the stream's sources can pay; with {@code filtered}, only what its filter lets. */
     private void carry(LaserNetworks networks, ItemEntity item, boolean filtered) {
         ItemStack stack = item.getItem();
         if (filtered && stream.filter() != null && !stream.filter().lets(stack)) return;

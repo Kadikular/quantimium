@@ -1,0 +1,73 @@
+{
+ "variants": {
+  "facing=north,mode=collect": {
+   "model": "quantimium:block/laser_port_collect"
+  },
+  "facing=south,mode=collect": {
+   "model": "quantimium:block/laser_port_collect",
+   "y": 180
+  },
+  "facing=west,mode=collect": {
+   "model": "quantimium:block/laser_port_collect",
+   "y": 270
+  },
+  "facing=east,mode=collect": {
+   "model": "quantimium:block/laser_port_collect",
+   "y": 90
+  },
+  "facing=up,mode=collect": {
+   "model": "quantimium:block/laser_port_collect",
+   "x": 270
+  },
+  "facing=down,mode=collect": {
+   "model": "quantimium:block/laser_port_collect",
+   "x": 90
+  },
+  "facing=north,mode=send": {
+   "model": "quantimium:block/laser_port_send"
+  },
+  "facing=south,mode=send": {
+   "model": "quantimium:block/laser_port_send",
+   "y": 180
+  },
+  "facing=west,mode=send": {
+   "model": "quantimium:block/laser_port_send",
+   "y": 270
+  },
+  "facing=east,mode=send": {
+   "model": "quantimium:block/laser_port_send",
+   "y": 90
+  },
+  "facing=up,mode=send": {
+   "model": "quantimium:block/laser_port_send",
+   "x": 270
+  },
+  "facing=down,mode=send": {
+   "model": "quantimium:block/laser_port_send",
+   "x": 90
+  },
+  "facing=north,mode=both": {
+   "model": "quantimium:block/laser_port_both"
+  },
+  "facing=south,mode=both": {
+   "model": "quantimium:block/laser_port_both",
+   "y": 180
+  },
+  "facing=west,mode=both": {
+   "model": "quantimium:block/laser_port_both",
+   "y": 270
+  },
+  "facing=east,mode=both": {
+   "model": "quantimium:block/laser_port_both",
+   "y": 90
+  },
+  "facing=up,mode=both": {
+   "model": "quantimium:block/laser_port_both",
+   "x": 270
+  },
+  "facing=down,mode=both": {
+   "model": "quantimium:block/laser_port_both",
+   "x": 90
+  }
+ }
+}

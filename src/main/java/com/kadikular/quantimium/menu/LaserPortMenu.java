@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.menu;
 
-import com.kadikular.quantimium.block.entity.CollectorBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserPortBlockEntity;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import com.kadikular.quantimium.util.SlotItemHandler;
 import net.minecraft.network.FriendlyByteBuf;
@@ -14,10 +14,10 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * A Collector: what it's caught in a 3x3 grid, as a dispenser's, or its filter's nine ghost entries,
- * one view at a time, and the player's inventory. Layout: tools/gui_panels.py collector.
+ * A Laser Port: what it holds in a 3x3 grid, as a dispenser's, or its filter's nine ghost entries,
+ * one view at a time, and the player's inventory. Layout: tools/gui_panels.py laser_port.
  */
-public class CollectorMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
     public static final int BUTTON_MODE = 0;
     /** Collect, send or both. */
@@ -28,30 +28,30 @@ public class CollectorMenu extends AbstractContainerMenu implements GhostFilterM
     public static final int FILTER_Y = 35;
 
     public static final int ITEMS_START = 0;
-    public static final int FILTER_START = CollectorBlockEntity.SLOTS;
-    public static final int FILTER_END = FILTER_START + CollectorBlockEntity.FILTER_SLOTS;
+    public static final int FILTER_START = LaserPortBlockEntity.SLOTS;
+    public static final int FILTER_END = FILTER_START + LaserPortBlockEntity.FILTER_SLOTS;
 
-    private final CollectorBlockEntity collector;
+    private final LaserPortBlockEntity port;
     /** Client only: whether the screen is showing the filter. */
     private boolean filterView;
 
-    public CollectorMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        this(containerId, playerInv, (CollectorBlockEntity) playerInv.player.level().getBlockEntity(extraData.readBlockPos()));
+    public LaserPortMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
+        this(containerId, playerInv, (LaserPortBlockEntity) playerInv.player.level().getBlockEntity(extraData.readBlockPos()));
     }
 
-    public CollectorMenu(int containerId, Inventory playerInv, CollectorBlockEntity collector) {
-        super(ModMenuTypes.COLLECTOR_MENU.get(), containerId);
-        this.collector = collector;
-        for (int i = 0; i < CollectorBlockEntity.SLOTS; i++) {
-            addSlot(new SlotItemHandler(collector.getItems(), i, GRID_X + (i % 3) * 18, GRID_Y + (i / 3) * 18) {
+    public LaserPortMenu(int containerId, Inventory playerInv, LaserPortBlockEntity port) {
+        super(ModMenuTypes.LASER_PORT_MENU.get(), containerId);
+        this.port = port;
+        for (int i = 0; i < LaserPortBlockEntity.SLOTS; i++) {
+            addSlot(new SlotItemHandler(port.getItems(), i, GRID_X + (i % 3) * 18, GRID_Y + (i / 3) * 18) {
                 @Override
                 public boolean isActive() {
                     return !filterView;
                 }
             });
         }
-        for (int i = 0; i < CollectorBlockEntity.FILTER_SLOTS; i++) {
-            addSlot(new GhostSlot(collector.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
+        for (int i = 0; i < LaserPortBlockEntity.FILTER_SLOTS; i++) {
+            addSlot(new GhostSlot(port.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
         }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -84,8 +84,8 @@ public class CollectorMenu extends AbstractContainerMenu implements GhostFilterM
         }
     }
 
-    public CollectorBlockEntity getBlockEntity() {
-        return collector;
+    public LaserPortBlockEntity getBlockEntity() {
+        return port;
     }
 
     public boolean isFilterView() {
@@ -101,7 +101,7 @@ public class CollectorMenu extends AbstractContainerMenu implements GhostFilterM
     public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
         if (slotId >= FILTER_START && slotId < FILTER_END) {
             int index = slotId - FILTER_START;
-            if (clickType == ContainerInput.QUICK_MOVE) collector.cycleFilterTag(index);
+            if (clickType == ContainerInput.QUICK_MOVE) port.cycleFilterTag(index);
             else if (clickType == ContainerInput.PICKUP) setGhost(index, getCarried());
             return;
         }
@@ -110,17 +110,17 @@ public class CollectorMenu extends AbstractContainerMenu implements GhostFilterM
 
     @Override
     public void setGhost(int index, ItemStack stack) {
-        collector.setFilterSlot(index, stack);
+        port.setFilterSlot(index, stack);
     }
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
         if (id == BUTTON_MODE) {
-            collector.toggleMode();
+            port.toggleAllow();
             return true;
         }
         if (id == BUTTON_RELAY) {
-            collector.cycleMode();
+            port.cycleMode();
             return true;
         }
         return false;
@@ -144,6 +144,6 @@ public class CollectorMenu extends AbstractContainerMenu implements GhostFilterM
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(ContainerLevelAccess.create(collector.getLevel(), collector.getBlockPos()), player, collector.getBlockState().getBlock());
+        return stillValid(ContainerLevelAccess.create(port.getLevel(), port.getBlockPos()), player, port.getBlockState().getBlock());
     }
 }

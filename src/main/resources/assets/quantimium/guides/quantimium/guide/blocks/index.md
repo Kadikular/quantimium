@@ -19,7 +19,6 @@ navigation:
 - <ItemLink id="quantimium:budding_anomalite" />
 - <ItemLink id="quantimium:catalyst_bay" />
 - <ItemLink id="quantimium:cavity_mirror" />
-- <ItemLink id="quantimium:collector" />
 - <ItemLink id="quantimium:creative_energy_cell" />
 - <ItemLink id="quantimium:creative_energy_void" />
 - <ItemLink id="quantimium:decoherence_projector" />
@@ -40,6 +39,7 @@ navigation:
 - <ItemLink id="quantimium:laser_emitter_2" />
 - <ItemLink id="quantimium:laser_emitter_3" />
 - <ItemLink id="quantimium:laser_mirror" />
+- <ItemLink id="quantimium:laser_port" />
 - <ItemLink id="quantimium:laser_prism" />
 - <ItemLink id="quantimium:laser_relay" />
 - <ItemLink id="quantimium:laser_splitter" />
@@ -79,7 +79,6 @@ navigation:
 - <ItemLink id="quantimium:rift_lens" />
 - <ItemLink id="quantimium:rift_stabiliser" />
 - <ItemLink id="quantimium:ring_emitter" />
-- <ItemLink id="quantimium:sender" />
 - <ItemLink id="quantimium:solar_emitter" />
 - <ItemLink id="quantimium:stabilised_portal_frame" />
 - <ItemLink id="quantimium:superposition_pod" />

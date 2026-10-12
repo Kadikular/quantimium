@@ -142,15 +142,10 @@ public class Quantimium {
                 (be, context) -> be.energy()
         );
 
-        // A Collector hands out what it caught, a Sender takes in what it sends, face by face as set.
+        // A Laser Port hands out what it caught and takes in what it sends, face by face as set.
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,
-                ModBlockEntities.COLLECTOR_BE.get(),
-                (be, context) -> be.automation(context)
-        );
-        event.registerBlockEntity(
-                Capabilities.Item.BLOCK,
-                ModBlockEntities.SENDER_BE.get(),
+                ModBlockEntities.LASER_PORT_BE.get(),
                 (be, context) -> be.automation(context)
         );
 

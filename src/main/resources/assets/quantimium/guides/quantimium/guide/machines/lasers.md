@@ -183,27 +183,27 @@ no room).
 | --- | --- | --- | --- |
 | <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, or one light passes through just before it (a crop on farmland, grass), as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
 | <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. It charges up for its hits while there's something to hit, over as many ticks as it takes, and keeps what it's charged. With Pickup, what it kills drops straight back up the beam. | 1,000 FE a hit, charged as it goes |
-| <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest Collector; what that one can't take goes to the next. Back past a cavity, it reaches the Collectors up the light that filled it. With no Collector, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the Collectors up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | 200 FE a stack, when it's carried |
+| <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free, and items lying within about a block of the beam, go back up it to the nearest collecting Laser Port; what that one can't take goes to the next. Back past a cavity, it reaches the ports up the light that filled it. With none, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the ports up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | 200 FE a stack, when it's carried |
 | <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far, up to 64 blocks (a pack can change that, `maxRange` in the `lasers` config): light with an action goes 8, 16, 32, 64. | none |
-| <ItemLink id="quantimium:interact_lens" /> | Action | Uses one thing a Sender up the beam sends, or an empty hand with none, as a player would, each 0.5 s. Set to **use**: with something in hand, a right click on the first thing living in the beam that takes it (feeding, shearing, milking; a Filter after it says which: only grown ones, say; never a villager); else a right click on the block the beam ends on, or on something light passes just before it (a lever, a button), so it opens doors, flips levers, works items on blocks; an empty bucket fills from the fluid the beam ends on. Set to **hit**: a swing at the first thing living in the beam, as hard as what it holds. It works with what the Sender holds where it lies, trying each kind of thing there in turn (carrots, then wheat, then shears) till one is used: nothing moves unless using it changes it. Then what it became goes back where it belongs: still the same thing (a worn sword) to the Sender, anything new (a filled bucket) up the beam to a Collector. Through an Area Prism it works on the area: with something in hand, on what's living there first; else on its blocks in turn, each from the side facing the prism (bone meal over a field, say). It does it over and over: behind a pulse mirror, once a signal. Use it in the air, or its button in a mount, to switch. | 200 FE a use |
-| <ItemLink id="quantimium:insert_lens" /> | Action | Puts what Senders up the beam send into the inventory the beam ends on, up to 8 items each 0.5 s (each Speed lens doubles that, to 64, and halves the wait); with an Area Prism, each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
-| <ItemLink id="quantimium:extract_lens" /> | Action | Takes from the inventory the beam ends on, up to 8 items each 0.5 s (each Speed lens doubles that, to 64, and halves the wait), as much as the Collectors up the beam have room for, back up to them; with an Area Prism, from each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
+| <ItemLink id="quantimium:interact_lens" /> | Action | Uses one thing a Laser Port up the beam sends, or an empty hand with none, as a player would, each 0.5 s. Set to **use**: with something in hand, a right click on the first thing living in the beam that takes it (feeding, shearing, milking; a Filter after it says which: only grown ones, say; never a villager); else a right click on the block the beam ends on, or on something light passes just before it (a lever, a button), so it opens doors, flips levers, works items on blocks; an empty bucket fills from the fluid the beam ends on. Set to **hit**: a swing at the first thing living in the beam, as hard as what it holds. It works with what the port holds where it lies, trying each kind of thing there in turn (carrots, then wheat, then shears) till one is used: nothing moves unless using it changes it. Then what it became goes back where it belongs: still the same thing (a worn sword) to the sending port, anything new (a filled bucket) up the beam to a collecting one. Through an Area Prism it works on the area: with something in hand, on what's living there first; else on its blocks in turn, each from the side facing the prism (bone meal over a field, say). It does it over and over: behind a pulse mirror, once a signal. Use it in the air, or its button in a mount, to switch. | 200 FE a use |
+| <ItemLink id="quantimium:insert_lens" /> | Action | Puts what Laser Ports up the beam send into the inventory the beam ends on, up to 8 items each 0.5 s (each Speed lens doubles that, to 64, and halves the wait); with an Area Prism, each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
+| <ItemLink id="quantimium:extract_lens" /> | Action | Takes from the inventory the beam ends on, up to 8 items each 0.5 s (each Speed lens doubles that, to 64, and halves the wait), as much as the Laser Ports up the beam have room for, back up to them; with an Area Prism, from each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
 | <ItemLink id="quantimium:precision_lens" /> | Modifier | Harvest cuts with Silk Touch: blocks come away whole. | none |
 | <ItemLink id="quantimium:harmonic_lens" /> | Modifier | Harvest cuts with Fortune, and Damage hits with Looting, a level for each, up to 3. | none |
 | <ItemLink id="quantimium:unrealising_lens" /> | Modifier | Ore a Harvest beam cuts (anything in `#c:ores`) comes away as <ItemLink id="quantimium:unrealised_matter" />, one to a block, with no history yet. A pack can turn it off in the config, where Matter would duplicate ores. | none |
 | <ItemLink id="quantimium:smelting_lens" /> | Modifier | Smelts, as a furnace would, what the actions before it free or move: what a Harvest beam cuts and what Damage kills (picked up or left lying), what Pickup gathers, what Insert puts in and Extract takes out. Sand becomes glass, ore ingots, a pig's drops cooked. Unrealised Matter gets smelting in its history, as a Quantum Crafter with a furnace gives it. What a furnace can't smelt stays as it is, for nothing. With no other action on the light it's an action of its own: it smelts what lies in the beam where it lies, else the block the beam ends on, every 0.5 s. A block it smelts into takes its place (sand becomes glass, and the light goes on through to the next); anything else drops there. | 25 FE for each item it smelts |
 | <ItemLink id="quantimium:crushing_lens" /> | Modifier | Crushes what the actions before it free or move, everywhere Smelting smelts: stone to cobblestone, cobblestone and deepslate to gravel, gravel and sandstone to sand, and anything else as the pack's crushers would, their sure outputs only (raw ore to dust, say). Which crushers, and in what order, is `crushingRecipeTypes` in the `lasers` config: Energized Power's pulverizer and crusher, Ender IO's SAG Mill, Mekanism, Create, Thermal and others. Each Crushing or Smelting lens is a step, in the lenses' order (up to 8): Crushing then Smelting makes raw ore dust, then ingots; Crushing, Crushing, Smelting makes cobblestone gravel, then sand, then glass. A step that changes nothing is free, and so is a run of steps that ends as it began (glass crushed to sand and smelted again). Where nothing says which came first (a crushing beam and a smelting beam meeting at a mirror) it crushes first. Where they change no action before them (alone, or before one: Crushing, Smelting, Harvest), they act on the world themselves, as one, in their order, and a Harvest after them waits till they've done: sandstone becomes glass, then it's cut. Unrealised Matter gets the first of those crushers that gives it something new in its history. Alone it crushes what lies in the beam, else the block the beam ends on, in place: stone becomes cobblestone, then gravel, then sand. With Phantom, it goes through what it can't change to the first block on its way it can (Smelting too). | 25 FE for each item it crushes |
-| <ItemLink id="quantimium:phantom_lens" /> | Modifier | Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Filter set to ores, just the ore in the ground; with Pickup, it passes over what no Collector up the beam would take); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (15 by default, `phantomFePerBlock`) for each block it passes through; for an Area Prism, for each block between it and what it works on |
+| <ItemLink id="quantimium:phantom_lens" /> | Modifier | Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Filter set to ores, just the ore in the ground; with Pickup, it passes over what no Laser Port up the beam would take); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (15 by default, `phantomFePerBlock`) for each block it passes through; for an Area Prism, for each block between it and what it works on |
 | <ItemLink id="quantimium:speed_lens" /> | Modifier | Its actions work twice as fast: a Harvest beam waits half as long between blocks, Placement too, and an Area Prism looks through its area twice as fast. Three count, for eight times. | none |
 | <ItemLink id="quantimium:filter_lens" /> | Modifier | The actions it changes act only on what it lists: nine entries, a whitelist or a blacklist, with tags, and which living things a hit may land on (any, hostile, passive, players, all but players). A block counts by what it drops, so "wheat" lets only ripe wheat be cut. It decides what each action works on (which blocks Harvest cuts, what Damage hits, which items Pickup gathers from the ground, what Placement places), not what happens to the drops: a cut block's drops, and a kill's, all come back with Pickup. **Fully grown** lets a Harvest beam cut only ripe crops (and nothing that doesn't grow, so never the farmland), and a Damage beam spare the young. A **keep** count spares that many of what a Damage beam would hit: it hits only those beyond it, so a pen keeps its breeding pair. Use it in the air to set it. | none |
 | <ItemLink id="quantimium:amplify_lens" /> | Modifier | Harvest cuts as a diamond pickaxe, so obsidian and the like; each one doubles a Damage hit, up to 3. | a cut costs one more share for each; a hit doubles |
 | <ItemLink id="quantimium:uv_lens" /> | Modifier | Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light. | none |
-| <ItemLink id="quantimium:place_lens" /> | Action | Places a block a Sender up the beam sends, in the space where the beam ends, as you would against the block it ends on; one every 0.5 s at most. Seeds count: on farmland they're sown. A bucket of water or lava empties there, and the empty bucket goes back to the Sender. A Filter lens in its mount says what it places. | 200 FE a block, when it's placed |
+| <ItemLink id="quantimium:place_lens" /> | Action | Places a block a Laser Port up the beam sends, in the space where the beam ends, as you would against the block it ends on; one every 0.5 s at most. Seeds count: on farmland they're sown. A bucket of water or lava empties there, and the empty bucket goes back to the port. A Filter lens in its mount says what it places. | 200 FE a block, when it's placed |
 
-**A wheat field.** Point a beam down at farmland through a Collector, a Sender of seeds, and a mount
+**A wheat field.** Point a beam down at farmland through a Laser Port set to both, holding seeds, and a mount
 with Harvest, Pickup, Placement and a Filter lens set to fully grown. Only ripe wheat is cut, it comes
-back up to the Collector, and the spot is sown again. Spread it over a whole field with an Area Prism.
-A cut waits until the Collectors up the beam would take all of its drops, seeds included, so give the
+back up to the port, and the spot is sown again. Spread it over a whole field with an Area Prism.
+A cut waits until the ports up the beam would take all of its drops, seeds included, so give the
 seeds somewhere to go. Use Fully grown rather than a "wheat" entry here: an entry also stops Pickup
 gathering items from the ground.
 
@@ -222,28 +222,27 @@ the lens that gave it, and only for work done: a cut as it's made, a hit when it
 carried. Harvest light joined with plain light is still paid for by its own emitter alone; a Harvest
 lens after the join is paid for by both. Actions only work while their light is lit.
 
-A <ItemLink id="quantimium:collector" /> passes light, out of its face, as a relay does, and
-catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from,
-or take from it yourself. Put it between the emitter and the mount: emitter, Collector, Lens Mount with
-Harvest and Pickup, then the blocks to break. What one Collector can't take goes on up the beam to the
-next. A stream from one side of a join goes up its own side, or to Collectors after the join.
-Open it to set a filter, nine entries, as a whitelist or a blacklist,
-with tags: what it turns away goes on up the beam.
+A <ItemLink id="quantimium:laser_port" /> passes light, out of its face, as a relay does,
+and holds nine slots. It starts out **collecting**: it catches what a Pickup lens further along brings
+back, for pipes and hoppers to take from, or take from it yourself. Put it between the emitter and the
+mount: emitter, Laser Port, Lens Mount with Harvest and Pickup, then the blocks to break. What one port
+can't take goes on up the beam to the next. A stream from one side of a join goes up its own side, or to
+ports after the join. Open it to set a filter on what it catches, nine
+entries, as a whitelist or a blacklist, with tags: what it turns away goes on up the beam.
 
-A <ItemLink id="quantimium:sender" /> is a Collector the other way round: light passes through
-it, and what's in its nine slots goes down the beam, to a Placement lens further along, or once a second
-a stack at a time to the nearest Collector down the beam with room, not past an Isolator. The light
-reaching it pays to carry it, and only while it's lit: a switched-off relay before it, or on the way,
-stops it. A bound Tesseract in a slot sends from the inventory it links to.
+Set to **send**, it works the other way round: what's in its slots goes down
+the beam, to a Placement, Insert or Interact lens further along, or once a second a stack at a time to the
+nearest collecting port down the beam with room, not past an Isolator. The light reaching it pays to
+carry it, and only while it's lit: a switched-off relay before it, or on the way, stops it. A bound
+Tesseract in a slot sends from the inventory it links to.
 
-Each can be set, on its screen, to **collect**, **send** or **both**: a
-Collector starts collecting and a Sender sending, but either does either. In both, what comes back up
-the beam can go straight back down: a Collector of seeds on a wheat field catches the harvest and sows
-the field again from it, with no Sender.
+Its mode tab steps through **collect**, **send** and **both**. In both, what
+comes back up the beam can go straight back down: a port of seeds on a wheat field catches the harvest
+and sows the field again from it.
 
-Open a Collector or Sender and use the **Faces** tab to set, face by face, what pipes and hoppers may
-do there (a Collector's faces hand things out, a Sender's take them in), and which faces push to, or
-pull from, what's beside them, once a second.
+Use the **Faces** tab to set, face by face, what pipes and hoppers may do there (hand things out, take
+them in; things only go in while it sends), and which faces push to, or pull from, what's beside them,
+once a second.
 
 An <ItemLink id="quantimium:area_prism" /> spreads the actions of light reaching it over an
 area of any size: Harvest cuts each block there in turn, Damage hurts and Pickup gathers whatever's in it,
@@ -260,7 +259,7 @@ machines on the same light can't starve it; blocks are charged from what's left.
 
 The <ItemLink id="quantimium:spectroscope" /> splits light into what it carries, as a real
 spectroscope's prism does. Use it on any laser block to read the light leaving it: how far a run
-reaches and from how many sources, each action with its modifiers, who pays and how many Collectors it
+reaches and from how many sources, each action with its modifiers, who pays and how many Laser Ports it
 can reach, and each beam's length, end and power.
 
 **Don't look into the beam.** Light carrying power blinds anything whose eyes
@@ -279,7 +278,7 @@ doesn't refocus the light or take anything for it. Light in the mirror:
   Veiled and mirror mites. Placement does nothing.
 - draws <ItemLink id="quantimium:veil_thread" /> with Pickup: through a Containment Hall's glass, into the cell where a Veiled
   is held, it draws a thread at a Harvest Laser's pace, one draw to a hall at a time, and the thread goes
-  up the beam to a Collector.
+  up the beam to a Laser Port.
 - charges nothing of the real world: a machine just stops it.
 - is stopped by solid blocks as any light is: blocks are solid in the mirror too.
 - can only be seen from in the mirror, or through a <ItemLink id="quantimium:mirror_lens" />.
@@ -298,7 +297,7 @@ action, or more with Range lenses. A block beyond it gets nothing.
 
 ## Networks
 
-Emitters, mirrors, relays, prisms, cavities, photodetectors, Lens Mounts and Collectors joined by light make one network. Power goes where it's asked for: every block
+Emitters, mirrors, relays, prisms, cavities, photodetectors, Lens Mounts and Laser Ports joined by light make one network. Power goes where it's asked for: every block
 the network's light reaches is charged as far as the network's emitters have power, shared between
 the emitters whose light reaches it in proportion to what each has. An emitter only ever pays for the
 blocks its own light reaches. Light reaches a block by the fewest relays it can.

@@ -168,7 +168,7 @@ public interface LaserNode {
         return true;
     }
 
-    /** Puts back what a Sender sent but couldn't be used; what didn't fit. */
+    /** Puts back what a sending Laser Port sent but couldn't be used; what didn't fit. */
     default net.minecraft.world.item.ItemStack takeBack(net.minecraft.world.item.ItemStack stack) {
         return stack;
     }
@@ -178,25 +178,25 @@ public interface LaserNode {
         return false;
     }
 
-    /** Whether this sends items down the beam, from its slots: a Sender. */
+    /** Whether this sends items down the beam, from its slots: a sending Laser Port. */
     default boolean sends() {
         return false;
     }
 
-    /** Takes up to one stack the {@code wants} predicate accepts from a Sender's slots (or with {@code simulate}, says what it would). */
+    /** Takes up to one stack the {@code wants} predicate accepts from a sending Laser Port's slots (or with {@code simulate}, says what it would). */
     default net.minecraft.world.item.ItemStack send(java.util.function.Predicate<net.minecraft.world.item.ItemStack> wants, int max, boolean simulate) {
         return net.minecraft.world.item.ItemStack.EMPTY;
     }
 
     /**
-     * Whether items a beam brings back stop here: a Collector. Pickup sends them to the nearest one up
+     * Whether items a beam brings back stop here: a collecting Laser Port. Pickup sends them to the nearest one up
      * the beam.
      */
     default boolean collects() {
         return false;
     }
 
-    /** Takes what it can of {@code stack}, a Collector (or with {@code simulate}, says what it would); what's left. */
+    /** Takes what it can of {@code stack}, a collecting Laser Port (or with {@code simulate}, says what it would); what's left. */
     default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack, boolean simulate) {
         return stack;
     }

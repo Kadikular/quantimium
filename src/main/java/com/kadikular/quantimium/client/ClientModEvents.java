@@ -124,9 +124,7 @@ public class ClientModEvents {
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LENS_MOUNT_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.SENDER_BE.get(),
-                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.COLLECTOR_BE.get(),
+        event.registerBlockEntityRenderer(ModBlockEntities.LASER_PORT_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.RIFT_STABILISER_BE.get(), RiftStabiliserBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ENTANGLED_DOCK_BE.get(), EntangledDockBER::new);

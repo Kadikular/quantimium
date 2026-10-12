@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "I": "minecraft:iron_ingot",
-    "D": "minecraft:dispenser",
+    "D": "minecraft:dropper",
     "M": "quantimium:laser_relay",
     "G": "minecraft:glass_pane"
   },
@@ -13,7 +13,7 @@
     "III"
   ],
   "result": {
-    "id": "quantimium:sender",
+    "id": "quantimium:laser_port",
     "count": 1
   }
 }

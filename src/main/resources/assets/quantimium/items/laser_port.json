@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/collector"
+    "model": "quantimium:block/laser_port_collect"
   }
 }

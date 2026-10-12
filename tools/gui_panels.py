@@ -375,16 +375,16 @@ def lens_mount() -> Panel:
     return panel
 
 
-def collector() -> Panel:
-    """A Collector: what it's caught in a dispenser's 3x3 grid, centred (CollectorMenu.GRID_*)."""
+def laser_port() -> Panel:
+    """A Laser Port: what it holds in a dispenser's 3x3 grid, centred (LaserPortMenu.GRID_*)."""
     panel = Panel(HIGH)
     panel.grid((62, 17), 3, 3, "items")
     panel.player()
     return panel
 
 
-def collector_filter() -> Panel:
-    """The Collector's filter view: a note across the top and nine ghost entries in a row (CollectorMenu.FILTER_*)."""
+def laser_port_filter() -> Panel:
+    """The Laser Port's filter view: a note across the top and nine ghost entries in a row (LaserPortMenu.FILTER_*)."""
     panel = Panel(HIGH)
     panel.region("note", (8, 22, 160, 9))
     panel.grid((8, 35), 9, 1, "filter")
@@ -495,9 +495,9 @@ PANELS = {
     "laser_emitter": lambda: laser_emitter(False),
     "flash_emitter": lambda: laser_emitter(True),
     "lens_mount": lens_mount,
-    "collector": collector,
+    "laser_port": laser_port,
     "area_prism": area_prism,
-    "collector_filter": collector_filter,
+    "laser_port_filter": laser_port_filter,
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,

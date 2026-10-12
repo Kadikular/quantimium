@@ -1,9 +1,9 @@
 package com.kadikular.quantimium.gametest;
 
-import com.kadikular.quantimium.block.CollectorBlock;
+import com.kadikular.quantimium.block.LaserPortBlock;
 import com.kadikular.quantimium.block.LaserEmitterBlock;
 import com.kadikular.quantimium.block.LensMountBlock;
-import com.kadikular.quantimium.block.entity.CollectorBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserPortBlockEntity;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity;
 import com.kadikular.quantimium.block.entity.LensMountBlockEntity;
@@ -24,7 +24,7 @@ import net.minecraft.world.phys.AABB;
 /**
  * Lasers, phase two: lenses in a Lens Mount give the light leaving it an action (harvest, damage) and
  * modifiers (pickup), which add up along mounts in a row. The beam still carries power; its actions
- * spend some of it, and only while it's lit. A Collector up the beam catches what Pickup brings back.
+ * spend some of it, and only while it's lit. A Laser Port up the beam catches what Pickup brings back.
  */
 public final class LensTests {
 
@@ -45,14 +45,14 @@ public final class LensTests {
         return mount;
     }
 
-    private static CollectorBlockEntity collector(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.COLLECTOR.get().defaultBlockState().setValue(CollectorBlock.FACING, facing));
-        return helper.getBlockEntity(pos, CollectorBlockEntity.class);
+    private static LaserPortBlockEntity collector(GameTestHelper helper, BlockPos pos, Direction facing) {
+        helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(LaserPortBlock.FACING, facing));
+        return helper.getBlockEntity(pos, LaserPortBlockEntity.class);
     }
 
-    private static int count(CollectorBlockEntity collector, Item item) {
+    private static int count(LaserPortBlockEntity collector, Item item) {
         int total = 0;
-        for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) {
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) {
             ItemStack stack = collector.getItems().getStackInSlot(slot);
             if (stack.is(item)) total += stack.getCount();
         }
@@ -102,11 +102,11 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.lens.pickup, laser.collector
+    // covers: laser.lens.pickup, laser.port.collect
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void pickupBringsWhatItBreaksBackToACollector(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {
@@ -121,7 +121,7 @@ public final class LensTests {
         // Pickup in the first mount, Harvest in the second: the light leaving the second does both. Pickup,
         // unlike other modifiers, goes on actions added after it too.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
         mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
         helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
@@ -135,7 +135,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void pickupAloneGathersItemsLyingInTheBeam(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
         ItemEntity item = new ItemEntity(helper.getLevel(), helper.absoluteVec(new BlockPos(10, Y, 8).getCenter()).x,
                 helper.absolutePos(new BlockPos(10, Y, 8)).getY() + 0.5, helper.absoluteVec(new BlockPos(10, Y, 8).getCenter()).z,
@@ -165,17 +165,17 @@ public final class LensTests {
     // covers: laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void pickupFillsTheNextCollectorWhenOneIsFull(GameTestHelper helper) {
-        // Two emitters, each through its own Collector, joined at a mirror: when one Collector is full,
+        // Two emitters, each through its own Laser Port, joined at a mirror: when one Laser Port is full,
         // what Pickup brings back goes up the other side.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity west = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity west = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
-        CollectorBlockEntity north = collector(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
+        LaserPortBlockEntity north = collector(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
         helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
         mount(helper, new BlockPos(8, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
-        for (CollectorBlockEntity full : java.util.List.of(west, north)) {
-            for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) full.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        for (LaserPortBlockEntity full : java.util.List.of(west, north)) {
+            for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) full.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
         }
         // Room in the west one only: whichever side is tried first, the diamonds must end up there.
         west.getItems().setStackInSlot(4, ItemStack.EMPTY);
@@ -452,7 +452,7 @@ public final class LensTests {
     public static void pickupBeforeDamageStillGathersItsDrops(GameTestHelper helper) {
         // Pickup stays on the light: Damage added after it gets it too.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.DAMAGE_LENS.get());
         var zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(9, Y, 8));
         zombie.setHealth(1.0f);
@@ -464,13 +464,13 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.collector.filter
+    // covers: laser.port.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aCollectorsFilterSendsTheRestOnUp(GameTestHelper helper) {
-        // The nearer Collector catches only stone; the cobblestone goes on up to the farther one.
+        // The nearer Laser Port catches only stone; the cobblestone goes on up to the farther one.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity far = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
-        CollectorBlockEntity near = collector(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        LaserPortBlockEntity far = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity near = collector(helper, new BlockPos(5, Y, 8), Direction.EAST);
         near.setFilterSlot(0, new ItemStack(Items.STONE));
         mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
@@ -533,8 +533,8 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void withPickupItOnlyCutsWhatItCanCarryAway(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
-        for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
         helper.runAfterDelay(60, () -> {
@@ -672,14 +672,15 @@ public final class LensTests {
         });
     }
 
-    private static com.kadikular.quantimium.block.entity.SenderBlockEntity sender(GameTestHelper helper, BlockPos pos, Direction facing, ItemStack... stock) {
-        helper.setBlock(pos, ModBlocks.SENDER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.SenderBlock.FACING, facing));
-        var sender = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.SenderBlockEntity.class);
+    /** A Laser Port set to send, holding {@code stock}. */
+    private static LaserPortBlockEntity sender(GameTestHelper helper, BlockPos pos, Direction facing, ItemStack... stock) {
+        LaserPortBlockEntity sender = collector(helper, pos, facing);
+        sender.cycleMode();
         for (int i = 0; i < stock.length; i++) sender.getItems().setStackInSlot(i, stock[i]);
         return sender;
     }
 
-    // covers: laser.lens.place, laser.sender
+    // covers: laser.lens.place, laser.port.send
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aPlacementBeamPlacesWhatASenderSends(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
@@ -688,7 +689,7 @@ public final class LensTests {
         helper.setBlock(new BlockPos(11, Y, 8), Blocks.DIRT);
         helper.succeedWhen(() -> {
             helper.assertBlockPresent(Blocks.COBBLESTONE, new BlockPos(10, Y, 8));
-            helper.assertTrue(sender.getItems().getStackInSlot(0).getCount() < 4, "taken from the Sender");
+            helper.assertTrue(sender.getItems().getStackInSlot(0).getCount() < 4, "taken from the sending port");
             TestSupport.finishLasers(helper);
         });
     }
@@ -696,13 +697,13 @@ public final class LensTests {
     // covers: laser.lens.place, laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void aWheatFieldCutRipeAndReplanted(GameTestHelper helper) {
-        // Down onto farmland: Harvest with Pickup, filtered to fully grown, and Placement of seeds from the Sender.
+        // Down onto farmland: Harvest with Pickup, filtered to fully grown, and Placement of seeds from the sending Laser Port.
         BlockPos crop = new BlockPos(8, Y, 8);
         helper.setBlock(crop.below(), Blocks.FARMLAND);
         helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7));
         helper.setBlock(new BlockPos(8, Y + 7, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
         helper.setBlock(new BlockPos(8, Y + 6, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
-        CollectorBlockEntity collector = collector(helper, new BlockPos(8, Y + 5, 8), Direction.DOWN);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(8, Y + 5, 8), Direction.DOWN);
         sender(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN, new ItemStack(Items.WHEAT_SEEDS, 8));
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 3, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         // Fully grown only: ripe crops are cut, and the seeds it sows aren't.
@@ -733,12 +734,12 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.sender
+    // covers: laser.port.send
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aSenderShipsDownTheBeamToACollector(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.DIAMOND, 5));
-        CollectorBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
         helper.setBlock(new BlockPos(14, Y, 8), ModBlocks.FOLD_CORE.get());
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.DIAMOND), 5, "the diamonds went down the beam");
@@ -977,7 +978,7 @@ public final class LensTests {
     // covers: laser.relay.redstone
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void placementBehindAnUnpoweredMirrorStaysOffAfterAJoin(GameTestHelper helper) {
-        // A: emitter, mirror needing a signal (none), Sender, Placement mount, into a join mirror.
+        // A: emitter, mirror needing a signal (none), Laser Port, Placement mount, into a join mirror.
         // B: emitter, Harvest + Pickup mount, into the same join. The join's light goes on into an Area Prism.
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
         helper.setBlock(new BlockPos(3, Y, 4), ModBlocks.LASER_RELAY.get().defaultBlockState()
@@ -999,7 +1000,7 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.sender, laser.relay.redstone
+    // covers: laser.port.send, laser.relay.redstone
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void aSenderBehindAnUnpoweredMirrorShipsNothing(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
@@ -1007,7 +1008,7 @@ public final class LensTests {
                 .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
         helper.getBlockEntity(new BlockPos(3, Y, 8), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).cycleMode();
         sender(helper, new BlockPos(5, Y, 8), Direction.EAST, new ItemStack(Items.DIAMOND, 5));
-        CollectorBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
         helper.setBlock(new BlockPos(13, Y, 8), Blocks.BEDROCK);
         helper.runAfterDelay(70, () -> {
             helper.assertValueEqual(count(collector, Items.DIAMOND), 0, "nothing shipped while the light's switched off");
@@ -1027,7 +1028,7 @@ public final class LensTests {
             helper.assertBlockPresent(Blocks.WATER, new BlockPos(8, Y, 8));
             boolean empty = false;
             for (int slot = 0; slot < 9; slot++) empty |= sender.getItems().getStackInSlot(slot).is(Items.BUCKET);
-            helper.assertTrue(empty, "the empty bucket came back to the Sender");
+            helper.assertTrue(empty, "the empty bucket came back to the sending port");
             TestSupport.finishLasers(helper);
             helper.setBlock(new BlockPos(8, Y, 8), Blocks.AIR);
         });
@@ -1061,10 +1062,10 @@ public final class LensTests {
     // covers: laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void withPickupItCutsNothingItsCollectorsWouldRefuse(GameTestHelper helper) {
-        // The Collector takes only sandstone: dirt from a grass block would be left lying, so it isn't cut.
+        // The Laser Port takes only sandstone: dirt from a grass block would be left lying, so it isn't cut.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
-        CollectorBlockEntity collector = collector(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(5, Y, 8), Direction.EAST);
         collector.setFilterSlot(0, new ItemStack(Items.SANDSTONE));
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.GRASS_BLOCK);
         helper.runAfterDelay(60, () -> {
@@ -1135,9 +1136,9 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void pickupComesBackPastACavity(GameTestHelper helper) {
         // Harvest + Pickup light fills a cavity; the cavity's own light cuts the stone, and the drop comes
-        // back past it to the Collector up the light that filled it.
+        // back past it to the collecting Laser Port up the light that filled it.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.CAVITY_MIRROR.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, Direction.SOUTH));
@@ -1186,9 +1187,9 @@ public final class LensTests {
     // covers: laser.lens.phantom
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void phantomPickupPassesOverWhatItCantCarry(GameTestHelper helper) {
-        // A Collector for dirt only: the sandstone first in the way stays, and the dirt behind it is cut.
+        // A Laser Port for dirt only: the sandstone first in the way stays, and the dirt behind it is cut.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         collector.setFilterSlot(0, new ItemStack(Items.DIRT));
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.PHANTOM_LENS.get());
         helper.setBlock(new BlockPos(7, Y, 8), Blocks.SANDSTONE);
@@ -1267,9 +1268,9 @@ public final class LensTests {
     // covers: laser.rift
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
     public static void mirroredHarvestTakesACrystalApart(GameTestHelper helper) {
-        // Through a rift, Harvest light takes a grown crystal apart for its shards, back up to the Collector.
+        // Through a rift, Harvest light takes a grown crystal apart for its shards, back up to the collecting Laser Port.
         LaserEmitterBlockEntity emitter = emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         rift(helper, new BlockPos(7, Y, 8), Direction.Axis.X);
         helper.setBlock(new BlockPos(10, Y - 1, 8), ModBlocks.FOLD_CORE.get());
@@ -1337,10 +1338,10 @@ public final class LensTests {
         BlockPos hallAt = new BlockPos(8, 2, 8);
         var hall = TestSupport.readyHall(helper, hallAt, 1, 16);
         hall.contain();
-        // West into the hall's east wall: emitter, Collector, a Pickup mount, then a rift seated on the glass.
+        // West into the hall's east wall: emitter, Laser Port, a Pickup mount, then a rift seated on the glass.
         BlockPos row = hallAt.above(2);
         emitter(helper, row.east(7), Direction.WEST, true);
-        CollectorBlockEntity collector = collector(helper, row.east(5), Direction.WEST);
+        LaserPortBlockEntity collector = collector(helper, row.east(5), Direction.WEST);
         mount(helper, row.east(4), Direction.WEST, ModItems.PICKUP_LENS.get());
         rift(helper, row.east(2), Direction.Axis.X);
         helper.runAfterDelay(30, () -> com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).nearlyDrawn(5));
@@ -1352,19 +1353,20 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.collector.mode
+    // covers: laser.port.mode
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
-    public static void aCollectorSetToBothFeedsSeedsBackDown(GameTestHelper helper) {
+    public static void aPortSetToBothFeedsSeedsBackDown(GameTestHelper helper) {
         // One block for both: it catches the harvest, and its seeds go back down to be sown.
         BlockPos crop = new BlockPos(8, Y, 8);
         helper.setBlock(crop.below(), Blocks.FARMLAND);
         helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7));
         helper.setBlock(new BlockPos(8, Y + 6, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
         helper.setBlock(new BlockPos(8, Y + 5, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
-        CollectorBlockEntity both = collector(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN);
+        LaserPortBlockEntity both = collector(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN);
         both.cycleMode();
         both.cycleMode();
-        helper.assertTrue(both.mode() == com.kadikular.quantimium.block.entity.ItemRelayBlockEntity.Mode.BOTH, "set to both");
+        helper.assertTrue(both.mode() == com.kadikular.quantimium.block.entity.LaserPortBlockEntity.Mode.BOTH, "set to both");
+        helper.assertTrue(helper.getBlockState(new BlockPos(8, Y + 4, 8)).getValue(LaserPortBlock.MODE) == LaserPortBlockEntity.Mode.BOTH, "and shows it");
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
                 ModItems.PLACE_LENS.get());
         mount.getLensSlots().setStackInSlot(3, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
@@ -1394,9 +1396,9 @@ public final class LensTests {
     // covers: laser.lens.extract
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void anExtractBeamEmptiesTheChestBackUp(GameTestHelper helper) {
-        // Filtered to gold: the gold comes back to the Collector; the iron stays.
+        // Filtered to gold: the gold comes back to the collecting Laser Port; the iron stays.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get());
         mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.GOLD_INGOT))));
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
@@ -1429,7 +1431,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void anInteractBeamFillsABucket(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         sender(helper, new BlockPos(5, Y, 8), Direction.EAST, new ItemStack(Items.BUCKET));
         mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
         helper.setBlock(new BlockPos(10, Y, 8), Blocks.WATER);
@@ -1455,7 +1457,7 @@ public final class LensTests {
             helper.assertTrue(!pig.isAlive() || full - pig.getHealth() >= 6.0f, "hit as hard as a diamond sword: " + pig.getHealth());
             boolean back = false;
             for (int slot = 0; slot < 9; slot++) back |= sender.getItems().getStackInSlot(slot).is(Items.DIAMOND_SWORD);
-            helper.assertTrue(back, "the sword went back to the Sender");
+            helper.assertTrue(back, "the sword went back to the sending port");
             TestSupport.finishLasers(helper);
         });
     }
@@ -1522,9 +1524,9 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void anInteractBeamLeavesFedAnimalsAlone(GameTestHelper helper) {
         // One pig waiting to breed again, one already in love: neither takes a carrot, and the carrots stay in the
-        // Sender rather than going on up to the Collector.
+        // Laser Port rather than going on up to the collecting Laser Port.
         emitter(helper, new BlockPos(0, Y + 2, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(2, Y + 2, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(2, Y + 2, 8), Direction.EAST);
         var sender = sender(helper, new BlockPos(3, Y + 2, 8), Direction.EAST, new ItemStack(Items.CARROT, 4));
         LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y + 2, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
         mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
@@ -1542,7 +1544,7 @@ public final class LensTests {
             int carrots = 0;
             for (int slot = 0; slot < 9; slot++) carrots += sender.getItems().getStackInSlot(slot).is(Items.CARROT) ? sender.getItems().getStackInSlot(slot).getCount() : 0;
             helper.assertValueEqual(carrots, 4, "no carrot eaten");
-            helper.assertValueEqual(count(collector, Items.CARROT), 0, "none went to the Collector");
+            helper.assertValueEqual(count(collector, Items.CARROT), 0, "none went to the collecting port");
             TestSupport.finishLasers(helper);
             resting.discard();
             loving.discard();
@@ -1553,7 +1555,7 @@ public final class LensTests {
     // covers: laser.lens.interact, laser.area_prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
     public static void anAreaInteractTriesEachThingItsSent(GameTestHelper helper) {
-        // Carrots first in the Sender, which only the pig wants: the cow still gets wheat, the sheep shorn.
+        // Carrots first in the sending Laser Port, which only the pig wants: the cow still gets wheat, the sheep shorn.
         emitter(helper, new BlockPos(1, Y + 2, 8), Direction.EAST, true);
         sender(helper, new BlockPos(3, Y + 2, 8), Direction.EAST, new ItemStack(Items.CARROT, 4), new ItemStack(Items.WHEAT, 4),
                 new ItemStack(Items.SHEARS));
@@ -1577,11 +1579,11 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.lens.interact, laser.collector.mode
+    // covers: laser.lens.interact, laser.port.mode
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void anInteractBeamShearsFromACollectorSetToBoth(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity both = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity both = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         both.cycleMode();
         both.cycleMode();
         both.getItems().setStackInSlot(0, new ItemStack(Items.SHEARS));
@@ -1596,11 +1598,11 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.lens.interact, laser.collector.mode, laser.area_prism
+    // covers: laser.lens.interact, laser.port.mode, laser.area_prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void anAreaInteractFeedsFromACollectorSetToBoth(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y + 2, 8), Direction.EAST, true);
-        CollectorBlockEntity both = collector(helper, new BlockPos(3, Y + 2, 8), Direction.EAST);
+        LaserPortBlockEntity both = collector(helper, new BlockPos(3, Y + 2, 8), Direction.EAST);
         both.cycleMode();
         both.cycleMode();
         both.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT, 8));
@@ -1684,7 +1686,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void smeltingExtractBringsIngotsBackUp(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get(), ModItems.SMELTING_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
         var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
@@ -1719,7 +1721,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void precisionCutsWithSilkTouch(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.PRECISION_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {
@@ -1734,7 +1736,7 @@ public final class LensTests {
         // Fortune III on eight lapis ore: more than plain cutting could ever give (9 a block at most).
         // Fortune is chance: this fails by bad luck about once in a few hundred runs.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.HARMONIC_LENS.get(),
                 ModItems.SPEED_LENS.get());
         mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARMONIC_LENS.get(), ModItems.HARMONIC_LENS.get(), ModItems.RANGE_LENS.get());
@@ -1768,7 +1770,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void unrealisingTurnsOreIntoMatter(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.UNREALISING_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.COAL_ORE);
         helper.succeedWhen(() -> {
@@ -1778,8 +1780,8 @@ public final class LensTests {
         });
     }
 
-    private static ItemStack firstOf(CollectorBlockEntity collector, Item item) {
-        for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) {
+    private static ItemStack firstOf(LaserPortBlockEntity collector, Item item) {
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) {
             ItemStack stack = collector.getItems().getStackInSlot(slot);
             if (stack.is(item)) return stack;
         }
@@ -1790,7 +1792,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
     public static void smeltingHarvestCutsSandIntoGlass(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.SAND);
         helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
@@ -1805,7 +1807,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void smeltingPickupSmeltsWhatLiesInTheBeam(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get());
         BlockPos at = new BlockPos(10, Y, 8);
         ItemEntity iron = new ItemEntity(helper.getLevel(), helper.absoluteVec(at.getCenter()).x, helper.absolutePos(at).getY() + 0.5,
@@ -1824,7 +1826,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
     public static void smeltingGivesUnrealisedMatterItsSmelting(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
                 ModItems.UNREALISING_LENS.get(), ModItems.SMELTING_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.IRON_ORE);
@@ -1853,7 +1855,7 @@ public final class LensTests {
     public static void crushingHarvestBringsBackGravel(GameTestHelper helper) {
         // Stone cuts to cobblestone, and that crushes to gravel on the way up.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
         helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
@@ -1880,13 +1882,13 @@ public final class LensTests {
     public static void crushingTurnsRawOreToDust(GameTestHelper helper) {
         // Raw iron has no crushing of its own: the pack's crushers make it dust.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get());
         floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.RAW_IRON, 4));
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.RAW_IRON), 0, "no raw iron came back");
             boolean dust = false;
-            for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) {
+            for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) {
                 ItemStack stack = collector.getItems().getStackInSlot(slot);
                 dust |= net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().contains("dust");
             }
@@ -1900,7 +1902,7 @@ public final class LensTests {
     public static void crushingThenSmeltingMakesIngots(GameTestHelper helper) {
         // Crushing, then Smelting: raw iron to dust to ingots.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get());
         floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.RAW_IRON, 4));
         helper.succeedWhen(() -> {
@@ -1916,11 +1918,11 @@ public final class LensTests {
         // Crushing, then Smelting: cobblestone crushes to gravel, which won't smelt. Smelting, then Crushing:
         // cobblestone smelts to stone, which crushes back to cobblestone.
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
-        CollectorBlockEntity crushFirst = collector(helper, new BlockPos(3, Y, 4), Direction.EAST);
+        LaserPortBlockEntity crushFirst = collector(helper, new BlockPos(3, Y, 4), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 4), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get());
         floating(helper, new BlockPos(10, Y, 4), new ItemStack(Items.COBBLESTONE, 4));
         emitter(helper, new BlockPos(1, Y, 12), Direction.EAST, true);
-        CollectorBlockEntity smeltFirst = collector(helper, new BlockPos(3, Y, 12), Direction.EAST);
+        LaserPortBlockEntity smeltFirst = collector(helper, new BlockPos(3, Y, 12), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 12), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get(), ModItems.CRUSHING_LENS.get());
         floating(helper, new BlockPos(10, Y, 12), new ItemStack(Items.COBBLESTONE, 4));
         helper.succeedWhen(() -> {
@@ -1936,7 +1938,7 @@ public final class LensTests {
     public static void eachCrushingLensIsAnotherStep(GameTestHelper helper) {
         // Crushing, Crushing, Smelting: cobblestone to gravel, to sand, to glass.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get(),
                 ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get());
         floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.COBBLESTONE, 4));
@@ -1968,7 +1970,7 @@ public final class LensTests {
         // Crushing, Smelting, Harvest, Precision: they change no action before them, so they work on the sandstone
         // itself, to sand, to glass; only then is it cut, whole, with Silk Touch, and the glass comes back.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get(),
                 ModItems.HARVEST_LENS.get(), ModItems.PRECISION_LENS.get());
         mount(helper, new BlockPos(6, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
@@ -2033,7 +2035,7 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
     public static void crushingGivesUnrealisedMatterItsCrushing(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
                 ModItems.UNREALISING_LENS.get(), ModItems.CRUSHING_LENS.get());
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.IRON_ORE);

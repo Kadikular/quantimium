@@ -386,7 +386,7 @@ public final class LaserNetworks {
 
     /**
      * Each beam takes the look of the light it carries, and gets an action for each stream (kept from
-     * before, if it was there), with the Collectors up that stream's light; then every node shows its beams.
+     * before, if it was there), with the collecting Laser Ports up that stream's light; then every node shows its beams.
      */
     private void actionsUp() {
         Map<LensAction.Key, LensAction> was = new HashMap<>(actions);
@@ -396,7 +396,7 @@ public final class LaserNetworks {
             Light core = lights.get(pos);
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
             if (core != null) {
-                // The Collectors and Senders up each stream's light: the same for every beam it's on.
+                // The Laser Ports up each stream's light: the same for every beam it's on.
                 Map<Set<BlockPos>, List<BlockPos>> collectors = new HashMap<>();
                 Map<Set<BlockPos>, List<BlockPos>> senders = new HashMap<>();
                 List<LaserBeam> lensed = new ArrayList<>(list.size());
@@ -449,7 +449,7 @@ public final class LaserNetworks {
     }
 
     /**
-     * Every node {@code wanted} picks (a Collector, a Sender) up the light reaching {@code pos}, through
+     * Every node {@code wanted} picks (a collecting Laser Port, a sending Laser Port) up the light reaching {@code pos}, through
      * relays and cavities, nearest first, whose light comes from one of {@code payers}: where Pickup sends
      * what it brings back, or where Placement takes from, each standing in for the ones before. A stream
      * from one side of a join reaches back up its own side, and the shared part; past a cavity, up the
@@ -467,7 +467,7 @@ public final class LaserNetworks {
             BlockPos at = queue.poll();
             LaserNode node = nodes.get(at);
             if (node == null) continue;
-            // A Collector counts if its own light comes from one of the stream's sources: on the stream's own side of a join.
+            // A Laser Port counts if its own light comes from one of the stream's sources: on the stream's own side of a join.
             Light light = lights.get(at);
             if (wanted.test(node) && light != null && !java.util.Collections.disjoint(light.feeders(), ours)) found.add(at);
             if (node.buffers()) {
@@ -491,7 +491,7 @@ public final class LaserNetworks {
         return false;
     }
 
-    /** Gives {@code stack} to the Collectors at {@code positions}, in order; what none could take. */
+    /** Gives {@code stack} to the collecting Laser Ports at {@code positions}, in order; what none could take. */
     ItemStack collect(List<BlockPos> positions, ItemStack stack) {
         ItemStack left = stack;
         for (BlockPos pos : positions) {
@@ -518,9 +518,9 @@ public final class LaserNetworks {
     }
 
     /**
-     * Once a second, each Sender with light reaching it sends a stack down the beam to the nearest
-     * Collector further along with room for it, through relays but not past an Isolator. The light
-     * reaching the Sender pays to carry it.
+     * Once a second, each Laser Port with light reaching it sends a stack down the beam to the nearest
+     * Laser Port further along with room for it, through relays but not past an Isolator. The light
+     * reaching the sending Laser Port pays to carry it.
      */
     private void ship() {
         for (LaserNode node : nodes.values()) {
@@ -539,7 +539,7 @@ public final class LaserNetworks {
         }
     }
 
-    /** What the Collectors at {@code positions} wouldn't take of {@code stack}, between them. */
+    /** What the collecting Laser Ports at {@code positions} wouldn't take of {@code stack}, between them. */
     ItemStack simulateCollect(List<BlockPos> positions, ItemStack stack) {
         ItemStack left = stack;
         for (BlockPos pos : positions) {
@@ -549,7 +549,7 @@ public final class LaserNetworks {
         return left;
     }
 
-    /** Every Collector down the light leaving {@code pos}, through switched-on relays, nearest first; not past an Isolator. */
+    /** Every Laser Port down the light leaving {@code pos}, through switched-on relays, nearest first; not past an Isolator. */
     private List<BlockPos> downFor(BlockPos pos) {
         List<BlockPos> found = new ArrayList<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
@@ -618,7 +618,7 @@ public final class LaserNetworks {
         }
     }
 
-    /** Up to {@code max} of the first thing {@code wants} accepts, from the Senders at {@code positions} in order. */
+    /** Up to {@code max} of the first thing {@code wants} accepts, from the sending Laser Ports at {@code positions} in order. */
     ItemStack take(List<BlockPos> positions, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate) {
         for (BlockPos pos : positions) {
             LaserNode node = nodes.get(pos);
@@ -629,7 +629,7 @@ public final class LaserNetworks {
         return ItemStack.EMPTY;
     }
 
-    /** Puts back into the Senders at {@code positions} what one sent but couldn't be used; what none took. */
+    /** Puts back into the sending Laser Ports at {@code positions} what one sent but couldn't be used; what none took. */
     ItemStack returnTo(List<BlockPos> positions, ItemStack stack) {
         ItemStack left = stack;
         for (BlockPos pos : positions) {
@@ -651,12 +651,12 @@ public final class LaserNetworks {
         return can >= fe;
     }
 
-    /** Whether the Collectors at {@code positions} would take all of {@code stack} between them. */
+    /** Whether the collecting Laser Ports at {@code positions} would take all of {@code stack} between them. */
     boolean roomForAll(List<BlockPos> positions, ItemStack stack) {
         return simulateCollect(positions, stack).isEmpty();
     }
 
-    /** Whether any of the Collectors at {@code positions} would take some of {@code stack}. */
+    /** Whether any of the collecting Laser Ports at {@code positions} would take some of {@code stack}. */
     boolean roomFor(List<BlockPos> positions, ItemStack stack) {
         for (BlockPos pos : positions) {
             LaserNode node = nodes.get(pos);
