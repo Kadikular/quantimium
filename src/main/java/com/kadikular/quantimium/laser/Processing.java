@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * What Crushing and Smelting lenses make of things on their way: crushed first, then smelted, as a
- * crusher feeding a furnace would. Smelting is the furnace's. Crushing is a short stone chain of its own
+ * What Crushing and Smelting lenses make of things on their way: one, then the other, in the order of
+ * their lenses (crushed first where that can't be told, as a crusher feeding a furnace would). Smelting is the furnace's. Crushing is a short stone chain of its own
  * (stone to cobblestone to gravel to sand), then whatever the pack's crushers do, in the order the
  * config lists their recipe types: their sure outputs only, never the chance ones. Unrealised Matter
  * isn't made anything: it gets the step in its history, as a Quantum Crafter would give it.
@@ -68,23 +68,16 @@ public final class Processing {
         SMELTED.clear();
     }
 
-    /** What one of {@code stack} becomes, crushed if {@code crush}, then smelted if {@code smelt}. */
-    public static Made ofOne(ServerLevel level, BlockPos at, ItemStack stack, boolean crush, boolean smelt) {
+    /** What one of {@code stack} becomes, crushed if {@code crush} and smelted if {@code smelt}: smelted first if {@code smeltFirst}. */
+    public static Made ofOne(ServerLevel level, BlockPos at, ItemStack stack, boolean crush, boolean smelt, boolean smeltFirst) {
         List<ItemStack> forms = List.of(stack.copyWithCount(1));
         long fe = 0;
-        if (crush) {
-            List<ItemStack> crushed = each(forms, form -> crushed(level, at, form));
-            if (crushed != null) {
-                forms = crushed;
-                fe += LaserTuning.CRUSH_FE_PER_ITEM;
-            }
-        }
-        if (smelt) {
-            List<ItemStack> smelted = each(forms, form -> smelted(level, at, form));
-            if (smelted != null) {
-                forms = smelted;
-                fe += LaserTuning.SMELT_FE_PER_ITEM;
-            }
+        for (boolean smelting : smeltFirst ? new boolean[] {true, false} : new boolean[] {false, true}) {
+            if (smelting ? !smelt : !crush) continue;
+            List<ItemStack> made = each(forms, form -> smelting ? smelted(level, at, form) : crushed(level, at, form));
+            if (made == null) continue;
+            forms = made;
+            fe += smelting ? LaserTuning.SMELT_FE_PER_ITEM : LaserTuning.CRUSH_FE_PER_ITEM;
         }
         return new Made(forms, fe);
     }

@@ -1710,14 +1710,52 @@ public final class LensTests {
     // covers: laser.lens.crushing, laser.lens.smelting
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void crushingThenSmeltingMakesIngots(GameTestHelper helper) {
-        // Crushed, then smelted, whichever lens comes first: raw iron to dust to ingots.
+        // Crushing, then Smelting: raw iron to dust to ingots.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
-        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get(), ModItems.CRUSHING_LENS.get());
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get());
         floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.RAW_IRON, 4));
         helper.succeedWhen(() -> {
             helper.assertTrue(count(collector, Items.IRON_INGOT) >= 4, "ingots came back");
             helper.assertValueEqual(count(collector, Items.RAW_IRON), 0, "no raw iron");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing, laser.lens.order
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void smeltingThenCrushingFollowsTheLenses(GameTestHelper helper) {
+        // Crushing, then Smelting: cobblestone crushes to gravel, which won't smelt. Smelting, then Crushing:
+        // cobblestone smelts to stone, which crushes back to cobblestone.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        CollectorBlockEntity crushFirst = collector(helper, new BlockPos(3, Y, 4), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 4), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get(), ModItems.SMELTING_LENS.get());
+        floating(helper, new BlockPos(10, Y, 4), new ItemStack(Items.COBBLESTONE, 4));
+        emitter(helper, new BlockPos(1, Y, 12), Direction.EAST, true);
+        CollectorBlockEntity smeltFirst = collector(helper, new BlockPos(3, Y, 12), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 12), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get(), ModItems.CRUSHING_LENS.get());
+        floating(helper, new BlockPos(10, Y, 12), new ItemStack(Items.COBBLESTONE, 4));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(crushFirst, Items.GRAVEL), 4, "crushed first: gravel");
+            helper.assertValueEqual(count(smeltFirst, Items.COBBLESTONE), 4, "smelted first: stone, crushed back to cobblestone");
+            helper.assertValueEqual(count(smeltFirst, Items.GRAVEL), 0, "and no gravel");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing, laser.light.join
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void crushingAndSmeltingFromTwoBeamsCrushFirst(GameTestHelper helper) {
+        // Smelting from one side, Crushing from the other, joined at a mirror: nothing says which comes first,
+        // so it crushes first, and the cobblestone the light ends on becomes gravel.
+        emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 6), Direction.EAST, ModItems.SMELTING_LENS.get());
+        emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
+        mount(helper, new BlockPos(6, Y, 3), Direction.SOUTH, ModItems.CRUSHING_LENS.get());
+        mirror(helper, new BlockPos(6, Y, 6), Direction.EAST);
+        helper.setBlock(new BlockPos(10, Y, 6), Blocks.COBBLESTONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.GRAVEL, new BlockPos(10, Y, 6));
             TestSupport.finishLasers(helper);
         });
     }

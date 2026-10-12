@@ -65,10 +65,16 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /**
      * One action the light carries, its modifiers (bits of {@link Lens}), and who pays for it; how many
-     * Amplify lenses it's met, and what a Filter lens lets it act on (null for everything).
+     * Amplify lenses it's met, and what a Filter lens lets it act on (null for everything). With both
+     * Smelting and Crushing, {@code smeltFirst} says Smelting came first, so it smelts before it crushes;
+     * otherwise, and where it can't tell, it crushes first.
      */
     public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits,
-                         int fortune) {
+                         int fortune, boolean smeltFirst) {
+        public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits, int fortune) {
+            this(action, modifiers, payers, amps, filter, speed, hits, fortune, false);
+        }
+
         public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed) {
             this(action, modifiers, payers, amps, filter, speed, false, 0);
         }
@@ -95,20 +101,33 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         }
 
         Stream paidBy(Set<BlockPos> payers) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, hits, fortune);
+            return new Stream(action, modifiers, payers, amps, filter, speed, hits, fortune, smeltFirst);
         }
 
         Stream with(int modifiers, int amps, @Nullable LensFilter filter) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, hits, fortune);
+            return new Stream(action, modifiers, payers, amps, filter, speed, hits, fortune, smeltFirst);
         }
 
         Stream faster() {
-            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), hits, fortune);
+            return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), hits, fortune,
+                    smeltFirst);
         }
 
         Stream luckier() {
             return new Stream(action, modifiers | 1 << Lens.HARMONIC.ordinal(), payers, amps, filter, speed, hits,
-                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1));
+                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1), smeltFirst);
+        }
+
+        /** Through a Smelting or Crushing lens: if it already did the other, that one comes first. */
+        Stream processedBy(Lens lens) {
+            boolean first = smeltFirst || (lens == Lens.CRUSH && has(Lens.SMELT) && !has(Lens.CRUSH));
+            if (lens == Lens.SMELT && has(Lens.CRUSH) && !has(Lens.SMELT)) first = false;
+            return new Stream(action, modifiers | 1 << lens.ordinal(), payers, amps, filter, speed, hits, fortune, first);
+        }
+
+        /** Whether it does both, and knows which first. */
+        boolean ordersProcessing() {
+            return has(Lens.SMELT) && has(Lens.CRUSH);
         }
     }
 
@@ -147,9 +166,13 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     Set<BlockPos> payers = new HashSet<>(had.payers());
                     payers.addAll(stream.payers());
                     // Joined, the same action does the most either side did; a filter from one side is kept.
+                    // Smelting before Crushing only where a side that did both says so, and no side says otherwise: two
+                    // beams, one smelting and one crushing, meeting at a mirror can't say, so it crushes first.
+                    boolean smeltFirst = (had.smeltFirst() || stream.smeltFirst())
+                            && !(had.ordersProcessing() && !had.smeltFirst()) && !(stream.ordersProcessing() && !stream.smeltFirst());
                     streams.put(stream.action(), new Stream(stream.action(), had.modifiers() | stream.modifiers(), Set.copyOf(payers),
                             Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter(),
-                            Math.max(had.speed(), stream.speed()), had.hits() || stream.hits(), Math.max(had.fortune(), stream.fortune())));
+                            Math.max(had.speed(), stream.speed()), had.hits() || stream.hits(), Math.max(had.fortune(), stream.fortune()), smeltFirst));
                 }
             }
         }
@@ -181,7 +204,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 // Pickup is the exception to order: an action added after it gets it too.
                 int pickup = streams.containsKey(Lens.PICKUP) ? 1 << Lens.PICKUP.ordinal() : 0;
                 streams.put(lens, new Stream(lens, (had == null ? 0 : had.modifiers()) | pickup, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
-                        had == null ? 0 : had.speed(), use.hits(), had == null ? 0 : had.fortune()));
+                        had == null ? 0 : had.speed(), use.hits(), had == null ? 0 : had.fortune(), had != null && had.smeltFirst()));
             } else switch (lens) {
                 case PICKUP -> {
                     streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << Lens.PICKUP.ordinal(), stream.amps(), stream.filter()));
@@ -199,7 +222,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case SMELT, CRUSH -> {
-                    streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
+                    streams.replaceAll((action, stream) -> stream.processedBy(lens));
                     // Smelting and Crushing are actions of their own too, where there's no other: on what the beam ends on.
                     Stream had = streams.get(lens);
                     streams.put(lens, new Stream(lens, 1 << lens.ordinal(), feeders, 0, had == null ? null : had.filter()));
@@ -221,10 +244,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         if (others.size() == streams.size()) return streams;
         if (!others.isEmpty()) return others;
         if (streams.size() == 1) return streams;
-        int both = 0;
-        for (Stream stream : streams) both |= stream.modifiers();
+        // Both alone: the one that came first was changed by the other, so it does both, in their order.
+        // From two sides that each did one, neither knows: it crushes first.
+        for (Stream stream : streams) if (stream.ordersProcessing()) return List.of(stream);
         Stream crush = streams.stream().filter(stream -> stream.action() == Lens.CRUSH).findFirst().orElseThrow();
-        return List.of(crush.with(both, crush.amps(), crush.filter()));
+        return List.of(crush.processedBy(Lens.SMELT));
     }
 
     private static boolean processes(Lens action) {
@@ -262,6 +286,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             entry.putInt("Amps", stream.amps());
             entry.putInt("Speed", stream.speed());
             entry.putInt("Fortune", stream.fortune());
+            entry.putBoolean("SmeltFirst", stream.smeltFirst());
             if (stream.filter() != null) {
                 LensFilter.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, stream.filter()).result().ifPresent(filter -> entry.put("Filter", filter));
             }
@@ -282,7 +307,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             LensFilter filter = stream.get("Filter") == null ? null
                     : LensFilter.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, stream.get("Filter")).result().orElse(null);
             streams.add(new Stream(Lens.values()[action], stream.getIntOr("Modifiers", 0), Set.of(source), stream.getIntOr("Amps", 0), filter,
-                    stream.getIntOr("Speed", 0), false, stream.getIntOr("Fortune", 0)));
+                    stream.getIntOr("Speed", 0), false, stream.getIntOr("Fortune", 0), stream.getBooleanOr("SmeltFirst", false)));
         }
         return new Light(tag.getIntOr("Range", LaserTuning.RELAY_RANGE), tag.getIntOr("Boosts", 0),
                 List.copyOf(streams), Set.of(source), -1, tag.getIntOr("Marks", 0));

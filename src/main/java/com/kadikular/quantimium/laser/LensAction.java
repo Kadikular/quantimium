@@ -901,12 +901,12 @@ public final class LensAction {
     /** What one of {@code stack} becomes with this stream's Crushing and Smelting lenses: nothing, in the mirror. */
     private Processing.Made made(ServerLevel level, ItemStack stack) {
         if (!processes() || stack.isEmpty() || mirrored()) return new Processing.Made(List.of(stack.copyWithCount(1)), 0);
-        return Processing.ofOne(level, key.node(), stack, stream.has(Lens.CRUSH), stream.has(Lens.SMELT));
+        return Processing.ofOne(level, key.node(), stack, stream.has(Lens.CRUSH), stream.has(Lens.SMELT), stream.smeltFirst());
     }
 
     /**
-     * What Crushing and Smelting lenses make of {@code stack} on its way: crushed, then smelted (see
-     * {@link Processing}), in stacks no bigger than they may be. What neither changes comes as it is, the same stack.
+     * What Crushing and Smelting lenses make of {@code stack} on its way: one, then the other, in their
+     * lenses' order (see {@link Processing}), in stacks no bigger than they may be. What neither changes comes as it is, the same stack.
      */
     private List<ItemStack> processed(ServerLevel level, ItemStack stack) {
         Processing.Made made = made(level, stack);
