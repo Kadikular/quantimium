@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/lens_mount_down_west"
+    "model": "quantimium:block/lens_mount"
   }
 }

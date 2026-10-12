@@ -162,11 +162,10 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 
 ## Lenses
 
-A <ItemLink id="quantimium:lens_mount" /> is a holder on a base with four lenses standing in a
-row, and light goes straight through it: in by the side behind its output, out of its output, refocused,
-through its lenses in order (its four slots, left to right). Light from any other side stops on it. Its
-output is never along its base's axis (on a floor, it shines sideways), and a collar marks the end light
-leaves by. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
+A <ItemLink id="quantimium:lens_mount" /> is a frame cube with four lenses standing inside it
+in a row, and light goes straight through it: in by the side behind its front, out of its front,
+refocused, through its lenses in order (its four slots, left to right). Light from any other side stops
+on it. Its four front edges are light blue, so you can see which way it shines. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
 lenses say along the way. Open the mount with an empty hand; sneak-click or wrench a side to point it
 there. Under each lens is a button for that lens's own settings (a Filter lens's, say), lit when it has
 any. Each lensed beam is tinted by what it does.

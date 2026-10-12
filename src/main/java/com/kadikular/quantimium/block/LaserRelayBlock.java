@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>The Isolator, built on it, has no base: a wrench or a sneaking empty hand on a face adds or takes away an
  * output there (one always stays), and an empty hand steps through how it listens to redstone.
  */
-public class LaserRelayBlock extends BaseEntityBlock {
+public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.quantimium.laser.BeamAnchor {
     public static final MapCodec<LaserRelayBlock> CODEC = simpleCodec(LaserRelayBlock::new);
     /** The face it was placed facing: its first output. */
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
@@ -79,6 +79,12 @@ public class LaserRelayBlock extends BaseEntityBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, MOUNT);
         OUTPUTS.values().forEach(builder::add);
+    }
+
+    /** Light into it goes to its focus, in its middle. */
+    @Override
+    public net.minecraft.world.phys.Vec3 beamPoint(BlockState state, BlockPos pos) {
+        return pos.getCenter();
     }
 
     /** Whether it stands on a base: a Relay does; the Isolator, built on it, is a plain block. */

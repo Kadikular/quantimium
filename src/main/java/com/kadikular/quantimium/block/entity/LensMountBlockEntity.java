@@ -98,6 +98,13 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         return Set.of(facing());
     }
 
+    /** Its light leaves from its middle, past its lenses, not its face. */
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        net.minecraft.world.phys.Vec3[] ends = beam.ends();
+        return new net.minecraft.world.phys.Vec3[] {worldPosition.getCenter(), ends[1]};
+    }
+
     /** Light goes straight through it: in by the side behind its output, travelling the way it shines. */
     @Override
     public boolean accepts(Direction travel) {

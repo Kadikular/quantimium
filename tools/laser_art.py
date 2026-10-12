@@ -633,53 +633,49 @@ def solar_emitter() -> None:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/solar_emitter_item"}}, handle, indent=2)
 
 
+def lens_mount_front() -> Image.Image:
+    """The Lens Mount's front edges: the focus's light blue, a lighter line along them, so you can see which way it shines."""
+    img = Image.new("RGBA", (16, 16), hx("7fb2ff"))
+    for i in range(16):
+        img.putpixel((i, 0), hx("c8dcff"))
+        img.putpixel((0, i), hx("c8dcff"))
+        img.putpixel((i, 15), hx("4a7fd0"))
+        img.putpixel((15, i), hx("4a7fd0"))
+    return img
+
+
 def lens_mount() -> None:
     """
-    The Lens Mount: a holder on a base, its four lenses (drawn by its renderer, as items) standing in cradles in a
-    row along the light, and a collar at the end light leaves by. Drawn standing on a floor shining north, then
-    turned to each base and way it shines, as LensMountBlock.turn turns it (its shape and lenses follow the same).
+    The Lens Mount: a frame cube of 2x2 edges, its lenses (drawn by its renderer, as items) standing inside it in
+    a row along the light, its four front edges light blue where light leaves. Drawn shining north, turned to each
+    way it shines.
     """
-    t = {"steel": "quantimium:block/laser_mirror_steel", "particle": "quantimium:block/laser_mirror_steel"}
-    slots = (12.5, 9.5, 6.5, 3.5)
-    parts = [((3, 0, 0), (13, 1, 16)), ((3, 1, 0), (4, 2, 16)), ((12, 1, 0), (13, 2, 16))]
-    for along in slots:
-        parts += [((7, 1, along - 0.5), (9, 4, along + 0.5)), ((5, 4, along - 0.75), (11, 5, along + 0.75))]
-    # The collar where light leaves, on a post of its own.
-    parts += [((7, 1, 0), (9, 5, 1)), ((5, 5, 0), (11, 6, 1)), ((5, 10, 0), (11, 11, 1)), ((5, 6, 0), (6, 10, 1)), ((10, 6, 0), (11, 10, 1))]
+    lens_mount_front().save(os.path.join(TEX, "lens_mount_front.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "front": "quantimium:block/lens_mount_front",
+         "particle": "quantimium:block/laser_mirror_steel"}
 
-    def turn(point, mount, facing):
-        up = [-v for v in DIRS[mount]]
-        forward = DIRS[facing]
-        across = [forward[1] * up[2] - forward[2] * up[1], forward[2] * up[0] - forward[0] * up[2], forward[0] * up[1] - forward[1] * up[0]]
-        x, y, z = point
-        return [8 + across[k] * (x - 8) + up[k] * (y - 8) + forward[k] * (8 - z) for k in range(3)]
+    def bar(start, end, texture):
+        return {"from": start, "to": end, "faces": {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}}
 
-    def elements(mount, facing):
-        out = []
-        for start, end in parts:
-            a, b = turn(start, mount, facing), turn(end, mount, facing)
-            lo, hi = [round(min(a[k], b[k]), 4) for k in range(3)], [round(max(a[k], b[k]), 4) for k in range(3)]
-            out.append({"from": lo, "to": hi, "faces": {f: {"texture": "#steel"} for f in ("north", "south", "east", "west", "up", "down")}})
-        return out
-
-    variants = {}
-    for mount in DIRS:
-        valid = [f for f in DIRS if sum(p * q for p, q in zip(DIRS[f], DIRS[mount])) == 0]
-        for facing in DIRS:
-            shown = facing if facing in valid else valid[0]
-            name = f"lens_mount_{mount}_{shown}"
-            if facing in valid:
-                with open(os.path.join(MODELS, name + ".json"), "w") as handle:
-                    json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements(mount, facing)}, handle, indent=2)
-            variants[f"facing={facing},mount={mount}"] = {"model": f"quantimium:block/{name}"}
+    edges = []
+    for y in (0, 14):
+        for z in (0, 14):
+            edges.append(bar([0, y, z], [16, y + 2, z + 2], "#front" if z == 0 else "#steel"))
+    for x in (0, 14):
+        for z in (0, 14):
+            edges.append(bar([x, 2, z], [x + 2, 14, z + 2], "#front" if z == 0 else "#steel"))
+    for x in (0, 14):
+        for y in (0, 14):
+            edges.append(bar([x, y, 2], [x + 2, y + 2, 14], "#steel"))
+    with open(os.path.join(MODELS, "lens_mount.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "textures": t, "elements": edges}, handle, indent=2)
     with open(os.path.join(STATES, "lens_mount.json"), "w") as handle:
-        json.dump({"variants": variants}, handle, indent=1)
+        json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/lens_mount"}, **r) for f, r in ROTATIONS.items()}}, handle, indent=1)
     with open(os.path.join(ITEMS, "lens_mount.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/lens_mount_down_west"}}, handle, indent=2)
-    for stale in ("lens_mount",):
-        path = os.path.join(MODELS, stale + ".json")
-        if os.path.exists(path):
-            os.remove(path)
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/lens_mount"}}, handle, indent=2)
+    for name in os.listdir(MODELS):
+        if name.startswith("lens_mount_") and name.endswith(".json"):
+            os.remove(os.path.join(MODELS, name))
 
 
 def laser_relay() -> None:
