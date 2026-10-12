@@ -63,6 +63,8 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         protected void onContentsChanged(int slot) {
             setChanged();
             if (level != null && !level.isClientSide()) LaserNetworks.changed(level);
+            // Its slot panels show what's fitted: clients need to know.
+            sync();
         }
     };
     private List<LaserBeam> shownBeams = List.of();

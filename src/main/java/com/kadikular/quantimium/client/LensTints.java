@@ -21,7 +21,7 @@ import java.util.List;
 public final class LensTints {
 
     /** An empty Lens Mount slot. */
-    public static final int EMPTY_SLOT = 0xFF2C303C;
+    public static final int EMPTY_SLOT = 0xFF2A2B2F;
     /** A bare emitter tip: its own colours. */
     private static final int BARE = 0xFFFFFFFF;
 

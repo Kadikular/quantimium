@@ -635,14 +635,8 @@ def solar_emitter() -> None:
 
 
 def lens_slot() -> Image.Image:
-    """A Lens Mount's slot panel, pale grey so its tint shows: dark when empty, the lens's colour when fitted."""
-    img = Image.new("RGBA", (16, 16), hx("e8ecf2"))
-    for i in range(16):
-        for edge in ((i, 0), (0, i)):
-            img.putpixel(edge, hx("ffffff"))
-        for edge in ((i, 15), (15, i)):
-            img.putpixel(edge, hx("b8c0cc"))
-    return img
+    """A Lens Mount's slot panel: plain near-white, so its tint is the colour it shows (dark grey empty, the lens's when fitted)."""
+    return Image.new("RGBA", (16, 16), hx("f2f2f2"))
 
 
 def lens_mount() -> None:
@@ -671,9 +665,9 @@ def lens_mount() -> None:
         parts += [box([0, 0, z0], [16, 5, z1]), box([0, 11, z0], [16, 16, z1]), box([0, 5, z0], [5, 11, z1]), box([11, 5, z0], [16, 11, z1])]
     # The way out: half an emitter, its collar and its tip; the way in: half a focus.
     parts += [box([6, 6, 1], [10, 10, 2]), box([7, 7, 0], [9, 9, 1], "#focus", [7, 7, 9, 9]), box([6, 6, 14], [10, 10, 16], "#focus", [6, 6, 10, 10])]
-    # The slot panels, a hair proud of each side, first lens nearest the way in.
-    for index, along in enumerate((12.5, 9.5, 6.5, 3.5)):
-        z0, z1 = along - 1, along + 1
+    # The slot panels, a hair proud of each side: a pixel wide, two apart, on the pixel grid; first lens nearest the way in.
+    for index, z0 in enumerate((12, 9, 6, 3)):
+        z1 = z0 + 1
         panels = [box([16.01, 4, z0], [16.01, 12, z1], "#slot", None, ("east",)), box([-0.01, 4, z0], [-0.01, 12, z1], "#slot", None, ("west",)),
                   box([4, 16.01, z0], [12, 16.01, z1], "#slot", None, ("up",)), box([4, -0.01, z0], [12, -0.01, z1], "#slot", None, ("down",))]
         for panel in panels:
@@ -684,7 +678,7 @@ def lens_mount() -> None:
         json.dump({"parent": "minecraft:block/block", "textures": t, "elements": parts}, handle, indent=2)
     with open(os.path.join(STATES, "lens_mount.json"), "w") as handle:
         json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/lens_mount"}, **r) for f, r in ROTATIONS.items()}}, handle, indent=1)
-    empty = 0x2C303C - 0x1000000
+    empty = 0x2A2B2F - 0x1000000
     with open(os.path.join(ITEMS, "lens_mount.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/lens_mount",
                              "tints": [{"type": "minecraft:constant", "value": empty} for _ in range(4)]}}, handle, indent=2)
