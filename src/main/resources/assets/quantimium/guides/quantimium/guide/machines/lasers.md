@@ -162,12 +162,14 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 
 ## Lenses
 
-A <ItemLink id="quantimium:lens_mount" /> is a relay that holds lenses: light that reaches
-it leaves by its face, refocused, through its four lens slots, left to right. The beam is still a beam:
-it carries power to whatever it ends on, as before, and does what its lenses say along the way. Open
-the mount with an empty hand; sneak-click or wrench a face to point it there. Under each lens is a
-button for that lens's own settings (a Filter lens's, say), lit when it has any. Each lensed beam is
-tinted by what it does.
+A <ItemLink id="quantimium:lens_mount" /> is a holder on a base with four lenses standing in a
+row, and light goes straight through it: in by the side behind its output, out of its output, refocused,
+through its lenses in order (its four slots, left to right). Light from any other side stops on it. Its
+output is never along its base's axis (on a floor, it shines sideways), and a collar marks the end light
+leaves by. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
+lenses say along the way. Open the mount with an empty hand; sneak-click or wrench a side to point it
+there. Under each lens is a button for that lens's own settings (a Filter lens's, say), lit when it has
+any. Each lensed beam is tinted by what it does.
 
 **Actions** give light something to do, and light can carry several: Harvest and Damage on one beam
 both work. An action stays on the light until the beam ends. **Modifiers**

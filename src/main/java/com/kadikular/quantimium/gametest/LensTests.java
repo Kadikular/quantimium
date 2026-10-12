@@ -769,6 +769,21 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.mount
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void lightOnlyGoesStraightThroughALensMount(GameTestHelper helper) {
+        // Shining east: light from the south, at its side, stops on it.
+        emitter(helper, new BlockPos(6, Y, 12), Direction.NORTH, true);
+        mount(helper, new BlockPos(6, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(10, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0,
+                    "nothing in from the side");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aRelayEmittersLensIsOnlyItsOwn(GameTestHelper helper) {

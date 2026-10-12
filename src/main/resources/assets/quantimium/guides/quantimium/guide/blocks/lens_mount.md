@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:lens_mount" scale="2" />
 
-Holds lenses in a beam's way: light leaving it breaks, hurts or brings things back.
+A holder for four lenses: light goes straight through it, through each in turn.
 
 ## Recipes
 

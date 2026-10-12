@@ -123,7 +123,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.ISOLATOR_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LENS_MOUNT_BE.get(),
-                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
+                com.kadikular.quantimium.client.renderer.LensMountBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SENDER_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.COLLECTOR_BE.get(),

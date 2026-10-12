@@ -233,23 +233,6 @@ def detector_face(lit: bool) -> Image.Image:
     return img
 
 
-def lens_mount_face() -> Image.Image:
-    """A violet-rimmed window onto four lens slots: violet is for what changes a beam."""
-    img = stone(("1e1630", "2a2042", "3a2d5a"), 61)
-    for x in range(16):
-        for y in range(16):
-            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
-            if 4.6 < d < 6.2:
-                img.putpixel((x, y), hx("9a7bff"))
-            elif d <= 4.6:
-                img.putpixel((x, y), hx("120c22"))
-    # The four lenses, seen edge-on as a stack: four pale bars.
-    for i, y in enumerate((5, 7, 9, 11)):
-        for x in range(5, 11):
-            img.putpixel((x, y - 1 + (i % 2 == 0)), hx("c8b8ff") if x in (5, 10) else hx("e4dcff"))
-    return img
-
-
 def collector_face() -> Image.Image:
     """A grille that light passes and items catch on: a green-trimmed mesh."""
     img = stone(("1c2a22", "26382e", "32493c"), 71)
@@ -650,6 +633,55 @@ def solar_emitter() -> None:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/solar_emitter_item"}}, handle, indent=2)
 
 
+def lens_mount() -> None:
+    """
+    The Lens Mount: a holder on a base, its four lenses (drawn by its renderer, as items) standing in cradles in a
+    row along the light, and a collar at the end light leaves by. Drawn standing on a floor shining north, then
+    turned to each base and way it shines, as LensMountBlock.turn turns it (its shape and lenses follow the same).
+    """
+    t = {"steel": "quantimium:block/laser_mirror_steel", "particle": "quantimium:block/laser_mirror_steel"}
+    slots = (12.5, 9.5, 6.5, 3.5)
+    parts = [((3, 0, 0), (13, 1, 16)), ((3, 1, 0), (4, 2, 16)), ((12, 1, 0), (13, 2, 16))]
+    for along in slots:
+        parts += [((7, 1, along - 0.5), (9, 4, along + 0.5)), ((5, 4, along - 0.75), (11, 5, along + 0.75))]
+    # The collar where light leaves, on a post of its own.
+    parts += [((7, 1, 0), (9, 5, 1)), ((5, 5, 0), (11, 6, 1)), ((5, 10, 0), (11, 11, 1)), ((5, 6, 0), (6, 10, 1)), ((10, 6, 0), (11, 10, 1))]
+
+    def turn(point, mount, facing):
+        up = [-v for v in DIRS[mount]]
+        forward = DIRS[facing]
+        across = [forward[1] * up[2] - forward[2] * up[1], forward[2] * up[0] - forward[0] * up[2], forward[0] * up[1] - forward[1] * up[0]]
+        x, y, z = point
+        return [8 + across[k] * (x - 8) + up[k] * (y - 8) + forward[k] * (8 - z) for k in range(3)]
+
+    def elements(mount, facing):
+        out = []
+        for start, end in parts:
+            a, b = turn(start, mount, facing), turn(end, mount, facing)
+            lo, hi = [round(min(a[k], b[k]), 4) for k in range(3)], [round(max(a[k], b[k]), 4) for k in range(3)]
+            out.append({"from": lo, "to": hi, "faces": {f: {"texture": "#steel"} for f in ("north", "south", "east", "west", "up", "down")}})
+        return out
+
+    variants = {}
+    for mount in DIRS:
+        valid = [f for f in DIRS if sum(p * q for p, q in zip(DIRS[f], DIRS[mount])) == 0]
+        for facing in DIRS:
+            shown = facing if facing in valid else valid[0]
+            name = f"lens_mount_{mount}_{shown}"
+            if facing in valid:
+                with open(os.path.join(MODELS, name + ".json"), "w") as handle:
+                    json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements(mount, facing)}, handle, indent=2)
+            variants[f"facing={facing},mount={mount}"] = {"model": f"quantimium:block/{name}"}
+    with open(os.path.join(STATES, "lens_mount.json"), "w") as handle:
+        json.dump({"variants": variants}, handle, indent=1)
+    with open(os.path.join(ITEMS, "lens_mount.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/lens_mount_down_west"}}, handle, indent=2)
+    for stale in ("lens_mount",):
+        path = os.path.join(MODELS, stale + ".json")
+        if os.path.exists(path):
+            os.remove(path)
+
+
 def laser_relay() -> None:
     """
     The Laser Relay: a 12x12 base and an 8x8 boss on the block it was placed against, a 2x2 post up to the
@@ -770,8 +802,8 @@ def main() -> None:
     isolator_face().save(os.path.join(TEX, "isolator_face.png"))
     stone(("1b1b1e", "26262b", "33333a"), 92).save(os.path.join(TEX, "isolator_side.png"))
     outputs_block("isolator", "isolator_face", "isolator_side")
-    for name, face, tones, seed in (("lens_mount", lens_mount_face, ("1e1630", "2a2042", "3a2d5a"), 62),
-                                    ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
+    lens_mount()
+    for name, face, tones, seed in (("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
                                     ("sender", sender_face, ("162a2a", "1f3838", "294949"), 76)):
         face().save(os.path.join(TEX, f"{name}_face.png"))
         stone(tones, seed).save(os.path.join(TEX, f"{name}_side.png"))

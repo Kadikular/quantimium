@@ -98,6 +98,18 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         return Set.of(facing());
     }
 
+    /** Light goes straight through it: in by the side behind its output, travelling the way it shines. */
+    @Override
+    public boolean accepts(Direction travel) {
+        return travel == facing();
+    }
+
+    /** Out of its output, if light comes in straight behind it (or none does: where light would go). */
+    @Override
+    public Set<Direction> outputsFor(Set<Direction> arriving) {
+        return arriving.isEmpty() || arriving.contains(facing()) ? Set.of(facing()) : Set.of();
+    }
+
     @Override
     public int range() {
         return LaserTuning.RELAY_RANGE;

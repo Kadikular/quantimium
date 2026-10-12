@@ -1,27 +1,112 @@
 {
  "variants": {
-  "facing=north": {
-   "model": "quantimium:block/lens_mount"
+  "facing=down,mount=down": {
+   "model": "quantimium:block/lens_mount_down_north"
   },
-  "facing=south": {
-   "model": "quantimium:block/lens_mount",
-   "y": 180
+  "facing=up,mount=down": {
+   "model": "quantimium:block/lens_mount_down_north"
   },
-  "facing=west": {
-   "model": "quantimium:block/lens_mount",
-   "y": 270
+  "facing=north,mount=down": {
+   "model": "quantimium:block/lens_mount_down_north"
   },
-  "facing=east": {
-   "model": "quantimium:block/lens_mount",
-   "y": 90
+  "facing=south,mount=down": {
+   "model": "quantimium:block/lens_mount_down_south"
   },
-  "facing=up": {
-   "model": "quantimium:block/lens_mount",
-   "x": 270
+  "facing=west,mount=down": {
+   "model": "quantimium:block/lens_mount_down_west"
   },
-  "facing=down": {
-   "model": "quantimium:block/lens_mount",
-   "x": 90
+  "facing=east,mount=down": {
+   "model": "quantimium:block/lens_mount_down_east"
+  },
+  "facing=down,mount=up": {
+   "model": "quantimium:block/lens_mount_up_north"
+  },
+  "facing=up,mount=up": {
+   "model": "quantimium:block/lens_mount_up_north"
+  },
+  "facing=north,mount=up": {
+   "model": "quantimium:block/lens_mount_up_north"
+  },
+  "facing=south,mount=up": {
+   "model": "quantimium:block/lens_mount_up_south"
+  },
+  "facing=west,mount=up": {
+   "model": "quantimium:block/lens_mount_up_west"
+  },
+  "facing=east,mount=up": {
+   "model": "quantimium:block/lens_mount_up_east"
+  },
+  "facing=down,mount=north": {
+   "model": "quantimium:block/lens_mount_north_down"
+  },
+  "facing=up,mount=north": {
+   "model": "quantimium:block/lens_mount_north_up"
+  },
+  "facing=north,mount=north": {
+   "model": "quantimium:block/lens_mount_north_down"
+  },
+  "facing=south,mount=north": {
+   "model": "quantimium:block/lens_mount_north_down"
+  },
+  "facing=west,mount=north": {
+   "model": "quantimium:block/lens_mount_north_west"
+  },
+  "facing=east,mount=north": {
+   "model": "quantimium:block/lens_mount_north_east"
+  },
+  "facing=down,mount=south": {
+   "model": "quantimium:block/lens_mount_south_down"
+  },
+  "facing=up,mount=south": {
+   "model": "quantimium:block/lens_mount_south_up"
+  },
+  "facing=north,mount=south": {
+   "model": "quantimium:block/lens_mount_south_down"
+  },
+  "facing=south,mount=south": {
+   "model": "quantimium:block/lens_mount_south_down"
+  },
+  "facing=west,mount=south": {
+   "model": "quantimium:block/lens_mount_south_west"
+  },
+  "facing=east,mount=south": {
+   "model": "quantimium:block/lens_mount_south_east"
+  },
+  "facing=down,mount=west": {
+   "model": "quantimium:block/lens_mount_west_down"
+  },
+  "facing=up,mount=west": {
+   "model": "quantimium:block/lens_mount_west_up"
+  },
+  "facing=north,mount=west": {
+   "model": "quantimium:block/lens_mount_west_north"
+  },
+  "facing=south,mount=west": {
+   "model": "quantimium:block/lens_mount_west_south"
+  },
+  "facing=west,mount=west": {
+   "model": "quantimium:block/lens_mount_west_down"
+  },
+  "facing=east,mount=west": {
+   "model": "quantimium:block/lens_mount_west_down"
+  },
+  "facing=down,mount=east": {
+   "model": "quantimium:block/lens_mount_east_down"
+  },
+  "facing=up,mount=east": {
+   "model": "quantimium:block/lens_mount_east_up"
+  },
+  "facing=north,mount=east": {
+   "model": "quantimium:block/lens_mount_east_north"
+  },
+  "facing=south,mount=east": {
+   "model": "quantimium:block/lens_mount_east_south"
+  },
+  "facing=west,mount=east": {
+   "model": "quantimium:block/lens_mount_east_down"
+  },
+  "facing=east,mount=east": {
+   "model": "quantimium:block/lens_mount_east_down"
   }
  }
 }
