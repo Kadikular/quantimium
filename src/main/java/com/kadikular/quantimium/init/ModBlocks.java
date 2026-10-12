@@ -692,6 +692,8 @@ public class ModBlocks {
             "reactor_output_port", id -> new ReactorPortBlock(reactorPort(id), ReactorPortBlock.Kind.OUTPUT));
     public static final DeferredBlock<Block> REACTOR_ENERGY_PORT = BLOCKS.register(
             "reactor_energy_port", id -> new ReactorPortBlock(reactorPort(id), ReactorPortBlock.Kind.ENERGY));
+    public static final DeferredBlock<Block> REACTOR_LOGISTICS_PORT = BLOCKS.register(
+            "reactor_logistics_port", id -> new ReactorPortBlock(reactorPort(id), ReactorPortBlock.Kind.LOGISTICS));
     public static final DeferredBlock<Block> REACTOR_MATERIALISER_PORT = BLOCKS.register(
             "reactor_materialiser_port", id -> new ReactorPortBlock(reactorPort(id), ReactorPortBlock.Kind.MATERIALISER));
 

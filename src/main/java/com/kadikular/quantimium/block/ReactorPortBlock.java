@@ -14,12 +14,13 @@ import net.minecraft.world.level.block.state.StateDefinition;
 /**
  * A port on the Reactor's rim, in place of a plinth block. Input takes items into the horizon,
  * Output holds what the Reactor makes for pipes to take, Energy feeds it, and the Materialiser Port
- * offers everything it holds or could make to pipes and storage buses. Place as many as you like.
+ * offers everything it holds or could make to pipes and storage buses; the Logistics Port does both for a laser
+ * logistics network, as its storage. Place as many as you like.
  */
-public class ReactorPortBlock extends BaseEntityBlock {
+public class ReactorPortBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
 
     /** {@code ME}: the ME Superposition Port, which only exists with AE2 (compat.ae2). */
-    public enum Kind { INPUT, OUTPUT, ENERGY, MATERIALISER, ME }
+    public enum Kind { INPUT, OUTPUT, ENERGY, MATERIALISER, ME, LOGISTICS }
 
     /**
      * A Materialiser Port a linked ME network reads through a storage bus: it shows that network
@@ -44,6 +45,14 @@ public class ReactorPortBlock extends BaseEntityBlock {
     }
 
     @Override
+    public void appendTooltip(java.util.function.Consumer<net.minecraft.network.chat.Component> tooltip) {
+        if (kind == Kind.LOGISTICS) {
+            tooltip.accept(net.minecraft.network.chat.Component.translatable("block.quantimium.reactor_logistics_port.tip")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+    }
+
+    @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return switch (kind) {
             case INPUT -> simpleCodec(p -> new ReactorPortBlock(p, Kind.INPUT));
@@ -51,6 +60,7 @@ public class ReactorPortBlock extends BaseEntityBlock {
             case ENERGY -> simpleCodec(p -> new ReactorPortBlock(p, Kind.ENERGY));
             case MATERIALISER -> simpleCodec(p -> new ReactorPortBlock(p, Kind.MATERIALISER));
             case ME -> simpleCodec(p -> new ReactorPortBlock(p, Kind.ME));
+            case LOGISTICS -> simpleCodec(p -> new ReactorPortBlock(p, Kind.LOGISTICS));
         };
     }
 
@@ -81,6 +91,7 @@ public class ReactorPortBlock extends BaseEntityBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        if (kind == Kind.LOGISTICS) return new com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity(pos, state);
         return new ReactorPortBlockEntity(pos, state);
     }
 }

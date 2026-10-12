@@ -308,6 +308,8 @@ public class ModItems {
             "reactor_output_port", ModBlocks.REACTOR_OUTPUT_PORT);
     public static final DeferredItem<BlockItem> REACTOR_ENERGY_PORT_ITEM = ITEMS.registerSimpleBlockItem(
             "reactor_energy_port", ModBlocks.REACTOR_ENERGY_PORT);
+    public static final DeferredItem<BlockItem> REACTOR_LOGISTICS_PORT_ITEM = ITEMS.registerSimpleBlockItem(
+            "reactor_logistics_port", ModBlocks.REACTOR_LOGISTICS_PORT);
     public static final DeferredItem<BlockItem> REACTOR_MATERIALISER_PORT_ITEM = ITEMS.registerSimpleBlockItem(
             "reactor_materialiser_port", ModBlocks.REACTOR_MATERIALISER_PORT);
 

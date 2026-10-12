@@ -1249,5 +1249,7 @@
   "gui.quantimium.logistics_terminal.take.tip": "Click: a stack. Right-click: one. Shift-click: a stack to your inventory.",
   "gui.quantimium.logistics_terminal.status": "%s kinds",
   "gui.quantimium.logistics_terminal.status.unconnected": "No controller's light",
-  "gui.quantimium.logistics_terminal.status.tip": "A Logistics Controller's light must reach it. Click the grid holding something to put it away (right-click: one); shift-click it in your inventory does too."
+  "gui.quantimium.logistics_terminal.status.tip": "A Logistics Controller's light must reach it. Click the grid holding something to put it away (right-click: one); shift-click it in your inventory does too.",
+  "block.quantimium.reactor_logistics_port": "Reactor Logistics Port",
+  "block.quantimium.reactor_logistics_port.tip": "Logistics: a Reactor port that is storage for the logistics network whose light reaches it. What goes in feeds the horizon; what's taken is held or made. Light ending on it powers the Reactor."
 }

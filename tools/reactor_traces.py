@@ -357,7 +357,7 @@ def main() -> None:
     with open(os.path.join(ASSETS, "blockstates", "lit_reactor_plinth.json"), "w") as handle:
         json.dump({"variants": lit_variants}, handle, indent=1)
     write_bay(parts)
-    for port in ("input", "output", "energy", "materialiser", "me"):
+    for port in ("input", "output", "energy", "materialiser", "me", "logistics"):
         # A port is the plinth with a flat socket laid over every face (tools/reactor_art.py draws it).
         port_parts = list(parts)
         # A dark port (a Materialiser Port an ME network reads twice) shows its socket unlit.

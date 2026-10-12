@@ -1,0 +1,3106 @@
+{
+ "multipart": [
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0000_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0000_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0000"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0001_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0001_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0001"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0002_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0002_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0002"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0010_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0010_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0010"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0011_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0011_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0011"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0012_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0012_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0012"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0020_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0020_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0020"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0021_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0021_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0021"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0022_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0022_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0022"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0100_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0100_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0100"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0101_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0101_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0101"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0102_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0102_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0102"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0110_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0110_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0110"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0111_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0111_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0111"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0112_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0112_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0112"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0120_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0120_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0120"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0121_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0121_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0121"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0122_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0122_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0122"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0200_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0200_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0200"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0201_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0201_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0201"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0202_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0202_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0202"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0210_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0210_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0210"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0211_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0211_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0211"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0212_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0212_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0212"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0220_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0220_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0220"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0221_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0221_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0221"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0222_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0222_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "0",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/0222"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1000_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1000_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1000"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1001_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1001_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1001"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1002_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1002_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1002"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1010_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1010_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1010"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1011_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1011_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1011"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1012_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1012_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1012"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1020_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1020_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1020"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1021_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1021_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1021"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1022_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1022_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1022"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1100_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1100_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1100"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1101_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1101_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1101"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1102_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1102_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1102"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1110_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1110_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1110"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1111_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1111_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1111"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1112_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1112_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1112"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1120_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1120_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1120"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1121_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1121_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1121"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1122_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1122_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1122"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1200_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1200_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1200"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1201_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1201_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1201"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1202_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1202_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1202"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1210_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1210_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1210"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1211_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1211_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1211"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1212_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1212_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1212"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1220_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1220_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1220"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1221_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1221_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1221"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1222_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1222_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "1",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/1222"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2000_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2000_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2000"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2001_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2001_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2001"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2002_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2002_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2002"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2010_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2010_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2010"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2011_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2011_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2011"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2012_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2012_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2012"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2020_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2020_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2020"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2021_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2021_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2021"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2022_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2022_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "0",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2022"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2100_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2100_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2100"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2101_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2101_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2101"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2102_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2102_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2102"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2110_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2110_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2110"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2111_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2111_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2111"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2112_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2112_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2112"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2120_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2120_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2120"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2121_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2121_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2121"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2122_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2122_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "1",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2122"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2200_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2200_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2200"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2201_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2201_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2201"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2202_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2202_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "0",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2202"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2210_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2210_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2210"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2211_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2211_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2211"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2212_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2212_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "1",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2212"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2220_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2220_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "0",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2220"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2221_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2221_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "1",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2221"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2222_lit"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "true",
+    "busy": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2222_still"
+   }
+  },
+  {
+   "when": {
+    "trace_north": "2",
+    "trace_east": "2",
+    "trace_south": "2",
+    "trace_west": "2",
+    "formed": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_traces/2222"
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "formed": "false"
+     },
+     {
+      "dark": "true"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_logistics_port_overlay"
+   }
+  },
+  {
+   "when": {
+    "formed": "true",
+    "dark": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/reactor_logistics_port_overlay_active"
+   }
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "quantimium:reactor_plinth",
+    "L": "quantimium:logistics_receptacle",
+    "T": "quantimium:tesseract"
+  },
+  "pattern": [
+    " L ",
+    "PTP"
+  ],
+  "result": {
+    "id": "quantimium:reactor_logistics_port",
+    "count": 1
+  }
+}

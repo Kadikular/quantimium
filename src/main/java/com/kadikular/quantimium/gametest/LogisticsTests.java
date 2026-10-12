@@ -331,4 +331,46 @@ public final class LogisticsTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.logistics.reactor
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 120)
+    public static void theReactorLogisticsPortIsStorage(GameTestHelper helper) {
+        var core = ReactorTests.buildReactor(helper, 1);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        // An active provider on a chest above the light, between the controller and the port.
+        BlockPos chest = portAt.east(2).above();
+        helper.setBlock(chest, Blocks.CHEST);
+        helper.getBlockEntity(chest, ChestBlockEntity.class).setItem(0, new ItemStack(Items.DIAMOND, 4));
+        helper.setBlock(portAt.east(2), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.UP));
+        LogisticsReceptacleBlockEntity provider = helper.getBlockEntity(portAt.east(2), LogisticsReceptacleBlockEntity.class);
+        provider.cycleRole();
+        provider.toggleActive();
+        controller(helper, portAt.east(3), Direction.WEST, true);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(core.getLedger().count(net.neoforged.neoforge.transfer.item.ItemResource.of(Items.DIAMOND)), 4L,
+                    "the diamonds went into the horizon");
+            TestSupport.clearField(helper);
+        });
+    }
+
+    // covers: laser.logistics.reactor
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 120)
+    public static void lightEndingOnTheReactorLogisticsPortPowersTheReactor(GameTestHelper helper) {
+        var core = ReactorTests.buildReactor(helper, 1);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        BlockPos emitterAt = portAt.east(3);
+        helper.setBlock(emitterAt, ModBlocks.LASER_EMITTER_1.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserEmitterBlock.FACING, Direction.WEST));
+        helper.setBlock(emitterAt.above(), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "the Reactor charged from the beam");
+            TestSupport.finishLasers(helper);
+            TestSupport.clearField(helper);
+        });
+    }
 }

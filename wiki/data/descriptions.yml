@@ -131,6 +131,7 @@ photodetector: "Light passes through it, and it gives a redstone signal for how 
 lens_mount: "A holder for four lenses: light goes straight through it, through each in turn."
 logistics_controller: "Logistics: a relay whose light makes one network of everything it reaches; lenses past it put into and take from it."
 logistics_receptacle: "Logistics: puts the inventory it's on into a controller's network, as storage, a provider or a requester."
+reactor_logistics_port: "A Reactor port that makes the Reactor storage on a logistics network, and takes power from light."
 logistics_terminal: "Logistics: shows everything a network holds, to take or put away."
 laser_port: "Light passes through it; it catches what a Pickup lens brings back up the beam, sends what it holds down it, or both."
 harvest_lens: "A lens: the beam breaks the block it ends on."

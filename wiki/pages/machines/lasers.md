@@ -304,6 +304,11 @@ like an ME terminal. Click an item for a stack on the cursor, right-click for on
 into your inventory; click the grid holding something to put it away into storage (right-click: one), or
 shift-click it in your inventory. Each take or put costs the controller as a move does.
 
+[[mechanic:laser.logistics.reactor]] A [[block:reactor_logistics_port]] on the Reactor's plinth rim, where a
+controller's light ends, makes the Reactor storage on that network (priority 0). What the network puts
+in feeds the horizon, as an Input port; what it takes is held or made, as a Materialiser port gives it,
+so a terminal shows all the Reactor could give. Light ending on it also powers the Reactor.
+
 ## Into the mirror
 
 [[mechanic:laser.rift]] Laser light along a [[block:rift_lens]]'s axis goes through the tear in its middle

@@ -107,6 +107,10 @@ public class ModBlockEntities {
                             ModBlocks.REACTOR_OUTPUT_PORT.get(), ModBlocks.REACTOR_ENERGY_PORT.get(),
                             ModBlocks.REACTOR_MATERIALISER_PORT.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity>> REACTOR_LOGISTICS_PORT_BE =
+            BLOCK_ENTITIES.register("reactor_logistics_port_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity::new, ModBlocks.REACTOR_LOGISTICS_PORT.get()));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FoldCoreBlockEntity>> FOLD_CORE_BE =
             BLOCK_ENTITIES.register("fold_core_be", () ->
                     new BlockEntityType<>(FoldCoreBlockEntity::new, ModBlocks.FOLD_CORE.get()));

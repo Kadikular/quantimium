@@ -63,6 +63,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.REACTOR_OUTPUT_PORT_ITEM.get());
                         output.accept(ModItems.REACTOR_ENERGY_PORT_ITEM.get());
                         output.accept(ModItems.REACTOR_MATERIALISER_PORT_ITEM.get());
+                        output.accept(ModItems.REACTOR_LOGISTICS_PORT_ITEM.get());
                         output.accept(ModItems.FLASH_EMITTER_ITEM.get());
                         output.accept(ModItems.LASER_EMITTER_1_ITEM.get());
                         output.accept(ModItems.LASER_EMITTER_2_ITEM.get());

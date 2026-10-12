@@ -74,6 +74,7 @@ navigation:
 - <ItemLink id="quantimium:quantum_simulator" />
 - <ItemLink id="quantimium:reactor_energy_port" />
 - <ItemLink id="quantimium:reactor_input_port" />
+- <ItemLink id="quantimium:reactor_logistics_port" />
 - <ItemLink id="quantimium:reactor_materialiser_port" />
 - <ItemLink id="quantimium:reactor_me_port" />
 - <ItemLink id="quantimium:reactor_output_port" />

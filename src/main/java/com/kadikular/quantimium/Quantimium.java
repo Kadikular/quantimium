@@ -142,6 +142,13 @@ public class Quantimium {
                 (be, context) -> be.energy()
         );
 
+        // The Reactor Logistics Port: light ending on it powers the Reactor.
+        event.registerBlockEntity(
+                Capabilities.Energy.BLOCK,
+                ModBlockEntities.REACTOR_LOGISTICS_PORT_BE.get(),
+                (be, context) -> be.beamEnergy()
+        );
+
         // A Logistics Controller takes the power it pays to move things with on any face.
         event.registerBlockEntity(
                 Capabilities.Energy.BLOCK,

@@ -57,6 +57,16 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
     private final InputHandler input = new InputHandler();
     private final MaterialiserHandler materialiser = new MaterialiserHandler();
 
+    /** What goes in to the horizon, as an Input port takes it. */
+    protected ResourceHandler<ItemResource> inputHandler() {
+        return input;
+    }
+
+    /** What the Reactor holds or could make, as a Materialiser port offers it. */
+    protected ResourceHandler<ItemResource> materialiserHandler() {
+        return materialiser;
+    }
+
     public ReactorPortBlockEntity(BlockPos pos, BlockState state) {
         this(ModBlockEntities.REACTOR_PORT_BE.get(), pos, state);
     }
@@ -95,7 +105,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         return switch (kind()) {
             case INPUT -> input;
             case OUTPUT -> output;
-            case ENERGY, ME -> null;
+            case ENERGY, ME, LOGISTICS -> null;
             case MATERIALISER -> materialiser;
         };
     }
