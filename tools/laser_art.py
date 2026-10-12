@@ -384,19 +384,6 @@ def area_prism_face() -> Image.Image:
     return img
 
 
-def splitter_face() -> Image.Image:
-    """A silver plate cut into four by a cross: light leaving every way it's set to."""
-    img = mirror_face()
-    for i in range(2, 14):
-        img.putpixel((i, 7), hx("2b2b33"))
-        img.putpixel((i, 8), hx("2b2b33"))
-        img.putpixel((7, i), hx("2b2b33"))
-        img.putpixel((8, i), hx("2b2b33"))
-    for x, y in ((7, 7), (8, 8), (7, 8), (8, 7)):
-        img.putpixel((x, y), hx("c8dcff"))
-    return img
-
-
 def isolator_face() -> Image.Image:
     """A dark plate behind a grey bar: light through, nothing else."""
     img = stone(("1b1b1e", "26262b", "33333a"), 81)
@@ -667,6 +654,33 @@ def solar_emitter() -> None:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/solar_emitter_item"}}, handle, indent=2)
 
 
+def outputs_block(name: str, face: str, side: str) -> None:
+    """
+    A block light leaves by any faces you set (the Laser Relay, the Isolator): its plain casing, and its face
+    plate on each face light leaves by. Its item shows the plate on its front.
+    """
+    with open(os.path.join(MODELS, name + ".json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": f"quantimium:block/{side}", "particle": f"quantimium:block/{side}"}},
+                  handle, indent=2)
+    planes = {"north": ([0, 0, -0.01], [16, 16, -0.01]), "south": ([0, 0, 16.01], [16, 16, 16.01]),
+              "west": ([-0.01, 0, 0], [-0.01, 16, 16]), "east": ([16.01, 0, 0], [16.01, 16, 16]),
+              "down": ([0, -0.01, 0], [16, -0.01, 16]), "up": ([0, 16.01, 0], [16, 16.01, 16])}
+    for direction, (start, end) in planes.items():
+        with open(os.path.join(MODELS, f"{name}_out_{direction}.json"), "w") as handle:
+            json.dump({"textures": {"plate": f"quantimium:block/{face}", "particle": f"quantimium:block/{side}"},
+                       "elements": [{"from": start, "to": end, "faces": {direction: {"uv": [0, 0, 16, 16], "texture": "#plate"}}}]},
+                      handle, indent=2)
+    multipart = [{"apply": {"model": f"quantimium:block/{name}"}}]
+    multipart += [{"when": {direction: "true"}, "apply": {"model": f"quantimium:block/{name}_out_{direction}"}} for direction in planes]
+    with open(os.path.join(STATES, name + ".json"), "w") as handle:
+        json.dump({"multipart": multipart}, handle, indent=1)
+    with open(os.path.join(MODELS, f"{name}_item.json"), "w") as handle:
+        json.dump(cube({"front": f"quantimium:block/{face}", "back": f"quantimium:block/{side}", "side": f"quantimium:block/{side}"}, "front"),
+                  handle, indent=2)
+    with open(os.path.join(ITEMS, name + ".json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
+
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -695,15 +709,7 @@ def main() -> None:
 
     mirror_face().save(os.path.join(TEX, "laser_relay_face.png"))
     stone(("2b2b33", "3b3b45", "4d4d59"), 22).save(os.path.join(TEX, "laser_relay_side.png"))
-    model = cube({"front": "quantimium:block/laser_relay_face", "back": "quantimium:block/laser_relay_side",
-                  "side": "quantimium:block/laser_relay_side"}, "front")
-    with open(os.path.join(MODELS, "laser_relay.json"), "w") as handle:
-        json.dump(model, handle, indent=2)
-    with open(os.path.join(STATES, "laser_relay.json"), "w") as handle:
-        json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/laser_relay"}, **r) for f, r in ROTATIONS.items()}},
-                  handle, indent=1)
-    with open(os.path.join(ITEMS, "laser_relay.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_relay"}}, handle, indent=2)
+    outputs_block("laser_relay", "laser_relay_face", "laser_relay_side")
     laser_mirror()
     laser_mirror("laser_splitter", splits=True)
     solar_emitter()
@@ -728,9 +734,11 @@ def main() -> None:
             json.dump({"variants": variants}, handle, indent=1)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
+    isolator_face().save(os.path.join(TEX, "isolator_face.png"))
+    stone(("1b1b1e", "26262b", "33333a"), 92).save(os.path.join(TEX, "isolator_side.png"))
+    outputs_block("isolator", "isolator_face", "isolator_side")
     for name, face, tones, seed in (("lens_mount", lens_mount_face, ("1e1630", "2a2042", "3a2d5a"), 62),
                                     ("collector", collector_face, ("1c2a22", "26382e", "32493c"), 72),
-                                    ("isolator", isolator_face, ("1b1b1e", "26262b", "33333a"), 92),
                                     ("sender", sender_face, ("162a2a", "1f3838", "294949"), 76)):
         face().save(os.path.join(TEX, f"{name}_face.png"))
         stone(tones, seed).save(os.path.join(TEX, f"{name}_side.png"))
@@ -749,28 +757,6 @@ def main() -> None:
             json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"quantimium:item/{name}"}}, handle, indent=2)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:item/{name}"}}, handle, indent=2)
-    # The splitter: plain casing, with the split plate on each face light leaves by.
-    splitter_face().save(os.path.join(TEX, "splitter_face.png"))
-    stone(("2b2b33", "3b3b45", "4d4d59"), 82).save(os.path.join(TEX, "splitter_side.png"))
-    with open(os.path.join(MODELS, "splitter.json"), "w") as handle:
-        json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/splitter_side", "particle": "quantimium:block/splitter_side"}}, handle, indent=2)
-    planes = {"north": ([0, 0, -0.01], [16, 16, -0.01]), "south": ([0, 0, 16.01], [16, 16, 16.01]),
-              "west": ([-0.01, 0, 0], [-0.01, 16, 16]), "east": ([16.01, 0, 0], [16.01, 16, 16]),
-              "down": ([0, -0.01, 0], [16, -0.01, 16]), "up": ([0, 16.01, 0], [16, 16.01, 16])}
-    for face, (start, end) in planes.items():
-        with open(os.path.join(MODELS, f"splitter_out_{face}.json"), "w") as handle:
-            json.dump({"textures": {"plate": "quantimium:block/splitter_face", "particle": "quantimium:block/splitter_side"},
-                       "elements": [{"from": start, "to": end,
-                                     "faces": {face: {"uv": [0, 0, 16, 16], "texture": "#plate"}}}]}, handle, indent=2)
-    multipart = [{"apply": {"model": "quantimium:block/splitter"}}]
-    multipart += [{"when": {face: "true"}, "apply": {"model": f"quantimium:block/splitter_out_{face}"}} for face in planes]
-    with open(os.path.join(STATES, "splitter.json"), "w") as handle:
-        json.dump({"multipart": multipart}, handle, indent=1)
-    with open(os.path.join(MODELS, "splitter_item.json"), "w") as handle:
-        json.dump(cube({"front": "quantimium:block/splitter_face", "back": "quantimium:block/splitter_side",
-                        "side": "quantimium:block/splitter_face"}, "front"), handle, indent=2)
-    with open(os.path.join(ITEMS, "splitter.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/splitter_item"}}, handle, indent=2)
     area_prism_face().save(os.path.join(TEX, "area_prism.png"))
     with open(os.path.join(MODELS, "area_prism.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/area_prism"}}, handle, indent=2)

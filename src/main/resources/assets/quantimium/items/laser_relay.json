@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/laser_relay"
+    "model": "quantimium:block/laser_relay_item"
   }
 }

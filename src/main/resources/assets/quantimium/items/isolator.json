@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/isolator"
+    "model": "quantimium:block/isolator_item"
   }
 }

@@ -1,27 +1,57 @@
 {
- "variants": {
-  "facing=north": {
-   "model": "quantimium:block/isolator"
+ "multipart": [
+  {
+   "apply": {
+    "model": "quantimium:block/isolator"
+   }
   },
-  "facing=south": {
-   "model": "quantimium:block/isolator",
-   "y": 180
+  {
+   "when": {
+    "north": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_north"
+   }
   },
-  "facing=west": {
-   "model": "quantimium:block/isolator",
-   "y": 270
+  {
+   "when": {
+    "south": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_south"
+   }
   },
-  "facing=east": {
-   "model": "quantimium:block/isolator",
-   "y": 90
+  {
+   "when": {
+    "west": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_west"
+   }
   },
-  "facing=up": {
-   "model": "quantimium:block/isolator",
-   "x": 270
+  {
+   "when": {
+    "east": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_east"
+   }
   },
-  "facing=down": {
-   "model": "quantimium:block/isolator",
-   "x": 90
+  {
+   "when": {
+    "down": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_down"
+   }
+  },
+  {
+   "when": {
+    "up": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_up"
+   }
   }
- }
+ ]
 }

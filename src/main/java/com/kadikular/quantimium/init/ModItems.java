@@ -246,8 +246,6 @@ public class ModItems {
             "laser_prism", ModBlocks.LASER_PRISM);
     public static final DeferredItem<BlockItem> AREA_PRISM_ITEM = ITEMS.registerSimpleBlockItem(
             "area_prism", ModBlocks.AREA_PRISM);
-    public static final DeferredItem<BlockItem> SPLITTER_ITEM = ITEMS.registerSimpleBlockItem(
-            "splitter", ModBlocks.SPLITTER);
     public static final DeferredItem<BlockItem> ISOLATOR_ITEM = ITEMS.registerSimpleBlockItem(
             "isolator", ModBlocks.ISOLATOR);
     public static final DeferredItem<BlockItem> LENS_MOUNT_ITEM = ITEMS.registerSimpleBlockItem(
@@ -371,6 +369,8 @@ public class ModItems {
         // Renamed before release; worlds from then keep their lenses.
         ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "rift_ring"),
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "rift_lens"));
+        ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "splitter"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_relay"));
         ITEMS.register(eventBus);
     }
 }

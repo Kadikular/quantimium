@@ -2,7 +2,7 @@
 navigation:
   title: Stabilised Portal Frame
   parent: blocks/index.md
-  position: 74
+  position: 73
   icon: quantimium:stabilised_portal_frame
 item_ids:
 - quantimium:stabilised_portal_frame

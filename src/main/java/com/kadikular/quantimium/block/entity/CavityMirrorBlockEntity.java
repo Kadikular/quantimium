@@ -108,7 +108,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
             }
             BlockState there = level.getBlockState(at);
             if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserRelayBlock) {
-                return there.getValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING) == facing.getOpposite() && step > 1 ? step - 1 : 0;
+                return there.getValue(com.kadikular.quantimium.block.LaserRelayBlock.OUTPUTS.get(facing.getOpposite())) && step > 1 ? step - 1 : 0;
             }
             // A Laser Mirror set flat, facing back across the gap, closes the cavity as a real laser's end mirror does.
             if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock mirror && !mirror.splits()) {

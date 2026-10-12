@@ -74,7 +74,9 @@ in, they leave by the turn side only, joined: a combiner. Light from any other s
 does light into a side facing what it stands on. It closes no cavity.
 
 A <ItemLink id="quantimium:laser_relay" /> sends every beam that reaches it, from any side, out of
-its face. Placed, it faces you; sneak-click or wrench a face to point it there.
+every face you set, shared by what each beam's blocks ask for: a prism's job for the six straight
+directions, with no linking. Placed, its one output faces you; sneak-click or wrench a face to add an
+output there, or take one away (one always stays). Each output face shows the plate.
 
 Both refocus the light to its source's range: a run from a mirror or relay reaches as far as a run from
 the emitter that sent it, so a Flash Emitter's light goes 8 blocks a run however many it passes. Each
@@ -86,11 +88,6 @@ redstone: it ignores it, passes light only with a signal, only without one, or i
 each signal it gets lets light through until one action down the beam is done (a block cut, a hit, an
 item carried) or two seconds pass. A pulse relay before a Harvest lens breaks one block per pulse. Switched off, a relay (or a mirror) passes no light at all: nothing the light did reaches past it, and what's beyond
 gets only the light that reaches it some other way. An emitter switched off by redstone gives out none.
-
-A <ItemLink id="quantimium:splitter" /> (Laser Distributor) is a relay with as many faces as you set: light that
-reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six
-straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output;
-each output face shows the split plate.
 
 An <ItemLink id="quantimium:isolator" /> is a relay that lets only power through: light
 leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through it, so

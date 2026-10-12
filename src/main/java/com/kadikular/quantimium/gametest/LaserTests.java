@@ -136,16 +136,21 @@ public final class LaserTests {
         helper.setBlock(pos, ModBlocks.SOLAR_EMITTER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.SolarEmitterBlock.OUTPUT, output));
     }
 
-    /** Noon, clear skies: each of these tests has a batch of its own, since the time is the whole level's. */
-    private static void noon(GameTestHelper helper) {
+    /**
+     * Noon, clear skies: each of these tests has a batch of its own, since the time is the whole level's. What it
+     * was is put back after, so later tests (a zombie that would burn) don't find it day.
+     */
+    private static long noon(GameTestHelper helper) {
+        long was = helper.getLevel().getDefaultClockTime();
         helper.setTime(6000);
         helper.getLevel().resetWeatherCycle();
+        return was;
     }
 
     // covers: laser.solar
     @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_night", timeoutTicks = 200)
     public static void aSolarEmitterShinesByDayAndNotByNight(GameTestHelper helper) {
-        noon(helper);
+        long was = noon(helper);
         solar(helper, new BlockPos(6, Y, 8), Direction.EAST);
         FoldCoreBlockEntity core = sink(helper, new BlockPos(10, Y, 8));
         long[] at = new long[2];
@@ -156,7 +161,7 @@ public final class LaserTests {
         helper.runAfterDelay(100, () -> at[0] = core.getEnergyStorage().getEnergyStored());
         helper.runAfterDelay(140, () -> {
             helper.assertValueEqual((long) core.getEnergyStorage().getEnergyStored(), at[0], "nothing at midnight");
-            noon(helper);
+            helper.setTime(was);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
@@ -166,7 +171,7 @@ public final class LaserTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_chain", timeoutTicks = 200)
     public static void solarEmittersChainUpToEight(GameTestHelper helper) {
         // Three in a row give three's worth; ten in a row, only eight's.
-        noon(helper);
+        long was = noon(helper);
         for (int x = 1; x <= 3; x++) solar(helper, new BlockPos(x, Y, 3), Direction.EAST);
         FoldCoreBlockEntity three = sink(helper, new BlockPos(6, Y, 3));
         for (int x = 1; x <= 10; x++) solar(helper, new BlockPos(x, Y, 12), Direction.EAST);
@@ -184,6 +189,7 @@ public final class LaserTests {
             // The first of a chain feeds the next: its beam shows lit, carrying what it makes.
             var first = helper.getBlockEntity(new BlockPos(1, Y, 3), com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity.class).syncedBeams();
             helper.assertTrue(first.stream().anyMatch(beam -> beam.live() && beam.flow() > 0), "a feeding emitter's beam shows: " + first);
+            helper.setTime(was);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

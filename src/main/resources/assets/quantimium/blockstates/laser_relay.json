@@ -1,27 +1,57 @@
 {
- "variants": {
-  "facing=north": {
-   "model": "quantimium:block/laser_relay"
+ "multipart": [
+  {
+   "apply": {
+    "model": "quantimium:block/laser_relay"
+   }
   },
-  "facing=south": {
-   "model": "quantimium:block/laser_relay",
-   "y": 180
+  {
+   "when": {
+    "north": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay_out_north"
+   }
   },
-  "facing=west": {
-   "model": "quantimium:block/laser_relay",
-   "y": 270
+  {
+   "when": {
+    "south": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay_out_south"
+   }
   },
-  "facing=east": {
-   "model": "quantimium:block/laser_relay",
-   "y": 90
+  {
+   "when": {
+    "west": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay_out_west"
+   }
   },
-  "facing=up": {
-   "model": "quantimium:block/laser_relay",
-   "x": 270
+  {
+   "when": {
+    "east": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay_out_east"
+   }
   },
-  "facing=down": {
-   "model": "quantimium:block/laser_relay",
-   "x": 90
+  {
+   "when": {
+    "down": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay_out_down"
+   }
+  },
+  {
+   "when": {
+    "up": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay_out_up"
+   }
   }
- }
+ ]
 }

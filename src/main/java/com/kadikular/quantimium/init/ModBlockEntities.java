@@ -192,9 +192,6 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.AreaPrismBlockEntity>> AREA_PRISM_BE =
             BLOCK_ENTITIES.register("area_prism_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.AreaPrismBlockEntity::new, ModBlocks.AREA_PRISM.get()));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SplitterBlockEntity>> SPLITTER_BE =
-            BLOCK_ENTITIES.register("splitter_be", () ->
-                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.SplitterBlockEntity::new, ModBlocks.SPLITTER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.IsolatorBlockEntity>> ISOLATOR_BE =
             BLOCK_ENTITIES.register("isolator_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.IsolatorBlockEntity::new, ModBlocks.ISOLATOR.get()));
@@ -234,6 +231,9 @@ public class ModBlockEntities {
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.PhotodetectorBlockEntity::new, ModBlocks.PHOTODETECTOR.get()));
 
     public static void register(IEventBus eventBus) {
+        // The Laser Distributor folded into the Laser Relay before release: its block entities load as relays.
+        BLOCK_ENTITIES.addAlias(net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, "splitter_be"),
+                net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, "laser_relay_be"));
         BLOCK_ENTITIES.register(eventBus);
     }
 }

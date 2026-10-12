@@ -28,16 +28,23 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A Laser Relay: whatever light reaches it, from any side, leaves by its face, refocused. Placed, it faces you; a
- * wrench, or a sneaking empty hand, on any face points it there. An empty hand steps through how it listens to redstone.
+ * A Laser Relay: whatever light reaches it, from any side, leaves by every face it's set to, refocused, shared by
+ * what each beam's blocks ask for. Placed, its one output faces you; a wrench, or a sneaking empty hand, on a face
+ * adds or takes away an output there (one always stays). An empty hand steps through how it listens to redstone.
  */
 public class LaserRelayBlock extends BaseEntityBlock {
     public static final MapCodec<LaserRelayBlock> CODEC = simpleCodec(LaserRelayBlock::new);
+    /** The face it was placed facing: its first output. */
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
+    /** Whether light leaves by that face: what the block shows. */
+    public static final java.util.Map<Direction, net.minecraft.world.level.block.state.properties.BooleanProperty> OUTPUTS =
+            net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION;
 
     public LaserRelayBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        BlockState state = stateDefinition.any().setValue(FACING, Direction.NORTH);
+        for (var property : OUTPUTS.values()) state = state.setValue(property, false);
+        registerDefaultState(state);
     }
 
     @Override
@@ -48,12 +55,14 @@ public class LaserRelayBlock extends BaseEntityBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+        OUTPUTS.values().forEach(builder::add);
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        Direction facing = context.getNearestLookingDirection().getOpposite();
+        return defaultBlockState().setValue(FACING, facing).setValue(OUTPUTS.get(facing), true);
     }
 
     @Override
@@ -76,12 +85,12 @@ public class LaserRelayBlock extends BaseEntityBlock {
                                           InteractionHand hand, BlockHitResult hit) {
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
-        return point(state, level, pos, hit.getDirection());
+        return toggle(level, pos, hit.getDirection(), player);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player.isSecondaryUseActive()) return point(state, level, pos, hit.getDirection());
+        if (player.isSecondaryUseActive()) return toggle(level, pos, hit.getDirection(), player);
         return cycleMode(level, pos, player);
     }
 
@@ -102,12 +111,15 @@ public class LaserRelayBlock extends BaseEntityBlock {
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserRelayBlockEntity mirror) mirror.onSignal(level.hasNeighborSignal(pos));
     }
 
-    /** Points the relay out of the face clicked. */
-    private static InteractionResult point(BlockState state, Level level, BlockPos pos, Direction face) {
-        if (!level.isClientSide() && state.getValue(FACING) != face) {
-            level.setBlock(pos, state.setValue(FACING, face), Block.UPDATE_ALL);
-            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 1.2f);
-            LaserNetworks.changed(level);
+    /** Adds an output on the face clicked, or takes it away: one always stays. */
+    private static InteractionResult toggle(Level level, BlockPos pos, Direction face, @Nullable Player player) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay && relay.toggleOutput(face)) {
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, relay.outputs().contains(face) ? 1.3f : 0.8f);
+            if (player != null) {
+                player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.laser_relay.outputs",
+                        String.join(", ", relay.outputs().stream().map(Direction::getSerializedName).toList()))
+                        .withStyle(net.minecraft.ChatFormatting.AQUA));
+            }
         }
         return InteractionResult.SUCCESS;
     }

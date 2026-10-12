@@ -604,14 +604,13 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.distributor
+    // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
-    public static void aSplitterSendsLightOutOfEveryFaceSet(GameTestHelper helper) {
+    public static void aRelaySendsLightOutOfEveryFaceSet(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
-        helper.setBlock(new BlockPos(5, Y, 6), ModBlocks.SPLITTER.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        var splitter = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.SplitterBlockEntity.class);
-        splitter.toggleOutput(Direction.SOUTH);
+        relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        relay.toggleOutput(Direction.SOUTH);
         helper.setBlock(new BlockPos(10, Y, 6), ModBlocks.FOLD_CORE.get());
         helper.setBlock(new BlockPos(5, Y, 11), ModBlocks.FOLD_CORE.get());
         helper.succeedWhen(() -> {
@@ -731,23 +730,24 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.distributor
+    // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
-    public static void aSplitterFaceAddedByHandSendsLight(GameTestHelper helper) {
+    public static void aRelayFaceAddedByHandSendsLight(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
         BlockPos at = new BlockPos(5, Y, 6);
-        helper.setBlock(at, ModBlocks.SPLITTER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        relay(helper, at, Direction.EAST);
         helper.setBlock(new BlockPos(5, Y, 11), ModBlocks.FOLD_CORE.get());
         var player = TestSupport.player(helper, new BlockPos(5, Y, 9), net.minecraft.world.level.GameType.SURVIVAL);
         player.setShiftKeyDown(true);
         BlockPos abs = helper.absolutePos(at);
         var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(0, 0, 0.5), Direction.SOUTH, abs, false);
         helper.getLevel().getBlockState(abs).useWithoutItem(helper.getLevel(), player, hit);
-        var splitter = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.SplitterBlockEntity.class);
+        var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
         helper.succeedWhen(() -> {
-            helper.assertTrue(splitter.outputs().contains(Direction.SOUTH), "the face was added: " + splitter.outputs());
+            helper.assertTrue(relay.outputs().contains(Direction.SOUTH), "the face was added: " + relay.outputs());
+            helper.assertTrue(relay.getBlockState().getValue(com.kadikular.quantimium.block.LaserRelayBlock.OUTPUTS.get(Direction.SOUTH)), "and shows");
             helper.assertTrue(helper.getBlockEntity(new BlockPos(5, Y, 11), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
-                    "and sends: " + splitter.syncedBeams());
+                    "and sends: " + relay.syncedBeams());
             TestSupport.finishLasers(helper);
         });
     }

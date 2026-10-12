@@ -732,8 +732,6 @@ public class ModBlocks {
             "photodetector", id -> new PhotodetectorBlock(laserBlock(id, MapColor.COLOR_GRAY)));
     public static final DeferredBlock<Block> AREA_PRISM = BLOCKS.register(
             "area_prism", id -> new com.kadikular.quantimium.block.AreaPrismBlock(laserBlock(id, MapColor.COLOR_PURPLE).sound(SoundType.AMETHYST)));
-    public static final DeferredBlock<Block> SPLITTER = BLOCKS.register(
-            "splitter", id -> new com.kadikular.quantimium.block.SplitterBlock(laserBlock(id, MapColor.QUARTZ)));
     public static final DeferredBlock<Block> ISOLATOR = BLOCKS.register(
             "isolator", id -> new com.kadikular.quantimium.block.IsolatorBlock(laserBlock(id, MapColor.COLOR_BLACK)));
     public static final DeferredBlock<Block> LENS_MOUNT = BLOCKS.register(
@@ -801,6 +799,9 @@ public class ModBlocks {
         // Renamed before release; worlds from then keep their lenses.
         BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "rift_ring"),
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "rift_lens"));
+        // The Laser Distributor (once the Splitter) folded into the Laser Relay before release.
+        BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "splitter"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_relay"));
         BLOCKS.register(eventBus);
     }
 

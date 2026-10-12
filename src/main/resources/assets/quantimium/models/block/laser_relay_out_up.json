@@ -1,7 +1,7 @@
 {
   "textures": {
-    "plate": "quantimium:block/splitter_face",
-    "particle": "quantimium:block/splitter_side"
+    "plate": "quantimium:block/laser_relay_face",
+    "particle": "quantimium:block/laser_relay_side"
   },
   "elements": [
     {

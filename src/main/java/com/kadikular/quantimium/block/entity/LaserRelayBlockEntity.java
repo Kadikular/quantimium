@@ -33,6 +33,9 @@ import java.util.Set;
  */
 public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
 
+    /** The faces light leaves by: the one it was placed facing, and any added since. */
+    private final Set<Direction> outputs = java.util.EnumSet.noneOf(Direction.class);
+
     private List<LaserBeam> shownBeams = List.of();
     private com.kadikular.quantimium.laser.RelayMode mode = com.kadikular.quantimium.laser.RelayMode.IGNORED;
     /** Whether a redstone signal reaches it, as last told. */
@@ -45,9 +48,10 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         this(ModBlockEntities.LASER_RELAY_BE.get(), pos, state);
     }
 
-    /** For blocks built on the relay: the Splitter, the Isolator. */
+    /** For blocks built on the relay: the Isolator. */
     protected LaserRelayBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        if (state.hasProperty(LaserRelayBlock.FACING)) outputs.add(state.getValue(LaserRelayBlock.FACING));
     }
 
     public com.kadikular.quantimium.laser.RelayMode mode() {
@@ -95,6 +99,34 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         return getBlockState().getValue(LaserRelayBlock.FACING);
     }
 
+
+    /** Turns light out of {@code face} on or off; one output always stays. Whether it changed. */
+    public boolean toggleOutput(Direction face) {
+        if (outputs.contains(face)) {
+            if (outputs.size() == 1) return false;
+            outputs.remove(face);
+        } else {
+            outputs.add(face);
+        }
+        setChanged();
+        if (level != null) {
+            showOutputs();
+            LaserNetworks.changed(level);
+            if (!level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    /** The block shows which faces light leaves by. */
+    private void showOutputs() {
+        if (level == null || level.isClientSide()) return;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(LaserRelayBlock.OUTPUTS.get(Direction.NORTH))) return;
+        BlockState shown = state;
+        for (Direction face : Direction.values()) shown = shown.setValue(LaserRelayBlock.OUTPUTS.get(face), outputs.contains(face));
+        if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
+    }
+
     @Override
     public BlockPos nodePos() {
         return worldPosition;
@@ -102,7 +134,8 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
 
     @Override
     public Set<Direction> outputs() {
-        return Set.of(facing());
+        if (outputs.isEmpty()) outputs.add(facing());
+        return outputs;
     }
 
     @Override
@@ -134,6 +167,8 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         super.onLoad();
         if (level != null && !level.isClientSide()) {
             powered = level.hasNeighborSignal(worldPosition);
+            outputs();
+            showOutputs();
             LaserNetworks.add(level, this);
         }
     }
@@ -142,6 +177,9 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
         super.saveAdditional(out);
         out.putInt("Mode", mode.ordinal());
+        int mask = 0;
+        for (Direction face : outputs) mask |= 1 << face.get3DDataValue();
+        out.putInt("Outputs", mask);
     }
 
     @Override
@@ -160,6 +198,11 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         mode = com.kadikular.quantimium.laser.RelayMode.byOrdinal(in.getIntOr("Mode", 0));
+        int mask = in.getIntOr("Outputs", 0);
+        if (mask != 0) {
+            outputs.clear();
+            for (Direction face : Direction.values()) if ((mask & 1 << face.get3DDataValue()) != 0) outputs.add(face);
+        }
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 

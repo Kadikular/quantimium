@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_relay" scale="2" />
 
-Turns any beam that reaches it, from any side, out of its face, and refocuses it so it can go as far again.
+Sends any beam that reaches it, from any side, out of every face you set, refocused so it can go as far again.
 
 ## Recipes
 

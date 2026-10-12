@@ -81,7 +81,6 @@ navigation:
 - <ItemLink id="quantimium:ring_emitter" />
 - <ItemLink id="quantimium:sender" />
 - <ItemLink id="quantimium:solar_emitter" />
-- <ItemLink id="quantimium:splitter" />
 - <ItemLink id="quantimium:stabilised_portal_frame" />
 - <ItemLink id="quantimium:superposition_pod" />
 - <ItemLink id="quantimium:tesseract_stabilizer" />
