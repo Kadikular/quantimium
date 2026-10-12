@@ -4,7 +4,7 @@
 
 Laser emitters send power as light. A beam crosses open air, glass and anything you can walk
 through (grass, torches, flowers), and charges the first block it meets that takes power, from any
-mod. Mirrors turn the light around corners, and prisms split and join it at any angle; lenses give it
+mod. Mirrors and relays turn the light around corners, and prisms split and join it at any angle; lenses give it
 something to do. Items carried by light come later.
 
 !!! info "Badges"
@@ -38,27 +38,34 @@ output there, or take one away. One emitter can shine from all six faces; it alw
 [[mechanic:laser.redstone]] Open an emitter to see what it's sending and to set how it listens to
 redstone: not at all, on only with a signal, or off with a signal.
 
-## Mirrors
+## Mirrors and relays
 
-[[mechanic:laser.mirror]] A [[block:laser_mirror]] sends every beam that reaches it out of its face.
-Placed, it faces you; sneak-click or wrench a face to point it there. It refocuses
-the light to its source's range: a run from a mirror reaches as far as a run from the emitter that
-sent it, so a Flash Emitter's light goes 8 blocks a run however many mirrors it passes.
-Each mirror a beam passes takes {{c:LaserTuning.HOP_TAX|pct}} of what passes, and that becomes flux
-where the mirror stands.
+[[mechanic:laser.mirror]] A [[block:laser_mirror]] is a silver plate on a steel stand that turns light
+through a right angle, both ways. It stands on the block it was placed against, for good. Its plate faces
+half way between two sides at right angles, neither the one it stands on: sneak-click a side (by hand or
+with a wrench) to take light there, and click another to send it there. Light in by either side leaves by
+the other; light from anywhere else hits the back of the plate and stops. A redstone signal turns it off.
 
-[[mechanic:laser.mirror.redstone]] Use an empty hand on a mirror to step through how it listens to
+[[mechanic:laser.relay]] A [[block:laser_relay]] sends every beam that reaches it, from any side, out of
+its face. Placed, it faces you; sneak-click or wrench a face to point it there.
+
+Both refocus the light to its source's range: a run from a mirror or relay reaches as far as a run from
+the emitter that sent it, so a Flash Emitter's light goes 8 blocks a run however many it passes. Each
+one a beam passes takes {{c:LaserTuning.HOP_TAX|pct}} of what passes, and that becomes flux where it
+stands.
+
+[[mechanic:laser.relay.redstone]] Use an empty hand on a relay to step through how it listens to
 redstone: it ignores it, passes light only with a signal, only without one, or in **pulse** mode, where
 each signal it gets lets light through until one action down the beam is done (a block cut, a hit, an
-item carried) or two seconds pass. A pulse mirror before a Harvest lens breaks one block per pulse. Switched off, a mirror passes no light at all: nothing the light did reaches past it, and what's beyond
+item carried) or two seconds pass. A pulse relay before a Harvest lens breaks one block per pulse. Switched off, a relay (or a mirror) passes no light at all: nothing the light did reaches past it, and what's beyond
 gets only the light that reaches it some other way. An emitter switched off by redstone gives out none.
 
-[[mechanic:laser.splitter]] A [[block:splitter]] is a mirror with as many faces as you set: light that
+[[mechanic:laser.splitter]] A [[block:splitter]] is a relay with as many faces as you set: light that
 reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six
 straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output;
 each output face shows the split plate.
 
-[[mechanic:laser.isolator]] An [[block:isolator]] is a mirror that lets only power through: light
+[[mechanic:laser.isolator]] An [[block:isolator]] is a relay that lets only power through: light
 leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through it, so
 Pickup's items stop short of it.
 
@@ -69,7 +76,7 @@ it's linked to, along a straight line at any angle, sharing it by what each asks
 
 [[mechanic:laser.prism.join]] Light can reach it from any side, from any number of beams, so a prism
 also joins several emitters into one network: a block it's linked to can take more than any one of
-them could send. It refocuses and taxes light as a mirror does.
+them could send. It refocuses and taxes light as a relay does.
 
 [[mechanic:laser.prism.links]] Link it with the [[item:laser_linker]]: use the Linker on the prism to
 pick it, then on each block its light should reach, once to link it and again to unlink it. A prism
@@ -84,13 +91,13 @@ where light would go.
 
 ## Optical cavities
 
-[[mechanic:laser.cavity]] A [[block:cavity_mirror]] facing a [[block:laser_mirror]], or another Cavity
+[[mechanic:laser.cavity]] A [[block:cavity_mirror]] facing a [[block:laser_relay]], or another Cavity
 Mirror, across a clear gap of up to {{c:LaserTuning.CAVITY_MAX_GAP}} blocks holds light between them,
 as a real laser's cavity does: a battery for a laser network. Only one end needs to be a Cavity Mirror.
 Each Cavity Mirror holds {{c:LaserTuning.CAVITY_FE_PER_BLOCK}} FE for each block of gap, and takes or
-gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t; a Laser Mirror at the other end holds nothing.
+gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t; a Laser Relay at the other end holds nothing.
 
-With nothing facing it, a Cavity Mirror is just a mirror: light that reaches it leaves by its front,
+With nothing facing it, a Cavity Mirror is just a relay: light that reaches it leaves by its front,
 towards where its partner would stand. Once paired, what it holds leaves by its back instead.
 
 - Light that reaches a cavity mirror from outside charges it, but only with what the network's
@@ -101,7 +108,7 @@ towards where its partner would stand. Once paired, what it holds leaves by its 
   an empty hand to point the mirror there.
 - With two Cavity Mirrors, the light bounces between them, so what either holds evens out between
   them: both glow, and both can give it out.
-- Light reaching the Laser Mirror at the far end is passed into the cavity, so that end can feed it.
+- Light reaching the Laser Relay at the far end is passed into the cavity, so that end can feed it.
 - [[mechanic:laser.cavity.leak]] A cavity can leak: a pack can set it to lose a share of what it holds
   each tick, up to a cap, as flux where it stands. Out of the box it doesn't leak. Break a charged
   mirror, or block its gap, and the light it held all goes into the field at once.
@@ -122,7 +129,7 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 
 ## Lenses
 
-[[mechanic:laser.lens.mount]] A [[block:lens_mount]] is a mirror that holds lenses: light that reaches
+[[mechanic:laser.lens.mount]] A [[block:lens_mount]] is a relay that holds lenses: light that reaches
 it leaves by its face, refocused, through its four lens slots, left to right. The beam is still a beam:
 it carries power to whatever it ends on, as before, and does what its lenses say along the way. Open
 the mount with an empty hand; sneak-click or wrench a face to point it there. Under each lens is a
@@ -166,11 +173,11 @@ seeds somewhere to go. Use Fully grown rather than a "wheat" entry here: an entr
 gathering items from the ground.
 
 [[mechanic:laser.light.range]] **How far light reaches.** A run of light reaches as far as its source's:
-mirrors, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
+mirrors, relays, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
 {{c:LaserTuning.ACTION_REACH}} blocks a run instead, and the power it carries goes no farther. Each Range
 lens doubles a run, up to 64 blocks by default (`maxRange` in the `lasers` config). Where light joins, the farther reach wins.
 
-[[mechanic:laser.light.join]] **Joining light.** Light from two sides joined at a mirror or prism does
+[[mechanic:laser.light.join]] **Joining light.** Light from two sides joined at a relay or prism does
 everything either side did: Harvest light from one emitter and Damage light from another, joined, both
 work from there on. A modifier from before the join stays with its own side's actions; one after
 changes them all.
@@ -180,7 +187,7 @@ the lens that gave it, and only for work done: a cut as it's made, a hit when it
 carried. Harvest light joined with plain light is still paid for by its own emitter alone; a Harvest
 lens after the join is paid for by both. Actions only work while their light is lit.
 
-[[mechanic:laser.collector]] A [[block:collector]] passes light, out of its face, as a mirror does, and
+[[mechanic:laser.collector]] A [[block:collector]] passes light, out of its face, as a relay does, and
 catches what a Pickup lens further along brings back: nine slots, for pipes and hoppers to take from,
 or take from it yourself. Put it between the emitter and the mount: emitter, Collector, Lens Mount with
 Harvest and Pickup, then the blocks to break. What one Collector can't take goes on up the beam to the
@@ -191,7 +198,7 @@ with tags: what it turns away goes on up the beam.
 [[mechanic:laser.sender]] A [[block:sender]] is a Collector the other way round: light passes through
 it, and what's in its nine slots goes down the beam, to a Placement lens further along, or once a second
 a stack at a time to the nearest Collector down the beam with room, not past an Isolator. The light
-reaching it pays to carry it, and only while it's lit: a switched-off mirror before it, or on the way,
+reaching it pays to carry it, and only while it's lit: a switched-off relay before it, or on the way,
 stops it. A bound Tesseract in a slot sends from the inventory it links to.
 
 [[mechanic:laser.collector.mode]] Each can be set, on its screen, to **collect**, **send** or **both**: a
@@ -256,14 +263,14 @@ action, or more with Range lenses. A block beyond it gets nothing.
 
 ## Networks
 
-Emitters, mirrors, prisms, cavities, photodetectors, Lens Mounts and Collectors joined by light make one network. Power goes where it's asked for: every block
+Emitters, mirrors, relays, prisms, cavities, photodetectors, Lens Mounts and Collectors joined by light make one network. Power goes where it's asked for: every block
 the network's light reaches is charged as far as the network's emitters have power, shared between
 the emitters whose light reaches it in proportion to what each has. An emitter only ever pays for the
-blocks its own light reaches. Light reaches a block by the fewest mirrors it can.
+blocks its own light reaches. Light reaches a block by the fewest relays it can.
 
-Use the Flux Meter, or look with Jade, at an emitter or mirror to see what it's sending or passing on.
+Use the Flux Meter, or look with Jade, at an emitter, mirror or relay to see what it's sending or passing on.
 [[mechanic:laser.live]] Beams glow brighter the more they carry. A switched-on emitter with power keeps
-a dim beam lit even when nothing at its end needs power, along with the mirrors and prisms that light
+a dim beam lit even when nothing at its end needs power, along with the mirrors, relays and prisms that light
 reaches: it's checking for somewhere to send power, and that's what its small ready cost pays for.
 
 [[mechanic:laser.share]] Emitters whose light reaches the same block share a network, so that block

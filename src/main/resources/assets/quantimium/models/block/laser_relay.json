@@ -1,10 +1,10 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "front": "quantimium:block/laser_mirror_face",
-    "back": "quantimium:block/laser_mirror_side",
-    "side": "quantimium:block/laser_mirror_side",
-    "particle": "quantimium:block/laser_mirror_side"
+    "front": "quantimium:block/laser_relay_face",
+    "back": "quantimium:block/laser_relay_side",
+    "side": "quantimium:block/laser_relay_side",
+    "particle": "quantimium:block/laser_relay_side"
   },
   "elements": [
     {

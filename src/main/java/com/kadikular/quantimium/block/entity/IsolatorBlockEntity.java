@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * (actions, Pickup, UV), and nothing passes back up through it: Pickup's items stop at it, and later a
  * logistics network ends at it.
  */
-public class IsolatorBlockEntity extends LaserMirrorBlockEntity {
+public class IsolatorBlockEntity extends LaserRelayBlockEntity {
 
     public IsolatorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ISOLATOR_BE.get(), pos, state);

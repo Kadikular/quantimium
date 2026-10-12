@@ -51,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * another ring turned the same way, so it stands on a floor, hangs from a ceiling, sits on a wall or
  * stacks with its neighbours.
  */
-public class RiftLensBlock extends net.minecraft.world.level.block.BaseEntityBlock {
+public class RiftLensBlock extends net.minecraft.world.level.block.BaseEntityBlock implements com.kadikular.quantimium.laser.BeamAnchor {
 
     public static final MapCodec<RiftLensBlock> CODEC = simpleCodec(RiftLensBlock::new);
     /** The way a beam passes through it. */
@@ -257,5 +257,11 @@ public class RiftLensBlock extends net.minecraft.world.level.block.BaseEntityBlo
     @Override
     public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new com.kadikular.quantimium.block.entity.RiftLensBlockEntity(pos, state);
+    }
+
+    /** Beams meet the tear in its middle. */
+    @Override
+    public net.minecraft.world.phys.Vec3 beamPoint(BlockState state, BlockPos pos) {
+        return pos.getCenter();
     }
 }

@@ -2,7 +2,7 @@
 navigation:
   title: Reactor Input Port
   parent: blocks/index.md
-  position: 60
+  position: 61
   icon: quantimium:reactor_input_port
 ---
 

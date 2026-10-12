@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.block.entity;
 
-import com.kadikular.quantimium.block.LaserMirrorBlock;
+import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.init.ModBlockEntities;
 import com.kadikular.quantimium.laser.LaserNetworks;
 import net.minecraft.core.BlockPos;
@@ -21,13 +21,13 @@ import java.util.Set;
  * linking. Placed, its one output faces you; a wrench, or a sneaking empty hand, on a face adds or takes
  * away an output there.
  */
-public class SplitterBlockEntity extends LaserMirrorBlockEntity {
+public class SplitterBlockEntity extends LaserRelayBlockEntity {
 
     private final Set<Direction> outputs = EnumSet.noneOf(Direction.class);
 
     public SplitterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SPLITTER_BE.get(), pos, state);
-        if (state.hasProperty(LaserMirrorBlock.FACING)) outputs.add(state.getValue(LaserMirrorBlock.FACING));
+        if (state.hasProperty(LaserRelayBlock.FACING)) outputs.add(state.getValue(LaserRelayBlock.FACING));
     }
 
     @Override

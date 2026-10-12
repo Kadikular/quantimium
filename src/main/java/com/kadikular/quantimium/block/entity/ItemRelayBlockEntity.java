@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.block.entity;
 
-import com.kadikular.quantimium.block.LaserMirrorBlock;
+import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.block.entity.simulation.SideAutomationProfile;
 import com.kadikular.quantimium.block.entity.simulation.SideConfig;
 import com.kadikular.quantimium.block.entity.simulation.SideMode;
@@ -170,7 +170,7 @@ public abstract class ItemRelayBlockEntity extends BlockEntity implements LaserN
     }
 
     public Direction facing() {
-        return getBlockState().getValue(LaserMirrorBlock.FACING);
+        return getBlockState().getValue(LaserRelayBlock.FACING);
     }
 
     // ---- automation ----

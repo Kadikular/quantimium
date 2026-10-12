@@ -113,6 +113,35 @@ def mirror_face() -> Image.Image:
     return img
 
 
+def steel(seed: int) -> Image.Image:
+    """Dark brushed steel, for the Mirror's stand: streaks along its length."""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (16, 16), hx("3a3d44"))
+    for y in range(16):
+        tone = rnd.choice(["34373e", "3a3d44", "3a3d44", "41444c"])
+        for x in range(16):
+            img.putpixel((x, y), hx(tone) if rnd.random() < 0.85 else hx(rnd.choice(["2c2f35", "4a4e57"])))
+    return img
+
+
+def mirror_plate() -> Image.Image:
+    """The Mirror's silver plate, in the middle 10x10: a darker silver rim, a soft diagonal sheen across it."""
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for x in range(3, 13):
+        for y in range(3, 13):
+            if x in (3, 12) or y in (3, 12):
+                img.putpixel((x, y), hx("8d96a6"))
+                continue
+            shade = (x + (15 - y)) / 30
+            base = tuple(int(a + (b - a) * shade) for a, b in zip((0xb8, 0xc2, 0xd0), (0xec, 0xf1, 0xf8)))
+            img.putpixel((x, y), base + (255,))
+    for i in range(4, 12):
+        y = 15 - i
+        if 4 <= y <= 11:
+            img.putpixel((i, y), hx("fbfdff"))
+    return img
+
+
 def prism_face() -> Image.Image:
     """Facets of pale crystal in a dark frame: light split along clean lines."""
     img = stone(("12142a", "1b1e38", "262a4a"), 31)
@@ -362,6 +391,109 @@ def cube(textures: dict, front_key: str) -> dict:
             "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces}]}
 
 
+def _rot_x90(v):
+    x, y, z = v
+    return (x, z, -y)
+
+
+def _rot_y90(v):
+    x, y, z = v
+    return (-z, y, x)
+
+
+def _rotated(v, rx: int, ry: int):
+    for _ in range(rx // 90):
+        v = _rot_x90(v)
+    for _ in range(ry // 90):
+        v = _rot_y90(v)
+    return v
+
+
+DIRS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0), "east": (1, 0, 0)}
+
+
+def laser_mirror() -> None:
+    """
+    The Laser Mirror: a steel stand (a 12x12 base, a boss, a 2x2 column and a 2x2x2 hub at the middle)
+    on the block it was placed against, and a 10x10 silver plate tilted at 45 degrees in front of the hub,
+    facing half way between where light comes in and where it goes out. The stand is drawn for a floor
+    and turned to each mount; the plate is drawn between up and north and turned to each of its 12 ways.
+    """
+    steel(31).save(os.path.join(TEX, "laser_mirror_steel.png"))
+    mirror_plate().save(os.path.join(TEX, "laser_mirror_plate.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "plate": "quantimium:block/laser_mirror_plate",
+         "particle": "quantimium:block/laser_mirror_steel"}
+
+    def box(start, end, cull=None):
+        faces = {f: {"texture": "#steel", "uv": [start[0], start[2], end[0], end[2]] if f in ("up", "down") else
+                     [start[0] if f in ("north", "south") else start[2], 16 - end[1], end[0] if f in ("north", "south") else end[2], 16 - start[1]]}
+                 for f in ("north", "south", "east", "west", "up", "down")}
+        if cull:
+            faces[cull]["cullface"] = cull
+        return {"from": start, "to": end, "faces": faces}
+
+    stand = [box([2, 0, 2], [14, 1, 14], "down"), box([5, 1, 5], [11, 2, 11]), box([7, 2, 7], [9, 7, 9]), box([7, 7, 7], [9, 9, 9])]
+
+    def plate(sign: int):
+        # Two pixels in front of the hub along its tilt, so it never cuts the hub or column.
+        off = 2 / 2 ** 0.5
+        cy, cz = 8 + off, 8 - sign * off
+        element = box([3, cy - 0.5, cz - 5], [13, cy + 0.5, cz + 5])
+        element["faces"]["up"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+        element["rotation"] = {"origin": [8, cy, cz], "axis": "x", "angle": -45 * sign, "rescale": False}
+        return element
+
+    def write(name, elements):
+        with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
+            json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements}, handle, indent=2)
+
+    def upright():
+        # Standing, facing north and west: a positive turn about y takes north to north-west.
+        off = 2 / 2 ** 0.5
+        cx, cz = 8 - off, 8 - off
+        element = box([3, 3, cz - 0.5], [13, 13, cz + 0.5])
+        element["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+        element["rotation"] = {"origin": [cx, 8, cz], "axis": "y", "angle": 45, "rescale": False}
+        element["from"][0] += cx - 8
+        element["to"][0] += cx - 8
+        return element
+
+    write("laser_mirror_plate_upright", [upright()])
+    write("laser_mirror_stand", stand)
+    # Facing up and north: a positive turn about x would face it up and south.
+    write("laser_mirror_plate", [plate(1)])
+    write("laser_mirror_item", stand + [plate(-1)])
+
+    mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180},
+              "east": {"x": 90, "y": 270}}
+    parts = [{"when": {"mount": m}, "apply": dict({"model": "quantimium:block/laser_mirror_stand"}, **r)} for m, r in mounts.items()]
+    names = {v: k for k, v in DIRS.items()}
+    done = set()
+    for a in DIRS:
+        for b in DIRS:
+            pair = frozenset((a, b))
+            if a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0 or pair in done:
+                continue
+            done.add(pair)
+            # Between a side and up or down: the tilted plate. Between two sides: the upright one, turned about y.
+            horizontal = "up" not in pair and "down" not in pair
+            base = ("north", "west") if horizontal else ("up", "north")
+            model = "laser_mirror_plate_upright" if horizontal else "laser_mirror_plate"
+            rotation = None
+            for rx in ((0,) if horizontal else (0, 90, 180, 270)):
+                for ry in (0, 90, 180, 270):
+                    turned = {names[_rotated(DIRS[base[0]], rx, ry)], names[_rotated(DIRS[base[1]], rx, ry)]}
+                    if turned == {a, b} and rotation is None:
+                        rotation = {k: v for k, v in (("x", rx), ("y", ry)) if v}
+            assert rotation is not None, (a, b)
+            parts.append({"when": {"OR": [{"input": a, "output": b}, {"input": b, "output": a}]},
+                          "apply": dict({"model": f"quantimium:block/{model}"}, **rotation)})
+    with open(os.path.join(STATES, "laser_mirror.json"), "w") as handle:
+        json.dump({"multipart": parts}, handle, indent=1)
+    with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_mirror_item"}}, handle, indent=2)
+
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -388,17 +520,18 @@ def main() -> None:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
         written += 4
 
-    mirror_face().save(os.path.join(TEX, "laser_mirror_face.png"))
-    stone(("2b2b33", "3b3b45", "4d4d59"), 22).save(os.path.join(TEX, "laser_mirror_side.png"))
-    model = cube({"front": "quantimium:block/laser_mirror_face", "back": "quantimium:block/laser_mirror_side",
-                  "side": "quantimium:block/laser_mirror_side"}, "front")
-    with open(os.path.join(MODELS, "laser_mirror.json"), "w") as handle:
+    mirror_face().save(os.path.join(TEX, "laser_relay_face.png"))
+    stone(("2b2b33", "3b3b45", "4d4d59"), 22).save(os.path.join(TEX, "laser_relay_side.png"))
+    model = cube({"front": "quantimium:block/laser_relay_face", "back": "quantimium:block/laser_relay_side",
+                  "side": "quantimium:block/laser_relay_side"}, "front")
+    with open(os.path.join(MODELS, "laser_relay.json"), "w") as handle:
         json.dump(model, handle, indent=2)
-    with open(os.path.join(STATES, "laser_mirror.json"), "w") as handle:
-        json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/laser_mirror"}, **r) for f, r in ROTATIONS.items()}},
+    with open(os.path.join(STATES, "laser_relay.json"), "w") as handle:
+        json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/laser_relay"}, **r) for f, r in ROTATIONS.items()}},
                   handle, indent=1)
-    with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_mirror"}}, handle, indent=2)
+    with open(os.path.join(ITEMS, "laser_relay.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_relay"}}, handle, indent=2)
+    laser_mirror()
     for name, face, back_of, side_seed in (("cavity_mirror", cavity_face, coupler, 43), ("photodetector", detector_face, None, 52)):
         stone(("1b1e38", "262a4a", "323760") if name == "cavity_mirror" else ("2b2b33", "3b3b45", "4d4d59"), side_seed).save(
             os.path.join(TEX, f"{name}_side.png"))

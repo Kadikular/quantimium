@@ -2,14 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
+    "P": "minecraft:glass_pane",
     "I": "minecraft:iron_ingot",
-    "G": "minecraft:glass_pane",
-    "C": "minecraft:copper_ingot"
+    "N": "minecraft:iron_nugget"
   },
   "pattern": [
-    "IGI",
-    "GCG",
-    "IGI"
+    " P ",
+    " I ",
+    "NIN"
   ],
   "result": {
     "id": "quantimium:laser_mirror",

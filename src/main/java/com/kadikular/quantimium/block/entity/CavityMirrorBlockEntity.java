@@ -107,8 +107,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
                 return other.facing() == facing.getOpposite() && step > 1 ? step - 1 : 0;
             }
             BlockState there = level.getBlockState(at);
-            if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) {
-                return there.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING) == facing.getOpposite() && step > 1 ? step - 1 : 0;
+            if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserRelayBlock) {
+                return there.getValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING) == facing.getOpposite() && step > 1 ? step - 1 : 0;
             }
             if (!LaserBeam.passes(level, at, level.getBlockState(at))) return 0;
         }

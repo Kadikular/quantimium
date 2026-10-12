@@ -1,27 +1,277 @@
 {
- "variants": {
-  "facing=north": {
-   "model": "quantimium:block/laser_mirror"
+ "multipart": [
+  {
+   "when": {
+    "mount": "down"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_stand"
+   }
   },
-  "facing=south": {
-   "model": "quantimium:block/laser_mirror",
-   "y": 180
+  {
+   "when": {
+    "mount": "up"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_stand",
+    "x": 180
+   }
   },
-  "facing=west": {
-   "model": "quantimium:block/laser_mirror",
-   "y": 270
+  {
+   "when": {
+    "mount": "south"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_stand",
+    "x": 90
+   }
   },
-  "facing=east": {
-   "model": "quantimium:block/laser_mirror",
-   "y": 90
+  {
+   "when": {
+    "mount": "west"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_stand",
+    "x": 90,
+    "y": 90
+   }
   },
-  "facing=up": {
-   "model": "quantimium:block/laser_mirror",
-   "x": 270
+  {
+   "when": {
+    "mount": "north"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_stand",
+    "x": 90,
+    "y": 180
+   }
   },
-  "facing=down": {
-   "model": "quantimium:block/laser_mirror",
-   "x": 90
+  {
+   "when": {
+    "mount": "east"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_stand",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "down",
+      "output": "north"
+     },
+     {
+      "input": "north",
+      "output": "down"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "down",
+      "output": "south"
+     },
+     {
+      "input": "south",
+      "output": "down"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "down",
+      "output": "west"
+     },
+     {
+      "input": "west",
+      "output": "down"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "down",
+      "output": "east"
+     },
+     {
+      "input": "east",
+      "output": "down"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "up",
+      "output": "north"
+     },
+     {
+      "input": "north",
+      "output": "up"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate"
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "up",
+      "output": "south"
+     },
+     {
+      "input": "south",
+      "output": "up"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "up",
+      "output": "west"
+     },
+     {
+      "input": "west",
+      "output": "up"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "up",
+      "output": "east"
+     },
+     {
+      "input": "east",
+      "output": "up"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "north",
+      "output": "west"
+     },
+     {
+      "input": "west",
+      "output": "north"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_upright"
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "north",
+      "output": "east"
+     },
+     {
+      "input": "east",
+      "output": "north"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_upright",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "south",
+      "output": "west"
+     },
+     {
+      "input": "west",
+      "output": "south"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_upright",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "OR": [
+     {
+      "input": "south",
+      "output": "east"
+     },
+     {
+      "input": "east",
+      "output": "south"
+     }
+    ]
+   },
+   "apply": {
+    "model": "quantimium:block/laser_mirror_plate_upright",
+    "y": 180
+   }
   }
- }
+ ]
 }

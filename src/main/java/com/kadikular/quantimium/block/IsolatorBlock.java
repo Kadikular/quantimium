@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** An Isolator: a mirror that lets only power through. Pointed and set to redstone as a mirror is. */
-public class IsolatorBlock extends LaserMirrorBlock {
+public class IsolatorBlock extends LaserRelayBlock {
     public static final MapCodec<IsolatorBlock> ISOLATOR_CODEC = simpleCodec(IsolatorBlock::new);
 
     public IsolatorBlock(Properties properties) {

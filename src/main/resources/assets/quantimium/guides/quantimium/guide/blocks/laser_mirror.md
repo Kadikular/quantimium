@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_mirror" scale="2" />
 
-Turns any beam that reaches it out of its face, and refocuses it so it can go as far again.
+A silver plate on a stand: turns light through a right angle, both ways.
 
 ## Recipes
 

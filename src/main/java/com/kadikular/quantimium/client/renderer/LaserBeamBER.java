@@ -105,13 +105,14 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         return new float[] {0.45f + 0.55f * halo[0], 0.45f + 0.55f * halo[1], 0.45f + 0.55f * halo[2]};
     }
 
-    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. Light into a Rift Lens goes on to its tear. */
+    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. Light into a Rift Lens or Mirror goes on to its tear or plate. */
     private static Vec3[] line(LaserBeamView view, LaserBeam beam, Vec3 camera) {
         Vec3[] ends = view.endsOf(beam);
         Vec3 end = ends[1];
         var level = net.minecraft.client.Minecraft.getInstance().level;
-        if (beam.hit() != null && level != null && level.getBlockState(beam.hit()).getBlock() instanceof com.kadikular.quantimium.block.RiftLensBlock) {
-            end = beam.hit().getCenter();
+        if (beam.hit() != null && level != null) {
+            var state = level.getBlockState(beam.hit());
+            if (state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
         }
         return new Vec3[] {ends[0].subtract(camera), end.subtract(camera)};
     }

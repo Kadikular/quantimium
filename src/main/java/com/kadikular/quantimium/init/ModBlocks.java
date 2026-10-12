@@ -15,7 +15,7 @@ import com.kadikular.quantimium.block.ReactorPartBlock;
 import com.kadikular.quantimium.block.ReactorPlinthBlock;
 import com.kadikular.quantimium.block.LitReactorPlinthBlock;
 import com.kadikular.quantimium.block.LaserEmitterBlock;
-import com.kadikular.quantimium.block.LaserMirrorBlock;
+import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.block.LaserPrismBlock;
 import com.kadikular.quantimium.block.CavityMirrorBlock;
 import com.kadikular.quantimium.block.PhotodetectorBlock;
@@ -715,7 +715,9 @@ public class ModBlocks {
     public static final DeferredBlock<Block> LASER_EMITTER_3 = BLOCKS.register(
             "laser_emitter_3", id -> new LaserEmitterBlock(laserBlock(id, MapColor.COLOR_PURPLE), LaserTuning.Tier.THREE));
     public static final DeferredBlock<Block> LASER_MIRROR = BLOCKS.register(
-            "laser_mirror", id -> new LaserMirrorBlock(laserBlock(id, MapColor.QUARTZ)));
+            "laser_mirror", id -> new com.kadikular.quantimium.block.LaserMirrorBlock(laserBlock(id, MapColor.METAL).noOcclusion()));
+    public static final DeferredBlock<Block> LASER_RELAY = BLOCKS.register(
+            "laser_relay", id -> new LaserRelayBlock(laserBlock(id, MapColor.QUARTZ)));
 
     public static final DeferredBlock<Block> LASER_PRISM = BLOCKS.register(
             "laser_prism", id -> new LaserPrismBlock(laserBlock(id, MapColor.COLOR_LIGHT_BLUE).sound(SoundType.AMETHYST)));

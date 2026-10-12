@@ -1,0 +1,88 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "steel": "quantimium:block/laser_mirror_steel",
+    "plate": "quantimium:block/laser_mirror_plate",
+    "particle": "quantimium:block/laser_mirror_steel"
+  },
+  "elements": [
+    {
+      "from": [
+        1.585786437626905,
+        3,
+        6.085786437626905
+      ],
+      "to": [
+        11.585786437626904,
+        13,
+        7.085786437626905
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plate",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#steel",
+          "uv": [
+            6.085786437626905,
+            3,
+            7.085786437626905,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#steel",
+          "uv": [
+            6.085786437626905,
+            3,
+            7.085786437626905,
+            13
+          ]
+        },
+        "up": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            6.085786437626905,
+            13,
+            7.085786437626905
+          ]
+        },
+        "down": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            6.085786437626905,
+            13,
+            7.085786437626905
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.585786437626905,
+          8,
+          6.585786437626905
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 package com.kadikular.quantimium.gametest;
 
 import com.kadikular.quantimium.block.LaserEmitterBlock;
-import com.kadikular.quantimium.block.LaserMirrorBlock;
+import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserPrismBlockEntity;
@@ -81,14 +81,14 @@ public final class LaserTimingTests {
         for (int column = 0; column < 6; column++) {
             int x = 2 + 2 * column;
             boolean down = column % 2 == 0;
-            mirror(helper, new BlockPos(x, Y + 5, down ? 1 : 11), down ? Direction.SOUTH : Direction.NORTH);
-            mirror(helper, new BlockPos(x, Y + 5, down ? 11 : 1), Direction.EAST);
+            relay(helper, new BlockPos(x, Y + 5, down ? 1 : 11), down ? Direction.SOUTH : Direction.NORTH);
+            relay(helper, new BlockPos(x, Y + 5, down ? 11 : 1), Direction.EAST);
         }
         sink.accept(new BlockPos(14, Y + 5, 1));
     }
 
-    private static void mirror(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.LASER_MIRROR.get().defaultBlockState().setValue(LaserMirrorBlock.FACING, facing));
+    private static void relay(GameTestHelper helper, BlockPos pos, Direction facing) {
+        helper.setBlock(pos, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, facing));
     }
 
     private static void emitter(GameTestHelper helper, BlockPos pos, Block block, Direction facing) {

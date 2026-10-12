@@ -21,7 +21,7 @@ import net.minecraft.world.phys.BlockHitResult;
  * A Splitter: light out of every face you set. A wrench, or a sneaking empty hand, on a face adds or
  * takes away an output there; an empty hand steps through how it listens to redstone.
  */
-public class SplitterBlock extends LaserMirrorBlock {
+public class SplitterBlock extends LaserRelayBlock {
     public static final MapCodec<SplitterBlock> SPLITTER_CODEC = simpleCodec(SplitterBlock::new);
     /** Whether light leaves by that face: what the block shows. */
     public static final java.util.Map<Direction, net.minecraft.world.level.block.state.properties.BooleanProperty> OUTPUTS =

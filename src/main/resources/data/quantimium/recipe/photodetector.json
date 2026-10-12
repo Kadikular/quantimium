@@ -4,7 +4,7 @@
   "key": {
     "G": "minecraft:glass_pane",
     "R": "minecraft:redstone",
-    "M": "quantimium:laser_mirror",
+    "M": "quantimium:laser_relay",
     "I": "minecraft:iron_ingot"
   },
   "pattern": [

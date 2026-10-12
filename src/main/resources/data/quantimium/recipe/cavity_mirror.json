@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "G": "quantimium:quantum_attuned_glass",
-    "M": "quantimium:laser_mirror",
+    "M": "quantimium:laser_relay",
     "S": "quantimium:anomalite_shard",
     "C": "minecraft:copper_block"
   },

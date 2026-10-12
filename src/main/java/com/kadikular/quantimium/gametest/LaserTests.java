@@ -1,7 +1,7 @@
 package com.kadikular.quantimium.gametest;
 
 import com.kadikular.quantimium.block.LaserEmitterBlock;
-import com.kadikular.quantimium.block.LaserMirrorBlock;
+import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
@@ -10,6 +10,7 @@ import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.util.RedstoneMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -41,6 +42,86 @@ public final class LaserTests {
         return helper.getBlockEntity(pos, FoldCoreBlockEntity.class);
     }
 
+    private static BlockState mirror(Direction mount, Direction input, Direction output) {
+        return ModBlocks.LASER_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, mount)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, input).setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, output);
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aMirrorTurnsLightBothWays(GameTestHelper helper) {
+        // On the floor, turning between west and north: light from the west goes north, light from the north goes west.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        FoldCoreBlockEntity north = sink(helper, new BlockPos(6, Y, 3));
+        emitter(helper, new BlockPos(10, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.NORTH, true);
+        helper.setBlock(new BlockPos(10, Y, 9), mirror(Direction.DOWN, Direction.SOUTH, Direction.EAST));
+        FoldCoreBlockEntity east = sink(helper, new BlockPos(14, Y, 9));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(north.getEnergyStorage().getEnergyStored() > 0, "turned from west to north");
+            helper.assertTrue(east.getEnergyStorage().getEnergyStored() > 0, "and from south to east");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aMirrorTurnsLightFromItsOtherSideToo(GameTestHelper helper) {
+        // Set to turn west and north, lit from the north: the light goes out west.
+        emitter(helper, new BlockPos(6, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        helper.setBlock(new BlockPos(6, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        FoldCoreBlockEntity west = sink(helper, new BlockPos(1, Y, 8));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(west.getEnergyStorage().getEnergyStored() > 0, "out of its other side");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 80)
+    public static void aMirrorStopsLightFromItsBack(GameTestHelper helper) {
+        // Turning west and north, lit from the east: it hits the back of the plate, and nothing goes on.
+        emitter(helper, new BlockPos(12, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.WEST, true);
+        helper.setBlock(new BlockPos(6, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        FoldCoreBlockEntity north = sink(helper, new BlockPos(6, Y, 3));
+        FoldCoreBlockEntity west = sink(helper, new BlockPos(1, Y, 8));
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(north.getEnergyStorage().getEnergyStored(), 0, "nothing north");
+            helper.assertValueEqual(west.getEnergyStorage().getEnergyStored(), 0, "nothing on through");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 160)
+    public static void aPoweredMirrorIsOff(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        FoldCoreBlockEntity north = sink(helper, new BlockPos(6, Y, 3));
+        helper.setBlock(new BlockPos(6, Y, 9), net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK);
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(north.getEnergyStorage().getEnergyStored(), 0, "a signal turns it off");
+            helper.setBlock(new BlockPos(6, Y, 9), net.minecraft.world.level.block.Blocks.AIR);
+        });
+        helper.runAfterDelay(120, () -> {
+            helper.assertTrue(north.getEnergyStorage().getEnergyStored() > 0, "and back on without it");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void aMirrorOnlyTurnsThroughARightAngle(GameTestHelper helper) {
+        helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.NORTH), "west to north, on the floor");
+        helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.UP, Direction.EAST), "from above, to the east");
+        helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.EAST), "not straight on");
+        helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.DOWN), "not into its mount");
+        helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.DOWN, Direction.NORTH), "not from its mount");
+        helper.succeed();
+    }
+
     // covers: laser.power
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void anEmitterPowersAMachineAcrossAGap(GameTestHelper helper) {
@@ -50,12 +131,12 @@ public final class LaserTests {
                 "the core is charged by light: " + core.getEnergyStorage().getEnergyStored()));
     }
 
-    // covers: laser.mirror
+    // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
-    public static void aMirrorTurnsTheBeamAndTakesItsTax(GameTestHelper helper) {
+    public static void aRelayTurnsTheBeamAndTakesItsTax(GameTestHelper helper) {
         emitter(helper, new BlockPos(3, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         BlockPos mirror = new BlockPos(9, Y, 3);
-        helper.setBlock(mirror, ModBlocks.LASER_MIRROR.get().defaultBlockState().setValue(LaserMirrorBlock.FACING, Direction.SOUTH));
+        helper.setBlock(mirror, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.SOUTH));
         FoldCoreBlockEntity core = sink(helper, new BlockPos(9, Y, 12));
         long[] before = {-1};
         helper.runAfterDelay(40, () -> before[0] = core.getEnergyStorage().getEnergyStored());
@@ -474,11 +555,11 @@ public final class LaserTests {
 
     // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
-    public static void aCavityMirrorAndALaserMirrorMakeACavity(GameTestHelper helper) {
+    public static void aCavityMirrorAndALaserRelayMakeACavity(GameTestHelper helper) {
         // Only one end needs to be a Cavity Mirror: it holds the light, the Laser Mirror holds none.
         var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
-        helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.FACING, Direction.WEST));
+        helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.WEST));
         helper.runAfterDelay(25, () -> {
             helper.assertTrue(a.paired(), "paired with the Laser Mirror");
             helper.assertValueEqual(a.capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks of gap");
