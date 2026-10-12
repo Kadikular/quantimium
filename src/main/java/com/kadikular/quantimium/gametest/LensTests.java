@@ -277,6 +277,22 @@ public final class LensTests {
     }
 
     // covers: laser.splitter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 20)
+    public static void sneakClickingASplittersInputSwapsItsSides(GameTestHelper helper) {
+        BlockPos at = new BlockPos(6, Y, 8);
+        splitter(helper, at, Direction.WEST, Direction.NORTH);
+        var player = TestSupport.player(helper, new BlockPos(4, Y, 8), net.minecraft.world.level.GameType.SURVIVAL);
+        player.setShiftKeyDown(true);
+        BlockPos abs = helper.absolutePos(at);
+        var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(-0.5, 0, 0), Direction.WEST, abs, false);
+        helper.getLevel().getBlockState(abs).useWithoutItem(helper.getLevel(), player, hit);
+        var state = helper.getLevel().getBlockState(abs);
+        helper.assertTrue(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT) == Direction.WEST
+                && state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT) == Direction.NORTH, "swapped: " + state);
+        helper.succeed();
+    }
+
+    // covers: laser.splitter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void aLaserSplitterStopsLightFromItsOtherSides(GameTestHelper helper) {
         // Lit only from the east (behind its input side): nothing gets through.

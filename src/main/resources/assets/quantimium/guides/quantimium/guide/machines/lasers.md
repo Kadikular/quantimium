@@ -68,7 +68,7 @@ signal turns it off.
 
 A <ItemLink id="quantimium:laser_splitter" /> is a Laser Mirror with a half-silvered plate, set
 the same way (never flat): click its **input side**, sneak-click its **output (turn) side**, at right
-angles, as you sneak-click a Solar Emitter's output. Its plate has a light-blue mark in the middle, and a
+angles, as you sneak-click a Solar Emitter's output; sneak-clicking its input side swaps the two. Its plate has a light-blue mark in the middle, and a
 notch on its rim by the output side; the Flux Meter or Jade names both sides.
 Light in by its input side splits: half goes straight on, half turns out of its turn side. Light from
 behind its turn side passes straight through the plate and out of the turn side too; with both coming

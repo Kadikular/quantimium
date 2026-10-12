@@ -168,11 +168,12 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         } else {
             if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
             if (face == state.getValue(INPUT).getOpposite()) return refuse(player, "message.quantimium.laser_mirror.straight");
-            // A Laser Splitter has no flat: light would go straight through and back at once.
+            // A Laser Splitter has no flat: its input side made its output swaps the two over.
             if (face == state.getValue(INPUT) && ((LaserMirrorBlock) state.getBlock()).splits()) {
-                return refuse(player, "message.quantimium.laser_splitter.flat");
+                next = state.setValue(INPUT, state.getValue(OUTPUT)).setValue(OUTPUT, face);
+            } else {
+                next = state.setValue(OUTPUT, face);
             }
-            next = state.setValue(OUTPUT, face);
         }
         if (next != state) {
             level.setBlock(pos, next, Block.UPDATE_ALL);
