@@ -593,6 +593,24 @@ public final class LaserTests {
     }
 
     // covers: laser.mirror
+    // Alone in its batch: other tests building and breaking would rebuild the network too.
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_settled", timeoutTicks = 200)
+    public static void mirrorsLeaveTheNetworkSettled(GameTestHelper helper) {
+        // One lit, one never lit: once the light has settled, nothing should keep the network rebuilding.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        sink(helper, new BlockPos(6, Y, 3));
+        helper.setBlock(new BlockPos(12, Y, 12), mirror(Direction.DOWN, Direction.SOUTH, Direction.EAST));
+        long[] settled = {-1};
+        helper.runAfterDelay(80, () -> settled[0] = LaserNetworks.of(helper.getLevel()).rebuilds());
+        helper.runAfterDelay(180, () -> {
+            helper.assertValueEqual(LaserNetworks.of(helper.getLevel()).rebuilds(), settled[0], "no rebuilds once settled");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aFlatMirrorSendsLightBack(GameTestHelper helper) {
         // Light from the north, turned east by one mirror, into a flat one facing west: it goes straight back west.

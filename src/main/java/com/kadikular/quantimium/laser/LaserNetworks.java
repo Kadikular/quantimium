@@ -241,8 +241,16 @@ public final class LaserNetworks {
      */
     private record Hop(BlockPos node, int beam, @Nullable LaserNode relay, long[] carried, long @Nullable [] lost) {}
 
+    /** For tests: how many times it's rebuilt, so a test can see it settle. */
+    private long rebuilds;
+
+    public long rebuilds() {
+        return rebuilds;
+    }
+
     private void rebuild() {
         dirty = false;
+        rebuilds++;
         Map<BlockPos, List<LaserBeam>> before = new HashMap<>(beams);
         // What each beam has carried since the last settle is kept, so a rebuild (a block broken, say)
         // doesn't make the second's average look like nothing passed.

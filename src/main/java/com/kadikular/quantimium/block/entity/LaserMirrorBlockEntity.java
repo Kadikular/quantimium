@@ -49,17 +49,25 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
         return worldPosition;
     }
 
+    /** The sides light leaves by, as the network last found it arriving: what its beams are, so they're checked against it. */
+    private Set<Direction> passing = Set.of();
+
     @Override
     public Set<Direction> outputs() {
-        return java.util.EnumSet.of(input(), output());
+        return passing;
     }
 
-    /** Light coming in by either side turns out of the other; any other light stops here. */
+    /** Light coming in by either side turns out of the other; any other light stops here. With none, both: where light would go. */
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {
+        if (arriving.isEmpty()) {
+            passing = java.util.EnumSet.of(input(), output());
+            return passing;
+        }
         Set<Direction> out = java.util.EnumSet.noneOf(Direction.class);
         if (arriving.contains(input().getOpposite())) out.add(output());
         if (arriving.contains(output().getOpposite())) out.add(input());
+        passing = out;
         return out;
     }
 
