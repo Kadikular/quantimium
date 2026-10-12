@@ -1320,6 +1320,74 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.interact, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void anAreaInteractTriesEachThingItsSent(GameTestHelper helper) {
+        // Carrots first in the Sender, which only the pig wants: the cow still gets wheat, the sheep shorn.
+        emitter(helper, new BlockPos(1, Y + 2, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y + 2, 8), Direction.EAST, new ItemStack(Items.CARROT, 4), new ItemStack(Items.WHEAT, 4),
+                new ItemStack(Items.SHEARS));
+        mount(helper, new BlockPos(5, Y + 2, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        BlockPos at = new BlockPos(9, Y + 2, 8);
+        helper.setBlock(at, ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.cycleShape();
+        prism.setRadius(3);
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(8, Y, 6));
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(11, Y, 10));
+        var sheep = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(10, Y, 7));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(pig.isInLove(), "the pig had a carrot");
+            helper.assertTrue(cow.isInLove(), "the cow had wheat");
+            helper.assertTrue(sheep.isSheared(), "the sheep was shorn");
+            TestSupport.finishLasers(helper);
+            pig.discard();
+            cow.discard();
+            sheep.discard();
+        });
+    }
+
+    // covers: laser.lens.interact, laser.collector.mode
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anInteractBeamShearsFromACollectorSetToBoth(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity both = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        both.cycleMode();
+        both.cycleMode();
+        both.getItems().setStackInSlot(0, new ItemStack(Items.SHEARS));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        var sheep = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(9, Y, 8));
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(sheep.isSheared(), "sheared");
+            helper.assertValueEqual(count(both, Items.SHEARS), 1, "the shears are back");
+            TestSupport.finishLasers(helper);
+            sheep.discard();
+        });
+    }
+
+    // covers: laser.lens.interact, laser.collector.mode, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
+    public static void anAreaInteractFeedsFromACollectorSetToBoth(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y + 2, 8), Direction.EAST, true);
+        CollectorBlockEntity both = collector(helper, new BlockPos(3, Y + 2, 8), Direction.EAST);
+        both.cycleMode();
+        both.cycleMode();
+        both.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT, 8));
+        mount(helper, new BlockPos(5, Y + 2, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
+        BlockPos at = new BlockPos(9, Y + 2, 8);
+        helper.setBlock(at, ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.cycleShape();
+        prism.setRadius(3);
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(8, Y, 6));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(cow.isInLove(), "fed");
+            TestSupport.finishLasers(helper);
+            cow.discard();
+        });
+    }
+
     // covers: laser.lens.order
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aFilterChangesOnlyTheLensesBeforeIt(GameTestHelper helper) {

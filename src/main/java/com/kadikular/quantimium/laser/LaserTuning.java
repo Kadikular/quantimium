@@ -53,6 +53,8 @@ public final class LaserTuning {
     public static final long PLACE_FE = 200;
     /** Ticks between blocks a Placement beam places. */
     public static final int PLACE_COOLDOWN = 10;
+    /** Kinds of thing an Interact beam tries from its Senders in one go, before it gives up till next time. */
+    public static final int INTERACT_TRIES = 9;
     /** How long light carrying power blinds what looks into it: fifteen seconds. */
     public static final int BLIND_TICKS = 300;
     /** How near the beam's line an eye must be. */

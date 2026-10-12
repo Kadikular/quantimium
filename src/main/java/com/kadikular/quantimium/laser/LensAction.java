@@ -228,21 +228,32 @@ public final class LensAction {
         if ((beam == null && area == null) || (area != null && now < restUntil) || !networks.canPay(this, LaserTuning.PLACE_FE)) return;
         // It works with what the Sender holds where it is: the hand holds a copy, and only once using it has
         // changed it (eaten, filled, worn) is the real one taken and what it became sent on. Unused, nothing moves.
-        ItemStack sent = senders.isEmpty() ? ItemStack.EMPTY : networks.take(senders, this::lets, 1, true);
-        ItemStack held = sent.copy();
+        // Each kind of thing the Sender holds in turn, till one is used: carrots for the pigs, wheat for the cows, shears.
+        List<ItemStack> tried = new ArrayList<>();
+        ItemStack sent;
+        ItemStack after;
+        List<ItemStack> extras;
+        boolean done;
         LaserHand hand = handFor(level);
-        hand.hold(held);
-        boolean done = stream.hits() ? swing(level, hand) : use(level, hand, held);
-        // Whatever it holds now: a filled bucket, what's left of a stack, a worn sword.
-        ItemStack after = hand.letGo();
-        List<ItemStack> extras = List.copyOf(hand.getInventory().getNonEquipmentItems());
-        hand.getInventory().clearContent();
+        do {
+            sent = senders.isEmpty() ? ItemStack.EMPTY : networks.take(senders, stack -> lets(stack)
+                    && tried.stream().noneMatch(seen -> ItemStack.isSameItemSameComponents(seen, stack)), 1, true);
+            if (!sent.isEmpty()) tried.add(sent);
+            ItemStack held = sent.copy();
+            hand.hold(held);
+            done = stream.hits() ? swing(level, hand) : use(level, hand, held);
+            // Whatever it holds now: a filled bucket, what's left of a stack, a worn sword.
+            after = hand.letGo();
+            extras = List.copyOf(hand.getInventory().getNonEquipmentItems());
+            hand.getInventory().clearContent();
+        } while (!done && !sent.isEmpty() && !stream.hits() && tried.size() < LaserTuning.INTERACT_TRIES);
         if (!done) return;
-        boolean changed = !ItemStack.matches(after, sent) || extras.stream().anyMatch(extra -> !extra.isEmpty());
-        if (changed && !sent.isEmpty()) networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, sent), 1, false);
+        ItemStack used = sent;
+        boolean changed = !ItemStack.matches(after, used) || extras.stream().anyMatch(extra -> !extra.isEmpty());
+        if (changed && !used.isEmpty()) networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, used), 1, false);
         if (changed) {
-            for (ItemStack extra : extras) settle(level, networks, extra, sent);
-            settle(level, networks, after, sent);
+            for (ItemStack extra : extras) settle(level, networks, extra, used);
+            settle(level, networks, after, used);
         }
         networks.pay(this, LaserTuning.PLACE_FE);
         networks.workDone(this);
