@@ -100,6 +100,15 @@ public interface LaserNode {
     }
 
     /** Whether light through it goes into the mirror, or back out of it: a Rift Lens. */
+    /**
+     * Whether light travelling {@code travel} as it arrives gets in: a Mirror takes light only through its two
+     * sides, a Rift Lens only along its axis. Light that doesn't get in stops here: it's neither joined to what
+     * leaves, nor paid through, nor followed back up.
+     */
+    default boolean accepts(Direction travel) {
+        return true;
+    }
+
     default boolean rifts() {
         return false;
     }

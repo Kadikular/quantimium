@@ -71,6 +71,12 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
         return out;
     }
 
+    /** Only light coming in by one of its two sides; the rest hits the back or edge of the plate. */
+    @Override
+    public boolean accepts(Direction travel) {
+        return travel == input().getOpposite() || travel == output().getOpposite();
+    }
+
     @Override
     public int range() {
         return LaserTuning.RELAY_RANGE;

@@ -232,6 +232,31 @@ public final class LensTests {
         helper.setBlock(pos, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, facing));
     }
 
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
+    public static void lightAtAMirrorsBackDoesntJoinWhatItTurns(GameTestHelper helper) {
+        // Harvest light turned west to north; Damage light hitting the mirror's back from the east is stopped, not joined.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        BlockPos at = new BlockPos(6, Y, 8);
+        helper.setBlock(at, ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.WEST)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.NORTH));
+        emitter(helper, new BlockPos(12, Y, 8), Direction.WEST, true);
+        mount(helper, new BlockPos(10, Y, 8), Direction.WEST, ModItems.DAMAGE_LENS.get());
+        helper.setBlock(new BlockPos(6, Y, 2), Blocks.BEDROCK);
+        helper.runAfterDelay(40, () -> {
+            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(at));
+            helper.assertTrue(beams.stream().anyMatch(beam -> beam.face() == Direction.NORTH
+                    && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.HARVEST)), "the Harvest light turns north: " + beams);
+            helper.assertFalse(beams.stream().anyMatch(beam -> com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.DAMAGE)),
+                    "the Damage light at its back isn't joined: " + beams);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.light.range
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
     public static void aMirrorRefocusesToItsSourcesRange(GameTestHelper helper) {

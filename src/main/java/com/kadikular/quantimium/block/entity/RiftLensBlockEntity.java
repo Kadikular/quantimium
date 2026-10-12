@@ -69,6 +69,12 @@ public class RiftLensBlockEntity extends BlockEntity implements LaserNode, Laser
         return out;
     }
 
+    /** Only light along its axis goes through the tear. */
+    @Override
+    public boolean accepts(Direction travel) {
+        return travel.getAxis() == axis();
+    }
+
     @Override
     public int range() {
         return LaserTuning.RELAY_RANGE;

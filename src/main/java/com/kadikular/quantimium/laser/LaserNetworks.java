@@ -453,10 +453,18 @@ public final class LaserNetworks {
             // Nothing passes back up through an Isolator, or past a source; a cavity, it does.
             if (((!node.relays() && !node.buffers()) || node.isolates()) && !at.equals(pos)) continue;
             for (BlockPos up : into.getOrDefault(at, List.of())) {
-                if (seen.add(up)) queue.add(up);
+                if (letsIn(up, node) && seen.add(up)) queue.add(up);
             }
         }
         return found;
+    }
+
+    /** Whether light from {@code from} gets into {@code node}: one of its beams ends there, travelling a way it accepts. */
+    private boolean letsIn(BlockPos from, LaserNode node) {
+        for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
+            if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit()) && node.accepts(beam.face())) return true;
+        }
+        return false;
     }
 
     /** Gives {@code stack} to the Collectors at {@code positions}, in order; what none could take. */
@@ -676,7 +684,7 @@ public final class LaserNetworks {
             Light light = lights.get(from);
             if (light == null) continue;
             for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
-                if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit())) continue;
+                if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit()) || !node.accepts(beam.face())) continue;
                 joined = Light.join(joined, node.refocuses() ? light : light.passedOn(beam.length()));
             }
         }
@@ -797,7 +805,7 @@ public final class LaserNetworks {
                     if (next != null && next.buffers() && !source.buffers()) {
                         route(sinks, beam.hit(), beam.face().getOpposite(), next, source.nodePos(), index, path, visit.efficiency());
                     }
-                    if (next != null && next.relays() && seen.add(beam.hit())) {
+                    if (next != null && next.relays() && next.accepts(beam.face()) && seen.add(beam.hit())) {
                         queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
                     }
                 }
