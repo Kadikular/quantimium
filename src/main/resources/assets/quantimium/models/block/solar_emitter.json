@@ -5,6 +5,7 @@
     "steel": "quantimium:block/laser_mirror_steel",
     "focus": "quantimium:block/laser_focus",
     "glass": "quantimium:block/solar_emitter_glass",
+    "light": "quantimium:block/solar_emitter_light",
     "particle": "quantimium:block/laser_mirror_steel"
   },
   "elements": [
@@ -198,6 +199,38 @@
         },
         "down": {
           "texture": "#glass"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        1,
+        7
+      ],
+      "to": [
+        9,
+        6,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel"
+        },
+        "south": {
+          "texture": "#steel"
+        },
+        "east": {
+          "texture": "#steel"
+        },
+        "west": {
+          "texture": "#steel"
+        },
+        "up": {
+          "texture": "#steel"
+        },
+        "down": {
+          "texture": "#steel"
         }
       }
     },

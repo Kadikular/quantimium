@@ -26,7 +26,8 @@ import java.util.Set;
 /**
  * A Laser Mirror's light: it turns light between its two sides, both ways, as a mirror would: what comes
  * in by one leaves by the other, refocused, so its range starts again; flat, it goes back the way it came.
- * A Laser Splitter's half-silvered plate sends light both straight on and turned, by any of its four ports.
+ * A Laser Splitter's half-silvered plate splits light from its input side, on and turned, and joins light
+ * from behind its turn side to what it turns.
  * Light from anywhere else stops on it. Off while a redstone signal reaches it.
  */
 public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView {
@@ -59,22 +60,24 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
     }
 
     /**
-     * Light coming in by a port turns out of its partner (a Mirror's two sides to each other); through a Beam
-     * Splitter it also goes straight on. Any other light stops here. With none, every port: where light would go.
+     * A Mirror turns light between its two sides. A Laser Splitter splits light in by its input side, on and out
+     * of its turn side; light from behind its turn side passes straight through and out of it; both at once leave
+     * by the turn side only, joined. Any other light stops here. With none, where light would go.
      */
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {
-        Set<Direction> ports = ports();
-        if (arriving.isEmpty()) {
-            passing = ports;
-            return passing;
-        }
+        Direction mount = getBlockState().getValue(LaserMirrorBlock.MOUNT);
         Set<Direction> out = java.util.EnumSet.noneOf(Direction.class);
-        for (Direction travel : arriving) {
-            Direction in = travel.getOpposite();
-            if (!ports.contains(in)) continue;
-            if (ports.contains(turned(in))) out.add(turned(in));
-            if (splits() && ports.contains(travel)) out.add(travel);
+        if (!splits()) {
+            if (arriving.isEmpty() || arriving.contains(input().getOpposite())) out.add(output());
+            if (arriving.isEmpty() || arriving.contains(output().getOpposite())) out.add(input());
+        } else {
+            boolean in = arriving.contains(input().getOpposite()) && input() != mount;
+            boolean behind = arriving.contains(output()) && output().getOpposite() != mount;
+            if (in || behind || arriving.isEmpty()) out.add(output());
+            // Split on only while nothing joins it from behind: joined light leaves by the turn side alone.
+            if ((in && !behind) || arriving.isEmpty()) out.add(input().getOpposite());
+            out.remove(mount);
         }
         passing = out;
         return out;
@@ -86,31 +89,20 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
     }
 
     /**
-     * The faces light gets in and out by: a Mirror's two sides; a Laser Splitter's four, its two sides and the
-     * faces across from them, but for one facing its mount.
+     * The faces light gets in by. A Mirror: its two sides. A Laser Splitter: its input side, and the face behind
+     * its turn side; not one facing its mount.
      */
-    private Set<Direction> ports() {
-        Set<Direction> ports = java.util.EnumSet.of(input(), output());
-        if (splits()) {
-            ports.add(input().getOpposite());
-            ports.add(output().getOpposite());
-            ports.remove(getBlockState().getValue(LaserMirrorBlock.MOUNT));
-        }
-        return ports;
+    private Set<Direction> entries() {
+        if (!splits()) return java.util.EnumSet.of(input(), output());
+        Set<Direction> entries = java.util.EnumSet.of(input(), output().getOpposite());
+        entries.remove(getBlockState().getValue(LaserMirrorBlock.MOUNT));
+        return entries;
     }
 
-    /** The face light in by {@code face} turns out of, off the plate: one side to the other, and across the back likewise. */
-    private Direction turned(Direction face) {
-        if (face == input()) return output();
-        if (face == output()) return input();
-        if (face == input().getOpposite()) return output().getOpposite();
-        return input().getOpposite();
-    }
-
-    /** Only light coming in by one of its ports; the rest hits the back or edge of the plate. */
+    /** Only light coming in by one of its entries; the rest hits the back or edge of the plate. */
     @Override
     public boolean accepts(Direction travel) {
-        return ports().contains(travel.getOpposite());
+        return entries().contains(travel.getOpposite());
     }
 
     @Override

@@ -66,12 +66,12 @@ light from and it's **flat**, facing that side: light goes straight back the way
 Cavity Mirror across a gap it's the far end of the cavity. It never sends light straight on. A redstone
 signal turns it off.
 
-A <ItemLink id="quantimium:laser_splitter" /> is a Laser Mirror with a half-silvered plate, set the
-same way (two sides at right angles; never flat). It has four ports: its two sides and the faces across
-from them, but not one facing what it stands on. Light in by any port goes both straight on and turned
-off the plate, so one beam becomes two; and two beams meeting at a right angle (one through the back, one
-from the side) leave together, joined. Light also leaves by the fourth face, but power only goes where
-something asks for it, so that costs nothing. It closes no cavity.
+A <ItemLink id="quantimium:laser_splitter" /> is a Laser Mirror with a half-silvered plate, set
+the same way (never flat): sneak-click its **input side**, click its **turn side**, at right angles.
+Light in by its input side splits: half goes straight on, half turns out of its turn side. Light from
+behind its turn side passes straight through the plate and out of the turn side too; with both coming
+in, they leave by the turn side only, joined: a combiner. Light from any other side stops on it, and so
+does light into a side facing what it stands on. It closes no cavity.
 
 A <ItemLink id="quantimium:laser_relay" /> sends every beam that reaches it, from any side, out of
 its face. Placed, it faces you; sneak-click or wrench a face to point it there.

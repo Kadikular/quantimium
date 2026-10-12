@@ -154,16 +154,24 @@ def splitter_plate() -> Image.Image:
 
 def laser_focus() -> Image.Image:
     """The focus, where light gathers: white, edged in the beam's light blue. Its 4x4 face is the middle of the texture."""
-    img = Image.new("RGBA", (16, 16), hx("f4f8ff"))
+    img = Image.new("RGBA", (16, 16), hx("f4f8ff", 200))
     for x in range(16):
         for y in range(16):
             edge = x in (6, 9) or y in (6, 9)
             inside = 6 <= x <= 9 and 6 <= y <= 9
             if inside and edge:
-                img.putpixel((x, y), hx("a8d0ff"))
+                img.putpixel((x, y), hx("a8d0ff", 215))
             elif not inside:
-                img.putpixel((x, y), hx("cfe4ff"))
-    img.putpixel((7, 7), hx("ffffff"))
+                img.putpixel((x, y), hx("cfe4ff", 200))
+    img.putpixel((7, 7), hx("ffffff", 230))
+    return img
+
+
+def solar_light() -> Image.Image:
+    """Sunlight on its way down to the focus: warm and faint."""
+    img = Image.new("RGBA", (16, 16), (255, 246, 214, 52))
+    for i in range(16):
+        img.putpixel((i, i), (255, 250, 232, 80))
     return img
 
 
@@ -554,7 +562,8 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
         if splits and "_" not in key:
             continue
         write(f"{name}_{key}", stand(normal) + [plate(normal)])
-    item_normal = tuple(p + q for p, q in zip(DIRS["south"], DIRS["up"])) if splits else DIRS["south"]
+    # Facing north, the way an inventory icon looks at it.
+    item_normal = tuple(p + q for p, q in zip(DIRS["north"], DIRS["up"])) if splits else DIRS["north"]
     write(f"{name}_item", stand(item_normal) + [plate(item_normal)])
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
@@ -589,17 +598,15 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
 
 def emitter_nozzle(texture_steel: str = "#steel", texture_focus: str = "#focus") -> list:
     """
-    A simple emitter, pointing north from a focus at the block's middle: a 2x2 rod, a 6x6 collar, a 4x4
-    collar (both hollow) and a bright 2x2 tip at the face, where the beam leaves. Turn it to any side.
+    A simple emitter, pointing north from a focus at the block's middle: a 2x2 rod, a 6x6 collar and a 4x4
+    collar on it, and a bright 2x2 tip at the face, where the beam leaves. Turn it to any side.
     """
     def cube(start, end, texture):
         faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
         return {"from": start, "to": end, "faces": faces}
 
-    parts = [cube([7, 7, 1], [9, 9, 6], texture_steel)]
-    for (lo, hi, z0, z1) in ((5, 11, 3, 4), (6, 10, 1, 2)):
-        parts += [cube([lo, lo, z0], [hi, lo + 1, z1], texture_steel), cube([lo, hi - 1, z0], [hi, hi, z1], texture_steel),
-                  cube([lo, lo + 1, z0], [lo + 1, hi - 1, z1], texture_steel), cube([hi - 1, lo + 1, z0], [hi, hi - 1, z1], texture_steel)]
+    # The rod, and two collars on it, stepping down towards the tip: solid, so they sit on the rod.
+    parts = [cube([7, 7, 1], [9, 9, 6], texture_steel), cube([5, 5, 3], [11, 11, 4], texture_steel), cube([6, 6, 1], [10, 10, 2], texture_steel)]
     tip = cube([7, 7, 0], [9, 9, 1], texture_focus)
     for face in tip["faces"].values():
         face["uv"] = [7, 7, 9, 9]
@@ -614,8 +621,10 @@ def solar_emitter() -> None:
     """
     laser_focus().save(os.path.join(TEX, "laser_focus.png"))
     solar_glass().save(os.path.join(TEX, "solar_emitter_glass.png"))
+    solar_light().save(os.path.join(TEX, "solar_emitter_light.png"))
     t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
-         "glass": "quantimium:block/solar_emitter_glass", "particle": "quantimium:block/laser_mirror_steel"}
+         "glass": "quantimium:block/solar_emitter_glass", "light": "quantimium:block/solar_emitter_light",
+         "particle": "quantimium:block/laser_mirror_steel"}
 
     def cube(start, end, texture, cull=None):
         faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
@@ -627,19 +636,30 @@ def solar_emitter() -> None:
     for x, z in ((1, 1), (13, 1), (1, 13), (13, 13)):
         body.append(cube([x, 1, z], [x + 2, 13, z + 2], "#steel"))
     body.append(cube([1, 13, 1], [15, 14, 15], "#glass"))
+    # The focus stands on a 2x2 post from the base.
+    body.append(cube([7, 1, 7], [9, 6, 9], "#steel"))
     focus = cube([6, 6, 6], [10, 10, 10], "#focus")
     for face in focus["faces"].values():
         face["uv"] = [6, 6, 10, 10]
     body.append(focus)
     with open(os.path.join(MODELS, "solar_emitter.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": body}, handle, indent=2)
+    # By day: sunlight stepping down from the glass into the focus, drawn full-bright.
+    funnel = []
+    for lo, hi, y0 in ((3, 13, 12), (4, 12, 11), (5, 11, 10)):
+        step = cube([lo, y0, lo], [hi, y0 + 1, hi], "#light")
+        step["shade"] = False
+        step["neoforge_data"] = {"block_light": 15, "sky_light": 15}
+        funnel.append(step)
+    with open(os.path.join(MODELS, "solar_emitter_light.json"), "w") as handle:
+        json.dump({"render_type": "minecraft:translucent", "textures": t, "elements": funnel}, handle, indent=2)
     with open(os.path.join(MODELS, "laser_emitter_nozzle.json"), "w") as handle:
         json.dump({"textures": t, "elements": emitter_nozzle()}, handle, indent=2)
     with open(os.path.join(MODELS, "solar_emitter_item.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
                    "elements": body + emitter_nozzle()}, handle, indent=2)
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "down": {"x": 90}}
-    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}}]
+    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}}, {"when": {"day": "true"}, "apply": {"model": "quantimium:block/solar_emitter_light"}}]
     parts += [{"when": {"output": side}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
     with open(os.path.join(STATES, "solar_emitter.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)

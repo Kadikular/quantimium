@@ -181,6 +181,9 @@ public final class LaserTests {
             long gotTen = ten.getEnergyStorage().getEnergyStored() - before[1];
             helper.assertTrue(gotThree > 40L * 2 * LaserTuning.SOLAR_FE && gotThree <= 40L * 3 * LaserTuning.SOLAR_FE, "three's worth: " + gotThree);
             helper.assertTrue(gotTen > 40L * 7 * LaserTuning.SOLAR_FE && gotTen <= 40L * LaserTuning.SOLAR_CHAIN_MAX, "eight's worth at most: " + gotTen);
+            // The first of a chain feeds the next: its beam shows lit, carrying what it makes.
+            var first = helper.getBlockEntity(new BlockPos(1, Y, 3), com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity.class).syncedBeams();
+            helper.assertTrue(first.stream().anyMatch(beam -> beam.live() && beam.flow() > 0), "a feeding emitter's beam shows: " + first);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

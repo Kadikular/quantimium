@@ -160,9 +160,11 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         BlockState next;
         if (input) {
             if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
-            // A flat mirror stays flat, facing the new side.
+            // A flat mirror stays flat, facing the new side. A splitter never goes flat, whichever side is clicked first.
+            boolean splits = ((LaserMirrorBlock) state.getBlock()).splits();
             Direction output = flat(state) ? face : state.getValue(OUTPUT);
-            next = state.setValue(INPUT, face).setValue(OUTPUT, turns(mount, face, output) ? output : outputFor(mount, face));
+            boolean keeps = turns(mount, face, output) && !(splits && output == face);
+            next = state.setValue(INPUT, face).setValue(OUTPUT, keeps ? output : outputFor(mount, face));
         } else {
             if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
             if (face == state.getValue(INPUT).getOpposite()) return refuse(player, "message.quantimium.laser_mirror.straight");

@@ -3,6 +3,7 @@
     "steel": "quantimium:block/laser_mirror_steel",
     "focus": "quantimium:block/laser_focus",
     "glass": "quantimium:block/solar_emitter_glass",
+    "light": "quantimium:block/solar_emitter_light",
     "particle": "quantimium:block/laser_mirror_steel"
   },
   "elements": [
@@ -46,38 +47,6 @@
       ],
       "to": [
         11,
-        6,
-        4
-      ],
-      "faces": {
-        "north": {
-          "texture": "#steel"
-        },
-        "south": {
-          "texture": "#steel"
-        },
-        "east": {
-          "texture": "#steel"
-        },
-        "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
-        }
-      }
-    },
-    {
-      "from": [
-        5,
-        10,
-        3
-      ],
-      "to": [
-        11,
         11,
         4
       ],
@@ -104,173 +73,13 @@
     },
     {
       "from": [
-        5,
-        6,
-        3
-      ],
-      "to": [
-        6,
-        10,
-        4
-      ],
-      "faces": {
-        "north": {
-          "texture": "#steel"
-        },
-        "south": {
-          "texture": "#steel"
-        },
-        "east": {
-          "texture": "#steel"
-        },
-        "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
-        }
-      }
-    },
-    {
-      "from": [
-        10,
-        6,
-        3
-      ],
-      "to": [
-        11,
-        10,
-        4
-      ],
-      "faces": {
-        "north": {
-          "texture": "#steel"
-        },
-        "south": {
-          "texture": "#steel"
-        },
-        "east": {
-          "texture": "#steel"
-        },
-        "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
-        }
-      }
-    },
-    {
-      "from": [
         6,
         6,
         1
       ],
       "to": [
         10,
-        7,
-        2
-      ],
-      "faces": {
-        "north": {
-          "texture": "#steel"
-        },
-        "south": {
-          "texture": "#steel"
-        },
-        "east": {
-          "texture": "#steel"
-        },
-        "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
-        }
-      }
-    },
-    {
-      "from": [
-        6,
-        9,
-        1
-      ],
-      "to": [
         10,
-        10,
-        2
-      ],
-      "faces": {
-        "north": {
-          "texture": "#steel"
-        },
-        "south": {
-          "texture": "#steel"
-        },
-        "east": {
-          "texture": "#steel"
-        },
-        "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
-        }
-      }
-    },
-    {
-      "from": [
-        6,
-        7,
-        1
-      ],
-      "to": [
-        7,
-        9,
-        2
-      ],
-      "faces": {
-        "north": {
-          "texture": "#steel"
-        },
-        "south": {
-          "texture": "#steel"
-        },
-        "east": {
-          "texture": "#steel"
-        },
-        "west": {
-          "texture": "#steel"
-        },
-        "up": {
-          "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
-        }
-      }
-    },
-    {
-      "from": [
-        9,
-        7,
-        1
-      ],
-      "to": [
-        10,
-        9,
         2
       ],
       "faces": {
