@@ -39,13 +39,16 @@ public enum Lens {
     /** Ore cut comes away as Unrealised Matter. */
     UNREALISE(false, 0xFFB070FF),
     /** With Pickup, what comes back up the beam is smelted on the way. */
-    SMELT(false, 0xFFFF8040);
+    SMELT(false, 0xFFFF8040),
+    /** Crushes what the actions before it free or move: stone to gravel to sand, ore to dust. */
+    CRUSH(false, 0xFFB09070);
 
     /** The lens item's translation key: its name, but for the two named for what they do to things. */
     public String itemKey() {
         String name = switch (this) {
             case UNREALISE -> "unrealising";
             case SMELT -> "smelting";
+            case CRUSH -> "crushing";
             default -> name().toLowerCase(java.util.Locale.ROOT);
         };
         return "item.quantimium." + name + "_lens";

@@ -335,6 +335,12 @@ public final class Config {
             .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on.")
             .defineInRange("phantomFePerBlock", 15, 0, 100_000);
 
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> CRUSHING_RECIPE_TYPES = BUILDER
+            .comment("Recipe types a Crushing lens crushes by, after its own stone chain, the first that crushes a thing winning. Only their sure outputs, never chance ones. Types a pack doesn't have are skipped.")
+            .defineList("crushingRecipeTypes", List.of("energizedpower:pulverizer", "energizedpower:crusher", "enderio:sag_milling",
+                    "mekanism:crushing", "create:crushing", "create:milling", "thermal:pulverizer", "modern_industrialization:macerator",
+                    "immersiveengineering:crusher", "actuallyadditions:crushing", "occultism:crushing"), () -> "", o -> o instanceof String);
+
     public static final ModConfigSpec.IntValue MAX_RANGE = BUILDER
             .comment("The farthest one run of laser light reaches, in blocks, however many Range lenses it's been through.")
             .defineInRange("maxRange", 64, 8, 256);
@@ -349,6 +355,11 @@ public final class Config {
 
     public static int phantomFePerBlock() {
         return SPEC.isLoaded() ? PHANTOM_FE_PER_BLOCK.get() : 15;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<String> crushingRecipeTypes() {
+        return SPEC.isLoaded() ? (List<String>) CRUSHING_RECIPE_TYPES.get() : List.of();
     }
 
     public static int maxLaserRange() {

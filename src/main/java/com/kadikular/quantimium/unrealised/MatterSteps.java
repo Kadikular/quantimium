@@ -110,6 +110,12 @@ public final class MatterSteps {
         }
     }
 
+    /** What {@code type} makes of one {@code item}: its sure outputs, the least generous recipe where there's a choice; null if none. Cached. */
+    @Nullable
+    public static List<ItemStack> step(Level level, BlockPos pos, RecipeType<?> type, ItemStack item) {
+        return oneStep(level, pos, type, item);
+    }
+
     /** What {@code type} makes of one {@code item}, the least generous where there's a choice; null if nothing. */
     @Nullable
     private static List<ItemStack> oneStep(Level level, BlockPos pos, RecipeType<?> type, ItemStack item) {

@@ -2,7 +2,7 @@
 navigation:
   title: Quantimium Trace
   parent: items/index.md
-  position: 23
+  position: 24
   icon: quantimium:quantimium_trace
 item_ids:
 - quantimium:quantimium_trace

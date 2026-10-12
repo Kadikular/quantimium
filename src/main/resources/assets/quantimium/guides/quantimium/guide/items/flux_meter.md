@@ -2,7 +2,7 @@
 navigation:
   title: Flux Meter
   parent: items/index.md
-  position: 11
+  position: 12
   icon: quantimium:flux_meter
 item_ids:
 - quantimium:flux_meter

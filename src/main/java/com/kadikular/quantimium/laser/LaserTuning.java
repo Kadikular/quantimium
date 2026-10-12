@@ -87,6 +87,8 @@ public final class LaserTuning {
     public static final long DAMAGE_FE_PER_HIT = 1_000;
     /** Ticks between hits. */
     public static final int DAMAGE_INTERVAL = 10;
+    /** FE a Crushing lens takes for each item it crushes. */
+    public static final long CRUSH_FE_PER_ITEM = 25;
     /** FE a Smelting lens takes for each item it smelts on the way up. */
     public static final long SMELT_FE_PER_ITEM = 25;
     /** FE to carry one stack back up the beam. */

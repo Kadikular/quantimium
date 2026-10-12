@@ -15,6 +15,7 @@ navigation:
 - <ItemLink id="quantimium:anomalite_shard" />
 - <ItemLink id="quantimium:anomaly_fragment" />
 - <ItemLink id="quantimium:basic_decoherence_matrix" />
+- <ItemLink id="quantimium:crushing_lens" />
 - <ItemLink id="quantimium:damage_lens" />
 - <ItemLink id="quantimium:decoherence_lance" />
 - <ItemLink id="quantimium:extract_lens" />

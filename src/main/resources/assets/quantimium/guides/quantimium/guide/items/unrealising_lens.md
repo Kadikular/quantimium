@@ -2,7 +2,7 @@
 navigation:
   title: Unrealising Lens
   parent: items/index.md
-  position: 36
+  position: 37
   icon: quantimium:unrealising_lens
 item_ids:
 - quantimium:unrealising_lens

@@ -998,6 +998,8 @@
   "item.quantimium.harmonic_lens.tip": "Harvest cuts with Fortune, Damage hits with Looting: a level for each lens, up to three.",
   "item.quantimium.smelting_lens": "Smelting Lens",
   "item.quantimium.smelting_lens.tip": "Smelts what the actions before it free or move. Alone, it smelts what the beam ends on: sand becomes glass.",
+  "item.quantimium.crushing_lens": "Crushing Lens",
+  "item.quantimium.crushing_lens.tip": "Crushes what the actions before it free or move: stone to gravel to sand, ore to dust where a crusher mod makes it. Alone, it crushes what the beam ends on.",
   "item.quantimium.unrealising_lens": "Unrealising Lens",
   "item.quantimium.unrealising_lens.tip": "Ore a Harvest beam cuts comes away as Unrealised Matter, one to a block, with no history yet. A pack can turn this off.",
   "item.quantimium.interact_lens": "Interact Lens",

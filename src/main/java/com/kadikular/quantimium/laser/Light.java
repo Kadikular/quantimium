@@ -198,11 +198,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
                 case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
-                case SMELT -> {
-                    streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << Lens.SMELT.ordinal(), stream.amps(), stream.filter()));
-                    // Smelting is an action of its own too, where there's no other: on what the beam ends on.
-                    Stream had = streams.get(Lens.SMELT);
-                    streams.put(Lens.SMELT, new Stream(Lens.SMELT, 1 << Lens.SMELT.ordinal(), feeders, 0, had == null ? null : had.filter()));
+                case SMELT, CRUSH -> {
+                    streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
+                    // Smelting and Crushing are actions of their own too, where there's no other: on what the beam ends on.
+                    Stream had = streams.get(lens);
+                    streams.put(lens, new Stream(lens, 1 << lens.ordinal(), feeders, 0, had == null ? null : had.filter()));
                 }
                 case AMPLIFY -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.AMPLIFY.ordinal(), Math.min(LaserTuning.AMPLIFY_LENSES, stream.amps() + 1), stream.filter()));
@@ -212,11 +212,23 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         return new Light(range, boosts, List.copyOf(streams.values()), feeders, left, marks);
     }
 
-    /** The streams that act: all of them, but Smelting's own only where the light carries nothing else. */
+    /**
+     * The streams that act: all of them, but Smelting's and Crushing's own only where the light carries
+     * nothing else; and the two of those as one, crushing then smelting.
+     */
     public List<Stream> acting() {
-        if (streams.stream().noneMatch(stream -> stream.action() == Lens.SMELT)
-                || streams.stream().allMatch(stream -> stream.action() == Lens.SMELT)) return streams;
-        return streams.stream().filter(stream -> stream.action() != Lens.SMELT).toList();
+        List<Stream> others = streams.stream().filter(stream -> !processes(stream.action())).toList();
+        if (others.size() == streams.size()) return streams;
+        if (!others.isEmpty()) return others;
+        if (streams.size() == 1) return streams;
+        int both = 0;
+        for (Stream stream : streams) both |= stream.modifiers();
+        Stream crush = streams.stream().filter(stream -> stream.action() == Lens.CRUSH).findFirst().orElseThrow();
+        return List.of(crush.with(both, crush.amps(), crush.filter()));
+    }
+
+    private static boolean processes(Lens action) {
+        return action == Lens.SMELT || action == Lens.CRUSH;
     }
 
     /** What an Isolator lets through: power, at the light's reach, and nothing it did; still in the mirror, if it was. */

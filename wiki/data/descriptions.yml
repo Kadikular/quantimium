@@ -142,6 +142,7 @@ interact_lens: "A lens: uses what a Sender sends, or an empty hand, on what the 
 precision_lens: "A lens: Harvest cuts with Silk Touch."
 harmonic_lens: "A lens: Harvest cuts with Fortune, Damage hits with Looting, a level each."
 smelting_lens: "A lens: what the actions before it free or move is smelted; alone, it smelts what the beam ends on."
+crushing_lens: "A lens: what the actions before it free or move is crushed; alone, it crushes what the beam ends on."
 unrealising_lens: "A lens: ore a Harvest beam cuts comes away as Unrealised Matter."
 extract_lens: "A lens: takes from the inventory the beam ends on, back up to Collectors."
 splitter: "Sends light out of every face you set, shared by what each beam's blocks ask for."

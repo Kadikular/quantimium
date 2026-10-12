@@ -1651,6 +1651,96 @@ public final class LensTests {
         });
     }
 
+    private static ItemStack floating(GameTestHelper helper, BlockPos at, ItemStack stack) {
+        ItemEntity item = new ItemEntity(helper.getLevel(), helper.absoluteVec(at.getCenter()).x, helper.absolutePos(at).getY() + 0.5,
+                helper.absoluteVec(at.getCenter()).z, stack);
+        item.setDeltaMovement(0, 0, 0);
+        item.setNoGravity(true);
+        helper.getLevel().addFreshEntity(item);
+        return stack;
+    }
+
+    // covers: laser.lens.crushing
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void crushingHarvestBringsBackGravel(GameTestHelper helper) {
+        // Stone cuts to cobblestone, and that crushes to gravel on the way up.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.GRAVEL), 1, "gravel, not cobblestone");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void crushingAloneGrindsStoneDownToSand(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.CRUSHING_LENS.get());
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.SAND, new BlockPos(7, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void crushingTurnsRawOreToDust(GameTestHelper helper) {
+        // Raw iron has no crushing of its own: the pack's crushers make it dust.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.CRUSHING_LENS.get());
+        floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.RAW_IRON, 4));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.RAW_IRON), 0, "no raw iron came back");
+            boolean dust = false;
+            for (int slot = 0; slot < CollectorBlockEntity.SLOTS; slot++) {
+                ItemStack stack = collector.getItems().getStackInSlot(slot);
+                dust |= net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().contains("dust");
+            }
+            helper.assertTrue(dust, "dust came back");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing, laser.lens.smelting
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void crushingThenSmeltingMakesIngots(GameTestHelper helper) {
+        // Crushed, then smelted, whichever lens comes first: raw iron to dust to ingots.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.SMELTING_LENS.get(), ModItems.CRUSHING_LENS.get());
+        floating(helper, new BlockPos(10, Y, 8), new ItemStack(Items.RAW_IRON, 4));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(count(collector, Items.IRON_INGOT) >= 4, "ingots came back");
+            helper.assertValueEqual(count(collector, Items.RAW_IRON), 0, "no raw iron");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.crushing
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void crushingGivesUnrealisedMatterItsCrushing(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        CollectorBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
+                ModItems.UNREALISING_LENS.get(), ModItems.CRUSHING_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.IRON_ORE);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.BEDROCK);
+        helper.succeedWhen(() -> {
+            ItemStack matter = firstOf(collector, ModItems.UNREALISED_MATTER.get());
+            helper.assertFalse(matter.isEmpty(), "Unrealised Matter came back");
+            var steps = com.kadikular.quantimium.unrealised.MatterHistory.of(matter).steps();
+            helper.assertTrue(steps.size() == 1 && com.kadikular.quantimium.Config.crushingRecipeTypes().contains(steps.getFirst().toString()),
+                    "crushed by one of the pack's crushers, still unrealised: " + steps);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.area_prism.shape
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
     public static void anAreaPrismSphereLeavesItsBoxsCorners(GameTestHelper helper) {

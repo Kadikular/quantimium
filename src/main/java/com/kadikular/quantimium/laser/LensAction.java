@@ -149,8 +149,8 @@ public final class LensAction {
             case INTERACT -> {
                 if (!mirrored()) interact(level, networks);
             }
-            case SMELT -> {
-                if (!mirrored()) smeltAt(level, networks);
+            case SMELT, CRUSH -> {
+                if (!mirrored()) processAt(level, networks);
             }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
             case PHANTOM -> want = cutCost = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
@@ -189,8 +189,8 @@ public final class LensAction {
                     lastWorked = now;
                     // Killed, with Pickup: what it drops goes straight back up the beam, wherever it lands.
                     if (pickup && !entity.isAlive()) gatherDrops(level, networks, entity);
-                    // Smelting, without Pickup: what it drops is cooked where it falls.
-                    else if (!entity.isAlive() && stream.has(Lens.SMELT)) smeltDrops(level, networks, entity);
+                    // Smelting or Crushing, without Pickup: what it drops is cooked (or crushed) where it falls.
+                    else if (!entity.isAlive() && processes()) processDrops(level, networks, entity);
                 }
             }
             if (looter != null) looter.letGo();
@@ -389,7 +389,8 @@ public final class LensAction {
             return;
         }
         if (in ? senders.isEmpty() : collectors.isEmpty()) return;
-        long most = LaserTuning.PICKUP_FE_PER_STACK + (stream.has(Lens.SMELT) ? LaserTuning.SMELT_FE_PER_ITEM * 64 : 0);
+        long most = LaserTuning.PICKUP_FE_PER_STACK + 64 * ((stream.has(Lens.SMELT) ? LaserTuning.SMELT_FE_PER_ITEM : 0)
+                + (stream.has(Lens.CRUSH) ? LaserTuning.CRUSH_FE_PER_ITEM : 0));
         if (!networks.canPay(this, most)) return;
         BlockPos at = area == null ? inventoryAtEnd(level) : nextAreaInventory(level);
         if (at == null) return;
@@ -397,10 +398,10 @@ public final class LensAction {
         net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(
                 level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
         if (handler == null) return;
-        // How many it smelted on the way, or -1 for nothing moved.
-        int smelted = in ? insertInto(level, networks, handler) : extractFrom(level, networks, handler);
-        if (smelted < 0) return;
-        networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + LaserTuning.SMELT_FE_PER_ITEM * smelted);
+        // What crushing and smelting on the way cost, or -1 for nothing moved.
+        long processing = in ? insertInto(level, networks, handler) : extractFrom(level, networks, handler);
+        if (processing < 0) return;
+        networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
         placed = at;
@@ -408,48 +409,61 @@ public final class LensAction {
     }
 
     /**
-     * Into the inventory: what a Sender sends, smelted on the way with a Smelting lens. How many it smelted,
-     * or -1 for none moved.
+     * Into the inventory: what a Sender sends, crushed and smelted on the way with those lenses. What that
+     * cost, or -1 for none moved. What makes several things of one goes one at a time.
      */
-    private int insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
-        ItemStack offered = networks.take(senders, stack -> lets(stack) && fits(handler, as(level, stack, stack.getCount())) > 0, 64, true);
+    private long insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
+        ItemStack offered = networks.take(senders, stack -> lets(stack)
+                && arriving(level, stack, 1).stream().allMatch(each -> fits(handler, each) == each.getCount()), 64, true);
         if (offered.isEmpty()) return -1;
-        ItemStack one = smeltOne(level, offered);
-        int goes = fits(handler, as(level, offered, offered.getCount()));
-        int fits = one.isEmpty() ? goes : goes / one.getCount();
-        if (fits <= 0) return -1;
-        ItemStack taken = networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, offered), fits, false);
+        Processing.Made made = made(level, offered);
+        int count = 1;
+        if (made.ofOne().size() == 1) {
+            ItemStack one = made.ofOne().getFirst();
+            count = fits(handler, times(one, offered.getCount())) / one.getCount();
+        }
+        if (count <= 0) return -1;
+        ItemStack taken = networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, offered), count, false);
         if (taken.isEmpty()) return -1;
-        ItemStack left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, one.isEmpty() ? taken : times(one, taken.getCount()), false);
-        if (!left.isEmpty()) left = networks.returnTo(senders, left);
-        if (!left.isEmpty()) Block.popResource(level, beam.hit().relative(beam.face().getOpposite()), left);
-        return one.isEmpty() ? 0 : taken.getCount();
+        for (ItemStack each : arriving(level, taken, taken.getCount())) {
+            ItemStack left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, each, false);
+            if (!left.isEmpty()) left = networks.returnTo(senders, left);
+            if (!left.isEmpty()) Block.popResource(level, beam.hit().relative(beam.face().getOpposite()), left);
+        }
+        return made.fe() * taken.getCount();
     }
 
-    /** Out of the inventory, up to a Collector: smelted on the way with a Smelting lens. How many it smelted, or -1 for none moved. */
-    private int extractFrom(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
+    /** Out of the inventory, up to a Collector: crushed and smelted on the way with those lenses. What that cost, or -1 for none moved. */
+    private long extractFrom(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler) {
         for (int slot = 0; slot < handler.getSlots(); slot++) {
             ItemStack there = handler.extractItem(slot, 64, true);
             if (there.isEmpty() || !lets(there)) continue;
-            ItemStack one = smeltOne(level, there);
-            ItemStack comes = as(level, there, there.getCount());
-            if (!networks.roomFor(collectors, comes)) continue;
-            int room = comes.getCount() - networks.simulateCollectPublic(collectors, comes).getCount();
-            if (!one.isEmpty()) room /= one.getCount();
+            Processing.Made made = made(level, there);
+            int room;
+            if (made.ofOne().size() == 1) {
+                ItemStack one = made.ofOne().getFirst();
+                ItemStack comes = times(one, there.getCount());
+                if (!networks.roomFor(collectors, comes)) continue;
+                room = (comes.getCount() - networks.simulateCollectPublic(collectors, comes).getCount()) / one.getCount();
+            } else {
+                room = made.ofOne().stream().allMatch(each -> networks.roomForAll(collectors, each)) ? 1 : 0;
+            }
             if (room <= 0) continue;
             ItemStack taken = handler.extractItem(slot, room, false);
-            ItemStack left = networks.collect(collectors, one.isEmpty() ? taken : times(one, taken.getCount()));
-            if (!left.isEmpty()) left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, left, false);
-            if (!left.isEmpty()) Block.popResource(level, beam.hit().relative(beam.face().getOpposite()), left);
-            return one.isEmpty() ? 0 : taken.getCount();
+            for (ItemStack each : arriving(level, taken, taken.getCount())) {
+                ItemStack left = networks.collect(collectors, each);
+                if (!left.isEmpty()) left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, left, false);
+                if (!left.isEmpty()) Block.popResource(level, beam.hit().relative(beam.face().getOpposite()), left);
+            }
+            return made.fe() * taken.getCount();
         }
         return -1;
     }
 
-    /** {@code count} of {@code stack} as it would arrive: smelted, with a Smelting lens, if a furnace could. */
-    private ItemStack as(ServerLevel level, ItemStack stack, int count) {
-        ItemStack one = smeltOne(level, stack);
-        return one.isEmpty() ? stack.copyWithCount(count) : times(one, count);
+    /** {@code count} of {@code stack} as it would arrive: crushed and smelted, with those lenses, where they can be. */
+    private List<ItemStack> arriving(ServerLevel level, ItemStack stack, int count) {
+        Processing.Made made = made(level, stack);
+        return made.changed() ? Processing.times(made.ofOne(), count) : List.of(stack.copyWithCount(count));
     }
 
     /** How much of {@code stack} the inventory would take. */
@@ -719,7 +733,7 @@ public final class LensAction {
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
         for (ItemStack drop : drops(level, pos)) {
-            for (ItemStack carried : smelted(level, drop)) {
+            for (ItemStack carried : processed(level, drop)) {
                 if (!networks.roomForAll(collectors, carried)) return false;
             }
         }
@@ -741,9 +755,9 @@ public final class LensAction {
             level.removeBlock(pos, false);
         }
         for (ItemStack drop : drops) {
-            // Smelted on the way, picked up or not; with too little light to smelt it, it comes as it is.
-            List<ItemStack> out = smelted(level, drop);
-            long smelt = smeltCost(drop, out);
+            // Crushed and smelted on the way, picked up or not; with too little light for that, it comes as it is.
+            List<ItemStack> out = processed(level, drop);
+            long smelt = processCost(level, drop);
             if (smelt > 0 && !networks.canPay(this, smelt + (pickup ? LaserTuning.PICKUP_FE_PER_STACK : 0))) {
                 out = List.of(drop);
                 smelt = 0;
@@ -841,12 +855,12 @@ public final class LensAction {
         }
     }
 
-    /** Smelts the items a kill just dropped, where they lie. */
-    private void smeltDrops(ServerLevel level, LaserNetworks networks, LivingEntity killed) {
+    /** Crushes and smelts the items a kill just dropped, where they lie. */
+    private void processDrops(ServerLevel level, LaserNetworks networks, LivingEntity killed) {
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, killed.getBoundingBox().inflate(1.5),
                 item -> item.isAlive() && item.tickCount <= 1)) {
-            List<ItemStack> out = smelted(level, item.getItem());
-            if (networks.pay(this, smeltCost(item.getItem(), out))) replaceWith(level, item, out);
+            long cost = processCost(level, item.getItem());
+            if (cost > 0 && networks.pay(this, cost)) replaceWith(level, item, processed(level, item.getItem()));
         }
     }
 
@@ -855,9 +869,9 @@ public final class LensAction {
         ItemStack stack = item.getItem();
         if (filtered && stream.filter() != null && !stream.filter().lets(stack)) return;
         ServerLevel level = (ServerLevel) item.level();
-        List<ItemStack> carried = smelted(level, stack);
+        List<ItemStack> carried = processed(level, stack);
         if (!carried.stream().allMatch(each -> networks.roomFor(collectors, each))
-                || !networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + smeltCost(stack, carried))) return;
+                || !networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processCost(level, stack))) return;
         List<ItemStack> left = new ArrayList<>();
         for (ItemStack each : carried) {
             ItemStack rest = networks.collect(collectors, each.copy());
@@ -877,39 +891,31 @@ public final class LensAction {
         for (ItemStack rest : stacks.subList(1, stacks.size())) level.addFreshEntity(new ItemEntity(level, item.getX(), item.getY(), item.getZ(), rest));
     }
 
-    // ---- smelting ----
+    // ---- crushing and smelting ----
 
-    /**
-     * What a Smelting lens makes of {@code stack} on its way up the beam: what a furnace would, in stacks
-     * no bigger than they may be, or for Unrealised Matter, the Matter with smelting in its history (as a
-     * Quantum Crafter with a furnace gives it). Anything a furnace can't smelt comes up as it is, the same stack.
-     */
-    private List<ItemStack> smelted(ServerLevel level, ItemStack stack) {
-        ItemStack one = smeltOne(level, stack);
-        if (one.isEmpty()) return List.of(stack);
-        List<ItemStack> out = new ArrayList<>();
-        for (int total = one.getCount() * stack.getCount(); total > 0; ) {
-            int take = Math.min(total, one.getMaxStackSize());
-            out.add(one.copyWithCount(take));
-            total -= take;
-        }
-        return out;
+    /** Whether this stream crushes or smelts what it frees or moves. */
+    private boolean processes() {
+        return stream.has(Lens.SMELT) || stream.has(Lens.CRUSH);
     }
 
-    /** What one of {@code stack} smelts into, as this stream smelts: empty when it doesn't smelt, or a furnace couldn't. */
-    private ItemStack smeltOne(ServerLevel level, ItemStack stack) {
-        if (!stream.has(Lens.SMELT) || stack.isEmpty() || mirrored()) return ItemStack.EMPTY;
-        if (stack.is(com.kadikular.quantimium.init.ModItems.UNREALISED_MATTER.get())) {
-            var history = com.kadikular.quantimium.unrealised.MatterHistory.of(stack);
-            var step = com.kadikular.quantimium.unrealised.MatterSteps.idOf(net.minecraft.world.item.crafting.RecipeType.SMELTING);
-            if (history.full() || step == null) return ItemStack.EMPTY;
-            var next = history.then(step);
-            return com.kadikular.quantimium.unrealised.MatterSteps.lastStepAdds(level, key.node(), next)
-                    ? next.applyTo(stack.copyWithCount(1)) : ItemStack.EMPTY;
-        }
-        var input = new net.minecraft.world.item.crafting.SingleRecipeInput(stack.copyWithCount(1));
-        return level.recipeAccess().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.SMELTING, input, level)
-                .map(holder -> holder.value().assemble(input)).orElse(ItemStack.EMPTY);
+    /** What one of {@code stack} becomes with this stream's Crushing and Smelting lenses: nothing, in the mirror. */
+    private Processing.Made made(ServerLevel level, ItemStack stack) {
+        if (!processes() || stack.isEmpty() || mirrored()) return new Processing.Made(List.of(stack.copyWithCount(1)), 0);
+        return Processing.ofOne(level, key.node(), stack, stream.has(Lens.CRUSH), stream.has(Lens.SMELT));
+    }
+
+    /**
+     * What Crushing and Smelting lenses make of {@code stack} on its way: crushed, then smelted (see
+     * {@link Processing}), in stacks no bigger than they may be. What neither changes comes as it is, the same stack.
+     */
+    private List<ItemStack> processed(ServerLevel level, ItemStack stack) {
+        Processing.Made made = made(level, stack);
+        return made.changed() ? Processing.times(made.ofOne(), stack.getCount()) : List.of(stack);
+    }
+
+    /** FE for crushing and smelting {@code stack}: nothing when it comes as it is. */
+    private long processCost(ServerLevel level, ItemStack stack) {
+        return made(level, stack).fe() * stack.getCount();
     }
 
     /** {@code count} of what {@code one} is, a stack's worth at most. */
@@ -918,44 +924,44 @@ public final class LensAction {
     }
 
     /**
-     * Smelting alone: what lies in the beam is smelted where it lies, a stack at a time; else the block the
-     * beam ends on, as a furnace would its item. A block it smelts into goes in its place (sand becomes
-     * glass, and the light goes on through); anything else drops there (an ore's ingot).
+     * Smelting or Crushing alone: what lies in the beam is done where it lies, a stack at a time; else the
+     * block the beam ends on, as its item would be. A block it becomes goes in its place (sand becomes glass,
+     * and the light goes on through; stone becomes cobblestone, then gravel, then sand); anything else drops
+     * there (an ore's ingot, or its dust).
      */
-    private void smeltAt(ServerLevel level, LaserNetworks networks) {
+    private void processAt(ServerLevel level, LaserNetworks networks) {
         if (placeCooldown > 0) {
             placeCooldown--;
             return;
         }
-        if (beam == null || area != null || !networks.canPay(this, LaserTuning.SMELT_FE_PER_ITEM)) return;
-        if (!smeltLying(level, networks) && !smeltBlock(level, networks)) return;
+        if (beam == null || area != null || !networks.canPay(this, Math.min(LaserTuning.SMELT_FE_PER_ITEM, LaserTuning.CRUSH_FE_PER_ITEM))) return;
+        if (!processLying(level, networks) && !processBlock(level, networks)) return;
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
         lastWorked = now;
     }
 
-    private boolean smeltLying(ServerLevel level, LaserNetworks networks) {
+    private boolean processLying(ServerLevel level, LaserNetworks networks) {
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
                 && !com.kadikular.quantimium.event.MirrorPhaseInteractions.mirrorOnly(item) && lets(item.getItem()))) {
-            List<ItemStack> out = smelted(level, item.getItem());
-            long cost = smeltCost(item.getItem(), out);
+            long cost = processCost(level, item.getItem());
             if (cost == 0 || !networks.pay(this, cost)) continue;
-            replaceWith(level, item, out);
+            replaceWith(level, item, processed(level, item.getItem()));
             return true;
         }
         return false;
     }
 
-    private boolean smeltBlock(ServerLevel level, LaserNetworks networks) {
+    private boolean processBlock(ServerLevel level, LaserNetworks networks) {
         if (beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return false;
         BlockPos pos = beam.hit();
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null || state.is(ModTags.LASER_UNBREAKABLE)) return false;
         ItemStack as = new ItemStack(state.getBlock().asItem());
         if (as.isEmpty() || !lets(as)) return false;
-        List<ItemStack> out = smelted(level, as);
-        long cost = smeltCost(as, out);
+        long cost = processCost(level, as);
         if (cost == 0 || !networks.pay(this, cost)) return false;
+        List<ItemStack> out = processed(level, as);
         ItemStack first = out.getFirst();
         if (out.size() == 1 && first.getCount() == 1 && first.getItem() instanceof net.minecraft.world.item.BlockItem block) {
             level.setBlockAndUpdate(pos, block.getBlock().defaultBlockState());
@@ -963,15 +969,12 @@ public final class LensAction {
             level.removeBlock(pos, false);
             for (ItemStack each : out) Block.popResource(level, pos, each);
         }
-        level.playSound(null, pos, net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, net.minecraft.sounds.SoundSource.BLOCKS, 0.4f, 1.6f);
+        level.playSound(null, pos, stream.has(Lens.SMELT) ? net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH : net.minecraft.sounds.SoundEvents.GRINDSTONE_USE,
+                net.minecraft.sounds.SoundSource.BLOCKS, 0.4f, 1.6f);
         LaserNetworks.changed(level);
         return true;
     }
 
-    /** FE for smelting {@code stack} into {@code carried}: nothing when it came up as it was. */
-    private static long smeltCost(ItemStack stack, List<ItemStack> carried) {
-        return carried.size() == 1 && carried.getFirst() == stack ? 0 : LaserTuning.SMELT_FE_PER_ITEM * stack.getCount();
-    }
 
     /** The cracks it draws on the block it's cutting: one set per action. */
     private int crackId() {

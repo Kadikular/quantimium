@@ -272,6 +272,8 @@ public class ModItems {
             "unrealising_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UNREALISE));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> SMELTING_LENS = ITEMS.registerItem(
             "smelting_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.SMELT));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> CRUSHING_LENS = ITEMS.registerItem(
+            "crushing_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.CRUSH));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INTERACT_LENS = ITEMS.registerItem(
             "interact_lens", props -> new com.kadikular.quantimium.item.InteractLensItem(props.stacksTo(1)));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INSERT_LENS = ITEMS.registerItem(
