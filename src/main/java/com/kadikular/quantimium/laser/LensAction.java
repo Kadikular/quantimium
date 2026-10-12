@@ -153,7 +153,7 @@ public final class LensAction {
                 if (!mirrored()) smeltAt(level, networks);
             }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
-            case PHANTOM -> want = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
+            case PHANTOM -> want = cutCost = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
             default -> {}
         }
     }
@@ -982,6 +982,11 @@ public final class LensAction {
     private boolean inSight(ServerLevel level, BlockPos pos) {
         LaserBeam line = LaserBeam.traceTo(level, key.node(), pos, reach, marks);
         return pos.equals(line.hit());
+    }
+
+    /** For tests: what cutting the block it's on costs in all; for Phantom upkeep, what this tick's costs. */
+    long cutCost() {
+        return cutCost;
     }
 
     /** For an area prism's Phantom light: what working on {@code pos} costs for the blocks it goes through to get there. */

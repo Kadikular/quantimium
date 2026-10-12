@@ -67,7 +67,7 @@ public class LaserLinkerItem extends Item {
                 && area.first().isPresent() && area.second().isPresent()) {
             var placed = prism.setArea(area.first().get(), area.second().get());
             say(player, Component.translatable("message.quantimium.laser_linker.area." + placed.name().toLowerCase(Locale.ROOT),
-                    com.kadikular.quantimium.laser.LaserTuning.AREA_MAX));
+                    com.kadikular.quantimium.laser.LaserTuning.areaMax()));
             if (placed == com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.Placed.SET) {
                 stack.set(ModDataComponents.LINKER_AREA.get(), new com.kadikular.quantimium.laser.LinkerArea(true, java.util.Optional.empty(), java.util.Optional.empty()));
                 level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.8f, 1.6f);

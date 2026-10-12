@@ -46,7 +46,10 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         }
     }
 
-    public static final int MAX_RADIUS = LaserTuning.MAX_RANGE;
+    /** The widest a picked shape's radius goes: as far as light reaches. */
+    public static int maxRadius() {
+        return com.kadikular.quantimium.Config.maxLaserRange();
+    }
     private Shape shape = Shape.PICKED;
     private int radius = 4;
 
@@ -66,7 +69,7 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     /** Gives it the area between two corners, if it's small enough and near enough. */
     public Placed setArea(BlockPos a, BlockPos b) {
         BoundingBox box = BoundingBox.fromCorners(a, b);
-        if (box.getXSpan() > LaserTuning.AREA_MAX || box.getYSpan() > LaserTuning.AREA_MAX || box.getZSpan() > LaserTuning.AREA_MAX) {
+        if (box.getXSpan() > LaserTuning.areaMax() || box.getYSpan() > LaserTuning.areaMax() || box.getZSpan() > LaserTuning.areaMax()) {
             return Placed.TOO_BIG;
         }
         area = box;
@@ -114,7 +117,7 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     }
 
     public void setRadius(int radius) {
-        this.radius = Math.clamp(radius, 1, MAX_RADIUS);
+        this.radius = Math.clamp(radius, 1, maxRadius());
         changed();
     }
 
@@ -211,7 +214,7 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         super.loadAdditional(in);
         area = in.read("Area", BoundingBox.CODEC).orElse(null);
         shape = Shape.values()[Math.floorMod(in.getIntOr("Shape", 0), Shape.values().length)];
-        radius = Math.clamp(in.getIntOr("Radius", 4), 1, MAX_RADIUS);
+        radius = Math.clamp(in.getIntOr("Radius", 4), 1, maxRadius());
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
         in.read("Points", CompoundTag.CODEC).ifPresent(tag -> {
             List<net.minecraft.world.phys.Vec3> read = new java.util.ArrayList<>();

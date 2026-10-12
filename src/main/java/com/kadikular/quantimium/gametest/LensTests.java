@@ -751,7 +751,7 @@ public final class LensTests {
 
     // covers: laser.light.range
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 40)
-    public static void fourRangeLensesTakeActionLightTo128(GameTestHelper helper) {
+    public static void rangeLensesStopAtTheMostLightReaches(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.RANGE_LENS.get(),
                 ModItems.RANGE_LENS.get(), ModItems.RANGE_LENS.get());
@@ -761,7 +761,9 @@ public final class LensTests {
         helper.runAfterDelay(25, () -> {
             String text = String.join(" ", com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
                     .describe(helper.absolutePos(new BlockPos(5, Y, 8))).stream().map(net.minecraft.network.chat.Component::getString).toList());
-            helper.assertTrue(text.contains("128 blocks a run"), "8 doubled four times: " + text);
+            // 8 doubled four times would be 128: it stops at the configured most.
+            int most = com.kadikular.quantimium.Config.maxLaserRange();
+            helper.assertTrue(text.contains(Math.min(128, most) + " blocks a run"), "8 doubled, up to " + most + ": " + text);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
@@ -1007,6 +1009,46 @@ public final class LensTests {
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(collector, Items.DIRT), 1, "the dirt came back");
             helper.assertBlockPresent(Blocks.SANDSTONE, new BlockPos(7, Y, 8));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.phantom
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void phantomLightPaysForEachBlockItPassesThrough(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.PHANTOM_LENS.get());
+        for (int x = 5; x <= 7; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.FOLD_CORE.get());
+        long each = com.kadikular.quantimium.Config.phantomFePerBlock();
+        helper.succeedWhen(() -> {
+            long[] upkeep = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
+                    .costs(helper.absolutePos(new BlockPos(3, Y, 8)), 0, com.kadikular.quantimium.laser.Lens.PHANTOM);
+            helper.assertValueEqual(upkeep[0], 3 * each, "three stones' worth a tick");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.phantom, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void phantomAreaHarvestPaysForTheGroundItCutsThrough(GameTestHelper helper) {
+        // Coal under three stones, from a prism above: its cut costs an area's cutting and three stones' passing.
+        emitter(helper, new BlockPos(1, Y + 4, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y + 4, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PHANTOM_LENS.get());
+        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COAL))));
+        BlockPos at = new BlockPos(8, Y + 4, 8);
+        helper.setBlock(at, ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.cycleShape();
+        prism.setRadius(4);
+        for (int y = Y + 1; y <= Y + 3; y++) helper.setBlock(new BlockPos(8, y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.COAL_ORE);
+        long each = com.kadikular.quantimium.Config.phantomFePerBlock();
+        long cutting = Math.round(3 * com.kadikular.quantimium.laser.LaserTuning.HARVEST_FE_PER_HARDNESS * com.kadikular.quantimium.laser.LaserTuning.AREA_COST);
+        helper.succeedWhen(() -> {
+            long[] cut = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
+                    .costs(helper.absolutePos(at), -1, com.kadikular.quantimium.laser.Lens.HARVEST);
+            helper.assertValueEqual(cut[0], cutting + 3 * each, "cutting the coal, and three stones' passing");
             TestSupport.finishLasers(helper);
         });
     }

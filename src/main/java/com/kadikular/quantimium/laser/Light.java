@@ -121,7 +121,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
     public int reach() {
         if (left >= 0) return left;
         int base = streams.isEmpty() ? range : Math.min(range, LaserTuning.ACTION_REACH);
-        return Math.min(LaserTuning.MAX_RANGE, base << boosts);
+        return Math.min(com.kadikular.quantimium.Config.maxLaserRange(), base << boosts);
     }
 
     /** The light refocused, by a mirror: a fresh run at its own reach. */

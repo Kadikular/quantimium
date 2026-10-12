@@ -66,15 +66,15 @@ public final class LaserTuning {
     /** Ticks an area prism's action rests after a whole sweep of its area found nothing to do. */
     public static final int AREA_REST = 20;
     /** The largest an area may be on each side. Only what the prism's light reaches, and sees, is worked. */
-    public static final int AREA_MAX = 257;
-    /** Range lenses that count: each doubles a run's reach, up to {@link #MAX_RANGE}. Light with an action goes 8, 16, 32, 64, 128. */
+    public static int areaMax() {
+        return 2 * com.kadikular.quantimium.Config.maxLaserRange() + 1;
+    }
+    /** Range lenses that count: each doubles a run's reach, up to the configured most (64 by default). Light with an action goes 8, 16, 32, 64. */
     public static final int RANGE_LENSES = 4;
     /** Harmonic lenses that count: a level of Fortune each. */
     public static final int HARMONIC_LENSES = 3;
     /** Speed lenses that count: each doubles how fast an action works, to eight times. */
     public static final int SPEED_LENSES = 3;
-    /** The farthest any run of light reaches, Range lenses and all. */
-    public static final int MAX_RANGE = 128;
     /** How far a run of light with an action reaches (Pickup counts), before Range lenses. */
     public static final int ACTION_REACH = 8;
     /** FE to break a block, for each point of its hardness (stone is 1.5, obsidian 50); at least one point's worth. */

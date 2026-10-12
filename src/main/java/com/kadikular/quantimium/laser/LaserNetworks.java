@@ -127,6 +127,12 @@ public final class LaserNetworks {
         }
     }
 
+    /** For tests: the action {@code action} at {@code node} (beam -1 for an area): its whole cut's cost, and what it asks this tick. */
+    public long[] costs(BlockPos node, int beam, Lens action) {
+        LensAction found = actions.get(new LensAction.Key(node, beam, action));
+        return found == null ? new long[] {-1, -1} : new long[] {found.cutCost(), found.demand()};
+    }
+
     /** For tests: every Veil Thread being drawn by mirrored Pickup is {@code ticksLeft} ticks from done. */
     public void nearlyDrawn(int ticksLeft) {
         for (LensAction action : actions.values()) action.nearlyDrawn(ticksLeft);

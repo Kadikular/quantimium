@@ -333,7 +333,11 @@ public final class Config {
 
     public static final ModConfigSpec.IntValue PHANTOM_FE_PER_BLOCK = BUILDER
             .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on.")
-            .defineInRange("phantomFePerBlock", 5, 0, 100_000);
+            .defineInRange("phantomFePerBlock", 15, 0, 100_000);
+
+    public static final ModConfigSpec.IntValue MAX_RANGE = BUILDER
+            .comment("The farthest one run of laser light reaches, in blocks, however many Range lenses it's been through.")
+            .defineInRange("maxRange", 64, 8, 256);
 
     static {
         BUILDER.pop();
@@ -344,7 +348,11 @@ public final class Config {
     }
 
     public static int phantomFePerBlock() {
-        return SPEC.isLoaded() ? PHANTOM_FE_PER_BLOCK.get() : 5;
+        return SPEC.isLoaded() ? PHANTOM_FE_PER_BLOCK.get() : 15;
+    }
+
+    public static int maxLaserRange() {
+        return SPEC.isLoaded() ? MAX_RANGE.get() : 64;
     }
 
     /** What a Cavity Mirror holding {@code stored} loses this tick: a fraction of it, up to the cap. */
