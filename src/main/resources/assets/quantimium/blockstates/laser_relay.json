@@ -61,7 +61,7 @@
     "north": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_emitter_nozzle"
+    "model": "quantimium:block/laser_relay_emitter_north"
    }
   },
   {
@@ -69,7 +69,7 @@
     "east": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_emitter_nozzle",
+    "model": "quantimium:block/laser_relay_emitter_east",
     "y": 90
    }
   },
@@ -78,7 +78,7 @@
     "south": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_emitter_nozzle",
+    "model": "quantimium:block/laser_relay_emitter_south",
     "y": 180
    }
   },
@@ -87,7 +87,7 @@
     "west": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_emitter_nozzle",
+    "model": "quantimium:block/laser_relay_emitter_west",
     "y": 270
    }
   },
@@ -96,7 +96,7 @@
     "up": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_emitter_nozzle",
+    "model": "quantimium:block/laser_relay_emitter_up",
     "x": 270
    }
   },
@@ -105,7 +105,7 @@
     "down": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_emitter_nozzle",
+    "model": "quantimium:block/laser_relay_emitter_down",
     "x": 90
    }
   }

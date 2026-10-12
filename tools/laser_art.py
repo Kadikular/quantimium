@@ -403,6 +403,7 @@ def _rotated(v, rx: int, ry: int):
     return v
 
 
+DIR_INDEX = {"down": 0, "up": 1, "north": 2, "south": 3, "west": 4, "east": 5}
 DIRS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0), "east": (1, 0, 0)}
 
 
@@ -633,49 +634,64 @@ def solar_emitter() -> None:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/solar_emitter_item"}}, handle, indent=2)
 
 
-def lens_mount_front() -> Image.Image:
-    """The Lens Mount's front edges: the focus's light blue, a lighter line along them, so you can see which way it shines."""
-    img = Image.new("RGBA", (16, 16), hx("7fb2ff"))
+def lens_slot() -> Image.Image:
+    """A Lens Mount's slot panel, pale grey so its tint shows: dark when empty, the lens's colour when fitted."""
+    img = Image.new("RGBA", (16, 16), hx("e8ecf2"))
     for i in range(16):
-        img.putpixel((i, 0), hx("c8dcff"))
-        img.putpixel((0, i), hx("c8dcff"))
-        img.putpixel((i, 15), hx("4a7fd0"))
-        img.putpixel((15, i), hx("4a7fd0"))
+        for edge in ((i, 0), (0, i)):
+            img.putpixel(edge, hx("ffffff"))
+        for edge in ((i, 15), (15, i)):
+            img.putpixel(edge, hx("b8c0cc"))
     return img
 
 
 def lens_mount() -> None:
     """
-    The Lens Mount: a frame cube of 2x2 edges, its lenses (drawn by its renderer, as items) standing inside it in
-    a row along the light, its four front edges light blue where light leaves. Drawn shining north, turned to each
-    way it shines.
+    The Lens Mount: a solid grey block, a 2px recess at each end, with half a focus set in the one light comes in
+    by and half an emitter in the one it leaves by; on each of its four sides, four flat slot panels along the
+    light, tinted dark when empty and the lens's colour when fitted (tint 0 to 3, LensTints). Drawn shining north,
+    turned to each way it shines.
     """
-    lens_mount_front().save(os.path.join(TEX, "lens_mount_front.png"))
-    t = {"steel": "quantimium:block/laser_mirror_steel", "front": "quantimium:block/lens_mount_front",
+    lens_slot().save(os.path.join(TEX, "lens_mount_slot.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus", "slot": "quantimium:block/lens_mount_slot",
          "particle": "quantimium:block/laser_mirror_steel"}
 
-    def bar(start, end, texture):
-        return {"from": start, "to": end, "faces": {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}}
+    def box(start, end, texture="#steel", uv=None, faces=("north", "south", "east", "west", "up", "down")):
+        element = {"from": start, "to": end, "faces": {}}
+        for f in faces:
+            face = {"texture": texture}
+            if uv:
+                face["uv"] = uv
+            element["faces"][f] = face
+        return element
 
-    edges = []
-    for y in (0, 14):
-        for z in (0, 14):
-            edges.append(bar([0, y, z], [16, y + 2, z + 2], "#front" if z == 0 else "#steel"))
-    for x in (0, 14):
-        for z in (0, 14):
-            edges.append(bar([x, 2, z], [x + 2, 14, z + 2], "#front" if z == 0 else "#steel"))
-    for x in (0, 14):
-        for y in (0, 14):
-            edges.append(bar([x, y, 2], [x + 2, y + 2, 14], "#steel"))
+    parts = [box([0, 0, 2], [16, 16, 14])]
+    # Each end: a frame round a 6x6 recess, 2 deep.
+    for z0, z1 in ((0, 2), (14, 16)):
+        parts += [box([0, 0, z0], [16, 5, z1]), box([0, 11, z0], [16, 16, z1]), box([0, 5, z0], [5, 11, z1]), box([11, 5, z0], [16, 11, z1])]
+    # The way out: half an emitter, its collar and its tip; the way in: half a focus.
+    parts += [box([6, 6, 1], [10, 10, 2]), box([7, 7, 0], [9, 9, 1], "#focus", [7, 7, 9, 9]), box([6, 6, 14], [10, 10, 16], "#focus", [6, 6, 10, 10])]
+    # The slot panels, a hair proud of each side, first lens nearest the way in.
+    for index, along in enumerate((12.5, 9.5, 6.5, 3.5)):
+        z0, z1 = along - 1, along + 1
+        panels = [box([16.01, 4, z0], [16.01, 12, z1], "#slot", None, ("east",)), box([-0.01, 4, z0], [-0.01, 12, z1], "#slot", None, ("west",)),
+                  box([4, 16.01, z0], [12, 16.01, z1], "#slot", None, ("up",)), box([4, -0.01, z0], [12, -0.01, z1], "#slot", None, ("down",))]
+        for panel in panels:
+            for face in panel["faces"].values():
+                face["tintindex"] = index
+        parts += panels
     with open(os.path.join(MODELS, "lens_mount.json"), "w") as handle:
-        json.dump({"parent": "minecraft:block/block", "textures": t, "elements": edges}, handle, indent=2)
+        json.dump({"parent": "minecraft:block/block", "textures": t, "elements": parts}, handle, indent=2)
     with open(os.path.join(STATES, "lens_mount.json"), "w") as handle:
         json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/lens_mount"}, **r) for f, r in ROTATIONS.items()}}, handle, indent=1)
+    empty = 0x2C303C - 0x1000000
     with open(os.path.join(ITEMS, "lens_mount.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/lens_mount"}}, handle, indent=2)
-    for name in os.listdir(MODELS):
-        if name.startswith("lens_mount_") and name.endswith(".json"):
-            os.remove(os.path.join(MODELS, name))
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/lens_mount",
+                             "tints": [{"type": "minecraft:constant", "value": empty} for _ in range(4)]}}, handle, indent=2)
+    for stale in ("lens_mount_front.png",):
+        path = os.path.join(TEX, stale)
+        if os.path.exists(path):
+            os.remove(path)
 
 
 def laser_relay() -> None:
@@ -706,7 +722,14 @@ def laser_relay() -> None:
               "east": {"x": 90, "y": 270}}
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
     parts = [{"when": {"mount": m}, "apply": dict({"model": "quantimium:block/laser_relay"}, **r)} for m, r in mounts.items()]
-    parts += [{"when": {side: "true"}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
+    # Each face's nozzle tints its tip by that face (LensTints: the lens in that emitter).
+    for side, r in turns.items():
+        nozzle = emitter_nozzle()
+        for face in nozzle[-1]["faces"].values():
+            face["tintindex"] = DIR_INDEX[side]
+        with open(os.path.join(MODELS, f"laser_relay_emitter_{side}.json"), "w") as handle:
+            json.dump({"textures": t, "elements": nozzle}, handle, indent=2)
+        parts.append({"when": {side: "true"}, "apply": dict({"model": f"quantimium:block/laser_relay_emitter_{side}"}, **r)})
     with open(os.path.join(STATES, "laser_relay.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
     with open(os.path.join(ITEMS, "laser_relay.json"), "w") as handle:

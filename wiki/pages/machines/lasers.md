@@ -154,10 +154,11 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 
 ## Lenses
 
-[[mechanic:laser.lens.mount]] A [[block:lens_mount]] is a frame cube with four lenses standing inside it
-in a row, and light goes straight through it: in by the side behind its front, out of its front,
-refocused, through its lenses in order (its four slots, left to right). Light from any other side stops
-on it. Its four front edges are light blue, so you can see which way it shines. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
+[[mechanic:laser.lens.mount]] A [[block:lens_mount]] holds four lenses in a row, and light goes straight
+through it: in by its back, where half a focus is set in a recess, and out of its front, where half an
+emitter is, refocused, through its lenses in order (its four slots, left to right). Light from any other
+side stops on it. Down each side, four slot panels show what's fitted: dark when empty, the lens's colour
+when there's one. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
 lenses say along the way. Open the mount with an empty hand; sneak-click or wrench a side to point it
 there. Under each lens is a button for that lens's own settings (a Filter lens's, say), lit when it has
 any. Each lensed beam is tinted by what it does.

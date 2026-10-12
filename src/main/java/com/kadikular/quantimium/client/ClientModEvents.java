@@ -105,7 +105,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_EMITTER_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_RELAY_BE.get(),
-                com.kadikular.quantimium.client.renderer.LaserRelayBER::new);
+                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_EMITTER_BE.get(),
                 com.kadikular.quantimium.client.renderer.SolarEmitterBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_MIRROR_BE.get(),
@@ -123,7 +123,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.ISOLATOR_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LENS_MOUNT_BE.get(),
-                com.kadikular.quantimium.client.renderer.LensMountBER::new);
+                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SENDER_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.COLLECTOR_BE.get(),
@@ -181,6 +181,8 @@ public class ClientModEvents {
         event.register(List.of(QuantumPanelColours.source(QuantumPanelColours.BAND_TINT),
                 QuantumPanelColours.source(QuantumPanelColours.EMITTER_TINT)), ModBlocks.QUANTUM_SIMULATOR.get());
         MirrorPhaseColours.register(event);
+        event.register(LensTints.lensMountSlots(), ModBlocks.LENS_MOUNT.get());
+        event.register(LensTints.relayTips(), ModBlocks.LASER_RELAY.get());
     }
 
     @SubscribeEvent

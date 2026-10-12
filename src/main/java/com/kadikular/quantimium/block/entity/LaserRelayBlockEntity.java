@@ -369,6 +369,24 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         return tag;
     }
 
+    /** What lenses it holds: its model's colours come from them. */
+    private java.util.List<ItemStack> lensSignature() {
+        java.util.List<ItemStack> sig = new java.util.ArrayList<>();
+        for (Direction face : Direction.values()) sig.add(lens(face).copy());
+        return sig;
+    }
+
+    /** New lenses on the client: its model is baked with their colours, so its chunk is built again. */
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection connection, ValueInput input) {
+        java.util.List<ItemStack> before = lensSignature();
+        super.onDataPacket(connection, input);
+        java.util.List<ItemStack> after = lensSignature();
+        boolean same = before.size() == after.size();
+        for (int i = 0; same && i < before.size(); i++) same = ItemStack.matches(before.get(i), after.get(i));
+        if (!same && level != null) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_IMMEDIATE);
+    }
+
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
