@@ -51,7 +51,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     public static final int FILTER_SLOTS = 9;
     public static final int MAX_PRIORITY = 999;
 
-    /** Ghost entries: what it stores, provides or requests. An empty filter lists everything. */
+    /** Ghost entries: what it stores, provides or requests. Empty, storage and providers take everything; a requester, nothing. */
     private final SimpleContainer filter = new SimpleContainer(FILTER_SLOTS) {
         @Override
         public void setChanged() {
@@ -166,7 +166,9 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
             any = true;
             if (FilterEntry.matches(entry, stack)) listed = true;
         }
-        return !any || listed == allow;
+        // A requester with nothing listed asks for nothing; storage and providers with nothing listed take or give anything.
+        if (!any) return role != Role.REQUESTER;
+        return listed == allow;
     }
 
     @Override

@@ -102,6 +102,10 @@ public final class ClientPayloadHandler {
         MirrorLensClient.set(payload);
     }
 
+    public static void handleLogisticsTerminalView(com.kadikular.quantimium.network.LogisticsTerminalViewPayload payload) {
+        com.kadikular.quantimium.client.screen.LogisticsTerminalScreen.setView(payload);
+    }
+
     public static void handleHorizonView(com.kadikular.quantimium.network.HorizonViewPayload payload) {
         com.kadikular.quantimium.client.screen.HorizonCoreScreen.setView(payload);
     }

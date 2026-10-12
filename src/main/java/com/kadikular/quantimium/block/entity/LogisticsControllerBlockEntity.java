@@ -112,7 +112,8 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     }
 
     /** The members still standing, or none while another controller's light stops the network. */
-    private List<com.kadikular.quantimium.laser.LogisticsMember> members() {
+    @Override
+    public List<com.kadikular.quantimium.laser.LogisticsMember> members() {
         if (clash) return List.of();
         return members.stream().filter(member -> !(member instanceof BlockEntity entity) || !entity.isRemoved()).toList();
     }

@@ -582,6 +582,31 @@ public class Quantimium {
                 (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleFieldSurvey(payload))
         );
         registrar.playToClient(
+                com.kadikular.quantimium.network.LogisticsTerminalViewPayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalViewPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleLogisticsTerminalView(payload))
+        );
+        registrar.playToServer(
+                com.kadikular.quantimium.network.LogisticsTerminalTakePayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalTakePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
+                            && menu.getBlockEntity().getBlockPos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.take(context.player(), payload.item(), payload.count(), payload.toInventory());
+                    }
+                })
+        );
+        registrar.playToServer(
+                com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
+                            && menu.getBlockEntity().getBlockPos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.insertCarried(payload.one());
+                    }
+                })
+        );
+        registrar.playToClient(
                 HorizonViewPayload.TYPE,
                 HorizonViewPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleHorizonView(payload))

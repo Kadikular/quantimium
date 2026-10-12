@@ -254,6 +254,8 @@ public class ModItems {
             "logistics_controller", ModBlocks.LOGISTICS_CONTROLLER);
     public static final DeferredItem<BlockItem> LOGISTICS_RECEPTACLE_ITEM = ITEMS.registerSimpleBlockItem(
             "logistics_receptacle", ModBlocks.LOGISTICS_RECEPTACLE);
+    public static final DeferredItem<BlockItem> LOGISTICS_TERMINAL_ITEM = ITEMS.registerSimpleBlockItem(
+            "logistics_terminal", ModBlocks.LOGISTICS_TERMINAL);
     public static final DeferredItem<BlockItem> LASER_PORT_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_port", ModBlocks.LASER_PORT);
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARVEST_LENS = ITEMS.registerItem(

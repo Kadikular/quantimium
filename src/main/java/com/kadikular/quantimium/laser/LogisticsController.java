@@ -11,4 +11,7 @@ public interface LogisticsController {
 
     /** What the network found, once a second: its members, and whether another controller's light joins its own. */
     void report(java.util.List<LogisticsMember> members, boolean clash);
+
+    /** Its network's members, as last found; none while another controller's light stops it. */
+    java.util.List<LogisticsMember> members();
 }

@@ -72,6 +72,7 @@
     "quantimium:laser_port",
     "quantimium:logistics_controller",
     "quantimium:logistics_receptacle",
+    "quantimium:logistics_terminal",
     "quantimium:lens_mount",
     "quantimium:laser_prism",
     "quantimium:cavity_mirror",

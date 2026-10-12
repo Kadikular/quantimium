@@ -1241,6 +1241,13 @@
   "gui.quantimium.logistics_receptacle.priority.tip": "Higher goes first: storage fills from the highest and empties from the lowest. Shift-click for tens.",
   "gui.quantimium.logistics_receptacle.allow": "Whitelist: only these",
   "gui.quantimium.logistics_receptacle.deny": "Blacklist: all but these",
-  "gui.quantimium.logistics_receptacle.allow.tip": "Click to switch. An empty filter lists everything.",
-  "gui.quantimium.logistics_receptacle.status.tip": "Its part faces the inventory it serves. A controller's light must reach it, not past an Isolator."
+  "gui.quantimium.logistics_receptacle.allow.tip": "Click to switch. Empty, storage and providers take or give everything; a requester asks for nothing.",
+  "gui.quantimium.logistics_receptacle.status.tip": "Its part faces the inventory it serves. A controller's light must reach it, not past an Isolator.",
+  "block.quantimium.logistics_terminal": "Logistics Terminal",
+  "block.quantimium.logistics_terminal.tip": "Logistics: put it where a Logistics Controller's light ends, and it shows everything that network's storage holds and its providers offer, to take or put away.",
+  "gui.quantimium.logistics_terminal.count": "%s in the network",
+  "gui.quantimium.logistics_terminal.take.tip": "Click: a stack. Right-click: one. Shift-click: a stack to your inventory.",
+  "gui.quantimium.logistics_terminal.status": "%s kinds",
+  "gui.quantimium.logistics_terminal.status.unconnected": "No controller's light",
+  "gui.quantimium.logistics_terminal.status.tip": "A Logistics Controller's light must reach it. Click the grid holding something to put it away (right-click: one); shift-click it in your inventory does too."
 }

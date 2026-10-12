@@ -306,4 +306,29 @@ public final class LogisticsTests {
         var port = onPort(helper, 7, LogisticsMember.Role.STORAGE, false);
         helper.succeedWhen(() -> helper.assertValueEqual(count(port, Items.COBBLESTONE), 16, "into the port"));
     }
+
+    // covers: laser.logistics.terminal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aTerminalShowsTakesAndStores(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 20));
+        onChest(helper, 6, LogisticsMember.Role.PROVIDER, false, new ItemStack(Items.IRON_INGOT, 5));
+        onChest(helper, 8, LogisticsMember.Role.REQUESTER, false, new ItemStack(Items.GOLD_INGOT, 7));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        helper.runAfterDelay(40, () -> {
+            var contents = terminal.contents();
+            helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE))), 20L, "storage's cobblestone shows");
+            helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.IRON_INGOT))), 5L, "the provider's iron shows");
+            helper.assertFalse(contents.containsKey(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.GOLD_INGOT))), "a requester's gold doesn't");
+            ItemStack got = terminal.take(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE)), 16);
+            helper.assertValueEqual(got.getCount(), 16, "took 16 cobblestone");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 4, "out of storage");
+            ItemStack left = terminal.insert(new ItemStack(Items.DIAMOND, 3));
+            helper.assertTrue(left.isEmpty(), "the diamonds went in");
+            helper.assertValueEqual(count(helper, 4, Items.DIAMOND), 3, "into storage");
+            helper.succeed();
+        });
+    }
 }

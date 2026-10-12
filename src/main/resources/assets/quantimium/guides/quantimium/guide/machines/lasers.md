@@ -288,7 +288,7 @@ put the controller before the lenses, or on their side of the join.
 A <ItemLink id="quantimium:logistics_receptacle" /> goes on the inventory it serves (a chest, a machine, a drawer), and light
 passes straight through it, so one beam along a row of machines joins them all. Open it to set what that
 inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
-with tags (an empty filter lists everything). Its plate lights in its role's colour while a controller's
+with tags (empty, storage and providers take or give everything; a requester asks for nothing). Its plate lights in its role's colour while a controller's
 light reaches it. Once a second, each active part moves up to 64 items:
 
 - **Storage**: where the network keeps things. What comes in fills
@@ -305,6 +305,12 @@ what it's caught. A receptacle on a Laser Port works with its nine slots whateve
 any role.
 
 Light from a controller is drawn a deeper blue, and always as if at work.
+
+A <ItemLink id="quantimium:logistics_terminal" /> where a controller's light ends shows
+everything the network's storage holds and its providers offer, searchable and sorted by count or name,
+like an ME terminal. Click an item for a stack on the cursor, right-click for one, shift-click for a stack
+into your inventory; click the grid holding something to put it away into storage (right-click: one), or
+shift-click it in your inventory. Each take or put costs the controller as a move does.
 
 ## Into the mirror
 

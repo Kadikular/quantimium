@@ -47,6 +47,7 @@ navigation:
 - <ItemLink id="quantimium:lit_reactor_plinth" />
 - <ItemLink id="quantimium:logistics_controller" />
 - <ItemLink id="quantimium:logistics_receptacle" />
+- <ItemLink id="quantimium:logistics_terminal" />
 - <ItemLink id="quantimium:materialiser" />
 - <ItemLink id="quantimium:me_superposition_crafter" />
 - <ItemLink id="quantimium:observation_chamber" />

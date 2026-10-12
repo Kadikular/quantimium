@@ -570,6 +570,20 @@ public final class LaserNetworks {
         return found;
     }
 
+    /**
+     * The Logistics Controller whose light reaches the node at {@code pos}, or null for none, or for light from
+     * two (which stops both).
+     */
+    @Nullable
+    public static LogisticsController logisticsAt(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return null;
+        LaserNetworks networks = LEVELS.get(server);
+        if (networks == null) return null;
+        Light light = networks.lights.get(pos);
+        if (light == null || light.logistics().size() != 1) return null;
+        return networks.nodes.get(light.logistics().iterator().next()) instanceof LogisticsController controller ? controller : null;
+    }
+
     /** Pays {@code fe} from what the sources at {@code feeders} have left this tick, by what each has; nothing if they haven't enough. */
     private boolean payFrom(Set<BlockPos> feeders, long fe) {
         long can = 0;

@@ -1006,6 +1006,34 @@ def laser_port() -> None:
             os.remove(path)
 
 
+def terminal_front() -> Image.Image:
+    """A Logistics Terminal's screen: a steel bezel round dark glass, with a faint grid of item cells in the network's blue and one lit."""
+    img = steel(31)
+    for x in range(2, 14):
+        for y in range(2, 14):
+            img.putpixel((x, y), hx("0d1020"))
+    for i in range(3):
+        for j in range(3):
+            colour = hx("7fb2ff") if (i, j) == (0, 0) else hx("2a3f8f")
+            for x in range(4 + i * 3, 6 + i * 3):
+                for y in range(4 + j * 3, 6 + j * 3):
+                    img.putpixel((x, y), colour)
+    return img
+
+
+def logistics_terminal() -> None:
+    """The Logistics Terminal: a steel block, its screen on the front; turned to face whoever placed it."""
+    terminal_front().save(os.path.join(TEX, "logistics_terminal_front.png"))
+    model = cube({"front": "quantimium:block/logistics_terminal_front", "back": "quantimium:block/laser_mirror_steel",
+                  "side": "quantimium:block/laser_mirror_steel"}, "front")
+    with open(os.path.join(MODELS, "logistics_terminal.json"), "w") as handle:
+        json.dump(model, handle, indent=2)
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}}
+    with open(os.path.join(STATES, "logistics_terminal.json"), "w") as handle:
+        json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/logistics_terminal"}, **r) for f, r in turns.items()}}, handle, indent=1)
+    with open(os.path.join(ITEMS, "logistics_terminal.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_terminal"}}, handle, indent=2)
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -1044,6 +1072,7 @@ def main() -> None:
     lens_mount()
     laser_port()
     logistics_receptacle()
+    logistics_terminal()
     for name, colour in LENSES.items():
         lens_item(colour, GLYPHS.get(name)).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
         with open(os.path.join(ASSETS, "models", "item", f"{name}.json"), "w") as handle:

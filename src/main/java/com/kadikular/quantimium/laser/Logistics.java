@@ -145,8 +145,15 @@ public final class Logistics {
      * listing it first, then storage, highest priority first. What's left.
      */
     public static ItemStack insert(List<LogisticsMember> members, ItemStack stack, boolean simulate) {
+        return insert(members, stack, simulate, true);
+    }
+
+    /** As {@link #insert(List, ItemStack, boolean)}; without {@code requesters}, into storage only (what a player puts away). */
+    public static ItemStack insert(List<LogisticsMember> members, ItemStack stack, boolean simulate, boolean requesters) {
         ItemStack left = stack.copy();
-        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}) {
+        LogisticsMember.Role[] roles = requesters ? new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}
+                : new LogisticsMember.Role[] {LogisticsMember.Role.STORAGE};
+        for (LogisticsMember.Role role : roles) {
             for (LogisticsMember to : byPriority(members, true)) {
                 if (left.isEmpty()) return ItemStack.EMPTY;
                 if (to.role() != role || !to.lets(left)) continue;

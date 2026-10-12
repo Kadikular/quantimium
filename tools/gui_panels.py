@@ -471,6 +471,18 @@ def horizon_core() -> Panel:
     return panel
 
 
+def logistics_terminal() -> Panel:
+    """The Logistics Terminal: the sort toggle and a search box, a scrolling 9x5 grid of what the network can give
+    (LogisticsTerminalScreen.GRID_*), then the player's inventory (LogisticsTerminalMenu.PLAYER_Y)."""
+    panel = Panel(HIGH, height=222)
+    panel.region("sort", (8, 18, 72, 12))
+    panel.well(93, 18, 76, 12)
+    panel.region("search", (95, 20, 72, 9))
+    panel.grid((8, 34), 9, 5, "items")
+    panel.player(140)
+    return panel
+
+
 PANELS = {
     "relay_emitter": relay_emitter,
     "quantum_crafter": lambda: crafter(MID, basic=False),
@@ -500,6 +512,7 @@ PANELS = {
     "laser_port_filter": laser_port_filter,
     # The same note and nine ghost entries as the Laser Port's filter view.
     "logistics_receptacle": laser_port_filter,
+    "logistics_terminal": logistics_terminal,
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,
