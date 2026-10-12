@@ -49,6 +49,13 @@ light from and it's **flat**, facing that side: light goes straight back the way
 Cavity Mirror across a gap it's the far end of the cavity. It never sends light straight on. A redstone
 signal turns it off.
 
+[[mechanic:laser.splitter]] A [[block:laser_splitter]] is a Laser Mirror with a half-silvered plate, set the
+same way (two sides at right angles; never flat). It has four ports: its two sides and the faces across
+from them, but not one facing what it stands on. Light in by any port goes both straight on and turned
+off the plate, so one beam becomes two; and two beams meeting at a right angle (one through the back, one
+from the side) leave together, joined. Light also leaves by the fourth face, but power only goes where
+something asks for it, so that costs nothing. It closes no cavity.
+
 [[mechanic:laser.relay]] A [[block:laser_relay]] sends every beam that reaches it, from any side, out of
 its face. Placed, it faces you; sneak-click or wrench a face to point it there.
 
@@ -63,7 +70,7 @@ each signal it gets lets light through until one action down the beam is done (a
 item carried) or two seconds pass. A pulse relay before a Harvest lens breaks one block per pulse. Switched off, a relay (or a mirror) passes no light at all: nothing the light did reaches past it, and what's beyond
 gets only the light that reaches it some other way. An emitter switched off by redstone gives out none.
 
-[[mechanic:laser.splitter]] A [[block:splitter]] is a relay with as many faces as you set: light that
+[[mechanic:laser.distributor]] A [[block:splitter]] (Laser Distributor) is a relay with as many faces as you set: light that
 reaches it leaves by every output, shared by what each beam's blocks ask for, like a prism for the six
 straight directions with nothing to link. Wrench or sneak-click a face to add or take away an output;
 each output face shows the split plate.

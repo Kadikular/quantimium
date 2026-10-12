@@ -232,6 +232,8 @@ public class ModItems {
             "laser_emitter_3", props -> new TooltipBlockItem(ModBlocks.LASER_EMITTER_3.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> LASER_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_mirror", ModBlocks.LASER_MIRROR);
+    public static final DeferredItem<BlockItem> LASER_SPLITTER_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_splitter", ModBlocks.LASER_SPLITTER);
     public static final DeferredItem<BlockItem> LASER_RELAY_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_relay", ModBlocks.LASER_RELAY);
     public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerItem(

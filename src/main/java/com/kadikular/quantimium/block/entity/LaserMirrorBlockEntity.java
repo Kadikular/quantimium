@@ -26,6 +26,7 @@ import java.util.Set;
 /**
  * A Laser Mirror's light: it turns light between its two sides, both ways, as a mirror would: what comes
  * in by one leaves by the other, refocused, so its range starts again; flat, it goes back the way it came.
+ * A Laser Splitter's half-silvered plate sends light both straight on and turned, by any of its four ports.
  * Light from anywhere else stops on it. Off while a redstone signal reaches it.
  */
 public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView {
@@ -57,24 +58,59 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
         return passing;
     }
 
-    /** Light coming in by either side turns out of the other; any other light stops here. With none, both: where light would go. */
+    /**
+     * Light coming in by a port turns out of its partner (a Mirror's two sides to each other); through a Beam
+     * Splitter it also goes straight on. Any other light stops here. With none, every port: where light would go.
+     */
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {
+        Set<Direction> ports = ports();
         if (arriving.isEmpty()) {
-            passing = java.util.EnumSet.of(input(), output());
+            passing = ports;
             return passing;
         }
         Set<Direction> out = java.util.EnumSet.noneOf(Direction.class);
-        if (arriving.contains(input().getOpposite())) out.add(output());
-        if (arriving.contains(output().getOpposite())) out.add(input());
+        for (Direction travel : arriving) {
+            Direction in = travel.getOpposite();
+            if (!ports.contains(in)) continue;
+            if (ports.contains(turned(in))) out.add(turned(in));
+            if (splits() && ports.contains(travel)) out.add(travel);
+        }
         passing = out;
         return out;
     }
 
-    /** Only light coming in by one of its two sides; the rest hits the back or edge of the plate. */
+    /** Whether its plate is half-silvered: light goes straight through as well as turning. */
+    private boolean splits() {
+        return getBlockState().getBlock() instanceof LaserMirrorBlock mirror && mirror.splits();
+    }
+
+    /**
+     * The faces light gets in and out by: a Mirror's two sides; a Laser Splitter's four, its two sides and the
+     * faces across from them, but for one facing its mount.
+     */
+    private Set<Direction> ports() {
+        Set<Direction> ports = java.util.EnumSet.of(input(), output());
+        if (splits()) {
+            ports.add(input().getOpposite());
+            ports.add(output().getOpposite());
+            ports.remove(getBlockState().getValue(LaserMirrorBlock.MOUNT));
+        }
+        return ports;
+    }
+
+    /** The face light in by {@code face} turns out of, off the plate: one side to the other, and across the back likewise. */
+    private Direction turned(Direction face) {
+        if (face == input()) return output();
+        if (face == output()) return input();
+        if (face == input().getOpposite()) return output().getOpposite();
+        return input().getOpposite();
+    }
+
+    /** Only light coming in by one of its ports; the rest hits the back or edge of the plate. */
     @Override
     public boolean accepts(Direction travel) {
-        return travel == input().getOpposite() || travel == output().getOpposite();
+        return ports().contains(travel.getOpposite());
     }
 
     @Override

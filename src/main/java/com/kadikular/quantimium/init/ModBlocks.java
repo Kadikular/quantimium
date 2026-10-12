@@ -716,6 +716,8 @@ public class ModBlocks {
             "laser_emitter_3", id -> new LaserEmitterBlock(laserBlock(id, MapColor.COLOR_PURPLE), LaserTuning.Tier.THREE));
     public static final DeferredBlock<Block> LASER_MIRROR = BLOCKS.register(
             "laser_mirror", id -> new com.kadikular.quantimium.block.LaserMirrorBlock(laserBlock(id, MapColor.METAL).noOcclusion()));
+    public static final DeferredBlock<Block> LASER_SPLITTER = BLOCKS.register(
+            "laser_splitter", id -> new com.kadikular.quantimium.block.LaserSplitterBlock(laserBlock(id, MapColor.METAL).noOcclusion()));
     public static final DeferredBlock<Block> LASER_RELAY = BLOCKS.register(
             "laser_relay", id -> new LaserRelayBlock(laserBlock(id, MapColor.QUARTZ)));
 

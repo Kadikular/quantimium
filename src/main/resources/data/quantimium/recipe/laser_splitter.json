@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:laser_mirror",
+    "minecraft:glass_pane"
+  ],
+  "result": {
+    "id": "quantimium:laser_splitter",
+    "count": 1
+  }
+}

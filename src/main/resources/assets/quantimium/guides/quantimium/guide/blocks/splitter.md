@@ -1,14 +1,14 @@
 ---
 navigation:
-  title: Laser Splitter
+  title: Laser Distributor
   parent: blocks/index.md
-  position: 71
+  position: 72
   icon: quantimium:splitter
 item_ids:
 - quantimium:splitter
 ---
 
-# Laser Splitter
+# Laser Distributor
 
 <ItemImage id="quantimium:splitter" scale="2" />
 

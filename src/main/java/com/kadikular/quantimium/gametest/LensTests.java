@@ -232,6 +232,48 @@ public final class LensTests {
         helper.setBlock(pos, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, facing));
     }
 
+    private static void splitter(GameTestHelper helper, BlockPos pos, Direction input, Direction output) {
+        helper.setBlock(pos, ModBlocks.LASER_SPLITTER.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, input)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, output));
+    }
+
+    // covers: laser.splitter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aLaserSplitterSendsLightOnAndAround(GameTestHelper helper) {
+        // Light from the west: on east, and turned north.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        splitter(helper, new BlockPos(6, Y, 8), Direction.WEST, Direction.NORTH);
+        helper.setBlock(new BlockPos(6, Y, 3), ModBlocks.FOLD_CORE.get());
+        helper.setBlock(new BlockPos(12, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(6, Y, 3), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0, "turned north");
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(12, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0, "and on east");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.splitter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
+    public static void aLaserSplitterJoinsLightMeetingAtARightAngle(GameTestHelper helper) {
+        // Harvest light in through the back (from the east) and Damage light from the north: they leave west together.
+        splitter(helper, new BlockPos(6, Y, 8), Direction.WEST, Direction.NORTH);
+        emitter(helper, new BlockPos(13, Y, 8), Direction.WEST, true);
+        mount(helper, new BlockPos(10, Y, 8), Direction.WEST, ModItems.HARVEST_LENS.get());
+        emitter(helper, new BlockPos(6, Y, 2), Direction.SOUTH, true);
+        mount(helper, new BlockPos(6, Y, 4), Direction.SOUTH, ModItems.DAMAGE_LENS.get());
+        helper.setBlock(new BlockPos(1, Y, 8), Blocks.BEDROCK);
+        helper.runAfterDelay(40, () -> {
+            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(6, Y, 8)));
+            helper.assertTrue(beams.stream().anyMatch(beam -> beam.face() == Direction.WEST
+                    && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.HARVEST)
+                    && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.DAMAGE)), "joined, leaving west: " + beams);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
     public static void lightAtAMirrorsBackDoesntJoinWhatItTurns(GameTestHelper helper) {
@@ -544,7 +586,7 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.splitter
+    // covers: laser.distributor
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void aSplitterSendsLightOutOfEveryFaceSet(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
@@ -671,7 +713,7 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.splitter
+    // covers: laser.distributor
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aSplitterFaceAddedByHandSendsLight(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);

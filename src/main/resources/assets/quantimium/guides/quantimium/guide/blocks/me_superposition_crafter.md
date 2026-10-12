@@ -2,7 +2,7 @@
 navigation:
   title: ME Superposition Crafter
   parent: blocks/index.md
-  position: 37
+  position: 38
   icon: quantimium:me_superposition_crafter
 item_ids:
 - quantimium:me_superposition_crafter

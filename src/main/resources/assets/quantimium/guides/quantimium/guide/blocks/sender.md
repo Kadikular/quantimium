@@ -2,7 +2,7 @@
 navigation:
   title: Sender
   parent: blocks/index.md
-  position: 70
+  position: 71
   icon: quantimium:sender
 item_ids:
 - quantimium:sender

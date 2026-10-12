@@ -121,6 +121,7 @@ laser_emitter_1: "Sends power as light, only as much as the blocks its beams rea
 laser_emitter_2: "A stronger laser emitter, with more power and a longer reach."
 laser_emitter_3: "The strongest laser emitter."
 laser_mirror: "A silver plate on a stand: turns light through a right angle, both ways, or sends it straight back."
+laser_splitter: "A half-silvered mirror: splits a beam in two, or joins two meeting at a right angle."
 laser_relay: "Turns any beam that reaches it, from any side, out of its face, and refocuses it so it can go as far again."
 laser_prism: "Sends the light that reaches it to each block it's linked to, in a straight line at any angle: splits and joins beams."
 laser_linker: "Links a Laser Prism to the blocks its light should reach."

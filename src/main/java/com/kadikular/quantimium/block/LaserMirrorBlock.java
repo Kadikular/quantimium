@@ -88,6 +88,11 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         return input != mount && output != mount && (output == input || output.getAxis() != input.getAxis());
     }
 
+    /** Whether its plate is half-silvered (a Laser Splitter): light goes straight through as well as turning. */
+    public boolean splits() {
+        return false;
+    }
+
     /** Whether it's flat, facing one side: light bounces straight back. */
     public static boolean flat(BlockState state) {
         return state.getValue(INPUT) == state.getValue(OUTPUT);
@@ -161,6 +166,10 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         } else {
             if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
             if (face == state.getValue(INPUT).getOpposite()) return refuse(player, "message.quantimium.laser_mirror.straight");
+            // A Laser Splitter has no flat: light would go straight through and back at once.
+            if (face == state.getValue(INPUT) && ((LaserMirrorBlock) state.getBlock()).splits()) {
+                return refuse(player, "message.quantimium.laser_splitter.flat");
+            }
             next = state.setValue(OUTPUT, face);
         }
         if (next != state) {
@@ -168,8 +177,9 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, input ? 1.0f : 1.3f);
             LaserNetworks.changed(level);
         }
+        String set = ((LaserMirrorBlock) state.getBlock()).splits() ? "message.quantimium.laser_splitter.set" : "message.quantimium.laser_mirror.set";
         player.sendOverlayMessage((flat(next) ? Component.translatable("message.quantimium.laser_mirror.flat", direction(next.getValue(INPUT)))
-                : Component.translatable("message.quantimium.laser_mirror.set", direction(next.getValue(INPUT)), direction(next.getValue(OUTPUT))))
+                : Component.translatable(set, direction(next.getValue(INPUT)), direction(next.getValue(OUTPUT))))
                 .withStyle(ChatFormatting.AQUA));
         return InteractionResult.SUCCESS;
     }
@@ -208,6 +218,6 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
 
     @Override
     public void appendTooltip(java.util.function.Consumer<Component> tooltip) {
-        tooltip.accept(Component.translatable("block.quantimium.laser_mirror.tip").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.translatable(getDescriptionId() + ".tip").withStyle(ChatFormatting.GRAY));
     }
 }

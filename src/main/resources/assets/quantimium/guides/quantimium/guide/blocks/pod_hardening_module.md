@@ -2,7 +2,7 @@
 navigation:
   title: Pod Hardening Module
   parent: blocks/index.md
-  position: 42
+  position: 43
   icon: quantimium:pod_hardening_module
 ---
 

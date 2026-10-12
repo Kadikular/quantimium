@@ -142,6 +142,16 @@ def mirror_plate() -> Image.Image:
     return img
 
 
+def splitter_plate() -> Image.Image:
+    """The Laser Splitter's half-silvered plate: the Mirror's rim, and silver with every other pixel open."""
+    img = mirror_plate()
+    for x in range(4, 12):
+        for y in range(4, 12):
+            if (x + y) % 2:
+                img.putpixel((x, y), (0, 0, 0, 0))
+    return img
+
+
 def prism_face() -> Image.Image:
     """Facets of pale crystal in a dark frame: light split along clean lines."""
     img = stone(("12142a", "1b1e38", "262a4a"), 31)
@@ -412,7 +422,7 @@ def _rotated(v, rx: int, ry: int):
 DIRS = {"down": (0, -1, 0), "up": (0, 1, 0), "north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0), "east": (1, 0, 0)}
 
 
-def laser_mirror() -> None:
+def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     """
     The Laser Mirror: a 10x10 silver plate whose face's middle is the block's middle, so beams meet it
     there and run straight; behind the plate a 2x2x2 hub, and a 2x2 post from the hub down to a boss and
@@ -421,9 +431,17 @@ def laser_mirror() -> None:
     mirror standing on the floor, and the whole of it turned to each mount.
     """
     steel(31).save(os.path.join(TEX, "laser_mirror_steel.png"))
-    mirror_plate().save(os.path.join(TEX, "laser_mirror_plate.png"))
-    t = {"steel": "quantimium:block/laser_mirror_steel", "plate": "quantimium:block/laser_mirror_plate",
+    (splitter_plate() if splits else mirror_plate()).save(os.path.join(TEX, f"{name}_plate.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "plate": f"quantimium:block/{name}_plate",
          "particle": "quantimium:block/laser_mirror_steel"}
+    # A half-silvered plate is silver both sides, with holes to see through.
+    back = "#plate" if splits else "#steel"
+    opposite = {"up": "down", "down": "up", "north": "south", "south": "north", "east": "west", "west": "east"}
+
+    def faced(element, face):
+        element["faces"][face] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+        element["faces"][opposite[face]] = {"texture": back, "uv": [3, 3, 13, 13]}
+        return element
 
     def box(start, end, cull=None):
         faces = {f: {"texture": "#steel", "uv": [start[0], start[2], end[0], end[2]] if f in ("up", "down") else
@@ -443,9 +461,7 @@ def laser_mirror() -> None:
         # The plate's middle, half its thickness behind the face.
         cx, cy, cz = 8 - ux * 0.5, 8 - uy * 0.5, 8 - uz * 0.5
         if ny and not nx and not nz:
-            element = box([3, cy - 0.5, 3], [13, cy + 0.5, 13])
-            element["faces"]["up"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-            return element
+            return faced(box([3, cy - 0.5, 3], [13, cy + 0.5, 13]), "up")
         if not ny and (nx == 0 or nz == 0):
             # Flat, facing a side: drawn facing north, the face on the plate's north side.
             if nz:
@@ -453,8 +469,7 @@ def laser_mirror() -> None:
             else:
                 element = box([cx - 0.5, 3, 3], [cx + 0.5, 13, 13])
             face = {(0, 0, -1): "north", (0, 0, 1): "south", (-1, 0, 0): "west", (1, 0, 0): "east"}[(nx, ny, nz)]
-            element["faces"][face] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-            return element
+            return faced(element, face)
         if ny:
             # Tilted between up and a side: a lying plate turned 45 degrees about the side's axis.
             if nz:
@@ -465,11 +480,10 @@ def laser_mirror() -> None:
                 element = box([cx - 5, cy - 0.5, 3], [cx + 5, cy + 0.5, 13])
                 # A positive turn about z faces up and west.
                 element["rotation"] = {"origin": [cx, cy, cz], "axis": "z", "angle": 45 if nx < 0 else -45, "rescale": False}
-            element["faces"]["up"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-            return element
+            return faced(element, "up")
         # Upright between two sides: a standing plate facing north, turned about y.
         element = box([cx - 5, 3, cz - 0.5], [cx + 5, 13, cz + 0.5])
-        element["faces"]["north" if nz < 0 else "south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+        faced(element, "north" if nz < 0 else "south")
         # A positive turn about y takes north to north-west (and south to south-east).
         if nz < 0:
             angle = 45 if nx < 0 else -45
@@ -490,9 +504,12 @@ def laser_mirror() -> None:
             parts.append(box([hx - 1, 2, hz - 1], [hx + 1, hy - 1, hz + 1]))
         return parts
 
-    def write(name, elements):
-        with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
-            json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements}, handle, indent=2)
+    def write(model, elements):
+        with open(os.path.join(MODELS, f"{model}.json"), "w") as handle:
+            body = {"parent": "minecraft:block/block", "textures": t, "elements": elements}
+            if splits:
+                body["render_type"] = "minecraft:cutout"
+            json.dump(body, handle, indent=2)
 
     # The ways a floor mirror's plate can face: flat, to up or a side; tilted, up and a side; upright, two sides.
     floor_normals = {}
@@ -506,8 +523,12 @@ def laser_mirror() -> None:
             key = "_".join(sorted({a, b}))
             floor_normals[key] = tuple(p + q for p, q in zip(va, vb)) if a != b else va
     for key, normal in floor_normals.items():
-        write(f"laser_mirror_{key}", stand(normal) + [plate(normal)])
-    write("laser_mirror_item", stand(DIRS["south"]) + [plate(DIRS["south"])])
+        # A splitter is never flat.
+        if splits and "_" not in key:
+            continue
+        write(f"{name}_{key}", stand(normal) + [plate(normal)])
+    item_normal = tuple(p + q for p, q in zip(DIRS["south"], DIRS["up"])) if splits else DIRS["south"]
+    write(f"{name}_item", stand(item_normal) + [plate(item_normal)])
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
     names = {v: k for k, v in DIRS.items()}
@@ -523,16 +544,16 @@ def laser_mirror() -> None:
     for mount, (rx, ry) in mounts.items():
         for a in DIRS:
             for b in DIRS:
-                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0):
+                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0) or (splits and a == b):
                     continue
                 key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
                 assert key in floor_normals, (mount, a, b, key)
                 parts.append({"when": {"mount": mount, "input": a, "output": b},
-                              "apply": dict({"model": f"quantimium:block/laser_mirror_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
-    with open(os.path.join(STATES, "laser_mirror.json"), "w") as handle:
+                              "apply": dict({"model": f"quantimium:block/{name}_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
+    with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
-    with open(os.path.join(ITEMS, "laser_mirror.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_mirror_item"}}, handle, indent=2)
+    with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
     for stale in ("laser_mirror_stand", "laser_mirror_plate", "laser_mirror_plate_upright", "laser_mirror_plate_flat"):
         path = os.path.join(MODELS, f"{stale}.json")
         if os.path.exists(path):
@@ -577,6 +598,7 @@ def main() -> None:
     with open(os.path.join(ITEMS, "laser_relay.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_relay"}}, handle, indent=2)
     laser_mirror()
+    laser_mirror("laser_splitter", splits=True)
     for name, face, back_of, side_seed in (("cavity_mirror", cavity_face, coupler, 43), ("photodetector", detector_face, None, 52)):
         stone(("1b1e38", "262a4a", "323760") if name == "cavity_mirror" else ("2b2b33", "3b3b45", "4d4d59"), side_seed).save(
             os.path.join(TEX, f"{name}_side.png"))
