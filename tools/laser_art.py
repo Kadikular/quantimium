@@ -538,7 +538,7 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
         n = [p + q for p, q in zip(DIRS[into], DIRS[out])]
         along = [q - p for p, q in zip(DIRS[into], DIRS[out])]
         nl, al = sum(v * v for v in n) ** 0.5, sum(v * v for v in along) ** 0.5
-        middle = [8 + along[k] / al * 5.5 + n[k] / nl * -0.1 for k in range(3)]
+        middle = [8 + along[k] / al * 4.625 + n[k] / nl * 0.025 for k in range(3)]
         notch = box([v - 0.75 for v in middle], [v + 0.75 for v in middle])
         for face in notch["faces"].values():
             face["texture"] = "#plate"
