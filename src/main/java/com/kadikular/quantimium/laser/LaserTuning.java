@@ -104,6 +104,13 @@ public final class LaserTuning {
     public static final int MOVE_ITEMS = 8;
     /** FE to carry one stack back up the beam. */
     public static final long PICKUP_FE_PER_STACK = 200;
+    /** Items each active logistics provider or requester moves a second. */
+    public static final int LOGISTICS_ITEMS = 64;
+    /** FE a Logistics Controller pays for each transfer (up to a stack). */
+    public static final long LOGISTICS_FE_PER_MOVE = 100;
+    /** What a Logistics Controller holds, and takes in a tick. */
+    public static final int LOGISTICS_CAPACITY = 100_000;
+    public static final int LOGISTICS_RECEIVE = 1_000;
     /** Ticks between the beam's sweeps for items lying in it. */
     public static final int PICKUP_INTERVAL = 10;
 }

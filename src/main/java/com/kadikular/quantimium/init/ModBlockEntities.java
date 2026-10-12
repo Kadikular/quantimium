@@ -198,6 +198,12 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LensMountBlockEntity>> LENS_MOUNT_BE =
             BLOCK_ENTITIES.register("lens_mount_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LensMountBlockEntity::new, ModBlocks.LENS_MOUNT.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity>> LOGISTICS_CONTROLLER_BE =
+            BLOCK_ENTITIES.register("logistics_controller_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity::new, ModBlocks.LOGISTICS_CONTROLLER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity>> LOGISTICS_RECEPTACLE_BE =
+            BLOCK_ENTITIES.register("logistics_receptacle_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity::new, ModBlocks.LOGISTICS_RECEPTACLE.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserPortBlockEntity>> LASER_PORT_BE =
             BLOCK_ENTITIES.register("laser_port_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserPortBlockEntity::new, ModBlocks.LASER_PORT.get()));

@@ -109,6 +109,7 @@ public class QuantimiumJeiPlugin implements IModPlugin {
         });
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.CatalystBayScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.LaserPortScreen.class);
+        GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.LogisticsReceptacleScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.FilterLensScreen.class);
         // The Superposition Crafter only exists with AE2; its screen class is only touched then.
         if (ModList.get().isLoaded("ae2")) {

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "C": "minecraft:comparator",
+    "E": "minecraft:ender_pearl",
+    "R": "quantimium:laser_relay"
+  },
+  "pattern": [
+    "ICI",
+    "ERE",
+    "III"
+  ],
+  "result": {
+    "id": "quantimium:logistics_controller",
+    "count": 1
+  }
+}

@@ -257,6 +257,33 @@ can reach, and each beam's length, end and power.
 [[mechanic:laser.blind]] **Don't look into the beam.** Light carrying power blinds anything whose eyes
 are in it, for {{c:LaserTuning.BLIND_TICKS|s}}. The [[item:mirror_lens]] protects the wearer.
 
+## Logistics
+
+[[mechanic:laser.logistics.network]] A [[block:logistics_controller]] shines like an emitter, but its light
+carries no power: everything it reaches, through mirrors, splitters and relays, joined with other light
+or not, is one **logistics network**. An Isolator lets none of it through. One controller to a network:
+where light from two meets, both stop and say so. [[mechanic:laser.logistics.controller]] It pays
+{{c:LaserTuning.LOGISTICS_FE_PER_MOVE}} FE for each move (up to a stack) from FE you give it on any face,
+holding up to {{c:LaserTuning.LOGISTICS_CAPACITY}}; out of power, the network waits.
+
+A [[block:logistics_receptacle]] goes on the inventory it serves (a chest, a machine, a drawer), and light
+passes straight through it, so one beam along a row of machines joins them all. Open it to set what that
+inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
+with tags (an empty filter lists everything). Its plate lights in its role's colour while a controller's
+light reaches it. Once a second, each active part moves up to {{c:LaserTuning.LOGISTICS_ITEMS}} items:
+
+- **Storage**: where the network keeps things. [[mechanic:laser.logistics.priority]] What comes in fills
+  the highest priority first, as far as its filter lets in; what's taken goes from the lowest first.
+- [[mechanic:laser.logistics.provider]] **Provider**: passive, the network may take what its filter lets go
+  (a furnace's output, say); active, it pushes it out itself, to requesters listing it first, then into
+  storage.
+- [[mechanic:laser.logistics.requester]] **Requester**: passive, it takes what active providers push, as its
+  filter lets in; active, it pulls what its filter lists from providers first, then storage.
+  [[mechanic:laser.logistics.filter]] Only what its filter lists comes, as far as the inventory takes it.
+
+[[mechanic:laser.logistics.port]] A [[block:laser_port]] on the network, collecting, is a passive provider of
+what it's caught.
+
 ## Into the mirror
 
 [[mechanic:laser.rift]] Laser light along a [[block:rift_lens]]'s axis goes through the tear in its middle

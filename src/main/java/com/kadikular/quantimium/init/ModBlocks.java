@@ -736,6 +736,10 @@ public class ModBlocks {
             "isolator", id -> new com.kadikular.quantimium.block.IsolatorBlock(laserBlock(id, MapColor.COLOR_BLACK)));
     public static final DeferredBlock<Block> LENS_MOUNT = BLOCKS.register(
             "lens_mount", id -> new com.kadikular.quantimium.block.LensMountBlock(laserBlock(id, MapColor.COLOR_PURPLE).noOcclusion()));
+    public static final DeferredBlock<Block> LOGISTICS_CONTROLLER = BLOCKS.register(
+            "logistics_controller", id -> new com.kadikular.quantimium.block.LogisticsControllerBlock(laserBlock(id, MapColor.COLOR_PURPLE)));
+    public static final DeferredBlock<Block> LOGISTICS_RECEPTACLE = BLOCKS.register(
+            "logistics_receptacle", id -> new com.kadikular.quantimium.block.LogisticsReceptacleBlock(laserBlock(id, MapColor.COLOR_GRAY).noOcclusion()));
     public static final DeferredBlock<Block> LASER_PORT = BLOCKS.register(
             "laser_port", id -> new com.kadikular.quantimium.block.LaserPortBlock(laserBlock(id, MapColor.COLOR_GRAY)));
 

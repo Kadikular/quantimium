@@ -36,8 +36,19 @@ import java.util.Set;
  * @param feeders the sources whose light this is: emitters, or cavities giving out what they hold
  * @param left    for light through a photodetector, which doesn't refocus: blocks it has left; -1 otherwise
  * @param marks   what stays on the light once it's met it ({@link #UV}, {@link #PHANTOM}, {@link #MIRRORED})
+ * @param logistics the Logistics Controllers whose light this is: it joins what it reaches to their networks.
+ *                  An Isolator lets power through but not this.
  */
-public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks) {
+public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks, Set<BlockPos> logistics) {
+
+    public Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks) {
+        this(range, boosts, streams, feeders, left, marks, Set.of());
+    }
+
+    /** This light, from a Logistics Controller at {@code controller}. */
+    public Light controlledBy(BlockPos controller) {
+        return new Light(range, boosts, streams, feeders, left, marks, Set.of(controller));
+    }
 
     /** Seen only with a wrench or the Linker in hand. */
     public static final int UV = 1;
@@ -60,7 +71,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** The light through a rift: into the mirror, or back out of it. */
     public Light throughRift() {
-        return new Light(range, boosts, streams, feeders, left, marks ^ MIRRORED);
+        return new Light(range, boosts, streams, feeders, left, marks ^ MIRRORED, logistics);
     }
 
     /**
@@ -166,12 +177,12 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** The light refocused, by a mirror: a fresh run at its own reach. */
     public Light refocused() {
-        return left < 0 ? this : new Light(range, boosts, streams, feeders, -1, marks);
+        return left < 0 ? this : new Light(range, boosts, streams, feeders, -1, marks, logistics);
     }
 
     /** This light gone {@code length} blocks into a run and on through something that doesn't refocus it. */
     public Light passedOn(int length) {
-        return new Light(range, boosts, streams, feeders, Math.max(0, reach() - length - 1), marks);
+        return new Light(range, boosts, streams, feeders, Math.max(0, reach() - length - 1), marks, logistics);
     }
 
     /** Light from two sides, joined: the longer reach, every stream, the same action paid for by both. */
@@ -196,10 +207,12 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         }
         Set<BlockPos> feeders = new HashSet<>(a.feeders);
         feeders.addAll(b.feeders);
+        Set<BlockPos> logistics = new HashSet<>(a.logistics);
+        logistics.addAll(b.logistics);
         // Through a photodetector a side has only so far left: the joined light reaches as far as the farther side.
         int left = a.left < 0 && b.left < 0 ? -1 : Math.max(a.reach(), b.reach());
         return new Light(Math.max(a.range, b.range), Math.max(a.boosts, b.boosts),
-                List.copyOf(streams.values()), Set.copyOf(feeders), left, a.marks | b.marks);
+                List.copyOf(streams.values()), Set.copyOf(feeders), left, a.marks | b.marks, Set.copyOf(logistics));
     }
 
     /**
@@ -252,7 +265,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 default -> {}
             }
         }
-        return new Light(range, boosts, List.copyOf(streams.values()), feeders, left, marks);
+        return new Light(range, boosts, List.copyOf(streams.values()), feeders, left, marks, logistics);
     }
 
     /**

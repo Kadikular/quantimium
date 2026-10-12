@@ -1,0 +1,6 @@
+{
+  "parent": "quantimium:block/logistics_receptacle",
+  "textures": {
+    "plate": "quantimium:block/logistics_receptacle_provider"
+  }
+}

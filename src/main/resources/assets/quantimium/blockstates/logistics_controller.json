@@ -1,0 +1,165 @@
+{
+ "multipart": [
+  {
+   "apply": {
+    "model": "quantimium:block/laser_emitter_edges"
+   }
+  },
+  {
+   "when": {
+    "north": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_north"
+   }
+  },
+  {
+   "when": {
+    "north": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_lit_north"
+   }
+  },
+  {
+   "when": {
+    "north": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_plain_north"
+   }
+  },
+  {
+   "when": {
+    "south": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_south"
+   }
+  },
+  {
+   "when": {
+    "south": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_lit_south"
+   }
+  },
+  {
+   "when": {
+    "south": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_plain_south"
+   }
+  },
+  {
+   "when": {
+    "west": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_west"
+   }
+  },
+  {
+   "when": {
+    "west": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_lit_west"
+   }
+  },
+  {
+   "when": {
+    "west": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_plain_west"
+   }
+  },
+  {
+   "when": {
+    "east": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_east"
+   }
+  },
+  {
+   "when": {
+    "east": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_lit_east"
+   }
+  },
+  {
+   "when": {
+    "east": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_plain_east"
+   }
+  },
+  {
+   "when": {
+    "up": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_up"
+   }
+  },
+  {
+   "when": {
+    "up": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_lit_up"
+   }
+  },
+  {
+   "when": {
+    "up": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_plain_up"
+   }
+  },
+  {
+   "when": {
+    "down": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_down"
+   }
+  },
+  {
+   "when": {
+    "down": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_out_lit_down"
+   }
+  },
+  {
+   "when": {
+    "down": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_plain_down"
+   }
+  }
+ ]
+}

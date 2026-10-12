@@ -66,6 +66,9 @@ public class ModMenuTypes {
             MENUS.register("lens_mount_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LensMountMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LogisticsReceptacleMenu>> LOGISTICS_RECEPTACLE_MENU =
+            MENUS.register("logistics_receptacle_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.LogisticsReceptacleMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LaserPortMenu>> LASER_PORT_MENU =
             MENUS.register("laser_port_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LaserPortMenu::new));

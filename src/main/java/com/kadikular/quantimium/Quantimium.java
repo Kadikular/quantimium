@@ -142,6 +142,13 @@ public class Quantimium {
                 (be, context) -> be.energy()
         );
 
+        // A Logistics Controller takes the power it pays to move things with on any face.
+        event.registerBlockEntity(
+                Capabilities.Energy.BLOCK,
+                ModBlockEntities.LOGISTICS_CONTROLLER_BE.get(),
+                (be, context) -> be.getEnergyStorage()
+        );
+
         // A Laser Port hands out what it caught and takes in what it sends, face by face as set.
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,

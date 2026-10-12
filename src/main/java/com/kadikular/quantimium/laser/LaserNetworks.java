@@ -926,6 +926,7 @@ public final class LaserNetworks {
         for (Network network : networks) refill(network);
         for (LensAction action : actions.values()) action.act(level, this);
         if (time % SETTLE_TICKS == 10) ship();
+        if (time % SETTLE_TICKS == 15) Logistics.run(level, nodes.values(), lights);
         if (time % 2 == 0) showAreaWork();
         passing.clear();
         for (Network network : networks) move(network);
@@ -1198,7 +1199,9 @@ public final class LaserNetworks {
         Set<BlockPos> live = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         for (LaserNode node : nodes.values()) {
-            if (node.generates() && node.enabled() && node.available() > 0 && live.add(node.nodePos())) queue.add(node.nodePos());
+            // A Logistics Controller's light shows while it has power to move things, though it gives none.
+            boolean shines = node.available() > 0 || node instanceof LogisticsController controller && controller.powered();
+            if (node.generates() && node.enabled() && shines && live.add(node.nodePos())) queue.add(node.nodePos());
         }
         while (!queue.isEmpty()) {
             for (LaserBeam beam : beams.getOrDefault(queue.poll(), List.of())) {

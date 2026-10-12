@@ -2,7 +2,7 @@
 navigation:
   title: Solar Emitter
   parent: blocks/index.md
-  position: 71
+  position: 73
   icon: quantimium:solar_emitter
 item_ids:
 - quantimium:solar_emitter

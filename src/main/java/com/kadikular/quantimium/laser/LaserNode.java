@@ -200,4 +200,10 @@ public interface LaserNode {
     default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack, boolean simulate) {
         return stack;
     }
+
+    /** What it does on a logistics network (a Logistics Receptacle, a Laser Port), or null when it takes no part. */
+    @org.jetbrains.annotations.Nullable
+    default LogisticsMember logistics() {
+        return null;
+    }
 }

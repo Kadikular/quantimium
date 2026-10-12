@@ -2,7 +2,7 @@
 navigation:
   title: Tesseract Stabiliser
   parent: blocks/index.md
-  position: 74
+  position: 76
   icon: quantimium:tesseract_stabilizer
 item_ids:
 - quantimium:tesseract_stabilizer

@@ -1,0 +1,160 @@
+{
+ "variants": {
+  "facing=down,lit=false,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage"
+  },
+  "facing=up,lit=false,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage",
+   "x": 180
+  },
+  "facing=south,lit=false,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage",
+   "x": 90
+  },
+  "facing=west,lit=false,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage",
+   "x": 90,
+   "y": 90
+  },
+  "facing=north,lit=false,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage",
+   "x": 90,
+   "y": 180
+  },
+  "facing=east,lit=false,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage",
+   "x": 90,
+   "y": 270
+  },
+  "facing=down,lit=true,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage_lit"
+  },
+  "facing=up,lit=true,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage_lit",
+   "x": 180
+  },
+  "facing=south,lit=true,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage_lit",
+   "x": 90
+  },
+  "facing=west,lit=true,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage_lit",
+   "x": 90,
+   "y": 90
+  },
+  "facing=north,lit=true,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage_lit",
+   "x": 90,
+   "y": 180
+  },
+  "facing=east,lit=true,role=storage": {
+   "model": "quantimium:block/logistics_receptacle_storage_lit",
+   "x": 90,
+   "y": 270
+  },
+  "facing=down,lit=false,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider"
+  },
+  "facing=up,lit=false,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider",
+   "x": 180
+  },
+  "facing=south,lit=false,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider",
+   "x": 90
+  },
+  "facing=west,lit=false,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider",
+   "x": 90,
+   "y": 90
+  },
+  "facing=north,lit=false,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider",
+   "x": 90,
+   "y": 180
+  },
+  "facing=east,lit=false,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider",
+   "x": 90,
+   "y": 270
+  },
+  "facing=down,lit=true,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider_lit"
+  },
+  "facing=up,lit=true,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider_lit",
+   "x": 180
+  },
+  "facing=south,lit=true,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider_lit",
+   "x": 90
+  },
+  "facing=west,lit=true,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider_lit",
+   "x": 90,
+   "y": 90
+  },
+  "facing=north,lit=true,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider_lit",
+   "x": 90,
+   "y": 180
+  },
+  "facing=east,lit=true,role=provider": {
+   "model": "quantimium:block/logistics_receptacle_provider_lit",
+   "x": 90,
+   "y": 270
+  },
+  "facing=down,lit=false,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester"
+  },
+  "facing=up,lit=false,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester",
+   "x": 180
+  },
+  "facing=south,lit=false,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester",
+   "x": 90
+  },
+  "facing=west,lit=false,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester",
+   "x": 90,
+   "y": 90
+  },
+  "facing=north,lit=false,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester",
+   "x": 90,
+   "y": 180
+  },
+  "facing=east,lit=false,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester",
+   "x": 90,
+   "y": 270
+  },
+  "facing=down,lit=true,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester_lit"
+  },
+  "facing=up,lit=true,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester_lit",
+   "x": 180
+  },
+  "facing=south,lit=true,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester_lit",
+   "x": 90
+  },
+  "facing=west,lit=true,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester_lit",
+   "x": 90,
+   "y": 90
+  },
+  "facing=north,lit=true,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester_lit",
+   "x": 90,
+   "y": 180
+  },
+  "facing=east,lit=true,role=requester": {
+   "model": "quantimium:block/logistics_receptacle_requester_lit",
+   "x": 90,
+   "y": 270
+  }
+ }
+}

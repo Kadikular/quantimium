@@ -336,6 +336,80 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         return PROFILE;
     }
 
+    // ---- logistics ----
+
+    /** Its slots as a plain item handler, for the network. */
+    private final IItemHandler itemsView = new IItemHandler() {
+        @Override
+        public int getSlots() {
+            return SLOTS;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return items.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return items.insertItem(slot, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return items.extractItem(slot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return items.getSlotLimit(slot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return items.isItemValid(slot, stack);
+        }
+    };
+
+    /** On a logistics network, what it's caught is offered: a passive provider. */
+    private final com.kadikular.quantimium.laser.LogisticsMember asProvider = new com.kadikular.quantimium.laser.LogisticsMember() {
+        @Override
+        public Role role() {
+            return Role.PROVIDER;
+        }
+
+        @Override
+        public boolean active() {
+            return false;
+        }
+
+        @Override
+        public int priority() {
+            return 0;
+        }
+
+        @Override
+        public boolean lets(ItemStack stack) {
+            return true;
+        }
+
+        @Override
+        public IItemHandler inventory() {
+            return itemsView;
+        }
+
+        @Override
+        public BlockPos inventoryPos() {
+            return worldPosition;
+        }
+    };
+
+    @Override
+    @Nullable
+    public com.kadikular.quantimium.laser.LogisticsMember logistics() {
+        return collects() ? asProvider : null;
+    }
+
     // ---- the network ----
 
     @Override

@@ -498,6 +498,8 @@ PANELS = {
     "laser_port": laser_port,
     "area_prism": area_prism,
     "laser_port_filter": laser_port_filter,
+    # The same note and nine ghost entries as the Laser Port's filter view.
+    "logistics_receptacle": laser_port_filter,
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,

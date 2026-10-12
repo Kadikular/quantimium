@@ -78,6 +78,8 @@ public class ModCreativeTabs {
                         output.accept(ModItems.ISOLATOR_ITEM.get());
                         output.accept(ModItems.LENS_MOUNT_ITEM.get());
                         output.accept(ModItems.LASER_PORT_ITEM.get());
+                        output.accept(ModItems.LOGISTICS_CONTROLLER_ITEM.get());
+                        output.accept(ModItems.LOGISTICS_RECEPTACLE_ITEM.get());
                         output.accept(ModItems.HARVEST_LENS.get());
                         output.accept(ModItems.DAMAGE_LENS.get());
                         output.accept(ModItems.PICKUP_LENS.get());

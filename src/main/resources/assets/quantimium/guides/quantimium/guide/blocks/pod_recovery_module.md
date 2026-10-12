@@ -2,7 +2,7 @@
 navigation:
   title: Pod Recovery Module
   parent: blocks/index.md
-  position: 45
+  position: 47
   icon: quantimium:pod_recovery_module
 ---
 

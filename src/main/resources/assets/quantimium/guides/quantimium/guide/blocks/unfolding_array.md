@@ -2,7 +2,7 @@
 navigation:
   title: Unfolding Array
   parent: blocks/index.md
-  position: 75
+  position: 77
   icon: quantimium:unfolding_array
 ---
 

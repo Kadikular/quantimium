@@ -2,7 +2,7 @@
 navigation:
   title: Pod Relay Module
   parent: blocks/index.md
-  position: 47
+  position: 49
   icon: quantimium:pod_relay_module
 ---
 

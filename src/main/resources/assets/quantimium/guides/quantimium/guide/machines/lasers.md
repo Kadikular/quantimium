@@ -265,6 +265,33 @@ can reach, and each beam's length, end and power.
 **Don't look into the beam.** Light carrying power blinds anything whose eyes
 are in it, for 15 s. The <ItemLink id="quantimium:mirror_lens" /> protects the wearer.
 
+## Logistics
+
+A <ItemLink id="quantimium:logistics_controller" /> shines like an emitter, but its light
+carries no power: everything it reaches, through mirrors, splitters and relays, joined with other light
+or not, is one **logistics network**. An Isolator lets none of it through. One controller to a network:
+where light from two meets, both stop and say so. It pays
+100 FE for each move (up to a stack) from FE you give it on any face,
+holding up to 100,000; out of power, the network waits.
+
+A <ItemLink id="quantimium:logistics_receptacle" /> goes on the inventory it serves (a chest, a machine, a drawer), and light
+passes straight through it, so one beam along a row of machines joins them all. Open it to set what that
+inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
+with tags (an empty filter lists everything). Its plate lights in its role's colour while a controller's
+light reaches it. Once a second, each active part moves up to 64 items:
+
+- **Storage**: where the network keeps things. What comes in fills
+  the highest priority first, as far as its filter lets in; what's taken goes from the lowest first.
+- **Provider**: passive, the network may take what its filter lets go
+  (a furnace's output, say); active, it pushes it out itself, to requesters listing it first, then into
+  storage.
+- **Requester**: passive, it takes what active providers push, as its
+  filter lets in; active, it pulls what its filter lists from providers first, then storage.
+  Only what its filter lists comes, as far as the inventory takes it.
+
+A <ItemLink id="quantimium:laser_port" /> on the network, collecting, is a passive provider of
+what it's caught.
+
 ## Into the mirror
 
 Laser light along a <ItemLink id="quantimium:rift_lens" />'s axis goes through the tear in its middle

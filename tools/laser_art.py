@@ -831,32 +831,111 @@ def laser_emitters() -> None:
         json.dump({"parent": "minecraft:block/block", "elements": elements}, handle, indent=2)
 
     for name, spec in TIERS.items():
-        emitter_panel(spec).save(os.path.join(TEX, f"{name}_panel.png"))
-        emitter_tip(spec, False).save(os.path.join(TEX, f"{name}_tip.png"))
-        emitter_tip(spec, True).save(os.path.join(TEX, f"{name}_tip_lit.png"))
-        steel_tex = "quantimium:block/laser_mirror_steel"
-        def child(model, parent, **textures):
-            with open(os.path.join(MODELS, model + ".json"), "w") as handle:
-                json.dump({"parent": f"quantimium:block/{parent}", "textures": dict(steel=steel_tex, particle=steel_tex, **textures)}, handle, indent=2)
-        parts = [{"apply": {"model": "quantimium:block/laser_emitter_edges"}}]
-        for direction in FACE_FRAMES:
-            child(f"{name}_plain_{direction}", f"laser_emitter_plain_{direction}", panel=f"quantimium:block/{name}_panel")
-            for lit in (False, True):
-                tag = "_lit" if lit else ""
-                child(f"{name}_out{tag}_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip{tag}")
-                parts.append({"when": {direction: "true", "lit": str(lit).lower()}, "apply": {"model": f"quantimium:block/{name}_out{tag}_{direction}"}})
-            parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
-        child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip_lit")
-        with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
-            json.dump({"multipart": parts}, handle, indent=1)
-        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
-            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
-        for stale in (f"textures/block/{name}_side.png", f"textures/block/{name}_back.png", f"textures/block/{name}_front.png",
-                      f"textures/block/{name}_front_lit.png", f"models/block/{name}.json", f"models/block/{name}_lit.json"):
-            path = os.path.join(ASSETS, stale)
-            if os.path.exists(path):
-                os.remove(path)
+        solid_emitter(name, emitter_panel(spec), spec)
+    solid_emitter("logistics_controller", controller_panel(), {"lens": LOGISTICS_VIOLET})
 
+
+def solid_emitter(name: str, panel: Image.Image, spec) -> None:
+    """One solid emitter: its plain face, its tip in {@code spec}'s lens colour, and its multipart blockstate over the shared shapes."""
+    panel.save(os.path.join(TEX, f"{name}_panel.png"))
+    emitter_tip(spec, False).save(os.path.join(TEX, f"{name}_tip.png"))
+    emitter_tip(spec, True).save(os.path.join(TEX, f"{name}_tip_lit.png"))
+    steel_tex = "quantimium:block/laser_mirror_steel"
+
+    def child(model, parent, **textures):
+        with open(os.path.join(MODELS, model + ".json"), "w") as handle:
+            json.dump({"parent": f"quantimium:block/{parent}", "textures": dict(steel=steel_tex, particle=steel_tex, **textures)}, handle, indent=2)
+    parts = [{"apply": {"model": "quantimium:block/laser_emitter_edges"}}]
+    for direction in FACE_FRAMES:
+        child(f"{name}_plain_{direction}", f"laser_emitter_plain_{direction}", panel=f"quantimium:block/{name}_panel")
+        for lit in (False, True):
+            tag = "_lit" if lit else ""
+            child(f"{name}_out{tag}_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip{tag}")
+            parts.append({"when": {direction: "true", "lit": str(lit).lower()}, "apply": {"model": f"quantimium:block/{name}_out{tag}_{direction}"}})
+        parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+    child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip_lit")
+    with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
+        json.dump({"multipart": parts}, handle, indent=1)
+    with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
+    for stale in (f"textures/block/{name}_side.png", f"textures/block/{name}_back.png", f"textures/block/{name}_front.png",
+                  f"textures/block/{name}_front_lit.png", f"models/block/{name}.json", f"models/block/{name}_lit.json"):
+        path = os.path.join(ASSETS, stale)
+        if os.path.exists(path):
+            os.remove(path)
+
+
+LOGISTICS_VIOLET = "b49cff"
+ROLE_COLOURS = {"storage": "3485ff", "provider": "f0a040", "requester": "5be38a"}
+
+
+def controller_panel() -> Image.Image:
+    """A Logistics Controller's plain face: the steel, with a violet network set in it, four nodes round a hub, joined."""
+    img = steel(31)
+    dark = hx("16171b")
+    violet = hx(LOGISTICS_VIOLET)
+    for x in range(4, 12):
+        for y in range(4, 12):
+            img.putpixel((x, y), dark)
+    for i in range(5, 11):
+        img.putpixel((i, 7), hx("6b5aa8"))
+        img.putpixel((i, 8), hx("6b5aa8"))
+        img.putpixel((7, i), hx("6b5aa8"))
+        img.putpixel((8, i), hx("6b5aa8"))
+    for x0, y0 in ((7, 7), (5, 5), (9, 5), (5, 9), (9, 9)):
+        for x in range(x0, x0 + 2):
+            for y in range(y0, y0 + 2):
+                img.putpixel((x, y), violet)
+    return img
+
+
+def role_plate(colour: str, lit: bool) -> Image.Image:
+    """A Logistics Receptacle's part plate in its role's colour, with a darker rim: bright while a controller's light reaches it."""
+    r, g, b, _ = hx(colour)
+    scale = 1.0 if lit else 0.35
+    face = tuple(int(c * scale) for c in (r, g, b)) + (255,)
+    rim = tuple(int(c * scale * 0.6) for c in (r, g, b)) + (255,)
+    img = Image.new("RGBA", (16, 16), face)
+    for i in range(16):
+        for x, y in ((i, 0), (i, 15), (0, i), (15, i)):
+            img.putpixel((x, y), rim)
+    return img
+
+
+def logistics_receptacle() -> None:
+    """
+    The Logistics Receptacle: the Relay's stand on the inventory it serves (base, a plate in its role's colour, a post) and
+    the see-through focus in the middle light passes through. Drawn for a floor and turned to each face.
+    """
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus", "particle": "quantimium:block/laser_mirror_steel"}
+
+    def cube(start, end, texture, cull=None, uv=None):
+        faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
+        for face in faces.values():
+            if uv:
+                face["uv"] = uv
+        if cull:
+            faces[cull]["cullface"] = cull
+        return {"from": start, "to": end, "faces": faces}
+
+    shape = [cube([2, 0, 2], [14, 1, 14], "#steel", "down"), cube([3, 1, 3], [13, 2, 13], "#plate"), cube([7, 2, 7], [9, 6, 9], "#steel"),
+             cube([6, 6, 6], [10, 10, 10], "#focus", uv=[6, 6, 10, 10])]
+    with open(os.path.join(MODELS, "logistics_receptacle.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": shape}, handle, indent=2)
+    mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180}, "east": {"x": 90, "y": 270}}
+    variants = {}
+    for role, colour in ROLE_COLOURS.items():
+        for lit in (False, True):
+            tag = "_lit" if lit else ""
+            role_plate(colour, lit).save(os.path.join(TEX, f"logistics_receptacle_{role}{tag}.png"))
+            with open(os.path.join(MODELS, f"logistics_receptacle_{role}{tag}.json"), "w") as handle:
+                json.dump({"parent": "quantimium:block/logistics_receptacle", "textures": {"plate": f"quantimium:block/logistics_receptacle_{role}{tag}"}}, handle, indent=2)
+            for facing, r in mounts.items():
+                variants[f"facing={facing},lit={str(lit).lower()},role={role}"] = dict({"model": f"quantimium:block/logistics_receptacle_{role}{tag}"}, **r)
+    with open(os.path.join(STATES, "logistics_receptacle.json"), "w") as handle:
+        json.dump({"variants": variants}, handle, indent=1)
+    with open(os.path.join(ITEMS, "logistics_receptacle.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_receptacle_storage_lit"}}, handle, indent=2)
 
 PORT_MODES = {"collect": ("5be38a",), "send": ("f0a040",), "both": ("5be38a", "f0a040")}
 
@@ -963,6 +1042,7 @@ def main() -> None:
     outputs_block("isolator", "isolator_face", "isolator_side")
     lens_mount()
     laser_port()
+    logistics_receptacle()
     for name, colour in LENSES.items():
         lens_item(colour, GLYPHS.get(name)).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
         with open(os.path.join(ASSETS, "models", "item", f"{name}.json"), "w") as handle:
