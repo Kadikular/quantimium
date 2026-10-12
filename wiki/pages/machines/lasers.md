@@ -52,16 +52,16 @@ redstone: not at all, on only with a signal, or off with a signal.
 
 [[mechanic:laser.mirror]] A [[block:laser_mirror]] is a silver plate on a steel stand that turns light
 through a right angle, both ways. It stands on the block it was placed against, for good. Its plate faces
-half way between two sides at right angles, neither the one it stands on: sneak-click a side (by hand or
-with a wrench) to take light there, and click another to send it there. Light in by either side leaves by
-the other; light from anywhere else hits the back of the plate and stops. Click the side it already takes
-light from and it's **flat**, facing that side: light goes straight back the way it came, and facing a
+half way between two sides at right angles, neither the one it stands on: click one side (by hand or with
+a wrench) and sneak-click another. Light in by either side leaves by the other; light from anywhere else
+hits the back of the plate and stops. Sneak-click the side it already takes light from and it's **flat**, facing that side: light goes straight back the way it came, and facing a
 Cavity Mirror across a gap it's the far end of the cavity. It never sends light straight on. A redstone
 signal turns it off.
 
 [[mechanic:laser.splitter]] A [[block:laser_splitter]] is a Laser Mirror with a half-silvered plate, set
-the same way (never flat): sneak-click its **input side**, click its **turn side**, at right angles.
-A small light-blue dot on the plate's edge marks its input side, and the Flux Meter or Jade names both.
+the same way (never flat): click its **input side**, sneak-click its **output (turn) side**, at right
+angles, as you sneak-click a Solar Emitter's output. Its plate has a light-blue mark in the middle, and a
+notch on its rim by the output side; the Flux Meter or Jade names both sides.
 Light in by its input side splits: half goes straight on, half turns out of its turn side. Light from
 behind its turn side passes straight through the plate and out of the turn side too; with both coming
 in, they leave by the turn side only, joined: a combiner. Light from any other side stops on it, and so

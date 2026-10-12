@@ -3,8 +3,7 @@
   "textures": {
     "steel": "quantimium:block/laser_mirror_steel",
     "plate": "quantimium:block/laser_splitter_plate",
-    "particle": "quantimium:block/laser_mirror_steel",
-    "focus": "quantimium:block/laser_focus"
+    "particle": "quantimium:block/laser_mirror_steel"
   },
   "elements": [
     {
@@ -361,71 +360,70 @@
     {
       "from": [
         7.25,
-        10.2198,
-        5.1287
+        3.9973,
+        11.0684
       ],
       "to": [
         8.75,
-        11.7198,
-        6.6287
+        5.4973,
+        12.5684
       ],
       "faces": {
         "north": {
-          "texture": "#focus",
+          "texture": "#plate",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            3,
+            6,
+            4,
+            7
           ]
         },
         "south": {
-          "texture": "#focus",
+          "texture": "#plate",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            3,
+            6,
+            4,
+            7
           ]
         },
         "east": {
-          "texture": "#focus",
+          "texture": "#plate",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            3,
+            6,
+            4,
+            7
           ]
         },
         "west": {
-          "texture": "#focus",
+          "texture": "#plate",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            3,
+            6,
+            4,
+            7
           ]
         },
         "up": {
-          "texture": "#focus",
+          "texture": "#plate",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            3,
+            6,
+            4,
+            7
           ]
         },
         "down": {
-          "texture": "#focus",
+          "texture": "#plate",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            3,
+            6,
+            4,
+            7
           ]
         }
       }
     }
-  ],
-  "render_type": "minecraft:cutout"
+  ]
 }

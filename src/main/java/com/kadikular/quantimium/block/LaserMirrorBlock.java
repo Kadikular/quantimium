@@ -42,9 +42,9 @@ import java.util.Map;
 /**
  * A Laser Mirror: a silver plate on a steel stand that turns light through a right angle, both ways. It
  * stands on the block it was placed against (its mount), for good. Its plate faces half way between two
- * sides at right angles, neither its mount: one set with a sneaking click, by hand or wrench, the other
- * with a plain click. Light in by either leaves by the other; light from anywhere else hits the back or
- * edge of the plate and stops. Both sides the same (a plain click on the side already set) and it's flat,
+ * sides at right angles, neither its mount: one set with a plain click, by hand or wrench, the other with
+ * a sneaking click. Light in by either leaves by the other; light from anywhere else hits the back or
+ * edge of the plate and stops. Both sides the same (a sneaking click on the side already set) and it's flat,
  * facing that side: light bounces straight back, and facing a Cavity Mirror it closes the cavity. A
  * redstone signal turns it off. (INPUT and OUTPUT name the two sides.)
  */
@@ -145,15 +145,15 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
                                           InteractionHand hand, BlockHitResult hit) {
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
-        return set(state, level, pos, player, hit.getDirection(), player.isSecondaryUseActive());
+        return set(state, level, pos, player, hit.getDirection(), !player.isSecondaryUseActive());
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        return set(state, level, pos, player, hit.getDirection(), player.isSecondaryUseActive());
+        return set(state, level, pos, player, hit.getDirection(), !player.isSecondaryUseActive());
     }
 
-    /** Sneaking: light comes in by the face clicked. Otherwise: it leaves by it. */
+    /** A plain click: light comes in by the face clicked. Sneaking: it leaves by it (as a Solar Emitter's output is set). */
     private static InteractionResult set(BlockState state, Level level, BlockPos pos, Player player, Direction face, boolean input) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         Direction mount = state.getValue(MOUNT);

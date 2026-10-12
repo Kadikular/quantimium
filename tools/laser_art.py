@@ -143,12 +143,11 @@ def mirror_plate() -> Image.Image:
 
 
 def splitter_plate() -> Image.Image:
-    """The Laser Splitter's half-silvered plate: the Mirror's rim, and silver with every other pixel open."""
+    """The Laser Splitter's plate: the Mirror's, with a 4x4 mark of the focus's light blue in the middle, white at its heart."""
     img = mirror_plate()
-    for x in range(4, 12):
-        for y in range(4, 12):
-            if (x + y) % 2:
-                img.putpixel((x, y), (0, 0, 0, 0))
+    for x in range(6, 10):
+        for y in range(6, 10):
+            img.putpixel((x, y), hx("f4f8ff") if 7 <= x <= 8 and 7 <= y <= 8 else hx("a8d0ff"))
     return img
 
 
@@ -448,7 +447,7 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     (splitter_plate() if splits else mirror_plate()).save(os.path.join(TEX, f"{name}_plate.png"))
     t = {"steel": "quantimium:block/laser_mirror_steel", "plate": f"quantimium:block/{name}_plate",
          "particle": "quantimium:block/laser_mirror_steel"}
-    # A half-silvered plate is silver both sides, with holes to see through.
+    # A half-silvered plate is silver both sides.
     back = "#plate" if splits else "#steel"
     opposite = {"up": "down", "down": "up", "north": "south", "south": "north", "east": "west", "west": "east"}
 
@@ -521,8 +520,6 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     def write(model, elements):
         with open(os.path.join(MODELS, f"{model}.json"), "w") as handle:
             body = {"parent": "minecraft:block/block", "textures": t, "elements": elements}
-            if splits:
-                body["render_type"] = "minecraft:cutout"
             json.dump(body, handle, indent=2)
 
     # The ways a floor mirror's plate can face: flat, to up or a side; tilted, up and a side; upright, two sides.
@@ -537,19 +534,18 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
             key = "_".join(sorted({a, b}))
             floor_normals[key] = tuple(p + q for p, q in zip(va, vb)) if a != b else va
     def marker(into, out):
-        """On a splitter, a light-blue dot on the plate's edge nearest its input side, so you can see where light goes in."""
+        """On a splitter, a notch on the plate's rim by its output (turn) side, the rim's own darker silver."""
         n = [p + q for p, q in zip(DIRS[into], DIRS[out])]
-        along = [p - q for p, q in zip(DIRS[into], DIRS[out])]
+        along = [q - p for p, q in zip(DIRS[into], DIRS[out])]
         nl, al = sum(v * v for v in n) ** 0.5, sum(v * v for v in along) ** 0.5
-        middle = [8 + along[k] / al * 3.6 + n[k] / nl * 0.6 for k in range(3)]
-        dot = box([v - 0.75 for v in middle], [v + 0.75 for v in middle])
-        for face in dot["faces"].values():
-            face["texture"] = "#focus"
-            face["uv"] = [7, 7, 9, 9]
-        return dot
+        middle = [8 + along[k] / al * 5.0 + n[k] / nl * 0.4 for k in range(3)]
+        notch = box([v - 0.75 for v in middle], [v + 0.75 for v in middle])
+        for face in notch["faces"].values():
+            face["texture"] = "#plate"
+            face["uv"] = [3, 6, 4, 7]
+        return notch
 
     if splits:
-        t["focus"] = "quantimium:block/laser_focus"
         # Each way round: the dot shows which of the two sides light goes in by.
         for a in DIRS:
             for b in DIRS:
