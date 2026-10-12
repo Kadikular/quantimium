@@ -230,6 +230,8 @@ public class ModItems {
             "laser_emitter_2", props -> new TooltipBlockItem(ModBlocks.LASER_EMITTER_2.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> LASER_EMITTER_3_ITEM = ITEMS.registerItem(
             "laser_emitter_3", props -> new TooltipBlockItem(ModBlocks.LASER_EMITTER_3.get(), props.useBlockDescriptionPrefix()));
+    public static final DeferredItem<BlockItem> SOLAR_EMITTER_ITEM = ITEMS.registerSimpleBlockItem(
+            "solar_emitter", ModBlocks.SOLAR_EMITTER);
     public static final DeferredItem<BlockItem> LASER_MIRROR_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_mirror", ModBlocks.LASER_MIRROR);
     public static final DeferredItem<BlockItem> LASER_SPLITTER_ITEM = ITEMS.registerSimpleBlockItem(

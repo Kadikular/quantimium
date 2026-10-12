@@ -42,6 +42,13 @@ public final class LaserTuning {
         }
     }
 
+    /** What a Solar Emitter makes in full sun, FE/t; less as the sky dims, none at night. */
+    public static final int SOLAR_FE = 20;
+    /** The most a chain of Solar Emitters gives out of its last one, FE/t: eight in full sun. */
+    public static final int SOLAR_CHAIN_MAX = 160;
+    /** How far a Solar Emitter's light reaches a run. */
+    public static final int SOLAR_RANGE = 8;
+
     /** What the flash emitter makes from burning: a furnace's fuel ticks, this much FE each. */
     public static final int FLASH_FE_PER_BURN_TICK = 100;
 

@@ -2,7 +2,7 @@
 navigation:
   title: Laser Distributor
   parent: blocks/index.md
-  position: 72
+  position: 73
   icon: quantimium:splitter
 item_ids:
 - quantimium:splitter

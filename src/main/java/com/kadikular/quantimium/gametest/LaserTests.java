@@ -132,6 +132,60 @@ public final class LaserTests {
                 "the core is charged by light: " + core.getEnergyStorage().getEnergyStored()));
     }
 
+    private static void solar(GameTestHelper helper, BlockPos pos, Direction output) {
+        helper.setBlock(pos, ModBlocks.SOLAR_EMITTER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.SolarEmitterBlock.OUTPUT, output));
+    }
+
+    /** Noon, clear skies: each of these tests has a batch of its own, since the time is the whole level's. */
+    private static void noon(GameTestHelper helper) {
+        helper.setTime(6000);
+        helper.getLevel().resetWeatherCycle();
+    }
+
+    // covers: laser.solar
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_night", timeoutTicks = 200)
+    public static void aSolarEmitterShinesByDayAndNotByNight(GameTestHelper helper) {
+        noon(helper);
+        solar(helper, new BlockPos(6, Y, 8), Direction.EAST);
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(10, Y, 8));
+        long[] at = new long[2];
+        helper.runAfterDelay(50, () -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "charged in the sun");
+            helper.setTime(18000);
+        });
+        helper.runAfterDelay(100, () -> at[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(140, () -> {
+            helper.assertValueEqual((long) core.getEnergyStorage().getEnergyStored(), at[0], "nothing at midnight");
+            noon(helper);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.solar
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_chain", timeoutTicks = 200)
+    public static void solarEmittersChainUpToEight(GameTestHelper helper) {
+        // Three in a row give three's worth; ten in a row, only eight's.
+        noon(helper);
+        for (int x = 1; x <= 3; x++) solar(helper, new BlockPos(x, Y, 3), Direction.EAST);
+        FoldCoreBlockEntity three = sink(helper, new BlockPos(6, Y, 3));
+        for (int x = 1; x <= 10; x++) solar(helper, new BlockPos(x, Y, 12), Direction.EAST);
+        FoldCoreBlockEntity ten = sink(helper, new BlockPos(13, Y, 12));
+        long[] before = new long[2];
+        helper.runAfterDelay(60, () -> {
+            before[0] = three.getEnergyStorage().getEnergyStored();
+            before[1] = ten.getEnergyStorage().getEnergyStored();
+        });
+        helper.runAfterDelay(100, () -> {
+            long gotThree = three.getEnergyStorage().getEnergyStored() - before[0];
+            long gotTen = ten.getEnergyStorage().getEnergyStored() - before[1];
+            helper.assertTrue(gotThree > 40L * 2 * LaserTuning.SOLAR_FE && gotThree <= 40L * 3 * LaserTuning.SOLAR_FE, "three's worth: " + gotThree);
+            helper.assertTrue(gotTen > 40L * 7 * LaserTuning.SOLAR_FE && gotTen <= 40L * LaserTuning.SOLAR_CHAIN_MAX, "eight's worth at most: " + gotTen);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aRelayTurnsTheBeamAndTakesItsTax(GameTestHelper helper) {

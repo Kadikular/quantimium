@@ -1,0 +1,53 @@
+{
+ "multipart": [
+  {
+   "apply": {
+    "model": "quantimium:block/solar_emitter"
+   }
+  },
+  {
+   "when": {
+    "output": "north"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle"
+   }
+  },
+  {
+   "when": {
+    "output": "east"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "output": "south"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "output": "west"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "output": "down"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "x": 90
+   }
+  }
+ ]
+}

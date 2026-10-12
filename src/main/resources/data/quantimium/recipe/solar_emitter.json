@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass_pane",
+    "D": "minecraft:daylight_detector",
+    "I": "minecraft:iron_ingot",
+    "C": "minecraft:copper_ingot"
+  },
+  "pattern": [
+    "GGG",
+    "IDI",
+    "ICI"
+  ],
+  "result": {
+    "id": "quantimium:solar_emitter",
+    "count": 1
+  }
+}

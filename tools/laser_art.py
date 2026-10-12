@@ -152,6 +152,33 @@ def splitter_plate() -> Image.Image:
     return img
 
 
+def laser_focus() -> Image.Image:
+    """The focus, where light gathers: white, edged in the beam's light blue. Its 4x4 face is the middle of the texture."""
+    img = Image.new("RGBA", (16, 16), hx("f4f8ff"))
+    for x in range(16):
+        for y in range(16):
+            edge = x in (6, 9) or y in (6, 9)
+            inside = 6 <= x <= 9 and 6 <= y <= 9
+            if inside and edge:
+                img.putpixel((x, y), hx("a8d0ff"))
+            elif not inside:
+                img.putpixel((x, y), hx("cfe4ff"))
+    img.putpixel((7, 7), hx("ffffff"))
+    return img
+
+
+def solar_glass() -> Image.Image:
+    """The Solar Emitter's lens: pale, faintly blue glass, firmer at its rim, with a highlight across it."""
+    img = Image.new("RGBA", (16, 16), (210, 232, 255, 70))
+    for i in range(16):
+        for edge in ((i, 1), (i, 14), (1, i), (14, i)):
+            img.putpixel(edge, (190, 215, 245, 150))
+    for i in range(3, 10):
+        img.putpixel((i, 12 - i), (255, 255, 255, 150))
+        img.putpixel((i + 1, 12 - i), (255, 255, 255, 90))
+    return img
+
+
 def prism_face() -> Image.Image:
     """Facets of pale crystal in a dark frame: light split along clean lines."""
     img = stone(("12142a", "1b1e38", "262a4a"), 31)
@@ -560,6 +587,66 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
             os.remove(path)
 
 
+def emitter_nozzle(texture_steel: str = "#steel", texture_focus: str = "#focus") -> list:
+    """
+    A simple emitter, pointing north from a focus at the block's middle: a 2x2 rod, a 6x6 collar, a 4x4
+    collar (both hollow) and a bright 2x2 tip at the face, where the beam leaves. Turn it to any side.
+    """
+    def cube(start, end, texture):
+        faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
+        return {"from": start, "to": end, "faces": faces}
+
+    parts = [cube([7, 7, 1], [9, 9, 6], texture_steel)]
+    for (lo, hi, z0, z1) in ((5, 11, 3, 4), (6, 10, 1, 2)):
+        parts += [cube([lo, lo, z0], [hi, lo + 1, z1], texture_steel), cube([lo, hi - 1, z0], [hi, hi, z1], texture_steel),
+                  cube([lo, lo + 1, z0], [lo + 1, hi - 1, z1], texture_steel), cube([hi - 1, lo + 1, z0], [hi, hi - 1, z1], texture_steel)]
+    tip = cube([7, 7, 0], [9, 9, 1], texture_focus)
+    for face in tip["faces"].values():
+        face["uv"] = [7, 7, 9, 9]
+    parts.append(tip)
+    return parts
+
+
+def solar_emitter() -> None:
+    """
+    The Solar Emitter: a steel base, four corner posts holding a glass lens up top, a 4x4x4 focus in the
+    middle, and a simple emitter on its output side (any but up).
+    """
+    laser_focus().save(os.path.join(TEX, "laser_focus.png"))
+    solar_glass().save(os.path.join(TEX, "solar_emitter_glass.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
+         "glass": "quantimium:block/solar_emitter_glass", "particle": "quantimium:block/laser_mirror_steel"}
+
+    def cube(start, end, texture, cull=None):
+        faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
+        if cull:
+            faces[cull]["cullface"] = cull
+        return {"from": start, "to": end, "faces": faces}
+
+    body = [cube([1, 0, 1], [15, 1, 15], "#steel", "down")]
+    for x, z in ((1, 1), (13, 1), (1, 13), (13, 13)):
+        body.append(cube([x, 1, z], [x + 2, 13, z + 2], "#steel"))
+    body.append(cube([1, 13, 1], [15, 14, 15], "#glass"))
+    focus = cube([6, 6, 6], [10, 10, 10], "#focus")
+    for face in focus["faces"].values():
+        face["uv"] = [6, 6, 10, 10]
+    body.append(focus)
+    with open(os.path.join(MODELS, "solar_emitter.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": body}, handle, indent=2)
+    with open(os.path.join(MODELS, "laser_emitter_nozzle.json"), "w") as handle:
+        json.dump({"textures": t, "elements": emitter_nozzle()}, handle, indent=2)
+    with open(os.path.join(MODELS, "solar_emitter_item.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
+                   "elements": body + emitter_nozzle()}, handle, indent=2)
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "down": {"x": 90}}
+    parts = [{"apply": {"model": "quantimium:block/solar_emitter"}}]
+    parts += [{"when": {"output": side}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
+    with open(os.path.join(STATES, "solar_emitter.json"), "w") as handle:
+        json.dump({"multipart": parts}, handle, indent=1)
+    with open(os.path.join(ITEMS, "solar_emitter.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/solar_emitter_item"}}, handle, indent=2)
+
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -599,6 +686,7 @@ def main() -> None:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_relay"}}, handle, indent=2)
     laser_mirror()
     laser_mirror("laser_splitter", splits=True)
+    solar_emitter()
     for name, face, back_of, side_seed in (("cavity_mirror", cavity_face, coupler, 43), ("photodetector", detector_face, None, 52)):
         stone(("1b1e38", "262a4a", "323760") if name == "cavity_mirror" else ("2b2b33", "3b3b45", "4d4d59"), side_seed).save(
             os.path.join(TEX, f"{name}_side.png"))

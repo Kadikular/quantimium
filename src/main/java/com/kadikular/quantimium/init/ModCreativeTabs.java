@@ -67,6 +67,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.LASER_EMITTER_1_ITEM.get());
                         output.accept(ModItems.LASER_EMITTER_2_ITEM.get());
                         output.accept(ModItems.LASER_EMITTER_3_ITEM.get());
+                        output.accept(ModItems.SOLAR_EMITTER_ITEM.get());
                         output.accept(ModItems.LASER_MIRROR_ITEM.get());
                         output.accept(ModItems.LASER_SPLITTER_ITEM.get());
                         output.accept(ModItems.LASER_RELAY_ITEM.get());
