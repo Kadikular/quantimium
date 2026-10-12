@@ -49,6 +49,38 @@ public final class LogisticsTests {
         return receptacle;
     }
 
+    /** An Emitter I at {@code x} shining east, a creative energy cell behind it. */
+    private static void emitter(GameTestHelper helper, int x) {
+        helper.setBlock(new BlockPos(x, Y, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserEmitterBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(x - 1, Y, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+    }
+
+    /** A Lens Mount at {@code x} shining east, holding {@code lenses}. */
+    private static void mount(GameTestHelper helper, int x, Item... lenses) {
+        BlockPos pos = new BlockPos(x, Y, 8);
+        helper.setBlock(pos, ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        var mount = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
+        for (int i = 0; i < lenses.length; i++) mount.getLensSlots().setStackInSlot(i, new ItemStack(lenses[i]));
+    }
+
+    /** A chest in the beam's path at {@code x}, on the light's line, holding {@code stock}. */
+    private static ChestBlockEntity target(GameTestHelper helper, int x, ItemStack... stock) {
+        BlockPos pos = new BlockPos(x, Y, 8);
+        helper.setBlock(pos, Blocks.CHEST);
+        ChestBlockEntity box = helper.getBlockEntity(pos, ChestBlockEntity.class);
+        for (int i = 0; i < stock.length; i++) box.setItem(i, stock[i]);
+        return box;
+    }
+
+    private static int count(ChestBlockEntity box, Item item) {
+        int total = 0;
+        for (int slot = 0; slot < box.getContainerSize(); slot++) {
+            if (box.getItem(slot).is(item)) total += box.getItem(slot).getCount();
+        }
+        return total;
+    }
+
     private static int count(GameTestHelper helper, int x, Item item) {
         ChestBlockEntity box = helper.getBlockEntity(new BlockPos(x, Y - 1, 8), ChestBlockEntity.class);
         int total = 0;
@@ -158,5 +190,77 @@ public final class LogisticsTests {
                 .setStackInSlot(0, new ItemStack(Items.WHEAT, 20));
         onChest(helper, 7, LogisticsMember.Role.REQUESTER, true).setFilterSlot(0, new ItemStack(Items.WHEAT));
         helper.succeedWhen(() -> helper.assertValueEqual(count(helper, 7, Items.WHEAT), 20, "the wheat came out of the port"));
+    }
+
+    // covers: laser.logistics.controller
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aControllerChargesFromLightAndPassesItOn(GameTestHelper helper) {
+        emitter(helper, 1);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
+        helper.setBlock(new BlockPos(8, Y, 8), ModBlocks.FOLD_CORE.get());
+        var sink = helper.getBlockEntity(new BlockPos(8, Y, 8), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(controller.getEnergyStorage().getEnergyStored() > 0, "the controller charged from the beam");
+            helper.assertTrue(sink.getEnergyStorage().getEnergyStored() > 0, "and the light went on through it to the machine");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.logistics.controller
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aControllersOwnStoreChargesNoMachines(GameTestHelper helper) {
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(3, Y, 8), Direction.EAST, true);
+        helper.setBlock(new BlockPos(8, Y, 8), ModBlocks.FOLD_CORE.get());
+        var sink = helper.getBlockEntity(new BlockPos(8, Y, 8), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(sink.getEnergyStorage().getEnergyStored(), 0, "the machine got nothing from the controller's store");
+            helper.assertValueEqual(controller.getEnergyStorage().getEnergyStored(), LaserTuning.LOGISTICS_CAPACITY, "and it kept it");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.lenses
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 160)
+    public static void anExtractLensPastTheControllerFillsTheNetwork(GameTestHelper helper) {
+        emitter(helper, 1);
+        controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
+        onChest(helper, 5, LogisticsMember.Role.STORAGE, false);
+        mount(helper, 7, com.kadikular.quantimium.init.ModItems.EXTRACT_LENS.get());
+        ChestBlockEntity from = target(helper, 9, new ItemStack(Items.DIRT, 10));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(from, Items.DIRT), 0, "taken from the chest the beam ends on");
+            helper.assertValueEqual(count(helper, 5, Items.DIRT), 10, "into the network's storage");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.logistics.lenses
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 160)
+    public static void anInsertLensPastTheControllerTakesFromTheNetwork(GameTestHelper helper) {
+        emitter(helper, 1);
+        controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
+        onChest(helper, 5, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIAMOND, 6));
+        mount(helper, 7, com.kadikular.quantimium.init.ModItems.INSERT_LENS.get());
+        ChestBlockEntity into = target(helper, 9);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(into, Items.DIAMOND), 6, "the diamonds went into the chest the beam ends on");
+            helper.assertValueEqual(count(helper, 5, Items.DIAMOND), 0, "out of the network's storage");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.logistics.controller
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aControllersStorePaysForNoLensWork(GameTestHelper helper) {
+        // Cables only, no emitter: its receptacles could move, but nothing pays for the Insert lens.
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(3, Y, 8), Direction.EAST, true);
+        onChest(helper, 5, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIAMOND, 6));
+        mount(helper, 7, com.kadikular.quantimium.init.ModItems.INSERT_LENS.get());
+        ChestBlockEntity into = target(helper, 9);
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(count(into, Items.DIAMOND), 0, "nothing inserted");
+            helper.assertValueEqual(controller.getEnergyStorage().getEnergyStored(), LaserTuning.LOGISTICS_CAPACITY, "the store untouched");
+            helper.succeed();
+        });
     }
 }

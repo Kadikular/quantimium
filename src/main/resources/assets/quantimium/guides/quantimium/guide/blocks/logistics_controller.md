@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_controller" scale="2" />
 
-Logistics: everything its light reaches is one network that moves items between inventories.
+Logistics: a relay whose light makes one network of everything it reaches; lenses past it put into and take from it.
 
 ## Recipes
 

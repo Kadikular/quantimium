@@ -206,4 +206,12 @@ public interface LaserNode {
     default LogisticsMember logistics() {
         return null;
     }
+
+    /**
+     * Whether light ending on it charges it, as it would any block that takes power, besides passing on: a Logistics
+     * Controller fills its own store this way. Its energy is the block's own (Capabilities.Energy).
+     */
+    default boolean chargedByLight() {
+        return false;
+    }
 }

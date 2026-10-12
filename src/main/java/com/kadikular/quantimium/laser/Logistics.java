@@ -31,7 +31,7 @@ import java.util.Set;
  * Each active member moves up to {@link LaserTuning#LOGISTICS_ITEMS} items a second, and every transfer costs the
  * controller {@link LaserTuning#LOGISTICS_FE_PER_MOVE} FE; without it, the network waits.
  */
-final class Logistics {
+public final class Logistics {
 
     /** A transfer the controller couldn't pay for: the network stops for this second. */
     private static final int UNPAID = -1;
@@ -75,7 +75,7 @@ final class Logistics {
         for (Map.Entry<BlockPos, LogisticsController> entry : controllers.entrySet()) {
             List<LogisticsMember> members = networks.getOrDefault(entry.getKey(), List.of());
             boolean clash = clashing.contains(entry.getKey());
-            entry.getValue().report(members.size(), clash);
+            entry.getValue().report(members, clash);
             if (!clash && !members.isEmpty()) runNetwork(level, entry.getValue(), members);
         }
     }
@@ -138,6 +138,52 @@ final class Logistics {
             }
         }
         return LaserTuning.LOGISTICS_ITEMS - budget;
+    }
+
+    /**
+     * Puts {@code stack} into a network (a Pickup or Extract lens's catch, through its controller): to requesters
+     * listing it first, then storage, highest priority first. What's left.
+     */
+    public static ItemStack insert(List<LogisticsMember> members, ItemStack stack, boolean simulate) {
+        ItemStack left = stack.copy();
+        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}) {
+            for (LogisticsMember to : byPriority(members, true)) {
+                if (left.isEmpty()) return ItemStack.EMPTY;
+                if (to.role() != role || !to.lets(left)) continue;
+                IItemHandler into = to.inventory();
+                if (into != null) left = ItemHandlerHelper.insertItem(into, left, simulate);
+            }
+        }
+        return left;
+    }
+
+    /**
+     * Takes up to {@code max} of the first thing {@code wants} accepts from a network (for an Insert, Placement or
+     * Interact lens, through its controller): from providers first, as their filters let go, then storage, lowest
+     * priority first.
+     */
+    public static ItemStack take(List<LogisticsMember> members, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate) {
+        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
+            for (LogisticsMember source : byPriority(members, role == LogisticsMember.Role.PROVIDER)) {
+                if (source.role() != role) continue;
+                IItemHandler from = source.inventory();
+                if (from == null) continue;
+                for (int slot = 0; slot < from.getSlots(); slot++) {
+                    ItemStack there = from.getStackInSlot(slot);
+                    if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
+                    ItemStack taken = from.extractItem(slot, Math.min(max, there.getCount()), simulate);
+                    if (!taken.isEmpty()) return taken;
+                }
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private static List<LogisticsMember> byPriority(List<LogisticsMember> members, boolean highestFirst) {
+        List<LogisticsMember> sorted = new ArrayList<>(members);
+        Comparator<LogisticsMember> order = Comparator.comparingInt(LogisticsMember::priority).thenComparing(LogisticsMember::inventoryPos);
+        sorted.sort(highestFirst ? order.reversed() : order);
+        return sorted;
     }
 
     /** Moves up to {@code max} of what's in {@code slot} of {@code from} into {@code into}, as far as it fits, if the controller pays. */

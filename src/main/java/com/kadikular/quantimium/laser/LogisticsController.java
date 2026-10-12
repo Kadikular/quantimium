@@ -9,6 +9,6 @@ public interface LogisticsController {
     /** Takes {@code fe} to move a stack; whether it had it. */
     boolean pay(long fe);
 
-    /** What the network found, once a second: how many members, and whether another controller's light joins its own. */
-    void report(int members, boolean clash);
+    /** What the network found, once a second: its members, and whether another controller's light joins its own. */
+    void report(java.util.List<LogisticsMember> members, boolean clash);
 }

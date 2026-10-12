@@ -524,7 +524,8 @@ public final class LaserNetworks {
      */
     private void ship() {
         for (LaserNode node : nodes.values()) {
-            if (!node.sends()) continue;
+            // A Logistics Controller sends only to lenses that ask, never down the beam by itself.
+            if (!node.sends() || node instanceof LogisticsController) continue;
             Light light = lights.get(node.nodePos());
             // Only while light runs to it: a switched-off mirror before it stops it too.
             if (light == null || !litNow.contains(node.nodePos())) continue;
@@ -867,6 +868,10 @@ public final class LaserNetworks {
                     if (next != null && next.buffers() && !source.buffers()) {
                         route(sinks, beam.hit(), beam.face().getOpposite(), next, source.nodePos(), index, path, visit.efficiency());
                     }
+                    // One that light charges (a Logistics Controller) is a block that takes power too, though never from itself.
+                    if (next != null && next.chargedByLight() && next != source) {
+                        route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
+                    }
                     if (next != null && next.relays() && next.accepts(beam.face()) && seen.add(beam.hit())) {
                         queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
                     }
@@ -1199,7 +1204,7 @@ public final class LaserNetworks {
         Set<BlockPos> live = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         for (LaserNode node : nodes.values()) {
-            // A Logistics Controller's light shows while it has power to move things, though it gives none.
+            // A Logistics Controller gives no power, but its light shows while its store can pay for moves.
             boolean shines = node.available() > 0 || node instanceof LogisticsController controller && controller.powered();
             if (node.generates() && node.enabled() && shines && live.add(node.nodePos())) queue.add(node.nodePos());
         }

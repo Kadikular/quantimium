@@ -259,12 +259,23 @@ are in it, for {{c:LaserTuning.BLIND_TICKS|s}}. The [[item:mirror_lens]] protect
 
 ## Logistics
 
-[[mechanic:laser.logistics.network]] A [[block:logistics_controller]] shines like an emitter, but its light
-carries no power: everything it reaches, through mirrors, splitters and relays, joined with other light
-or not, is one **logistics network**. An Isolator lets none of it through. One controller to a network:
-where light from two meets, both stop and say so. [[mechanic:laser.logistics.controller]] It pays
-{{c:LaserTuning.LOGISTICS_FE_PER_MOVE}} FE for each move (up to a stack) from FE you give it on any face,
-holding up to {{c:LaserTuning.LOGISTICS_CAPACITY}}; out of power, the network waits.
+[[mechanic:laser.logistics.network]] A [[block:logistics_controller]] is a relay: light reaching it goes on
+out of its outputs (set as an emitter's are), and it gives out light of its own too. Everything the light
+leaving it reaches, through mirrors, splitters and relays, joined with other light or not, is one
+**logistics network**, as any light is a laser network. An Isolator lets power through but not the
+network. One controller to a network: where light from two meets, both stop and say so.
+[[mechanic:laser.logistics.controller]] It fills its own store, up to {{c:LaserTuning.LOGISTICS_CAPACITY}} FE,
+from light ending on it as any block that takes power does, or from cables on any face. From that store it
+pays {{c:LaserTuning.LOGISTICS_FE_PER_MOVE}} FE for each move its receptacles make (up to a stack), and for
+nothing else: it gives no power, so it charges no machines, and lens work past it is paid for by the other
+sources whose light reaches the lens, as ever. Out of power, its receptacles wait.
+
+[[mechanic:laser.logistics.lenses]] **Lenses past the controller use the network.** Up the beam from a lens,
+the controller stands for the whole network, after any Laser Port nearer the lens: what a Pickup or Extract
+lens brings back goes into it (to requesters listing it, then storage), so they work as active providers;
+what an Insert, Placement or Interact lens uses comes from it (providers, then storage), so with a Filter
+lens they work as active requesters. As ever, a stream from one side of a join reaches back up its own side:
+put the controller before the lenses, or on their side of the join.
 
 A [[block:logistics_receptacle]] goes on the inventory it serves (a chest, a machine, a drawer), and light
 passes straight through it, so one beam along a row of machines joins them all. Open it to set what that

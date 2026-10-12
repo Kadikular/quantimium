@@ -1216,7 +1216,7 @@
   "advancements.quantimium.should_you_be_holding_that.title": "Should you be holding that?",
   "advancements.quantimium.should_you_be_holding_that.description": "Carry a Singularity with a Reactor's worth of matter in it",
   "block.quantimium.logistics_controller": "Logistics Controller",
-  "block.quantimium.logistics_controller.tip": "Logistics: everything its light reaches is one network that moves items between inventories. Pays for each move from FE you give it. One controller to a network.",
+  "block.quantimium.logistics_controller.tip": "Logistics: light passes through it, and everything that light reaches is one network that moves items between inventories. Charged by light ending on it, or by cables. Lenses past it put into and take from the network. One controller to a network.",
   "block.quantimium.logistics_receptacle": "Logistics Receptacle",
   "block.quantimium.logistics_receptacle.tip": "Logistics: puts the inventory it's placed on into a Logistics Controller's network, as storage, a provider or a requester. Light passes straight through it.",
   "message.quantimium.logistics_controller.status": "Logistics network: %s members, %s FE",

@@ -32,9 +32,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A Logistics Controller: a source whose light carries no power to what it reaches, only the network. Everything
- * its light reaches, through mirrors, splitters and relays but not past an Isolator, is one logistics network,
- * and it pays, from the FE it's given, for every item the network moves. See {@code Logistics}.
+ * A Logistics Controller: a relay that marks the light it passes on, and gives out light of its own, as a Solar
+ * Emitter does. Everything that light reaches, through mirrors, splitters and relays, joined with other light or
+ * not, but not past an Isolator, is one logistics network. It fills its own store from light ending on it, or from
+ * cables, and pays from it only for what its receptacles move: it gives no power, so lens work past it is paid
+ * for by the light's other sources, as ever. Up the beam from a lens, it is the network: Pickup and Extract put into it, Insert, Placement and
+ * Interact take from it. See {@code Logistics}.
  */
 public class LogisticsControllerBlockEntity extends BlockEntity implements LaserNode, LogisticsController, FluxMeterReadout, LaserBeamView {
 
@@ -46,8 +49,8 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     };
     private final Set<Direction> outputs = EnumSet.noneOf(Direction.class);
     private List<LaserBeam> shownBeams = List.of();
-    /** What the network found last time it ran: how many members, and whether another controller's light joins this one's. */
-    private int members;
+    /** What the network found last time it ran: its members, and whether another controller's light joins this one's. */
+    private List<com.kadikular.quantimium.laser.LogisticsMember> members = List.of();
     private boolean clash;
 
     public LogisticsControllerBlockEntity(BlockPos pos, BlockState state) {
@@ -103,16 +106,49 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     }
 
     @Override
-    public void report(int members, boolean clash) {
-        this.members = members;
+    public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
+        this.members = List.copyOf(members);
         this.clash = clash;
+    }
+
+    /** The members still standing, or none while another controller's light stops the network. */
+    private List<com.kadikular.quantimium.laser.LogisticsMember> members() {
+        if (clash) return List.of();
+        return members.stream().filter(member -> !(member instanceof BlockEntity entity) || !entity.isRemoved()).toList();
+    }
+
+    // ---- up the beam from a lens, it is the network ----
+
+    @Override
+    public boolean collects() {
+        return true;
+    }
+
+    @Override
+    public net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack, boolean simulate) {
+        return com.kadikular.quantimium.laser.Logistics.insert(members(), stack, simulate);
+    }
+
+    @Override
+    public boolean sends() {
+        return true;
+    }
+
+    @Override
+    public net.minecraft.world.item.ItemStack send(java.util.function.Predicate<net.minecraft.world.item.ItemStack> wants, int max, boolean simulate) {
+        return com.kadikular.quantimium.laser.Logistics.take(members(), wants, max, simulate);
+    }
+
+    @Override
+    public net.minecraft.world.item.ItemStack takeBack(net.minecraft.world.item.ItemStack stack) {
+        return com.kadikular.quantimium.laser.Logistics.insert(members(), stack, false);
     }
 
     /** How its network stands, for a click or the Flux Meter. */
     public MutableComponent status() {
         if (clash) return Component.translatable("message.quantimium.logistics_controller.clash").withStyle(ChatFormatting.RED);
-        if (!powered()) return Component.translatable("message.quantimium.logistics_controller.unpowered", members).withStyle(ChatFormatting.GOLD);
-        return Component.translatable("message.quantimium.logistics_controller.status", members, String.format(java.util.Locale.ROOT, "%,d", energy.getEnergyStored()))
+        if (!powered()) return Component.translatable("message.quantimium.logistics_controller.unpowered", members.size()).withStyle(ChatFormatting.GOLD);
+        return Component.translatable("message.quantimium.logistics_controller.status", members.size(), String.format(java.util.Locale.ROOT, "%,d", energy.getEnergyStored()))
                 .withStyle(ChatFormatting.DARK_AQUA);
     }
 
@@ -139,15 +175,26 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         return LaserTuning.RELAY_RANGE;
     }
 
+    /** Light reaching it goes on out of its outputs, marked as the network's. */
     @Override
     public boolean relays() {
-        return false;
+        return true;
     }
 
-    /** Its light carries the network, and no power. */
+    /** And it gives out light of its own, which joins what it passes on. */
+    @Override
+    public boolean generates() {
+        return true;
+    }
+
     @Override
     public Light emits() {
         return Light.from(worldPosition, range()).controlledBy(worldPosition);
+    }
+
+    @Override
+    public boolean chargedByLight() {
+        return true;
     }
 
     @Override
