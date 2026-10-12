@@ -174,6 +174,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     public IItemHandler inventory() {
         if (level == null) return null;
         Direction face = facing();
+        // A Laser Port's slots, whole: its faces are set for pipes, which may only put in while it sends.
+        if (level.getBlockEntity(worldPosition.relative(face)) instanceof LaserPortBlockEntity port) return port.slots();
         return LegacyItems.legacy(level.getCapability(Capabilities.Item.BLOCK, worldPosition.relative(face), face.getOpposite()));
     }
 
@@ -237,6 +239,12 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     @Override
     public List<LaserBeam> syncedBeams() {
         return shownBeams;
+    }
+
+    /** Light leaves from the focus in its middle, as it arrives there. */
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        return new net.minecraft.world.phys.Vec3[] {worldPosition.getCenter(), beam.ends()[1]};
     }
 
     @Override

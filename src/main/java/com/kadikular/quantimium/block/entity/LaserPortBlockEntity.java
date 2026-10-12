@@ -371,6 +371,11 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         }
     };
 
+    /** Its nine slots, whole: what a Logistics Receptacle on it works with, whatever its faces are set to. */
+    public IItemHandler slots() {
+        return itemsView;
+    }
+
     /** On a logistics network, what it's caught is offered: a passive provider. */
     private final com.kadikular.quantimium.laser.LogisticsMember asProvider = new com.kadikular.quantimium.laser.LogisticsMember() {
         @Override

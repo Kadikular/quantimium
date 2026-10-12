@@ -51,7 +51,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         VertexConsumer halo = buffers.getBuffer(QuantumRenderTypes.FIELD_GLOW);
         for (LaserBeam beam : beams) {
             if (hidden(beam, aiming)) continue;
-            int bright = LaserNetworks.brightness(beam.flow());
+            int bright = brightness(beam);
             float[] tint = halo(beam);
             if (bright == 0) {
                 // Live but carrying nothing: a dim line, checking. Dark, it shows only while aiming.
@@ -68,7 +68,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         VertexConsumer cores = buffers.getBuffer(QuantumRenderTypes.BEAM_CORE);
         for (LaserBeam beam : beams) {
             if (hidden(beam, aiming)) continue;
-            int bright = LaserNetworks.brightness(beam.flow());
+            int bright = brightness(beam);
             float[] tint = core(beam);
             if (bright == 0) {
                 if (beam.live()) BeamRibbon.draw(cores, pose, Vec3.ZERO, line(view, beam, camera), 0.008f, tint[0], tint[1], tint[2], 0.30f);
@@ -90,17 +90,27 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
 
     private static final float[] AZURE_HALO = {0.40f, 0.62f, 1.0f};
     private static final float[] AZURE_CORE = {0.70f, 0.85f, 1.0f};
+    private static final float[] LOGISTICS_HALO = {0.16f, 0.32f, 1.0f};
+    private static final float[] LOGISTICS_CORE = {0.50f, 0.64f, 1.0f};
 
-    /** The halo's colour: azure, or what its lenses tint it. */
+    /** How bright to draw it: by what it carries; a logistics network's light always as if at work. */
+    private static int brightness(LaserBeam beam) {
+        int bright = LaserNetworks.brightness(beam.flow());
+        return com.kadikular.quantimium.laser.Lens.logistics(beam.lenses()) ? Math.max(bright, 2) : bright;
+    }
+
+    /** The halo's colour: azure, a logistics network's deeper blue, or what its lenses tint it. */
     private static float[] halo(LaserBeam beam) {
         int colour = com.kadikular.quantimium.laser.Lens.colour(beam.lenses());
-        if (colour == 0) return AZURE_HALO;
+        if (colour == 0) return com.kadikular.quantimium.laser.Lens.logistics(beam.lenses()) ? LOGISTICS_HALO : AZURE_HALO;
         return new float[] {(colour >> 16 & 0xFF) / 255f, (colour >> 8 & 0xFF) / 255f, (colour & 0xFF) / 255f};
     }
 
     /** The core's: the halo's, most of the way to white. */
     private static float[] core(LaserBeam beam) {
-        if (com.kadikular.quantimium.laser.Lens.colour(beam.lenses()) == 0) return AZURE_CORE;
+        if (com.kadikular.quantimium.laser.Lens.colour(beam.lenses()) == 0) {
+            return com.kadikular.quantimium.laser.Lens.logistics(beam.lenses()) ? LOGISTICS_CORE : AZURE_CORE;
+        }
         float[] halo = halo(beam);
         return new float[] {0.45f + 0.55f * halo[0], 0.45f + 0.55f * halo[1], 0.45f + 0.55f * halo[2]};
     }

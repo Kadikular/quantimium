@@ -56,6 +56,13 @@ public enum Lens {
 
     /** The bit a beam's look carries for light that's gone through a rift (not a lens). */
     public static final int MIRRORED_MARK = 30;
+    /** In a beam's packed lenses: light from a Logistics Controller, drawn its own blue and always lit. */
+    public static final int LOGISTICS_MARK = 29;
+
+    /** Whether a beam's packed lenses say it carries a logistics network. */
+    public static boolean logistics(int packed) {
+        return (packed & 1 << LOGISTICS_MARK) != 0;
+    }
 
     private static final Lens[] VALUES = values();
 

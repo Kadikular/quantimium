@@ -263,4 +263,47 @@ public final class LogisticsTests {
             helper.succeed();
         });
     }
+
+    /** A Laser Port at {@code x} under the light, collecting, holding {@code stock}, and a receptacle on it set to {@code role}. */
+    private static com.kadikular.quantimium.block.entity.LaserPortBlockEntity onPort(GameTestHelper helper, int x, LogisticsMember.Role role, boolean active, ItemStack... stock) {
+        BlockPos portAt = new BlockPos(x, Y - 1, 8);
+        helper.setBlock(portAt, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.NORTH));
+        var port = helper.getBlockEntity(portAt, com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
+        for (int i = 0; i < stock.length; i++) port.getItems().setStackInSlot(i, stock[i]);
+        BlockPos pos = new BlockPos(x, Y, 8);
+        helper.setBlock(pos, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(pos, LogisticsReceptacleBlockEntity.class);
+        while (receptacle.role() != role) receptacle.cycleRole();
+        if (active) receptacle.toggleActive();
+        return port;
+    }
+
+    private static int count(com.kadikular.quantimium.block.entity.LaserPortBlockEntity port, Item item) {
+        int total = 0;
+        for (int slot = 0; slot < com.kadikular.quantimium.block.entity.LaserPortBlockEntity.SLOTS; slot++) {
+            if (port.getItems().getStackInSlot(slot).is(item)) total += port.getItems().getStackInSlot(slot).getCount();
+        }
+        return total;
+    }
+
+    // covers: laser.logistics.port
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aReceptacleOnALaserPortProvidesFromIt(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        var port = onPort(helper, 4, LogisticsMember.Role.PROVIDER, true, new ItemStack(Items.COBBLESTONE, 16));
+        onChest(helper, 7, LogisticsMember.Role.STORAGE, false);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(port, Items.COBBLESTONE), 0, "out of the port");
+            helper.assertValueEqual(count(helper, 7, Items.COBBLESTONE), 16, "into storage");
+        });
+    }
+
+    // covers: laser.logistics.port
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aReceptacleOnALaserPortStoresInIt(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.PROVIDER, true, new ItemStack(Items.COBBLESTONE, 16));
+        var port = onPort(helper, 7, LogisticsMember.Role.STORAGE, false);
+        helper.succeedWhen(() -> helper.assertValueEqual(count(port, Items.COBBLESTONE), 16, "into the port"));
+    }
 }

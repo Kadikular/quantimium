@@ -1,6 +1,6 @@
 {
   "parent": "quantimium:block/logistics_receptacle",
   "textures": {
-    "plate": "quantimium:block/logistics_receptacle_requester_lit"
+    "mark": "quantimium:block/logistics_receptacle_requester_lit"
   }
 }

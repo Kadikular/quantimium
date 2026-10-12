@@ -306,6 +306,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         if (uv()) packed |= 1 << Lens.UV.ordinal();
         if (phantom()) packed |= 1 << Lens.PHANTOM.ordinal();
         if (mirrored()) packed |= 1 << Lens.MIRRORED_MARK;
+        if (!logistics.isEmpty()) packed |= 1 << Lens.LOGISTICS_MARK;
         return packed;
     }
 

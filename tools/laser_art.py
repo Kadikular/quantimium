@@ -889,16 +889,15 @@ def controller_panel() -> Image.Image:
     return img
 
 
-def role_plate(colour: str, lit: bool) -> Image.Image:
-    """A Logistics Receptacle's part plate in its role's colour, with a darker rim: bright while a controller's light reaches it."""
+def role_outline(colour: str, lit: bool) -> Image.Image:
+    """A Logistics Receptacle's role mark: a 1px square outline (pixels 4 to 11) in its role's colour, bright while a controller's light reaches it; clear elsewhere."""
     r, g, b, _ = hx(colour)
-    scale = 1.0 if lit else 0.35
-    face = tuple(int(c * scale) for c in (r, g, b)) + (255,)
-    rim = tuple(int(c * scale * 0.6) for c in (r, g, b)) + (255,)
-    img = Image.new("RGBA", (16, 16), face)
-    for i in range(16):
-        for x, y in ((i, 0), (i, 15), (0, i), (15, i)):
-            img.putpixel((x, y), rim)
+    scale = 1.0 if lit else 0.4
+    ring = tuple(int(c * scale) for c in (r, g, b)) + (255,)
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    for i in range(4, 12):
+        for x, y in ((i, 4), (i, 11), (4, i), (11, i)):
+            img.putpixel((x, y), ring)
     return img
 
 
@@ -918,7 +917,9 @@ def logistics_receptacle() -> None:
             faces[cull]["cullface"] = cull
         return {"from": start, "to": end, "faces": faces}
 
-    shape = [cube([2, 0, 2], [14, 1, 14], "#steel", "down"), cube([3, 1, 3], [13, 2, 13], "#plate"), cube([7, 2, 7], [9, 6, 9], "#steel"),
+    # The plate is steel; its role shows as a square outline a pixel in from its edge, a hair above it.
+    outline = {"from": [4, 2.01, 4], "to": [12, 2.01, 12], "faces": {"up": {"texture": "#mark", "uv": [4, 4, 12, 12]}}}
+    shape = [cube([2, 0, 2], [14, 1, 14], "#steel", "down"), cube([3, 1, 3], [13, 2, 13], "#steel"), outline, cube([7, 2, 7], [9, 6, 9], "#steel"),
              cube([6, 6, 6], [10, 10, 10], "#focus", uv=[6, 6, 10, 10])]
     with open(os.path.join(MODELS, "logistics_receptacle.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": shape}, handle, indent=2)
@@ -927,9 +928,9 @@ def logistics_receptacle() -> None:
     for role, colour in ROLE_COLOURS.items():
         for lit in (False, True):
             tag = "_lit" if lit else ""
-            role_plate(colour, lit).save(os.path.join(TEX, f"logistics_receptacle_{role}{tag}.png"))
+            role_outline(colour, lit).save(os.path.join(TEX, f"logistics_receptacle_{role}{tag}.png"))
             with open(os.path.join(MODELS, f"logistics_receptacle_{role}{tag}.json"), "w") as handle:
-                json.dump({"parent": "quantimium:block/logistics_receptacle", "textures": {"plate": f"quantimium:block/logistics_receptacle_{role}{tag}"}}, handle, indent=2)
+                json.dump({"parent": "quantimium:block/logistics_receptacle", "textures": {"mark": f"quantimium:block/logistics_receptacle_{role}{tag}"}}, handle, indent=2)
             for facing, r in mounts.items():
                 variants[f"facing={facing},lit={str(lit).lower()},role={role}"] = dict({"model": f"quantimium:block/logistics_receptacle_{role}{tag}"}, **r)
     with open(os.path.join(STATES, "logistics_receptacle.json"), "w") as handle:

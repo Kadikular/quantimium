@@ -301,7 +301,10 @@ light reaches it. Once a second, each active part moves up to 64 items:
   Only what its filter lists comes, as far as the inventory takes it.
 
 A <ItemLink id="quantimium:laser_port" /> on the network, collecting, is a passive provider of
-what it's caught.
+what it's caught. A receptacle on a Laser Port works with its nine slots whatever its faces are set to, in
+any role.
+
+Light from a controller is drawn a deeper blue, and always as if at work.
 
 ## Into the mirror
 

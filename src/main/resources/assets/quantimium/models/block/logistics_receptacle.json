@@ -53,22 +53,45 @@
       ],
       "faces": {
         "north": {
-          "texture": "#plate"
+          "texture": "#steel"
         },
         "south": {
-          "texture": "#plate"
+          "texture": "#steel"
         },
         "east": {
-          "texture": "#plate"
+          "texture": "#steel"
         },
         "west": {
-          "texture": "#plate"
+          "texture": "#steel"
         },
         "up": {
-          "texture": "#plate"
+          "texture": "#steel"
         },
         "down": {
-          "texture": "#plate"
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        2.01,
+        4
+      ],
+      "to": [
+        12,
+        2.01,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#mark",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
         }
       }
     },
