@@ -80,7 +80,7 @@ public final class LaserNetworks {
     /** The light reaching each cavity, which it remembers when it's filled. */
     private final Map<BlockPos, Light> cavityIn = new HashMap<>();
     /** What redstone can switch, and whether each was on when the network was last built. */
-    private Map<LaserNode, Boolean> switched = Map.of();
+    private Map<LaserNode, Integer> switched = Map.of();
     /** The nodes light ran through at the last settle. */
     private Set<BlockPos> litNow = Set.of();
 
@@ -274,9 +274,9 @@ public final class LaserNetworks {
         // gets there; again wherever more light arrives. Light only adds up, so this settles.
         ArrayDeque<BlockPos> work = new ArrayDeque<>();
         // What redstone switches, and how each stood now: watched each tick, rebuilt when one changes.
-        Map<LaserNode, Boolean> watching = new LinkedHashMap<>();
+        Map<LaserNode, Integer> watching = new LinkedHashMap<>();
         for (LaserNode node : nodes.values()) {
-            if (node.switches()) watching.put(node, node.enabled());
+            if (node.switches()) watching.put(node, node.switchState());
         }
         switched = watching;
         for (LaserNode node : nodes.values()) {
@@ -508,7 +508,11 @@ public final class LaserNetworks {
         if (at == null) return;
         for (Route route : at.sink().routes()) {
             for (Hop hop : route.path()) {
-                if (hop.relay() != null) hop.relay().pulseDone();
+                if (hop.relay() == null) continue;
+                // The pulse closes on the face its beam left by.
+                List<LaserBeam> out = beams.getOrDefault(hop.node(), List.of());
+                if (hop.beam() < out.size()) hop.relay().pulseDone(out.get(hop.beam()).face());
+                else hop.relay().pulseDone();
             }
         }
     }
@@ -893,8 +897,8 @@ public final class LaserNetworks {
         // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
         // Something redstone switches has been switched: what light carries changes.
         if (!dirty) {
-            for (Map.Entry<LaserNode, Boolean> entry : switched.entrySet()) {
-                if (entry.getKey().enabled() != entry.getValue()) {
+            for (Map.Entry<LaserNode, Integer> entry : switched.entrySet()) {
+                if (entry.getKey().switchState() != entry.getValue()) {
                     dirty = true;
                     break;
                 }

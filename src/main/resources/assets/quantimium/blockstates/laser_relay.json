@@ -1,8 +1,59 @@
 {
  "multipart": [
   {
+   "when": {
+    "mount": "down"
+   },
    "apply": {
     "model": "quantimium:block/laser_relay"
+   }
+  },
+  {
+   "when": {
+    "mount": "up"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "south"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "north"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "east"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_relay",
+    "x": 90,
+    "y": 270
    }
   },
   {
@@ -10,23 +61,7 @@
     "north": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_relay_out_north"
-   }
-  },
-  {
-   "when": {
-    "south": "true"
-   },
-   "apply": {
-    "model": "quantimium:block/laser_relay_out_south"
-   }
-  },
-  {
-   "when": {
-    "west": "true"
-   },
-   "apply": {
-    "model": "quantimium:block/laser_relay_out_west"
+    "model": "quantimium:block/laser_emitter_nozzle"
    }
   },
   {
@@ -34,15 +69,26 @@
     "east": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_relay_out_east"
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "y": 90
    }
   },
   {
    "when": {
-    "down": "true"
+    "south": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_relay_out_down"
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "west": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "y": 270
    }
   },
   {
@@ -50,7 +96,17 @@
     "up": "true"
    },
    "apply": {
-    "model": "quantimium:block/laser_relay_out_up"
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "x": 270
+   }
+  },
+  {
+   "when": {
+    "down": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_nozzle",
+    "x": 90
    }
   }
  ]

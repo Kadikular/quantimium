@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_relay" scale="2" />
 
-Sends any beam that reaches it, from any side, out of every face you set, refocused so it can go as far again.
+A focus on a base with emitters on its other sides: light reaching it leaves by each, each with its own lens and redstone.
 
 ## Recipes
 

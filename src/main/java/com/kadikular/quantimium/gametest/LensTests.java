@@ -756,7 +756,8 @@ public final class LensTests {
         var player = TestSupport.player(helper, new BlockPos(5, Y, 9), net.minecraft.world.level.GameType.SURVIVAL);
         player.setShiftKeyDown(true);
         BlockPos abs = helper.absolutePos(at);
-        var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(0, 0, 0.5), Direction.SOUTH, abs, false);
+        // A sneaking click on the south side of its focus puts an emitter there.
+        var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(0, 0, 2 / 16.0), Direction.SOUTH, abs, false);
         helper.getLevel().getBlockState(abs).useWithoutItem(helper.getLevel(), player, hit);
         var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
         helper.succeedWhen(() -> {
@@ -765,6 +766,77 @@ public final class LensTests {
             helper.assertTrue(helper.getBlockEntity(new BlockPos(5, Y, 11), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
                     "and sends: " + relay.syncedBeams());
             TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.relay
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aRelayEmittersLensIsOnlyItsOwn(GameTestHelper helper) {
+        // A Harvest lens in the east emitter: the stone east is cut, the stone south isn't.
+        emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        relay.addEmitter(Direction.SOUTH);
+        relay.setLens(Direction.EAST, new ItemStack(ModItems.HARVEST_LENS.get()));
+        helper.setBlock(new BlockPos(9, Y, 6), Blocks.STONE);
+        helper.setBlock(new BlockPos(5, Y, 9), Blocks.STONE);
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 6));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(5, Y, 9));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.relay
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 40)
+    public static void takingAwayARelayEmitterDropsItsLens(GameTestHelper helper) {
+        relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        relay.addEmitter(Direction.NORTH);
+        relay.setLens(Direction.NORTH, new ItemStack(ModItems.RANGE_LENS.get()));
+        helper.assertTrue(relay.removeEmitter(Direction.NORTH), "taken away");
+        helper.runAfterDelay(2, () -> {
+            var dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(5, Y, 6))).inflate(2),
+                    item -> item.getItem().is(ModItems.RANGE_LENS.get()));
+            helper.assertFalse(dropped.isEmpty(), "its lens dropped");
+            dropped.forEach(ItemEntity::discard);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.relay.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void eachRelayEmitterListensToRedstoneItsOwnWay(GameTestHelper helper) {
+        // East needs a signal, south runs without one: with no signal, only south gets light.
+        emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
+        relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        relay.addEmitter(Direction.SOUTH);
+        relay.cycleMode(Direction.EAST);
+        helper.assertTrue(relay.modeOf(Direction.EAST) == com.kadikular.quantimium.laser.RelayMode.WITH_SIGNAL, "east needs a signal");
+        helper.setBlock(new BlockPos(10, Y, 6), ModBlocks.FOLD_CORE.get());
+        helper.setBlock(new BlockPos(5, Y, 11), ModBlocks.FOLD_CORE.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(10, Y, 6), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0, "east off");
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(5, Y, 11), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0, "south on");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.relay
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void lightCantComeUpThroughARelaysBase(GameTestHelper helper) {
+        // On the floor: light from below hits its base and stops.
+        emitter(helper, new BlockPos(5, Y, 6), Direction.UP, true);
+        relay(helper, new BlockPos(5, Y + 3, 6), Direction.EAST);
+        helper.setBlock(new BlockPos(9, Y + 3, 6), ModBlocks.FOLD_CORE.get());
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(9, Y + 3, 6), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0,
+                    "nothing through the base");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
         });
     }
 

@@ -401,6 +401,14 @@ def area_prism() -> Panel:
     return panel
 
 
+def relay_emitter() -> Panel:
+    """One of a Laser Relay's emitters: its one lens slot in the middle (RelayEmitterMenu.LENS_X, LENS_Y)."""
+    panel = Panel(HIGH)
+    panel.slot(80, 35)
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -464,6 +472,7 @@ def horizon_core() -> Panel:
 
 
 PANELS = {
+    "relay_emitter": relay_emitter,
     "quantum_crafter": lambda: crafter(MID, basic=False),
     "basic_quantum_crafter": lambda: crafter(LOW, basic=True),
     "quantum_simulator": simulator,

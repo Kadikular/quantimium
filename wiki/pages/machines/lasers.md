@@ -67,25 +67,32 @@ behind its turn side passes straight through the plate and out of the turn side 
 in, they leave by the turn side only, joined: a combiner. Light from any other side stops on it, and so
 does light into a side facing what it stands on. It closes no cavity.
 
-[[mechanic:laser.relay]] A [[block:laser_relay]] sends every beam that reaches it, from any side, out of
-every face you set, shared by what each beam's blocks ask for: a prism's job for the six straight
-directions, with no linking. Placed, its one output faces you; sneak-click or wrench a face to add an
-output there, or take one away (one always stays). Each output face shows the plate.
+[[mechanic:laser.relay]] A [[block:laser_relay]] is a focus on a post, on a base on the block it was
+placed against, with an emitter on any of its other sides. Light reaching its focus, from any side but
+its base, leaves by each emitter, shared by what each beam's blocks ask for: a prism's job for the six
+straight directions, with no linking. Placed, its one emitter faces you. Sneak-click (by hand or with a
+wrench) a side of its focus to put an emitter there, or an emitter to take it away. Click an emitter to
+open it: it holds one lens, which only the light leaving by that emitter goes through (a Harvest lens on
+one emitter cuts only there), and its tip takes the lens's colour. Taking an emitter away drops its lens.
 
 Both refocus the light to its source's range: a run from a mirror or relay reaches as far as a run from
 the emitter that sent it, so a Flash Emitter's light goes 8 blocks a run however many it passes. Each
 one a beam passes takes {{c:LaserTuning.HOP_TAX|pct}} of what passes, and that becomes flux where it
 stands.
 
-[[mechanic:laser.relay.redstone]] Use an empty hand on a relay to step through how it listens to
-redstone: it ignores it, passes light only with a signal, only without one, or in **pulse** mode, where
-each signal it gets lets light through until one action down the beam is done (a block cut, a hit, an
-item carried) or two seconds pass. A pulse relay before a Harvest lens breaks one block per pulse. Switched off, a relay (or a mirror) passes no light at all: nothing the light did reaches past it, and what's beyond
-gets only the light that reaches it some other way. An emitter switched off by redstone gives out none.
+[[mechanic:laser.relay.redstone]] Each of a relay's emitters listens to the redstone reaching the block its
+own way, set in its screen: it ignores it, lets light out only with a signal, only without one, or in
+**pulse** mode, where each signal it gets lets light out until one action down its beam is done (a block
+cut, a hit, an item carried) or two seconds pass. One signal can open one emitter and close another. A
+pulse emitter before a Harvest lens breaks one block per pulse. An emitter switched off sends nothing; with
+all of them off, the relay passes no light at all, and what's beyond gets only the light that reaches it
+some other way. An emitter switched off by redstone gives out none.
 
-[[mechanic:laser.isolator]] An [[block:isolator]] is a relay that lets only power through: light
-leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through it, so
-Pickup's items stop short of it.
+[[mechanic:laser.isolator]] An [[block:isolator]] passes light on as a relay does, but lets only power
+through: light leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through
+it, so Pickup's items stop short of it. It's a plain block: sneak-click or wrench a face to add an output
+there or take one away (one always stays), and use an empty hand to step through how it listens to
+redstone.
 
 ## Prisms
 

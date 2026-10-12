@@ -101,18 +101,6 @@ def back(spec) -> Image.Image:
     return img
 
 
-def mirror_face() -> Image.Image:
-    img = stone(("2b2b33", "3b3b45", "4d4d59"), 21)
-    for x in range(2, 14):
-        for y in range(2, 14):
-            img.putpixel((x, y), hx("9fb4d8") if (x + y) % 5 else hx("dfe8f8"))
-    # Two bright sheen lines across the plate.
-    for i in range(2, 14):
-        if 2 <= 15 - i - 3 < 14:
-            img.putpixel((i, 15 - i - 3), hx("f4f8ff"))
-    return img
-
-
 def steel(seed: int) -> Image.Image:
     """Dark brushed steel, for the Mirror's stand: streaks along its length."""
     rnd = random.Random(seed)
@@ -662,6 +650,45 @@ def solar_emitter() -> None:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/solar_emitter_item"}}, handle, indent=2)
 
 
+def laser_relay() -> None:
+    """
+    The Laser Relay: a 12x12 base and an 8x8 boss on the block it was placed against, a 2x2 post up to the
+    Solar Emitter's focus in the middle, and the simple emitter on each side light leaves by. The stand is
+    drawn for a floor and turned to each mount; the emitters turn to their faces.
+    """
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
+         "particle": "quantimium:block/laser_mirror_steel"}
+
+    def cube(start, end, texture, cull=None):
+        faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
+        if cull:
+            faces[cull]["cullface"] = cull
+        return {"from": start, "to": end, "faces": faces}
+
+    focus = cube([6, 6, 6], [10, 10, 10], "#focus")
+    for face in focus["faces"].values():
+        face["uv"] = [6, 6, 10, 10]
+    stand = [cube([2, 0, 2], [14, 1, 14], "#steel", "down"), cube([4, 1, 4], [12, 2, 12], "#steel"), cube([7, 2, 7], [9, 6, 9], "#steel"), focus]
+    with open(os.path.join(MODELS, "laser_relay.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": stand}, handle, indent=2)
+    with open(os.path.join(MODELS, "laser_relay_item.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
+                   "elements": stand + emitter_nozzle()}, handle, indent=2)
+    mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180},
+              "east": {"x": 90, "y": 270}}
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
+    parts = [{"when": {"mount": m}, "apply": dict({"model": "quantimium:block/laser_relay"}, **r)} for m, r in mounts.items()]
+    parts += [{"when": {side: "true"}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
+    with open(os.path.join(STATES, "laser_relay.json"), "w") as handle:
+        json.dump({"multipart": parts}, handle, indent=1)
+    with open(os.path.join(ITEMS, "laser_relay.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/laser_relay_item"}}, handle, indent=2)
+    for stale in [f"laser_relay_out_{d}" for d in ("north", "south", "east", "west", "up", "down")]:
+        path = os.path.join(MODELS, stale + ".json")
+        if os.path.exists(path):
+            os.remove(path)
+
+
 def outputs_block(name: str, face: str, side: str) -> None:
     """
     A block light leaves by any faces you set (the Laser Relay, the Isolator): its plain casing, and its face
@@ -715,9 +742,7 @@ def main() -> None:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
         written += 4
 
-    mirror_face().save(os.path.join(TEX, "laser_relay_face.png"))
-    stone(("2b2b33", "3b3b45", "4d4d59"), 22).save(os.path.join(TEX, "laser_relay_side.png"))
-    outputs_block("laser_relay", "laser_relay_face", "laser_relay_side")
+    laser_relay()
     laser_mirror()
     laser_mirror("laser_splitter", splits=True)
     solar_emitter()

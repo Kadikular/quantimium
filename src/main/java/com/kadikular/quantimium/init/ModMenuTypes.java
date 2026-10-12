@@ -70,6 +70,10 @@ public class ModMenuTypes {
             MENUS.register("collector_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.CollectorMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.RelayEmitterMenu>> RELAY_EMITTER_MENU =
+            MENUS.register("relay_emitter_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.RelayEmitterMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.AreaPrismMenu>> AREA_PRISM_MENU =
             MENUS.register("area_prism_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.AreaPrismMenu::new));

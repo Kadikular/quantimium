@@ -142,6 +142,16 @@ public interface LaserNode {
     /** One action that light through this relay was let through for is done: a pulse mirror closes. */
     default void pulseDone() {}
 
+    /** One action down the beam out of {@code face} is done: a pulse on that face closes. */
+    default void pulseDone(Direction face) {
+        pulseDone();
+    }
+
+    /** What redstone has switched, as a number: a change in it is a change in the light (a Relay: which emitters are on). */
+    default int switchState() {
+        return enabled() ? 1 : 0;
+    }
+
     /** For an area prism: the blocks the actions of light reaching it work on; null for any other node. */
     @org.jetbrains.annotations.Nullable
     default net.minecraft.world.level.levelgen.structure.BoundingBox area() {

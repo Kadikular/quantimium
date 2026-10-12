@@ -20,6 +20,12 @@ public class IsolatorBlock extends LaserRelayBlock {
         return ISOLATOR_CODEC;
     }
 
+    /** A plain block: no base. */
+    @Override
+    public boolean mounted() {
+        return false;
+    }
+
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new IsolatorBlockEntity(pos, state);

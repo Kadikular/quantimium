@@ -28,9 +28,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A Laser Relay: whatever light reaches it, from any side, leaves by every face it's set to, refocused, shared by
- * what each beam's blocks ask for. Placed, its one output faces you; a wrench, or a sneaking empty hand, on a face
- * adds or takes away an output there (one always stays). An empty hand steps through how it listens to redstone.
+ * A Laser Relay: a focus on a post, on a base on the block it was placed against, with emitters on any of its
+ * other sides. Whatever light reaches its focus, from any side but its base, leaves by each emitter, refocused,
+ * shared by what each beam's blocks ask for. Placed, its one emitter faces you. A sneaking click (by hand or with a
+ * wrench) on a side of the focus puts an emitter there; on an emitter, takes it away, dropping its lens. A plain
+ * click on an emitter opens it: its lens, and how it listens to redstone.
+ *
+ * <p>The Isolator, built on it, has no base: a wrench or a sneaking empty hand on a face adds or takes away an
+ * output there (one always stays), and an empty hand steps through how it listens to redstone.
  */
 public class LaserRelayBlock extends BaseEntityBlock {
     public static final MapCodec<LaserRelayBlock> CODEC = simpleCodec(LaserRelayBlock::new);
@@ -39,10 +44,28 @@ public class LaserRelayBlock extends BaseEntityBlock {
     /** Whether light leaves by that face: what the block shows. */
     public static final java.util.Map<Direction, net.minecraft.world.level.block.state.properties.BooleanProperty> OUTPUTS =
             net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION;
+    /** The side its base stands on: the block it was placed against. */
+    public static final EnumProperty<Direction> MOUNT = EnumProperty.create("mount", Direction.class);
+
+    /** In sixteenths: its focus, an emitter on each side, its base (with its boss) on each side, and its post to it. */
+    private static final net.minecraft.world.phys.AABB FOCUS = new net.minecraft.world.phys.AABB(6, 6, 6, 10, 10, 10);
+    private static final java.util.Map<Direction, net.minecraft.world.phys.AABB> EMITTERS = new java.util.EnumMap<>(java.util.Map.of(
+            Direction.NORTH, new net.minecraft.world.phys.AABB(5, 5, 0, 11, 11, 6), Direction.SOUTH, new net.minecraft.world.phys.AABB(5, 5, 10, 11, 11, 16),
+            Direction.WEST, new net.minecraft.world.phys.AABB(0, 5, 5, 6, 11, 11), Direction.EAST, new net.minecraft.world.phys.AABB(10, 5, 5, 16, 11, 11),
+            Direction.DOWN, new net.minecraft.world.phys.AABB(5, 0, 5, 11, 6, 11), Direction.UP, new net.minecraft.world.phys.AABB(5, 10, 5, 11, 16, 11)));
+    private static final java.util.Map<Direction, net.minecraft.world.phys.AABB> BASES = new java.util.EnumMap<>(java.util.Map.of(
+            Direction.DOWN, new net.minecraft.world.phys.AABB(2, 0, 2, 14, 2, 14), Direction.UP, new net.minecraft.world.phys.AABB(2, 14, 2, 14, 16, 14),
+            Direction.NORTH, new net.minecraft.world.phys.AABB(2, 2, 0, 14, 14, 2), Direction.SOUTH, new net.minecraft.world.phys.AABB(2, 2, 14, 14, 14, 16),
+            Direction.WEST, new net.minecraft.world.phys.AABB(0, 2, 2, 2, 14, 14), Direction.EAST, new net.minecraft.world.phys.AABB(14, 2, 2, 16, 14, 14)));
+    private static final java.util.Map<Direction, net.minecraft.world.phys.AABB> POSTS = new java.util.EnumMap<>(java.util.Map.of(
+            Direction.DOWN, new net.minecraft.world.phys.AABB(7, 2, 7, 9, 6, 9), Direction.UP, new net.minecraft.world.phys.AABB(7, 10, 7, 9, 14, 9),
+            Direction.NORTH, new net.minecraft.world.phys.AABB(7, 7, 2, 9, 9, 6), Direction.SOUTH, new net.minecraft.world.phys.AABB(7, 7, 10, 9, 9, 14),
+            Direction.WEST, new net.minecraft.world.phys.AABB(2, 7, 7, 6, 9, 9), Direction.EAST, new net.minecraft.world.phys.AABB(10, 7, 7, 14, 9, 9)));
+    private static final java.util.Map<BlockState, net.minecraft.world.phys.shapes.VoxelShape> SHAPES = new java.util.concurrent.ConcurrentHashMap<>();
 
     public LaserRelayBlock(Properties properties) {
         super(properties);
-        BlockState state = stateDefinition.any().setValue(FACING, Direction.NORTH);
+        BlockState state = stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(MOUNT, Direction.DOWN);
         for (var property : OUTPUTS.values()) state = state.setValue(property, false);
         registerDefaultState(state);
     }
@@ -54,15 +77,58 @@ public class LaserRelayBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, MOUNT);
         OUTPUTS.values().forEach(builder::add);
     }
 
+    /** Whether it stands on a base: a Relay does; the Isolator, built on it, is a plain block. */
+    public boolean mounted() {
+        return true;
+    }
+
+    /** On the block it was placed against, its one emitter facing you (away from its base, if you face that). */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction mount = context.getClickedFace().getOpposite();
         Direction facing = context.getNearestLookingDirection().getOpposite();
-        return defaultBlockState().setValue(FACING, facing).setValue(OUTPUTS.get(facing), true);
+        if (mounted() && facing == mount) facing = mount.getOpposite();
+        return defaultBlockState().setValue(FACING, facing).setValue(MOUNT, mount).setValue(OUTPUTS.get(facing), true);
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos,
+                                                                  net.minecraft.world.phys.shapes.CollisionContext context) {
+        if (!mounted()) return net.minecraft.world.phys.shapes.Shapes.block();
+        return SHAPES.computeIfAbsent(state, LaserRelayBlock::shapeOf);
+    }
+
+    private static net.minecraft.world.phys.shapes.VoxelShape shapeOf(BlockState state) {
+        Direction mount = state.getValue(MOUNT);
+        net.minecraft.world.phys.shapes.VoxelShape shape = net.minecraft.world.phys.shapes.Shapes.or(box(FOCUS), box(BASES.get(mount)), box(POSTS.get(mount)));
+        for (Direction face : Direction.values()) {
+            if (face != mount && state.getValue(OUTPUTS.get(face))) shape = net.minecraft.world.phys.shapes.Shapes.or(shape, box(EMITTERS.get(face)));
+        }
+        return shape;
+    }
+
+    private static net.minecraft.world.phys.shapes.VoxelShape box(net.minecraft.world.phys.AABB sixteenths) {
+        return Block.box(sixteenths.minX, sixteenths.minY, sixteenths.minZ, sixteenths.maxX, sixteenths.maxY, sixteenths.maxZ);
+    }
+
+    /** The emitter a click at {@code hit} landed on, if it did. */
+    @Nullable
+    private static Direction emitterAt(BlockState state, BlockPos pos, BlockHitResult hit) {
+        net.minecraft.world.phys.Vec3 at = hit.getLocation().subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(pos)).scale(16);
+        for (Direction face : Direction.values()) {
+            if (face != state.getValue(MOUNT) && state.getValue(OUTPUTS.get(face)) && EMITTERS.get(face).inflate(0.1).contains(at)) return face;
+        }
+        return null;
+    }
+
+    /** Whether a click at {@code hit} landed on the focus. */
+    private static boolean onFocus(BlockPos pos, BlockHitResult hit) {
+        return FOCUS.inflate(0.1).contains(hit.getLocation().subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(pos)).scale(16));
     }
 
     @Override
@@ -72,7 +138,7 @@ public class LaserRelayBlock extends BaseEntityBlock {
 
     @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING))).setValue(MOUNT, rotation.rotate(state.getValue(MOUNT)));
     }
 
     @Override
@@ -85,13 +151,52 @@ public class LaserRelayBlock extends BaseEntityBlock {
                                           InteractionHand hand, BlockHitResult hit) {
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
-        return toggle(level, pos, hit.getDirection(), player);
+        if (!mounted()) return toggle(level, pos, hit.getDirection(), player);
+        return addOrRemove(state, level, pos, player, hit);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player.isSecondaryUseActive()) return toggle(level, pos, hit.getDirection(), player);
-        return cycleMode(level, pos, player);
+        if (!mounted()) {
+            if (player.isSecondaryUseActive()) return toggle(level, pos, hit.getDirection(), player);
+            return cycleMode(level, pos, player);
+        }
+        if (player.isSecondaryUseActive()) return addOrRemove(state, level, pos, player, hit);
+        Direction emitter = emitterAt(state, pos, hit);
+        if (emitter == null) return InteractionResult.PASS;
+        if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer server
+                && level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay) {
+            server.openMenu(new net.minecraft.world.SimpleMenuProvider(
+                    (id, inventory, who) -> new com.kadikular.quantimium.menu.RelayEmitterMenu(id, inventory, relay, emitter),
+                    net.minecraft.network.chat.Component.translatable("gui.quantimium.relay_emitter.title",
+                            net.minecraft.network.chat.Component.translatable("direction.quantimium." + emitter.getSerializedName()))),
+                    buffer -> {
+                        buffer.writeBlockPos(pos);
+                        buffer.writeEnum(emitter);
+                    });
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    /** On an emitter: takes it away, dropping its lens. On a side of the focus: puts an emitter there, but not on its base. */
+    private static InteractionResult addOrRemove(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (level.isClientSide() || !(level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay)) return InteractionResult.SUCCESS;
+        Direction emitter = emitterAt(state, pos, hit);
+        boolean changed;
+        if (emitter != null) {
+            changed = relay.removeEmitter(emitter);
+        } else if (onFocus(pos, hit)) {
+            changed = relay.addEmitter(hit.getDirection());
+        } else {
+            return InteractionResult.PASS;
+        }
+        if (changed) {
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, emitter == null ? 1.3f : 0.8f);
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.laser_relay.outputs",
+                    String.join(", ", relay.outputs().stream().map(Direction::getSerializedName).toList()))
+                    .withStyle(net.minecraft.ChatFormatting.AQUA));
+        }
+        return InteractionResult.SUCCESS;
     }
 
     /** An empty hand steps through how it listens to redstone: ignored, with a signal, without one, pulse. */
