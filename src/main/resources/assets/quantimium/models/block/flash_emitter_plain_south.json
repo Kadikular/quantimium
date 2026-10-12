@@ -1,0 +1,8 @@
+{
+  "parent": "quantimium:block/laser_emitter_plain_south",
+  "textures": {
+    "steel": "quantimium:block/laser_mirror_steel",
+    "particle": "quantimium:block/laser_mirror_steel",
+    "panel": "quantimium:block/flash_emitter_panel"
+  }
+}

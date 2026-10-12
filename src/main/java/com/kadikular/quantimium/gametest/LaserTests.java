@@ -338,6 +338,9 @@ public final class LaserTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(east.getEnergyStorage().getEnergyStored() > 0, "east");
             helper.assertTrue(west.getEnergyStorage().getEnergyStored() > 0, "and west");
+            BlockState shown = helper.getBlockState(new BlockPos(8, Y, 8));
+            helper.assertTrue(shown.getValue(LaserEmitterBlock.OUTPUTS.get(Direction.EAST)) && shown.getValue(LaserEmitterBlock.OUTPUTS.get(Direction.WEST))
+                    && !shown.getValue(LaserEmitterBlock.OUTPUTS.get(Direction.NORTH)), "the block shows both its outputs");
             TestSupport.finishLasers(helper);
         });
     }

@@ -1,0 +1,9 @@
+{
+  "parent": "quantimium:block/laser_emitter_item_shape",
+  "textures": {
+    "steel": "quantimium:block/laser_mirror_steel",
+    "particle": "quantimium:block/laser_mirror_steel",
+    "panel": "quantimium:block/flash_emitter_panel",
+    "tip": "quantimium:block/flash_emitter_tip_lit"
+  }
+}

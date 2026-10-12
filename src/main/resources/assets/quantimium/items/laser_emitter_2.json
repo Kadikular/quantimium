@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/laser_emitter_2_lit"
+    "model": "quantimium:block/laser_emitter_2_item"
   }
 }

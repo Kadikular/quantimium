@@ -1,0 +1,31 @@
+{
+  "textures": {
+    "particle": "#steel"
+  },
+  "elements": [
+    {
+      "from": [
+        14,
+        2,
+        2
+      ],
+      "to": [
+        16,
+        14,
+        14
+      ],
+      "faces": {
+        "east": {
+          "texture": "#panel",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

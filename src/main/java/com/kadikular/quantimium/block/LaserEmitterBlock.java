@@ -38,13 +38,17 @@ import org.jetbrains.annotations.Nullable;
 public class LaserEmitterBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    /** Which faces light leaves by, for the model: each shows a recessed emitter. */
+    public static final java.util.Map<Direction, BooleanProperty> OUTPUTS = net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION;
 
     private final LaserTuning.Tier tier;
 
     public LaserEmitterBlock(Properties properties, LaserTuning.Tier tier) {
         super(properties);
         this.tier = tier;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
+        BlockState state = stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false);
+        for (BooleanProperty output : OUTPUTS.values()) state = state.setValue(output, false);
+        registerDefaultState(state.setValue(OUTPUTS.get(Direction.NORTH), true));
     }
 
     public LaserTuning.Tier tier() {
@@ -69,12 +73,14 @@ public class LaserEmitterBlock extends BaseEntityBlock implements com.kadikular.
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, LIT);
+        OUTPUTS.values().forEach(builder::add);
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        Direction facing = context.getNearestLookingDirection().getOpposite();
+        return defaultBlockState().setValue(OUTPUTS.get(Direction.NORTH), false).setValue(FACING, facing).setValue(OUTPUTS.get(facing), true);
     }
 
     @Override

@@ -159,10 +159,7 @@ public class LaserEmitterBlockEntity extends BlockEntity implements LaserNode, M
         } else {
             outputs.add(face);
         }
-        BlockState state = getBlockState();
-        if (!outputs.contains(state.getValue(LaserEmitterBlock.FACING)) && level != null) {
-            level.setBlock(worldPosition, state.setValue(LaserEmitterBlock.FACING, outputs.iterator().next()), Block.UPDATE_ALL);
-        }
+        showOutputs();
         setChanged();
         sync();
         if (level != null) LaserNetworks.changed(level);
@@ -264,7 +261,21 @@ public class LaserEmitterBlockEntity extends BlockEntity implements LaserNode, M
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && !level.isClientSide()) LaserNetworks.add(level, this);
+        if (level != null && !level.isClientSide()) {
+            showOutputs();
+            LaserNetworks.add(level, this);
+        }
+    }
+
+    /** The block shows which faces light leaves by, and faces one of them. */
+    private void showOutputs() {
+        if (level == null || level.isClientSide()) return;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(LaserEmitterBlock.OUTPUTS.get(Direction.NORTH))) return;
+        BlockState shown = state;
+        for (Direction face : Direction.values()) shown = shown.setValue(LaserEmitterBlock.OUTPUTS.get(face), outputs.contains(face));
+        if (!outputs.contains(shown.getValue(LaserEmitterBlock.FACING))) shown = shown.setValue(LaserEmitterBlock.FACING, outputs.iterator().next());
+        if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
     }
 
     @Override

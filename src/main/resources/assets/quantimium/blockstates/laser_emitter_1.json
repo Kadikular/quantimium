@@ -1,50 +1,165 @@
 {
- "variants": {
-  "facing=north,lit=false": {
-   "model": "quantimium:block/laser_emitter_1"
+ "multipart": [
+  {
+   "apply": {
+    "model": "quantimium:block/laser_emitter_edges"
+   }
   },
-  "facing=north,lit=true": {
-   "model": "quantimium:block/laser_emitter_1_lit"
+  {
+   "when": {
+    "north": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_north"
+   }
   },
-  "facing=south,lit=false": {
-   "model": "quantimium:block/laser_emitter_1",
-   "y": 180
+  {
+   "when": {
+    "north": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_lit_north"
+   }
   },
-  "facing=south,lit=true": {
-   "model": "quantimium:block/laser_emitter_1_lit",
-   "y": 180
+  {
+   "when": {
+    "north": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_plain_north"
+   }
   },
-  "facing=west,lit=false": {
-   "model": "quantimium:block/laser_emitter_1",
-   "y": 270
+  {
+   "when": {
+    "south": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_south"
+   }
   },
-  "facing=west,lit=true": {
-   "model": "quantimium:block/laser_emitter_1_lit",
-   "y": 270
+  {
+   "when": {
+    "south": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_lit_south"
+   }
   },
-  "facing=east,lit=false": {
-   "model": "quantimium:block/laser_emitter_1",
-   "y": 90
+  {
+   "when": {
+    "south": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_plain_south"
+   }
   },
-  "facing=east,lit=true": {
-   "model": "quantimium:block/laser_emitter_1_lit",
-   "y": 90
+  {
+   "when": {
+    "west": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_west"
+   }
   },
-  "facing=up,lit=false": {
-   "model": "quantimium:block/laser_emitter_1",
-   "x": 270
+  {
+   "when": {
+    "west": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_lit_west"
+   }
   },
-  "facing=up,lit=true": {
-   "model": "quantimium:block/laser_emitter_1_lit",
-   "x": 270
+  {
+   "when": {
+    "west": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_plain_west"
+   }
   },
-  "facing=down,lit=false": {
-   "model": "quantimium:block/laser_emitter_1",
-   "x": 90
+  {
+   "when": {
+    "east": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_east"
+   }
   },
-  "facing=down,lit=true": {
-   "model": "quantimium:block/laser_emitter_1_lit",
-   "x": 90
+  {
+   "when": {
+    "east": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_lit_east"
+   }
+  },
+  {
+   "when": {
+    "east": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_plain_east"
+   }
+  },
+  {
+   "when": {
+    "up": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_up"
+   }
+  },
+  {
+   "when": {
+    "up": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_lit_up"
+   }
+  },
+  {
+   "when": {
+    "up": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_plain_up"
+   }
+  },
+  {
+   "when": {
+    "down": "true",
+    "lit": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_down"
+   }
+  },
+  {
+   "when": {
+    "down": "true",
+    "lit": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_out_lit_down"
+   }
+  },
+  {
+   "when": {
+    "down": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_emitter_1_plain_down"
+   }
   }
- }
+ ]
 }

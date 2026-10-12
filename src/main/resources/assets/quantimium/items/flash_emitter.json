@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "quantimium:block/flash_emitter_lit"
+    "model": "quantimium:block/flash_emitter_item"
   }
 }

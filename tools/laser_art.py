@@ -56,51 +56,6 @@ def stone(tones, seed: int) -> Image.Image:
     return img
 
 
-def side(spec) -> Image.Image:
-    img = stone(spec["stone"], spec["seed"])
-    if spec["trim"]:
-        # Flux trim: a straight azure line across the middle with a lighter pixel where it meets the edge.
-        trim = hx(spec["trim"])
-        for x in range(2, 14):
-            img.putpixel((x, 8), trim)
-        img.putpixel((2, 8), hx("c8dcff"))
-        img.putpixel((13, 8), hx("c8dcff"))
-    else:
-        # The flash emitter: a vent of three slots, for the fire inside.
-        for y in (5, 8, 11):
-            for x in range(4, 12):
-                img.putpixel((x, y), hx("1b1b1e"))
-    return img
-
-
-def front(spec, lit: bool) -> Image.Image:
-    img = stone(spec["stone"], spec["seed"] + 1)
-    lens = hx(spec["lens"])
-    ring = hx("0b0d18")
-    for x in range(16):
-        for y in range(16):
-            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
-            if d < 5.6:
-                img.putpixel((x, y), ring)
-            if d < 4.2:
-                img.putpixel((x, y), lens if lit else tuple(int(c * 0.35) for c in lens[:3]) + (255,))
-            if lit and d < 1.8:
-                img.putpixel((x, y), hx("ffffff"))
-    return img
-
-
-def back(spec) -> Image.Image:
-    img = stone(spec["stone"], spec["seed"] + 2)
-    port = hx("0b0d18")
-    for x in range(5, 11):
-        for y in range(5, 11):
-            img.putpixel((x, y), port)
-    accent = hx(spec["trim"] or spec["lens"])
-    for x, y in ((6, 6), (9, 6), (6, 9), (9, 9)):
-        img.putpixel((x, y), accent)
-    return img
-
-
 def steel(seed: int) -> Image.Image:
     """Dark brushed steel, for the Mirror's stand: streaks along its length."""
     rnd = random.Random(seed)
@@ -761,31 +716,142 @@ def outputs_block(name: str, face: str, side: str) -> None:
         json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
 
 
+def emitter_panel(spec) -> Image.Image:
+    """A Laser Emitter's plain face: the steel, with its tier set in the middle (the flash's vent, or one to three lens-coloured pips)."""
+    img = steel(31)
+    dark = hx("1b1b1e")
+    if not spec["trim"]:
+        for y in (5, 8, 11):
+            for x in range(4, 12):
+                img.putpixel((x, y), dark)
+        return img
+    pips = {"3485ff": (7,), "7fb2ff": (5, 9), "c8dcff": (4, 7, 10)}[spec["lens"]]
+    for x0 in pips:
+        for x in range(x0 - 1, x0 + 3):
+            for y in range(6, 10):
+                img.putpixel((x, y), dark)
+    for x0 in pips:
+        for x in range(x0, x0 + 2):
+            for y in range(7, 9):
+                img.putpixel((x, y), hx(spec["lens"]))
+    return img
+
+
+def emitter_tip(spec, lit: bool) -> Image.Image:
+    """A Laser Emitter's tip, in its tier's colour: dim when idle, bright when it shines."""
+    r, g, b, _ = hx(spec["lens"])
+    colour = tuple(int(c + (255 - c) * 0.35) for c in (r, g, b)) if lit else tuple(int(c * 0.4) for c in (r, g, b))
+    return Image.new("RGBA", (16, 16), colour + (255,))
+
+
+# Each face of a block, as a map from (u, v, w) on it (w the depth in from the face) to the block's (x, y, z).
+FACE_FRAMES = {
+    "north": lambda u, v, w: (u, v, w),
+    "south": lambda u, v, w: (16 - u, v, 16 - w),
+    "west": lambda u, v, w: (w, v, 16 - u),
+    "east": lambda u, v, w: (16 - w, v, u),
+    "up": lambda u, v, w: (u, 16 - w, 16 - v),
+    "down": lambda u, v, w: (u, w, v),
+}
+_NORMALS = {(0, 0, -1): "north", (0, 0, 1): "south", (-1, 0, 0): "west", (1, 0, 0): "east", (0, 1, 0): "up", (0, -1, 0): "down"}
+
+
+def on_face(direction: str, start, end, faces: dict) -> dict:
+    """A box drawn on a north face, (u, v, w) from start to end, put on {@code direction}'s face; faces keyed out/in/+u/-u/+v/-v."""
+    frame = FACE_FRAMES[direction]
+    a, b = frame(*start), frame(*end)
+    origin = frame(0, 0, 0)
+    axes = {"+u": frame(1, 0, 0), "-u": frame(-1, 0, 0), "+v": frame(0, 1, 0), "-v": frame(0, -1, 0), "out": frame(0, 0, -1), "in": frame(0, 0, 1)}
+    element = {"from": [min(a[i], b[i]) for i in range(3)], "to": [max(a[i], b[i]) for i in range(3)], "faces": {}}
+    for key, face in faces.items():
+        world = _NORMALS[tuple(axes[key][i] - origin[i] for i in range(3))]
+        element["faces"][world] = dict(face)
+        if key == "out" and start[2] == 0:
+            element["faces"][world]["cullface"] = world
+    return element
+
+
+def laser_emitters() -> None:
+    """
+    The Laser Emitters: a solid steel block, like the Lens Mount, its twelve edges shared, each face either plain (with its
+    tier set in it) or, where light leaves, an 8x8 recess 2 deep holding half an emitter whose tip lights in the tier's
+    colour while it shines. Faces come and go by the block's outputs.
+    """
+    def edges() -> list:
+        parts = []
+        spans = ((0, 2), (14, 16))
+        for a in spans:
+            for b in spans:
+                parts += [([0, a[0], b[0]], [16, a[1], b[1]]), ([a[0], 2, b[0]], [a[1], 14, b[1]]), ([a[0], b[0], 2], [a[1], b[1], 14])]
+        elements = []
+        for start, end in parts:
+            faces = {}
+            for axis, (low, high) in enumerate((("west", "east"), ("down", "up"), ("north", "south"))):
+                if start[axis] == 0:
+                    faces[low] = {"texture": "#steel", "cullface": low}
+                if end[axis] == 16:
+                    faces[high] = {"texture": "#steel", "cullface": high}
+            elements.append({"from": start, "to": end, "faces": faces})
+        return elements
+
+    steel_face = {"texture": "#steel"}
+    for direction in FACE_FRAMES:
+        plain = [on_face(direction, (2, 2, 0), (14, 14, 2), {"out": {"texture": "#panel", "uv": [2, 2, 14, 14]}})]
+        recess = [on_face(direction, (2, 12, 0), (14, 14, 2), {"out": steel_face, "-v": steel_face}),
+                  on_face(direction, (2, 2, 0), (14, 4, 2), {"out": steel_face, "+v": steel_face}),
+                  on_face(direction, (2, 4, 0), (4, 12, 2), {"out": steel_face, "+u": steel_face}),
+                  on_face(direction, (12, 4, 0), (14, 12, 2), {"out": steel_face, "-u": steel_face}),
+                  on_face(direction, (4, 4, 2), (12, 12, 2), {"out": steel_face}),
+                  on_face(direction, (6, 6, 1), (10, 10, 2), {k: steel_face for k in ("out", "+u", "-u", "+v", "-v")}),
+                  on_face(direction, (7, 7, 0), (9, 9, 1), {k: {"texture": "#tip", "uv": [7, 7, 9, 9]} for k in ("out", "+u", "-u", "+v", "-v")})]
+        for name, elements in ((f"laser_emitter_plain_{direction}", plain), (f"laser_emitter_out_{direction}", recess)):
+            with open(os.path.join(MODELS, name + ".json"), "w") as handle:
+                json.dump({"textures": {"particle": "#steel"}, "elements": elements}, handle, indent=2)
+    with open(os.path.join(MODELS, "laser_emitter_edges.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "textures": {"steel": "quantimium:block/laser_mirror_steel", "particle": "quantimium:block/laser_mirror_steel"},
+                   "elements": edges()}, handle, indent=2)
+    with open(os.path.join(MODELS, "laser_emitter_item_shape.json"), "w") as handle:
+        elements = edges()
+        for direction in FACE_FRAMES:
+            source = "out" if direction == "north" else "plain"
+            with open(os.path.join(MODELS, f"laser_emitter_{source}_{direction}.json")) as part:
+                elements += json.load(part)["elements"]
+        json.dump({"parent": "minecraft:block/block", "elements": elements}, handle, indent=2)
+
+    for name, spec in TIERS.items():
+        emitter_panel(spec).save(os.path.join(TEX, f"{name}_panel.png"))
+        emitter_tip(spec, False).save(os.path.join(TEX, f"{name}_tip.png"))
+        emitter_tip(spec, True).save(os.path.join(TEX, f"{name}_tip_lit.png"))
+        steel_tex = "quantimium:block/laser_mirror_steel"
+        def child(model, parent, **textures):
+            with open(os.path.join(MODELS, model + ".json"), "w") as handle:
+                json.dump({"parent": f"quantimium:block/{parent}", "textures": dict(steel=steel_tex, particle=steel_tex, **textures)}, handle, indent=2)
+        parts = [{"apply": {"model": "quantimium:block/laser_emitter_edges"}}]
+        for direction in FACE_FRAMES:
+            child(f"{name}_plain_{direction}", f"laser_emitter_plain_{direction}", panel=f"quantimium:block/{name}_panel")
+            for lit in (False, True):
+                tag = "_lit" if lit else ""
+                child(f"{name}_out{tag}_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip{tag}")
+                parts.append({"when": {direction: "true", "lit": str(lit).lower()}, "apply": {"model": f"quantimium:block/{name}_out{tag}_{direction}"}})
+            parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+        child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip_lit")
+        with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
+            json.dump({"multipart": parts}, handle, indent=1)
+        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
+        for stale in (f"textures/block/{name}_side.png", f"textures/block/{name}_back.png", f"textures/block/{name}_front.png",
+                      f"textures/block/{name}_front_lit.png", f"models/block/{name}.json", f"models/block/{name}_lit.json"):
+            path = os.path.join(ASSETS, stale)
+            if os.path.exists(path):
+                os.remove(path)
+
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
 def main() -> None:
     written = 0
-    for name, spec in TIERS.items():
-        side(spec).save(os.path.join(TEX, f"{name}_side.png"))
-        back(spec).save(os.path.join(TEX, f"{name}_back.png"))
-        front(spec, False).save(os.path.join(TEX, f"{name}_front.png"))
-        front(spec, True).save(os.path.join(TEX, f"{name}_front_lit.png"))
-        for lit in (False, True):
-            tag = "_lit" if lit else ""
-            model = cube({"front": f"quantimium:block/{name}_front{tag}", "back": f"quantimium:block/{name}_back",
-                          "side": f"quantimium:block/{name}_side"}, "front")
-            with open(os.path.join(MODELS, f"{name}{tag}.json"), "w") as handle:
-                json.dump(model, handle, indent=2)
-        variants = {}
-        for facing, rot in ROTATIONS.items():
-            for lit in (False, True):
-                variants[f"facing={facing},lit={str(lit).lower()}"] = dict({"model": f"quantimium:block/{name}{'_lit' if lit else ''}"}, **rot)
-        with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
-            json.dump({"variants": variants}, handle, indent=1)
-        with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
-            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
-        written += 4
+    laser_emitters()
 
     laser_relay()
     laser_mirror()
