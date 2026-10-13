@@ -230,6 +230,9 @@ dependencies {
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
     devClientMods("maven.modrinth:journeymap:${journeymap_version}") { transitive = false }
 
+    // Profiling while playtesting: /spark tps, /spark profiler (Observable has no 26.1 build). Client runs only.
+    devClientMods("maven.modrinth:spark:${spark_version}") { transitive = false }
+
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
     // The group id is ignored when searching -- in this case, it is "blank"

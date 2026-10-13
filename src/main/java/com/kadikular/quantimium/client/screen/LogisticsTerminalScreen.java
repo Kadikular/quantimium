@@ -122,11 +122,29 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     private String shownQuery;
     private boolean shownByName;
     private View shownView;
+    /** Whether the list was last kept in its order for shift: sorted again once shift is let go. */
+    private boolean frozen;
     private List<LogisticsTerminalViewPayload.Entry> shown = List.of();
 
     private List<LogisticsTerminalViewPayload.Entry> shown() {
         String query = search == null ? "" : search.getValue().trim().toLowerCase(Locale.ROOT);
-        if (entries == shownFor && query.equals(shownQuery) && byName == shownByName && view == shownView) return shown;
+        boolean shift = minecraft != null && minecraft.hasShiftDown();
+        if (entries == shownFor && query.equals(shownQuery) && byName == shownByName && view == shownView && (shift || !frozen)) return shown;
+        // While shift is held the order stands still, so taking one at a time doesn't move what's under the mouse;
+        // the counts still change, and what's run out drops away.
+        if (shift && shownFor != null && query.equals(shownQuery) && byName == shownByName && view == shownView) {
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, LogisticsTerminalViewPayload.Entry> latest = new java.util.HashMap<>();
+            for (LogisticsTerminalViewPayload.Entry entry : entries) latest.put(entry.item(), entry);
+            List<LogisticsTerminalViewPayload.Entry> kept = new ArrayList<>();
+            for (LogisticsTerminalViewPayload.Entry was : shown) {
+                LogisticsTerminalViewPayload.Entry now = latest.get(was.item());
+                if (now != null && view.shows(now)) kept.add(now);
+            }
+            shownFor = entries;
+            shown = kept;
+            frozen = true;
+            return kept;
+        }
         List<LogisticsTerminalViewPayload.Entry> cells = new ArrayList<>();
         for (LogisticsTerminalViewPayload.Entry entry : entries) {
             if (!view.shows(entry)) continue;
@@ -141,6 +159,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         shownQuery = query;
         shownByName = byName;
         shownView = view;
+        frozen = false;
         shown = cells;
         return cells;
     }
@@ -246,10 +265,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             var pos = menu.getBlockEntity().getBlockPos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             ItemStack carried = menu.getCarried();
-            // Right-click on what's already in hand takes one more of it (makes one more, if it must).
+            // Right-click: half a stack; with shift, one. On what's already in hand, that much more of it (made, if it must be).
             if (event.button() == 1 && cell != null && !carried.isEmpty()
                     && net.neoforged.neoforge.transfer.item.ItemResource.of(carried).equals(cell.item())) {
-                ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), 1, false));
+                ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), rightClickCount(cell, event.hasShiftDown()), false));
                 click();
                 return true;
             }
@@ -259,13 +278,18 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             }
             if (cell != null) {
                 int stack = cell.item().toStack(1).getMaxStackSize();
-                int count = event.button() == 1 ? 1 : stack;
+                int count = event.button() == 1 ? rightClickCount(cell, event.hasShiftDown()) : stack;
                 ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), count, event.button() == 0 && event.hasShiftDown()));
                 click();
             }
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    /** Half a stack, or one with shift. */
+    private static int rightClickCount(LogisticsTerminalViewPayload.Entry cell, boolean shift) {
+        return shift ? 1 : Math.max(1, cell.item().toStack(1).getMaxStackSize() / 2);
     }
 
     private void click() {
