@@ -38,11 +38,17 @@ public final class Logistics {
 
     private Logistics() {}
 
-    static void run(Level level, Collection<LaserNode> nodes, Map<BlockPos, Light> lights) {
+    /** Each tick, the networks whose controllers fall in this {@code slice} of the second (0 to 19) do their moves. */
+    static void run(Level level, Collection<LaserNode> nodes, Map<BlockPos, Light> lights, int slice) {
         Map<BlockPos, LogisticsController> controllers = new HashMap<>();
         for (LaserNode node : nodes) {
             if (node instanceof LogisticsController controller) controllers.put(node.nodePos(), controller);
         }
+        // None due this tick: nothing to look at. Who's on which network is worked out again when one is.
+        boolean due = false;
+        for (BlockPos controller : controllers.keySet()) due |= Math.floorMod(controller.hashCode(), 20) == slice;
+        // With none at all, receptacles are told they're on no network once a second.
+        if (controllers.isEmpty() ? slice != 0 : !due) return;
         // Whose light reaches each member; light from two controllers on one member stops both.
         Map<LogisticsMember, BlockPos> owners = new HashMap<>();
         Set<BlockPos> clashing = new HashSet<>();
@@ -73,6 +79,7 @@ public final class Logistics {
             if (joined) networks.computeIfAbsent(owner, key -> new ArrayList<>()).add(member);
         }
         for (Map.Entry<BlockPos, LogisticsController> entry : controllers.entrySet()) {
+            if (Math.floorMod(entry.getKey().hashCode(), 20) != slice) continue;
             List<LogisticsMember> members = networks.getOrDefault(entry.getKey(), List.of());
             boolean clash = clashing.contains(entry.getKey());
             entry.getValue().report(members, clash);

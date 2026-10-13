@@ -62,6 +62,8 @@ public final class LaserTuning {
     public static final int PLACE_COOLDOWN = 10;
     /** Ticks over which Insert and Extract beams made together are spread at the start, so they don't all look in one tick. */
     public static final int IDLE_RETRY = 10;
+    /** Ticks a network whose blocks took no power waits before charging them again. */
+    public static final int FULL_REST = 10;
     /**
      * The longest an Insert or Extract beam waits between looks: two seconds. Idle, its wait doubles up to this; each
      * move halves it again, down to its own pace (PLACE_COOLDOWN, quicker with Speed lenses).

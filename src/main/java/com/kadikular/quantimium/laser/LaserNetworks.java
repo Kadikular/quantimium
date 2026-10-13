@@ -219,7 +219,8 @@ public final class LaserNetworks {
     // ---- the network ----
 
     /** One connected set of nodes: its sources, and each block it charges with how to reach it; whether any of it is a cavity. */
-    private record Network(List<LaserNode> sources, List<Sink> sinks, boolean cavities, long[] left) {}
+    /** @param rest ticks it waits before charging again, after a tick when nothing it reaches took any power */
+    private record Network(List<LaserNode> sources, List<Sink> sinks, boolean cavities, long[] left, int[] rest) {}
 
     /**
      * A block a beam charges: where, from which face, through which beams from a source (each as its
@@ -547,7 +548,7 @@ public final class LaserNetworks {
                 reach(source, sources.size() - 1, sinks);
             }
             boolean cavities = sources.stream().anyMatch(LaserNode::buffers) || sinks.values().stream().anyMatch(sink -> sink.buffer() != null);
-            Network network = new Network(sources, List.copyOf(sinks.values()), cavities, new long[sources.size()]);
+            Network network = new Network(sources, List.copyOf(sinks.values()), cavities, new long[sources.size()], new int[1]);
             built.add(network);
             for (Sink sink : network.sinks()) {
                 if (sink.action() != null) actionSinks.put(sink.action().key(), new ActionSink(network, sink));
@@ -1141,7 +1142,8 @@ public final class LaserNetworks {
         for (Network network : networks) refill(network);
         for (LensAction action : actions.values()) action.act(level, this);
         if (time % SETTLE_TICKS == 10) ship();
-        if (time % SETTLE_TICKS == 15) Logistics.run(level, nodes.values(), lights);
+        // Each logistics network moves once a second, in its own slice of it, not all in one tick.
+        Logistics.run(level, nodes.values(), lights, (int) Math.floorMod(time, SETTLE_TICKS));
         if (time % 2 == 0) showAreaWork();
         passing.clear();
         for (Network network : networks) move(network);
@@ -1169,15 +1171,25 @@ public final class LaserNetworks {
         long supply = 0;
         for (long has : left) supply += has;
         if (supply <= 0 || network.sinks().isEmpty()) return;
+        // Nothing it reaches took power last time: it asks again in a while, not every tick.
+        if (network.rest()[0] > 0) {
+            network.rest()[0]--;
+            return;
+        }
         long[] had = left.clone();
         charge(network, left, false, false);
         if (network.cavities()) {
             charge(network, left, false, true);
             charge(network, left, true, false);
         }
+        boolean gave = false;
         for (int i = 0; i < left.length; i++) {
-            if (had[i] > left[i]) sources.get(i).draw(had[i] - left[i]);
+            if (had[i] > left[i]) {
+                sources.get(i).draw(had[i] - left[i]);
+                gave = true;
+            }
         }
+        network.rest()[0] = gave ? 0 : LaserTuning.FULL_REST;
     }
 
     /**

@@ -289,12 +289,13 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         private com.kadikular.quantimium.reactor.ReactorCounter.Counts slotsFrom;
         private List<ItemResource> slots = List.of();
         private List<Long> amounts = List.of();
-        /** The last ask answered with nothing pending: when, against which ledger, and the answer. */
-        private long cachedTick = Long.MIN_VALUE;
+        /** What asks were answered with nothing pending, while the ledger stood at {@link #cachedVersion}, since {@link #cachedTick}. */
+        private record AnswerKey(ItemResource item, int amount) {}
+
+        private final java.util.Map<AnswerKey, Op> answers = new java.util.HashMap<>();
+        /** Far enough back that the first ask starts afresh, near enough that the subtraction can't overflow. */
+        private long cachedTick = Long.MIN_VALUE / 2;
         private int cachedVersion;
-        private ItemResource cachedItem;
-        private int cachedAmount;
-        private Op cachedAnswer;
 
         /**
          * The core, unless this port is to show nothing: while the core is reading or taking from a
@@ -399,9 +400,17 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         private Op answer(HorizonCoreBlockEntity horizon, ItemResource item, int amount) {
             long tick = level.getGameTime();
             boolean clean = ops.isEmpty() && !horizon.hasReservations();
-            if (clean && cachedTick == tick && cachedVersion == horizon.ledgerVersion() && item.equals(cachedItem)
-                    && cachedAmount == amount) {
-                return cachedAnswer;
+            // Answers are kept while the ledger stands, up to a second: a storage bus asks about everything, often.
+            if (cachedVersion != horizon.ledgerVersion() || tick - cachedTick >= 20) {
+                answers.clear();
+                cachedTick = tick;
+                cachedVersion = horizon.ledgerVersion();
+            }
+            AnswerKey askKey = new AnswerKey(item, amount);
+            if (clean && answers.containsKey(askKey)) {
+                Op kept = answers.get(askKey);
+                // Still to be paid for: the power may have gone since.
+                if (kept == null || kept.fe() <= horizon.getEnergyStorage().getEnergyStored()) return kept;
             }
             // What's held less what any open transaction has promised (this one's included), and what this
             // one's own earlier steps leave or put in.
@@ -432,13 +441,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
                     high = tryAmount - 1;
                 }
             }
-            if (clean) {
-                cachedTick = tick;
-                cachedVersion = horizon.ledgerVersion();
-                cachedItem = item;
-                cachedAmount = amount;
-                cachedAnswer = best;
-            }
+            if (clean && answers.size() < 256) answers.put(askKey, best);
             return best;
         }
 
