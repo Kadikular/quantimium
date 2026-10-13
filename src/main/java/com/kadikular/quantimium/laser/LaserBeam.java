@@ -131,11 +131,14 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
     @Nullable
     private static LaserBeam endsAt(Level level, BlockPos from, Direction face, @Nullable BlockPos aim, int length, BlockPos pos, int marks) {
         if (!level.isLoaded(pos)) return new LaserBeam(from, face, aim, length, null, End.OPEN, 0, false, Lens.NONE);
-        if (level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
         BlockState state = level.getBlockState(pos);
+        if (state.isAir()) return null;
+        // Only a block with a block entity can be a laser block or take power: the rest are looked up no further.
+        boolean entity = state.hasBlockEntity();
+        if (entity && level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
         if (passes(level, pos, state)) return null;
         // In the mirror, light charges nothing of the real world: a block that takes power just stops it.
-        boolean takes = (marks & Light.MIRRORED) == 0 && level.getCapability(Capabilities.Energy.BLOCK, pos, face.getOpposite()) != null;
+        boolean takes = entity && (marks & Light.MIRRORED) == 0 && level.getCapability(Capabilities.Energy.BLOCK, pos, face.getOpposite()) != null;
         // Phantom light goes through anything but a laser block, or a block it charges.
         if ((marks & Light.PHANTOM) != 0 && !takes) return null;
         return new LaserBeam(from, face, aim, length, pos, takes ? End.SINK : End.BLOCKED, 0, false, Lens.NONE);

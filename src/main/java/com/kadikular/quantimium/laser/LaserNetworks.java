@@ -320,6 +320,7 @@ public final class LaserNetworks {
         List<BlockPos> present = seeds.stream().filter(nodes::containsKey).toList();
         dirtyAt.clear();
         if (present.isEmpty()) return;
+        if (onlyEndsMoved(present)) return;
         Set<BlockPos> scope = group(present);
         // Nearly the whole level: as cheap to do it all.
         if (scope.size() * 10 > nodes.size() * 9) {
@@ -376,6 +377,59 @@ public final class LaserNetworks {
         kept.addAll(built);
         networks = kept;
         limited = nodes.values().stream().anyMatch(node -> node.relays() && node.passLimit() != Long.MAX_VALUE);
+    }
+
+    /**
+     * The common case of a change along a beam: a block cut, placed or used where it ended, so the beam now stops
+     * somewhere else, but on the same kind of thing (open air or a block it can't charge), or on the same node or
+     * charged block. Nothing it carries or pays for changes: its node's beams are traced again and its actions told,
+     * and every network stays as it was. Whether that was all it took for every node at {@code positions}.
+     */
+    private boolean onlyEndsMoved(List<BlockPos> positions) {
+        Map<BlockPos, List<LaserBeam>> fresh = new HashMap<>();
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            List<LaserBeam> was = beams.get(pos);
+            if (node == null || was == null) return false;
+            Light light = lights.get(pos);
+            List<LaserBeam> now = trace(node, rangeOf(node), light == null ? 0 : light.marks());
+            if (now.size() != was.size()) return false;
+            for (int i = 0; i < now.size(); i++) {
+                if (!sameEnding(was.get(i), now.get(i))) return false;
+            }
+            fresh.put(pos, now);
+        }
+        rebuilds++;
+        partialRebuilds++;
+        Map<LensAction.Key, LensAction> was = new HashMap<>();
+        List<LaserNode> moved = new ArrayList<>();
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            Map<BlockPos, List<LaserBeam>> before = Map.of(pos, beams.get(pos));
+            traceAt(node, rangeOf(node), before);
+            moved.add(node);
+        }
+        actions.entrySet().removeIf(entry -> {
+            if (!fresh.containsKey(entry.getKey().node())) return false;
+            was.put(entry.getKey(), entry.getValue());
+            return true;
+        });
+        actionsUp(moved, was);
+        // An action gone, or a new one with no way to be paid for: everything again, next tick.
+        for (LensAction.Key key : was.keySet()) {
+            if (!actions.containsKey(key)) dirty = true;
+        }
+        for (LensAction.Key key : actions.keySet()) {
+            if (fresh.containsKey(key.node()) && !was.containsKey(key)) dirty = true;
+        }
+        return true;
+    }
+
+    /** Whether two beams leave the same way and end on the same kind of thing: the same node or charged block, or neither. */
+    private static boolean sameEnding(LaserBeam a, LaserBeam b) {
+        if (a.face() != b.face() || !java.util.Objects.equals(a.aim(), b.aim()) || a.end() != b.end()) return false;
+        if (a.end() == LaserBeam.End.NODE || a.end() == LaserBeam.End.SINK) return java.util.Objects.equals(a.hit(), b.hit());
+        return true;
     }
 
     /** Takes {@code pos}'s old beams off the indexes of what beams reach. */

@@ -107,6 +107,11 @@ public final class LensAction {
 
     void update(@Nullable LaserBeam beam, Light.Stream stream, List<BlockPos> collectors, List<BlockPos> senders,
                 @Nullable net.minecraft.world.level.levelgen.structure.BoundingBox area, int reach, int marks, int solids) {
+        // A new stream may cut with another tool, and let other things through its filter.
+        if (!stream.equals(this.stream)) {
+            tool = null;
+            cuts.clear();
+        }
         this.reach = reach;
         this.marks = marks;
         this.solids = solids;
@@ -746,7 +751,17 @@ public final class LensAction {
             return state.is(com.kadikular.quantimium.init.ModBlocks.ANOMALITE_CRYSTAL.get())
                     && state.getValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.AGE) >= 3;
         }
-        if (state.isAir() || state.getDestroySpeed(level, pos) < 0 || level.getBlockEntity(pos) != null) return false;
+        if (state.isAir() || state.hasBlockEntity()) return false;
+        Boolean known = cuts.get(state);
+        if (known != null) return known;
+        boolean may = cuttableState(level, pos, state);
+        if (cuts.size() < 512) cuts.put(state, may);
+        return may;
+    }
+
+    /** Whether it may cut a block in {@code state}: the same answer wherever one stands, so it's kept. */
+    private boolean cuttableState(ServerLevel level, BlockPos pos, BlockState state) {
+        if (state.getDestroySpeed(level, pos) < 0) return false;
         if (state.is(ModTags.LASER_UNBREAKABLE)) return false;
         // Plain, it cuts as an iron pickaxe: what needs better waits for an Amplify lens.
         if (state.requiresCorrectToolForDrops() && !tool(level).isCorrectToolForDrops(state)) return false;
@@ -755,12 +770,19 @@ public final class LensAction {
 
     /** What it cuts as: an iron pickaxe, or with an Amplify lens a diamond one; with Silk Touch for Precision, Fortune for each Harmonic lens. */
     private ItemStack tool(ServerLevel level) {
-        ItemStack tool = new ItemStack(stream.amps() > 0 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
+        if (tool != null) return tool;
+        tool = new ItemStack(stream.amps() > 0 ? Items.DIAMOND_PICKAXE : Items.IRON_PICKAXE);
         var enchantments = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
         if (stream.has(Lens.PRECISION)) tool.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH), 1);
         if (stream.fortune() > 0) tool.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FORTUNE), stream.fortune());
         return tool;
     }
+
+    /** What it cuts with, made once for its stream: asked for every block it looks at. */
+    @Nullable
+    private ItemStack tool;
+    /** Whether it may cut each kind of block it has looked at, for its stream: an area's scan asks again and again. */
+    private final java.util.Map<BlockState, Boolean> cuts = new java.util.HashMap<>();
 
     private long harvestCost(ServerLevel level, BlockPos pos) {
         // A crystal takes as long to take apart as a Harvest Laser's does.
