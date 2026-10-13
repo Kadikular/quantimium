@@ -1246,7 +1246,7 @@
   "block.quantimium.logistics_terminal": "Logistics Terminal",
   "block.quantimium.logistics_terminal.tip": "Logistics: put it where a Logistics Controller's light ends, and it shows everything that network's storage holds and its providers offer, to take or put away.",
   "gui.quantimium.logistics_terminal.count": "%s in the network",
-  "gui.quantimium.logistics_terminal.take.tip": "Click: a stack. Right-click: half a stack; shift-right-click: one (holding it, that much more). Shift-click: a stack to your inventory. Holding shift keeps the order still; shift and the wheel move one in or out.",
+  "gui.quantimium.logistics_terminal.take.tip": "Click: a stack. Right-click: half a stack; shift-right-click: one (holding it, that much more). Shift-click: a stack to your inventory. Holding shift keeps the order still; shift and the wheel: down takes one more onto the cursor, up puts one back.",
   "gui.quantimium.logistics_terminal.status": "%s kinds",
   "gui.quantimium.logistics_terminal.status.unconnected": "No controller's light",
   "gui.quantimium.logistics_terminal.status.tip": "A Logistics Controller's light must reach it. Click the grid holding something to put it away (right-click: one); shift-click it in your inventory does too.",
