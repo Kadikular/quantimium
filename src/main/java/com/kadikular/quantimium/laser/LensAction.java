@@ -65,6 +65,10 @@ public final class LensAction {
     /** The block being cut, what it costs, and the FE gone into it so far. */
     @Nullable
     private BlockPos cutting;
+    /** The last block it saw along a clear line, and until when that's taken as still so. */
+    @Nullable
+    private BlockPos seen;
+    private long seenUntil;
     private long cutCost;
     private long cut;
     private int cooldown;
@@ -409,7 +413,11 @@ public final class LensAction {
         // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
         BlockPos spill = area == null ? beam.hit().relative(beam.face().getOpposite()) : at.above();
         long processing = in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
-        if (processing < 0) return;
+        // Nothing to move (nothing it may take, or no room): it looks again in a while, not every tick.
+        if (processing < 0) {
+            placeCooldown = LaserTuning.IDLE_RETRY;
+            return;
+        }
         networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
@@ -1024,8 +1032,15 @@ public final class LensAction {
 
     /** Whether the area prism can see {@code pos}: a clear line of light from it, ending there, within its light's reach. */
     private boolean inSight(ServerLevel level, BlockPos pos) {
+        // A block it has just seen stays seen a little while: the block it's cutting is looked at every tick.
+        if (pos.equals(seen) && now < seenUntil) return true;
         LaserBeam line = LaserBeam.traceTo(level, key.node(), pos, reach, marks);
-        return pos.equals(line.hit());
+        boolean sees = pos.equals(line.hit());
+        if (sees) {
+            seen = pos.immutable();
+            seenUntil = now + LaserTuning.SIGHT_KEPT;
+        }
+        return sees;
     }
 
     /** For tests: what cutting the block it's on costs in all; for Phantom upkeep, what this tick's costs. */

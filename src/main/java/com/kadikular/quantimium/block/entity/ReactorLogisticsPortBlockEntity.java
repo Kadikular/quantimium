@@ -85,6 +85,10 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     /** What it offers, worked out once a tick so slot numbers hold still while something reads them. */
     private List<Offer> offers = List.of();
     private long offersTick = Long.MIN_VALUE;
+    /** The Reactor's ledger and counts the offers were worked out from. */
+    private int offersVersion;
+    @Nullable
+    private Object offersCounts;
     /** What the network holds, for the Reactor, once a tick. */
     private Map<ItemResource, Long> networkStock = Map.of();
     private long networkStockTick = Long.MIN_VALUE;
@@ -194,13 +198,22 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         return others;
     }
 
+    /**
+     * What it offers, worked out again only when the Reactor's holdings or counts change, or once a second for what
+     * its other networks hold: every Insert lens and terminal on the network reads it.
+     */
     private List<Offer> offers() {
         if (level == null) return List.of();
         long tick = level.getGameTime();
-        if (offersTick == tick) return offers;
-        offersTick = tick;
         HorizonCoreBlockEntity horizon = visibleCore();
-        if (horizon == null) return offers = List.of();
+        if (horizon == null) return List.of();
+        if (offersTick != Long.MIN_VALUE && tick - offersTick < 20 && offersVersion == horizon.ledgerVersion()
+                && offersCounts == horizon.getCounts()) {
+            return offers;
+        }
+        offersTick = tick;
+        offersVersion = horizon.ledgerVersion();
+        offersCounts = horizon.getCounts();
         Map<ItemResource, Long> held = horizon.available();
         Map<ItemResource, Long> passed = new HashMap<>();
         for (ReactorNetwork network : otherNetworks(horizon)) {

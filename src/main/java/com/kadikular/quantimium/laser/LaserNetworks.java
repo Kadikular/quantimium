@@ -332,12 +332,13 @@ public final class LaserNetworks {
         // Every node reached from each source, nearest first: each hop costs the tax, so fewest hops is best.
         List<Network> built = new ArrayList<>();
         Set<BlockPos> claimed = new HashSet<>();
+        Map<BlockPos, List<BlockPos>> joined = links();
         for (LaserNode start : nodes.values()) {
             if (!start.generates() || claimed.contains(start.nodePos())) continue;
             List<LaserNode> sources = new ArrayList<>();
             Map<Object, Sink> sinks = new LinkedHashMap<>();
             // The sources joined to this one through shared relays share the network.
-            for (LaserNode source : component(start)) {
+            for (LaserNode source : component(start, joined)) {
                 if (!source.generates()) continue;
                 claimed.add(source.nodePos());
                 sources.add(source);
@@ -812,7 +813,8 @@ public final class LaserNetworks {
     }
 
     /** Every node joined to {@code start} by a beam either way. */
-    private List<LaserNode> component(LaserNode start) {
+    /** Which nodes are joined to which: by beams between them, or by charging the same block. Worked out once a rebuild. */
+    private Map<BlockPos, List<BlockPos>> links() {
         Map<BlockPos, List<BlockPos>> links = new HashMap<>();
         // Nodes whose light charges the same block share a network too, so that block draws on all of them.
         Map<BlockPos, List<BlockPos>> chargers = new HashMap<>();
@@ -829,6 +831,11 @@ public final class LaserNetworks {
                 for (BlockPos b : sharing) if (!a.equals(b)) links.computeIfAbsent(a, key -> new ArrayList<>()).add(b);
             }
         });
+        return links;
+    }
+
+    /** Every node joined to {@code start}, by {@code links}. */
+    private List<LaserNode> component(LaserNode start, Map<BlockPos, List<BlockPos>> links) {
         List<LaserNode> found = new ArrayList<>();
         Set<BlockPos> seen = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();

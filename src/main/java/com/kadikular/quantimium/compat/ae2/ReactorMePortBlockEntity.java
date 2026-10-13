@@ -433,6 +433,8 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     /** Things whose trees to plan next, a few a tick, and those already queued. */
     private static final int TREES_PER_TICK = 32;
+    /** Ticks between planning one more tree again while nothing else is waiting. */
+    private static final int ROLLING_TICKS = 10;
     private final java.util.ArrayDeque<ItemResource> toPlan = new java.util.ArrayDeque<>();
     private final java.util.Set<ItemResource> queued = new java.util.HashSet<>();
     private final Map<ItemResource, ReactorTreePattern> trees = new java.util.LinkedHashMap<>();
@@ -484,16 +486,20 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                     }
                 });
             }
-            Map<ItemResource, Long> stock = horizon.stockWithNetworks(server);
+            // The stock (the Reactor's and every linked network's) is read only when something needs it.
+            Map<ItemResource, Long> stock = null;
             if (gameTime % 20 == 0) {
+                Map<ItemResource, Long> now = stock = horizon.stockWithNetworks(server);
                 trees.forEach((item, tree) -> {
-                    if (!tree.findsItsInputsIn(stock)) queue(item, true);
+                    if (!tree.findsItsInputsIn(now)) queue(item, true);
                 });
             }
-            if (toPlan.isEmpty()) {
+            // With nothing waiting, one tree is planned again now and then, to keep them fresh.
+            if (toPlan.isEmpty() && gameTime % ROLLING_TICKS == 0) {
                 if (!rolling.hasNext()) rolling = List.copyOf(trees.keySet()).iterator();
                 if (rolling.hasNext()) queue(rolling.next(), false);
             }
+            if (!toPlan.isEmpty() && stock == null) stock = horizon.stockWithNetworks(server);
             for (int i = 0; i < TREES_PER_TICK && !toPlan.isEmpty(); i++) {
                 ItemResource item = toPlan.poll();
                 queued.remove(item);

@@ -60,6 +60,10 @@ public final class LaserTuning {
     public static final long PLACE_FE = 200;
     /** Ticks between blocks a Placement beam places. */
     public static final int PLACE_COOLDOWN = 10;
+    /** Ticks an Insert or Extract beam waits after finding nothing to move, before it looks again. */
+    public static final int IDLE_RETRY = 10;
+    /** Ticks an area action takes a clear line to a block as still clear, before tracing it again. */
+    public static final int SIGHT_KEPT = 10;
     /** Kinds of thing an Interact beam tries from its sending Laser Ports in one go, before it gives up till next time. */
     public static final int INTERACT_TRIES = 9;
     /** How long light carrying power blinds what looks into it: fifteen seconds. */
