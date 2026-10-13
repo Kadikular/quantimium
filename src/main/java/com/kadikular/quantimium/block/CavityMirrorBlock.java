@@ -83,7 +83,21 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
     protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos,
                                                                   net.minecraft.world.phys.shapes.CollisionContext context) {
         Direction mount = state.getValue(MOUNT);
-        return net.minecraft.world.phys.shapes.Shapes.or(SHAPES.get(state.getValue(FACING)), box(LaserRelayBlock.BASES.get(mount)), box(LaserRelayBlock.POSTS.get(mount)));
+        net.minecraft.world.phys.shapes.VoxelShape shape = net.minecraft.world.phys.shapes.Shapes.or(SHAPES.get(state.getValue(FACING)),
+                box(LaserRelayBlock.BASES.get(mount)), box(LaserRelayBlock.POSTS.get(mount)));
+        for (Direction face : Direction.values()) {
+            if (state.getValue(OUTPUTS.get(face))) shape = net.minecraft.world.phys.shapes.Shapes.or(shape, box(LaserRelayBlock.EMITTERS.get(face)));
+        }
+        return shape;
+    }
+
+    /** The emitter a click at {@code hit} landed on, if it did; else the face clicked. */
+    private static Direction faceAt(BlockState state, BlockPos pos, BlockHitResult hit) {
+        net.minecraft.world.phys.Vec3 at = hit.getLocation().subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(pos)).scale(16);
+        for (Direction face : Direction.values()) {
+            if (state.getValue(OUTPUTS.get(face)) && LaserRelayBlock.EMITTERS.get(face).inflate(0.1).contains(at)) return face;
+        }
+        return hit.getDirection();
     }
 
     private static net.minecraft.world.phys.shapes.VoxelShape box(net.minecraft.world.phys.AABB sixteenths) {
@@ -161,7 +175,7 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!player.isSecondaryUseActive()) return InteractionResult.PASS;
-        Direction face = hit.getDirection();
+        Direction face = faceAt(state, pos, hit);
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity mirror) {
             if (!mirror.toggleOutput(face)) {
                 player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.cavity.not_on_mirror"));

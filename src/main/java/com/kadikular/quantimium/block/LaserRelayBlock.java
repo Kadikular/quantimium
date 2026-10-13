@@ -49,7 +49,7 @@ public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.qu
 
     /** In sixteenths: its focus, an emitter on each side, its base (with its boss) on each side, and its post to it. */
     private static final net.minecraft.world.phys.AABB FOCUS = new net.minecraft.world.phys.AABB(6, 6, 6, 10, 10, 10);
-    private static final java.util.Map<Direction, net.minecraft.world.phys.AABB> EMITTERS = new java.util.EnumMap<>(java.util.Map.of(
+    static final java.util.Map<Direction, net.minecraft.world.phys.AABB> EMITTERS = new java.util.EnumMap<>(java.util.Map.of(
             Direction.NORTH, new net.minecraft.world.phys.AABB(5, 5, 0, 11, 11, 6), Direction.SOUTH, new net.minecraft.world.phys.AABB(5, 5, 10, 11, 11, 16),
             Direction.WEST, new net.minecraft.world.phys.AABB(0, 5, 5, 6, 11, 11), Direction.EAST, new net.minecraft.world.phys.AABB(10, 5, 5, 16, 11, 11),
             Direction.DOWN, new net.minecraft.world.phys.AABB(5, 0, 5, 11, 6, 11), Direction.UP, new net.minecraft.world.phys.AABB(5, 10, 5, 11, 16, 11)));
@@ -155,6 +155,18 @@ public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.qu
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
+        // A lens used on an emitter goes into it, in place of any there.
+        if (mounted() && !player.isSecondaryUseActive() && stack.getItem() instanceof com.kadikular.quantimium.item.LensItem) {
+            Direction emitter = emitterAt(state, pos, hit);
+            if (emitter == null) return InteractionResult.PASS;
+            if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay) {
+                ItemStack was = relay.lens(emitter);
+                relay.setLens(emitter, stack.split(1));
+                if (!was.isEmpty() && !player.getInventory().add(was)) player.drop(was, false);
+                level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 1.0f, 1.2f);
+            }
+            return InteractionResult.SUCCESS;
+        }
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
         if (!mounted()) return toggle(level, pos, hit.getDirection(), player);
@@ -184,12 +196,21 @@ public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.qu
         return InteractionResult.SUCCESS;
     }
 
-    /** On an emitter: takes it away, dropping its lens. On a side of the focus: puts an emitter there, but not on its base. */
+    /**
+     * On an emitter: takes its lens out first, to the player; with none in it, takes the emitter away. On a side of
+     * the focus: puts an emitter there, but not on its base.
+     */
     private static InteractionResult addOrRemove(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide() || !(level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay)) return InteractionResult.SUCCESS;
         Direction emitter = emitterAt(state, pos, hit);
         boolean changed;
-        if (emitter != null) {
+        if (emitter != null && !relay.lens(emitter).isEmpty()) {
+            ItemStack lens = relay.lens(emitter);
+            relay.setLens(emitter, ItemStack.EMPTY);
+            if (!player.getInventory().add(lens)) player.drop(lens, false);
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0f, 1.0f);
+            return InteractionResult.SUCCESS;
+        } else if (emitter != null) {
             changed = relay.removeEmitter(emitter);
         } else if (onFocus(pos, hit)) {
             changed = relay.addEmitter(hit.getDirection());
