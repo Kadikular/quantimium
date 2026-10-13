@@ -2072,4 +2072,24 @@ public final class LensTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.network.incremental
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void cuttingReworksOnlyItsOwnNetwork(GameTestHelper helper) {
+        // A Harvest beam cutting a column of stone east along z = 4; a plain beam charging a Fold Core along z = 12.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
+        for (int x = 6; x <= 8; x++) helper.setBlock(new BlockPos(x, Y, 4), Blocks.STONE);
+        emitter(helper, new BlockPos(1, Y, 12), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y, 12), ModBlocks.FOLD_CORE.get());
+        var core = helper.getBlockEntity(new BlockPos(6, Y, 12), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        var networks = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel());
+        long partialBefore = networks.partialRebuilds();
+        helper.succeedWhen(() -> {
+            for (int x = 6; x <= 8; x++) helper.assertBlockPresent(Blocks.AIR, new BlockPos(x, Y, 4));
+            helper.assertTrue(networks.partialRebuilds() > partialBefore, "each cut reworked only its own network");
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "the other network charged on meanwhile");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

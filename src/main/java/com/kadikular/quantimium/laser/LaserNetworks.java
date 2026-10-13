@@ -80,7 +80,11 @@ public final class LaserNetworks {
     /** The light reaching each cavity, which it remembers when it's filled. */
     private final Map<BlockPos, Light> cavityIn = new HashMap<>();
     /** What redstone can switch, and whether each was on when the network was last built. */
-    private Map<LaserNode, Integer> switched = Map.of();
+    private Map<LaserNode, Integer> switched = new LinkedHashMap<>();
+    /** For each block a beam charges, the nodes whose beams charge it: they share a network. Kept as beams are traced. */
+    private final Map<BlockPos, Set<BlockPos>> chargedBy = new HashMap<>();
+    /** Nodes whose beams changed on their own (a block cut, placed, switched): only their networks are worked out again. */
+    private final Set<BlockPos> dirtyAt = new HashSet<>();
     /** The nodes light ran through at the last settle. */
     private Set<BlockPos> litNow = Set.of();
 
@@ -113,6 +117,14 @@ public final class LaserNetworks {
         if (level instanceof ServerLevel server) of(server).dirty = true;
     }
 
+    /**
+     * Something along {@code node}'s beams changed (a block it cut, placed or used): only the network it's part of is
+     * worked out again, not every one in the level.
+     */
+    public static void changed(Level level, BlockPos node) {
+        if (level instanceof ServerLevel server) of(server).dirtyAt.add(node.immutable());
+    }
+
     private void put(LaserNode node) {
         nodes.put(node.nodePos().immutable(), node);
         dirty = true;
@@ -124,6 +136,7 @@ public final class LaserNetworks {
             nodes.remove(pos);
             beams.remove(pos);
             into.values().forEach(list -> list.remove(pos));
+            chargedBy.values().forEach(set -> set.remove(pos));
             carried.remove(pos);
             dirty = true;
         }
@@ -250,8 +263,16 @@ public final class LaserNetworks {
         return rebuilds;
     }
 
+    /** For tests: how many of those worked out only the networks round a change. */
+    private long partialRebuilds;
+
+    public long partialRebuilds() {
+        return partialRebuilds;
+    }
+
     private void rebuild() {
         dirty = false;
+        dirtyAt.clear();
         rebuilds++;
         Map<BlockPos, List<LaserBeam>> before = new HashMap<>(beams);
         // What each beam has carried since the last settle is kept, so a rebuild (a block broken, say)
@@ -259,6 +280,7 @@ public final class LaserNetworks {
         Map<BlockPos, long[]> carriedBefore = new HashMap<>(carried);
         beams.clear();
         into.clear();
+        chargedBy.clear();
         carried.clear();
         // What the relays still standing lost so far goes into the field.
         lost.forEach((pos, fe) -> {
@@ -270,29 +292,128 @@ public final class LaserNetworks {
         faceLights.clear();
         cavityIn.clear();
         actionSinks.clear();
-        // Light from each source, then on through each relay it reaches, at the reach of the light that
-        // gets there; again wherever more light arrives. Light only adds up, so this settles.
-        ArrayDeque<BlockPos> work = new ArrayDeque<>();
         // What redstone switches, and how each stood now: watched each tick, rebuilt when one changes.
-        Map<LaserNode, Integer> watching = new LinkedHashMap<>();
+        switched.clear();
         for (LaserNode node : nodes.values()) {
-            if (node.switches()) watching.put(node, node.switchState());
+            if (node.switches()) switched.put(node, node.switchState());
         }
-        switched = watching;
-        for (LaserNode node : nodes.values()) {
+        propagate(nodes.values(), before, null);
+        Map<LensAction.Key, LensAction> was = new HashMap<>(actions);
+        actions.clear();
+        actionsUp(nodes.values(), was);
+        keepCarried(beams.keySet(), carriedBefore);
+        List<List<LaserNode>> buckets = new ArrayList<>();
+        for (int i = 0; i < RECHECK_TICKS; i++) buckets.add(new ArrayList<>());
+        for (LaserNode node : nodes.values()) buckets.get(Math.floorMod(node.nodePos().hashCode(), RECHECK_TICKS)).add(node);
+        rechecks = buckets;
+        networks = buildNetworks(nodes.values(), null);
+        limited = nodes.values().stream().anyMatch(node -> node.relays() && node.passLimit() != Long.MAX_VALUE);
+    }
+
+    /**
+     * Works out again only the networks the nodes at {@code seeds} are part of: every node joined to them by a beam
+     * either way, or by charging the same block. Their beams, light, actions and networks are made anew; every other
+     * network stays as it was. If light from them now reaches a node outside, two networks have joined: then
+     * everything is worked out again.
+     */
+    private void rebuildAround(Set<BlockPos> seeds) {
+        List<BlockPos> present = seeds.stream().filter(nodes::containsKey).toList();
+        dirtyAt.clear();
+        if (present.isEmpty()) return;
+        Set<BlockPos> scope = group(present);
+        // Nearly the whole level: as cheap to do it all.
+        if (scope.size() * 10 > nodes.size() * 9) {
+            rebuild();
+            return;
+        }
+        rebuilds++;
+        partialRebuilds++;
+        Map<BlockPos, List<LaserBeam>> before = new HashMap<>();
+        Map<BlockPos, long[]> carriedBefore = new HashMap<>();
+        for (BlockPos pos : scope) {
+            List<LaserBeam> old = beams.remove(pos);
+            if (old != null) {
+                before.put(pos, old);
+                unindex(pos, old);
+            }
+            long[] had = carried.remove(pos);
+            if (had != null) carriedBefore.put(pos, had);
+            long[] lostHere = lost.remove(pos);
+            if (lostHere != null && lostHere[0] > 0) QuantumFlux.emitFromEnergy(level, pos, lostHere[0]);
+            ranges.remove(pos);
+            lights.remove(pos);
+            faceLights.remove(pos);
+            cavityIn.remove(pos);
+        }
+        Map<LensAction.Key, LensAction> was = new HashMap<>();
+        actions.entrySet().removeIf(entry -> {
+            if (!scope.contains(entry.getKey().node())) return false;
+            was.put(entry.getKey(), entry.getValue());
+            return true;
+        });
+        actionSinks.keySet().removeIf(key -> scope.contains(key.node()));
+        List<Network> kept = new ArrayList<>();
+        for (Network network : networks) {
+            if (network.sources().stream().noneMatch(source -> scope.contains(source.nodePos()))) kept.add(network);
+        }
+        List<LaserNode> group = new ArrayList<>(scope.size());
+        for (BlockPos pos : scope) group.add(nodes.get(pos));
+        switched.keySet().removeIf(node -> scope.contains(node.nodePos()));
+        for (LaserNode node : group) {
+            if (node.switches()) switched.put(node, node.switchState());
+        }
+        if (!propagate(group, before, scope)) {
+            rebuild();
+            return;
+        }
+        actionsUp(group, was);
+        keepCarried(scope, carriedBefore);
+        List<Network> built = buildNetworks(group, scope);
+        if (built == null) {
+            rebuild();
+            return;
+        }
+        kept.addAll(built);
+        networks = kept;
+        limited = nodes.values().stream().anyMatch(node -> node.relays() && node.passLimit() != Long.MAX_VALUE);
+    }
+
+    /** Takes {@code pos}'s old beams off the indexes of what beams reach. */
+    private void unindex(BlockPos pos, List<LaserBeam> old) {
+        for (LaserBeam beam : old) {
+            if (beam.end() == LaserBeam.End.NODE) {
+                List<BlockPos> list = into.get(beam.hit());
+                if (list != null) list.remove(pos);
+            } else if (beam.end() == LaserBeam.End.SINK) {
+                Set<BlockPos> set = chargedBy.get(beam.hit());
+                if (set != null) set.remove(pos);
+            }
+        }
+    }
+
+    /**
+     * Light from each source among {@code which}, then on through each relay it reaches, at the reach of the light
+     * that gets there; again wherever more light arrives. Light only adds up, so this settles. With a {@code scope},
+     * whether the light stayed within it (false: it reached a node outside, and nothing here can be trusted).
+     */
+    private boolean propagate(java.util.Collection<LaserNode> which, Map<BlockPos, List<LaserBeam>> before, @Nullable Set<BlockPos> scope) {
+        ArrayDeque<BlockPos> work = new ArrayDeque<>();
+        for (LaserNode node : which) {
             if (!node.generates()) continue;
             // A switched-off source gives out no light: none of its reach, nor what it does.
             if (!node.enabled()) {
                 traceAt(node, node.range(), before);
+                if (escapes(node.nodePos(), scope)) return false;
                 continue;
             }
             Light light = node.emits();
             setLight(node.nodePos(), light);
             traceAt(node, light.reach(), before);
+            if (escapes(node.nodePos(), scope)) return false;
             hits(node.nodePos(), work);
         }
         int steps = 0;
-        int cap = Math.max(64, nodes.size() * 16);
+        int cap = Math.max(64, which.size() * 16);
         while (!work.isEmpty() && steps++ < cap) {
             BlockPos at = work.poll();
             LaserNode node = nodes.get(at);
@@ -307,40 +428,67 @@ public final class LaserNetworks {
             if (out.equals(lights.get(at))) continue;
             setLight(at, out);
             traceAt(node, out.reach(), before);
+            if (escapes(at, scope)) return false;
             hits(at, work);
         }
         // Relays no light reaches still show where light would go, at their own range.
-        for (LaserNode node : nodes.values()) {
-            if (node.relays() && !lights.containsKey(node.nodePos())) traceAt(node, node.range(), before);
+        for (LaserNode node : which) {
+            if (node.relays() && !lights.containsKey(node.nodePos())) {
+                traceAt(node, node.range(), before);
+                if (escapes(node.nodePos(), scope)) return false;
+            }
         }
-        for (LaserNode node : nodes.values()) {
+        for (LaserNode node : which) {
             if (!node.buffers()) continue;
             Light in = incoming(node);
             if (in != null) cavityIn.put(node.nodePos(), in.refocused());
         }
-        actionsUp();
-        for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
-            long[] sums = new long[entry.getValue().size()];
-            long[] had = carriedBefore.get(entry.getKey());
-            if (had != null) System.arraycopy(had, 0, sums, 0, Math.min(had.length, sums.length));
-            carried.put(entry.getKey(), sums);
+        return true;
+    }
+
+    /** Whether {@code pos}'s beams now reach a node, or share a block with a node, outside {@code scope}. */
+    private boolean escapes(BlockPos pos, @Nullable Set<BlockPos> scope) {
+        if (scope == null) return false;
+        for (LaserBeam beam : beams.getOrDefault(pos, List.of())) {
+            if (beam.end() == LaserBeam.End.NODE && nodes.containsKey(beam.hit()) && !scope.contains(beam.hit())) return true;
+            if (beam.end() == LaserBeam.End.SINK) {
+                for (BlockPos other : chargedBy.getOrDefault(beam.hit(), Set.of())) if (!scope.contains(other)) return true;
+            }
         }
-        List<List<LaserNode>> buckets = new ArrayList<>();
-        for (int i = 0; i < RECHECK_TICKS; i++) buckets.add(new ArrayList<>());
-        for (LaserNode node : nodes.values()) buckets.get(Math.floorMod(node.nodePos().hashCode(), RECHECK_TICKS)).add(node);
-        rechecks = buckets;
-        // Every node reached from each source, nearest first: each hop costs the tax, so fewest hops is best.
+        return false;
+    }
+
+    /** What each beam of the nodes at {@code which} had carried since the last settle, kept. */
+    private void keepCarried(java.util.Collection<BlockPos> which, Map<BlockPos, long[]> carriedBefore) {
+        for (BlockPos pos : which) {
+            List<LaserBeam> list = beams.get(pos);
+            if (list == null) continue;
+            long[] sums = new long[list.size()];
+            long[] had = carriedBefore.get(pos);
+            if (had != null) System.arraycopy(had, 0, sums, 0, Math.min(had.length, sums.length));
+            carried.put(pos, sums);
+        }
+    }
+
+    /**
+     * The networks of the sources among {@code which}: every node reached from each, nearest first (each hop costs
+     * the tax, so fewest hops is best). With a {@code scope}, null if a network reaches outside it.
+     */
+    @Nullable
+    private List<Network> buildNetworks(java.util.Collection<LaserNode> which, @Nullable Set<BlockPos> scope) {
         List<Network> built = new ArrayList<>();
         Set<BlockPos> claimed = new HashSet<>();
-        Map<BlockPos, List<BlockPos>> joined = links();
-        for (LaserNode start : nodes.values()) {
+        for (LaserNode start : which) {
             if (!start.generates() || claimed.contains(start.nodePos())) continue;
             List<LaserNode> sources = new ArrayList<>();
             Map<Object, Sink> sinks = new LinkedHashMap<>();
             // The sources joined to this one through shared relays share the network.
-            for (LaserNode source : component(start, joined)) {
-                if (!source.generates()) continue;
-                claimed.add(source.nodePos());
+            Set<BlockPos> joined = group(List.of(start.nodePos()));
+            if (scope != null && !scope.containsAll(joined)) return null;
+            for (BlockPos pos : joined) {
+                LaserNode source = nodes.get(pos);
+                if (source == null || !source.generates()) continue;
+                claimed.add(pos);
                 sources.add(source);
                 reach(source, sources.size() - 1, sinks);
             }
@@ -351,8 +499,35 @@ public final class LaserNetworks {
                 if (sink.action() != null) actionSinks.put(sink.action().key(), new ActionSink(network, sink));
             }
         }
-        networks = built;
-        limited = nodes.values().stream().anyMatch(node -> node.relays() && node.passLimit() != Long.MAX_VALUE);
+        return built;
+    }
+
+    /**
+     * Every node joined to those at {@code seeds}, nearest first: by a beam either way, or by charging the same block,
+     * so that block draws on all of them.
+     */
+    private Set<BlockPos> group(java.util.Collection<BlockPos> seeds) {
+        Set<BlockPos> found = new java.util.LinkedHashSet<>();
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        for (BlockPos seed : seeds) {
+            if (nodes.containsKey(seed) && found.add(seed)) queue.add(seed);
+        }
+        while (!queue.isEmpty()) {
+            BlockPos at = queue.poll();
+            for (LaserBeam beam : beams.getOrDefault(at, List.of())) {
+                if (beam.end() == LaserBeam.End.NODE) {
+                    if (nodes.containsKey(beam.hit()) && found.add(beam.hit())) queue.add(beam.hit());
+                } else if (beam.end() == LaserBeam.End.SINK) {
+                    for (BlockPos other : chargedBy.getOrDefault(beam.hit(), Set.of())) {
+                        if (nodes.containsKey(other) && found.add(other)) queue.add(other);
+                    }
+                }
+            }
+            for (BlockPos from : into.getOrDefault(at, List.of())) {
+                if (nodes.containsKey(from) && found.add(from)) queue.add(from);
+            }
+        }
+        return found;
     }
 
     /** Traces {@code node}'s beams at {@code range}; a beam that runs as it did keeps its brightness, so a change elsewhere doesn't make it flicker. */
@@ -361,14 +536,10 @@ public final class LaserNetworks {
         Light light = lights.get(node.nodePos());
         List<LaserBeam> traced = trace(node, range, light == null ? 0 : light.marks());
         // What this node's beams end on, now: off the index for the old beams, on for the new.
-        for (LaserBeam old : beams.getOrDefault(node.nodePos(), List.of())) {
-            if (old.end() == LaserBeam.End.NODE) {
-                List<BlockPos> list = into.get(old.hit());
-                if (list != null) list.remove(node.nodePos());
-            }
-        }
+        unindex(node.nodePos(), beams.getOrDefault(node.nodePos(), List.of()));
         for (LaserBeam beam : traced) {
             if (beam.end() == LaserBeam.End.NODE) into.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(node.nodePos());
+            else if (beam.end() == LaserBeam.End.SINK) chargedBy.computeIfAbsent(beam.hit(), key -> new HashSet<>()).add(node.nodePos());
         }
         List<LaserBeam> was = before.getOrDefault(node.nodePos(), List.of());
         for (int i = 0; i < traced.size(); i++) {
@@ -389,10 +560,8 @@ public final class LaserNetworks {
      * Each beam takes the look of the light it carries, and gets an action for each stream (kept from
      * before, if it was there), with the collecting Laser Ports up that stream's light; then every node shows its beams.
      */
-    private void actionsUp() {
-        Map<LensAction.Key, LensAction> was = new HashMap<>(actions);
-        actions.clear();
-        for (LaserNode node : nodes.values()) {
+    private void actionsUp(java.util.Collection<LaserNode> which, Map<LensAction.Key, LensAction> was) {
+        for (LaserNode node : which) {
             BlockPos pos = node.nodePos();
             Light core = lights.get(pos);
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
@@ -812,45 +981,6 @@ public final class LaserNetworks {
         return false;
     }
 
-    /** Every node joined to {@code start} by a beam either way. */
-    /** Which nodes are joined to which: by beams between them, or by charging the same block. Worked out once a rebuild. */
-    private Map<BlockPos, List<BlockPos>> links() {
-        Map<BlockPos, List<BlockPos>> links = new HashMap<>();
-        // Nodes whose light charges the same block share a network too, so that block draws on all of them.
-        Map<BlockPos, List<BlockPos>> chargers = new HashMap<>();
-        beams.forEach((from, list) -> {
-            for (LaserBeam beam : list) {
-                if (beam.end() == LaserBeam.End.SINK) chargers.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(from);
-                if (beam.end() != LaserBeam.End.NODE || !nodes.containsKey(beam.hit())) continue;
-                links.computeIfAbsent(from, key -> new ArrayList<>()).add(beam.hit());
-                links.computeIfAbsent(beam.hit(), key -> new ArrayList<>()).add(from);
-            }
-        });
-        chargers.values().forEach(sharing -> {
-            for (BlockPos a : sharing) {
-                for (BlockPos b : sharing) if (!a.equals(b)) links.computeIfAbsent(a, key -> new ArrayList<>()).add(b);
-            }
-        });
-        return links;
-    }
-
-    /** Every node joined to {@code start}, by {@code links}. */
-    private List<LaserNode> component(LaserNode start, Map<BlockPos, List<BlockPos>> links) {
-        List<LaserNode> found = new ArrayList<>();
-        Set<BlockPos> seen = new HashSet<>();
-        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        queue.add(start.nodePos());
-        seen.add(start.nodePos());
-        while (!queue.isEmpty()) {
-            BlockPos at = queue.poll();
-            found.add(nodes.get(at));
-            for (BlockPos next : links.getOrDefault(at, List.of())) {
-                if (seen.add(next)) queue.add(next);
-            }
-        }
-        return found;
-    }
-
     /** The blocks {@code source}'s light reaches, by the fewest relays; adds those it reaches best. */
     private void reach(LaserNode source, int index, Map<Object, Sink> sinks) {
         record Visit(BlockPos node, List<Hop> path, int relays, double efficiency) {}
@@ -932,30 +1062,26 @@ public final class LaserNetworks {
         // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
         // Something redstone switches has been switched: what light carries changes.
         if (!dirty) {
+            // Each switched one marks only its own network to be worked out again.
             for (Map.Entry<LaserNode, Integer> entry : switched.entrySet()) {
-                if (entry.getKey().switchState() != entry.getValue()) {
-                    dirty = true;
-                    break;
-                }
+                if (entry.getKey().switchState() != entry.getValue()) dirtyAt.add(entry.getKey().nodePos());
             }
-        }
-        if (!dirty) {
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
                 List<LaserBeam> was = beams.get(node.nodePos());
                 if (was == null || was.size() != node.outputs().size() + node.targets().size() || linkGone(node)) {
-                    dirty = true;
-                    break;
+                    dirtyAt.add(node.nodePos());
+                    continue;
                 }
                 for (LaserBeam beam : was) {
                     if (!beam.stillHolds(level, rangeOf(node, beam))) {
-                        dirty = true;
+                        dirtyAt.add(node.nodePos());
                         break;
                     }
                 }
-                if (dirty) break;
             }
         }
         if (dirty) rebuild();
+        else if (!dirtyAt.isEmpty()) rebuildAround(new HashSet<>(dirtyAt));
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
         for (Network network : networks) refill(network);

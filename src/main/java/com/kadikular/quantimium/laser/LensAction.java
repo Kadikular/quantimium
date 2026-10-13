@@ -65,6 +65,8 @@ public final class LensAction {
     /** The block being cut, what it costs, and the FE gone into it so far. */
     @Nullable
     private BlockPos cutting;
+    /** How many times in a row it found nothing to move: each waits longer. */
+    private int idle;
     /** The last block it saw along a clear line, and until when that's taken as still so. */
     @Nullable
     private BlockPos seen;
@@ -83,6 +85,19 @@ public final class LensAction {
 
     LensAction(Key key) {
         this.key = key;
+        // Insert and Extract look again and again for something to move: staggered from the start, so those made in the
+        // same rebuild don't all look in the same tick.
+        if (key.action() == Lens.INSERT || key.action() == Lens.EXTRACT) placeCooldown = Math.floorMod(key.hashCode(), LaserTuning.IDLE_RETRY);
+    }
+
+    /**
+     * How long to wait after finding nothing to do: longer each time in a row, from {@link LaserTuning#IDLE_RETRY} up
+     * to {@link LaserTuning#IDLE_MAX}, with a little of its own offset so idle beams don't line up.
+     */
+    private int idleWait() {
+        idle = Math.min(idle + 1, 8);
+        int wait = Math.min(LaserTuning.IDLE_MAX, LaserTuning.IDLE_RETRY << (idle - 1));
+        return wait + Math.floorMod(key.hashCode() + idle, 4);
     }
 
     public Key key() {
@@ -272,7 +287,7 @@ public final class LensAction {
         if (area == null) placed = beam.hit();
         lastWorked = now;
         // A door opened, a block changed: the beam may reach on, or not. An area's beams don't change.
-        if (area == null) LaserNetworks.changed(level);
+        if (area == null) LaserNetworks.changed(level, key.node());
     }
 
     /**
@@ -413,11 +428,12 @@ public final class LensAction {
         // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
         BlockPos spill = area == null ? beam.hit().relative(beam.face().getOpposite()) : at.above();
         long processing = in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
-        // Nothing to move (nothing it may take, or no room): it looks again in a while, not every tick.
+        // Nothing to move (nothing it may take, or no room): it looks again in a while, longer the longer it's idle.
         if (processing < 0) {
-            placeCooldown = LaserTuning.IDLE_RETRY;
+            placeCooldown = idleWait();
             return;
         }
+        idle = 0;
         networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
@@ -570,7 +586,7 @@ public final class LensAction {
         placed = at.getBlockPos().relative(at.getDirection());
         lastWorked = now;
         // A beam now ends on what it placed; an area's beams don't change.
-        if (area == null) LaserNetworks.changed(level);
+        if (area == null) LaserNetworks.changed(level, key.node());
     }
 
     /** Where a beam places: against the block it ends on, from its side. */
@@ -805,7 +821,7 @@ public final class LensAction {
             }
         }
         // A beam now reaches on past where the block was; an area's beams don't change.
-        if (area == null) LaserNetworks.changed(level);
+        if (area == null) LaserNetworks.changed(level, key.node());
     }
 
     /** What breaking it gives: a crystal its shards, as a Harvest Laser's; anything else, what its pickaxe would get. */
@@ -1020,7 +1036,7 @@ public final class LensAction {
         }
         level.playSound(null, pos, stream.has(Lens.SMELT) ? net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH : net.minecraft.sounds.SoundEvents.GRINDSTONE_USE,
                 net.minecraft.sounds.SoundSource.BLOCKS, 0.4f, 1.6f);
-        LaserNetworks.changed(level);
+        LaserNetworks.changed(level, key.node());
         return true;
     }
 

@@ -373,6 +373,10 @@ the network's light reaches is charged as far as the network's emitters have pow
 the emitters whose light reaches it in proportion to what each has. An emitter only ever pays for the
 blocks its own light reaches. Light reaches a block by the fewest relays it can.
 
+When a beam's action changes the world along it (a block cut, one
+placed, a door opened), only the network that beam belongs to is worked out again; every other network in
+the level carries on as it was. Placing or breaking a laser block works everything out again.
+
 Use the Flux Meter, or look with Jade, at an emitter, mirror or relay to see what it's sending or passing on.
 Beams glow brighter the more they carry. A switched-on emitter with power keeps
 a dim beam lit even when nothing at its end needs power, along with the mirrors, relays and prisms that light
