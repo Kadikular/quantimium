@@ -27,7 +27,9 @@ public final class MirrorFloraSpawner {
 
     public static boolean tick(ServerLevel level, LevelChunk chunk, ChunkFlux field) {
         MirrorFloraData flora = chunk.getData(ModAttachments.MIRROR_FLORA);
-        boolean changed = prune(level, flora, pressureBand(field));
+        // What's lost its footing goes within a few seconds: each chunk's flora is looked over every fifth second.
+        boolean changed = level.getGameTime() / 20 % 5 == Math.floorMod(chunk.getPos().hashCode(), 5)
+                && prune(level, flora, pressureBand(field));
         FluxBand band = pressureBand(field);
         if (band == FluxBand.LOW) {
             if (changed) chunk.markUnsaved();

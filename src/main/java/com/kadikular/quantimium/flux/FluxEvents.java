@@ -83,12 +83,16 @@ public final class FluxEvents {
     public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         drainFloraMigration(server);
-        if (server.getTickCount() % 20 != 0 || ACTIVE.isEmpty()) return;
-        stepFields(server);
+        if (ACTIVE.isEmpty()) return;
+        // The field moves once a second, all together; each chunk's own work (spawns, flora) is spread over the
+        // second, a twentieth of the chunks a tick, so it's never all in one tick.
+        int slice = server.getTickCount() % 20;
+        if (slice == 0) stepFields(server);
 
         Iterator<Map.Entry<ChunkKey, Boolean>> iterator = ACTIVE.entrySet().iterator();
         while (iterator.hasNext()) {
             ChunkKey key = iterator.next().getKey();
+            if (Math.floorMod(key.hashCode(), 20) != slice) continue;
             ServerLevel level = server.getLevel(key.dimension());
             if (level == null) {
                 iterator.remove();
@@ -117,7 +121,8 @@ public final class FluxEvents {
                 if (fieldEmpty && (flora == null || flora.isEmpty())) iterator.remove();
             }
         }
-        AnomalyEntrySpawner.flush();
+        // The second's entry candidates, from every slice, rolled together at its end.
+        if (slice == 19) AnomalyEntrySpawner.flush();
     }
 
     /** Field Model 2.0: one second of release, coupling, decay and diffusion, dimension by dimension. */
