@@ -44,6 +44,17 @@ public class ReactorPortBlock extends BaseEntityBlock implements com.kadikular.q
         return kind;
     }
 
+    /** The Logistics Port opens its screen; the others have none. */
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos,
+                                                                   net.minecraft.world.entity.player.Player player, net.minecraft.world.phys.BlockHitResult hit) {
+        if (kind != Kind.LOGISTICS) return super.useWithoutItem(state, level, pos, player, hit);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity port) {
+            player.openMenu(port, pos);
+        }
+        return net.minecraft.world.InteractionResult.SUCCESS;
+    }
+
     @Override
     public void appendTooltip(java.util.function.Consumer<net.minecraft.network.chat.Component> tooltip) {
         if (kind == Kind.LOGISTICS) {

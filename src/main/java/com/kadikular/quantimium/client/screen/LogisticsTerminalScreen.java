@@ -97,7 +97,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             if (query.isEmpty() || entry.item().toStack(1).getHoverName().getString().toLowerCase(Locale.ROOT).contains(query)) cells.add(entry);
         }
         Comparator<LogisticsTerminalViewPayload.Entry> name = Comparator.comparing(e -> e.item().toStack(1).getHoverName().getString());
-        cells.sort(byName ? name : Comparator.comparingLong(LogisticsTerminalViewPayload.Entry::count).reversed().thenComparing(name));
+        cells.sort(byName ? name : Comparator.comparingLong((LogisticsTerminalViewPayload.Entry e) -> e.count() + e.craftable()).reversed().thenComparing(name));
         shownFor = entries;
         shownQuery = query;
         shownByName = byName;
@@ -143,13 +143,16 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
                 graphics.item(cell.item().toStack(1), x, y);
-                if (cell.count() > 1) {
-                    String count = HorizonCoreScreen.slotCount(cell.count());
+                // How many there are; with none there, that it can be made, as an ME terminal says "Craft".
+                boolean makeOnly = cell.count() == 0 && cell.craftable() > 0;
+                if (cell.count() > 1 || makeOnly) {
+                    String count = makeOnly ? Component.translatable("gui.quantimium.logistics_terminal.craft").getString()
+                            : HorizonCoreScreen.slotCount(cell.count());
                     graphics.nextStratum();
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(x + 16, y + 11);
                     graphics.pose().scale(0.5f, 0.5f);
-                    graphics.text(font, count, -font.width(count), 0, 0xFFFFFFFF, true);
+                    graphics.text(font, count, -font.width(count), 0, makeOnly ? 0xFFB49CFF : 0xFFFFFFFF, true);
                     graphics.pose().popMatrix();
                 }
             }
@@ -164,6 +167,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         List<Component> lines = new ArrayList<>();
         lines.add(cell.item().toStack(1).getHoverName());
         lines.add(Component.translatable("gui.quantimium.logistics_terminal.count", String.format(Locale.ROOT, "%,d", cell.count())).withStyle(ChatFormatting.GRAY));
+        if (cell.craftable() > 0) {
+            lines.add(Component.translatable("gui.quantimium.logistics_terminal.craftable", String.format(Locale.ROOT, "%,d", cell.craftable()))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
         lines.add(Component.translatable("gui.quantimium.logistics_terminal.take.tip").withStyle(ChatFormatting.DARK_GRAY));
         graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
     }

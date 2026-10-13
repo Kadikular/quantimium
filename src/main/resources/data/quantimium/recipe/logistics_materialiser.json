@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "E": "minecraft:ender_eye",
+    "H": "minecraft:hopper",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "IEI",
+    "HRH",
+    "III"
+  ],
+  "result": {
+    "id": "quantimium:logistics_materialiser",
+    "count": 1
+  }
+}

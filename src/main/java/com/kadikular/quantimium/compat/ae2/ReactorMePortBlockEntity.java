@@ -334,6 +334,23 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             horizon.getLedger().view().forEach((item, amount) -> {
                 if (shows(item)) out.add(AEItemKey.of(item), amount);
             });
+            // What the Reactor's other linked networks share with it (a laser logistics network), passed on.
+            for (com.kadikular.quantimium.reactor.ReactorNetwork other : others(horizon)) {
+                horizon.whileDrawing(other::stock).forEach((item, amount) -> {
+                    if (shows(item)) out.add(AEItemKey.of(item), amount);
+                });
+            }
+        }
+
+        /** The Reactor's linked networks other than this port's own ME network. */
+        private List<com.kadikular.quantimium.reactor.ReactorNetwork> others(HorizonCoreBlockEntity horizon) {
+            if (!(level instanceof net.minecraft.server.level.ServerLevel server)) return List.of();
+            IGrid grid = grid();
+            List<com.kadikular.quantimium.reactor.ReactorNetwork> others = new java.util.ArrayList<>();
+            for (com.kadikular.quantimium.reactor.ReactorNetwork network : horizon.networks(server)) {
+                if (network != ReactorMePortBlockEntity.this && network.network() != grid) others.add(network);
+            }
+            return others;
         }
 
         @Override
@@ -343,8 +360,13 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             ItemResource item = key.toResource();
             if (!shows(item)) return 0;
             long available = Math.min(amount, horizon.availableCount(item));
-            if (available <= 0) return 0;
-            return mode == Actionable.MODULATE ? horizon.withdraw(item, available) : available;
+            long got = available <= 0 ? 0 : mode == Actionable.MODULATE ? horizon.withdraw(item, available) : available;
+            for (com.kadikular.quantimium.reactor.ReactorNetwork other : others(horizon)) {
+                if (got >= amount) break;
+                long want = amount - got;
+                got += horizon.whileDrawing(() -> other.extract(item, want, mode != Actionable.MODULATE));
+            }
+            return got;
         }
 
         @Override

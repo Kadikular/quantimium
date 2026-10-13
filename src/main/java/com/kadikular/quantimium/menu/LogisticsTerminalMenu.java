@@ -35,7 +35,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     private final Player player;
     private int sinceView;
     @Nullable
-    private Map<ItemResource, Long> sent;
+    private Map<ItemResource, List<Long>> sent;
     private boolean sentConnected;
 
     public LogisticsTerminalMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
@@ -66,12 +66,14 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         if (!(player instanceof ServerPlayer server) || sinceView-- > 0) return;
         sinceView = VIEW_TICKS;
         boolean connected = terminal.controller() != null;
-        Map<ItemResource, Long> contents = terminal.contents();
-        if (contents.equals(sent) && connected == sentConnected) return;
-        sent = contents;
+        Map<ItemResource, long[]> contents = terminal.contents();
+        Map<ItemResource, List<Long>> comparable = new java.util.HashMap<>();
+        contents.forEach((item, both) -> comparable.put(item, List.of(both[0], both[1])));
+        if (comparable.equals(sent) && connected == sentConnected) return;
+        sent = comparable;
         sentConnected = connected;
         List<LogisticsTerminalViewPayload.Entry> entries = new ArrayList<>(contents.size());
-        contents.forEach((item, count) -> entries.add(new LogisticsTerminalViewPayload.Entry(item, count)));
+        contents.forEach((item, both) -> entries.add(new LogisticsTerminalViewPayload.Entry(item, both[0], both[1])));
         PacketDistributor.sendToPlayer(server, new LogisticsTerminalViewPayload(terminal.getBlockPos(), connected, entries));
     }
 

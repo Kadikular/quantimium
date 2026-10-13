@@ -49,17 +49,22 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         return controller == null ? List.of() : controller.members();
     }
 
-    /** Everything it can reach: what storage holds and what providers let go, by item, with how many. */
-    public Map<ItemResource, Long> contents() {
-        Map<ItemResource, Long> counts = new LinkedHashMap<>();
+    /** Everything it can reach: what storage holds and what providers let go, by item, with how many, and how many more could be made. */
+    public Map<ItemResource, long[]> contents() {
+        Map<ItemResource, long[]> counts = new LinkedHashMap<>();
         for (LogisticsMember member : members()) {
             if (member.role() == LogisticsMember.Role.REQUESTER) continue;
+            Map<ItemResource, long[]> listing = member.listing();
+            if (listing != null) {
+                listing.forEach((item, both) -> counts.merge(item, both.clone(), (a, b) -> new long[] {a[0] + b[0], a[1] + b[1]}));
+                continue;
+            }
             IItemHandler inventory = member.inventory();
             if (inventory == null) continue;
             for (int slot = 0; slot < inventory.getSlots(); slot++) {
                 ItemStack stack = inventory.getStackInSlot(slot);
                 if (stack.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
-                counts.merge(ItemResource.of(stack), (long) stack.getCount(), Long::sum);
+                counts.merge(ItemResource.of(stack), new long[] {stack.getCount(), 0}, (a, b) -> new long[] {a[0] + b[0], a[1] + b[1]});
             }
         }
         return counts;

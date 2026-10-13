@@ -1251,5 +1251,19 @@
   "gui.quantimium.logistics_terminal.status.unconnected": "No controller's light",
   "gui.quantimium.logistics_terminal.status.tip": "A Logistics Controller's light must reach it. Click the grid holding something to put it away (right-click: one); shift-click it in your inventory does too.",
   "block.quantimium.reactor_logistics_port": "Reactor Logistics Port",
-  "block.quantimium.reactor_logistics_port.tip": "Logistics: a Reactor port that is storage for the logistics network whose light reaches it. What goes in feeds the horizon; what's taken is held or made. Light ending on it powers the Reactor."
+  "block.quantimium.reactor_logistics_port.tip": "Logistics: joins the Reactor to the logistics network whose light ends on it, both ways: storage that offers what the Reactor holds or can make, and the network's items for the Reactor to make with. Light ending on it powers the Reactor.",
+  "gui.quantimium.reactor_logistics_port.storing.true": "Stores: the network may put things in the Reactor",
+  "gui.quantimium.reactor_logistics_port.storing.false": "Doesn't store: the network only takes from the Reactor",
+  "gui.quantimium.reactor_logistics_port.storing.tip": "Click to switch.",
+  "gui.quantimium.reactor_logistics_port.sharing.true": "Shares: the Reactor may make things with what the network holds",
+  "gui.quantimium.reactor_logistics_port.sharing.false": "Doesn't share: the Reactor makes things only with what it holds",
+  "gui.quantimium.reactor_logistics_port.sharing.tip": "Click to switch. Shared, the network's items also show on through an ME Superposition Port.",
+  "gui.quantimium.reactor_logistics_port.allow": "Whitelist: offers only these",
+  "gui.quantimium.reactor_logistics_port.deny": "Blacklist: offers all but these",
+  "gui.quantimium.reactor_logistics_port.allow.tip": "What the Reactor offers the network, held or made. Click to switch; an empty filter offers everything.",
+  "gui.quantimium.reactor_logistics_port.status.tip": "Storage on the network, at this priority: what the Reactor holds, what its ME network holds, and what it can make.",
+  "gui.quantimium.logistics_terminal.craft": "Craft",
+  "gui.quantimium.logistics_terminal.craftable": "~%s more can be made",
+  "block.quantimium.logistics_materialiser": "Logistics Materialiser",
+  "block.quantimium.logistics_materialiser.tip": "Logistics: put it where a Logistics Controller's light ends, and any mod's pipes or storage buses see the whole network through it: everything storage holds and providers offer, to take, and room to put things away."
 }

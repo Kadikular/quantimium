@@ -741,6 +741,32 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
      */
     public ReactorPlanner.Result request(ItemResource target, long count) {
         if (!(level instanceof ServerLevel server)) return refused("message.quantimium.reactor.offline");
+        return produce(server, target, count, outputPorts(server));
+    }
+
+    /**
+     * Makes {@code count} of {@code target} with what it holds and its networks hold, keeping it in the horizon
+     * for whoever asked to take (a Reactor Logistics Port). Whether it was made.
+     */
+    public boolean make(ItemResource target, long count) {
+        return level instanceof ServerLevel server && produce(server, target, count, List.of()).planned();
+    }
+
+    /**
+     * Reads or takes from the linked networks with this Reactor out of sight, as the core does itself: none of its
+     * own ports show anything meanwhile, so nothing is counted twice.
+     */
+    public <T> T whileDrawing(java.util.function.Supplier<T> read) {
+        drawing++;
+        try {
+            return read.get();
+        } finally {
+            drawing--;
+        }
+    }
+
+    /** Plans, pulls what the plan uses from the networks, makes it, and sends it to {@code outputs}; what they can't take stays held. */
+    private ReactorPlanner.Result produce(ServerLevel server, ItemResource target, long count, List<ReactorPortBlockEntity> outputs) {
         if (!isActive()) return refused("message.quantimium.reactor.offline");
         refreshRecipes(server);
         ReactorPlanner.Result result = ReactorPlanner.plan(recipes, stockWithNetworks(server), target, count);
@@ -753,7 +779,6 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
                     String.format(Locale.ROOT, "%,d", fe)));
         }
         // Whatever the ports can't take goes back in; the horizon must have room for it.
-        List<ReactorPortBlockEntity> outputs = outputPorts(server);
         long deliverable = 0;
         ItemStack sample = target.toStack(1);
         for (ReactorPortBlockEntity port : outputs) deliverable += port.roomFor(sample);

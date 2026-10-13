@@ -1034,6 +1034,36 @@ def logistics_terminal() -> None:
     with open(os.path.join(ITEMS, "logistics_terminal.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_terminal"}}, handle, indent=2)
 
+def materialiser_face() -> Image.Image:
+    """A Logistics Materialiser's face: the steel, a socket framed in the network's blue, and the Materialiser's eye in it."""
+    import math
+    img = steel(31)
+    blue = hx("2a52ff")
+    for x in range(3, 13):
+        for y in range(3, 13):
+            img.putpixel((x, y), hx("07080f"))
+    for i in range(3, 13):
+        for x, y in ((i, 2), (i, 13), (2, i), (13, i)):
+            img.putpixel((x, y), blue)
+    for x in range(16):
+        for y in range(16):
+            if 2.2 <= math.hypot(x - 7.5, y - 7.5) < 3.3:
+                img.putpixel((x, y), hx("7fb2ff"))
+    for x, y in ((7, 7), (8, 7), (7, 8), (8, 8)):
+        img.putpixel((x, y), hx("e8f2ff"))
+    return img
+
+
+def logistics_materialiser() -> None:
+    """The Logistics Materialiser: a steel block with its socket on every face, open to pipes on all of them."""
+    materialiser_face().save(os.path.join(TEX, "logistics_materialiser.png"))
+    with open(os.path.join(MODELS, "logistics_materialiser.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/logistics_materialiser"}}, handle, indent=2)
+    with open(os.path.join(STATES, "logistics_materialiser.json"), "w") as handle:
+        json.dump({"variants": {"": {"model": "quantimium:block/logistics_materialiser"}}}, handle, indent=1)
+    with open(os.path.join(ITEMS, "logistics_materialiser.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_materialiser"}}, handle, indent=2)
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -1073,6 +1103,7 @@ def main() -> None:
     laser_port()
     logistics_receptacle()
     logistics_terminal()
+    logistics_materialiser()
     for name, colour in LENSES.items():
         lens_item(colour, GLYPHS.get(name)).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))
         with open(os.path.join(ASSETS, "models", "item", f"{name}.json"), "w") as handle:

@@ -69,6 +69,9 @@ public class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LogisticsReceptacleMenu>> LOGISTICS_RECEPTACLE_MENU =
             MENUS.register("logistics_receptacle_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LogisticsReceptacleMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.ReactorLogisticsPortMenu>> REACTOR_LOGISTICS_PORT_MENU =
+            MENUS.register("reactor_logistics_port_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.ReactorLogisticsPortMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LogisticsTerminalMenu>> LOGISTICS_TERMINAL_MENU =
             MENUS.register("logistics_terminal_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LogisticsTerminalMenu::new));

@@ -2,7 +2,7 @@
 navigation:
   title: Logistics Receptacle
   parent: blocks/index.md
-  position: 38
+  position: 39
   icon: quantimium:logistics_receptacle
 item_ids:
 - quantimium:logistics_receptacle

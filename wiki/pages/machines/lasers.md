@@ -306,10 +306,24 @@ like an ME terminal. Click an item for a stack on the cursor, right-click for on
 into your inventory; click the grid holding something to put it away into storage (right-click: one), or
 shift-click it in your inventory. Each take or put costs the controller as a move does.
 
+[[mechanic:laser.logistics.materialiser]] A [[block:logistics_materialiser]] where a controller's light ends
+offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus
+or a pipe on any face sees everything storage holds and providers offer (a Reactor on the network, with what it
+can make), takes from it, and puts things away into storage. Nothing moves until the other side commits, so
+looking is free; each move costs the controller as a receptacle's does. A receptacle on a Logistics
+Materialiser is ignored: it would read the network into itself.
+
 [[mechanic:laser.logistics.reactor]] A [[block:reactor_logistics_port]] on the Reactor's plinth rim, where a
-controller's light ends, makes the Reactor storage on that network (priority 0). What the network puts
-in feeds the horizon, as an Input port; what it takes is held or made, as a Materialiser port gives it,
-so a terminal shows all the Reactor could give. Light ending on it also powers the Reactor.
+controller's light ends, joins the Reactor to that network both ways, as the ME Superposition Port does for
+an ME network. Open it to set it.
+
+- To the network it's storage, at its priority. It offers what the Reactor holds, what its ME network holds
+  (passed through), and what could be made from all of it, made when it's taken: a terminal shows those as
+  craftable. Its filter says what it offers. Set to store, what the network puts in feeds the horizon.
+- Set to share (the default), what the network holds is the Reactor's to make with, as an ME network's is,
+  and shows on through an ME Superposition Port.
+
+Light ending on it also powers the Reactor.
 
 ## Into the mirror
 

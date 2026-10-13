@@ -149,6 +149,13 @@ public class Quantimium {
                 (be, context) -> be.beamEnergy()
         );
 
+        // A Logistics Materialiser offers its whole network to pipes and storage buses on every face.
+        event.registerBlockEntity(
+                Capabilities.Item.BLOCK,
+                ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
+                (be, context) -> be.itemHandler()
+        );
+
         // A Logistics Controller takes the power it pays to move things with on any face.
         event.registerBlockEntity(
                 Capabilities.Energy.BLOCK,

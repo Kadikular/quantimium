@@ -1,0 +1,127 @@
+package com.kadikular.quantimium.menu;
+
+import com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity;
+import com.kadikular.quantimium.init.ModMenuTypes;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+
+/**
+ * A Logistics Receptacle: its filter's nine ghost entries and the player's inventory; its role, active or passive,
+ * priority and allow/deny on the screen's tabs. Layout: tools/gui_panels.py logistics_port.
+ */
+public class ReactorLogisticsPortMenu extends AbstractContainerMenu implements GhostFilterMenu {
+
+    public static final int BUTTON_STORING = 0;
+    public static final int BUTTON_SHARING = 1;
+    public static final int BUTTON_ALLOW = 2;
+    public static final int BUTTON_PRIORITY_UP = 3;
+    public static final int BUTTON_PRIORITY_DOWN = 4;
+    public static final int BUTTON_PRIORITY_UP_TEN = 5;
+    public static final int BUTTON_PRIORITY_DOWN_TEN = 6;
+    public static final int FILTER_X = 8;
+    public static final int FILTER_Y = 35;
+    public static final int FILTER_START = 0;
+    public static final int FILTER_END = ReactorLogisticsPortBlockEntity.FILTER_SLOTS;
+
+    private final ReactorLogisticsPortBlockEntity port;
+
+    public ReactorLogisticsPortMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
+        this(containerId, playerInv, (ReactorLogisticsPortBlockEntity) playerInv.player.level().getBlockEntity(extraData.readBlockPos()));
+    }
+
+    public ReactorLogisticsPortMenu(int containerId, Inventory playerInv, ReactorLogisticsPortBlockEntity port) {
+        super(ModMenuTypes.REACTOR_LOGISTICS_PORT_MENU.get(), containerId);
+        this.port = port;
+        for (int i = 0; i < ReactorLogisticsPortBlockEntity.FILTER_SLOTS; i++) {
+            addSlot(new GhostSlot(port.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
+        }
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+            }
+        }
+        for (int col = 0; col < 9; col++) {
+            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+        }
+    }
+
+    private static final class GhostSlot extends Slot {
+        GhostSlot(Container container, int index, int x, int y) {
+            super(container, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return false;
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return false;
+        }
+    }
+
+    public ReactorLogisticsPortBlockEntity getBlockEntity() {
+        return port;
+    }
+
+    /** A filter entry takes what's on the cursor, or clears with an empty hand; shift-click steps it through its item's tags. */
+    @Override
+    public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
+        if (slotId >= FILTER_START && slotId < FILTER_END) {
+            if (clickType == ContainerInput.QUICK_MOVE) port.cycleFilterTag(slotId);
+            else if (clickType == ContainerInput.PICKUP) setGhost(slotId, getCarried());
+            return;
+        }
+        super.clicked(slotId, button, clickType, player);
+    }
+
+    @Override
+    public void setGhost(int index, ItemStack stack) {
+        port.setFilterSlot(index, stack);
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        switch (id) {
+            case BUTTON_STORING -> port.toggleStoring();
+            case BUTTON_SHARING -> port.toggleSharing();
+            case BUTTON_ALLOW -> port.toggleAllow();
+            case BUTTON_PRIORITY_UP -> port.addPriority(1);
+            case BUTTON_PRIORITY_DOWN -> port.addPriority(-1);
+            case BUTTON_PRIORITY_UP_TEN -> port.addPriority(10);
+            case BUTTON_PRIORITY_DOWN_TEN -> port.addPriority(-10);
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Shift-clicking an item in the inventory lists it in the first free entry. */
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        if (index < FILTER_END) return ItemStack.EMPTY;
+        ItemStack stack = slots.get(index).getItem();
+        if (stack.isEmpty()) return ItemStack.EMPTY;
+        for (int i = 0; i < ReactorLogisticsPortBlockEntity.FILTER_SLOTS; i++) {
+            if (port.getFilter().getItem(i).isEmpty()) {
+                setGhost(i, stack);
+                break;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return stillValid(ContainerLevelAccess.create(port.getLevel(), port.getBlockPos()), player, port.getBlockState().getBlock());
+    }
+}

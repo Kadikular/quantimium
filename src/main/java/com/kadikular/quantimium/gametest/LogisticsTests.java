@@ -344,8 +344,8 @@ public final class LogisticsTests {
         var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
         helper.runAfterDelay(40, () -> {
             var contents = terminal.contents();
-            helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE))), 20L, "storage's cobblestone shows");
-            helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.IRON_INGOT))), 5L, "the provider's iron shows");
+            helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE)))[0], 20L, "storage's cobblestone shows");
+            helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.IRON_INGOT)))[0], 5L, "the provider's iron shows");
             helper.assertFalse(contents.containsKey(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.GOLD_INGOT))), "a requester's gold doesn't");
             ItemStack got = terminal.take(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE)), 16);
             helper.assertValueEqual(got.getCount(), 16, "took 16 cobblestone");
@@ -396,6 +396,122 @@ public final class LogisticsTests {
             helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "the Reactor charged from the beam");
             TestSupport.finishLasers(helper);
             TestSupport.clearField(helper);
+        });
+    }
+
+    /** A Reactor with a crafting table bay and a Reactor Logistics Port, a controller's light ending on it through a storage receptacle on a chest of {@code stock}. */
+    private static com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity reactorOnNetwork(GameTestHelper helper, ItemStack... stock) {
+        var core = ReactorTests.buildReactor(helper, 1);
+        ReactorTests.bay(helper, ReactorTests.CORE.below().north(2), Items.CRAFTING_TABLE);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        BlockPos chest = portAt.east(2).above();
+        helper.setBlock(chest, Blocks.CHEST);
+        ChestBlockEntity box = helper.getBlockEntity(chest, ChestBlockEntity.class);
+        for (int i = 0; i < stock.length; i++) box.setItem(i, stock[i]);
+        helper.setBlock(portAt.east(2), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.UP));
+        controller(helper, portAt.east(3), Direction.WEST, true);
+        return helper.getBlockEntity(portAt, com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity.class);
+    }
+
+    private static net.neoforged.neoforge.transfer.item.ItemResource resource(Item item) {
+        return net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(item));
+    }
+
+    // covers: laser.logistics.reactor
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 100)
+    public static void theReactorMakesWithWhatTheNetworkShares(GameTestHelper helper) {
+        var port = reactorOnNetwork(helper, new ItemStack(Items.OAK_LOG, 2));
+        var core = helper.getBlockEntity(ReactorTests.CORE, com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.class);
+        helper.runAfterDelay(30, () -> {
+            var made = core.request(resource(Items.OAK_PLANKS), 8);
+            helper.assertTrue(made.planned(), "planks from the network's logs: " + made.problem());
+            helper.assertValueEqual(core.getLedger().count(resource(Items.OAK_PLANKS)), 8L, "made and kept");
+            helper.assertValueEqual(count(helper.getBlockEntity(ReactorTests.CORE.below().east(7).above(), ChestBlockEntity.class), Items.OAK_LOG), 0,
+                    "the logs came out of the network's chest");
+            port.toggleSharing();
+            helper.assertTrue(port.network() == null, "not shared once set not to");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.reactor
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 100)
+    public static void theReactorOffersWhatItCanMakeAndMakesItWhenTaken(GameTestHelper helper) {
+        var port = reactorOnNetwork(helper);
+        var core = helper.getBlockEntity(ReactorTests.CORE, com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.class);
+        core.getLedger().add(resource(Items.OAK_LOG), 1);
+        core.getLedger().add(resource(Items.DIAMOND), 2);
+        helper.runAfterDelay(30, () -> {
+            core.recountNow();
+            var listing = port.listing();
+            helper.assertValueEqual(listing.get(resource(Items.DIAMOND))[0], 2L, "the diamonds held");
+            helper.assertTrue(listing.containsKey(resource(Items.OAK_PLANKS)) && listing.get(resource(Items.OAK_PLANKS))[1] >= 4,
+                    "planks can be made from the log");
+            var inventory = port.inventory();
+            ItemStack got = ItemStack.EMPTY;
+            for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                if (inventory.getStackInSlot(slot).is(Items.OAK_PLANKS)) got = inventory.extractItem(slot, 4, false);
+            }
+            helper.assertValueEqual(got.getCount(), 4, "four planks, made when taken");
+            helper.assertValueEqual(core.getLedger().count(resource(Items.OAK_LOG)), 0L, "the log used");
+            // Filtered to diamonds, it offers nothing else.
+            port.setFilterSlot(0, new ItemStack(Items.DIAMOND));
+            core.getLedger().add(resource(Items.STICK), 3);
+            helper.assertFalse(port.listing().containsKey(resource(Items.STICK)), "the filter hides the sticks");
+            helper.assertTrue(port.listing().containsKey(resource(Items.DIAMOND)), "and offers the diamonds");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.reactor
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 100)
+    public static void aReactorLogisticsPortSetNotToStoreTakesNothingIn(GameTestHelper helper) {
+        var port = reactorOnNetwork(helper);
+        port.toggleStoring();
+        var core = helper.getBlockEntity(ReactorTests.CORE, com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.class);
+        helper.runAfterDelay(30, () -> {
+            ItemStack left = port.inventory().insertItem(0, new ItemStack(Items.DIAMOND, 3), false);
+            helper.assertValueEqual(left.getCount(), 3, "turned away");
+            helper.assertValueEqual(core.getLedger().count(resource(Items.DIAMOND)), 0L, "none in the horizon");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aLogisticsMaterialiserOffersTheNetworkToPipes(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIAMOND, 5));
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(30, () -> {
+            var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(at), null);
+            helper.assertTrue(handler != null, "pipes see it");
+            var diamond = resource(Items.DIAMOND);
+            int slot = -1;
+            for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(diamond)) slot = i;
+            helper.assertTrue(slot >= 0 && handler.getAmountAsLong(slot) == 5, "it offers the network's diamonds");
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertValueEqual(handler.extract(slot, diamond, 3, transaction), 3, "promised");
+            }
+            helper.assertValueEqual(count(helper, 4, Items.DIAMOND), 5, "an aborted take moves nothing");
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                handler.extract(slot, diamond, 3, transaction);
+                transaction.commit();
+            }
+            helper.assertValueEqual(count(helper, 4, Items.DIAMOND), 2, "a committed take moves them");
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertValueEqual(handler.insert(resource(Items.DIRT), 7, transaction), 7, "room for dirt");
+                transaction.commit();
+            }
+            helper.assertValueEqual(count(helper, 4, Items.DIRT), 7, "put away in storage");
+            helper.succeed();
         });
     }
 }

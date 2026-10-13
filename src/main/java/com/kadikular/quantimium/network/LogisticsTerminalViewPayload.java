@@ -14,10 +14,12 @@ import java.util.List;
 /** What the open Logistics Terminal shows: whether it's on a network, and what that network can give, with how many of each. */
 public record LogisticsTerminalViewPayload(BlockPos pos, boolean connected, List<Entry> entries) implements CustomPacketPayload {
 
-    public record Entry(ItemResource item, long count) {
+    /** One thing: how many the network has, and how many more a Reactor on it could make. */
+    public record Entry(ItemResource item, long count, long craftable) {
         static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.composite(
                 ItemResource.STREAM_CODEC, Entry::item,
                 ByteBufCodecs.VAR_LONG, Entry::count,
+                ByteBufCodecs.VAR_LONG, Entry::craftable,
                 Entry::new);
     }
 

@@ -48,6 +48,15 @@ public interface LogisticsMember {
     /** Where that inventory is, so nothing is moved from an inventory into itself. */
     BlockPos inventoryPos();
 
+    /**
+     * For a terminal, if it knows better than its slots say: each thing, with how many are there and how many more
+     * could be made (a Reactor). Null to read its slots.
+     */
+    @Nullable
+    default java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, long[]> listing() {
+        return null;
+    }
+
     /** The network has found it, joined to a controller's light, or not: it shows it. */
     default void connected(boolean connected) {}
 }

@@ -211,6 +211,9 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity>> LOGISTICS_TERMINAL_BE =
             BLOCK_ENTITIES.register("logistics_terminal_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity::new, ModBlocks.LOGISTICS_TERMINAL.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LogisticsMaterialiserBlockEntity>> LOGISTICS_MATERIALISER_BE =
+            BLOCK_ENTITIES.register("logistics_materialiser_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LogisticsMaterialiserBlockEntity::new, ModBlocks.LOGISTICS_MATERIALISER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserPortBlockEntity>> LASER_PORT_BE =
             BLOCK_ENTITIES.register("laser_port_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserPortBlockEntity::new, ModBlocks.LASER_PORT.get()));

@@ -165,6 +165,28 @@ public final class Logistics {
     }
 
     /**
+     * How much of {@code stack} the network's storage has room for, up to {@code max}, by reading its slots alone:
+     * for a caller inside an open transaction, where a simulated insert would open another.
+     */
+    public static int roomFor(List<LogisticsMember> members, ItemStack stack, int max) {
+        int room = 0;
+        for (LogisticsMember member : members) {
+            if (member.role() != LogisticsMember.Role.STORAGE || !member.lets(stack)) continue;
+            IItemHandler into = member.inventory();
+            if (into == null) continue;
+            for (int slot = 0; slot < into.getSlots() && room < max; slot++) {
+                if (!into.isItemValid(slot, stack)) continue;
+                ItemStack there = into.getStackInSlot(slot);
+                int limit = Math.min(into.getSlotLimit(slot), stack.getMaxStackSize());
+                if (there.isEmpty()) room += limit;
+                else if (ItemStack.isSameItemSameComponents(there, stack)) room += Math.max(0, limit - there.getCount());
+            }
+            if (room >= max) return max;
+        }
+        return Math.min(room, max);
+    }
+
+    /**
      * Takes up to {@code max} of the first thing {@code wants} accepts from a network (for an Insert, Placement or
      * Interact lens, through its controller): from providers first, as their filters let go, then storage, lowest
      * priority first.
