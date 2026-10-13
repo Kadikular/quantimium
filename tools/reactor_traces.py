@@ -357,7 +357,8 @@ def main() -> None:
     with open(os.path.join(ASSETS, "blockstates", "lit_reactor_plinth.json"), "w") as handle:
         json.dump({"variants": lit_variants}, handle, indent=1)
     write_bay(parts)
-    for port in ("input", "output", "energy", "materialiser", "me", "logistics"):
+    write_logistics_port()
+    for port in ("input", "output", "energy", "materialiser", "me"):
         # A port is the plinth with a flat socket laid over every face (tools/reactor_art.py draws it).
         port_parts = list(parts)
         # A dark port (a Materialiser Port an ME network reads twice) shows its socket unlit.
@@ -380,40 +381,63 @@ def main() -> None:
                               "faces": {d: {"uv": [0, 0, 16, 16], "texture": "#overlay", "cullface": d}
                                         for d in ("north", "south", "east", "west", "up", "down")}}],
             }
-            if port == "logistics":
-                overlay["elements"] += light_sockets()
-                overlay["textures"].update({"rim": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus"})
             with open(os.path.join(ASSETS, "models", "block", f"reactor_{port}_port_overlay{tag}.json"), "w") as handle:
                 json.dump(overlay, handle, indent=2)
     print(f"wrote {len(variants)} plinth states and their traces")
 
 
-def light_sockets() -> list:
+def write_logistics_port() -> None:
     """
-    The Logistics Port's sockets for light on its four sides: a raised steel rim a pixel proud of the face round an
-    8x8 opening, half a focus set in it. Drawn on the north face and turned to the others.
+    The Reactor Logistics Port, a model of its own as the Catalyst Bay has: the plinth's body with an 8x8 recess two
+    deep in each side, half a focus set in each for light to come in by, and its socket on top. The plinth's traces
+    stop at it.
     """
-    def box(start, end, texture, uv=None):
-        faces = {}
-        for f in ("north", "south", "east", "west", "up", "down"):
-            faces[f] = {"texture": texture}
-            if uv:
-                faces[f]["uv"] = uv
-        return {"from": start, "to": end, "faces": faces}
+    models = os.path.join(ASSETS, "models", "block")
 
-    north = [box([4, 4, -1], [12, 6, 0], "#rim"), box([4, 10, -1], [12, 12, 0], "#rim"),
-             box([4, 6, -1], [6, 10, 0], "#rim"), box([10, 6, -1], [12, 10, 0], "#rim"),
-             box([6, 6, -0.5], [10, 10, 0], "#focus", [6, 6, 10, 10])]
-    turns = {"north": lambda x, y, z: (x, y, z), "south": lambda x, y, z: (16 - x, y, 16 - z),
-             "west": lambda x, y, z: (z, y, 16 - x), "east": lambda x, y, z: (16 - z, y, x)}
-    elements = []
-    for turn in turns.values():
-        for element in north:
-            a, b = turn(*element["from"]), turn(*element["to"])
-            elements.append({"from": [min(a[i], b[i]) for i in range(3)], "to": [max(a[i], b[i]) for i in range(3)],
-                             "shade": False, "faces": element["faces"]})
-    return elements
+    def box(start, end):
+        element = {"from": start, "to": end, "faces": {}}
+        for axis, (low, high) in enumerate((("west", "east"), ("down", "up"), ("north", "south"))):
+            for name, edge in ((low, start[axis] == 0), (high, end[axis] == 16)):
+                texture = "#top" if name == "up" else "#bottom" if name == "down" else "#side"
+                element["faces"][name] = {"texture": texture}
+                if edge:
+                    element["faces"][name]["cullface"] = name
+        return element
 
+    parts = [box([2, 0, 2], [14, 16, 14])]
+    for z0, z1 in ((0, 2), (14, 16)):
+        parts += [box([0, 0, z0], [16, 4, z1]), box([0, 12, z0], [16, 16, z1]), box([0, 4, z0], [4, 12, z1]), box([12, 4, z0], [16, 12, z1])]
+    for x0, x1 in ((0, 2), (14, 16)):
+        parts += [box([x0, 0, 2], [x1, 4, 14]), box([x0, 12, 2], [x1, 16, 14]), box([x0, 4, 2], [x1, 12, 4]), box([x0, 4, 12], [x1, 12, 14])]
+    focus = {"texture": "#focus", "uv": [6, 6, 10, 10]}
+    for start, end in (([6, 6, 0], [10, 10, 2]), ([6, 6, 14], [10, 10, 16]), ([0, 6, 6], [2, 10, 10]), ([14, 6, 6], [16, 10, 10])):
+        parts.append({"from": start, "to": end, "faces": {d: dict(focus) for d in ("north", "south", "east", "west", "up", "down")}})
+    parts.append({"from": [0, 16.01, 0], "to": [16, 16.01, 16], "shade": False, "faces": {"up": {"texture": "#overlay", "uv": [0, 0, 16, 16]}}})
+    multipart = []
+    for formed in (False, True):
+        tag = "_active" if formed else ""
+        model = {
+            "parent": "minecraft:block/block",
+            "render_type": "minecraft:cutout",
+            "textures": {"side": "quantimium:block/reactor_plinth_side" + tag,
+                         "top": "quantimium:block/reactor_traces/0000" + ("_still" if formed else ""),
+                         "bottom": "quantimium:block/quantum_foundry_base",
+                         "focus": "quantimium:block/laser_focus",
+                         "overlay": f"quantimium:block/reactor_logistics_port_overlay{tag}",
+                         "particle": "quantimium:block/reactor_plinth_side" + tag},
+            "elements": parts,
+        }
+        with open(os.path.join(models, f"reactor_logistics_port{tag}.json"), "w") as handle:
+            json.dump(model, handle, indent=2)
+        multipart.append({"when": {"formed": str(formed).lower()}, "apply": {"model": f"quantimium:block/reactor_logistics_port{tag}"}})
+    with open(os.path.join(ASSETS, "blockstates", "reactor_logistics_port.json"), "w") as handle:
+        json.dump({"multipart": multipart}, handle, indent=1)
+    with open(os.path.join(ASSETS, "items", "reactor_logistics_port.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/reactor_logistics_port_active"}}, handle, indent=2)
+    for stale in ("reactor_logistics_port_overlay.json", "reactor_logistics_port_overlay_active.json"):
+        path = os.path.join(models, stale)
+        if os.path.exists(path):
+            os.remove(path)
 
 if __name__ == "__main__":
     main()

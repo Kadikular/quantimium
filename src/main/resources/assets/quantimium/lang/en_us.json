@@ -1246,7 +1246,7 @@
   "block.quantimium.logistics_terminal": "Logistics Terminal",
   "block.quantimium.logistics_terminal.tip": "Logistics: put it where a Logistics Controller's light ends, and it shows everything that network's storage holds and its providers offer, to take or put away.",
   "gui.quantimium.logistics_terminal.count": "%s in the network",
-  "gui.quantimium.logistics_terminal.take.tip": "Click: a stack. Right-click: one. Shift-click: a stack to your inventory.",
+  "gui.quantimium.logistics_terminal.take.tip": "Click: a stack. Right-click: one (again, holding it: one more). Shift-click: a stack to your inventory.",
   "gui.quantimium.logistics_terminal.status": "%s kinds",
   "gui.quantimium.logistics_terminal.status.unconnected": "No controller's light",
   "gui.quantimium.logistics_terminal.status.tip": "A Logistics Controller's light must reach it. Click the grid holding something to put it away (right-click: one); shift-click it in your inventory does too.",
@@ -1265,5 +1265,14 @@
   "gui.quantimium.logistics_terminal.craft": "Craft",
   "gui.quantimium.logistics_terminal.craftable": "~%s more can be made",
   "block.quantimium.logistics_materialiser": "Logistics Materialiser",
-  "block.quantimium.logistics_materialiser.tip": "Logistics: put it where a Logistics Controller's light ends, and any mod's pipes or storage buses see the whole network through it: everything storage holds and providers offer, to take, and room to put things away."
+  "block.quantimium.logistics_materialiser.tip": "Logistics: put it where a Logistics Controller's light ends, and any mod's pipes or storage buses see the whole network through it: everything storage holds and providers offer, to take, and room to put things away.",
+  "gui.quantimium.logistics_terminal.view.all": "All",
+  "gui.quantimium.logistics_terminal.view.split": "Both",
+  "gui.quantimium.logistics_terminal.view.real": "Real",
+  "gui.quantimium.logistics_terminal.view.craft": "Craft",
+  "gui.quantimium.logistics_terminal.view.all.tip": "All counts: what's there and what could be made, as one number",
+  "gui.quantimium.logistics_terminal.view.split.tip": "Real and craftable: what's there, and \"Craft\" for what could only be made",
+  "gui.quantimium.logistics_terminal.view.real.tip": "Real only: just what's there",
+  "gui.quantimium.logistics_terminal.view.craft.tip": "Craftable only: just what could be made, with how many",
+  "gui.quantimium.logistics_terminal.view.tip": "Click to switch."
 }

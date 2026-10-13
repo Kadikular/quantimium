@@ -40,7 +40,9 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_terminal.png");
     private static final int SORT_X = 8;
     private static final int SORT_Y = 18;
-    private static final int SORT_W = 72;
+    private static final int SORT_W = 34;
+    private static final int VIEW_X = 44;
+    private static final int VIEW_W = 36;
     private static final int SORT_H = 12;
     private static final int SEARCH_X = 95;
     private static final int SEARCH_Y = 20;
@@ -56,6 +58,38 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     private static boolean connected;
     /** Remembered while the game runs, like a terminal's sort. */
     private static boolean byName;
+
+    /** What the grid counts: everything as one number, there and craftable apart, only what's there, or only what can be made. */
+    private enum View {
+        ALL, SPLIT, REAL, CRAFT;
+
+        View next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+
+        String key() {
+            return "gui.quantimium.logistics_terminal.view." + name().toLowerCase(Locale.ROOT);
+        }
+
+        boolean shows(LogisticsTerminalViewPayload.Entry entry) {
+            return switch (this) {
+                case ALL, SPLIT -> true;
+                case REAL -> entry.count() > 0;
+                case CRAFT -> entry.craftable() > 0;
+            };
+        }
+
+        /** The number shown, and sorted on first. */
+        long count(LogisticsTerminalViewPayload.Entry entry) {
+            return switch (this) {
+                case ALL -> entry.count() + entry.craftable();
+                case SPLIT, REAL -> entry.count();
+                case CRAFT -> entry.craftable();
+            };
+        }
+    }
+
+    private static View view = View.SPLIT;
     private EditBox search;
     private int scrollRow;
 
@@ -87,20 +121,26 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     private List<LogisticsTerminalViewPayload.Entry> shownFor;
     private String shownQuery;
     private boolean shownByName;
+    private View shownView;
     private List<LogisticsTerminalViewPayload.Entry> shown = List.of();
 
     private List<LogisticsTerminalViewPayload.Entry> shown() {
         String query = search == null ? "" : search.getValue().trim().toLowerCase(Locale.ROOT);
-        if (entries == shownFor && query.equals(shownQuery) && byName == shownByName) return shown;
+        if (entries == shownFor && query.equals(shownQuery) && byName == shownByName && view == shownView) return shown;
         List<LogisticsTerminalViewPayload.Entry> cells = new ArrayList<>();
         for (LogisticsTerminalViewPayload.Entry entry : entries) {
+            if (!view.shows(entry)) continue;
             if (query.isEmpty() || entry.item().toStack(1).getHoverName().getString().toLowerCase(Locale.ROOT).contains(query)) cells.add(entry);
         }
         Comparator<LogisticsTerminalViewPayload.Entry> name = Comparator.comparing(e -> e.item().toStack(1).getHoverName().getString());
-        cells.sort(byName ? name : Comparator.comparingLong((LogisticsTerminalViewPayload.Entry e) -> e.count() + e.craftable()).reversed().thenComparing(name));
+        // By count: what the view counts first, then (there and craftable apart) what can be made.
+        Comparator<LogisticsTerminalViewPayload.Entry> byCount = Comparator.comparingLong((LogisticsTerminalViewPayload.Entry e) -> view.count(e)).reversed()
+                .thenComparing(Comparator.comparingLong(LogisticsTerminalViewPayload.Entry::craftable).reversed());
+        cells.sort(byName ? name : byCount.thenComparing(name));
         shownFor = entries;
         shownQuery = query;
         shownByName = byName;
+        shownView = view;
         shown = cells;
         return cells;
     }
@@ -130,6 +170,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         graphics.fill(left, top, left + SORT_W, top + SORT_H, sortHovered ? 0x66303650 : 0x33303650);
         graphics.centeredText(font, Component.translatable(byName ? "gui.quantimium.horizon_core.sort.name" : "gui.quantimium.horizon_core.sort.count"),
                 left + SORT_W / 2, top + 2, textColour());
+        int viewLeft = leftPos + VIEW_X;
+        boolean viewHovered = QuantumWidgets.hit(mouseX, mouseY, viewLeft, top, VIEW_W, SORT_H);
+        graphics.fill(viewLeft, top, viewLeft + VIEW_W, top + SORT_H, viewHovered ? 0x66303650 : 0x33303650);
+        graphics.centeredText(font, Component.translatable(view.key()), viewLeft + VIEW_W / 2, top + 2, textColour());
 
         List<LogisticsTerminalViewPayload.Entry> shown = shown();
         scrollRow = Mth.clamp(scrollRow, 0, maxScroll(shown));
@@ -143,16 +187,18 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
                 graphics.item(cell.item().toStack(1), x, y);
-                // How many there are; with none there, that it can be made, as an ME terminal says "Craft".
-                boolean makeOnly = cell.count() == 0 && cell.craftable() > 0;
-                if (cell.count() > 1 || makeOnly) {
+                // How many the view counts; there and craftable apart, with none there, that it can be made, as an ME terminal says "Craft".
+                boolean makeOnly = view == View.SPLIT && cell.count() == 0 && cell.craftable() > 0;
+                long shownCount = view.count(cell);
+                boolean purple = makeOnly || view == View.CRAFT;
+                if (shownCount > 1 || makeOnly) {
                     String count = makeOnly ? Component.translatable("gui.quantimium.logistics_terminal.craft").getString()
-                            : HorizonCoreScreen.slotCount(cell.count());
+                            : HorizonCoreScreen.slotCount(shownCount);
                     graphics.nextStratum();
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(x + 16, y + 11);
                     graphics.pose().scale(0.5f, 0.5f);
-                    graphics.text(font, count, -font.width(count), 0, makeOnly ? 0xFFB49CFF : 0xFFFFFFFF, true);
+                    graphics.text(font, count, -font.width(count), 0, purple ? 0xFFB49CFF : 0xFFFFFFFF, true);
                     graphics.pose().popMatrix();
                 }
             }
@@ -161,6 +207,11 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     @Override
     protected void renderMachineTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (QuantumWidgets.hit(mouseX, mouseY, leftPos + VIEW_X, topPos + SORT_Y, VIEW_W, SORT_H)) {
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable(view.key() + ".tip"),
+                    Component.translatable("gui.quantimium.logistics_terminal.view.tip").withStyle(ChatFormatting.DARK_GRAY)), mouseX, mouseY);
+            return;
+        }
         if (!menu.getCarried().isEmpty()) return;
         LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
         if (cell == null) return;
@@ -185,13 +236,27 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             click();
             return true;
         }
+        if (activeOverlay() == null && event.button() == 0 && QuantumWidgets.hit(mouseX, mouseY, leftPos + VIEW_X, topPos + SORT_Y, VIEW_W, SORT_H)) {
+            view = view.next();
+            scrollRow = 0;
+            click();
+            return true;
+        }
         if (activeOverlay() == null && onGrid(mouseX, mouseY) && (event.button() == 0 || event.button() == 1)) {
             var pos = menu.getBlockEntity().getBlockPos();
-            if (!menu.getCarried().isEmpty()) {
+            LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
+            ItemStack carried = menu.getCarried();
+            // Right-click on what's already in hand takes one more of it (makes one more, if it must).
+            if (event.button() == 1 && cell != null && !carried.isEmpty()
+                    && net.neoforged.neoforge.transfer.item.ItemResource.of(carried).equals(cell.item())) {
+                ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), 1, false));
+                click();
+                return true;
+            }
+            if (!carried.isEmpty()) {
                 ClientPacketDistributor.sendToServer(new LogisticsTerminalInsertPayload(pos, event.button() == 1));
                 return true;
             }
-            LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             if (cell != null) {
                 int stack = cell.item().toStack(1).getMaxStackSize();
                 int count = event.button() == 1 ? 1 : stack;

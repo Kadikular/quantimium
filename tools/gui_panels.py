@@ -475,7 +475,8 @@ def logistics_terminal() -> Panel:
     """The Logistics Terminal: the sort toggle and a search box, a scrolling 9x5 grid of what the network can give
     (LogisticsTerminalScreen.GRID_*), then the player's inventory (LogisticsTerminalMenu.PLAYER_Y)."""
     panel = Panel(HIGH, height=222)
-    panel.region("sort", (8, 18, 72, 12))
+    panel.region("sort", (8, 18, 34, 12))
+    panel.region("view", (44, 18, 36, 12))
     panel.well(93, 18, 76, 12)
     panel.region("search", (95, 20, 72, 9))
     panel.grid((8, 34), 9, 5, "items")
