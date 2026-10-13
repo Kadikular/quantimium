@@ -24,7 +24,9 @@ public enum PodModule implements StringRepresentable {
     /** Makes the pod a hub: it reaches the pods its Tesseracts are bound to, holding a double or not. */
     RELAY("relay"),
     /** Brings a lost double home: a field double, or a Sophon lying where one was knocked out. */
-    RECOVERY("recovery");
+    RECOVERY("recovery"),
+    /** Where a Logistics Controller's light ends on it, opens that network's terminal from anywhere. */
+    LOGISTICS("logistics");
 
     private final String name;
 

@@ -386,6 +386,16 @@ public class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(PodCradleBlock.FORMED) ? 6 : 0)));
 
+    public static final DeferredBlock<Block> POD_LOGISTICS_MODULE = BLOCKS.register(
+            "pod_logistics_module",
+            id -> new com.kadikular.quantimium.block.PodLogisticsModuleBlock(BlockBehaviour.Properties.of()
+                    .setId(ResourceKey.create(Registries.BLOCK, id))
+                    .mapColor(MapColor.COLOR_BLACK)
+                    .strength(6.0f, 1200.0f)
+                    .sound(SoundType.NETHERITE_BLOCK)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(PodCradleBlock.FORMED) ? 6 : 0)));
+
     public static final DeferredBlock<Block> POD_CHARGE_MODULE = BLOCKS.register(
             "pod_charge_module",
             id -> new PodModuleBlock(PodModule.CHARGE, BlockBehaviour.Properties.of()

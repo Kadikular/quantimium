@@ -56,6 +56,7 @@ navigation:
 - <ItemLink id="quantimium:pod_charge_module" />
 - <ItemLink id="quantimium:pod_cradle" />
 - <ItemLink id="quantimium:pod_hardening_module" />
+- <ItemLink id="quantimium:pod_logistics_module" />
 - <ItemLink id="quantimium:pod_plating" />
 - <ItemLink id="quantimium:pod_recovery_module" />
 - <ItemLink id="quantimium:pod_regeneration_module" />

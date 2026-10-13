@@ -1628,9 +1628,23 @@ def _tracks(img: Image.Image, lit: bool) -> None:
     put(img, 9, 9, FLUX_DIM if lit else PANEL_LINE)
 
 
+def _beam_cells(img: Image.Image, lit: bool) -> None:
+    """Logistics: a beam running in from the left to a stack of three cells, the network's storage."""
+    hline(img, 2, 7, 7, FLUX if lit else PANEL)
+    hline(img, 2, 7, 8, FLUX_DIM if lit else PANEL_LINE)
+    for y0 in (3, 7, 11):
+        fill(img, 9, y0, 12, y0 + 1, FLUX_CORE if lit else RAISED)
+
+
+def _beam_line(img: Image.Image, lit: bool) -> None:
+    """Logistics' sides: a beam along the middle, through a cell."""
+    hline(img, 1, 14, 8, FLUX_DIM if lit else PANEL_LINE)
+    fill(img, 7, 7, 8, 9, FLUX if lit else RAISED)
+
+
 for _name, _emblem, _pattern in (("regeneration", _plus, _rising), ("hardening", _shield, _lattice),
                                  ("ward", _eye, _bars), ("stash", _grid, _hatch), ("charge", _bolt, _cells),
-                                 ("relay", _nodes, _signal), ("recovery", _homeward, _tracks)):
+                                 ("relay", _nodes, _signal), ("recovery", _homeward, _tracks), ("logistics", _beam_cells, _beam_line)):
     for _lit in (True, False):
         _suffix = "" if _lit else "_off"
         texture(f"block/pod_{_name}_module_top{_suffix}")(

@@ -39,6 +39,7 @@
     "quantimium:pod_hardening_module",
     "quantimium:pod_ward_module",
     "quantimium:pod_stash_module",
+    "quantimium:pod_logistics_module",
     "quantimium:pod_charge_module",
     "quantimium:pod_relay_module",
     "quantimium:pod_recovery_module",

@@ -563,6 +563,13 @@ public class Quantimium {
                 })
         );
         registrar.playToServer(
+                com.kadikular.quantimium.network.OpenLogisticsPayload.TYPE,
+                com.kadikular.quantimium.network.OpenLogisticsPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof ServerPlayer player) Superposition.openLogistics(player);
+                })
+        );
+        registrar.playToServer(
                 OpenStashPayload.TYPE,
                 OpenStashPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
@@ -605,7 +612,7 @@ public class Quantimium {
                 com.kadikular.quantimium.network.LogisticsTerminalTakePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
-                            && menu.getBlockEntity().getBlockPos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                            && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
                         menu.take(context.player(), payload.item(), payload.count(), payload.toInventory());
                     }
                 })
@@ -615,7 +622,7 @@ public class Quantimium {
                 com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
-                            && menu.getBlockEntity().getBlockPos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                            && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
                         menu.insertCarried(payload.one());
                     }
                 })

@@ -96,6 +96,8 @@ public class ModItems {
             "pod_ward_module", props -> new TooltipBlockItem(ModBlocks.POD_WARD_MODULE.get(), props.useBlockDescriptionPrefix().rarity(Rarity.RARE)));
     public static final DeferredItem<BlockItem> POD_STASH_MODULE_ITEM = ITEMS.registerItem(
             "pod_stash_module", props -> new TooltipBlockItem(ModBlocks.POD_STASH_MODULE.get(), props.useBlockDescriptionPrefix().rarity(Rarity.RARE)));
+    public static final DeferredItem<BlockItem> POD_LOGISTICS_MODULE_ITEM = ITEMS.registerItem(
+            "pod_logistics_module", props -> new TooltipBlockItem(ModBlocks.POD_LOGISTICS_MODULE.get(), props.useBlockDescriptionPrefix().rarity(Rarity.RARE)));
     public static final DeferredItem<BlockItem> POD_CHARGE_MODULE_ITEM = ITEMS.registerItem(
             "pod_charge_module", props -> new TooltipBlockItem(ModBlocks.POD_CHARGE_MODULE.get(), props.useBlockDescriptionPrefix().rarity(Rarity.RARE)));
     public static final DeferredItem<BlockItem> POD_RELAY_MODULE_ITEM = ITEMS.registerItem(

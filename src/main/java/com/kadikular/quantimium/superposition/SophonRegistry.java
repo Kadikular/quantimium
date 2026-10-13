@@ -284,6 +284,15 @@ public final class SophonRegistry {
         return false;
     }
 
+    /** The pods with a Logistics module holding one of {@code owner}'s doubles. */
+    public java.util.List<GlobalPos> logisticsPods(UUID owner) {
+        java.util.List<GlobalPos> pods = new java.util.ArrayList<>();
+        for (Entry entry : sophons.values()) {
+            if (entry.owner().equals(owner) && entry.inPod() && entry.hasModule(PodModule.LOGISTICS)) pods.add(entry.pod().get());
+        }
+        return pods;
+    }
+
     // ---- Recovery ----
 
     /** Notes whether the pod at {@code pod}, {@code owner}'s, has a Recovery module. */

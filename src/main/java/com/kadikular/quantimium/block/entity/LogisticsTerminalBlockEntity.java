@@ -35,7 +35,12 @@ import java.util.Set;
 public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNode, MenuProvider {
 
     public LogisticsTerminalBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.LOGISTICS_TERMINAL_BE.get(), pos, state);
+        this(ModBlockEntities.LOGISTICS_TERMINAL_BE.get(), pos, state);
+    }
+
+    /** For another block that is a terminal too: a pod's Logistics module. */
+    protected LogisticsTerminalBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
     /** The controller whose light reaches it, or null. Server side. */
@@ -156,6 +161,6 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
-        return new com.kadikular.quantimium.menu.LogisticsTerminalMenu(containerId, inventory, this);
+        return new com.kadikular.quantimium.menu.LogisticsTerminalMenu(containerId, inventory, this, false);
     }
 }

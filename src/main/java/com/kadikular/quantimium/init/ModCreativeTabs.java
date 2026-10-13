@@ -140,6 +140,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.POD_HARDENING_MODULE_ITEM.get());
                         output.accept(ModItems.POD_WARD_MODULE_ITEM.get());
                         output.accept(ModItems.POD_STASH_MODULE_ITEM.get());
+                        output.accept(ModItems.POD_LOGISTICS_MODULE_ITEM.get());
                         output.accept(ModItems.POD_CHARGE_MODULE_ITEM.get());
                         output.accept(ModItems.POD_RELAY_MODULE_ITEM.get());
                         output.accept(ModItems.POD_RECOVERY_MODULE_ITEM.get());

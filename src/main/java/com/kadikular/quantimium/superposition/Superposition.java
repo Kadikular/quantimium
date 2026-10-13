@@ -399,6 +399,35 @@ public final class Superposition {
                 SoundSource.PLAYERS, player.getX(), player.getY(), player.getZ(), 0.8f, 0.6f, player.getRandom().nextLong()));
     }
 
+    /**
+     * Opens, from anywhere, the logistics network a pod's Logistics module is on: a pod holding one of the player's
+     * doubles, its cradle loaded, a controller's light ending on the module.
+     */
+    public static void openLogistics(ServerPlayer player) {
+        SophonRegistry registry = SophonRegistry.get(player.level().getServer());
+        java.util.List<GlobalPos> pods = registry.logisticsPods(player.getUUID());
+        if (pods.isEmpty()) {
+            refuse(player, "no_logistics");
+            return;
+        }
+        for (GlobalPos pod : pods) {
+            net.minecraft.server.level.ServerLevel level = player.level().getServer().getLevel(pod.dimension());
+            if (level == null) continue;
+            BlockPos floor = pod.pos().below();
+            for (net.minecraft.core.Direction side : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                BlockPos at = floor.relative(side);
+                if (!level.isLoaded(at) || !(level.getBlockEntity(at) instanceof com.kadikular.quantimium.block.entity.PodLogisticsModuleBlockEntity terminal)
+                        || terminal.controller() == null) {
+                    continue;
+                }
+                player.openMenu(new SimpleMenuProvider((id, inventory, who) -> new com.kadikular.quantimium.menu.LogisticsTerminalMenu(id, inventory, terminal, true),
+                        terminal.getDisplayName()), buffer -> buffer.writeBlockPos(terminal.getBlockPos()));
+                return;
+            }
+        }
+        refuse(player, "no_logistics_network");
+    }
+
     // ---- the Anchor ----
 
     /** Makes the pod its owner's Anchor, or stops it being one. Needs a Rescue module. */

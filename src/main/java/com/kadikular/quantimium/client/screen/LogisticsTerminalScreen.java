@@ -262,7 +262,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             return true;
         }
         if (activeOverlay() == null && onGrid(mouseX, mouseY) && (event.button() == 0 || event.button() == 1)) {
-            var pos = menu.getBlockEntity().getBlockPos();
+            var pos = menu.pos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             ItemStack carried = menu.getCarried();
             // Right-click: half a stack; with shift, one. On what's already in hand, that much more of it (made, if it must be).

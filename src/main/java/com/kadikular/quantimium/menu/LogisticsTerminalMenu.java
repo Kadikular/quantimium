@@ -30,7 +30,12 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     /** How often it looks again at what the network holds. */
     private static final int VIEW_TICKS = 10;
 
+    /** The terminal, on the server; on the client only its place, which may be far away (opened through a pod). */
+    @Nullable
     private final LogisticsTerminalBlockEntity terminal;
+    private final net.minecraft.core.BlockPos pos;
+    /** Opened from afar, through a pod's Logistics module: no need to stand by it. */
+    private final boolean remote;
     @Nullable
     private final Player player;
     private int sinceView;
@@ -39,12 +44,19 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     private boolean sentConnected;
 
     public LogisticsTerminalMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        this(containerId, playerInv, (LogisticsTerminalBlockEntity) playerInv.player.level().getBlockEntity(extraData.readBlockPos()));
+        this(containerId, playerInv, null, extraData.readBlockPos(), true);
     }
 
-    public LogisticsTerminalMenu(int containerId, Inventory playerInv, LogisticsTerminalBlockEntity terminal) {
+    public LogisticsTerminalMenu(int containerId, Inventory playerInv, LogisticsTerminalBlockEntity terminal, boolean remote) {
+        this(containerId, playerInv, terminal, terminal.getBlockPos(), remote);
+    }
+
+    private LogisticsTerminalMenu(int containerId, Inventory playerInv, @Nullable LogisticsTerminalBlockEntity terminal, net.minecraft.core.BlockPos pos,
+                                  boolean remote) {
         super(ModMenuTypes.LOGISTICS_TERMINAL_MENU.get(), containerId);
         this.terminal = terminal;
+        this.pos = pos;
+        this.remote = remote;
         this.player = playerInv.player;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -56,14 +68,15 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         }
     }
 
-    public LogisticsTerminalBlockEntity getBlockEntity() {
-        return terminal;
+    /** Where the terminal is: what the screen's clicks name. */
+    public net.minecraft.core.BlockPos pos() {
+        return pos;
     }
 
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
-        if (!(player instanceof ServerPlayer server) || sinceView-- > 0) return;
+        if (!(player instanceof ServerPlayer server) || terminal == null || sinceView-- > 0) return;
         sinceView = VIEW_TICKS;
         boolean connected = terminal.controller() != null;
         Map<ItemResource, long[]> contents = terminal.contents();
@@ -84,6 +97,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
 
     /** Takes {@code count} of {@code item}: onto the cursor (as much as it holds with what's there), or into the inventory. */
     public void take(Player player, ItemResource item, int count, boolean toInventory) {
+        if (terminal == null) return;
         int room = count;
         ItemStack carried = getCarried();
         if (!toInventory) {
@@ -110,6 +124,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
 
     /** Puts what's on the cursor (or one of it) into the network. */
     public void insertCarried(boolean one) {
+        if (terminal == null) return;
         ItemStack carried = getCarried();
         if (carried.isEmpty()) return;
         if (one) {
@@ -126,7 +141,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         Slot slot = slots.get(index);
-        if (!slot.hasItem() || player.level().isClientSide()) return ItemStack.EMPTY;
+        if (!slot.hasItem() || player.level().isClientSide() || terminal == null) return ItemStack.EMPTY;
         ItemStack left = terminal.insert(slot.getItem().copy());
         slot.set(left);
         refresh();
@@ -135,6 +150,8 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
+        if (terminal == null) return true;
+        if (remote) return !terminal.isRemoved();
         return stillValid(ContainerLevelAccess.create(terminal.getLevel(), terminal.getBlockPos()), player, terminal.getBlockState().getBlock());
     }
 }

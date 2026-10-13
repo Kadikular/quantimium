@@ -142,6 +142,7 @@ doubles, and the power ones draw from the pod's own buffer.
 | <ItemLink id="quantimium:pod_charge_module" /> | Charges what holds FE in your inventory | up to 2,000 FE/t |
 | <ItemLink id="quantimium:pod_relay_module" /> | Makes the pod a hub (below) | what it sends |
 | <ItemLink id="quantimium:pod_recovery_module" /> | Brings a lost double home (below) | what it brings |
+| <ItemLink id="quantimium:pod_logistics_module" /> | Opens a logistics network's terminal from anywhere (below) | as the network's controller pays |
 
 **Regeneration and Hardening** reach you anywhere in the pod's dimension, and give out
 when you stand in Critical anomaly or worse. They do not stack: two Regeneration pods still give
@@ -162,6 +163,10 @@ folded up as its Sophon, safe but no longer a way back. You are warned while it 
 **The Stash** is a chest's worth of room kept out of phase: yours, the same whichever
 pod opens it. Press the stash key (**B** by default), use a Stash module, or press **Stash** on a pod's screen,
 from anywhere, while a pod with a Stash module holds one of your doubles.
+
+**The Logistics module** is a <ItemLink id="quantimium:logistics_terminal" /> in the pod's cradle: point
+a Logistics Controller's light at it, and the logistics key (**V** by default) opens that network's
+terminal from anywhere, while a pod with it holds one of your doubles. Using the module opens it too.
 
 ## The Relay: a hub
 

@@ -26,6 +26,10 @@ public final class SuperpositionKeys {
     public static final KeyMapping OPEN_STASH = new KeyMapping("key.quantimium.stash", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
 
+    /** Opens the logistics network a pod's Logistics module is on, from anywhere. */
+    public static final KeyMapping OPEN_LOGISTICS = new KeyMapping("key.quantimium.logistics", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
+
     private SuperpositionKeys() {}
 
     @SubscribeEvent
@@ -33,11 +37,17 @@ public final class SuperpositionKeys {
         while (OPEN_STASH.consumeClick()) {
             if (Minecraft.getInstance().player != null) ClientPacketDistributor.sendToServer(OpenStashPayload.INSTANCE);
         }
+        while (OPEN_LOGISTICS.consumeClick()) {
+            if (Minecraft.getInstance().player != null) {
+                ClientPacketDistributor.sendToServer(com.kadikular.quantimium.network.OpenLogisticsPayload.INSTANCE);
+            }
+        }
     }
 
     /** Registered on the mod bus, from {@link ClientModEvents}. */
     public static void register(RegisterKeyMappingsEvent event) {
         event.registerCategory(CATEGORY);
         event.register(OPEN_STASH);
+        event.register(OPEN_LOGISTICS);
     }
 }

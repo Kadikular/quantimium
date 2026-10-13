@@ -1274,5 +1274,10 @@
   "gui.quantimium.logistics_terminal.view.split.tip": "Real and craftable: what's there, and \"Craft\" for what could only be made",
   "gui.quantimium.logistics_terminal.view.real.tip": "Real only: just what's there",
   "gui.quantimium.logistics_terminal.view.craft.tip": "Craftable only: just what could be made, with how many",
-  "gui.quantimium.logistics_terminal.view.tip": "Click to switch."
+  "gui.quantimium.logistics_terminal.view.tip": "Click to switch.",
+  "block.quantimium.pod_logistics_module": "Pod Logistics Module",
+  "block.quantimium.pod_module.logistics.tip": "Where a Logistics Controller's light ends on it, opens that network's terminal from anywhere (V), while one of your doubles waits in the pod. Use it for the terminal there.",
+  "key.quantimium.logistics": "Open logistics terminal",
+  "message.quantimium.pod.no_logistics": "None of your doubles waits in a pod with a Logistics module",
+  "message.quantimium.pod.no_logistics_network": "No logistics network: a controller's light must end on the pod's Logistics module, and the pod be loaded"
 }

@@ -514,4 +514,19 @@ public final class LogisticsTests {
             helper.succeed();
         });
     }
+
+    // covers: pod.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aPodLogisticsModuleIsATerminal(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.EMERALD, 9));
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, ModBlocks.POD_LOGISTICS_MODULE.get());
+        var module = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.PodLogisticsModuleBlockEntity.class);
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(module.controller() != null, "the controller's light reaches it");
+            helper.assertValueEqual(module.contents().get(resource(Items.EMERALD))[0], 9L, "it lists the network's emeralds");
+            helper.succeed();
+        });
+    }
 }
