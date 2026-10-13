@@ -273,14 +273,16 @@ sources whose light reaches the lens, as ever. Out of power, its receptacles wai
 [[mechanic:laser.logistics.lenses]] **Lenses past the controller use the network.** Up the beam from a lens,
 the controller stands for the whole network, after any Laser Port nearer the lens: what a Pickup or Extract
 lens brings back goes into it (to requesters listing it, then storage), so they work as active providers;
-what an Insert, Placement or Interact lens uses comes from it (providers, then storage), so with a Filter
-lens they work as active requesters. As ever, a stream from one side of a join reaches back up its own side:
+what an Insert, Placement or Interact lens uses comes from it (providers, then storage), but only through a
+Filter lens, so they work as active requesters: unfiltered, they take nothing from the network (a Laser Port
+up the beam still feeds them). As ever, a stream from one side of a join reaches back up its own side:
 put the controller before the lenses, or on their side of the join.
 
 A [[block:logistics_receptacle]] goes on the inventory it serves (a chest, a machine, a drawer), and light
 passes straight through it, so one beam along a row of machines joins them all. Open it to set what that
 inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
-with tags (empty, storage and providers take or give everything; a requester asks for nothing). Its plate lights in its role's colour while a controller's
+with tags (empty, storage and providers take or give everything; a requester asks for nothing as a whitelist,
+everything as a blacklist). Its plate lights in its role's colour while a controller's
 light reaches it. Once a second, each active part moves up to {{c:LaserTuning.LOGISTICS_ITEMS}} items:
 
 - **Storage**: where the network keeps things. [[mechanic:laser.logistics.priority]] What comes in fills

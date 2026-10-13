@@ -411,7 +411,7 @@ public final class LaserNetworks {
                         LensAction action = was.getOrDefault(key, new LensAction(key));
                         int solids = stream.action() == Lens.PHANTOM ? beam.solidsThrough(level) : 0;
                         action.update(beam, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
-                                senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends)),
+                                sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
                         actions.put(key, action);
@@ -425,7 +425,7 @@ public final class LaserNetworks {
                         LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
                         action.update(null, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
-                                senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends)),
+                                sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 node.area(), core.reach(), core.marks(), 0);
                         action.within(node::inArea);
                         actions.put(key, action);
@@ -434,6 +434,15 @@ public final class LaserNetworks {
             }
             node.showBeams(list);
         }
+    }
+
+    /**
+     * The senders a stream's lens may take from: a logistics network (its controller) only through a Filter lens,
+     * so an unfiltered Insert, Placement or Interact lens doesn't empty the network; Laser Ports always.
+     */
+    private List<BlockPos> sendersFor(Light.Stream stream, List<BlockPos> senders) {
+        if (stream.filter() != null) return senders;
+        return senders.stream().filter(pos -> !(nodes.get(pos) instanceof LogisticsController)).toList();
     }
 
     /** What acts on {@code light}'s beam: its streams, and Phantom light's upkeep, paid by everyone whose light it is. */

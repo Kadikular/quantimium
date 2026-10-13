@@ -236,17 +236,42 @@ public final class LogisticsTests {
 
     // covers: laser.logistics.lenses
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 160)
-    public static void anInsertLensPastTheControllerTakesFromTheNetwork(GameTestHelper helper) {
+    public static void aFilteredInsertLensPastTheControllerTakesFromTheNetwork(GameTestHelper helper) {
+        emitter(helper, 1);
+        controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
+        onChest(helper, 5, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIAMOND, 6), new ItemStack(Items.DIRT, 6));
+        mount(helper, 7, com.kadikular.quantimium.init.ModItems.INSERT_LENS.get());
+        filterSlot(helper, 7, 1, Items.DIAMOND);
+        ChestBlockEntity into = target(helper, 9);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(into, Items.DIAMOND), 6, "the diamonds went into the chest the beam ends on");
+            helper.assertValueEqual(count(helper, 5, Items.DIAMOND), 0, "out of the network's storage");
+            helper.assertValueEqual(count(into, Items.DIRT), 0, "not the dirt");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.logistics.lenses
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void anUnfilteredInsertLensTakesNothingFromTheNetwork(GameTestHelper helper) {
         emitter(helper, 1);
         controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
         onChest(helper, 5, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIAMOND, 6));
         mount(helper, 7, com.kadikular.quantimium.init.ModItems.INSERT_LENS.get());
         ChestBlockEntity into = target(helper, 9);
-        helper.succeedWhen(() -> {
-            helper.assertValueEqual(count(into, Items.DIAMOND), 6, "the diamonds went into the chest the beam ends on");
-            helper.assertValueEqual(count(helper, 5, Items.DIAMOND), 0, "out of the network's storage");
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(count(into, Items.DIAMOND), 0, "nothing inserted");
             TestSupport.finishLasers(helper);
+            helper.succeed();
         });
+    }
+
+    /** Puts a Filter lens listing {@code item} in slot {@code slot} of the mount at {@code x}. */
+    private static void filterSlot(GameTestHelper helper, int x, int slot, Item item) {
+        ItemStack lens = new ItemStack(com.kadikular.quantimium.init.ModItems.FILTER_LENS.get());
+        lens.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), new com.kadikular.quantimium.laser.LensFilter(
+                java.util.List.of(new ItemStack(item)), true, com.kadikular.quantimium.laser.LensFilter.Living.ANY));
+        helper.getBlockEntity(new BlockPos(x, Y, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class).getLensSlots().setStackInSlot(slot, lens);
     }
 
     // covers: laser.logistics.controller

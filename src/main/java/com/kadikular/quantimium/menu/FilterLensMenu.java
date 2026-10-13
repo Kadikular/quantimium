@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * A Filter lens in hand: its nine ghost entries in a row, whitelist or blacklist, and which living things
- * it lets through. Changes go straight onto the lens. Layout: tools/gui_panels.py collector_filter.
+ * it lets through. Changes go straight onto the lens. Layout: tools/gui_panels.py laser_port_filter.
  */
 public class FilterLensMenu extends AbstractContainerMenu implements GhostFilterMenu {
 

@@ -1241,7 +1241,7 @@
   "gui.quantimium.logistics_receptacle.priority.tip": "Higher goes first: storage fills from the highest and empties from the lowest. Shift-click for tens.",
   "gui.quantimium.logistics_receptacle.allow": "Whitelist: only these",
   "gui.quantimium.logistics_receptacle.deny": "Blacklist: all but these",
-  "gui.quantimium.logistics_receptacle.allow.tip": "Click to switch. Empty, storage and providers take or give everything; a requester asks for nothing.",
+  "gui.quantimium.logistics_receptacle.allow.tip": "Click to switch. Empty, storage and providers take or give everything; a requester asks for nothing as a whitelist, everything as a blacklist.",
   "gui.quantimium.logistics_receptacle.status.tip": "Its part faces the inventory it serves. A controller's light must reach it, not past an Isolator.",
   "block.quantimium.logistics_terminal": "Logistics Terminal",
   "block.quantimium.logistics_terminal.tip": "Logistics: put it where a Logistics Controller's light ends, and it shows everything that network's storage holds and its providers offer, to take or put away.",

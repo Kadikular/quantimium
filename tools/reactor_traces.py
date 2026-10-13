@@ -380,9 +380,39 @@ def main() -> None:
                               "faces": {d: {"uv": [0, 0, 16, 16], "texture": "#overlay", "cullface": d}
                                         for d in ("north", "south", "east", "west", "up", "down")}}],
             }
+            if port == "logistics":
+                overlay["elements"] += light_sockets()
+                overlay["textures"].update({"rim": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus"})
             with open(os.path.join(ASSETS, "models", "block", f"reactor_{port}_port_overlay{tag}.json"), "w") as handle:
                 json.dump(overlay, handle, indent=2)
     print(f"wrote {len(variants)} plinth states and their traces")
+
+
+def light_sockets() -> list:
+    """
+    The Logistics Port's sockets for light on its four sides: a raised steel rim a pixel proud of the face round an
+    8x8 opening, half a focus set in it. Drawn on the north face and turned to the others.
+    """
+    def box(start, end, texture, uv=None):
+        faces = {}
+        for f in ("north", "south", "east", "west", "up", "down"):
+            faces[f] = {"texture": texture}
+            if uv:
+                faces[f]["uv"] = uv
+        return {"from": start, "to": end, "faces": faces}
+
+    north = [box([4, 4, -1], [12, 6, 0], "#rim"), box([4, 10, -1], [12, 12, 0], "#rim"),
+             box([4, 6, -1], [6, 10, 0], "#rim"), box([10, 6, -1], [12, 10, 0], "#rim"),
+             box([6, 6, -0.5], [10, 10, 0], "#focus", [6, 6, 10, 10])]
+    turns = {"north": lambda x, y, z: (x, y, z), "south": lambda x, y, z: (16 - x, y, 16 - z),
+             "west": lambda x, y, z: (z, y, 16 - x), "east": lambda x, y, z: (16 - z, y, x)}
+    elements = []
+    for turn in turns.values():
+        for element in north:
+            a, b = turn(*element["from"]), turn(*element["to"])
+            elements.append({"from": [min(a[i], b[i]) for i in range(3)], "to": [max(a[i], b[i]) for i in range(3)],
+                             "shade": False, "faces": element["faces"]})
+    return elements
 
 
 if __name__ == "__main__":

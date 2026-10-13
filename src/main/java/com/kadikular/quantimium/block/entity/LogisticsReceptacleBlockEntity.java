@@ -166,8 +166,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
             any = true;
             if (FilterEntry.matches(entry, stack)) listed = true;
         }
-        // A requester with nothing listed asks for nothing; storage and providers with nothing listed take or give anything.
-        if (!any) return role != Role.REQUESTER;
+        // Nothing listed: storage and providers take or give anything; a requester asks for nothing on a whitelist, everything on a blacklist.
+        if (!any) return role != Role.REQUESTER || !allow;
         return listed == allow;
     }
 

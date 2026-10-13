@@ -21,7 +21,7 @@ import java.util.List;
 /** A Filter lens's settings: nine ghost entries, whitelist or blacklist, and which living things it lets through. */
 public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> implements GhostFilterScreen {
 
-    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/collector_filter.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port_filter.png");
 
     /** Where the pointer was when a Lens Mount's button opened this, to put it back: or NaN. */
     private static double keptX = Double.NaN;
