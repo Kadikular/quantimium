@@ -714,14 +714,19 @@ public final class LensAction {
         if (area != null) {
             if (cutting != null && area.isInside(cutting) && cuttable(level, cutting) && inSight(level, cutting)) return cutting;
             if (now < restUntil) return null;
+            int traces = LaserTuning.AREA_TRACES * stream.pace();
             for (int i = 0; i < LaserTuning.AREA_SCAN * stream.pace(); i++) {
                 BlockPos pos = areaPos(cursor);
-                cursor = (cursor + 1) % areaVolume();
-                if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos) && inSight(level, pos)
-                        && (!pickup || roomForDrops(level, networks, pos))) {
-                    missed = 0;
-                    return pos;
+                if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos)) {
+                    // Out of traces for this tick: this one is looked at first next tick.
+                    if (traces-- <= 0) return null;
+                    if (inSight(level, pos) && (!pickup || roomForDrops(level, networks, pos))) {
+                        cursor = (cursor + 1) % areaVolume();
+                        missed = 0;
+                        return pos;
+                    }
                 }
+                cursor = (cursor + 1) % areaVolume();
                 if (fruitless()) return null;
             }
             return null;

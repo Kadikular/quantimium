@@ -125,21 +125,89 @@ public final class LaserNetworks {
         if (level instanceof ServerLevel server) of(server).dirtyAt.add(node.immutable());
     }
 
+    /**
+     * A node arrives (placed, or its chunk loaded): only it, and the nodes whose beams pass where it stands, are worked
+     * out again; their networks join with whatever its light reaches.
+     */
     private void put(LaserNode node) {
-        nodes.put(node.nodePos().immutable(), node);
-        dirty = true;
+        BlockPos pos = node.nodePos().immutable();
+        LaserNode was = nodes.put(pos, node);
+        bucketsStale = true;
+        // One block entity in place of another at the same spot: everything again, to be safe.
+        if (was != null && was != node) {
+            dirty = true;
+            return;
+        }
+        dirtyAt.add(pos);
+        dirtyAt.addAll(beamsCrossing(pos));
     }
 
+    /**
+     * A node goes (broken, or its chunk unloaded): what it held is let go, and only the nodes it joined (those whose
+     * beams reached it, those its beams reached, and those charging a block with it) are worked out again.
+     */
     private void drop(LaserNode node) {
         BlockPos pos = node.nodePos();
-        if (nodes.get(pos) == node) {
-            nodes.remove(pos);
-            beams.remove(pos);
-            into.values().forEach(list -> list.remove(pos));
-            chargedBy.values().forEach(set -> set.remove(pos));
-            carried.remove(pos);
-            dirty = true;
+        if (nodes.get(pos) != node) return;
+        Set<BlockPos> seeds = new HashSet<>(into.getOrDefault(pos, List.of()));
+        List<LaserBeam> old = beams.remove(pos);
+        if (old != null) {
+            for (LaserBeam beam : old) {
+                if (beam.end() == LaserBeam.End.NODE) seeds.add(beam.hit());
+                else if (beam.end() == LaserBeam.End.SINK) seeds.addAll(chargedBy.getOrDefault(beam.hit(), Set.of()));
+            }
+            unindex(pos, old);
         }
+        nodes.remove(pos);
+        into.remove(pos);
+        carried.remove(pos);
+        lost.remove(pos);
+        ranges.remove(pos);
+        lights.remove(pos);
+        faceLights.remove(pos);
+        cavityIn.remove(pos);
+        actions.keySet().removeIf(key -> key.node().equals(pos));
+        actionSinks.keySet().removeIf(key -> key.node().equals(pos));
+        switched.remove(node);
+        networks = networks.stream().filter(network -> !network.sources().contains(node)).toList();
+        seeds.remove(pos);
+        dirtyAt.addAll(seeds);
+        bucketsStale = true;
+    }
+
+    /** The nodes whose beams pass through, or end at, {@code pos}: a node placed there now stands in their light. */
+    private Set<BlockPos> beamsCrossing(BlockPos pos) {
+        Set<BlockPos> crossing = new HashSet<>();
+        beams.forEach((from, list) -> {
+            for (LaserBeam beam : list) {
+                if (pos.equals(beam.hit())) {
+                    crossing.add(from);
+                } else if (beam.aim() == null) {
+                    // A straight beam: on its line, within its length.
+                    int dx = pos.getX() - from.getX(), dy = pos.getY() - from.getY(), dz = pos.getZ() - from.getZ();
+                    Direction face = beam.face();
+                    int along = dx * face.getStepX() + dy * face.getStepY() + dz * face.getStepZ();
+                    if (along >= 1 && along <= beam.length()
+                            && dx == along * face.getStepX() && dy == along * face.getStepY() && dz == along * face.getStepZ()) {
+                        crossing.add(from);
+                    }
+                } else if (beam.path().contains(pos)) {
+                    crossing.add(from);
+                }
+            }
+        });
+        return crossing;
+    }
+
+    /** Whether the recheck slices need sorting again: nodes have come or gone. */
+    private boolean bucketsStale;
+
+    private void rebucket() {
+        List<List<LaserNode>> buckets = new ArrayList<>();
+        for (int i = 0; i < RECHECK_TICKS; i++) buckets.add(new ArrayList<>());
+        for (LaserNode node : nodes.values()) buckets.get(Math.floorMod(node.nodePos().hashCode(), RECHECK_TICKS)).add(node);
+        rechecks = buckets;
+        bucketsStale = false;
     }
 
     /** For tests: the action {@code action} at {@code node} (beam -1 for an area): its whole cut's cost, and what it asks this tick. */
@@ -303,10 +371,7 @@ public final class LaserNetworks {
         actions.clear();
         actionsUp(nodes.values(), was);
         keepCarried(beams.keySet(), carriedBefore);
-        List<List<LaserNode>> buckets = new ArrayList<>();
-        for (int i = 0; i < RECHECK_TICKS; i++) buckets.add(new ArrayList<>());
-        for (LaserNode node : nodes.values()) buckets.get(Math.floorMod(node.nodePos().hashCode(), RECHECK_TICKS)).add(node);
-        rechecks = buckets;
+        rebucket();
         networks = buildNetworks(nodes.values(), null);
         limited = nodes.values().stream().anyMatch(node -> node.relays() && node.passLimit() != Long.MAX_VALUE);
     }
@@ -317,11 +382,11 @@ public final class LaserNetworks {
      * network stays as it was. If light from them now reaches a node outside, two networks have joined: then
      * everything is worked out again.
      */
-    private void rebuildAround(Set<BlockPos> seeds) {
+    private void rebuildAround(Set<BlockPos> seeds, int tries, Map<LensAction.Key, LensAction> carryActions) {
         List<BlockPos> present = seeds.stream().filter(nodes::containsKey).toList();
         dirtyAt.clear();
         if (present.isEmpty()) return;
-        if (onlyEndsMoved(present)) return;
+        if (tries == 0 && onlyEndsMoved(present)) return;
         Set<BlockPos> scope = group(present);
         // Nearly the whole level: as cheap to do it all.
         if (scope.size() * 10 > nodes.size() * 9) {
@@ -347,7 +412,7 @@ public final class LaserNetworks {
             faceLights.remove(pos);
             cavityIn.remove(pos);
         }
-        Map<LensAction.Key, LensAction> was = new HashMap<>();
+        Map<LensAction.Key, LensAction> was = new HashMap<>(carryActions);
         actions.entrySet().removeIf(entry -> {
             if (!scope.contains(entry.getKey().node())) return false;
             was.put(entry.getKey(), entry.getValue());
@@ -364,15 +429,19 @@ public final class LaserNetworks {
         for (LaserNode node : group) {
             if (node.switches()) switched.put(node, node.switchState());
         }
+        // Its light now reaches another network: the two are one now. Again, with that one too (its beams already
+        // reach it, so it's in the group next time); after a few joins in one go, everything.
         if (!propagate(group, before, scope)) {
-            rebuild();
+            if (tries < 3) rebuildAround(new HashSet<>(present), tries + 1, was);
+            else rebuild();
             return;
         }
         actionsUp(group, was);
         keepCarried(scope, carriedBefore);
         List<Network> built = buildNetworks(group, scope);
         if (built == null) {
-            rebuild();
+            if (tries < 3) rebuildAround(new HashSet<>(present), tries + 1, was);
+            else rebuild();
             return;
         }
         kept.addAll(built);
@@ -1116,6 +1185,7 @@ public final class LaserNetworks {
         long time = level.getGameTime();
         // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
         // Something redstone switches has been switched: what light carries changes.
+        if (bucketsStale) rebucket();
         if (!dirty) {
             // Each switched one marks only its own network to be worked out again.
             for (Map.Entry<LaserNode, Integer> entry : switched.entrySet()) {
@@ -1136,7 +1206,7 @@ public final class LaserNetworks {
             }
         }
         if (dirty) rebuild();
-        else if (!dirtyAt.isEmpty()) rebuildAround(new HashSet<>(dirtyAt));
+        else if (!dirtyAt.isEmpty()) rebuildAround(new HashSet<>(dirtyAt), 0, new HashMap<>());
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
         for (Network network : networks) refill(network);

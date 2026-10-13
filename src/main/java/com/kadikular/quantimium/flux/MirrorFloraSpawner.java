@@ -147,7 +147,7 @@ public final class MirrorFloraSpawner {
                                         FluxBand band, RandomSource random) {
         int x = chunk.getPos().getMinBlockX() + random.nextInt(16);
         int z = chunk.getPos().getMinBlockZ() + random.nextInt(16);
-        int hostY = randomFloorHost(level, x, z, random);
+        int hostY = randomFloorHost(level, chunk, x, z, random);
         if (hostY == Integer.MIN_VALUE) return false;
         BlockPos host = new BlockPos(x, hostY, z);
         return placeFloor(level, flora, host, host.above(), band);
@@ -157,7 +157,7 @@ public final class MirrorFloraSpawner {
                                           FluxBand band, RandomSource random) {
         int x = chunk.getPos().getMinBlockX() + random.nextInt(16);
         int z = chunk.getPos().getMinBlockZ() + random.nextInt(16);
-        int hostY = randomCeilingHost(level, x, z, random);
+        int hostY = randomCeilingHost(level, chunk, x, z, random);
         if (hostY == Integer.MIN_VALUE) return false;
         BlockPos host = new BlockPos(x, hostY, z);
         return placeHanging(level, flora, host, host.below(), band);
@@ -240,31 +240,42 @@ public final class MirrorFloraSpawner {
         return minY + random.nextInt(top - minY);
     }
 
-    private static int randomFloorHost(ServerLevel level, int x, int z, RandomSource random) {
+    /**
+     * A floor somewhere in the column: the surface a quarter of the time, else the first solid block under air found
+     * walking down from a random height, at most {@link #HOST_SEARCH} blocks. Read from the chunk itself, one block a
+     * step: an attempt that finds nothing is cheap, and there are plenty of attempts.
+     */
+    private static int randomFloorHost(ServerLevel level, LevelChunk chunk, int x, int z, RandomSource random) {
         int minY = level.getMinY() + 1;
-        int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        int surface = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15);
         if (surface < minY) return Integer.MIN_VALUE;
         if (random.nextInt(4) == 0) return surface;
         int start = minY + random.nextInt(surface - minY + 1);
-        for (int y = start; y >= minY; y--) {
-            BlockPos host = new BlockPos(x, y, z);
-            if (!level.getBlockState(host).isAir() && level.getBlockState(host.above()).isAir()) {
-                return y;
-            }
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos(x, start + 1, z);
+        boolean airAbove = chunk.getBlockState(at).isAir();
+        for (int y = start; y >= Math.max(minY, start - HOST_SEARCH); y--) {
+            boolean air = chunk.getBlockState(at.setY(y)).isAir();
+            if (!air && airAbove) return y;
+            airAbove = air;
         }
-        return surface;
+        return Integer.MIN_VALUE;
     }
 
-    private static int randomCeilingHost(ServerLevel level, int x, int z, RandomSource random) {
+    /** How far a random host search walks a column before it gives up. */
+    private static final int HOST_SEARCH = 32;
+
+    /** A ceiling: the first solid block over air found walking up from a random height, at most {@link #HOST_SEARCH} blocks. */
+    private static int randomCeilingHost(ServerLevel level, LevelChunk chunk, int x, int z, RandomSource random) {
         int minY = level.getMinY() + 2;
-        int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        int surface = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15);
         if (surface < minY) return Integer.MIN_VALUE;
         int start = minY + random.nextInt(surface - minY + 1);
-        for (int y = start; y <= surface; y++) {
-            BlockPos host = new BlockPos(x, y, z);
-            if (!level.getBlockState(host).isAir() && level.getBlockState(host.below()).isAir()) {
-                return y;
-            }
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos(x, start - 1, z);
+        boolean airBelow = chunk.getBlockState(at).isAir();
+        for (int y = start; y <= Math.min(surface, start + HOST_SEARCH); y++) {
+            boolean air = chunk.getBlockState(at.setY(y)).isAir();
+            if (!air && airBelow) return y;
+            airBelow = air;
         }
         return Integer.MIN_VALUE;
     }

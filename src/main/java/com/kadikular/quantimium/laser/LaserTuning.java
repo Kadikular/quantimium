@@ -81,6 +81,8 @@ public final class LaserTuning {
     public static final double AREA_COST = 1.5;
     /** Blocks an area prism's action looks through a tick for the next to work on. */
     public static final int AREA_SCAN = 64;
+    /** Lines of sight an area prism's action traces a tick while it looks (each Speed lens more): the dear part of looking. */
+    public static final int AREA_TRACES = 4;
     /** Ticks an area prism's action rests after a whole sweep of its area found nothing to do. */
     public static final int AREA_REST = 20;
     /** The largest an area may be on each side. Only what the prism's light reaches, and sees, is worked. */

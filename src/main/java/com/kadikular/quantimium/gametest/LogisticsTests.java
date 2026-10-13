@@ -529,4 +529,53 @@ public final class LogisticsTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.logistics.controller
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 200)
+    public static void blockingAndClearingAControllersOutputLeavesTheRestLit(GameTestHelper helper) {
+        // An emitter into a Relay: east to a controller and on to a void, south straight to another void.
+        emitter(helper, 1);
+        BlockPos relayAt = new BlockPos(3, Y, 8);
+        helper.setBlock(relayAt, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        controller(helper, new BlockPos(5, Y, 8), Direction.EAST, false);
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
+        helper.setBlock(new BlockPos(3, Y, 12), ModBlocks.CREATIVE_ENERGY_VOID.get());
+        var past = helper.getBlockEntity(new BlockPos(10, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
+        var beside = helper.getBlockEntity(new BlockPos(3, Y, 12), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
+        helper.runAfterDelay(40, () -> helper.setBlock(new BlockPos(7, Y, 8), Blocks.STONE));
+        helper.runAfterDelay(80, () -> helper.setBlock(new BlockPos(7, Y, 8), Blocks.AIR));
+        helper.runAfterDelay(150, () -> {
+            helper.assertTrue(past.taking() > 0, "light past the controller charges again once it's clear");
+            helper.assertTrue(beside.taking() > 0, "and the Relay's other output still charges");
+            var emitterBeams = helper.getBlockEntity(new BlockPos(1, Y, 8), com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity.class).syncedBeams();
+            var relayBeams = helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).syncedBeams();
+            var controllerBeams = helper.getBlockEntity(new BlockPos(5, Y, 8), LogisticsControllerBlockEntity.class).syncedBeams();
+            helper.assertTrue(emitterBeams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "the emitter's beam shows lit: " + emitterBeams);
+            helper.assertTrue(relayBeams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "both of the Relay's show lit: " + relayBeams);
+            helper.assertTrue(controllerBeams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "the controller's shows lit: " + controllerBeams);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.network.incremental
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 200)
+    public static void aRelayPlacedInABeamAndBrokenAgainKeepsItRunning(GameTestHelper helper) {
+        emitter(helper, 1);
+        helper.setBlock(new BlockPos(12, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
+        var end = helper.getBlockEntity(new BlockPos(12, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
+        BlockPos relayAt = new BlockPos(6, Y, 8);
+        helper.runAfterDelay(30, () -> helper.setBlock(relayAt, ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)));
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(end.taking() > 0, "light runs on through the Relay placed in it");
+            helper.setBlock(relayAt, Blocks.AIR);
+        });
+        helper.runAfterDelay(140, () -> {
+            helper.assertTrue(end.taking() > 0, "and straight on again once it's broken");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

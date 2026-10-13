@@ -108,10 +108,10 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
     private static final float[] LOGISTICS_HALO = {0.16f, 0.32f, 1.0f};
     private static final float[] LOGISTICS_CORE = {0.50f, 0.64f, 1.0f};
 
-    /** How bright to draw it: by what it carries; a logistics network's light always as if at work. */
+    /** How bright to draw it: by what it carries; a logistics network's light, while lit, as if at work. Out of power and unlit, off. */
     private static int brightness(LaserBeam beam) {
         int bright = LaserNetworks.brightness(beam.flow());
-        return com.kadikular.quantimium.laser.Lens.logistics(beam.lenses()) ? Math.max(bright, 2) : bright;
+        return beam.live() && com.kadikular.quantimium.laser.Lens.logistics(beam.lenses()) ? Math.max(bright, 2) : bright;
     }
 
     /** The halo's colour: azure, a logistics network's deeper blue, or what its lenses tint it. */
