@@ -613,6 +613,24 @@ public final class LaserTests {
     }
 
     // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 120)
+    public static void aCavityGivesOutByTheOutputsItsSetTo(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        var far = cavityMirror(helper, new BlockPos(9, Y, 8), Direction.WEST);
+        helper.assertFalse(far.toggleOutput(Direction.WEST), "never an output on its mirror");
+        far.toggleOutput(Direction.EAST);
+        far.toggleOutput(Direction.NORTH);
+        FoldCoreBlockEntity side = sink(helper, new BlockPos(9, Y, 5));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(side.getEnergyStorage().getEnergyStored() > 0, "what it holds leaves by its side output");
+            helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
+            helper.setBlock(new BlockPos(9, Y, 8), Blocks.AIR);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
     public static void aCavityWithItsOutputOffOnlyStores(GameTestHelper helper) {
         emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
@@ -620,7 +638,8 @@ public final class LaserTests {
         cavityMirror(helper, new BlockPos(9, Y, 8), Direction.WEST);
         helper.setBlock(new BlockPos(13, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
         var drain = helper.getBlockEntity(new BlockPos(13, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
-        helper.getBlockEntity(new BlockPos(9, Y, 8), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class).toggleOutput();
+        // Its one output, its back, turned off.
+        helper.getBlockEntity(new BlockPos(9, Y, 8), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class).toggleOutput(Direction.EAST);
         helper.runAfterDelay(45, () -> {
             helper.assertTrue(a.stored() > 0, "it fills");
             helper.assertValueEqual(drain.taking(), 0L, "and gives nothing out");

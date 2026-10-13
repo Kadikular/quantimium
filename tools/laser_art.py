@@ -148,32 +148,6 @@ def linker() -> Image.Image:
     return img
 
 
-def cavity_face(lit: bool) -> Image.Image:
-    """A half-silvered plate: silver with a mesh of darker pixels, rimmed in azure, glowing when charged."""
-    img = stone(("1b1e38", "262a4a", "323760"), 41)
-    for x in range(2, 14):
-        for y in range(2, 14):
-            silver = hx("c8dcff") if lit else hx("8a9ab8")
-            img.putpixel((x, y), silver if (x + y) % 2 else (hx("7fb2ff") if lit else hx("5c6884")))
-    for i in range(1, 15):
-        for x, y in ((i, 1), (i, 14), (1, i), (14, i)):
-            img.putpixel((x, y), hx("3485ff") if lit else hx("1f2742"))
-    return img
-
-
-def coupler(lit: bool) -> Image.Image:
-    """The cavity mirror's back: a small output lens."""
-    img = stone(("1b1e38", "262a4a", "323760"), 42)
-    for x in range(16):
-        for y in range(16):
-            d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
-            if d < 3.6:
-                img.putpixel((x, y), hx("0b0d18"))
-            if d < 2.4:
-                img.putpixel((x, y), hx("7fb2ff") if lit else hx("1f2742"))
-    return img
-
-
 def detector_face(lit: bool) -> Image.Image:
     """A photodetector's face: a square sensor with a redstone pip in each corner."""
     img = stone(("2b2b33", "3b3b45", "4d4d59"), 51)
@@ -1064,6 +1038,47 @@ def logistics_materialiser() -> None:
     with open(os.path.join(ITEMS, "logistics_materialiser.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_materialiser"}}, handle, indent=2)
 
+def cavity_mirror() -> None:
+    """
+    The Cavity Mirror: a Relay with a flat Splitter mirror for its front. The plate on its mirror face (north, drawn),
+    a rod back to the see-through focus in the middle, and the simple emitter on each face light leaves by.
+    """
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
+         "plate": "quantimium:block/laser_splitter_plate", "particle": "quantimium:block/laser_mirror_steel"}
+
+    def cube(start, end, texture, uv=None):
+        faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
+        for face in faces.values():
+            if uv:
+                face["uv"] = uv
+        return {"from": start, "to": end, "faces": faces}
+
+    plate = cube([3, 3, 0], [13, 13, 1], "#steel")
+    plate["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+    plate["faces"]["south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+    core = [plate, cube([7, 7, 1], [9, 9, 6], "#steel"), cube([6, 6, 6], [10, 10, 10], "#focus", [6, 6, 10, 10])]
+    with open(os.path.join(MODELS, "cavity_mirror.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": core}, handle, indent=2)
+    nozzle_south = []
+    for element in emitter_nozzle():
+        a, b = FACE_FRAMES["south"](*element["from"]), FACE_FRAMES["south"](*element["to"])
+        nozzle_south.append(dict(element, **{"from": [min(a[i], b[i]) for i in range(3)], "to": [max(a[i], b[i]) for i in range(3)]}))
+    with open(os.path.join(MODELS, "cavity_mirror_item.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
+                   "elements": core + nozzle_south}, handle, indent=2)
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
+    parts = [{"when": {"facing": facing}, "apply": dict({"model": "quantimium:block/cavity_mirror"}, **r)} for facing, r in ROTATIONS.items()]
+    parts += [{"when": {side: "true"}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
+    with open(os.path.join(STATES, "cavity_mirror.json"), "w") as handle:
+        json.dump({"multipart": parts}, handle, indent=1)
+    with open(os.path.join(ITEMS, "cavity_mirror.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/cavity_mirror_item"}}, handle, indent=2)
+    for stale in ("textures/block/cavity_mirror_front.png", "textures/block/cavity_mirror_front_lit.png", "textures/block/cavity_mirror_back.png",
+                  "textures/block/cavity_mirror_back_lit.png", "textures/block/cavity_mirror_side.png", "models/block/cavity_mirror_lit.json"):
+        path = os.path.join(ASSETS, stale)
+        if os.path.exists(path):
+            os.remove(path)
+
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
@@ -1075,7 +1090,8 @@ def main() -> None:
     laser_mirror()
     laser_mirror("laser_splitter", splits=True)
     solar_emitter()
-    for name, face, back_of, side_seed in (("cavity_mirror", cavity_face, coupler, 43), ("photodetector", detector_face, None, 52)):
+    cavity_mirror()
+    for name, face, back_of, side_seed in (("photodetector", detector_face, None, 52),):
         stone(("1b1e38", "262a4a", "323760") if name == "cavity_mirror" else ("2b2b33", "3b3b45", "4d4d59"), side_seed).save(
             os.path.join(TEX, f"{name}_side.png"))
         for lit in (False, True):

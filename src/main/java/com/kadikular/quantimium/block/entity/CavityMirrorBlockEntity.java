@@ -54,8 +54,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
      */
     @Nullable
     private com.kadikular.quantimium.laser.Light held;
-    /** Whether light leaves by the back; a wrench turns it off, so the cavity only stores. */
-    private boolean output = true;
+    /**
+     * The faces what it holds leaves by, set as a Relay's are: by default its back, never its mirror. None, and the
+     * cavity only stores. Null until first known: then its back.
+     */
+    @Nullable
+    private java.util.EnumSet<Direction> outputFaces;
     private List<LaserBeam> shownBeams = List.of();
     /** On the client: how bright the light held looks, for the glow between the mirrors. */
     private int shownCharge;
@@ -78,15 +82,38 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return stored;
     }
 
-    public boolean output() {
-        return output;
+    /** The faces what it holds leaves by. */
+    public Set<Direction> outputFaces() {
+        if (outputFaces == null) outputFaces = java.util.EnumSet.of(facing().getOpposite());
+        outputFaces.remove(facing());
+        return outputFaces;
     }
 
-    /** Turns light out of the back on or off. */
-    public void toggleOutput() {
-        output = !output;
+    /** Turns light out of {@code face} on or off; never its mirror. Whether it changed. */
+    public boolean toggleOutput(Direction face) {
+        if (face == facing()) return false;
+        Set<Direction> faces = outputFaces();
+        if (!faces.remove(face)) faces.add(face);
+        outputsChanged();
+        return true;
+    }
+
+    /** Its mirror turned, or its outputs changed: the block shows them, and the network looks again. */
+    public void outputsChanged() {
         setChanged();
+        showOutputs();
+        sync();
         if (level != null) LaserNetworks.changed(level);
+    }
+
+    private void showOutputs() {
+        if (level == null || level.isClientSide()) return;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(CavityMirrorBlock.OUTPUTS.get(Direction.NORTH))) return;
+        BlockState shown = state;
+        Set<Direction> faces = outputFaces();
+        for (Direction face : Direction.values()) shown = shown.setValue(CavityMirrorBlock.OUTPUTS.get(face), faces.contains(face));
+        if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
     }
 
     public long capacity() {
@@ -241,13 +268,13 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     }
 
     /**
-     * Paired, what it holds leaves by the back while its output is on. Unpaired, it's a mirror: light that
-     * reaches it leaves by the front, towards where its partner would stand.
+     * Paired, what it holds leaves by its outputs. Unpaired, it's a mirror: light that reaches it leaves by the
+     * front, towards where its partner would stand.
      */
     @Override
     public Set<Direction> outputs() {
         if (!paired()) return Set.of(facing());
-        return output ? Set.of(facing().getOpposite()) : Set.of();
+        return Set.copyOf(outputFaces());
     }
 
     @Override
@@ -268,7 +295,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
 
     @Override
     public long available() {
-        return paired() && output ? Math.min(stored, LaserTuning.CAVITY_RATE) : 0;
+        return paired() && !outputFaces().isEmpty() ? Math.min(stored, LaserTuning.CAVITY_RATE) : 0;
     }
 
     @Override
@@ -308,7 +335,10 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (level == null || beam.end() != LaserBeam.End.OPEN || beam.aim() != null || beam.face() != facing() || beam.length() != gap) return ends;
         BlockPos far = worldPosition.relative(facing(), gap + 1);
         BlockState there = level.getBlockState(far);
-        if (there.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) ends[1] = anchor.beamPoint(there, far);
+        // A Cavity Mirror's own plate is on its face, where the light already ends.
+        if (there.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor && !(there.getBlock() instanceof CavityMirrorBlock)) {
+            ends[1] = anchor.beamPoint(there, far);
+        }
         return ends;
     }
 
@@ -330,6 +360,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         super.onLoad();
         if (level != null && !level.isClientSide()) {
             gap = findGap();
+            showOutputs();
             LaserNetworks.add(level, this);
         }
     }
@@ -365,7 +396,9 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         out.putLong("Stored", stored);
         out.putInt("Gap", gap);
         out.putBoolean("PartnerHolds", partnerHolds);
-        out.putBoolean("Output", output);
+        int mask = 0;
+        for (Direction face : outputFaces()) mask |= 1 << face.get3DDataValue();
+        out.putInt("Outputs", mask);
         if (held != null) out.store("Light", CompoundTag.CODEC, held.save());
     }
 
@@ -375,7 +408,14 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         stored = in.getLongOr("Stored", 0);
         gap = in.getIntOr("Gap", 0);
         partnerHolds = in.getBooleanOr("PartnerHolds", true);
-        output = in.getBooleanOr("Output", true);
+        // Before outputs were set face by face: its back, or (output off) none.
+        int mask = in.getIntOr("Outputs", -1);
+        if (mask >= 0) {
+            outputFaces = java.util.EnumSet.noneOf(Direction.class);
+            for (Direction face : Direction.values()) if ((mask & 1 << face.get3DDataValue()) != 0) outputFaces.add(face);
+        } else if (!in.getBooleanOr("Output", true)) {
+            outputFaces = java.util.EnumSet.noneOf(Direction.class);
+        }
         held = in.read("Light", CompoundTag.CODEC).map(tag -> com.kadikular.quantimium.laser.Light.load(tag, worldPosition)).orElse(null);
         shownCharge = in.getIntOr("Charge", 0);
         shownLenses = in.getIntOr("Lenses", 0);
@@ -403,6 +443,6 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (!paired()) return Component.translatable("message.quantimium.cavity.unpaired").withStyle(ChatFormatting.GRAY);
         MutableComponent line = Component.translatable("message.quantimium.cavity.holds", String.format(java.util.Locale.ROOT, "%,d", stored),
                 String.format(java.util.Locale.ROOT, "%,d", capacity()), gap).withStyle(ChatFormatting.DARK_AQUA);
-        return output ? line : line.append(Component.translatable("message.quantimium.cavity.no_output").withStyle(ChatFormatting.GRAY));
+        return !outputFaces().isEmpty() ? line : line.append(Component.translatable("message.quantimium.cavity.no_output").withStyle(ChatFormatting.GRAY));
     }
 }

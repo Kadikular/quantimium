@@ -939,7 +939,7 @@
   "message.quantimium.laser_mirror.flat": "Flat, facing %s: light goes straight back",
   "block.quantimium.laser_prism": "Laser Prism",
   "block.quantimium.cavity_mirror": "Cavity Mirror",
-  "block.quantimium.cavity_mirror.tip": "Gives up to %s FE/t out of its back. Facing a flat Laser Mirror, a Laser Relay or another Cavity Mirror, it holds %s FE per block of gap; alone, it's a mirror out of its front.",
+  "block.quantimium.cavity_mirror.tip": "Gives up to %s FE/t out of its outputs (sneak-click a face; a wrench turns the mirror). Facing a flat Laser Mirror, a Laser Relay or another Cavity Mirror, it holds %s FE per block of gap; alone, it's a mirror out of its front.",
   "block.quantimium.laser_emitter.tip": "Sends up to %s FE/t, %s blocks.",
   "block.quantimium.flash_emitter.tip": "Burns furnace fuel, or takes FE.",
   "block.quantimium.photodetector": "Photodetector",
@@ -1078,9 +1078,9 @@
   "gui.quantimium.lens_mount.settings": "This lens's settings",
   "message.quantimium.cavity.unpaired": "Not a cavity: face a flat Laser Mirror, a Laser Relay or a Cavity Mirror across a clear gap. Passing light on, as a mirror",
   "message.quantimium.cavity.holds": "Holds %s of %s FE across a %s-block gap",
-  "message.quantimium.cavity.no_output": ", output off",
-  "message.quantimium.cavity.output_on": "Cavity output on",
-  "message.quantimium.cavity.output_off": "Cavity output off: it only stores",
+  "message.quantimium.cavity.no_output": ", no outputs",
+  "message.quantimium.cavity.output_on": "Output on this face",
+  "message.quantimium.cavity.output_off": "Output off on this face",
   "message.quantimium.photodetector.dark": "No light passing",
   "message.quantimium.photodetector.reading": "%s FE/t passing; signal %s",
   "item.quantimium.laser_linker": "Laser Linker",
@@ -1279,5 +1279,6 @@
   "block.quantimium.pod_module.logistics.tip": "Where a Logistics Controller's light ends on it, opens that network's terminal from anywhere (V), while one of your doubles waits in the pod. Use it for the terminal there.",
   "key.quantimium.logistics": "Open logistics terminal",
   "message.quantimium.pod.no_logistics": "None of your doubles waits in a pod with a Logistics module",
-  "message.quantimium.pod.no_logistics_network": "No logistics network: a controller's light must end on the pod's Logistics module, and the pod be loaded"
+  "message.quantimium.pod.no_logistics_network": "No logistics network: a controller's light must end on the pod's Logistics module, and the pod be loaded",
+  "message.quantimium.cavity.not_on_mirror": "Not on its mirror: a wrench turns the mirror"
 }

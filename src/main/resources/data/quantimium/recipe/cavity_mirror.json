@@ -5,12 +5,13 @@
     "G": "quantimium:quantum_attuned_glass",
     "M": "quantimium:laser_relay",
     "S": "quantimium:anomalite_shard",
-    "C": "minecraft:copper_block"
+    "C": "minecraft:copper_block",
+    "X": "quantimium:laser_splitter"
   },
   "pattern": [
     "GMG",
     "SCS",
-    "GMG"
+    "GXG"
   ],
   "result": {
     "id": "quantimium:cavity_mirror",
