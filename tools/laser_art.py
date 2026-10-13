@@ -1057,6 +1057,12 @@ def cavity_mirror() -> None:
     plate["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
     plate["faces"]["south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
     core = [plate, cube([7, 7, 1], [9, 9, 6], "#steel"), cube([6, 6, 6], [10, 10, 10], "#focus", [6, 6, 10, 10])]
+    # Its stand, as a Relay's (base, boss and post up to the focus), drawn for a floor and turned to each mount.
+    stand = [{"from": [2, 0, 2], "to": [14, 1, 14], "faces": {f: {"texture": "#steel", **({"cullface": "down"} if f == "down" else {})}
+                                                             for f in ("north", "south", "east", "west", "up", "down")}},
+             cube([4, 1, 4], [12, 2, 12], "#steel"), cube([7, 2, 7], [9, 6, 9], "#steel")]
+    with open(os.path.join(MODELS, "cavity_mirror_stand.json"), "w") as handle:
+        json.dump({"textures": t, "elements": stand}, handle, indent=2)
     with open(os.path.join(MODELS, "cavity_mirror.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": core}, handle, indent=2)
     nozzle_south = []
@@ -1065,9 +1071,11 @@ def cavity_mirror() -> None:
         nozzle_south.append(dict(element, **{"from": [min(a[i], b[i]) for i in range(3)], "to": [max(a[i], b[i]) for i in range(3)]}))
     with open(os.path.join(MODELS, "cavity_mirror_item.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
-                   "elements": core + nozzle_south}, handle, indent=2)
+                   "elements": core + nozzle_south + stand}, handle, indent=2)
+    mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180}, "east": {"x": 90, "y": 270}}
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
     parts = [{"when": {"facing": facing}, "apply": dict({"model": "quantimium:block/cavity_mirror"}, **r)} for facing, r in ROTATIONS.items()]
+    parts += [{"when": {"mount": m}, "apply": dict({"model": "quantimium:block/cavity_mirror_stand"}, **r)} for m, r in mounts.items()]
     parts += [{"when": {side: "true"}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
     with open(os.path.join(STATES, "cavity_mirror.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)

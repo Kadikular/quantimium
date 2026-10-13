@@ -32,6 +32,21 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, node, beams, aiming));
     }
 
+    /** Beams run far: drawn as far off as one can reach, and then some. */
+    @Override
+    public int getViewDistance() {
+        return Math.max(96, com.kadikular.quantimium.Config.maxLaserRange() + 64);
+    }
+
+    /**
+     * Drawn even when its own block's section is out of sight: a beam from a relay behind you still crosses the
+     * screen. Whether any of it is in view is still checked, against the box round its beams.
+     */
+    @Override
+    public boolean shouldRenderOffScreen() {
+        return true;
+    }
+
     /** Holding the Laser Linker or a wrench shows even dark beams, faintly: where light would go. */
     private static boolean aiming() {
         var player = net.minecraft.client.Minecraft.getInstance().player;

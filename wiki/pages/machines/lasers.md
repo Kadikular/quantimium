@@ -122,8 +122,9 @@ as a real laser's cavity does: a battery for a laser network. Only one end needs
 Each Cavity Mirror holds {{c:LaserTuning.CAVITY_FE_PER_BLOCK}} FE for each block of gap, and takes or
 gives up to {{c:LaserTuning.CAVITY_RATE}} FE/t; a Laser Mirror or Relay at the other end holds nothing.
 
-A Cavity Mirror looks like a [[block:laser_relay]] with a flat Splitter mirror for its front: its mirror faces
-its partner, and an emitter stands on each face light leaves by. With nothing facing it, it's just a relay:
+A Cavity Mirror looks like a [[block:laser_relay]] with a flat Splitter mirror for its front: it stands on the
+block it was placed against, as a Relay does, its mirror faces its partner, and an emitter stands on each face
+light leaves by. No light comes in by its base. With nothing facing it, it's just a relay:
 light that reaches it leaves by its mirror, towards where its partner would stand. Once paired, what it
 holds leaves by its outputs instead.
 
@@ -131,7 +132,7 @@ holds leaves by its outputs instead.
   emitters have left over once its blocks are served. One cavity never fills another.
 - Light leaves by its **outputs**, set as a Relay's are (its back, to begin with), for the blocks that ask
   for it. A network serves its blocks from its emitters first, then from its cavities. Sneak-click a face
-  with an empty hand to add an output there, or take it away; never on the mirror. With no outputs it only
+  with an empty hand to add an output there, or take it away; never on the mirror or the base. With no outputs it only
   stores. Use a wrench on a face to turn the mirror there.
 - With two Cavity Mirrors, the light bounces between them, so what either holds evens out between
   them: both glow, and both can give it out.

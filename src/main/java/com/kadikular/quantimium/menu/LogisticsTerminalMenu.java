@@ -122,6 +122,22 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         refresh();
     }
 
+    /** Puts one of {@code item} from the player's inventory into the network. */
+    public void depositOne(Player player, ItemResource item) {
+        if (terminal == null) return;
+        var inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (stack.isEmpty() || !ItemResource.of(stack).equals(item)) continue;
+            if (terminal.insert(stack.copyWithCount(1)).isEmpty()) {
+                stack.shrink(1);
+                inventory.setChanged();
+                refresh();
+            }
+            return;
+        }
+    }
+
     /** Puts what's on the cursor (or one of it) into the network. */
     public void insertCarried(boolean one) {
         if (terminal == null) return;

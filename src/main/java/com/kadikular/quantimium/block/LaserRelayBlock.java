@@ -53,11 +53,11 @@ public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.qu
             Direction.NORTH, new net.minecraft.world.phys.AABB(5, 5, 0, 11, 11, 6), Direction.SOUTH, new net.minecraft.world.phys.AABB(5, 5, 10, 11, 11, 16),
             Direction.WEST, new net.minecraft.world.phys.AABB(0, 5, 5, 6, 11, 11), Direction.EAST, new net.minecraft.world.phys.AABB(10, 5, 5, 16, 11, 11),
             Direction.DOWN, new net.minecraft.world.phys.AABB(5, 0, 5, 11, 6, 11), Direction.UP, new net.minecraft.world.phys.AABB(5, 10, 5, 11, 16, 11)));
-    private static final java.util.Map<Direction, net.minecraft.world.phys.AABB> BASES = new java.util.EnumMap<>(java.util.Map.of(
+    static final java.util.Map<Direction, net.minecraft.world.phys.AABB> BASES = new java.util.EnumMap<>(java.util.Map.of(
             Direction.DOWN, new net.minecraft.world.phys.AABB(2, 0, 2, 14, 2, 14), Direction.UP, new net.minecraft.world.phys.AABB(2, 14, 2, 14, 16, 14),
             Direction.NORTH, new net.minecraft.world.phys.AABB(2, 2, 0, 14, 14, 2), Direction.SOUTH, new net.minecraft.world.phys.AABB(2, 2, 14, 14, 14, 16),
             Direction.WEST, new net.minecraft.world.phys.AABB(0, 2, 2, 2, 14, 14), Direction.EAST, new net.minecraft.world.phys.AABB(14, 2, 2, 16, 14, 14)));
-    private static final java.util.Map<Direction, net.minecraft.world.phys.AABB> POSTS = new java.util.EnumMap<>(java.util.Map.of(
+    static final java.util.Map<Direction, net.minecraft.world.phys.AABB> POSTS = new java.util.EnumMap<>(java.util.Map.of(
             Direction.DOWN, new net.minecraft.world.phys.AABB(7, 2, 7, 9, 6, 9), Direction.UP, new net.minecraft.world.phys.AABB(7, 10, 7, 9, 14, 9),
             Direction.NORTH, new net.minecraft.world.phys.AABB(7, 7, 2, 9, 9, 6), Direction.SOUTH, new net.minecraft.world.phys.AABB(7, 7, 10, 9, 9, 14),
             Direction.WEST, new net.minecraft.world.phys.AABB(2, 7, 7, 6, 9, 9), Direction.EAST, new net.minecraft.world.phys.AABB(10, 7, 7, 14, 9, 9)));

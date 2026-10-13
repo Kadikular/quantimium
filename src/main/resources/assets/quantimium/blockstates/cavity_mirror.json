@@ -55,6 +55,62 @@
   },
   {
    "when": {
+    "mount": "down"
+   },
+   "apply": {
+    "model": "quantimium:block/cavity_mirror_stand"
+   }
+  },
+  {
+   "when": {
+    "mount": "up"
+   },
+   "apply": {
+    "model": "quantimium:block/cavity_mirror_stand",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "south"
+   },
+   "apply": {
+    "model": "quantimium:block/cavity_mirror_stand",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west"
+   },
+   "apply": {
+    "model": "quantimium:block/cavity_mirror_stand",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "north"
+   },
+   "apply": {
+    "model": "quantimium:block/cavity_mirror_stand",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "east"
+   },
+   "apply": {
+    "model": "quantimium:block/cavity_mirror_stand",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
     "north": "true"
    },
    "apply": {

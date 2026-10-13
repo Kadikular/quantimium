@@ -618,6 +618,16 @@ public class Quantimium {
                 })
         );
         registrar.playToServer(
+                com.kadikular.quantimium.network.LogisticsTerminalDepositPayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalDepositPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
+                            && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.depositOne(context.player(), payload.item());
+                    }
+                })
+        );
+        registrar.playToServer(
                 com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.TYPE,
                 com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {

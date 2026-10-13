@@ -82,16 +82,29 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return stored;
     }
 
-    /** The faces what it holds leaves by. */
+    /** The face it stands on. */
+    public Direction mount() {
+        BlockState state = getBlockState();
+        return state.hasProperty(CavityMirrorBlock.MOUNT) ? state.getValue(CavityMirrorBlock.MOUNT) : Direction.DOWN;
+    }
+
+    /** The faces what it holds leaves by: never its mirror, nor its base. */
     public Set<Direction> outputFaces() {
-        if (outputFaces == null) outputFaces = java.util.EnumSet.of(facing().getOpposite());
+        if (outputFaces == null) outputFaces = java.util.EnumSet.of(CavityMirrorBlock.outputFor(facing(), mount()));
         outputFaces.remove(facing());
+        outputFaces.remove(mount());
         return outputFaces;
+    }
+
+    /** No light comes in by its base. */
+    @Override
+    public boolean accepts(Direction travel) {
+        return travel.getOpposite() != mount();
     }
 
     /** Turns light out of {@code face} on or off; never its mirror. Whether it changed. */
     public boolean toggleOutput(Direction face) {
-        if (face == facing()) return false;
+        if (face == facing() || face == mount()) return false;
         Set<Direction> faces = outputFaces();
         if (!faces.remove(face)) faces.add(face);
         outputsChanged();
@@ -111,6 +124,10 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         BlockState state = getBlockState();
         if (!state.hasProperty(CavityMirrorBlock.OUTPUTS.get(Direction.NORTH))) return;
         BlockState shown = state;
+        // One from before it stood on a base, its mirror facing down: it stands on the other side instead.
+        if (shown.getValue(CavityMirrorBlock.MOUNT) == shown.getValue(CavityMirrorBlock.FACING)) {
+            shown = shown.setValue(CavityMirrorBlock.MOUNT, shown.getValue(CavityMirrorBlock.FACING).getOpposite());
+        }
         Set<Direction> faces = outputFaces();
         for (Direction face : Direction.values()) shown = shown.setValue(CavityMirrorBlock.OUTPUTS.get(face), faces.contains(face));
         if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);

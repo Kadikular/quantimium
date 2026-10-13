@@ -40,6 +40,8 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
     public static final MapCodec<CavityMirrorBlock> CODEC = simpleCodec(CavityMirrorBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    /** The face it stands on, as a Relay does: never its mirror nor an output, and no light comes in by it. */
+    public static final EnumProperty<Direction> MOUNT = LaserRelayBlock.MOUNT;
     /** Which faces light leaves by, for the model: each shows an emitter. */
     public static final java.util.Map<Direction, BooleanProperty> OUTPUTS = net.minecraft.world.level.block.PipeBlock.PROPERTY_BY_DIRECTION;
     private static final java.util.Map<Direction, net.minecraft.world.phys.shapes.VoxelShape> SHAPES = new java.util.EnumMap<>(Direction.class);
@@ -72,7 +74,7 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
 
     public CavityMirrorBlock(Properties properties) {
         super(properties);
-        BlockState state = stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false);
+        BlockState state = stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false).setValue(MOUNT, Direction.DOWN);
         for (BooleanProperty output : OUTPUTS.values()) state = state.setValue(output, false);
         registerDefaultState(state.setValue(OUTPUTS.get(Direction.SOUTH), true));
     }
@@ -80,7 +82,12 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
     @Override
     protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos,
                                                                   net.minecraft.world.phys.shapes.CollisionContext context) {
-        return SHAPES.get(state.getValue(FACING));
+        Direction mount = state.getValue(MOUNT);
+        return net.minecraft.world.phys.shapes.Shapes.or(SHAPES.get(state.getValue(FACING)), box(LaserRelayBlock.BASES.get(mount)), box(LaserRelayBlock.POSTS.get(mount)));
+    }
+
+    private static net.minecraft.world.phys.shapes.VoxelShape box(net.minecraft.world.phys.AABB sixteenths) {
+        return Block.box(sixteenths.minX, sixteenths.minY, sixteenths.minZ, sixteenths.maxX, sixteenths.maxY, sixteenths.maxZ);
     }
 
     /** Light comes in to the focus in its middle. */
@@ -96,15 +103,27 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, LIT);
+        builder.add(FACING, LIT, MOUNT);
         OUTPUTS.values().forEach(builder::add);
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction mount = context.getClickedFace().getOpposite();
         Direction facing = context.getNearestLookingDirection().getOpposite();
-        return defaultBlockState().setValue(OUTPUTS.get(Direction.SOUTH), false).setValue(FACING, facing).setValue(OUTPUTS.get(facing.getOpposite()), true);
+        if (facing == mount) facing = mount.getOpposite();
+        Direction output = outputFor(facing, mount);
+        return defaultBlockState().setValue(OUTPUTS.get(Direction.SOUTH), false).setValue(FACING, facing).setValue(MOUNT, mount).setValue(OUTPUTS.get(output), true);
+    }
+
+    /** Where its one output goes to begin with: behind its mirror, or if that's its base, the first side free of both. */
+    public static Direction outputFor(Direction facing, Direction mount) {
+        if (facing.getOpposite() != mount) return facing.getOpposite();
+        for (Direction side : Direction.values()) {
+            if (side != facing && side != mount && side.getAxis() != facing.getAxis()) return side;
+        }
+        return facing.getOpposite();
     }
 
     @Override
@@ -114,7 +133,7 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
 
     @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING))).setValue(MOUNT, rotation.rotate(state.getValue(MOUNT)));
     }
 
     @Override
@@ -158,6 +177,7 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
 
     /** Turns the mirror to the face clicked; an output there goes. */
     private static InteractionResult point(BlockState state, Level level, BlockPos pos, Direction face) {
+        if (face == state.getValue(MOUNT)) return InteractionResult.SUCCESS;
         if (!level.isClientSide() && state.getValue(FACING) != face) {
             level.setBlock(pos, state.setValue(FACING, face), Block.UPDATE_ALL);
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 1.2f);

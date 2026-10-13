@@ -298,6 +298,16 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        // Shift and the wheel over an item: up, one into the inventory; down, one of it back from the inventory.
+        if (activeOverlay() == null && onGrid(mouseX, mouseY) && minecraft != null && minecraft.hasShiftDown() && scrollY != 0) {
+            LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
+            if (cell != null) {
+                ClientPacketDistributor.sendToServer(scrollY > 0
+                        ? new LogisticsTerminalTakePayload(menu.pos(), cell.item(), 1, true)
+                        : new com.kadikular.quantimium.network.LogisticsTerminalDepositPayload(menu.pos(), cell.item()));
+            }
+            return true;
+        }
         if (activeOverlay() == null && onGrid(mouseX, mouseY)) {
             scrollRow = Mth.clamp(scrollRow - (int) Math.signum(scrollY), 0, maxScroll(shown()));
             return true;
