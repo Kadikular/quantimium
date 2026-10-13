@@ -65,8 +65,8 @@ public final class LensAction {
     /** The block being cut, what it costs, and the FE gone into it so far. */
     @Nullable
     private BlockPos cutting;
-    /** How many times in a row it found nothing to move: each waits longer. */
-    private int idle;
+    /** Insert and Extract: ticks it waited last, longer while idle, shorter while busy; 0 before it first looks. */
+    private int wait;
     /** The last block it saw along a clear line, and until when that's taken as still so. */
     @Nullable
     private BlockPos seen;
@@ -91,13 +91,14 @@ public final class LensAction {
     }
 
     /**
-     * How long to wait after finding nothing to do: longer each time in a row, from {@link LaserTuning#IDLE_RETRY} up
-     * to {@link LaserTuning#IDLE_MAX}, with a little of its own offset so idle beams don't line up.
+     * The wait after a look: idle, twice the last, up to {@link LaserTuning#IDLE_MAX}; after a move, half the last, down
+     * to its own pace. A little of its own offset keeps idle beams from lining up.
      */
-    private int idleWait() {
-        idle = Math.min(idle + 1, 8);
-        int wait = Math.min(LaserTuning.IDLE_MAX, LaserTuning.IDLE_RETRY << (idle - 1));
-        return wait + Math.floorMod(key.hashCode() + idle, 4);
+    private int nextWait(boolean moved) {
+        int pace = Math.max(1, LaserTuning.PLACE_COOLDOWN / stream.pace());
+        int last = wait <= 0 ? LaserTuning.IDLE_MAX : wait;
+        wait = moved ? Math.max(pace, last / 2) : Math.min(LaserTuning.IDLE_MAX, Math.max(pace, last * 2));
+        return moved ? wait : wait + Math.floorMod(key.hashCode(), 4);
     }
 
     public Key key() {
@@ -430,13 +431,13 @@ public final class LensAction {
         long processing = in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
         // Nothing to move (nothing it may take, or no room): it looks again in a while, longer the longer it's idle.
         if (processing < 0) {
-            placeCooldown = idleWait();
+            placeCooldown = nextWait(false);
             return;
         }
-        idle = 0;
         networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
-        placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
+        // Busy, it speeds up: each move in a row halves the wait, down to its own pace.
+        placeCooldown = nextWait(true);
         placed = at;
         lastWorked = now;
     }

@@ -60,10 +60,13 @@ public final class LaserTuning {
     public static final long PLACE_FE = 200;
     /** Ticks between blocks a Placement beam places. */
     public static final int PLACE_COOLDOWN = 10;
-    /** Ticks an Insert or Extract beam waits after finding nothing to move, before it looks again. */
+    /** Ticks over which Insert and Extract beams made together are spread at the start, so they don't all look in one tick. */
     public static final int IDLE_RETRY = 10;
-    /** The longest an idle Insert or Extract beam waits between looks. */
-    public static final int IDLE_MAX = 160;
+    /**
+     * The longest an Insert or Extract beam waits between looks: two seconds. Idle, its wait doubles up to this; each
+     * move halves it again, down to its own pace (PLACE_COOLDOWN, quicker with Speed lenses).
+     */
+    public static final int IDLE_MAX = 40;
     /** Ticks an area action takes a clear line to a block as still clear, before tracing it again. */
     public static final int SIGHT_KEPT = 10;
     /** Kinds of thing an Interact beam tries from its sending Laser Ports in one go, before it gives up till next time. */
