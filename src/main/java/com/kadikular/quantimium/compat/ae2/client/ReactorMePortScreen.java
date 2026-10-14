@@ -146,10 +146,8 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
 
     @Override
     protected Component statusLabel() {
-        if (menu.isFilterView()) {
-            return Component.translatable(menu.isStorageList() ? "gui.quantimium.reactor_me_port.list.storage.short"
-                    : "gui.quantimium.reactor_me_port.list.patterns.short");
-        }
+        // On the filter, its tabs on the left say which list and how it filters.
+        if (menu.isFilterView()) return Component.empty();
         return Component.translatable("gui.quantimium.reactor_me_port.status." + switch (menu.link()) {
             case 2 -> "online";
             case 1 -> "offline";

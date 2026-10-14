@@ -1,6 +1,5 @@
 package com.kadikular.quantimium.client.screen.ui;
 
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
@@ -17,8 +16,6 @@ public record Rail(int fill, int edge, int litFill, int litEdge, int hoverEdge, 
     public static final Rail LOW = new Rail(0xFF706E6A, 0xFF4F4D4B, 0xFF5A5856, 0xFF2896BE, 0xFF2896BE, 0xFF1E1C1A, 0xFF3C3A37, 0xFF42403E, 0xFF14606A);
 
     public static final int SIZE = 22;
-    public static final int BADGE = QuantumUiColours.ACCENT;
-    public static final int BADGE_TEXT = 0xFF090A14;
 
     public static Rail of(PanelTheme theme) {
         return switch (theme) {
@@ -42,11 +39,5 @@ public record Rail(int fill, int edge, int litFill, int litEdge, int hoverEdge, 
     public void button(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean lit, boolean hovered) {
         graphics.fill(x, y, x + width, y + height, lit ? litFill : fill);
         QuantumWidgets.outline(graphics, x, y, width, height, hovered ? hoverEdge : lit ? litEdge : edge);
-    }
-
-    /** A value in the tab's bottom-right corner, at the small size of an item count. */
-    public static void badge(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, int width) {
-        if (text.isEmpty()) return;
-        SmallText.drawRight(graphics, font, text, x + width - 2, y + SIZE - 2, BADGE_TEXT, BADGE);
     }
 }

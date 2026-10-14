@@ -123,12 +123,8 @@ public class CatalystBayScreen extends QuantumMachineScreen<CatalystBayMenu> imp
 
     @Override
     protected Component statusLabel() {
-        if (menu.isFilterView()) {
-            return Component.translatable(menu.isInputList()
-                    ? (bay().inputsAllow() ? "gui.quantimium.catalyst_bay.list.inputs.allow.short"
-                            : "gui.quantimium.catalyst_bay.list.inputs.short")
-                    : "gui.quantimium.catalyst_bay.list.outputs.short");
-        }
+        // On the filter, its tabs on the left say which list and how it filters.
+        if (menu.isFilterView()) return Component.empty();
         return Component.translatable("gui.quantimium.catalyst_bay.status", catalysts(), CatalystBayBlockEntity.SLOTS);
     }
 

@@ -120,8 +120,6 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         @Nullable
         private BooleanSupplier during;
         @Nullable
-        private Supplier<String> badge;
-        @Nullable
         private Runnable onRightClick;
         @Nullable
         private IntConsumer onScroll;
@@ -194,11 +192,6 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             return this;
         }
 
-        /** A short value in its corner, such as the priority, so it reads without opening. */
-        public Tab badge(Supplier<String> badge) {
-            this.badge = badge;
-            return this;
-        }
 
         /** Right-click: a choice steps back. */
         public Tab onRightClick(Runnable onRightClick) {
@@ -320,7 +313,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     }
 
     /**
-     * The shared Priority tab: the value in its corner, scroll over it to nudge (shift for tens), click for the
+     * The shared Priority tab: its value on hover, scroll over it to nudge (shift for tens), click for the
      * page. {@code set} sends the new value; it arrives already clamped to {@code max}.
      */
     protected final Tab priorityTab(IntSupplier value, IntConsumer set, int max) {
@@ -332,7 +325,6 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
                         () -> List.of(Component.translatable("gui.quantimium.priority.value", value.getAsInt()),
                                 hint("gui.quantimium.priority.tab.hint")))
                 .page(RailSlot.PRIORITY, () -> activeOverlay() instanceof PriorityPage, this::closeOverlay)
-                .badge(() -> priorityBadge(value.getAsInt()))
                 .onScroll(step -> clamped.accept(value.getAsInt() + step * (Minecraft.getInstance().hasShiftDown() ? 10 : 1)));
     }
 
@@ -376,13 +368,6 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     /** Whether each face also picks which of the machine's input slots it may fill or empty. */
     protected boolean sideSlotMasks() {
         return false;
-    }
-
-    private static String priorityBadge(int value) {
-        if (value == 0) return "";
-        if (value > 99) return "99+";
-        if (value < -99) return "-99";
-        return Integer.toString(value);
     }
 
     /** How far the rails reach past the panel's left and right edges; for tools that capture the screen. */
@@ -455,10 +440,15 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             graphics.setComponentTooltipForNextFrame(font, energyTooltip(), mouseX, mouseY);
             return;
         }
-        int statusWidth = font.width(statusLabel());
-        if (QuantumWidgets.hit(mouseX, mouseY, leftPos + statusX(statusWidth) - 2, topPos + TITLE_Y - 3,
+        if (statusWidth > 0 && QuantumWidgets.hit(mouseX, mouseY, leftPos + statusX - 2, topPos + TITLE_Y - 3,
                 statusWidth + 4, font.lineHeight + 4)) {
-            graphics.setComponentTooltipForNextFrame(font, statusTooltip(), mouseX, mouseY);
+            List<Component> lines = statusTooltip();
+            // Shortened to fit, it reads in full here.
+            if (statusShortened) {
+                lines = new ArrayList<>(lines);
+                lines.addFirst(statusLabel());
+            }
+            graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
             return;
         }
         renderTabTooltip(graphics, mouseX, mouseY);
@@ -477,36 +467,42 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         }
     }
 
-    private int statusX(int statusWidth) {
-        return imageWidth - STATUS_RIGHT_MARGIN - statusWidth;
-    }
+    /** Where the status was last drawn, panel-relative, and whether it had to be shortened. */
+    private int statusX;
+    private int statusWidth;
+    private boolean statusShortened;
 
     /**
-     * The title strip: the machine's name on the left, its status on the right, in the theme's
-     * colours. The status always fits; the name gives way to it, shortened with an ellipsis. There
-     * is no "Inventory" label: the rule above the player's slots says the same thing.
+     * The title strip: the machine's name on the left, its status on the right, in the theme's colours. The
+     * name always reads in full; the status takes the room left and is shortened with an ellipsis if it must
+     * (in full on hover), so the two never overlap. There is no "Inventory" label: the rule above the player's
+     * slots says the same thing.
      */
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        Component status = statusLabel();
-        int statusWidth = font.width(status);
-        int statusX = statusX(statusWidth);
-        graphics.text(font, status, statusX, TITLE_Y, theme().tone(statusTone()), false);
-
         // A page that's a view of the menu itself (a filter) has the same back arrow as a covering page.
         int titleX = TITLE_X;
         if (viewPageOpen()) {
             Page.backArrow(graphics, rail(), 0, 0, overViewBack(mouseX, mouseY));
             titleX = Page.TITLE_AFTER_BACK;
         }
-        int room = statusX - TITLE_STATUS_GAP - titleX;
-        FormattedText name = title;
-        if (font.width(name) > room) {
-            name = FormattedText.composite(font.substrByWidth(title, room - font.width("…")),
-                    FormattedText.of("…"));
-        }
-        graphics.text(font, Language.getInstance().getVisualOrder(name), titleX, TITLE_Y,
-                theme().title, false);
+        int right = imageWidth - STATUS_RIGHT_MARGIN;
+        FormattedText name = fit(title, right - titleX);
+        graphics.text(font, Language.getInstance().getVisualOrder(name), titleX, TITLE_Y, theme().title, false);
+
+        Component status = statusLabel();
+        int room = right - (titleX + font.width(name) + TITLE_STATUS_GAP);
+        FormattedText shown = room < font.width("…") ? FormattedText.EMPTY : fit(status, room);
+        statusShortened = font.width(status) > room;
+        statusWidth = font.width(shown);
+        statusX = right - statusWidth;
+        graphics.text(font, Language.getInstance().getVisualOrder(shown), statusX, TITLE_Y, theme().tone(statusTone()), false);
+    }
+
+    /** {@code text} cut to {@code room} with an ellipsis, or whole if it fits. */
+    private FormattedText fit(Component text, int room) {
+        if (font.width(text) <= room) return text;
+        return FormattedText.composite(font.substrByWidth(text, Math.max(0, room - font.width("…"))), FormattedText.of("…"));
     }
 
     /** A page open that isn't drawn over the panel: the panel itself is showing it. */
@@ -584,7 +580,6 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             graphics.text(font, text, tab.x + (tab.width - font.width(text)) / 2, tab.y + 7,
                     usable ? rail().text() : rail().textDim(), false);
         }
-        if (tab.badge != null) Rail.badge(graphics, font, tab.badge.get(), tab.x, tab.y, tab.width);
     }
 
     /** A tab under the cursor, if the rails are in use. */
