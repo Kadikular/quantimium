@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.5.0-alpha: Quantimium Lasers
+
+**Power, work and items by light**, and a new look for every screen. Same Minecraft 26.1.2 and
+NeoForge 26.1.2.109. Worlds from 0.4.x carry on.
+
+### Light
+
+- **Laser Emitters** (Flash, I, II, III) and the **Solar Emitter** turn FE into light, and anything
+  that takes FE takes it back where a beam ends. Beams join, split and bend through **Laser Relays**,
+  **Mirrors**, **Splitters** and **Prisms**, linked with the **Laser Linker**; **Cavity Mirrors** store
+  light between them, and **Photodetectors** read it.
+- **Lens Mounts** and **Relay emitters** hold lenses that give light something to do: **Harvest**,
+  **Damage**, **Pickup**, **Place**, **Insert**, **Extract** and **Interact**, changed by **Range**,
+  **Speed**, **Amplify**, **Precision**, **Harmonic**, **Unrealising**, **Smelting**, **Crushing**,
+  **Phantom** and **UV**. Lens order matters, and **Laser Ports** catch what comes back and send
+  what goes out.
+- **Filter lenses** come in three: **Item** (what's carried, placed or moved), **Block** (what Harvest
+  cuts, ripe only if you like) and **Entity** (what's hit, by kind or spawn egg, sparing the young or a
+  number of them). Each sets only its own part, so they combine on one beam.
+- **Isolators** let only power through. The **Isolator Lens** does the same in a mount and can be set
+  to let a logistics network, actions, modifiers or chosen lenses pass.
+- **The Area Prism** works a whole area: picked with the Linker, or a cube or sphere round it.
+- **Rifts** take light into the mirror, where Harvest cuts grown Anomalite crystals and Pickup draws
+  Veil Thread.
+
+### Logistics
+
+- **A Logistics Controller's light is a network.** **Logistics Receptacles** on any inventory make it
+  storage, a provider or a requester, active or passive, with a priority and a filter; a requester can
+  **keep counts stocked**. Active receptacles move at a lens's pace, quicker with Speed lenses.
+- **Logistics Terminal** and **Logistics Lectern**: everything the network holds, to take or put
+  away, as an ME terminal; the **Pod Logistics Module** opens it from anywhere (V).
+- **The Reactor joins in.** The **Reactor Logistics Port** makes the Reactor network storage, sharing
+  what it holds and can make; the **Logistics Materialiser** offers the network to pipes.
+
+### The Reactor
+
+- **Catalyst Bays sink into the floor**, four catalysts each with a filter, and the **Lit Reactor
+  Plinth** shows the core working.
+- **The ME Superposition Port** puts the Reactor on an ME network: what it holds as storage, what it
+  can make as patterns (whole trees, steps or both), with a priority and filters, set up like a
+  storage bus.
+- **Safer and quicker**: no duplication or loss at the edges, partial recounts, and an indestructible
+  Singularity.
+
+### Screens
+
+- **One layout everywhere.** Pages (filter, priority, sides, slots) are tabs on the right, lit while
+  open; a block's own settings are tabs on the left. Icons replace letters, tooltips are a line, and
+  nothing overlaps.
+- **Sides** and **Simulator slot binding** open in the machine's own frame and save as you change them.
+  **Priority** has its own page: type it, step it or scroll it.
+
+### Changed
+
+- The old **Collector** and **Sender** are the **Laser Port**; the old **Filter Lens** is the **Item
+  Filter Lens** and keeps its settings.
+- New `lasers` options: `maxRange` (64), `phantomFePerBlock` (20, and Phantom light's actions cost
+  twice as much), `laserIdleSeconds` (4), `unrealisingLens`, `crushingRecipeTypes` and the cavity leak.
+
 ## 0.4.0-alpha: the Quantimium Reactor
 
 **The Quantimium Reactor**, a first version, and the machines of All the Mods 11. Same Minecraft
