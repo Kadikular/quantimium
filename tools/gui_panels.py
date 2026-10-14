@@ -396,9 +396,11 @@ def area_prism() -> Panel:
 
 
 def relay_emitter() -> Panel:
-    """One of a Laser Relay's emitters: its one lens slot in the middle (RelayEmitterMenu.LENS_X, LENS_Y)."""
+    """One of a Laser Relay's emitters: its one lens slot in the middle, the lens's settings button under it as on
+    a Lens Mount (RelayEmitterMenu.LENS_X, LENS_Y, BUTTON_Y)."""
     panel = Panel(HIGH)
     panel.slot(80, 35)
+    panel.well(79, 55, 18, 10)
     panel.player()
     return panel
 

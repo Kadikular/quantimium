@@ -62,7 +62,7 @@ public class LensMountMenu extends AbstractContainerMenu {
         if (player instanceof net.minecraft.server.level.ServerPlayer server) {
             net.minecraft.core.BlockPos pos = mount.getBlockPos();
             server.openMenu(new net.minecraft.world.SimpleMenuProvider((containerId, inventory, who) -> new FilterLensMenu(containerId, inventory, mount, id),
-                    net.minecraft.network.chat.Component.translatable("item.quantimium.filter_lens")), buf -> {
+                    lens.getHoverName()), buf -> {
                 buf.writeByte(FilterLensMenu.IN_MOUNT);
                 buf.writeBlockPos(pos);
                 buf.writeByte(id);

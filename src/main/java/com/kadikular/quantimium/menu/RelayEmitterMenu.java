@@ -19,6 +19,11 @@ import net.minecraft.world.item.ItemStack;
 public class RelayEmitterMenu extends AbstractContainerMenu {
 
     public static final int BUTTON_MODE = 0;
+    /** The settings of the lens in it: an Interact lens's switches in place, a filter lens's open. */
+    public static final int BUTTON_LENS = 1;
+    public static final int BUTTON_Y = 55;
+    public static final int BUTTON_W = 18;
+    public static final int BUTTON_H = 10;
     public static final int LENS_X = 80;
     public static final int LENS_Y = 35;
 
@@ -61,8 +66,26 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
-        if (id != BUTTON_MODE) return false;
-        relay.cycleMode(face);
+        if (id == BUTTON_MODE) {
+            relay.cycleMode(face);
+            return true;
+        }
+        if (id != BUTTON_LENS) return false;
+        ItemStack lens = relay.lens(face);
+        if (lens.getItem() instanceof com.kadikular.quantimium.item.InteractLensItem) {
+            com.kadikular.quantimium.item.InteractLensItem.toggle(lens);
+            relay.setLens(face, lens);
+            return true;
+        }
+        if (!(lens.getItem() instanceof com.kadikular.quantimium.item.FilterLensItem)) return false;
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            server.openMenu(new net.minecraft.world.SimpleMenuProvider((containerId, inventory, who) -> new FilterLensMenu(containerId, inventory, relay, face),
+                    lens.getHoverName()), buf -> {
+                buf.writeByte(FilterLensMenu.IN_RELAY);
+                buf.writeBlockPos(relay.getBlockPos());
+                buf.writeEnum(face);
+            });
+        }
         return true;
     }
 

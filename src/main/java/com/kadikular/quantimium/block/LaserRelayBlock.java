@@ -167,6 +167,22 @@ public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.qu
             }
             return InteractionResult.SUCCESS;
         }
+        // Sneaking with a lens in hand: the emitter itself comes off, its lens back to the player.
+        if (mounted() && player.isSecondaryUseActive() && stack.getItem() instanceof com.kadikular.quantimium.item.LensItem) {
+            Direction emitter = emitterAt(state, pos, hit);
+            if (emitter == null) return InteractionResult.PASS;
+            if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay) {
+                ItemStack lens = relay.lens(emitter);
+                if (!lens.isEmpty()) {
+                    relay.setLens(emitter, ItemStack.EMPTY);
+                    if (!player.getInventory().add(lens)) player.drop(lens, false);
+                }
+                if (relay.removeEmitter(emitter)) {
+                    level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 0.8f);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
         if (!mounted()) return toggle(level, pos, hit.getDirection(), player);

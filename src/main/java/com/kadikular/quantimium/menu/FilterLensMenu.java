@@ -36,6 +36,7 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     /** Where the lens is: in a hand, or in a Lens Mount's slot. */
     public static final int IN_HAND = 0;
     public static final int IN_MOUNT = 1;
+    public static final int IN_RELAY = 2;
 
     private final java.util.function.Supplier<ItemStack> lens;
     /** After a change: a mount's light changes with its lens. */
@@ -45,7 +46,16 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     private final SimpleContainer shown = new SimpleContainer(LensFilter.SLOTS);
 
     public static FilterLensMenu fromNetwork(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        if (extraData.readByte() == IN_MOUNT) {
+        byte where = extraData.readByte();
+        if (where == IN_RELAY) {
+            net.minecraft.core.BlockPos pos = extraData.readBlockPos();
+            net.minecraft.core.Direction face = extraData.readEnum(net.minecraft.core.Direction.class);
+            if (playerInv.player.level().getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LaserRelayBlockEntity relay) {
+                return new FilterLensMenu(containerId, playerInv, relay, face);
+            }
+            return new FilterLensMenu(containerId, playerInv, InteractionHand.MAIN_HAND);
+        }
+        if (where == IN_MOUNT) {
             net.minecraft.core.BlockPos pos = extraData.readBlockPos();
             int slot = extraData.readByte();
             if (playerInv.player.level().getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LensMountBlockEntity mount) {
@@ -66,6 +76,14 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
         this(containerId, playerInv, () -> mount.getLensSlots().getStackInSlot(slot), mount::lensChanged,
                 who -> !mount.isRemoved() && mount.getLensSlots().getStackInSlot(slot).getItem() instanceof FilterLensItem
                         && who.distanceToSqr(mount.getBlockPos().getCenter()) <= 64, -1);
+    }
+
+    /** For a filter lens in one of a Laser Relay's emitters. */
+    public FilterLensMenu(int containerId, Inventory playerInv, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity relay,
+                          net.minecraft.core.Direction face) {
+        this(containerId, playerInv, () -> relay.lens(face), () -> relay.setLens(face, relay.lens(face)),
+                who -> !relay.isRemoved() && relay.lens(face).getItem() instanceof FilterLensItem
+                        && who.distanceToSqr(relay.getBlockPos().getCenter()) <= 64, -1);
     }
 
     private FilterLensMenu(int containerId, Inventory playerInv, java.util.function.Supplier<ItemStack> lens, Runnable changed,
