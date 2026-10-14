@@ -99,6 +99,8 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         @Nullable
         private Supplier<GuiIcon> glyph;
         @Nullable
+        private Supplier<Identifier> texture;
+        @Nullable
         private BooleanSupplier on;
         private boolean opens;
         @Nullable
@@ -147,6 +149,12 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         /** An icon that follows the machine's state, such as a toggle. */
         public Tab icon(Supplier<ItemStack> icon) {
             this.icon = icon;
+            return this;
+        }
+
+        /** A whole 16×16 texture as its icon, such as a vanilla item's. */
+        public Tab texture(Supplier<Identifier> texture) {
+            this.texture = texture;
             return this;
         }
 
@@ -259,6 +267,11 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         overlay.layout(width, height);
     }
 
+    /** The rail's colours, from the panel's tier. */
+    protected final Rail rail() {
+        return Rail.of(theme());
+    }
+
     /** The panel's frame on screen, where pages are drawn. */
     public final Rect2i panelArea() {
         return new Rect2i(leftPos, topPos, imageWidth, imageHeight);
@@ -273,7 +286,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             int next = Math.clamp(to, -max, max);
             if (next != value.getAsInt()) set.accept(next);
         };
-        return Tab.glyph(() -> GuiIcon.PRIORITY, () -> openOverlay(new PriorityPage(this::panelArea, value, clamped, max)),
+        return Tab.glyph(() -> GuiIcon.PRIORITY, () -> openOverlay(new PriorityPage(this::panelArea, rail(), value, clamped, max)),
                         () -> List.of(Component.translatable("gui.quantimium.priority.value", value.getAsInt()),
                                 hint("gui.quantimium.priority.tab.hint")))
                 .slot(RailSlot.PRIORITY).opens()
@@ -284,7 +297,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     /** The shared redstone tab: the item shows the setting; click steps on, right-click back. */
     protected final Tab redstoneTab(Supplier<RedstoneMode> mode, Runnable next) {
         return Tab.of(Component::empty, next, () -> List.of(mode.get().label(), hint("gui.quantimium.tab.cycle")))
-                .icon(() -> new ItemStack(mode.get().icon))
+                .texture(() -> mode.get().texture)
                 .slot(RailSlot.REDSTONE)
                 // Three settings: two steps on is one back.
                 .onRightClick(() -> {
@@ -306,7 +319,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     }
 
     public final void openSideConfig(OpenSideConfigPayload payload) {
-        openOverlay(new SidesPage(this::panelArea, payload.pos(), payload.configs(), payload.profile(), sideSlotMasks()));
+        openOverlay(new SidesPage(this::panelArea, rail(), payload.pos(), payload.configs(), payload.profile(), sideSlotMasks()));
     }
 
     /** Whether each face also picks which of the machine's input slots it may fill or empty. */
@@ -369,7 +382,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         QuantumOverlay open = activeOverlay();
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         for (Tab tab : tabs) {
-            ItemStack icon = !tab.shown || tab.glyph != null ? ItemStack.EMPTY : tab.icon.get();
+            ItemStack icon = !tab.shown || tab.glyph != null || tab.texture != null ? ItemStack.EMPTY : tab.icon.get();
             if (!icon.isEmpty()) graphics.item(icon, tab.x + (tab.width - 16) / 2, tab.y + 3);
         }
         renderMachineForeground(graphics, mouseX, mouseY);
@@ -464,16 +477,19 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     private void drawTab(GuiGraphicsExtractor graphics, Tab tab, boolean hovered) {
         boolean lit = tab.on != null && tab.on.getAsBoolean();
         boolean usable = tab.enabled.getAsBoolean();
-        Rail.tab(graphics, tab.x, tab.y, tab.width, lit, hovered && usable);
+        rail().tab(graphics, tab.x, tab.y, tab.width, lit, hovered && usable);
         if (tab.glyph != null) {
             boolean dim = !usable || (tab.on != null && !lit);
             tab.glyph.get().draw(graphics, tab.x + (tab.width - GuiIcon.SIZE) / 2, tab.y + 3, dim ? GuiIcon.DIMMED : 0xFFFFFFFF);
+        } else if (tab.texture != null) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, tab.texture.get(), tab.x + (tab.width - 16) / 2, tab.y + 3, 0.0f, 0.0f,
+                    16, 16, 16, 16, usable ? 0xFFFFFFFF : GuiIcon.DIMMED);
         } else if (tab.icon.get().isEmpty()) {
             Component text = tab.label.get();
             graphics.text(font, text, tab.x + (tab.width - font.width(text)) / 2, tab.y + 7,
-                    usable ? Rail.TEXT : Rail.TEXT_DIM, false);
+                    usable ? rail().text() : rail().textDim(), false);
         }
-        if (tab.opens) Rail.opensTick(graphics, tab.x, tab.y, tab.width);
+        if (tab.opens) rail().opensTick(graphics, tab.x, tab.y, tab.width);
         if (tab.badge != null) Rail.badge(graphics, font, tab.badge.get(), tab.x, tab.y, tab.width);
     }
 

@@ -2,23 +2,22 @@ package com.kadikular.quantimium.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 
 import java.util.Locale;
 
 /** How a machine listens to redstone: not at all, running only with a signal, or only without one. */
 public enum RedstoneMode {
-    IGNORED(Items.GUNPOWDER),
-    WITH_SIGNAL(Items.REDSTONE_TORCH),
-    WITHOUT_SIGNAL(Items.REDSTONE);
+    IGNORED("item/gunpowder"),
+    WITH_SIGNAL("block/redstone_torch"),
+    WITHOUT_SIGNAL("block/redstone_torch_off");
 
-    /** The item its button shows. */
-    public final Item icon;
+    /** The 16×16 texture its tab shows: the vanilla item's, or the unlit torch, which has no item of its own. */
+    public final Identifier texture;
 
-    RedstoneMode(Item icon) {
-        this.icon = icon;
+    RedstoneMode(String texture) {
+        this.texture = Identifier.withDefaultNamespace("textures/" + texture + ".png");
     }
 
     /** Whether a machine at {@code pos} runs, given the signal reaching it. */

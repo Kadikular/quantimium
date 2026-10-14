@@ -21,14 +21,16 @@ public abstract class Page implements QuantumOverlay {
 
     private final Supplier<Rect2i> panel;
     private final Component title;
+    protected final Rail rail;
     private boolean closed;
     protected int left;
     protected int top;
     protected int width;
     protected int height;
 
-    protected Page(Supplier<Rect2i> panel, Component title) {
+    protected Page(Supplier<Rect2i> panel, Rail rail, Component title) {
         this.panel = panel;
+        this.rail = rail;
         this.title = title;
     }
 
@@ -70,13 +72,13 @@ public abstract class Page implements QuantumOverlay {
     @Override
     public final void render(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY, float partialTick) {
         graphics.nextStratum();
-        graphics.fill(left, top, left + width, top + height, Rail.FILL);
-        QuantumWidgets.outline(graphics, left, top, width, height, Rail.EDGE);
-        graphics.fill(left + 3, top + 15, left + width - 3, top + 16, Rail.EDGE);
-        graphics.text(font, title, left + 6, top + 4, QuantumUiColours.ACCENT, false);
+        graphics.fill(left, top, left + width, top + height, rail.fill());
+        QuantumWidgets.outline(graphics, left, top, width, height, rail.edge());
+        graphics.fill(left + 3, top + 15, left + width - 3, top + 16, rail.edge());
+        graphics.text(font, title, left + 6, top + 4, rail.title(), false);
 
         boolean overBack = overBack(mouseX, mouseY);
-        Rail.tab(graphics, backX(), backY(), QuantumMachineScreen.TAB_SIZE, false, overBack);
+        rail.tab(graphics, backX(), backY(), QuantumMachineScreen.TAB_SIZE, false, overBack);
         GuiIcon.BACK.draw(graphics, backX() + 3, backY() + 3);
 
         renderPage(graphics, font, mouseX, mouseY);
@@ -114,9 +116,8 @@ public abstract class Page implements QuantumOverlay {
     }
 
     /** A plain button on a page: the rail's colours, its label centred. */
-    protected static void button(GuiGraphicsExtractor graphics, Font font, String label, int x, int y, int w, int h, boolean hovered) {
-        graphics.fill(x, y, x + w, y + h, Rail.LIT_FILL);
-        QuantumWidgets.outline(graphics, x, y, w, h, hovered ? Rail.HOVER_EDGE : Rail.LIT_EDGE);
-        graphics.text(font, label, x + (w - font.width(label)) / 2, y + (h - 8) / 2, Rail.TEXT, false);
+    protected void button(GuiGraphicsExtractor graphics, Font font, String label, int x, int y, int w, int h, boolean hovered) {
+        rail.button(graphics, x, y, w, h, true, hovered);
+        graphics.text(font, label, x + (w - font.width(label)) / 2, y + (h - 8) / 2, rail.text(), false);
     }
 }

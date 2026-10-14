@@ -27,8 +27,9 @@ import java.util.function.Supplier;
 
 /**
  * The Sides page. The six faces are an unfolded cube around the front, named from the block's own facing,
- * coloured by what each lets through: click one to step it on (Off, In, Out, Both), right-click to step back.
- * The face last clicked shows below, with what it touches and whether it pulls from or pushes into it. Machines
+ * coloured by what each lets through. Click one to pick it; right-click to step it on (Off, In, Out, Both),
+ * shift-right-click to step back. The picked face shows below, with what it touches and whether it pulls from
+ * or pushes into it. Machines
  * with input slots also choose, per face, which slots it may fill or empty. Each change is sent as it's made.
  */
 public final class SidesPage extends Page {
@@ -109,8 +110,8 @@ public final class SidesPage extends Page {
     private Kind kind = Kind.ITEMS;
     private Face selected = Face.FRONT;
 
-    public SidesPage(Supplier<Rect2i> panel, BlockPos pos, List<SideConfig> configs, SideAutomationProfile profile, boolean slotMasks) {
-        super(panel, Component.translatable("gui.quantimium.sides"));
+    public SidesPage(Supplier<Rect2i> panel, Rail rail, BlockPos pos, List<SideConfig> configs, SideAutomationProfile profile, boolean slotMasks) {
+        super(panel, rail, Component.translatable("gui.quantimium.sides"));
         this.pos = pos;
         this.facing = readFacing(pos);
         this.profile = profile;
@@ -241,8 +242,8 @@ public final class SidesPage extends Page {
                 int x = left + KIND_X;
                 int y = kindY(each);
                 boolean hovered = QuantumWidgets.hit(mouseX, mouseY, x, y, KIND_SIZE, KIND_SIZE);
-                graphics.fill(x, y, x + KIND_SIZE, y + KIND_SIZE, each == kind ? Rail.LIT_FILL : Rail.FILL);
-                QuantumWidgets.outline(graphics, x, y, KIND_SIZE, KIND_SIZE, hovered ? Rail.HOVER_EDGE : each == kind ? Rail.LIT_EDGE : Rail.EDGE);
+                graphics.fill(x, y, x + KIND_SIZE, y + KIND_SIZE, each == kind ? rail.litFill() : rail.fill());
+                QuantumWidgets.outline(graphics, x, y, KIND_SIZE, KIND_SIZE, hovered ? rail.hoverEdge() : each == kind ? rail.litEdge() : rail.edge());
                 graphics.item(new ItemStack(each == Kind.ITEMS ? Items.CHEST : Items.WATER_BUCKET), x + 1, y + 1);
                 if (hovered) tooltip = List.of(Component.translatable(each == Kind.ITEMS ? "gui.quantimium.sides.items" : "gui.quantimium.sides.fluids"));
             }
@@ -258,7 +259,7 @@ public final class SidesPage extends Page {
         Component name = selected.label().copy().withStyle(ChatFormatting.AQUA)
                 .append(Component.literal(" · " + neighbourName(selected.world(facing))).withStyle(ChatFormatting.GRAY));
         int room = (slotMasks ? MASK_X - 6 : width - 6) - 6;
-        graphics.text(font, font.substrByWidth(name, room).getString(), left + 6, top + FACE_Y, Rail.TEXT, false);
+        graphics.text(font, font.substrByWidth(name, room).getString(), left + 6, top + FACE_Y, rail.text(), false);
         SideMode mode = mode(selected);
         tooltip = autoChip(graphics, font, "gui.quantimium.sides.pull", pullX(), pulls(selected), mode.allowsInput(),
                 QuantumUiColours.CHIP_IN, mouseX, mouseY, tooltip);
@@ -268,8 +269,8 @@ public final class SidesPage extends Page {
         if (slotMasks) {
             int bits = maskBits();
             int x = left + MASK_X;
-            graphics.text(font, Component.translatable("gui.quantimium.sides.mode.input"), x, top + INSERT_Y - 10, Rail.TEXT_DIM, false);
-            graphics.text(font, Component.translatable("gui.quantimium.sides.mode.output"), x, top + EXTRACT_Y - 10, Rail.TEXT_DIM, false);
+            graphics.text(font, Component.translatable("gui.quantimium.sides.mode.input"), x, top + INSERT_Y - 10, rail.textDim(), false);
+            graphics.text(font, Component.translatable("gui.quantimium.sides.mode.output"), x, top + EXTRACT_Y - 10, rail.textDim(), false);
             QuantumWidgets.maskGrid(graphics, x, top + INSERT_Y, inputMask(selected), bits, QuantumUiColours.CHIP_IN);
             QuantumWidgets.maskGrid(graphics, x, top + EXTRACT_Y, outputMask(selected), bits, QuantumUiColours.CHIP_OUT);
             int bit = QuantumWidgets.maskBitAt(x, top + INSERT_Y, bits, mouseX, mouseY);
@@ -284,7 +285,7 @@ public final class SidesPage extends Page {
         for (SideMode each : SideMode.values()) {
             graphics.fill(x, top + LEGEND_Y, x + 6, top + LEGEND_Y + 6, QuantumUiColours.modeFill(each));
             Component word = modeLabel(each);
-            graphics.text(font, word, x + 9, top + LEGEND_Y - 1, Rail.TEXT_DIM, false);
+            graphics.text(font, word, x + 9, top + LEGEND_Y - 1, rail.textDim(), false);
             x += 9 + font.width(word) + 10;
         }
 
@@ -296,10 +297,10 @@ public final class SidesPage extends Page {
         int y = tileY(face);
         SideMode mode = mode(face);
         graphics.fill(x, y, x + TILE, y + TILE, QuantumUiColours.modeFill(mode));
-        QuantumWidgets.outline(graphics, x, y, TILE, TILE, face == selected ? QuantumUiColours.SELECTION : Rail.EDGE);
+        QuantumWidgets.outline(graphics, x, y, TILE, TILE, face == selected ? QuantumUiColours.SELECTION : rail.edge());
         String letter = face.label().getString().substring(0, 1);
         graphics.text(font, letter, x + (TILE - font.width(letter)) / 2 + 1, y + 5,
-                face == Face.FRONT ? QuantumUiColours.ACCENT : Rail.TEXT, false);
+                face == Face.FRONT ? QuantumUiColours.ACCENT : rail.text(), false);
         if (mode.allowsInput() && pulls(face)) graphics.fill(x + 2, y + 2, x + 5, y + 5, QuantumUiColours.CHIP_IN);
         if (mode.allowsOutput() && pushes(face)) graphics.fill(x + TILE - 5, y + 2, x + TILE - 2, y + 5, QuantumUiColours.CHIP_OUT);
     }
@@ -309,10 +310,10 @@ public final class SidesPage extends Page {
                                      int colour, int mouseX, int mouseY, @Nullable List<Component> tooltip) {
         int y = top + AUTO_Y;
         boolean lit = on && usable;
-        graphics.fill(x, y, x + AUTO_WIDTH, y + AUTO_HEIGHT, lit ? colour : Rail.FILL);
-        QuantumWidgets.outline(graphics, x, y, AUTO_WIDTH, AUTO_HEIGHT, lit ? QuantumUiColours.SELECTION : Rail.EDGE);
+        graphics.fill(x, y, x + AUTO_WIDTH, y + AUTO_HEIGHT, lit ? colour : rail.fill());
+        QuantumWidgets.outline(graphics, x, y, AUTO_WIDTH, AUTO_HEIGHT, lit ? QuantumUiColours.SELECTION : rail.edge());
         Component label = Component.translatable(key);
-        graphics.text(font, label, x + (AUTO_WIDTH - font.width(label)) / 2, y + 4, usable ? Rail.TEXT : Rail.TEXT_DIM, false);
+        graphics.text(font, label, x + (AUTO_WIDTH - font.width(label)) / 2, y + 4, usable ? rail.text() : rail.textDim(), false);
         if (!QuantumWidgets.hit(mouseX, mouseY, x, y, AUTO_WIDTH, AUTO_HEIGHT)) return tooltip;
         return List.of(Component.translatable(key + "." + (on ? "on" : "off")),
                 Component.translatable(usable ? key + ".tip" : key + ".unused").withStyle(ChatFormatting.GRAY));
@@ -355,12 +356,13 @@ public final class SidesPage extends Page {
 
         for (Face face : Face.values()) {
             if (!supports(face) || !QuantumWidgets.hit(mouseX, mouseY, tileX(face), tileY(face), TILE, TILE)) continue;
-            if (button != 0 && button != 1) return;
             click();
             selected = face;
-            SideMode[] modes = SideMode.values();
-            setMode(face, button == 0 ? mode(face).next() : modes[(mode(face).ordinal() + modes.length - 1) % modes.length]);
-            send();
+            if (button == 1) {
+                SideMode[] modes = SideMode.values();
+                setMode(face, shift() ? modes[(mode(face).ordinal() + modes.length - 1) % modes.length] : mode(face).next());
+                send();
+            }
             return;
         }
 

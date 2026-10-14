@@ -6,7 +6,6 @@ import com.kadikular.quantimium.laser.Lens;
 import com.kadikular.quantimium.menu.LensMountMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -15,14 +14,12 @@ import java.util.List;
 
 /**
  * A Lens Mount: its four lenses spaced along a line of light, left to right, each with a button under
- * it to open its settings (lit when it has any), and what the light leaving it will do. No power bar: it
+ * it to open its settings (lit when it has any). No power bar: it
  * takes what its lenses spend from the beam. Layout: tools/gui_panels.py lens_mount.
  */
 public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
 
     private static final Identifier PANEL = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/lens_mount.png");
-    private static final int TEXT_X = 8;
-    private static final int TEXT_Y = 20;
 
     public LensMountScreen(LensMountMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -71,18 +68,6 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
-        // What these lenses alone do to plain light: its actions, and what changes them.
-        com.kadikular.quantimium.laser.Light light = com.kadikular.quantimium.laser.Light
-                .from(menu.getBlockEntity().getBlockPos(), 32).through(menu.getBlockEntity().lenses());
-        MutableComponent actions = Component.empty();
-        for (com.kadikular.quantimium.laser.Light.Stream stream : light.acting()) {
-            if (!actions.getSiblings().isEmpty()) actions.append(", ");
-            actions.append(name(stream.action()));
-        }
-        MutableComponent does = light.streams().isEmpty() ? Component.translatable("gui.quantimium.lens_mount.no_action")
-                : Component.translatable("gui.quantimium.lens_mount.action", actions);
-        if (light.boosts() > 0) does.append(Component.translatable("gui.quantimium.lens_mount.range", 1 << light.boosts()));
-        graphics.text(font, does, leftPos + TEXT_X, topPos + TEXT_Y, textColour(), false);
         // Each lens's settings button: three dots, lit when it has settings to open, and brighter under the pointer.
         for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
             int x = leftPos + LensMountMenu.SLOT_X[slot] - 1;
@@ -135,7 +120,4 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
         return super.mouseClicked(event, doubleClick);
     }
 
-    private static Component name(Lens lens) {
-        return Component.translatable(lens.itemKey());
-    }
 }

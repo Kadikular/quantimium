@@ -29,8 +29,8 @@ public final class PriorityPage extends Page {
     /** What's being typed, or null while it shows the value as it is. */
     private String typed;
 
-    public PriorityPage(Supplier<Rect2i> panel, IntSupplier value, IntConsumer set, int max) {
-        super(panel, Component.translatable("gui.quantimium.priority"));
+    public PriorityPage(Supplier<Rect2i> panel, Rail rail, IntSupplier value, IntConsumer set, int max) {
+        super(panel, rail, Component.translatable("gui.quantimium.priority"));
         this.value = value;
         this.set = set;
         this.max = max;
@@ -63,11 +63,11 @@ public final class PriorityPage extends Page {
     protected void renderPage(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY) {
         int x = fieldX();
         int y = fieldY();
-        graphics.fill(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, 0xFF090A14);
-        QuantumWidgets.outline(graphics, x, y, FIELD_WIDTH, FIELD_HEIGHT, 0xFF343A5E);
+        graphics.fill(x, y, x + FIELD_WIDTH, y + FIELD_HEIGHT, rail.well());
+        QuantumWidgets.outline(graphics, x, y, FIELD_WIDTH, FIELD_HEIGHT, rail.litEdge());
         String shown = typed != null ? typed : Integer.toString(value.getAsInt());
         int textX = x + (FIELD_WIDTH - font.width(shown)) / 2;
-        graphics.text(font, shown, textX, y + 4, Rail.TEXT, false);
+        graphics.text(font, shown, textX, y + 4, rail.text(), false);
         if (typed != null && (System.currentTimeMillis() / 500) % 2 == 0) {
             graphics.fill(textX + font.width(shown) + 1, y + 3, textX + font.width(shown) + 2, y + 13, QuantumUiColours.ACCENT);
         }
@@ -79,7 +79,7 @@ public final class PriorityPage extends Page {
         }
 
         Component hint = Component.translatable("gui.quantimium.priority.hint");
-        graphics.text(font, hint, left + (width - font.width(hint)) / 2, stepY() + STEP_HEIGHT + 10, Rail.TEXT_DIM, false);
+        graphics.text(font, hint, left + (width - font.width(hint)) / 2, stepY() + STEP_HEIGHT + 10, rail.textDim(), false);
     }
 
     @Override
