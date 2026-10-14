@@ -17,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,14 +55,13 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
                 priorityTab(menu::priority, value -> press(PriorityButton.encode(value, ReactorMePortBlockEntity.MAX_PRIORITY)),
                         ReactorMePortBlockEntity.MAX_PRIORITY),
                 // How the Reactor's making is offered: both, whole trees or steps.
-                Tab.of(Component::empty, () -> press(ReactorMePortMenu.BUTTON_MODE_NEXT),
+                Tab.glyph(() -> switch (menu.mode()) {
+                                    case BOTH -> GuiIcon.TREES_AND_STEPS;
+                                    case TREES -> GuiIcon.TREES;
+                                    case STEPS -> GuiIcon.STEPS;
+                                }, () -> press(ReactorMePortMenu.BUTTON_MODE_NEXT),
                                 () -> List.of(Component.translatable("message.quantimium.reactor_me_port.mode." + modeKey()),
                                         hint("gui.quantimium.tab.cycle")))
-                        .icon(() -> new ItemStack(switch (menu.mode()) {
-                            case BOTH -> Items.ENDER_EYE;
-                            case TREES -> Items.OAK_SAPLING;
-                            case STEPS -> Items.CRAFTING_TABLE;
-                        }))
                         .onRightClick(() -> press(ReactorMePortMenu.BUTTON_MODE_BACK)),
                 // Whether the network may store items in the Reactor, as in a drive.
                 Tab.glyph(() -> GuiIcon.STORAGE, () -> press(ReactorMePortMenu.BUTTON_ACCEPTS),

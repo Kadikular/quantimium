@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.AreaPrismBlockEntity;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
@@ -8,8 +9,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -32,14 +31,13 @@ public class AreaPrismScreen extends QuantumMachineScreen<AreaPrismMenu> {
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(Component::empty, () -> press(AreaPrismMenu.BUTTON_SHAPE),
+                Tab.glyph(() -> switch (prism().shape()) {
+                                    case PICKED -> GuiIcon.AREA_PICKED;
+                                    case CUBE -> GuiIcon.AREA_CUBE;
+                                    case SPHERE -> GuiIcon.AREA_SPHERE;
+                                }, () -> press(AreaPrismMenu.BUTTON_SHAPE),
                                 () -> List.of(Component.translatable("gui.quantimium.area_prism.shape." + prism().shape().name().toLowerCase(java.util.Locale.ROOT)),
                                         hint("gui.quantimium.tab.cycle")))
-                        .icon(() -> new ItemStack(switch (prism().shape()) {
-                            case PICKED -> com.kadikular.quantimium.init.ModItems.LASER_LINKER.get();
-                            case CUBE -> Items.STONE;
-                            case SPHERE -> Items.SNOWBALL;
-                        }))
                         // Three shapes: two steps on is one back.
                         .onRightClick(() -> {
                             press(AreaPrismMenu.BUTTON_SHAPE);

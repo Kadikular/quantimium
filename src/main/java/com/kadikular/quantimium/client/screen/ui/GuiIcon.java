@@ -15,7 +15,10 @@ public enum GuiIcon {
     STORAGE(0, 1), PROVIDER(1, 1), REQUESTER(2, 1), ACTIVE_EXPORT(3, 1), ACTIVE_IMPORT(4, 1), PASSIVE(5, 1),
     COLLECT(6, 1), SEND(7, 1), BOTH(8, 1), SHARE(9, 1),
     SORT_COUNT(0, 2), SORT_NAME(1, 2), VIEW_ALL(2, 2), VIEW_REAL(3, 2), VIEW_CRAFT(4, 2), VIEW_BOTH(5, 2),
-    HOSTILE(0, 3), ANIMAL(1, 3), PLAYER(2, 3), GROWN(3, 3), BABY(4, 3), COUNT(5, 3), BLOCK(6, 3), CROP(7, 3);
+    HOSTILE(0, 3), ANIMAL(1, 3), PLAYER(2, 3), GROWN(3, 3), BABY(4, 3), COUNT(5, 3), BLOCK(6, 3), CROP(7, 3),
+    LOCKED(0, 4), UNLOCKED(1, 4), VOID(2, 4), SLOTS(3, 4), ACCELERATE(4, 4), HOLD(5, 4), AREA_PICKED(6, 4),
+    AREA_CUBE(7, 4), AREA_SPHERE(8, 4), FLOOR(9, 4), CEILING(10, 4), WATCH(11, 4), TREES(12, 4), STEPS(13, 4),
+    TREES_AND_STEPS(14, 4);
 
     public static final Identifier SHEET = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/icons.png");
     public static final int SIZE = 16;

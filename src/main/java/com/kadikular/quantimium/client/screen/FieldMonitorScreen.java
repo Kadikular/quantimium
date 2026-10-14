@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.FieldMonitorBlockEntity;
 import com.kadikular.quantimium.client.FieldMapRenderer;
@@ -12,8 +13,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -76,11 +75,10 @@ public class FieldMonitorScreen extends QuantumMachineScreen<FieldMonitorMenu> {
     @Override
     protected List<Tab> createTabs() {
         List<Tab> tabs = new ArrayList<>();
-        tabs.add(Tab.of(Component::empty, this::press,
+        tabs.add(Tab.glyph(() -> GuiIcon.WATCH, this::press,
                         () -> List.of(Component.translatable("gui.quantimium.field_monitor.watch",
                                         Component.translatable("gui.quantimium.field_monitor.watch." + menu.getWatch().key())),
-                                hint("gui.quantimium.tab.switch")))
-                .icon(new ItemStack(Items.REDSTONE)));
+                                hint("gui.quantimium.tab.switch"))));
         return tabs;
     }
 

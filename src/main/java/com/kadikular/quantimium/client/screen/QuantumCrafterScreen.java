@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
@@ -17,7 +18,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
@@ -65,13 +65,13 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         if (menu.isBasic()) return List.of();
         return List.of(
                 sidesTab(menu.getBlockEntity().getBlockPos()),
-                Tab.of(Component::empty,
+                Tab.glyph(() -> menu.isRecipeLocked() ? GuiIcon.LOCKED : GuiIcon.UNLOCKED,
                                 () -> ClientPacketDistributor.sendToServer(new SetCrafterLockPayload(
                                         menu.getBlockEntity().getBlockPos(), !menu.isRecipeLocked())),
                                 () -> List.of(Component.translatable(menu.isRecipeLocked()
                                                 ? "gui.quantimium.quantum_crafter.lock.on" : "gui.quantimium.quantum_crafter.lock.off"),
                                         hint("gui.quantimium.tab.switch")))
-                        .icon(() -> new ItemStack(menu.isRecipeLocked() ? Items.TRIPWIRE_HOOK : Items.STRING)));
+                        .on(menu::isRecipeLocked));
     }
 
 

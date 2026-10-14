@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.FieldControlBlock;
 import com.kadikular.quantimium.block.entity.FieldControlBlockEntity;
@@ -10,8 +11,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,18 +47,16 @@ public class FieldControlScreen extends QuantumMachineScreen<FieldControlMenu> {
         List<Tab> tabs = new ArrayList<>();
         FieldControlBlock.Kind kind = menu.kind();
         if (kind.raisesFlux()) {
-            tabs.add(Tab.of(Component::empty, () -> press(FieldControlBlockEntity.BUTTON_FLOOR),
+            tabs.add(Tab.glyph(() -> GuiIcon.FLOOR, () -> press(FieldControlBlockEntity.BUTTON_FLOOR),
                             () -> List.of(Component.translatable("gui.quantimium.field_control.floor", band(menu.getFloor())),
-                                    hint("gui.quantimium.tab.switch")))
-                    .icon(new ItemStack(Items.GLOWSTONE_DUST)));
+                                    hint("gui.quantimium.tab.switch"))));
         }
         if (kind.setsCeiling()) {
             // A Siphon's ceiling is for anomaly; a Suppressor's, for flux.
             String key = kind.pullsFlux() ? "gui.quantimium.field_control.flux_ceiling" : "gui.quantimium.field_control.ceiling";
-            tabs.add(Tab.of(Component::empty, () -> press(FieldControlBlockEntity.BUTTON_CEILING),
+            tabs.add(Tab.glyph(() -> GuiIcon.CEILING, () -> press(FieldControlBlockEntity.BUTTON_CEILING),
                             () -> List.of(Component.translatable(key, menu.getCeiling().label()),
-                                    hint("gui.quantimium.tab.switch")))
-                    .icon(new ItemStack(kind.pullsFlux() ? Items.LAPIS_LAZULI : Items.AMETHYST_SHARD)));
+                                    hint("gui.quantimium.tab.switch"))));
         }
         return tabs;
     }

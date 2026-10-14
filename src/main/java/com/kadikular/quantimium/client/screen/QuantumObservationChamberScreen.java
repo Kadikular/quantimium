@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.QuantumObservationChamberBlockEntity;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
@@ -9,8 +10,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -34,14 +33,14 @@ public class QuantumObservationChamberScreen extends QuantumMachineScreen<Quantu
     protected List<Tab> createTabs() {
         return List.of(
                 sidesTab(menu.getBlockEntity().getBlockPos()),
-                // A lava bucket while excess Trace is destroyed, a chest while it is kept.
-                Tab.of(Component::empty,
+                // Lit while excess Trace is destroyed.
+                Tab.glyph(() -> GuiIcon.VOID,
                                 () -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
                                         QuantumObservationChamberMenu.BUTTON_VOID_TRACE),
                                 () -> List.of(Component.translatable(menu.isVoidExcessTrace()
                                                 ? "gui.quantimium.observation_chamber.void_on" : "gui.quantimium.observation_chamber.void_off"),
                                         hint("gui.quantimium.tab.switch")))
-                        .icon(() -> new ItemStack(menu.isVoidExcessTrace() ? Items.LAVA_BUCKET : Items.CHEST)));
+                        .on(menu::isVoidExcessTrace));
     }
 
 

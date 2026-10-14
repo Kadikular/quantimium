@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.Config;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.ZenoFieldControllerBlockEntity;
@@ -13,8 +14,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,12 +47,11 @@ public class ZenoFieldControllerScreen extends QuantumMachineScreen<ZenoFieldCon
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(Component::empty, () -> press(ZenoFieldControllerBlockEntity.BUTTON_MODE),
+                Tab.glyph(() -> accelerating() ? GuiIcon.ACCELERATE : GuiIcon.HOLD, () -> press(ZenoFieldControllerBlockEntity.BUTTON_MODE),
                                 () -> List.of(Component.translatable(accelerating()
                                                 ? "gui.quantimium.zeno_field_controller.mode.accelerate"
                                                 : "gui.quantimium.zeno_field_controller.mode.pause"),
-                                        hint("gui.quantimium.tab.switch")))
-                        .icon(() -> new ItemStack(accelerating() ? Items.CLOCK : Items.PACKED_ICE)),
+                                        hint("gui.quantimium.tab.switch"))),
                 Tab.of(() -> Component.literal(Integer.toString(menu.getRadius())), () -> press(ZenoFieldControllerBlockEntity.BUTTON_RADIUS),
                                 () -> List.of(Component.translatable("gui.quantimium.zeno_field_controller.radius", menu.getRadius()),
                                         hint("gui.quantimium.tab.cycle.on"))),

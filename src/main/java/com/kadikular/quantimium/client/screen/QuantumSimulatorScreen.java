@@ -3,12 +3,11 @@ package com.kadikular.quantimium.client.screen;
 
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.fluid.FluidTintSource;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import com.kadikular.quantimium.Config;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.flux.BandGate;
@@ -64,13 +63,12 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(Component::empty, () -> ClientPacketDistributor.sendToServer(
+                Tab.glyph(() -> GuiIcon.SLOTS, () -> ClientPacketDistributor.sendToServer(
                                         new RequestSlotConfigPayload(menu.getBlockEntity().getBlockPos(), false)),
                                 () -> List.of(Component.translatable("gui.quantimium.quantum_simulator.slots"),
                                         hint(menu.isEngaged() ? "gui.quantimium.quantum_simulator.slots.tip" : "gui.quantimium.quantum_simulator.slots.disengaged")))
                         .page(RailSlot.SLOTS, () -> activeOverlay() instanceof SlotConfigScreen, this::closeOverlay)
-                        .enabled(menu::isEngaged)
-                        .icon(new ItemStack(Items.COMPARATOR)),
+                        .enabled(menu::isEngaged),
                 sidesTab(menu.getBlockEntity().getBlockPos()),
                 // The batch on the tab: click for twice as many, right-click for half.
                 Tab.of(() -> Component.literal(menu.getBatchSize() + "x"), () -> setBatch(menu.getBatchSize() >= 32 ? 1 : menu.getBatchSize() * 2),
