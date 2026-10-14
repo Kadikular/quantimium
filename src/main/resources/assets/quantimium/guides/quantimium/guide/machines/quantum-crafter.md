@@ -210,7 +210,7 @@ towards Medium.
 
 Items only; the crafter has no fluid ports.
 
-**Quantum Crafter.** The [side configuration](../concepts/side-configuration.md) (the hopper tab) sets each face to
+**Quantum Crafter.** The [side configuration](../concepts/side-configuration.md) (the Sides tab) sets each face to
 Off, In, Out or Both, and which grid slots and output slots it reaches. Every face starts
 as Both. With **auto input**, a face pulls from the block beside it once a second; with **auto
 output**, it commits and pushes a craft into it, sized to the room the neighbour has. Auto output

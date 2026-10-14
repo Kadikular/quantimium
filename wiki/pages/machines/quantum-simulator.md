@@ -59,16 +59,16 @@ cycling through them: a furnace has an ingredient slot and a fuel slot, so grid 
 and 9 feed the ingredient slot and 2, 4, 6 and 8 the fuel. Input tanks are mapped the same way. What
 the machine makes goes to the output slots and tanks.
 
-![Slot Configuration: each grid slot mapped to the furnace's ingredient or fuel slot](../assets/gui/quantum_simulator_slots.png){ .qgui }
+![Slot binding: each grid slot mapped to the furnace's ingredient or fuel slot](../assets/gui/quantum_simulator_slots.png){ .qgui }
 
-Open **Configure Slots** (the comparator tab) to change it. Each grid slot can be:
+Open the **Slots** tab on the right to change it; it opens in the Simulator's own frame. Each grid slot can be:
 
 - **bound** to one machine slot;
 - **Auto**, sending its item to whichever machine slot will take it;
 - **Locked**, closed to items entirely.
 
-Click a row to cycle it (left click for the next option, right click for the previous), or press
-**Auto-Detect** to map again from scratch.
+Click a row to step it on, right-click to step back; each change is saved as you make it. The
+**auto-detect** tab on the left, while the page is open, maps it again from scratch.
 
 [[mechanic:simulator.learn_inputs]] **Machines that take only their own items.** The Simulator
 first sorts a machine's slots by offering each a few common items (coal, raw iron, cobblestone,
@@ -83,13 +83,13 @@ still there; engage a different one and it is mapped afresh.
 
 ## Batch size
 
-[[mechanic:simulator.batch]] The batch button cycles **1×, 2×, 4×, 8×, 16× and 32×** (default 2×):
+[[mechanic:simulator.batch]] The batch tab (left; click for more, right-click for fewer) cycles **1×, 2×, 4×, 8×, 16× and 32×** (default 2×):
 how many copies of the machine run in parallel.
 
 [[mechanic:bands.simulator]] **A hotter field runs bigger batches.** The largest batch that runs
 depends on the flux band where the Simulator stands: **2×** at Low, **4×** at Medium, **8×** at High,
 **16×** at Critical and **32×** at Singularity (config `simulator.maxBatchByBand`). Choose a larger
-batch and it runs at the band's size until the field is hot enough; the button's tooltip says what it
+batch and it runs at the band's size until the field is hot enough; the tab's tooltip says what it
 runs at and what it needs.
 
 Every tick the machine runs once, on copies of what is in the grid. The Simulator measures what
@@ -155,7 +155,7 @@ itself: the outer one is charged for everything the inner one draws, and emits f
 ## Automation
 
 [[mechanic:simulator.automation]] Every face except the **top**, which is the field. The side
-configuration (the hopper tab; see [Side configuration](../concepts/side-configuration.md)) sets each face to Off, In, Out or Both for items and
+configuration (the Sides tab; see [Side configuration](../concepts/side-configuration.md)) sets each face to Off, In, Out or Both for items and
 fluids separately, and chooses which grid slots and tanks it reaches. With auto input or output on,
 a face moves items and fluids to or from the block beside it once a second.
 

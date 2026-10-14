@@ -37,13 +37,13 @@ Machines, redstone, furnaces and other block entities in the field work as norma
 
 ## Settings
 
-The three tabs down the right of its screen:
+The three tabs down the left of its screen (right-click steps a value back):
 
 | Tab | Does |
 | --- | --- |
-| Packed ice / clock | Switches between **Hold** (packed ice) and **Accelerate** (clock) |
-| **r4** | The radius: the field is every block within this many blocks of the controller, in each axis. Click to grow it; past 8 it starts again at 1. |
-| **8x** | Accelerate only: how many times the usual random tick rate. Cycles 2×, 4×, 8×, 16×. |
+| Hold / accelerate | Switches between **Hold** and **Accelerate** |
+| **4** | The radius: the field is every block within this many blocks of the controller, in each axis, 1 to 8, wrapping round. |
+| **8x** | Accelerate only: how many times the usual random tick rate: 2×, 4×, 8× or 16×. |
 
 The diagram on the right shows the field to scale: frosted while holding, ticking while
 accelerating.

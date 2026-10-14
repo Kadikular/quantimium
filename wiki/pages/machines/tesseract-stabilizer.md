@@ -88,7 +88,7 @@ Nothing passes through a buffer, so nothing is lost if the link drops mid-transf
 
 [[mechanic:stabilizer.sides]] Each face can be set to **Off**, **In** (things can go in
 only), **Out** (things can come out only) or **Both**, for items and fluids separately. Every face
-starts as Both for both. Set it in the [side configuration](../concepts/side-configuration.md) editor (the hopper tab on its screen), or hit a face with a wrench (any
+starts as Both for both. Set it in the [side configuration](../concepts/side-configuration.md) page (the Sides tab on its screen), or hit a face with a wrench (any
 `#c:tools/wrench` item): a click cycles that face's item mode, a sneak-click its fluid mode.
 
 [[mechanic:stabilizer.auto_transfer]] A face can also move things by itself. Once a second, a face

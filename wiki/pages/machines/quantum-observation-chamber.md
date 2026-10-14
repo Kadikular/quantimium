@@ -38,15 +38,15 @@ once a second.
 ## Trace
 
 Each collapse has a {{c:ObservationChamberBlockEntity.TRACE_CHANCE}} chance of a [[item:quantimium_trace]]
-as well, into its own slot. The **T** tab decides what happens when that slot is full:
+as well, into its own slot. The **void** tab on the left decides what happens when that slot is full:
 
-- **Void** (lava bucket, the default): the extra Trace is destroyed and collapsing carries on.
-- **Keep** (chest): [[mechanic:quantum_chamber.trace_hold]] it stops and says **Full** until there is room,
+- **Void** (lit, the default): the extra Trace is destroyed and collapsing carries on.
+- **Keep** (unlit): [[mechanic:quantum_chamber.trace_hold]] it stops and says **Full** until there is room,
   so no Trace is ever lost. [[mechanic:chamber.trace_hold]] The stone chamber keeps the same rule.
 
 ## Faces
 
-[[mechanic:quantum_chamber.sides]] Open the **S** tab (or use a wrench) to set each face, as on the
+[[mechanic:quantum_chamber.sides]] Open the **Sides** tab (or use a wrench) to set each face, as on the
 [Quantum Crafter](quantum-crafter.md): **In** takes Matter, **Out** hands results and Trace out, **Both**
 does either, **Off** does nothing. Every face starts as **Both**. See
 [Side configuration](../concepts/side-configuration.md).

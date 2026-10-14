@@ -251,7 +251,7 @@ Its mode tab steps through **collect**, **send** and **both**. In both, what
 comes back up the beam can go straight back down: a port of seeds on a wheat field catches the harvest
 and sows the field again from it.
 
-Use the **Faces** tab to set, face by face, what pipes and hoppers may do there (hand things out, take
+Use the **Sides** tab to set, face by face, what pipes and hoppers may do there (hand things out, take
 them in; things only go in while it sends), and which faces push to, or pull from, what's beside them,
 once a second.
 
@@ -321,8 +321,10 @@ Light from a controller is drawn a deeper blue, and always as if at work.
 
 A <ItemLink id="quantimium:logistics_terminal" /> where a controller's light ends shows
 everything the network's storage holds and its providers offer, searchable and sorted by count or name,
-like an ME terminal. Click an item for a stack on the cursor, right-click for one, shift-click for a stack
-into your inventory; click the grid holding something to put it away into storage (right-click: one), or
+like an ME terminal; sort and view are tabs on its left. Click an item for a stack on the cursor,
+right-click for half, shift-right-click for one, shift-click for a stack into your inventory; while
+shift is held the grid holds still, and shift with the wheel takes one more onto the cursor (down) or
+puts one back (up). Click the grid holding something to put it away into storage (right-click: one), or
 shift-click it in your inventory. Each take or put costs the controller as a move does. A <ItemLink id="quantimium:logistics_lectern" /> is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 
 A <ItemLink id="quantimium:logistics_materialiser" /> where a controller's light ends

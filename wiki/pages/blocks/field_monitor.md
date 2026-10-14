@@ -5,7 +5,7 @@ flux in azure, anomaly washed violet over it, and chunks under containment marke
 when held and amber when overloaded. Beside the map it says what it's watching for, how many chunks
 are alerting, and the peak flux and anomaly it can see.
 
-Set what it watches for with the **W** tab:
+Set what it watches for with the **watch** tab on the left:
 
 | Watch | Alerts on a chunk that is… |
 | --- | --- |

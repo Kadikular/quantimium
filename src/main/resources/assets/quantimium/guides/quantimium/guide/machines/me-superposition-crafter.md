@@ -92,7 +92,7 @@ hand them over.
 ## Batch
 
 AE2 hands a crafting provider one pattern run at a time, as fast
-as the crafting CPU's co-processors allow. The **batch tab** (1× to 64×) sets how many recipe runs one
+as the crafting CPU's co-processors allow. The **batch** tab on the left (1× to 64×) sets how many recipe runs one
 pattern run is, so a bigger batch crafts proportionally faster with the same CPU. At 8× the smelting
 pattern takes 8 raw iron, gives 8 ingots and costs 8 smelts: 32,000 FE.
 
@@ -110,9 +110,9 @@ craft's cost by up to +200% and, left alone, brings rifts and the
 
 ## Filters
 
-The **filter tab** (item frame) swaps the readout for the filters. There are two lists of 27 entries;
-the **list tab** switches between them (a dropper for outputs, a hopper for inputs), and the title strip
-says which one you're editing.
+The **Filter** tab on the right swaps the readout for the filters; click it again, or the back arrow by
+the title, to go back. There are two lists of 27 entries; on the filter, the **list** tab on the left
+switches between them.
 
 **Setting entries.** Click a slot with an item to list it, or drag one in from JEI, as you would onto a
 storage bus. Click with an empty hand to clear it. The slots only hold copies.
@@ -125,7 +125,7 @@ A tag entry has a small **#** in its corner, and its tooltip names the tag.
 ### Output filter
 
 Decides which recipes are offered, by their output. The
-**whitelist / blacklist tab** (white or black wool, shown on this list only) chooses what the list means:
+**allow / deny** tab on the left chooses what the list means:
 
 | Mode | Offers |
 | --- | --- |
@@ -138,8 +138,8 @@ An empty output filter offers everything, whatever the mode.
 
 ### Input filter
 
-Which items the crafter may use up. It has its own **whitelist / blacklist tab**, and starts as a
-blacklist. An empty input filter changes nothing.
+Which items the crafter may use up. It has its own **allow / deny** setting, and starts as
+deny. An empty input filter changes nothing.
 
 - **Blacklist:** each listed item is taken out of every
   recipe's accepted ingredients; a recipe goes only when an ingredient has nothing left it could take.
