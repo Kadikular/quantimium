@@ -358,6 +358,7 @@ def main() -> None:
         json.dump({"variants": lit_variants}, handle, indent=1)
     write_bay(parts)
     write_logistics_port()
+    write_pod_logistics_module()
     for port in ("input", "output", "energy", "materialiser", "me"):
         # A port is the plinth with a flat socket laid over every face (tools/reactor_art.py draws it).
         port_parts = list(parts)
@@ -386,14 +387,11 @@ def main() -> None:
     print(f"wrote {len(variants)} plinth states and their traces")
 
 
-def write_logistics_port() -> None:
+def recessed_sides() -> list:
     """
-    The Reactor Logistics Port, a model of its own as the Catalyst Bay has: the plinth's body with an 8x8 recess two
-    deep in each side, half a focus set in each for light to come in by, and its socket on top. The plinth's traces
-    stop at it.
+    A block's body with an 8x8 recess two deep in each side and half a laser focus set in each, for light to come in
+    by: the Reactor Logistics Port's and the pod's Logistics module's. Faces use #top, #bottom, #side and #focus.
     """
-    models = os.path.join(ASSETS, "models", "block")
-
     def box(start, end):
         element = {"from": start, "to": end, "faces": {}}
         for axis, (low, high) in enumerate((("west", "east"), ("down", "up"), ("north", "south"))):
@@ -412,6 +410,35 @@ def write_logistics_port() -> None:
     focus = {"texture": "#focus", "uv": [6, 6, 10, 10]}
     for start, end in (([6, 6, 0], [10, 10, 2]), ([6, 6, 14], [10, 10, 16]), ([0, 6, 6], [2, 10, 10]), ([14, 6, 6], [16, 10, 10])):
         parts.append({"from": start, "to": end, "faces": {d: dict(focus) for d in ("north", "south", "east", "west", "up", "down")}})
+    return parts
+
+
+def write_pod_logistics_module() -> None:
+    """The pod's Logistics module, recessed on its four sides for the light it takes, as the Reactor's port is."""
+    models = os.path.join(ASSETS, "models", "block")
+    for lit in (True, False):
+        tag = "" if lit else "_off"
+        model = {
+            "parent": "minecraft:block/block",
+            "textures": {"top": f"quantimium:block/pod_logistics_module_top{tag}",
+                         "side": f"quantimium:block/pod_logistics_module_side{tag}",
+                         "bottom": "quantimium:block/pod_logistics_module_side_off",
+                         "focus": "quantimium:block/laser_focus",
+                         "particle": f"quantimium:block/pod_logistics_module_side{tag}"},
+            "elements": recessed_sides(),
+        }
+        with open(os.path.join(models, f"pod_logistics_module{tag}.json"), "w") as handle:
+            json.dump(model, handle, indent=2)
+
+
+def write_logistics_port() -> None:
+    """
+    The Reactor Logistics Port, a model of its own as the Catalyst Bay has: the plinth's body with an 8x8 recess two
+    deep in each side, half a focus set in each for light to come in by, and its socket on top. The plinth's traces
+    stop at it.
+    """
+    models = os.path.join(ASSETS, "models", "block")
+    parts = recessed_sides()
     parts.append({"from": [0, 16.01, 0], "to": [16, 16.01, 16], "shade": False, "faces": {"up": {"texture": "#overlay", "uv": [0, 0, 16, 16]}}})
     multipart = []
     for formed in (False, True):
