@@ -1,6 +1,7 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
@@ -46,13 +47,9 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
     private static final int LOAD_W = 152;
     private static final int LOAD_H = 3;
     private static final int INFO_Y = 24;
-    private static final int TAB_Y = 35;
-    private static final int SORT_X = 16;
-    private static final int SORT_W = 74;
-    private static final int TAB_H = 12;
-    private static final int SEARCH_X = 95;
+    private static final int SEARCH_X = 17;
     private static final int SEARCH_Y = 37;
-    private static final int SEARCH_W = 72;
+    private static final int SEARCH_W = 150;
     private static final int GRID_X = 16;
     private static final int GRID_Y = 51;
     private static final int COLUMNS = 8;
@@ -153,8 +150,6 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
                         compact(mass), compact(capacity)),
                 leftPos + LOAD_X, topPos + INFO_Y, dimColour(), false);
 
-        sortButton(graphics, mouseX, mouseY);
-
         List<HorizonViewPayload.Entry> shown = shown();
         scrollRow = Mth.clamp(scrollRow, 0, maxScroll(shown));
         HorizonViewPayload.Entry hovered = cellAt(shown, mouseX, mouseY);
@@ -185,13 +180,15 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
         graphics.text(font, line, leftPos + LOAD_X, topPos + MESSAGE_Y, dimColour(), false);
     }
 
-    private void sortButton(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        int left = leftPos + SORT_X;
-        int top = topPos + TAB_Y;
-        boolean hovered = QuantumWidgets.hit(mouseX, mouseY, left, top, SORT_W, TAB_H);
-        graphics.fill(left, top, left + SORT_W, top + TAB_H, hovered ? 0x66303650 : 0x33303650);
-        graphics.centeredText(font, Component.translatable(byName ? "gui.quantimium.horizon_core.sort.name"
-                : "gui.quantimium.horizon_core.sort.count"), left + SORT_W / 2, top + 2, textColour());
+    /** Sort on the left rail. */
+    @Override
+    protected List<Tab> createTabs() {
+        return List.of(Tab.glyph(() -> byName ? GuiIcon.SORT_NAME : GuiIcon.SORT_COUNT, () -> {
+                            byName = !byName;
+                            scrollRow = 0;
+                        },
+                        () -> List.of(Component.translatable(byName ? "gui.quantimium.logistics_terminal.sort.name" : "gui.quantimium.logistics_terminal.sort.count"),
+                                hint("gui.quantimium.tab.switch"))));
     }
 
     /** At most four characters, as AE2 writes them: 999, 1.2k, 12k, 120k, 1.2M, 12M, 1.2G. */
@@ -247,12 +244,6 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
         double mouseX = event.x();
         double mouseY = event.y();
         if (activeOverlay() == null && event.button() == 0) {
-            if (QuantumWidgets.hit(mouseX, mouseY, leftPos + SORT_X, topPos + TAB_Y, SORT_W, TAB_H)) {
-                byName = !byName;
-                scrollRow = 0;
-                click();
-                return true;
-            }
             HorizonViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             if (cell != null) {
                 int count = event.hasShiftDown() ? cell.item().toStack(1).getMaxStackSize() : 1;

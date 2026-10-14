@@ -452,14 +452,13 @@ def fold_core() -> Panel:
 
 def horizon_core() -> Panel:
     """The Horizon Core: no slots. The horizon's load across the top, its rings and mass under it,
-    the sort toggle and a search box, then a scrolling grid of items and the last result."""
+    a search box, then a scrolling grid of items and the last result. Sort is on the left rail."""
     panel = Panel(HIGH, height=176)
     panel.energy()
     panel.gauge((16, 18, 152, 3), "load")
     panel.region("info", (16, 24, 152, 9))
-    panel.region("sort", (16, 35, 74, 12))
-    panel.well(93, 35, 76, 12)
-    panel.region("search", (95, 37, 72, 9))
+    panel.well(15, 35, 154, 12)
+    panel.region("search", (17, 37, 150, 9))
     panel.grid((16, 51), 8, 6, "items")
     panel.region("message", (16, 162, 152, 9))
     return panel

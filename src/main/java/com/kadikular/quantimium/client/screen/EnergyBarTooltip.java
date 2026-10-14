@@ -30,17 +30,15 @@ public final class EnergyBarTooltip {
                                         int surchargePercent, @Nullable FluxBand anomalyBand,
                                         int passiveDrainFePerTick) {
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("§cEnergy: §r" + String.format("%,d", stored)
-                + " / " + String.format("%,d", capacity) + " FE"));
+        lines.add(Component.translatable("gui.quantimium.energy.stored", String.format("%,d", stored), String.format("%,d", capacity)));
         if (currentPerTick >= 0) {
-            lines.add(Component.literal("§eCurrent: §f" + String.format("%,d", currentPerTick) + " FE/t"));
+            lines.add(Component.translatable("gui.quantimium.energy.using", String.format("%,d", currentPerTick)).withStyle(ChatFormatting.GRAY));
         }
         if (averagePerTick >= 0) {
-            lines.add(Component.literal("§e20-tick average: §f"
-                    + String.format("%,d", averagePerTick) + " FE/t"));
+            lines.add(Component.translatable("gui.quantimium.energy.average", String.format("%,d", averagePerTick)).withStyle(ChatFormatting.GRAY));
         }
         if (includesOverhead) {
-            lines.add(Component.literal("§820% quantum entanglement overhead included"));
+            lines.add(Component.translatable("gui.quantimium.energy.overhead").withStyle(ChatFormatting.DARK_GRAY));
         }
         if (surchargePercent > 0 && anomalyBand != null) {
             lines.add(Component.translatable("gui.quantimium.energy.anomaly_surcharge",

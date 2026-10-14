@@ -4,6 +4,7 @@ package com.kadikular.quantimium.client.screen;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.fluid.FluidTintSource;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
+import com.kadikular.quantimium.client.screen.ui.SlotsPage;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
 import net.minecraft.ChatFormatting;
@@ -67,8 +68,14 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
                                         new RequestSlotConfigPayload(menu.getBlockEntity().getBlockPos(), false)),
                                 () -> List.of(Component.translatable("gui.quantimium.quantum_simulator.slots"),
                                         hint(menu.isEngaged() ? "gui.quantimium.quantum_simulator.slots.tip" : "gui.quantimium.quantum_simulator.slots.disengaged")))
-                        .page(RailSlot.SLOTS, () -> activeOverlay() instanceof SlotConfigScreen, this::closeOverlay)
+                        .page(RailSlot.SLOTS, () -> activeOverlay() instanceof SlotsPage, this::closeOverlay)
                         .enabled(menu::isEngaged),
+                // On the slot page: bind each slot to what fits it.
+                Tab.glyph(() -> GuiIcon.AUTO, () -> ClientPacketDistributor.sendToServer(
+                                        new RequestSlotConfigPayload(menu.getBlockEntity().getBlockPos(), true)),
+                                () -> List.of(Component.translatable("gui.quantimium.slot_config.auto_detect"),
+                                        hint("gui.quantimium.slot_config.auto_detect.tip")))
+                        .during(() -> activeOverlay() instanceof SlotsPage),
                 sidesTab(menu.getBlockEntity().getBlockPos()),
                 // The batch on the tab: click for twice as many, right-click for half.
                 Tab.of(() -> Component.literal(menu.getBatchSize() + "x"), () -> setBatch(menu.getBatchSize() >= 32 ? 1 : menu.getBatchSize() * 2),
@@ -103,7 +110,7 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
 
     /** Called from the server's reply to a slot configuration request. */
     public void openSlotConfig(OpenSlotConfigPayload payload) {
-        openOverlay(new SlotConfigScreen(payload.pos(), payload.machineSlots(), payload.mappings(),
+        openOverlay(new SlotsPage(this::panelArea, rail(), payload.pos(), payload.machineSlots(), payload.mappings(),
                 payload.machineTanks(), payload.fluidMappings()));
     }
 
@@ -249,7 +256,7 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
         for (int i = 0; i < SimulatorFluidTanks.INPUT_TANKS; i++) {
             if (QuantumWidgets.hit(mouseX, mouseY, leftPos + INPUT_TANK_X + i * 18 - 1, topPos + TANK_Y - 1,
                     TANK_WIDTH + 2, TANK_HEIGHT + 2)) {
-                graphics.setComponentTooltipForNextFrame(font, fluidTooltip("Input", i, tanks.getFluid(i)), mouseX, mouseY);
+                graphics.setComponentTooltipForNextFrame(font, fluidTooltip(Component.translatable("gui.quantimium.quantum_simulator.input"), i, tanks.getFluid(i)), mouseX, mouseY);
                 return;
             }
         }
@@ -257,7 +264,7 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
             if (QuantumWidgets.hit(mouseX, mouseY, leftPos + OUTPUT_TANK_X + i * 18 - 1, topPos + TANK_Y - 1,
                     TANK_WIDTH + 2, TANK_HEIGHT + 2)) {
                 graphics.setComponentTooltipForNextFrame(font,
-                        fluidTooltip("Output", i, tanks.getFluid(SimulatorFluidTanks.outputIndex(i))), mouseX, mouseY);
+                        fluidTooltip(Component.translatable("gui.quantimium.quantum_simulator.output"), i, tanks.getFluid(SimulatorFluidTanks.outputIndex(i))), mouseX, mouseY);
                 return;
             }
         }
@@ -276,15 +283,14 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
         return tooltip;
     }
 
-    private static List<Component> fluidTooltip(String role, int index, FluidStack fluid) {
+    private static List<Component> fluidTooltip(Component role, int index, FluidStack fluid) {
         List<Component> tip = new ArrayList<>(2);
-        tip.add(Component.literal("§b" + role + " tank " + (index + 1)));
+        tip.add(Component.translatable("gui.quantimium.quantum_simulator.tank", role, index + 1));
         if (fluid.isEmpty()) {
-            tip.add(Component.literal("§7Empty"));
+            tip.add(Component.translatable("gui.quantimium.slot_config.empty").withStyle(ChatFormatting.GRAY));
         } else {
-            tip.add(Component.literal("§f").append(fluid.getHoverName())
-                    .append(Component.literal("§7: §f" + String.format("%,d", fluid.getAmount())
-                            + " / " + String.format("%,d", SimulatorFluidTanks.CAPACITY) + " mB")));
+            tip.add(Component.translatable("gui.quantimium.quantum_simulator.tank.holds", fluid.getHoverName(),
+                    String.format("%,d", fluid.getAmount()), String.format("%,d", SimulatorFluidTanks.CAPACITY)).withStyle(ChatFormatting.GRAY));
         }
         return tip;
     }

@@ -149,6 +149,7 @@ public final class WikiScreenshots {
             new BlockPos(-5, 5, 0), new BlockPos(-3, 5, 0), new BlockPos(-1, 5, 0), new BlockPos(1, 5, 0),
             new BlockPos(3, 5, 0), new BlockPos(5, 5, 0), new BlockPos(-3, 5, 2), new BlockPos(-1, 5, 2),
             new BlockPos(1, 5, 2), new BlockPos(3, 5, 2), new BlockPos(-3, 5, -2), new BlockPos(-1, 5, -2),
+            new BlockPos(1, 5, -2), new BlockPos(3, 5, -2), new BlockPos(-5, 5, 2), new BlockPos(5, 5, 2),
     };
     private static final int HALL = 7;
     private static final int FOUNDRY = 8;
@@ -168,6 +169,10 @@ public final class WikiScreenshots {
     private static final int MONITOR = 22;
     private static final int ME_PORT = 23;
     private static final int MATERIALISER = 24;
+    private static final int HORIZON = 25;
+    private static final int FOLD = 26;
+    private static final int UNFOLDING = 27;
+    private static final int ANCHOR = 28;
     private static final Identifier SUPERPOSITION_ID =
             Identifier.fromNamespaceAndPath(Quantimium.MODID, "me_superposition_crafter");
 
@@ -230,6 +235,11 @@ public final class WikiScreenshots {
         shoot("area_prism", PRISM, null);
         shoot("catalyst_bay", CATALYST_BAY, null);
         shoot("catalyst_bay_filter", CATALYST_BAY, Overlay.FILTER_VIEW);
+        // Unbuilt: their screens as they read before the structure is up.
+        shoot("horizon_core", HORIZON, null);
+        shoot("fold_core", FOLD, null);
+        shoot("unfolding_array", UNFOLDING, null);
+        shoot("rift_anchor", ANCHOR, null);
         if (ModList.get().isLoaded("ae2")) {
             shoot("reactor_me_port", ME_PORT, null);
             shoot("reactor_me_port_filter", ME_PORT, Overlay.FILTER_VIEW);
@@ -721,6 +731,10 @@ public final class WikiScreenshots {
         place(level, slot(player, LENS_MOUNT), ModBlocks.LENS_MOUNT.get().defaultBlockState());
         place(level, slot(player, PRISM), ModBlocks.AREA_PRISM.get().defaultBlockState());
         place(level, slot(player, CATALYST_BAY), ModBlocks.CATALYST_BAY.get().defaultBlockState());
+        place(level, slot(player, HORIZON), ModBlocks.HORIZON_CORE.get().defaultBlockState());
+        place(level, slot(player, FOLD), ModBlocks.FOLD_CORE.get().defaultBlockState());
+        place(level, slot(player, UNFOLDING), ModBlocks.UNFOLDING_ARRAY.get().defaultBlockState());
+        place(level, slot(player, ANCHOR), ModBlocks.RIFT_ANCHOR.get().defaultBlockState());
         if (ModList.get().isLoaded("ae2")) {
             place(level, slot(player, ME_PORT), BuiltInRegistries.BLOCK.getValue(
                     Identifier.fromNamespaceAndPath(Quantimium.MODID, "reactor_me_port")).defaultBlockState());

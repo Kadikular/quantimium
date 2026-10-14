@@ -197,19 +197,16 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         QuantumCrafterBlockEntity.GhostSlot ghost = be.ghostAt(absolute);
         if (ghost == null) return lines;
 
-        lines.add(Component.literal("\u00a7bWavefunction preview \u00a77\u2014 take to collapse"));
+        lines.add(Component.translatable("gui.quantimium.quantum_crafter.preview").withStyle(ChatFormatting.AQUA));
         int batch = Math.max(1, ghost.batchSize());
         if (batch > 1) {
-            lines.add(Component.literal("\u00a7cCost: \u00a7r" + String.format("%,d", ghost.feCost() / batch)
-                    + " FE \u00a77each"));
-            lines.add(Component.literal("\u00a7cCost x" + batch + " crafts: \u00a7r"
-                    + String.format("%,d", ghost.feCost()) + " FE"));
+            lines.add(Component.translatable("gui.quantimium.quantum_crafter.cost.batch", String.format("%,d", ghost.feCost()), batch,
+                    String.format("%,d", ghost.feCost() / batch)).withStyle(ChatFormatting.GRAY));
         } else {
-            lines.add(Component.literal("\u00a7cCost: \u00a7r" + String.format("%,d", ghost.feCost()) + " FE"));
+            lines.add(Component.translatable("gui.quantimium.quantum_crafter.cost", String.format("%,d", ghost.feCost())).withStyle(ChatFormatting.GRAY));
         }
         if (menu.isBasic()) {
-            lines.add(Component.literal("\u00a7bCoherence: \u00a7r" + batch
-                    + " / " + menu.getCoherenceReserve()));
+            lines.add(Component.translatable("gui.quantimium.quantum_crafter.coherence", batch, menu.getCoherenceReserve()).withStyle(ChatFormatting.GRAY));
         }
         if (menu.getAnomalySurchargePercent() > 0) {
             lines.add(Component.translatable("gui.quantimium.energy.anomaly_surcharge",
@@ -218,12 +215,11 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                             menu.getAnomalySurchargePercent())
                     .withStyle(ChatFormatting.GOLD));
         }
-        lines.add(Component.literal("\u00a7aTotal craftable: \u00a7r"
-                + String.format("%,d", ghost.available())));
+        lines.add(Component.translatable("gui.quantimium.quantum_crafter.can_make", String.format("%,d", ghost.available())).withStyle(ChatFormatting.GRAY));
         if (ghost.feCost() > menu.getEnergyStored()) {
-            lines.add(Component.literal("\u00a74Not enough energy"));
+            lines.add(Component.translatable("gui.quantimium.quantum_crafter.no_energy").withStyle(ChatFormatting.RED));
         } else if (ghost.energyCapped()) {
-            lines.add(Component.literal("\u00a78Batch limited by stored energy, not ingredients"));
+            lines.add(Component.translatable("gui.quantimium.quantum_crafter.energy_capped").withStyle(ChatFormatting.DARK_GRAY));
         }
         return lines;
     }
