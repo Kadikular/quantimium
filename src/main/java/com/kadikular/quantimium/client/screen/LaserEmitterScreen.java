@@ -8,7 +8,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.Locale;
@@ -61,9 +60,7 @@ public class LaserEmitterScreen extends QuantumMachineScreen<LaserEmitterMenu> {
 
     @Override
     protected List<Tab> createTabs() {
-        return List.of(Tab.of(() -> menu.redstone().label(), () -> press(LaserEmitterMenu.BUTTON_REDSTONE),
-                        () -> List.of(menu.redstone().label(), menu.redstone().tip()))
-                .icon(() -> new ItemStack(menu.redstone().icon)));
+        return List.of(redstoneTab(menu::redstone, () -> press(LaserEmitterMenu.BUTTON_REDSTONE)));
     }
 
     private void press(int button) {

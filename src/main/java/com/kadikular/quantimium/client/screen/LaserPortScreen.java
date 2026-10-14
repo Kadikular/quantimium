@@ -2,6 +2,7 @@ package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.LaserPortBlockEntity;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.menu.LaserPortMenu;
@@ -13,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,24 +38,29 @@ public class LaserPortScreen extends QuantumMachineScreen<LaserPortMenu> impleme
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of("F", () -> menu.setFilterView(!menu.isFilterView()),
-                                List.of(Component.translatable("gui.quantimium.laser_port.filter"),
-                                        Component.translatable("gui.quantimium.laser_port.filter.tip")))
-                        .icon(() -> new ItemStack(menu.isFilterView() ? Items.HOPPER : Items.ITEM_FRAME)),
-                Tab.of(() -> Component.literal(port().allows() ? "W" : "B"), () -> press(LaserPortMenu.BUTTON_MODE),
-                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.laser_port.mode.allow"
-                                                : "gui.quantimium.laser_port.mode.deny"),
-                                        Component.translatable("gui.quantimium.laser_port.mode.tip")))
-                        .icon(() -> new ItemStack(port().allows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
-                        .visible(menu::isFilterView),
-                Tab.of(() -> Component.literal(switch (port().mode()) { case COLLECT -> "C"; case SEND -> "S"; case BOTH -> "B"; }),
-                                () -> press(LaserPortMenu.BUTTON_RELAY),
+                Tab.glyph(() -> GuiIcon.FILTER, () -> menu.setFilterView(!menu.isFilterView()),
+                                () -> List.of(Component.translatable("gui.quantimium.laser_port.filter"),
+                                        hint("gui.quantimium.laser_port.filter.tip")))
+                        .on(menu::isFilterView)
+                        .slot(RailSlot.FILTER),
+                Tab.glyph(() -> port().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LaserPortMenu.BUTTON_MODE),
+                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .slot(RailSlot.FILTER),
+                Tab.glyph(() -> switch (port().mode()) {
+                                    case COLLECT -> GuiIcon.COLLECT;
+                                    case SEND -> GuiIcon.SEND;
+                                    case BOTH -> GuiIcon.BOTH;
+                                }, () -> press(LaserPortMenu.BUTTON_RELAY),
                                 () -> List.of(Component.translatable("gui.quantimium.laser_port.mode." + port().mode().name().toLowerCase(java.util.Locale.ROOT)),
-                                        Component.translatable("gui.quantimium.laser_port.mode.tip")))
-                        .icon(() -> new ItemStack(switch (port().mode()) { case COLLECT -> Items.HOPPER; case SEND -> Items.DISPENSER; case BOTH -> Items.DROPPER; })),
+                                        hint("gui.quantimium.tab.cycle")))
+                        // Three modes: two steps on is one back.
+                        .onRightClick(() -> {
+                            press(LaserPortMenu.BUTTON_RELAY);
+                            press(LaserPortMenu.BUTTON_RELAY);
+                        }),
                 sidesTab(port().getBlockPos()));
     }
-
 
     private void press(int button) {
         if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);

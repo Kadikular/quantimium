@@ -2,7 +2,8 @@ package com.kadikular.quantimium.menu;
 
 /**
  * Menu button ids that set a priority outright, so the Priority page can send a typed value in one click.
- * The value rides in the id: {@code BASE + MAX + value}, clear of any menu's own buttons.
+ * The value rides in the id: {@code BASE + max + value}, clear of any menu's own buttons. {@link #MAX} is the
+ * logistics blocks' limit; the ME port's, a storage bus's, is wider.
  */
 public final class PriorityButton {
 
@@ -12,14 +13,26 @@ public final class PriorityButton {
     private PriorityButton() {}
 
     public static int encode(int value) {
-        return BASE + MAX + Math.clamp(value, -MAX, MAX);
+        return encode(value, MAX);
     }
 
     public static boolean is(int id) {
-        return id >= BASE && id <= BASE + 2 * MAX;
+        return is(id, MAX);
     }
 
     public static int decode(int id) {
-        return id - BASE - MAX;
+        return decode(id, MAX);
+    }
+
+    public static int encode(int value, int max) {
+        return BASE + max + Math.clamp(value, -max, max);
+    }
+
+    public static boolean is(int id, int max) {
+        return id >= BASE && id <= BASE + 2 * max;
+    }
+
+    public static int decode(int id, int max) {
+        return id - BASE - max;
     }
 }

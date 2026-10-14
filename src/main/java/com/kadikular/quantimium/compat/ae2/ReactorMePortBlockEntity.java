@@ -117,6 +117,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     private boolean storageAllow = true;
     /** The priority of its storage and its patterns, as a storage bus's. */
     private int priority;
+    public static final int MAX_PRIORITY = 999_999;
     /** Whether the network may store items in the Reactor, as in a drive. Off unless chosen. */
     private boolean acceptsItems;
     /** What patterns have made, waiting to go to the network: never from inside a push. */
@@ -200,7 +201,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     }
 
     public void addPriority(int delta) {
-        priority = (int) Math.clamp((long) priority + delta, -999_999L, 999_999L);
+        priority = (int) Math.clamp((long) priority + delta, -MAX_PRIORITY, MAX_PRIORITY);
         IStorageProvider.requestUpdate(mainNode);
         ICraftingProvider.requestUpdate(mainNode);
         setChanged();

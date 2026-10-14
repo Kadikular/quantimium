@@ -41,8 +41,4 @@ public enum RedstoneMode {
     public Component label() {
         return Component.translatable("gui.quantimium.redstone." + name().toLowerCase(Locale.ROOT));
     }
-
-    public Component tip() {
-        return Component.translatable("gui.quantimium.redstone." + name().toLowerCase(Locale.ROOT) + ".tip");
-    }
 }

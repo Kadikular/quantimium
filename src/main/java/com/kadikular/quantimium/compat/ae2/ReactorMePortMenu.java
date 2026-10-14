@@ -1,6 +1,7 @@
 package com.kadikular.quantimium.compat.ae2;
 
 import com.kadikular.quantimium.menu.GhostFilterMenu;
+import com.kadikular.quantimium.menu.PriorityButton;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -26,9 +27,6 @@ public class ReactorMePortMenu extends AbstractContainerMenu implements GhostFil
     public static final int BUTTON_ACCEPTS = 2;
     public static final int BUTTON_PATTERNS_ALLOW = 3;
     public static final int BUTTON_STORAGE_ALLOW = 4;
-    /** Priority steps, as AE2's own priority screen has them: buttons 10 to 15. */
-    public static final int[] PRIORITY_STEPS = {-100, -10, -1, 1, 10, 100};
-    public static final int BUTTON_PRIORITY = 10;
 
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 18;
@@ -173,6 +171,10 @@ public class ReactorMePortMenu extends AbstractContainerMenu implements GhostFil
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (PriorityButton.is(id, ReactorMePortBlockEntity.MAX_PRIORITY)) {
+            port.addPriority(PriorityButton.decode(id, ReactorMePortBlockEntity.MAX_PRIORITY) - port.priority());
+            return true;
+        }
         switch (id) {
             case BUTTON_MODE_NEXT -> port.cycleMode(false);
             case BUTTON_MODE_BACK -> port.cycleMode(true);
@@ -180,9 +182,7 @@ public class ReactorMePortMenu extends AbstractContainerMenu implements GhostFil
             case BUTTON_PATTERNS_ALLOW -> port.togglePatternsAllow();
             case BUTTON_STORAGE_ALLOW -> port.toggleStorageAllow();
             default -> {
-                int step = id - BUTTON_PRIORITY;
-                if (step < 0 || step >= PRIORITY_STEPS.length) return false;
-                port.addPriority(PRIORITY_STEPS[step]);
+                return false;
             }
         }
         return true;

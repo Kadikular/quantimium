@@ -53,10 +53,6 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
                         .on(() -> port().sharing()));
     }
 
-    private static Component hint(String key) {
-        return Component.translatable(key).withStyle(ChatFormatting.GRAY);
-    }
-
     private void press(int button) {
         if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
     }

@@ -3,14 +3,15 @@ package com.kadikular.quantimium.compat.ae2.client;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.client.screen.GhostFilterScreen;
 import com.kadikular.quantimium.client.screen.QuantumMachineScreen;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.compat.ae2.ReactorMePortBlockEntity;
 import com.kadikular.quantimium.compat.ae2.ReactorMePortMenu;
+import com.kadikular.quantimium.menu.PriorityButton;
 import com.kadikular.quantimium.recipe.FilterEntry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -23,9 +24,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The ME Superposition Port, set up like a storage bus: its mode, its priority, whether the network may
- * store items in the Reactor, and a filter of two lists, one for which things it offers patterns for and
- * one for which held items the network sees.
+ * The ME Superposition Port, set up like a storage bus: a readout, and on the rail its filter, priority, mode
+ * and whether the network may store items in the Reactor. The filter has two lists, one for which things it
+ * offers patterns for and one for which held items the network sees; its view adds their tabs at the bottom.
  */
 public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu> implements GhostFilterScreen {
 
@@ -34,37 +35,13 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
     private static final Identifier FILTER_TEXTURE = Identifier.fromNamespaceAndPath(
             Quantimium.MODID, "textures/gui/container/reactor_me_port_filter.png");
 
-    /** The readout down the left; the priority box on the right (tools/gui_panels.py reactor_me_port). */
+    /** The readout (tools/gui_panels.py reactor_me_port). */
     private static final int INFO_X = 8;
     private static final int INFO_Y = 20;
     private static final int LINE_HEIGHT = 11;
-    private static final int PRIORITY_X = 92;
-    private static final int PRIORITY_VALUE_Y = 30;
-    private static final int STEP_Y = 45;
-    private static final int STEP_WIDTH = 26;
-    private static final int STEP_HEIGHT = 13;
-
-    private final List<Button> steps = new ArrayList<>();
 
     public ReactorMePortScreen(ReactorMePortMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        steps.clear();
-        // Two rows of three: +1 +10 +100 over -1 -10 -100.
-        int[] order = {3, 4, 5, 2, 1, 0};
-        for (int at = 0; at < order.length; at++) {
-            int i = order[at];
-            int step = ReactorMePortMenu.PRIORITY_STEPS[i];
-            int id = ReactorMePortMenu.BUTTON_PRIORITY + i;
-            Button button = Button.builder(Component.literal(step > 0 ? "+" + step : String.valueOf(step)), b -> press(id))
-                    .bounds(leftPos + PRIORITY_X + (at % 3) * (STEP_WIDTH + 1),
-                            topPos + STEP_Y + (at / 3) * (STEP_HEIGHT + 1), STEP_WIDTH, STEP_HEIGHT).build();
-            steps.add(addRenderableWidget(button));
-        }
     }
 
     private String modeKey() {
@@ -74,47 +51,46 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of("F", () -> menu.setFilterView(!menu.isFilterView()),
-                                List.of(Component.translatable("gui.quantimium.reactor_me_port.filter"),
-                                        Component.translatable("gui.quantimium.reactor_me_port.filter.tip")))
-                        .icon(() -> new ItemStack(menu.isFilterView() ? Items.CRAFTING_TABLE : Items.ITEM_FRAME)),
+                Tab.glyph(() -> GuiIcon.FILTER, () -> menu.setFilterView(!menu.isFilterView()),
+                                () -> List.of(Component.translatable("gui.quantimium.reactor_me_port.filter"),
+                                        hint("gui.quantimium.reactor_me_port.filter.tip")))
+                        .on(menu::isFilterView)
+                        .slot(RailSlot.FILTER),
+                priorityTab(menu::priority, value -> press(PriorityButton.encode(value, ReactorMePortBlockEntity.MAX_PRIORITY)),
+                        ReactorMePortBlockEntity.MAX_PRIORITY),
                 // How the Reactor's making is offered: both, whole trees or steps.
-                Tab.of(() -> Component.literal("M"), () -> press(ReactorMePortMenu.BUTTON_MODE_NEXT),
+                Tab.of(Component::empty, () -> press(ReactorMePortMenu.BUTTON_MODE_NEXT),
                                 () -> List.of(Component.translatable("message.quantimium.reactor_me_port.mode." + modeKey()),
-                                        Component.translatable("gui.quantimium.reactor_me_port.mode.tip")))
+                                        hint("gui.quantimium.tab.cycle")))
                         .icon(() -> new ItemStack(switch (menu.mode()) {
                             case BOTH -> Items.ENDER_EYE;
                             case TREES -> Items.OAK_SAPLING;
                             case STEPS -> Items.CRAFTING_TABLE;
                         }))
-                        .visible(() -> !menu.isFilterView()),
+                        .onRightClick(() -> press(ReactorMePortMenu.BUTTON_MODE_BACK)),
                 // Whether the network may store items in the Reactor, as in a drive.
-                Tab.of(() -> Component.literal("S"), () -> press(ReactorMePortMenu.BUTTON_ACCEPTS),
+                Tab.glyph(() -> GuiIcon.STORAGE, () -> press(ReactorMePortMenu.BUTTON_ACCEPTS),
                                 () -> List.of(Component.translatable(menu.acceptsItems()
                                                 ? "gui.quantimium.reactor_me_port.accepts.on" : "gui.quantimium.reactor_me_port.accepts.off"),
-                                        Component.translatable("gui.quantimium.reactor_me_port.accepts.tip")))
-                        .icon(() -> new ItemStack(menu.acceptsItems() ? Items.CHEST : Items.BARRIER))
-                        .visible(() -> !menu.isFilterView()),
+                                        hint("gui.quantimium.tab.switch")))
+                        .on(menu::acceptsItems),
                 // Which list the filter view is editing: what it offers patterns for, or what the network sees.
-                Tab.of(() -> Component.literal(menu.isStorageList() ? "S" : "P"),
+                Tab.glyph(() -> menu.isStorageList() ? GuiIcon.STORAGE : GuiIcon.VIEW_CRAFT,
                                 () -> menu.setStorageList(!menu.isStorageList()),
                                 () -> List.of(Component.translatable(menu.isStorageList()
                                                 ? "gui.quantimium.reactor_me_port.list.storage"
                                                 : "gui.quantimium.reactor_me_port.list.patterns"),
-                                        Component.translatable("gui.quantimium.reactor_me_port.list.tip")))
-                        .icon(() -> new ItemStack(menu.isStorageList() ? Items.CHEST : Items.CRAFTING_TABLE))
-                        .visible(menu::isFilterView),
-                // Whitelist or blacklist, for the list on show; each list has its own.
-                Tab.of(() -> Component.literal(shownListAllows() ? "W" : "B"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .visible(menu::isFilterView)
+                        .slot(RailSlot.VIEW),
+                // Allow or deny, for the list on show; each list has its own.
+                Tab.glyph(() -> shownListAllows() ? GuiIcon.ALLOW : GuiIcon.DENY,
                                 () -> press(menu.isStorageList() ? ReactorMePortMenu.BUTTON_STORAGE_ALLOW
                                         : ReactorMePortMenu.BUTTON_PATTERNS_ALLOW),
-                                () -> List.of(Component.translatable(shownListAllows()
-                                                ? "gui.quantimium.catalyst_bay.mode.allow" : "gui.quantimium.catalyst_bay.mode.deny"),
-                                        Component.translatable(menu.isStorageList()
-                                                ? "gui.quantimium.reactor_me_port.storage.tip"
-                                                : "gui.quantimium.reactor_me_port.patterns.tip")))
-                        .icon(() -> new ItemStack(shownListAllows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
-                        .visible(menu::isFilterView));
+                                () -> List.of(Component.translatable(shownListAllows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .visible(menu::isFilterView)
+                        .slot(RailSlot.VIEW));
     }
 
     private boolean shownListAllows() {
@@ -202,7 +178,6 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
-        for (Button step : steps) step.visible = !menu.isFilterView();
         if (menu.isFilterView()) return;
         List<Component> lines = List.of(
                 Component.translatable("message.quantimium.reactor_me_port.mode." + modeKey() + ".short"),
@@ -214,12 +189,6 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
             graphics.text(font, lines.get(i), leftPos + INFO_X, topPos + INFO_Y + i * LINE_HEIGHT,
                     i == 0 ? textColour() : dimColour(), false);
         }
-        graphics.text(font, Component.translatable("gui.quantimium.reactor_me_port.priority"),
-                leftPos + PRIORITY_X, topPos + INFO_Y, dimColour(), false);
-        String value = String.format(Locale.ROOT, "%,d", menu.priority());
-        int boxWidth = 3 * STEP_WIDTH + 2;
-        graphics.text(font, Component.literal(value), leftPos + PRIORITY_X + (boxWidth - font.width(value)) / 2,
-                topPos + PRIORITY_VALUE_Y + 2, textColour(), false);
     }
 
     /** A small # on entries standing for a tag rather than an item. */

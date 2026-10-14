@@ -2,6 +2,7 @@ package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.CatalystBayBlockEntity;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.menu.CatalystBayMenu;
@@ -13,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,31 +49,28 @@ public class CatalystBayScreen extends QuantumMachineScreen<CatalystBayMenu> imp
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of("F", () -> menu.setFilterView(!menu.isFilterView()),
-                                List.of(Component.translatable("gui.quantimium.catalyst_bay.filter"),
-                                        Component.translatable("gui.quantimium.catalyst_bay.filter.tip")))
-                        .icon(() -> new ItemStack(menu.isFilterView() ? Items.CRAFTING_TABLE : Items.ITEM_FRAME)),
+                Tab.glyph(() -> GuiIcon.FILTER, () -> menu.setFilterView(!menu.isFilterView()),
+                                () -> List.of(Component.translatable("gui.quantimium.catalyst_bay.filter"),
+                                        hint("gui.quantimium.catalyst_bay.filter.tip")))
+                        .on(menu::isFilterView)
+                        .slot(RailSlot.FILTER),
                 // Which list the filter view is editing: outputs made, or inputs used up.
-                Tab.of(() -> Component.literal(menu.isInputList() ? "I" : "O"),
+                Tab.glyph(() -> menu.isInputList() ? GuiIcon.ACTIVE_IMPORT : GuiIcon.ACTIVE_EXPORT,
                                 () -> menu.setInputList(!menu.isInputList()),
                                 () -> List.of(Component.translatable(menu.isInputList()
                                                 ? "gui.quantimium.catalyst_bay.list.inputs"
                                                 : "gui.quantimium.catalyst_bay.list.outputs"),
-                                        Component.translatable("gui.quantimium.catalyst_bay.list.tip")))
-                        .icon(() -> new ItemStack(menu.isInputList() ? Items.HOPPER : Items.DROPPER))
-                        .visible(menu::isFilterView),
-                // Whitelist or blacklist, for the list on show; each list has its own.
-                Tab.of(() -> Component.literal(shownListAllows() ? "W" : "B"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .visible(menu::isFilterView)
+                        .slot(RailSlot.VIEW),
+                // Allow or deny, for the list on show; each list has its own.
+                Tab.glyph(() -> shownListAllows() ? GuiIcon.ALLOW : GuiIcon.DENY,
                                 () -> press(menu.isInputList() ? CatalystBayMenu.BUTTON_INPUT_MODE
                                         : CatalystBayMenu.BUTTON_OUTPUT_MODE),
-                                () -> List.of(Component.translatable(shownListAllows()
-                                                ? "gui.quantimium.catalyst_bay.mode.allow"
-                                                : "gui.quantimium.catalyst_bay.mode.deny"),
-                                        Component.translatable(menu.isInputList()
-                                                ? "gui.quantimium.catalyst_bay.mode.inputs.tip"
-                                                : "gui.quantimium.catalyst_bay.mode.outputs.tip")))
-                        .icon(() -> new ItemStack(shownListAllows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
-                        .visible(menu::isFilterView));
+                                () -> List.of(Component.translatable(shownListAllows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .visible(menu::isFilterView)
+                        .slot(RailSlot.VIEW));
     }
 
     private void press(int button) {

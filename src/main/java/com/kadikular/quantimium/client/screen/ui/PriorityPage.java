@@ -106,7 +106,7 @@ public final class PriorityPage extends Page {
     @Override
     public boolean charTyped(int codepoint) {
         String now = typed == null ? "" : typed;
-        if (codepoint >= '0' && codepoint <= '9' && now.replace("-", "").length() < 3) {
+        if (codepoint >= '0' && codepoint <= '9' && now.replace("-", "").length() < Integer.toString(max).length()) {
             typed = now + (char) codepoint;
         } else if (codepoint == '-') {
             typed = now.startsWith("-") ? now.substring(1) : "-" + now;

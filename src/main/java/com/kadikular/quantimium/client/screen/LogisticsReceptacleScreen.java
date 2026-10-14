@@ -68,10 +68,6 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
                         .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE));
     }
 
-    private static Component hint(String key) {
-        return Component.translatable(key).withStyle(ChatFormatting.GRAY);
-    }
-
     private void press(int button) {
         if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
     }

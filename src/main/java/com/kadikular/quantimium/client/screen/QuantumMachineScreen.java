@@ -19,6 +19,7 @@ import com.kadikular.quantimium.client.screen.ui.Rail;
 import com.kadikular.quantimium.client.screen.ui.SidesPage;
 import com.kadikular.quantimium.network.OpenSideConfigPayload;
 import com.kadikular.quantimium.network.RequestSideConfigPayload;
+import com.kadikular.quantimium.util.RedstoneMode;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.minecraft.ChatFormatting;
@@ -81,9 +82,10 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     /**
      * Where a tab sits on the rail. Settings every block shares come first and always in this order, so
      * the filter and the priority are in the same place on every screen that has them; the block's own
-     * modes follow. A page's Back tab takes the top of the rail.
+     * modes follow, then tabs that belong to one view only (a filter view's list switch), last so that showing
+     * them moves nothing. A page's Back tab takes the top of the rail.
      */
-    public enum RailSlot { FILTER, PRIORITY, REDSTONE, SIDES, MODE }
+    public enum RailSlot { FILTER, PRIORITY, REDSTONE, SIDES, MODE, VIEW }
 
     /** A tab on the rail. It shows an icon (or, until a screen is redrawn, a short label or an item). */
     protected static final class Tab {
@@ -273,10 +275,27 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         };
         return Tab.glyph(() -> GuiIcon.PRIORITY, () -> openOverlay(new PriorityPage(this::panelArea, value, clamped, max)),
                         () -> List.of(Component.translatable("gui.quantimium.priority.value", value.getAsInt()),
-                                Component.translatable("gui.quantimium.priority.tab.hint").withStyle(ChatFormatting.GRAY)))
+                                hint("gui.quantimium.priority.tab.hint")))
                 .slot(RailSlot.PRIORITY).opens()
                 .badge(() -> priorityBadge(value.getAsInt()))
                 .onScroll(step -> clamped.accept(value.getAsInt() + step * (Minecraft.getInstance().hasShiftDown() ? 10 : 1)));
+    }
+
+    /** The shared redstone tab: the item shows the setting; click steps on, right-click back. */
+    protected final Tab redstoneTab(Supplier<RedstoneMode> mode, Runnable next) {
+        return Tab.of(Component::empty, next, () -> List.of(mode.get().label(), hint("gui.quantimium.tab.cycle")))
+                .icon(() -> new ItemStack(mode.get().icon))
+                .slot(RailSlot.REDSTONE)
+                // Three settings: two steps on is one back.
+                .onRightClick(() -> {
+                    next.run();
+                    next.run();
+                });
+    }
+
+    /** The grey second line of a tab's tooltip: how to use it. */
+    protected static Component hint(String key) {
+        return Component.translatable(key).withStyle(ChatFormatting.GRAY);
     }
 
     /** The shared Sides tab: asks the server for the faces, which answers with {@link #openSideConfig}. */

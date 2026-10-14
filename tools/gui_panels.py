@@ -329,15 +329,10 @@ def catalyst_bay() -> Panel:
 
 
 def reactor_me_port() -> Panel:
-    """The ME Superposition Port: a short readout down the left; on the right the priority, its value in
-    a well and two rows of step buttons (ReactorMePortScreen). The filter view is the Superposition
-    Crafter's."""
+    """The ME Superposition Port: a short readout; its settings and priority are on the rail
+    (ReactorMePortScreen). The filter view is the Superposition Crafter's."""
     panel = Panel(HIGH)
-    panel.region("info", (8, 20, 80, 44))
-    panel.region("priority", (92, 20, 80, 9))
-    panel.well(91, 29, 82, 13)
-    panel.region("value", (92, 30, 80, 11))
-    panel.region("steps", (92, 45, 80, 27))
+    panel.region("info", (8, 20, 160, 44))
     panel.player()
     return panel
 
