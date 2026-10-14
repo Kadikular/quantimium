@@ -3,14 +3,12 @@ package com.kadikular.quantimium.client.screen;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
-import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.laser.IsolatorSettings;
 import com.kadikular.quantimium.menu.IsolatorLensMenu;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,18 +38,17 @@ public class IsolatorLensScreen extends QuantumMachineScreen<IsolatorLensMenu> i
                 Tab.glyph(() -> menu.settings().allow() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(IsolatorLensMenu.BUTTON_ALLOW),
                         () -> List.of(Component.translatable(menu.settings().allow() ? "gui.quantimium.isolator_lens.allow" : "gui.quantimium.isolator_lens.deny"),
                                 hint("gui.quantimium.tab.switch"))),
-                passes("logistics", IsolatorLensMenu.BUTTON_LOGISTICS, new ItemStack(ModItems.LOGISTICS_CONTROLLER_ITEM.get()), IsolatorSettings::logistics),
-                passes("actions", IsolatorLensMenu.BUTTON_ACTIONS, new ItemStack(ModItems.HARVEST_LENS.get()), IsolatorSettings::actions),
-                passes("modifiers", IsolatorLensMenu.BUTTON_MODIFIERS, new ItemStack(ModItems.AMPLIFY_LENS.get()), IsolatorSettings::modifiers));
+                passes("logistics", IsolatorLensMenu.BUTTON_LOGISTICS, GuiIcon.LOGISTICS, IsolatorSettings::logistics),
+                passes("actions", IsolatorLensMenu.BUTTON_ACTIONS, GuiIcon.ACTIONS, IsolatorSettings::actions),
+                passes("modifiers", IsolatorLensMenu.BUTTON_MODIFIERS, GuiIcon.MODIFIERS, IsolatorSettings::modifiers));
     }
 
     /** A switch for what passes it: lit while it does. */
-    private Tab passes(String key, int button, ItemStack icon, Predicate<IsolatorSettings> on) {
-        return Tab.of(Component::empty, () -> press(button),
+    private Tab passes(String key, int button, GuiIcon icon, Predicate<IsolatorSettings> on) {
+        return Tab.glyph(() -> icon, () -> press(button),
                         () -> List.of(Component.translatable("gui.quantimium.isolator_lens." + key)
                                         .append(": ").append(Component.translatable(on.test(menu.settings()) ? "gui.quantimium.isolator_lens.passes" : "gui.quantimium.isolator_lens.stops")),
                                 hint("gui.quantimium.tab.switch")))
-                .icon(icon)
                 .on(() -> on.test(menu.settings()));
     }
 
