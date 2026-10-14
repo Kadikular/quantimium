@@ -8,8 +8,6 @@ import com.kadikular.quantimium.menu.RelayEmitterMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -29,14 +27,19 @@ public class RelayEmitterScreen extends QuantumMachineScreen<RelayEmitterMenu> {
 
     @Override
     protected List<Tab> createTabs() {
-        return List.of(Tab.of(() -> Component.empty(), () -> press(RelayEmitterMenu.BUTTON_MODE),
-                        () -> List.of(mode().label(), Component.translatable("gui.quantimium.relay_emitter.mode.tip")))
-                .icon(() -> new ItemStack(switch (mode()) {
-                    case IGNORED -> Items.GUNPOWDER;
-                    case WITH_SIGNAL -> Items.REDSTONE_TORCH;
-                    case WITHOUT_SIGNAL -> Items.LEVER;
-                    case PULSE -> Items.REPEATER;
-                })));
+        return List.of(Tab.of(Component::empty, () -> press(RelayEmitterMenu.BUTTON_MODE),
+                        () -> List.of(mode().label(), hint("gui.quantimium.tab.cycle")))
+                .texture(() -> Identifier.withDefaultNamespace("textures/" + switch (mode()) {
+                    case IGNORED -> "item/gunpowder";
+                    case WITH_SIGNAL -> "block/redstone_torch";
+                    case WITHOUT_SIGNAL -> "block/redstone_torch_off";
+                    case PULSE -> "item/redstone";
+                } + ".png"))
+                // Four settings: three steps on is one back.
+                .onRightClick(() -> {
+                    for (int i = 0; i < 3; i++) press(RelayEmitterMenu.BUTTON_MODE);
+                })
+                .slot(RailSlot.REDSTONE));
     }
 
     private void press(int button) {

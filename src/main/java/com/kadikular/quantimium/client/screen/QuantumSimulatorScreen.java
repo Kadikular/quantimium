@@ -64,34 +64,34 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of("\u2699", () -> ClientPacketDistributor.sendToServer(
-                                new RequestSlotConfigPayload(menu.getBlockEntity().getBlockPos(), false)),
-                        List.of(Component.literal("§6Configure Slots"),
-                                Component.literal("§7Bind each input slot to a machine slot."),
-                                Component.literal("§8Requires an engaged containment field.")))
+                Tab.of(Component::empty, () -> ClientPacketDistributor.sendToServer(
+                                        new RequestSlotConfigPayload(menu.getBlockEntity().getBlockPos(), false)),
+                                () -> List.of(Component.translatable("gui.quantimium.quantum_simulator.slots"),
+                                        hint(menu.isEngaged() ? "gui.quantimium.quantum_simulator.slots.tip" : "gui.quantimium.quantum_simulator.slots.disengaged")))
+                        .page(RailSlot.SLOTS, () -> activeOverlay() instanceof SlotConfigScreen, this::closeOverlay)
                         .enabled(menu::isEngaged)
                         .icon(new ItemStack(Items.COMPARATOR)),
                 sidesTab(menu.getBlockEntity().getBlockPos()),
-                Tab.of(() -> Component.literal(menu.getBatchSize() + "x"),
-                        () -> {
-                            int current = menu.getBatchSize();
-                            int next = current >= 32 ? 1 : current * 2;
-                            ClientPacketDistributor.sendToServer(
-                                    new SetBatchSizePayload(menu.getBlockEntity().getBlockPos(), next));
-                        },
-                        this::batchTooltip)
+                // The batch on the tab: click for twice as many, right-click for half.
+                Tab.of(() -> Component.literal(menu.getBatchSize() + "x"), () -> setBatch(menu.getBatchSize() >= 32 ? 1 : menu.getBatchSize() * 2),
+                                this::batchTooltip)
+                        .onRightClick(() -> setBatch(menu.getBatchSize() <= 1 ? 32 : menu.getBatchSize() / 2))
                         .width(28));
+    }
+
+    private void setBatch(int size) {
+        ClientPacketDistributor.sendToServer(new SetBatchSizePayload(menu.getBlockEntity().getBlockPos(), size));
     }
 
     /** The batch chosen, and when the band here holds it back, what it runs at and what it needs. */
     private List<Component> batchTooltip() {
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.translatable("gui.quantimium.quantum_simulator.batch_chosen", menu.getBatchSize()).withStyle(ChatFormatting.LIGHT_PURPLE));
+        lines.add(Component.translatable("gui.quantimium.quantum_simulator.batch_chosen", menu.getBatchSize()));
         if (menu.getRunningBatch() < menu.getBatchSize()) {
             lines.add(Component.translatable("gui.quantimium.quantum_simulator.batch_running", menu.getRunningBatch()).withStyle(ChatFormatting.GOLD));
             lines.add(BandGate.refusal(bandFor(menu.getBatchSize()), menu.getBand(), menu.getHeading()).withStyle(ChatFormatting.GRAY));
         }
-        lines.add(Component.translatable("gui.quantimium.quantum_simulator.batch_cycle").withStyle(ChatFormatting.GRAY));
+        lines.add(hint("gui.quantimium.tab.halve"));
         return lines;
     }
 

@@ -76,10 +76,10 @@ public class FieldMonitorScreen extends QuantumMachineScreen<FieldMonitorMenu> {
     @Override
     protected List<Tab> createTabs() {
         List<Tab> tabs = new ArrayList<>();
-        tabs.add(Tab.of(() -> Component.literal("W"), this::press,
+        tabs.add(Tab.of(Component::empty, this::press,
                         () -> List.of(Component.translatable("gui.quantimium.field_monitor.watch",
                                         Component.translatable("gui.quantimium.field_monitor.watch." + menu.getWatch().key())),
-                                Component.translatable("gui.quantimium.field_monitor.watch.tip")))
+                                hint("gui.quantimium.tab.switch")))
                 .icon(new ItemStack(Items.REDSTONE)));
         return tabs;
     }

@@ -1,7 +1,6 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
-import com.kadikular.quantimium.block.entity.ObservationChamberBlockEntity;
 import com.kadikular.quantimium.block.entity.QuantumObservationChamberBlockEntity;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
@@ -36,16 +35,12 @@ public class QuantumObservationChamberScreen extends QuantumMachineScreen<Quantu
         return List.of(
                 sidesTab(menu.getBlockEntity().getBlockPos()),
                 // A lava bucket while excess Trace is destroyed, a chest while it is kept.
-                Tab.of(() -> Component.literal("T"),
-                        () -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
-                                QuantumObservationChamberMenu.BUTTON_VOID_TRACE),
-                        () -> List.of(
-                                Component.translatable(menu.isVoidExcessTrace()
-                                        ? "gui.quantimium.observation_chamber.void_on"
-                                        : "gui.quantimium.observation_chamber.void_off"),
-                                Component.translatable("gui.quantimium.observation_chamber.void.tip"),
-                                Component.translatable("gui.quantimium.observation_chamber.trace.chance",
-                                        Math.round(ObservationChamberBlockEntity.TRACE_CHANCE * 100))))
+                Tab.of(Component::empty,
+                                () -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
+                                        QuantumObservationChamberMenu.BUTTON_VOID_TRACE),
+                                () -> List.of(Component.translatable(menu.isVoidExcessTrace()
+                                                ? "gui.quantimium.observation_chamber.void_on" : "gui.quantimium.observation_chamber.void_off"),
+                                        hint("gui.quantimium.tab.switch")))
                         .icon(() -> new ItemStack(menu.isVoidExcessTrace() ? Items.LAVA_BUCKET : Items.CHEST)));
     }
 

@@ -32,25 +32,32 @@ public class AreaPrismScreen extends QuantumMachineScreen<AreaPrismMenu> {
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(() -> Component.literal(switch (prism().shape()) { case PICKED -> "P"; case CUBE -> "C"; case SPHERE -> "S"; }),
-                                () -> press(AreaPrismMenu.BUTTON_SHAPE),
+                Tab.of(Component::empty, () -> press(AreaPrismMenu.BUTTON_SHAPE),
                                 () -> List.of(Component.translatable("gui.quantimium.area_prism.shape." + prism().shape().name().toLowerCase(java.util.Locale.ROOT)),
-                                        Component.translatable("gui.quantimium.area_prism.shape.tip")))
+                                        hint("gui.quantimium.tab.cycle")))
                         .icon(() -> new ItemStack(switch (prism().shape()) {
                             case PICKED -> com.kadikular.quantimium.init.ModItems.LASER_LINKER.get();
                             case CUBE -> Items.STONE;
                             case SPHERE -> Items.SNOWBALL;
-                        })),
-                Tab.of(() -> Component.literal("+"), () -> press(minecraft != null && minecraft.hasShiftDown() ? AreaPrismMenu.BUTTON_MUCH_WIDER : AreaPrismMenu.BUTTON_WIDER),
+                        }))
+                        // Three shapes: two steps on is one back.
+                        .onRightClick(() -> {
+                            press(AreaPrismMenu.BUTTON_SHAPE);
+                            press(AreaPrismMenu.BUTTON_SHAPE);
+                        }),
+                // Its radius on the tab: click or scroll up to widen, right-click or scroll down to narrow; shift for eight.
+                Tab.of(() -> Component.literal(Integer.toString(prism().radius())), () -> widen(true),
                                 () -> List.of(Component.translatable("gui.quantimium.area_prism.radius", prism().radius()),
-                                        Component.translatable("gui.quantimium.area_prism.wider")))
-                        .icon(() -> new ItemStack(Items.GLOWSTONE_DUST))
-                        .visible(() -> prism().shape() != AreaPrismBlockEntity.Shape.PICKED),
-                Tab.of(() -> Component.literal("-"), () -> press(minecraft != null && minecraft.hasShiftDown() ? AreaPrismMenu.BUTTON_MUCH_NARROWER : AreaPrismMenu.BUTTON_NARROWER),
-                                () -> List.of(Component.translatable("gui.quantimium.area_prism.radius", prism().radius()),
-                                        Component.translatable("gui.quantimium.area_prism.narrower")))
-                        .icon(() -> new ItemStack(Items.REDSTONE))
+                                        hint("gui.quantimium.tab.number")))
+                        .onRightClick(() -> widen(false))
+                        .onScroll(step -> widen(step > 0))
                         .visible(() -> prism().shape() != AreaPrismBlockEntity.Shape.PICKED));
+    }
+
+    private void widen(boolean wider) {
+        boolean much = minecraft != null && minecraft.hasShiftDown();
+        press(wider ? (much ? AreaPrismMenu.BUTTON_MUCH_WIDER : AreaPrismMenu.BUTTON_WIDER)
+                : (much ? AreaPrismMenu.BUTTON_MUCH_NARROWER : AreaPrismMenu.BUTTON_NARROWER));
     }
 
     private void press(int button) {

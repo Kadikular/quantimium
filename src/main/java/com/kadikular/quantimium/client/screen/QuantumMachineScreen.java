@@ -87,7 +87,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
      * place on every screen that has them; settings go on the left, redstone first, then the block's own.
      */
     public enum RailSlot {
-        FILTER(true), PRIORITY(true), SIDES(true), REDSTONE(false), MODE(false);
+        FILTER(true), PRIORITY(true), SIDES(true), SLOTS(true), REDSTONE(false), MODE(false);
 
         private final boolean page;
 
@@ -284,7 +284,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         overlay.layout(width, height);
     }
 
-    private void closeOverlay() {
+    protected final void closeOverlay() {
         overlay = null;
     }
 

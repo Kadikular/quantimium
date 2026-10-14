@@ -25,17 +25,11 @@ public class ObservationChamberScreen extends QuantumMachineScreen<ObservationCh
     @Override
     protected List<Tab> createTabs() {
         // A lava bucket while excess Trace is destroyed, a chest while it is kept.
-        return List.of(Tab.of(
-                () -> Component.literal(menu.isVoidExcessTrace() ? "§cT" : "§aT"),
-                () -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
-                        ObservationChamberMenu.BUTTON_VOID_TRACE),
-                () -> List.of(
-                        Component.translatable(menu.isVoidExcessTrace()
-                                ? "gui.quantimium.observation_chamber.void_on"
-                                : "gui.quantimium.observation_chamber.void_off"),
-                        Component.translatable("gui.quantimium.observation_chamber.void.tip"),
-                        Component.translatable("gui.quantimium.observation_chamber.trace.chance",
-                                Math.round(ObservationChamberBlockEntity.TRACE_CHANCE * 100))))
+        return List.of(Tab.of(Component::empty,
+                        () -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId, ObservationChamberMenu.BUTTON_VOID_TRACE),
+                        () -> List.of(Component.translatable(menu.isVoidExcessTrace()
+                                        ? "gui.quantimium.observation_chamber.void_on" : "gui.quantimium.observation_chamber.void_off"),
+                                hint("gui.quantimium.tab.switch")))
                 .icon(() -> new ItemStack(menu.isVoidExcessTrace() ? Items.LAVA_BUCKET : Items.CHEST)));
     }
 

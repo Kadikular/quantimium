@@ -48,17 +48,17 @@ public class FieldControlScreen extends QuantumMachineScreen<FieldControlMenu> {
         List<Tab> tabs = new ArrayList<>();
         FieldControlBlock.Kind kind = menu.kind();
         if (kind.raisesFlux()) {
-            tabs.add(Tab.of(() -> Component.literal("F"), () -> press(FieldControlBlockEntity.BUTTON_FLOOR),
+            tabs.add(Tab.of(Component::empty, () -> press(FieldControlBlockEntity.BUTTON_FLOOR),
                             () -> List.of(Component.translatable("gui.quantimium.field_control.floor", band(menu.getFloor())),
-                                    Component.translatable("gui.quantimium.field_control.floor.tip")))
+                                    hint("gui.quantimium.tab.switch")))
                     .icon(new ItemStack(Items.GLOWSTONE_DUST)));
         }
         if (kind.setsCeiling()) {
             // A Siphon's ceiling is for anomaly; a Suppressor's, for flux.
             String key = kind.pullsFlux() ? "gui.quantimium.field_control.flux_ceiling" : "gui.quantimium.field_control.ceiling";
-            tabs.add(Tab.of(() -> Component.literal(kind.pullsFlux() ? "C" : "A"), () -> press(FieldControlBlockEntity.BUTTON_CEILING),
+            tabs.add(Tab.of(Component::empty, () -> press(FieldControlBlockEntity.BUTTON_CEILING),
                             () -> List.of(Component.translatable(key, menu.getCeiling().label()),
-                                    Component.translatable(key + ".tip")))
+                                    hint("gui.quantimium.tab.switch")))
                     .icon(new ItemStack(kind.pullsFlux() ? Items.LAPIS_LAZULI : Items.AMETHYST_SHARD)));
         }
         return tabs;

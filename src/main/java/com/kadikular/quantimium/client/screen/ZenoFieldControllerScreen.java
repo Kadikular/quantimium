@@ -48,16 +48,15 @@ public class ZenoFieldControllerScreen extends QuantumMachineScreen<ZenoFieldCon
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(() -> Component.literal("M"), () -> press(ZenoFieldControllerBlockEntity.BUTTON_MODE),
+                Tab.of(Component::empty, () -> press(ZenoFieldControllerBlockEntity.BUTTON_MODE),
                                 () -> List.of(Component.translatable(accelerating()
                                                 ? "gui.quantimium.zeno_field_controller.mode.accelerate"
                                                 : "gui.quantimium.zeno_field_controller.mode.pause"),
-                                        Component.translatable("gui.quantimium.zeno_field_controller.mode.tip")))
+                                        hint("gui.quantimium.tab.switch")))
                         .icon(() -> new ItemStack(accelerating() ? Items.CLOCK : Items.PACKED_ICE)),
-                Tab.of(() -> Component.literal("r" + menu.getRadius()), () -> press(ZenoFieldControllerBlockEntity.BUTTON_RADIUS),
+                Tab.of(() -> Component.literal(Integer.toString(menu.getRadius())), () -> press(ZenoFieldControllerBlockEntity.BUTTON_RADIUS),
                                 () -> List.of(Component.translatable("gui.quantimium.zeno_field_controller.radius", menu.getRadius()),
-                                        Component.translatable("gui.quantimium.zeno_field_controller.radius.tip")))
-                        .width(24),
+                                        hint("gui.quantimium.tab.cycle.on"))),
                 Tab.of(() -> Component.literal(menu.getFactor() + "x"), () -> press(ZenoFieldControllerBlockEntity.BUTTON_FACTOR),
                                 this::factorTooltip)
                         .width(28)
@@ -136,7 +135,7 @@ public class ZenoFieldControllerScreen extends QuantumMachineScreen<ZenoFieldCon
             lines.add(Component.translatable("gui.quantimium.zeno_field_controller.factor.running", menu.getRunningFactor()));
             lines.add(BandGate.refusal(needed, menu.getBand(), menu.getHeading()).withStyle(ChatFormatting.GRAY));
         }
-        lines.add(Component.translatable("gui.quantimium.zeno_field_controller.factor.tip"));
+        lines.add(hint("gui.quantimium.tab.cycle.on"));
         return lines;
     }
 

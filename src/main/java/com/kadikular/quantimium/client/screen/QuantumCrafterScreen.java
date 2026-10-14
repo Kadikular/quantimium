@@ -17,6 +17,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
@@ -64,15 +65,13 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         if (menu.isBasic()) return List.of();
         return List.of(
                 sidesTab(menu.getBlockEntity().getBlockPos()),
-                Tab.of(() -> Component.literal(menu.isRecipeLocked() ? "L" : "U"),
-                        () -> ClientPacketDistributor.sendToServer(new SetCrafterLockPayload(
-                                menu.getBlockEntity().getBlockPos(), !menu.isRecipeLocked())),
-                        () -> List.of(Component.literal(menu.isRecipeLocked()
-                                ? "\u00a76Recipe locked"
-                                : "\u00a76Recipe unlocked"),
-                                Component.literal(menu.isRecipeLocked()
-                                        ? "\u00a77Automation only runs the last selected recipe."
-                                        : "\u00a77Automation may pick any available recipe."))));
+                Tab.of(Component::empty,
+                                () -> ClientPacketDistributor.sendToServer(new SetCrafterLockPayload(
+                                        menu.getBlockEntity().getBlockPos(), !menu.isRecipeLocked())),
+                                () -> List.of(Component.translatable(menu.isRecipeLocked()
+                                                ? "gui.quantimium.quantum_crafter.lock.on" : "gui.quantimium.quantum_crafter.lock.off"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .icon(() -> new ItemStack(menu.isRecipeLocked() ? Items.TRIPWIRE_HOOK : Items.STRING)));
     }
 
 
