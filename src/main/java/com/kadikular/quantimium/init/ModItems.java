@@ -28,7 +28,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.List;
 
 public class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Quantimium.MODID);
@@ -270,8 +269,13 @@ public class ModItems {
             "pickup_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.PICKUP));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> RANGE_LENS = ITEMS.registerItem(
             "range_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.RANGE));
+    /** The Item Filter Lens: still "filter_lens", the id of the one lens before the split. */
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> FILTER_LENS = ITEMS.registerItem(
-            "filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1)));
+            "filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1), com.kadikular.quantimium.laser.LensFilter.ITEMS));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> BLOCK_FILTER_LENS = ITEMS.registerItem(
+            "block_filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1), com.kadikular.quantimium.laser.LensFilter.BLOCKS));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> ENTITY_FILTER_LENS = ITEMS.registerItem(
+            "entity_filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1), com.kadikular.quantimium.laser.LensFilter.ENTITIES));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> UV_LENS = ITEMS.registerItem(
             "uv_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UV));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> AMPLIFY_LENS = ITEMS.registerItem(

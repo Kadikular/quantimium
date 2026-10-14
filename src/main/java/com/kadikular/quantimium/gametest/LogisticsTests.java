@@ -269,8 +269,8 @@ public final class LogisticsTests {
     /** Puts a Filter lens listing {@code item} in slot {@code slot} of the mount at {@code x}. */
     private static void filterSlot(GameTestHelper helper, int x, int slot, Item item) {
         ItemStack lens = new ItemStack(com.kadikular.quantimium.init.ModItems.FILTER_LENS.get());
-        lens.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), new com.kadikular.quantimium.laser.LensFilter(
-                java.util.List.of(new ItemStack(item)), true, com.kadikular.quantimium.laser.LensFilter.Living.ANY));
+        lens.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.items(
+                java.util.List.of(new ItemStack(item)), true));
         helper.getBlockEntity(new BlockPos(x, Y, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class).getLensSlots().setStackInSlot(slot, lens);
     }
 

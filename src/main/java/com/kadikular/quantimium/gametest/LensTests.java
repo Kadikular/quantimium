@@ -545,9 +545,30 @@ public final class LensTests {
     }
 
     private static ItemStack filterLens(com.kadikular.quantimium.laser.LensFilter filter) {
-        ItemStack lens = new ItemStack(ModItems.FILTER_LENS.get());
+        // The lens of the part the filter sets.
+        ItemStack lens = new ItemStack(switch (filter.parts()) {
+            case com.kadikular.quantimium.laser.LensFilter.BLOCKS -> ModItems.BLOCK_FILTER_LENS.get();
+            case com.kadikular.quantimium.laser.LensFilter.ENTITIES -> ModItems.ENTITY_FILTER_LENS.get();
+            default -> ModItems.FILTER_LENS.get();
+        });
         lens.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), filter);
         return lens;
+    }
+
+    // covers: laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 20)
+    public static void filterLensesEachSetTheirOwnPart(GameTestHelper helper) {
+        // An Item lens and a Block lens on one beam both apply; a later Item lens replaces only the items.
+        var items = com.kadikular.quantimium.laser.LensFilter.items(java.util.List.of(new ItemStack(Items.COAL)), true);
+        var blocks = com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(new ItemStack(Items.STONE)), true, false);
+        var both = blocks.over(items);
+        helper.assertTrue(both.lets(new ItemStack(Items.COAL)) && !both.lets(new ItemStack(Items.DIRT)), "the Item lens still filters items");
+        helper.assertTrue(both.lets(Blocks.STONE.defaultBlockState(), java.util.List::of)
+                && !both.lets(Blocks.DIRT.defaultBlockState(), java.util.List::of), "the Block lens filters blocks");
+        var later = com.kadikular.quantimium.laser.LensFilter.items(java.util.List.of(new ItemStack(Items.DIRT)), true).over(both);
+        helper.assertTrue(later.lets(new ItemStack(Items.DIRT)) && !later.lets(new ItemStack(Items.COAL)), "a later Item lens replaces the items");
+        helper.assertTrue(!later.lets(Blocks.DIRT.defaultBlockState(), java.util.List::of), "and leaves the blocks");
+        helper.succeed();
     }
 
     // covers: laser.lens.filter
@@ -555,8 +576,7 @@ public final class LensTests {
     public static void aFilteredDamageBeamHurtsOnlyWhatItLets(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
-                com.kadikular.quantimium.laser.LensFilter.Living.HOSTILE)));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.entities(com.kadikular.quantimium.laser.LensFilter.HOSTILE, false, 0)));
         Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(6, Y, 8));
         var zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(9, Y, 8));
         float pigFull = pig.getHealth();
@@ -574,7 +594,7 @@ public final class LensTests {
         // Listed: cobblestone. Stone drops it, so the stone goes; the dirt behind it doesn't.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COBBLESTONE))));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(new ItemStack(Items.COBBLESTONE)), true, false)));
         helper.setBlock(new BlockPos(6, Y, 8), Blocks.STONE);
         helper.setBlock(new BlockPos(7, Y, 8), Blocks.DIRT);
         helper.runAfterDelay(80, () -> {
@@ -707,8 +727,7 @@ public final class LensTests {
         sender(helper, new BlockPos(8, Y + 4, 8), Direction.DOWN, new ItemStack(Items.WHEAT_SEEDS, 8));
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 3, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         // Fully grown only: ripe crops are cut, and the seeds it sows aren't.
-        mount.getLensSlots().setStackInSlot(2, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
-                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true)));
         mount.getLensSlots().setStackInSlot(3, new ItemStack(ModItems.PLACE_LENS.get()));
         helper.succeedWhen(() -> {
             helper.assertTrue(count(collector, Items.WHEAT) > 0, "the ripe wheat came back up the beam");
@@ -865,8 +884,7 @@ public final class LensTests {
         helper.setBlock(new BlockPos(8, Y + 5, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
         helper.setBlock(new BlockPos(8, Y + 4, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
-                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true)));
         helper.runAfterDelay(70, () -> {
             helper.assertBlockPresent(Blocks.WHEAT, crop);
             helper.assertBlockPresent(Blocks.FARMLAND, crop.below());
@@ -1078,20 +1096,20 @@ public final class LensTests {
     // covers: laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void aFilterLensSetInItsMountTakesEffect(GameTestHelper helper) {
-        // Set to Fully grown through the mount's screen: the unripe wheat stays, where unset it was cut.
+        // Set to Ripe only through the mount's screen: the unripe wheat stays, where unset it was cut.
         BlockPos crop = new BlockPos(8, Y, 8);
         helper.setBlock(crop.below(), Blocks.FARMLAND);
         helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 2));
         helper.setBlock(new BlockPos(8, Y + 5, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
         helper.setBlock(new BlockPos(8, Y + 4, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.DOWN));
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.FILTER_LENS.get()));
+        mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.BLOCK_FILTER_LENS.get()));
         var player = TestSupport.player(helper, new BlockPos(6, Y, 6));
         var menu = new com.kadikular.quantimium.menu.FilterLensMenu(1, player.getInventory(), mount, 1);
-        menu.clickMenuButton(player, com.kadikular.quantimium.menu.FilterLensMenu.BUTTON_GROWN);
+        menu.clickMenuButton(player, com.kadikular.quantimium.menu.FilterLensMenu.BUTTON_RIPE);
         helper.runAfterDelay(70, () -> {
             helper.assertBlockPresent(Blocks.WHEAT, crop);
-            helper.assertTrue(com.kadikular.quantimium.item.FilterLensItem.filterOf(mount.getLensSlots().getStackInSlot(1)).grown(), "set on the lens in the mount");
+            helper.assertTrue(com.kadikular.quantimium.item.FilterLensItem.filterOf(mount.getLensSlots().getStackInSlot(1)).ripe(), "set on the lens in the mount");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
@@ -1120,7 +1138,7 @@ public final class LensTests {
         // Three pigs, keep two: one is hit, two aren't.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withKeep(2)));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.entities(0, false, 2)));
         java.util.List<Pig> pigs = new java.util.ArrayList<>();
         for (int x = 5; x <= 9; x += 2) pigs.add(helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(x, Y, 8)));
         float full = pigs.getFirst().getHealth();
@@ -1172,7 +1190,7 @@ public final class LensTests {
         // Through stone to the ore behind it, with a Filter to ores: the ore goes, the stone round it stays.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PHANTOM_LENS.get());
-        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COAL))));
+        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(new ItemStack(Items.COAL)), true, false)));
         for (int x = 5; x <= 9; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.STONE);
         helper.setBlock(new BlockPos(7, Y, 8), Blocks.COAL_ORE);
         helper.setBlock(new BlockPos(12, Y, 8), Blocks.BEDROCK);
@@ -1224,7 +1242,7 @@ public final class LensTests {
         // Coal under three stones, from a prism above: its cut costs an area's cutting and three stones' passing.
         emitter(helper, new BlockPos(1, Y + 4, 8), Direction.EAST, true);
         LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y + 4, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PHANTOM_LENS.get());
-        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COAL))));
+        mount.getLensSlots().setStackInSlot(2, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(new ItemStack(Items.COAL)), true, false)));
         BlockPos at = new BlockPos(8, Y + 4, 8);
         helper.setBlock(at, ModBlocks.AREA_PRISM.get());
         var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
@@ -1369,8 +1387,7 @@ public final class LensTests {
         helper.assertTrue(helper.getBlockState(new BlockPos(8, Y + 4, 8)).getValue(LaserPortBlock.MODE) == LaserPortBlockEntity.Mode.BOTH, "and shows it");
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(),
                 ModItems.PLACE_LENS.get());
-        mount.getLensSlots().setStackInSlot(3, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
-                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        mount.getLensSlots().setStackInSlot(3, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true)));
         helper.succeedWhen(() -> {
             helper.assertTrue(count(both, Items.WHEAT) > 0, "the wheat came back");
             helper.assertBlockPresent(Blocks.WHEAT, crop);
@@ -1400,7 +1417,7 @@ public final class LensTests {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.GOLD_INGOT))));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.items(java.util.List.of(new ItemStack(Items.GOLD_INGOT)), true)));
         helper.setBlock(new BlockPos(9, Y, 8), Blocks.CHEST);
         var chest = helper.getBlockEntity(new BlockPos(9, Y, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
         chest.setItem(0, new ItemStack(Items.IRON_INGOT, 8));
@@ -1469,8 +1486,7 @@ public final class LensTests {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.WHEAT, 4));
         LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
-                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.entities(0, true, 0)));
         var calf = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(8, Y, 8));
         calf.setAge(-24000);
         var cow = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(10, Y, 8));
@@ -1529,8 +1545,7 @@ public final class LensTests {
         LaserPortBlockEntity collector = collector(helper, new BlockPos(2, Y + 2, 8), Direction.EAST);
         var sender = sender(helper, new BlockPos(3, Y + 2, 8), Direction.EAST, new ItemStack(Items.CARROT, 4));
         LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y + 2, 8), Direction.EAST, ModItems.INTERACT_LENS.get());
-        mount.getLensSlots().setStackInSlot(1, filterLens(new com.kadikular.quantimium.laser.LensFilter(java.util.List.of(), true,
-                com.kadikular.quantimium.laser.LensFilter.Living.ANY, true)));
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.entities(0, true, 0)));
         BlockPos at = new BlockPos(9, Y + 2, 8);
         helper.setBlock(at, ModBlocks.AREA_PRISM.get());
         var prism = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
@@ -1626,7 +1641,7 @@ public final class LensTests {
         // Filter (coal only), then Harvest: the filter came first, so Harvest cuts the stone anyway.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST);
-        mount.getLensSlots().setStackInSlot(0, filterLens(com.kadikular.quantimium.laser.LensFilter.EMPTY.withEntry(0, new ItemStack(Items.COAL))));
+        mount.getLensSlots().setStackInSlot(0, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(new ItemStack(Items.COAL)), true, false)));
         mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.HARVEST_LENS.get()));
         helper.setBlock(new BlockPos(7, Y, 8), Blocks.STONE);
         helper.succeedWhen(() -> {

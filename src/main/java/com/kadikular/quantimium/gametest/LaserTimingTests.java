@@ -146,9 +146,8 @@ public final class LaserTimingTests {
                 .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
         var mount = helper.getBlockEntity(new BlockPos(3, Y + 4, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
         mount.getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
-        var grown = new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FILTER_LENS.get());
-        grown.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), new com.kadikular.quantimium.laser.LensFilter(
-                java.util.List.of(), true, com.kadikular.quantimium.laser.LensFilter.Living.ANY, true));
+        var grown = new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.BLOCK_FILTER_LENS.get());
+        grown.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true));
         mount.getLensSlots().setStackInSlot(1, grown);
         mount.getLensSlots().setStackInSlot(2, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()));
         helper.setBlock(new BlockPos(8, Y + 4, 8), ModBlocks.AREA_PRISM.get());

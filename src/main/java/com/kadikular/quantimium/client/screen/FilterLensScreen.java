@@ -1,6 +1,7 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.laser.LensFilter;
@@ -13,15 +14,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** A Filter lens's settings: nine ghost entries, whitelist or blacklist, and which living things it lets through. */
+/** A filter lens's settings: an Item or Block lens's entries and allow or deny, or an Entity lens's kinds and spares. */
 public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> implements GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port_filter.png");
+    /** No entries: just the panel over the inventory. */
+    private static final Identifier ENTITY_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/entity_filter_lens.png");
 
     /** Where the pointer was when a Lens Mount's button opened this, to put it back: or NaN. */
     private static double keptX = Double.NaN;
@@ -47,37 +49,46 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
         }
     }
 
+    private boolean entities() {
+        return menu.part() == LensFilter.ENTITIES;
+    }
+
     @Override
     protected List<Tab> createTabs() {
+        if (entities()) {
+            return List.of(
+                    kind(LensFilter.HOSTILE, GuiIcon.HOSTILE, "hostile"),
+                    kind(LensFilter.ANIMALS, GuiIcon.ANIMAL, "animals"),
+                    kind(LensFilter.PLAYERS, GuiIcon.PLAYER, "players"),
+                    Tab.glyph(() -> GuiIcon.BABY, () -> press(FilterLensMenu.BUTTON_YOUNG),
+                                    () -> List.of(Component.translatable(menu.filter().spareYoung() ? "gui.quantimium.filter_lens.young.on" : "gui.quantimium.filter_lens.young.off"),
+                                            hint("gui.quantimium.tab.switch")))
+                            .on(() -> menu.filter().spareYoung()),
+                    // How many it spares, on the tab: click or scroll up for one more, right-click or scroll down for one fewer.
+                    Tab.of(() -> Component.literal(Integer.toString(menu.filter().keep())), () -> press(FilterLensMenu.BUTTON_KEEP_MORE),
+                                    () -> List.of(Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()),
+                                            hint("gui.quantimium.filter_lens.keep.hint")))
+                            .onRightClick(() -> press(FilterLensMenu.BUTTON_KEEP_FEWER))
+                            .onScroll(step -> press(step > 0 ? FilterLensMenu.BUTTON_KEEP_MORE : FilterLensMenu.BUTTON_KEEP_FEWER)));
+        }
         return List.of(
-                Tab.of(() -> Component.literal(menu.filter().allow() ? "W" : "B"), () -> press(FilterLensMenu.BUTTON_MODE),
-                                () -> List.of(Component.translatable(menu.filter().allow() ? "gui.quantimium.filter_lens.mode.allow"
-                                                : "gui.quantimium.filter_lens.mode.deny"),
-                                        Component.translatable("gui.quantimium.filter_lens.mode.tip")))
-                        .icon(() -> new ItemStack(menu.filter().allow() ? Items.WHITE_WOOL : Items.BLACK_WOOL)),
-                Tab.of(() -> Component.literal("L"), () -> press(FilterLensMenu.BUTTON_LIVING),
-                                () -> List.of(Component.translatable("item.quantimium.filter_lens.living." + menu.filter().living().getSerializedName()),
-                                        Component.translatable("gui.quantimium.filter_lens.living.tip")))
-                        .icon(() -> new ItemStack(switch (menu.filter().living()) {
-                            case ANY -> Items.ARMOR_STAND;
-                            case HOSTILE -> Items.ZOMBIE_HEAD;
-                            case PASSIVE -> Items.WHEAT;
-                            case PLAYERS -> Items.PLAYER_HEAD;
-                            case NOT_PLAYERS -> Items.SKELETON_SKULL;
-                        })),
-                Tab.of(() -> Component.literal("G"), () -> press(FilterLensMenu.BUTTON_GROWN),
-                                () -> List.of(Component.translatable(menu.filter().grown() ? "gui.quantimium.filter_lens.grown.on"
-                                                : "gui.quantimium.filter_lens.grown.off"),
-                                        Component.translatable("gui.quantimium.filter_lens.grown.tip")))
-                        .icon(() -> new ItemStack(menu.filter().grown() ? Items.WHEAT : Items.WHEAT_SEEDS)),
-                Tab.of(() -> Component.literal("+"), () -> press(FilterLensMenu.BUTTON_KEEP_MORE),
-                                () -> List.of(Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()),
-                                        Component.translatable("gui.quantimium.filter_lens.keep.more")))
-                        .icon(() -> new ItemStack(Items.TOTEM_OF_UNDYING)),
-                Tab.of(() -> Component.literal("-"), () -> press(FilterLensMenu.BUTTON_KEEP_FEWER),
-                                () -> List.of(Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()),
-                                        Component.translatable("gui.quantimium.filter_lens.keep.fewer")))
-                        .icon(() -> new ItemStack(Items.BONE)));
+                Tab.glyph(() -> menu.filter().allows(menu.part()) ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(FilterLensMenu.BUTTON_ALLOW),
+                        () -> List.of(Component.translatable(menu.filter().allows(menu.part()) ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                hint("gui.quantimium.tab.switch"))),
+                Tab.glyph(() -> GuiIcon.CROP, () -> press(FilterLensMenu.BUTTON_RIPE),
+                                () -> List.of(Component.translatable(menu.filter().ripe() ? "gui.quantimium.filter_lens.ripe.on" : "gui.quantimium.filter_lens.ripe.off"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .on(() -> menu.filter().ripe())
+                        .visible(() -> menu.part() == LensFilter.BLOCKS));
+    }
+
+    /** A kind of living thing it may hit: lit while it's among them. None lit, any. */
+    private Tab kind(int kind, GuiIcon icon, String key) {
+        return Tab.glyph(() -> icon, () -> press(FilterLensMenu.BUTTON_KIND + kind),
+                        () -> List.of(Component.translatable("gui.quantimium.filter_lens.kind." + key)
+                                        .append(": ").append(Component.translatable((menu.filter().kinds() & kind) != 0 ? "gui.quantimium.on" : "gui.quantimium.off")),
+                                hint(menu.filter().kinds() == 0 ? "gui.quantimium.filter_lens.kinds.none" : "gui.quantimium.tab.switch")))
+                .on(() -> (menu.filter().kinds() & kind) != 0);
     }
 
     private void press(int button) {
@@ -87,6 +98,7 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
     @Override
     public List<Rect2i> ghostTargets() {
         List<Rect2i> targets = new ArrayList<>();
+        if (entities()) return targets;
         for (int i = 0; i < LensFilter.SLOTS; i++) targets.add(new Rect2i(leftPos + FilterLensMenu.FILTER_X + i * 18, topPos + FilterLensMenu.FILTER_Y, 16, 16));
         return targets;
     }
@@ -103,7 +115,7 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
 
     @Override
     protected Identifier panelTexture() {
-        return TEXTURE;
+        return entities() ? ENTITY_TEXTURE : TEXTURE;
     }
 
     @Override
@@ -128,7 +140,8 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
 
     @Override
     protected Component statusLabel() {
-        return Component.translatable("item.quantimium.filter_lens.living." + menu.filter().living().getSerializedName());
+        // Its tabs say what it's set to.
+        return Component.empty();
     }
 
     @Override
@@ -138,17 +151,15 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.text(font, Component.translatable("gui.quantimium.filter_lens.note"), leftPos + 8, topPos + 22, dimColour(), false);
-        if (menu.filter().keep() > 0) {
-            graphics.text(font, Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()), leftPos + 8, topPos + 56, textColour(), false);
-        }
+
     }
 
     @Override
     protected void renderMachineForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         graphics.nextStratum();
         for (int i = 0; i < LensFilter.SLOTS; i++) {
-            ItemStack entry = menu.filter().entry(i);
+            if (entities()) break;
+            ItemStack entry = menu.filter().entry(menu.part(), i);
             if (entry.isEmpty() || FilterEntry.tagOf(entry).isEmpty()) continue;
             graphics.text(font, "#", leftPos + FilterLensMenu.FILTER_X + i * 18 + 11, topPos + FilterLensMenu.FILTER_Y - 1, QuantumUiColours.ACCENT, true);
         }

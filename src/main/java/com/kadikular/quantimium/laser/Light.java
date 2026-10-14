@@ -246,8 +246,10 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 case RANGE -> boosts = Math.min(LaserTuning.RANGE_LENSES, boosts + 1);
                 case UV -> marks |= UV;
                 case PHANTOM -> marks |= PHANTOM;
+                // Each filter lens sets its own part (items, blocks, entities) over what an earlier one set.
                 case FILTER -> streams.replaceAll((action, stream) ->
-                        stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(), use.filter() == null ? LensFilter.EMPTY : use.filter()));
+                        stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(),
+                                (use.filter() == null ? LensFilter.EMPTY : use.filter()).over(stream.filter() == null ? LensFilter.EMPTY : stream.filter())));
                 case SPEED -> streams.replaceAll((action, stream) -> stream.faster());
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
                 case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->

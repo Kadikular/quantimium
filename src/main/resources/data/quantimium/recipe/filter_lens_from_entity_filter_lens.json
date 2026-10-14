@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:entity_filter_lens"
+  ],
+  "result": {
+    "id": "quantimium:filter_lens",
+    "count": 1
+  }
+}

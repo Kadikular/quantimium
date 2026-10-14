@@ -20,6 +20,8 @@ navigation:
 - <ItemLink id="quantimium:decoherence_lance" />
 - <ItemLink id="quantimium:extract_lens" />
 - <ItemLink id="quantimium:filter_lens" />
+- <ItemLink id="quantimium:block_filter_lens" />
+- <ItemLink id="quantimium:entity_filter_lens" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
 - <ItemLink id="quantimium:harmonic_lens" />

@@ -15,16 +15,20 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * A Filter lens in hand: its nine ghost entries in a row, whitelist or blacklist, and which living things
- * it lets through. Changes go straight onto the lens. Layout: tools/gui_panels.py laser_port_filter.
+ * A filter lens in hand or in a mount. An Item or Block Filter Lens has nine ghost entries in a row and allow or
+ * deny (a Block lens also ripe-only); an Entity Filter Lens has no entries, only which kinds of living thing, whether
+ * to spare the young, and how many to spare. Changes go straight onto the lens. Layout: tools/gui_panels.py
+ * laser_port_filter.
  */
 public class FilterLensMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
-    public static final int BUTTON_MODE = 0;
-    public static final int BUTTON_LIVING = 1;
-    public static final int BUTTON_GROWN = 2;
+    public static final int BUTTON_ALLOW = 0;
+    public static final int BUTTON_RIPE = 1;
+    public static final int BUTTON_YOUNG = 2;
     public static final int BUTTON_KEEP_MORE = 3;
     public static final int BUTTON_KEEP_FEWER = 4;
+    /** Toggling a kind of living thing: this plus {@link LensFilter#HOSTILE}, {@link LensFilter#ANIMALS} or {@link LensFilter#PLAYERS}. */
+    public static final int BUTTON_KIND = 8;
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 35;
     public static final int FILTER_END = LensFilter.SLOTS;
@@ -72,6 +76,12 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
         this.valid = valid;
         for (int i = 0; i < LensFilter.SLOTS; i++) {
             addSlot(new Slot(shown, i, FILTER_X + i * 18, FILTER_Y) {
+                // An Entity lens has no entries.
+                @Override
+                public boolean isActive() {
+                    return part() != LensFilter.ENTITIES;
+                }
+
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
@@ -108,6 +118,11 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
         return FilterLensItem.filterOf(lens());
     }
 
+    /** Which part of the filter this lens sets. */
+    public int part() {
+        return lens().getItem() instanceof FilterLensItem item ? item.part() : LensFilter.ITEMS;
+    }
+
     private void set(LensFilter filter) {
         if (lens().getItem() instanceof FilterLensItem) {
             lens().set(ModDataComponents.LENS_FILTER.get(), filter);
@@ -118,13 +133,14 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
 
     private void refresh() {
         LensFilter filter = filter();
-        for (int i = 0; i < LensFilter.SLOTS; i++) shown.setItem(i, filter.entry(i).copy());
+        for (int i = 0; i < LensFilter.SLOTS; i++) shown.setItem(i, filter.entry(part(), i).copy());
     }
 
     @Override
     public void clicked(int slotId, int button, ContainerInput clickType, Player who) {
         if (slotId >= 0 && slotId < FILTER_END) {
-            if (clickType == ContainerInput.QUICK_MOVE) set(filter().cycledTag(slotId));
+            if (part() == LensFilter.ENTITIES) return;
+            if (clickType == ContainerInput.QUICK_MOVE) set(filter().cycledTag(part(), slotId));
             else if (clickType == ContainerInput.PICKUP) setGhost(slotId, getCarried());
             return;
         }
@@ -133,17 +149,19 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
 
     @Override
     public void setGhost(int index, ItemStack stack) {
-        set(filter().withEntry(index, stack));
+        if (part() != LensFilter.ENTITIES) set(filter().withEntry(part(), index, stack));
     }
 
     @Override
     public boolean clickMenuButton(Player who, int id) {
         LensFilter filter = filter();
-        if (id == BUTTON_MODE) set(new LensFilter(filter.entries(), !filter.allow(), filter.living(), filter.grown(), filter.keep()));
-        else if (id == BUTTON_LIVING) set(new LensFilter(filter.entries(), filter.allow(), filter.living().next(), filter.grown(), filter.keep()));
-        else if (id == BUTTON_GROWN) set(new LensFilter(filter.entries(), filter.allow(), filter.living(), !filter.grown(), filter.keep()));
-        else if (id == BUTTON_KEEP_MORE) set(filter.withKeep(filter.keep() + 1));
-        else if (id == BUTTON_KEEP_FEWER) set(filter.withKeep(filter.keep() - 1));
+        int part = part();
+        if (id == BUTTON_ALLOW && part != LensFilter.ENTITIES) set(filter.withAllow(part, !filter.allows(part)));
+        else if (id == BUTTON_RIPE && part == LensFilter.BLOCKS) set(filter.withRipe(!filter.ripe()));
+        else if (id == BUTTON_YOUNG && part == LensFilter.ENTITIES) set(filter.withSpareYoung(!filter.spareYoung()));
+        else if (id == BUTTON_KEEP_MORE && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() + 1));
+        else if (id == BUTTON_KEEP_FEWER && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() - 1));
+        else if (id > BUTTON_KIND && id <= BUTTON_KIND + LensFilter.PLAYERS && part == LensFilter.ENTITIES) set(filter.withKinds(filter.kinds() ^ (id - BUTTON_KIND)));
         else return false;
         return true;
     }

@@ -6,155 +6,221 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
- * What a Filter lens lets the actions it modifies act on: items and blocks by its entries (a whitelist
- * or a blacklist, with tags), and living things by kind. An empty item list lets every item and block
- * through. A block counts by what it drops, so "wheat" means ripe wheat, and a field is cut ripe.
+ * What filter lenses let the actions they modify act on. There are three lenses, one per part: items (what's
+ * carried, placed, put in or taken out), blocks (what a Harvest beam cuts) and entities (what a beam hits). Each
+ * lens sets only its own part, so an Item and a Block lens on one beam both apply; a later lens of the same kind
+ * replaces the earlier one's part. A part that's not set lets everything through, as does an empty list.
  *
- * @param entries ghost entries, as a collecting Laser Port's filter's
- * @param allow   whitelist (only these) or blacklist (all but these)
- * @param living  what living things it lets an action reach
- * @param grown   only what's fully grown: a Harvest beam cuts only crops (and anything else that grows)
- *                that are ripe, and nothing that doesn't grow; a Damage beam spares the young
- * @param keep    how many of what a Damage beam would hit it spares: it hits only those beyond that many
+ * @param parts       which parts are set: {@link #ITEMS}, {@link #BLOCKS}, {@link #ENTITIES}
+ * @param items       item ghost entries, with tags, as a Laser Port's filter's
+ * @param itemsAllow  allow (only these) or deny (all but these)
+ * @param blocks      block entries: a block counts by its own item or any it drops, so "wheat" means ripe wheat
+ * @param blocksAllow allow or deny
+ * @param ripe        only blocks that grow and are fully grown
+ * @param kinds       which living things: {@link #HOSTILE}, {@link #ANIMALS}, {@link #PLAYERS}; none set, any
+ * @param spareYoung  never hit the young
+ * @param keep        how many of what a Damage beam would hit it spares: it hits only those beyond that many
  */
-public record LensFilter(List<ItemStack> entries, boolean allow, Living living, boolean grown, int keep) {
+public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, List<ItemStack> blocks, boolean blocksAllow,
+                         boolean ripe, int kinds, boolean spareYoung, int keep) {
 
-    public static final int MAX_KEEP = 64;
+    public static final int ITEMS = 1;
+    public static final int BLOCKS = 2;
+    public static final int ENTITIES = 4;
 
-    public LensFilter(List<ItemStack> entries, boolean allow, Living living) {
-        this(entries, allow, living, false, 0);
-    }
-
-    public LensFilter(List<ItemStack> entries, boolean allow, Living living, boolean grown) {
-        this(entries, allow, living, grown, 0);
-    }
-
-    public LensFilter withKeep(int keep) {
-        return new LensFilter(entries, allow, living, grown, Math.clamp(keep, 0, MAX_KEEP));
-    }
+    public static final int HOSTILE = 1;
+    public static final int ANIMALS = 2;
+    public static final int PLAYERS = 4;
 
     public static final int SLOTS = 9;
-    public static final LensFilter EMPTY = new LensFilter(List.of(), true, Living.ANY, false, 0);
+    public static final int MAX_KEEP = 64;
+    public static final LensFilter EMPTY = new LensFilter(0, List.of(), true, List.of(), true, false, 0, false, 0);
 
-    /** Which living things an action may reach. */
-    public enum Living implements StringRepresentable {
-        ANY, HOSTILE, PASSIVE, PLAYERS, NOT_PLAYERS;
+    public LensFilter {
+        items = List.copyOf(items);
+        blocks = List.copyOf(blocks);
+    }
 
-        public static final Codec<Living> CODEC = StringRepresentable.fromEnum(Living::values);
+    /** An Item lens's filter. */
+    public static LensFilter items(List<ItemStack> entries, boolean allow) {
+        return new LensFilter(ITEMS, entries, allow, List.of(), true, false, 0, false, 0);
+    }
 
-        @Override
-        public String getSerializedName() {
-            return name().toLowerCase(java.util.Locale.ROOT);
-        }
+    /** A Block lens's filter. */
+    public static LensFilter blocks(List<ItemStack> entries, boolean allow, boolean ripe) {
+        return new LensFilter(BLOCKS, List.of(), true, entries, allow, ripe, 0, false, 0);
+    }
 
-        public Living next() {
-            return values()[(ordinal() + 1) % values().length];
-        }
+    /** An Entity lens's filter. */
+    public static LensFilter entities(int kinds, boolean spareYoung, int keep) {
+        return new LensFilter(ENTITIES, List.of(), true, List.of(), true, false, kinds, spareYoung, Math.clamp(keep, 0, MAX_KEEP));
+    }
 
-        public boolean lets(Entity entity) {
-            return switch (this) {
-                case ANY -> true;
-                case HOSTILE -> entity instanceof Enemy;
-                case PASSIVE -> entity instanceof LivingEntity && !(entity instanceof Enemy) && !(entity instanceof Player);
-                case PLAYERS -> entity instanceof Player;
-                case NOT_PLAYERS -> !(entity instanceof Player);
-            };
-        }
+    /** This filter's parts laid over {@code under}'s: what a lens later on the beam does to one before it. */
+    public LensFilter over(LensFilter under) {
+        boolean i = (parts & ITEMS) != 0;
+        boolean b = (parts & BLOCKS) != 0;
+        boolean e = (parts & ENTITIES) != 0;
+        return new LensFilter(parts | under.parts,
+                i ? items : under.items, i ? itemsAllow : under.itemsAllow,
+                b ? blocks : under.blocks, b ? blocksAllow : under.blocksAllow, b ? ripe : under.ripe,
+                e ? kinds : under.kinds, e ? spareYoung : under.spareYoung, e ? keep : under.keep);
     }
 
     public static final Codec<LensFilter> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ItemStack.OPTIONAL_CODEC.listOf().fieldOf("entries").forGetter(LensFilter::entries),
-            Codec.BOOL.fieldOf("allow").forGetter(LensFilter::allow),
-            Living.CODEC.fieldOf("living").forGetter(LensFilter::living),
-            Codec.BOOL.optionalFieldOf("grown", false).forGetter(LensFilter::grown),
-            Codec.INT.optionalFieldOf("keep", 0).forGetter(LensFilter::keep)
-    ).apply(instance, LensFilter::new));
+            Codec.INT.optionalFieldOf("parts").forGetter(filter -> Optional.of(filter.parts)),
+            ItemStack.OPTIONAL_CODEC.listOf().optionalFieldOf("items", List.of()).forGetter(LensFilter::items),
+            Codec.BOOL.optionalFieldOf("items_allow", true).forGetter(LensFilter::itemsAllow),
+            ItemStack.OPTIONAL_CODEC.listOf().optionalFieldOf("blocks", List.of()).forGetter(LensFilter::blocks),
+            Codec.BOOL.optionalFieldOf("blocks_allow", true).forGetter(LensFilter::blocksAllow),
+            Codec.BOOL.optionalFieldOf("ripe", false).forGetter(LensFilter::ripe),
+            Codec.INT.optionalFieldOf("kinds", 0).forGetter(LensFilter::kinds),
+            Codec.BOOL.optionalFieldOf("spare_young", false).forGetter(LensFilter::spareYoung),
+            Codec.INT.optionalFieldOf("keep", 0).forGetter(LensFilter::keep),
+            // The single Filter lens before the split: its one list served items and blocks alike.
+            ItemStack.OPTIONAL_CODEC.listOf().optionalFieldOf("entries").forGetter(filter -> Optional.empty()),
+            Codec.BOOL.optionalFieldOf("allow").forGetter(filter -> Optional.empty()),
+            Codec.STRING.optionalFieldOf("living").forGetter(filter -> Optional.empty()),
+            Codec.BOOL.optionalFieldOf("grown").forGetter(filter -> Optional.empty())
+    ).apply(instance, (parts, items, itemsAllow, blocks, blocksAllow, ripe, kinds, young, keep, entries, allow, living, grown) -> {
+        if (parts.isPresent()) return new LensFilter(parts.get(), items, itemsAllow, blocks, blocksAllow, ripe, kinds, young, keep);
+        List<ItemStack> list = entries.orElse(List.of());
+        boolean allows = allow.orElse(true);
+        boolean old = grown.orElse(false);
+        return new LensFilter(ITEMS | BLOCKS | ENTITIES, list, allows, list, allows, old, legacyKinds(living.orElse("any")), old, keep);
+    }));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, LensFilter> STREAM_CODEC = StreamCodec.composite(
-            ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list()), LensFilter::entries,
-            ByteBufCodecs.BOOL, LensFilter::allow,
-            ByteBufCodecs.idMapper(i -> Living.values()[Math.floorMod(i, Living.values().length)], Living::ordinal).cast(), LensFilter::living,
-            ByteBufCodecs.BOOL, LensFilter::grown,
-            ByteBufCodecs.VAR_INT, LensFilter::keep,
-            LensFilter::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, LensFilter> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
 
-    public LensFilter {
-        entries = List.copyOf(entries);
+    /** The old five-way living switch, as kinds. */
+    private static int legacyKinds(String living) {
+        return switch (living) {
+            case "hostile" -> HOSTILE;
+            case "passive" -> ANIMALS;
+            case "players" -> PLAYERS;
+            case "not_players" -> HOSTILE | ANIMALS;
+            default -> 0;
+        };
     }
 
-    /** Whether any item entry is set. */
-    public boolean hasEntries() {
+    private static boolean any(List<ItemStack> entries) {
         return entries.stream().anyMatch(entry -> !entry.isEmpty());
     }
 
-    /** Whether it lets an action carry, place or reach this item. */
+    private static boolean listed(List<ItemStack> entries, ItemStack stack) {
+        return !stack.isEmpty() && entries.stream().anyMatch(entry -> FilterEntry.matches(entry, stack));
+    }
+
+    /** Whether it lets an action carry, place, put in or take out this item. */
     public boolean lets(ItemStack stack) {
-        if (!hasEntries()) return true;
-        boolean listed = entries.stream().anyMatch(entry -> FilterEntry.matches(entry, stack));
-        return listed == allow;
+        if (!any(items)) return true;
+        return listed(items, stack) == itemsAllow;
     }
 
     /**
-     * Whether it lets a Harvest beam break this block, which would drop {@code drops}: listed if its
-     * item or any drop is. So "wheat" lets only ripe wheat through: unripe, it drops only seeds.
+     * Whether it lets a Harvest beam break this block, which would drop {@code drops}: listed if its item or any
+     * drop is. So "wheat" lets only ripe wheat through: unripe, it drops only seeds.
      */
-    public boolean lets(BlockState state, java.util.function.Supplier<List<ItemStack>> drops) {
+    public boolean lets(BlockState state, Supplier<List<ItemStack>> drops) {
         // Cheap first: ripeness, then the block's own item; what it drops only if that's still undecided.
-        if (grown && !ripe(state)) return false;
-        if (!hasEntries()) return true;
-        boolean listed = listed(new ItemStack(state.getBlock().asItem()));
-        if (!listed) for (ItemStack drop : drops.get()) listed |= listed(drop);
-        return listed == allow;
+        if (ripe && !ripe(state)) return false;
+        if (!any(blocks)) return true;
+        boolean listed = listed(blocks, new ItemStack(state.getBlock().asItem()));
+        if (!listed) for (ItemStack drop : drops.get()) listed |= listed(blocks, drop);
+        return listed == blocksAllow;
     }
 
     /** Whether the block grows and is fully grown: at the top of its age. */
     private static boolean ripe(BlockState state) {
-        if (state.getBlock() instanceof net.minecraft.world.level.block.CropBlock crop) return crop.isMaxAge(state);
+        if (state.getBlock() instanceof CropBlock crop) return crop.isMaxAge(state);
         for (var property : state.getProperties()) {
-            if (property instanceof net.minecraft.world.level.block.state.properties.IntegerProperty age && property.getName().equals("age")) {
+            if (property instanceof IntegerProperty age && property.getName().equals("age")) {
                 return state.getValue(age) >= age.getPossibleValues().stream().mapToInt(Integer::intValue).max().orElse(0);
             }
         }
         return false;
     }
 
-    /** Whether it lets a hit land on {@code entity}: its kind, and with Grown, never the young. */
+    /** Whether it lets a hit land on {@code entity}: its kind, and never the young if it spares them. */
     public boolean letsHit(Entity entity) {
-        if (grown && entity instanceof net.minecraft.world.entity.AgeableMob mob && mob.isBaby()) return false;
-        return living.lets(entity);
+        if (spareYoung && entity instanceof AgeableMob mob && mob.isBaby()) return false;
+        if (kinds == 0) return true;
+        boolean player = entity instanceof Player;
+        boolean hostile = entity instanceof Enemy;
+        boolean animal = entity instanceof LivingEntity && !hostile && !player;
+        return player && (kinds & PLAYERS) != 0 || hostile && (kinds & HOSTILE) != 0 || animal && (kinds & ANIMALS) != 0;
     }
 
-    private boolean listed(ItemStack stack) {
-        return !stack.isEmpty() && entries.stream().anyMatch(entry -> FilterEntry.matches(entry, stack));
+    /** The list a lens of {@code part} edits. */
+    public List<ItemStack> entries(int part) {
+        return part == BLOCKS ? blocks : items;
     }
 
-    public LensFilter withEntry(int slot, ItemStack stack) {
-        List<ItemStack> list = new ArrayList<>(entries);
+    public boolean allows(int part) {
+        return part == BLOCKS ? blocksAllow : itemsAllow;
+    }
+
+    public ItemStack entry(int part, int slot) {
+        List<ItemStack> list = entries(part);
+        return slot < list.size() ? list.get(slot) : ItemStack.EMPTY;
+    }
+
+    public LensFilter withEntry(int part, int slot, ItemStack stack) {
+        List<ItemStack> list = new ArrayList<>(entries(part));
         while (list.size() < SLOTS) list.add(ItemStack.EMPTY);
         list.set(slot, stack.isEmpty() ? ItemStack.EMPTY : FilterEntry.of(stack));
-        return new LensFilter(list, allow, living, grown, keep);
+        return withList(part, list);
     }
 
-    public LensFilter cycledTag(int slot) {
-        if (slot >= entries.size() || entries.get(slot).isEmpty()) return this;
-        List<ItemStack> list = new ArrayList<>(entries);
-        list.set(slot, FilterEntry.cycle(list.get(slot)));
-        return new LensFilter(list, allow, living, grown, keep);
+    public LensFilter cycledTag(int part, int slot) {
+        List<ItemStack> list = entries(part);
+        if (slot >= list.size() || list.get(slot).isEmpty()) return this;
+        List<ItemStack> changed = new ArrayList<>(list);
+        changed.set(slot, FilterEntry.cycle(changed.get(slot)));
+        return withList(part, changed);
     }
 
-    public ItemStack entry(int slot) {
-        return slot < entries.size() ? entries.get(slot) : ItemStack.EMPTY;
+    private LensFilter withList(int part, List<ItemStack> list) {
+        return part == BLOCKS
+                ? new LensFilter(parts | BLOCKS, items, itemsAllow, list, blocksAllow, ripe, kinds, spareYoung, keep)
+                : new LensFilter(parts | ITEMS, list, itemsAllow, blocks, blocksAllow, ripe, kinds, spareYoung, keep);
+    }
+
+    public LensFilter withAllow(int part, boolean allow) {
+        return part == BLOCKS
+                ? new LensFilter(parts | BLOCKS, items, itemsAllow, blocks, allow, ripe, kinds, spareYoung, keep)
+                : new LensFilter(parts | ITEMS, items, allow, blocks, blocksAllow, ripe, kinds, spareYoung, keep);
+    }
+
+    public LensFilter withRipe(boolean ripe) {
+        return new LensFilter(parts | BLOCKS, items, itemsAllow, blocks, blocksAllow, ripe, kinds, spareYoung, keep);
+    }
+
+    public LensFilter withKinds(int kinds) {
+        return new LensFilter(parts | ENTITIES, items, itemsAllow, blocks, blocksAllow, ripe, kinds, spareYoung, keep);
+    }
+
+    public LensFilter withSpareYoung(boolean spareYoung) {
+        return new LensFilter(parts | ENTITIES, items, itemsAllow, blocks, blocksAllow, ripe, kinds, spareYoung, keep);
+    }
+
+    public LensFilter withKeep(int keep) {
+        return new LensFilter(parts | ENTITIES, items, itemsAllow, blocks, blocksAllow, ripe, kinds, spareYoung, Math.clamp(keep, 0, MAX_KEEP));
     }
 }

@@ -18,11 +18,22 @@ import net.minecraft.world.level.Level;
 
 import java.util.function.Consumer;
 
-/** A Filter lens: use it in the air to set what the actions it changes may act on. */
+/**
+ * A filter lens: an Item, Block or Entity Filter Lens, each setting its own part of what the actions it changes may
+ * act on ({@link LensFilter}). Use it in the air to set it.
+ */
 public class FilterLensItem extends LensItem {
 
-    public FilterLensItem(Properties properties) {
+    /** {@link LensFilter#ITEMS}, {@link LensFilter#BLOCKS} or {@link LensFilter#ENTITIES}. */
+    private final int part;
+
+    public FilterLensItem(Properties properties, int part) {
         super(properties, Lens.FILTER);
+        this.part = part;
+    }
+
+    public int part() {
+        return part;
     }
 
     public static LensFilter filterOf(ItemStack stack) {
@@ -34,7 +45,7 @@ public class FilterLensItem extends LensItem {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (player instanceof ServerPlayer server) {
             server.openMenu(new SimpleMenuProvider((id, inventory, who) -> new FilterLensMenu(id, inventory, hand),
-                    Component.translatable("item.quantimium.filter_lens")), buf -> {
+                    player.getItemInHand(hand).getHoverName()), buf -> {
                 buf.writeByte(FilterLensMenu.IN_HAND);
                 buf.writeBoolean(hand == InteractionHand.MAIN_HAND);
             });
@@ -46,13 +57,30 @@ public class FilterLensItem extends LensItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
         LensFilter filter = filterOf(stack);
-        long entries = filter.entries().stream().filter(entry -> !entry.isEmpty()).count();
+        if (part == LensFilter.ENTITIES) {
+            tooltip.accept(kinds(filter.kinds()).withStyle(ChatFormatting.AQUA));
+            if (filter.spareYoung()) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.young.on").withStyle(ChatFormatting.AQUA));
+            if (filter.keep() > 0) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.keep", filter.keep()).withStyle(ChatFormatting.AQUA));
+            return;
+        }
+        long entries = filter.entries(part).stream().filter(entry -> !entry.isEmpty()).count();
         if (entries > 0) {
-            tooltip.accept(Component.translatable(filter.allow() ? "item.quantimium.filter_lens.allows" : "item.quantimium.filter_lens.denies", entries)
+            tooltip.accept(Component.translatable(filter.allows(part) ? "item.quantimium.filter_lens.allows" : "item.quantimium.filter_lens.denies", entries)
                     .withStyle(ChatFormatting.AQUA));
         }
-        tooltip.accept(Component.translatable("item.quantimium.filter_lens.living." + filter.living().getSerializedName()).withStyle(ChatFormatting.AQUA));
-        if (filter.grown()) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.grown.on").withStyle(ChatFormatting.AQUA));
-        if (filter.keep() > 0) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.keep", filter.keep()).withStyle(ChatFormatting.AQUA));
+        if (part == LensFilter.BLOCKS && filter.ripe()) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.ripe.on").withStyle(ChatFormatting.AQUA));
+    }
+
+    /** "Any living thing", or the kinds it lets through: "Hostile, players". */
+    public static net.minecraft.network.chat.MutableComponent kinds(int kinds) {
+        if (kinds == 0) return Component.translatable("gui.quantimium.filter_lens.kinds.any");
+        net.minecraft.network.chat.MutableComponent line = Component.empty();
+        String[] keys = {"hostile", "animals", "players"};
+        for (int i = 0; i < keys.length; i++) {
+            if ((kinds & 1 << i) == 0) continue;
+            if (!line.getSiblings().isEmpty()) line.append(", ");
+            line.append(Component.translatable("gui.quantimium.filter_lens.kind." + keys[i]));
+        }
+        return line;
     }
 }
