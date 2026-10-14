@@ -168,6 +168,8 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
                                           InteractionHand hand, BlockHitResult hit) {
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
+        // Sneaking, a wrench adds or takes off an emitter, wherever on it it lands, as on a Relay; else it turns the mirror.
+        if (player.isSecondaryUseActive()) return toggle(state, level, pos, player, hit);
         return point(state, level, pos, hit.getDirection());
     }
 
@@ -175,6 +177,11 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!player.isSecondaryUseActive()) return InteractionResult.PASS;
+        return toggle(state, level, pos, player, hit);
+    }
+
+    /** An output on the emitter clicked, or the face clicked, on or off. */
+    private static InteractionResult toggle(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         Direction face = faceAt(state, pos, hit);
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity mirror) {
             if (!mirror.toggleOutput(face)) {

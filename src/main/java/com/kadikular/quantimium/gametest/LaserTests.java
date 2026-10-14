@@ -425,6 +425,23 @@ public final class LaserTests {
     }
 
     // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void sneakClickingACavityEmitterAnywhereTakesItOff(GameTestHelper helper) {
+        // Its south emitter, clicked on its top rather than its end, goes, as a Relay's does.
+        BlockPos pos = new BlockPos(8, 2, 8);
+        var mirror = cavityMirror(helper, pos, Direction.NORTH);
+        helper.assertTrue(mirror.outputFaces().contains(Direction.SOUTH), "it starts with a south output");
+        var player = TestSupport.player(helper, new BlockPos(8, 2, 11));
+        player.setShiftKeyDown(true);
+        BlockPos at = helper.absolutePos(pos);
+        var hit = new net.minecraft.world.phys.BlockHitResult(
+                net.minecraft.world.phys.Vec3.atLowerCornerOf(at).add(8 / 16.0, 11 / 16.0, 13 / 16.0), Direction.UP, at, false);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, hit);
+        helper.assertFalse(mirror.outputFaces().contains(Direction.SOUTH), "the south emitter went");
+        helper.succeed();
+    }
+
+    // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 200)
     public static void aCavityStoresLightAndGivesItBack(GameTestHelper helper) {
         // An emitter fills one mirror of a four-block cavity; the core behind its back is charged from it,
