@@ -1,0 +1,37 @@
+{
+    DataVersion: 4790,
+    size: [10, 2, 1],
+    data: [
+        {pos: [0, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [1, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [2, 0, 0], state: "minecraft:chest{facing:north,type:single,waterlogged:false}", nbt: {Items: [], components: {}, id: "minecraft:chest"}},
+        {pos: [3, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [4, 0, 0], state: "minecraft:chest{facing:north,type:single,waterlogged:false}", nbt: {Items: [], components: {}, id: "minecraft:chest"}},
+        {pos: [5, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [6, 0, 0], state: "minecraft:chest{facing:north,type:single,waterlogged:false}", nbt: {Items: [], components: {}, id: "minecraft:chest"}},
+        {pos: [7, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [8, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [9, 0, 0], state: "minecraft:smooth_stone"},
+        {pos: [0, 1, 0], state: "quantimium:logistics_controller{down:false,east:true,facing:east,lit:true,north:false,south:false,up:false,west:false}", nbt: {Beams: {List: [{Dir: 5, End: 0, Flow: 0L, Length: 1, Lenses: 536870912, Live: 1b}]}, Energy: 100000, Outputs: 32, components: {}, id: "quantimium:logistics_controller_be"}},
+        {pos: [1, 1, 0], state: "minecraft:air"},
+        {pos: [2, 1, 0], state: "quantimium:logistics_receptacle{facing:down,lit:true,role:storage}", nbt: {Active: 0b, Allow: 1b, Beams: {List: [{Dir: 5, End: 0, Flow: 0L, Length: 1, Lenses: 536870912, Live: 1b}]}, Connected: 1b, Filter: [{}, {}, {}, {}, {}, {}, {}, {}, {}], Keep: 0b, KeepCounts: [I; 0, 0, 0, 0, 0, 0, 0, 0, 0], Priority: 0, Role: 0, components: {}, id: "quantimium:logistics_receptacle_be"}},
+        {pos: [3, 1, 0], state: "minecraft:air"},
+        {pos: [4, 1, 0], state: "quantimium:logistics_receptacle{facing:down,lit:true,role:provider}", nbt: {Active: 0b, Allow: 1b, Beams: {List: [{Dir: 5, End: 0, Flow: 0L, Length: 1, Lenses: 536870912, Live: 1b}]}, Connected: 1b, Filter: [{}, {}, {}, {}, {}, {}, {}, {}, {}], Keep: 0b, KeepCounts: [I; 0, 0, 0, 0, 0, 0, 0, 0, 0], Priority: 0, Role: 1, components: {}, id: "quantimium:logistics_receptacle_be"}},
+        {pos: [5, 1, 0], state: "minecraft:air"},
+        {pos: [6, 1, 0], state: "quantimium:logistics_receptacle{facing:down,lit:true,role:requester}", nbt: {Active: 0b, Allow: 1b, Beams: {List: [{Dir: 5, End: 0, Flow: 0L, Length: 2, Lenses: 536870912, Live: 1b}]}, Connected: 1b, Filter: [{}, {}, {}, {}, {}, {}, {}, {}, {}], Keep: 0b, KeepCounts: [I; 0, 0, 0, 0, 0, 0, 0, 0, 0], Priority: 0, Role: 2, components: {}, id: "quantimium:logistics_receptacle_be"}},
+        {pos: [7, 1, 0], state: "minecraft:air"},
+        {pos: [8, 1, 0], state: "minecraft:air"},
+        {pos: [9, 1, 0], state: "quantimium:logistics_lectern{facing:south}", nbt: {components: {}, id: "quantimium:logistics_terminal_be"}}
+    ],
+    entities: [],
+    palette: [
+        "minecraft:smooth_stone",
+        "minecraft:air",
+        "minecraft:chest{facing:north,type:single,waterlogged:false}",
+        "quantimium:logistics_controller{down:false,east:true,facing:east,lit:true,north:false,south:false,up:false,west:false}",
+        "quantimium:logistics_receptacle{facing:down,lit:true,role:storage}",
+        "quantimium:logistics_receptacle{facing:down,lit:true,role:provider}",
+        "quantimium:logistics_receptacle{facing:down,lit:true,role:requester}",
+        "quantimium:logistics_lectern{facing:south}"
+    ]
+}

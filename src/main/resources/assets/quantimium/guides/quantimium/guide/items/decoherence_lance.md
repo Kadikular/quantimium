@@ -2,7 +2,7 @@
 navigation:
   title: Decoherence Lance
   parent: items/index.md
-  position: 9
+  position: 10
   icon: quantimium:decoherence_lance
 item_ids:
 - quantimium:decoherence_lance

@@ -115,6 +115,105 @@ public final class GuideStructures {
         });
     }
 
+    /** A charged Emitter II, so the scene's beams are lit without a power source in the picture. */
+    private static void chargedEmitter(GameTestHelper h, BlockPos pos, Direction facing) {
+        h.setBlock(pos, ModBlocks.LASER_EMITTER_2.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserEmitterBlock.FACING, facing));
+        TestSupport.fill(h.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity.class).getEnergyStorage());
+    }
+
+    /** A laser network: an emitter's light split by a Relay to power two machines. */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "guide_structures", timeoutTicks = 60)
+    public static void laserNetwork(GameTestHelper helper) {
+        export(helper, "laser_network", h -> {
+            chargedEmitter(h, new BlockPos(2, 2, 6), Direction.EAST);
+            BlockPos relay = new BlockPos(7, 2, 6);
+            h.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+            h.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+            h.setBlock(new BlockPos(11, 2, 6), ModBlocks.QUANTUM_CRAFTER.get());
+            h.setBlock(new BlockPos(7, 2, 10), ModBlocks.QUANTUM_SIMULATOR.get());
+        });
+    }
+
+    /** A logistics network: a controller's light through a storage, a provider and a requester, to a Lectern. */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "guide_structures", timeoutTicks = 60)
+    public static void logistics(GameTestHelper helper) {
+        export(helper, "logistics", h -> {
+            BlockPos controller = new BlockPos(2, 2, 8);
+            h.setBlock(controller, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.FACING, Direction.EAST)
+                    .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false)
+                    .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
+            h.getBlockEntity(controller, com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class).getEnergyStorage()
+                    .setEnergy(com.kadikular.quantimium.laser.LaserTuning.LOGISTICS_CAPACITY);
+            com.kadikular.quantimium.laser.LogisticsMember.Role[] roles = {com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE,
+                    com.kadikular.quantimium.laser.LogisticsMember.Role.PROVIDER, com.kadikular.quantimium.laser.LogisticsMember.Role.REQUESTER};
+            for (int i = 0; i < roles.length; i++) {
+                BlockPos at = new BlockPos(4 + 2 * i, 2, 8);
+                h.setBlock(at.below(), Blocks.CHEST);
+                h.setBlock(at, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState()
+                        .setValue(com.kadikular.quantimium.block.LogisticsReceptacleBlock.FACING, Direction.DOWN));
+                var receptacle = h.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity.class);
+                while (receptacle.role() != roles[i]) receptacle.cycleRole();
+            }
+            h.setBlock(new BlockPos(11, 2, 8), ModBlocks.LOGISTICS_LECTERN.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LogisticsTerminalBlock.FACING, Direction.SOUTH));
+        });
+    }
+
+    /** A wheat farm: light down through a collecting and a sending Laser Port to a mount that cuts ripe wheat and sows seed. */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "guide_structures", timeoutTicks = 60)
+    public static void farm(GameTestHelper helper) {
+        export(helper, "laser_farm", h -> {
+            BlockPos crop = new BlockPos(8, 2, 8);
+            h.setBlock(crop.below(), Blocks.FARMLAND);
+            h.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 5));
+            chargedEmitter(h, crop.above(5), Direction.DOWN);
+            h.setBlock(crop.above(4), ModBlocks.LASER_PORT.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.DOWN));
+            h.setBlock(crop.above(3), ModBlocks.LASER_PORT.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.DOWN));
+            var sender = h.getBlockEntity(crop.above(3), com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
+            sender.cycleMode();
+            sender.getItems().setStackInSlot(0, new net.minecraft.world.item.ItemStack(Items.WHEAT_SEEDS, 8));
+            h.setBlock(crop.above(2), ModBlocks.LENS_MOUNT.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.DOWN));
+            var mount = h.getBlockEntity(crop.above(2), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
+            net.minecraft.world.item.ItemStack ripe = new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.BLOCK_FILTER_LENS.get());
+            ripe.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(),
+                    com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true));
+            mount.getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+            mount.getLensSlots().setStackInSlot(1, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.PICKUP_LENS.get()));
+            mount.getLensSlots().setStackInSlot(2, ripe);
+            mount.getLensSlots().setStackInSlot(3, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.PLACE_LENS.get()));
+        });
+    }
+
+    /**
+     * Laser blocks send their beams only to clients, so a saved block has none and the guide would show unlit lasers.
+     * Each one's beams go into its saved data, which it reads back on load; their two world positions, which would
+     * point outside the guide's scene, are left out.
+     */
+    private static void keepBeams(ServerLevel level, BlockPos origin, CompoundTag structure) {
+        for (net.minecraft.nbt.Tag entry : structure.getListOrEmpty("blocks")) {
+            if (!(entry instanceof CompoundTag block) || block.getCompound("nbt").isEmpty()) continue;
+            net.minecraft.nbt.ListTag at = block.getListOrEmpty("pos");
+            BlockPos pos = origin.offset(at.getIntOr(0, 0), at.getIntOr(1, 0), at.getIntOr(2, 0));
+            var entity = level.getBlockEntity(pos);
+            if (entity == null) continue;
+            CompoundTag beams = entity.getUpdateTag(level.registryAccess()).getCompoundOrEmpty("Beams");
+            if (beams.isEmpty()) continue;
+            CompoundTag local = beams.copy();
+            for (net.minecraft.nbt.Tag beam : local.getListOrEmpty("List")) {
+                if (beam instanceof CompoundTag one) {
+                    one.remove("Aim");
+                    one.remove("Hit");
+                }
+            }
+            block.getCompound("nbt").ifPresent(nbt -> nbt.put("Beams", local));
+        }
+    }
+
     /** Builds with {@code build}, waits for it to form, and saves every block that changed. */
     private static void export(GameTestHelper helper, String name, Consumer<GameTestHelper> build) {
         ServerLevel level = helper.getLevel();
@@ -137,6 +236,7 @@ public final class GuideStructures {
             template.fillFromWorld(level, lo, hi.subtract(lo).offset(1, 1, 1), false, java.util.List.of(Blocks.STRUCTURE_VOID));
             // The test floor isn't part of the multiblock.
             CompoundTag tag = template.save(new CompoundTag());
+            keepBeams(level, lo, tag);
             String snbt = NbtUtils.structureToSnbt(tag);
             try {
                 Path file = Path.of(DIRECTORY, name + ".snbt");

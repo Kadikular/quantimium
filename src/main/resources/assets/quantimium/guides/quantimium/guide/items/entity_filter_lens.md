@@ -2,7 +2,7 @@
 navigation:
   title: Entity Filter Lens
   parent: items/index.md
-  position: 13
+  position: 11
   icon: quantimium:entity_filter_lens
 item_ids:
 - quantimium:entity_filter_lens
@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:entity_filter_lens" scale="2" />
 
-A lens: the actions it changes hit only the living things it lets through, and can spare the young or a number of them. Put it alone in a crafting grid to make it an Item Filter Lens.
+A lens: the actions it changes hit only the living things it lets through.
 
 ## Recipes
 

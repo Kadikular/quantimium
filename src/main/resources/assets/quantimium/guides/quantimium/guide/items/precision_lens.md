@@ -2,7 +2,7 @@
 navigation:
   title: Precision Lens
   parent: items/index.md
-  position: 23
+  position: 26
   icon: quantimium:precision_lens
 item_ids:
 - quantimium:precision_lens

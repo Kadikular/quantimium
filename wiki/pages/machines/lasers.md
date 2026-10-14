@@ -5,7 +5,11 @@
 Laser emitters send power as light. A beam crosses open air, glass and anything you can walk
 through (grass, torches, flowers), and charges the first block it meets that takes power, from any
 mod. Mirrors and relays turn the light around corners, and prisms split and join it at any angle; lenses give it
-something to do. Items carried by light come later.
+something to do, and a logistics network moves items by it.
+
+[[structure:laser_network]]
+
+*An Emitter II's light, split by a Laser Relay, powering a Quantum Crafter and a Quantum Simulator.*
 
 !!! info "Badges"
     Badges like [[mechanic:laser.power]] show whether an in-game test backs the rule next to them. See
@@ -203,12 +207,14 @@ no room).
 | [[item:uv_lens]] | Modifier | Hides the light: only someone holding a wrench or the Linker sees it. It stays on the light. | none |
 | [[item:place_lens]] | Action | [[mechanic:laser.lens.place]] Places a block a Laser Port up the beam sends, in the space where the beam ends, as you would against the block it ends on; one every {{c:LaserTuning.PLACE_COOLDOWN|s}} at most. Seeds count: on farmland they're sown. A bucket of water or lava empties there, and the empty bucket goes back to the port. A Filter lens in its mount says what it places. | {{c:LaserTuning.PLACE_FE}} FE a block, when it's placed |
 
+[[structure:laser_farm]]
+
 **A wheat field.** Point a beam down at farmland through a Laser Port set to both, holding seeds, and a mount
 with Harvest, Pickup, Placement and a Block Filter Lens set to ripe only. Only ripe wheat is cut, it comes
 back up to the port, and the spot is sown again. Spread it over a whole field with an Area Prism.
 A cut waits until the ports up the beam would take all of its drops, seeds included, so give the
-seeds somewhere to go. Use Fully grown rather than a "wheat" entry here: an entry also stops Pickup
-gathering items from the ground.
+seeds somewhere to go. Above, a collecting port catches the harvest and a sending port below it holds
+the seed.
 
 [[mechanic:laser.light.range]] **How far light reaches.** A run of light reaches as far as its source's:
 mirrors, relays, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
@@ -275,6 +281,10 @@ out of its outputs (set as an emitter's are), and it gives out light of its own 
 leaving it reaches, through mirrors, splitters and relays, joined with other light or not, is one
 **logistics network**, as any light is a laser network. An Isolator lets power through but not the
 network. One controller to a network: where light from two meets, both stop and say so.
+
+[[structure:logistics]]
+
+*A controller's light through storage, a provider and a requester, each on a chest, to a Logistics Lectern.*
 [[mechanic:laser.logistics.controller]] It fills its own store, up to {{c:LaserTuning.LOGISTICS_CAPACITY}} FE,
 from light ending on it as any block that takes power does, or from cables on any face. From that store it
 pays {{c:LaserTuning.LOGISTICS_FE_PER_MOVE}} FE for each move its receptacles make (up to a stack), and for

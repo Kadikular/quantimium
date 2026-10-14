@@ -2,7 +2,7 @@
 navigation:
   title: Crushing Lens
   parent: items/index.md
-  position: 7
+  position: 8
   icon: quantimium:crushing_lens
 item_ids:
 - quantimium:crushing_lens
