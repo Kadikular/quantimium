@@ -2,7 +2,7 @@
  "multipart": [
   {
    "apply": {
-    "model": "quantimium:block/isolator"
+    "model": "quantimium:block/laser_emitter_edges"
    }
   },
   {
@@ -15,10 +15,26 @@
   },
   {
    "when": {
+    "north": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_north"
+   }
+  },
+  {
+   "when": {
     "south": "true"
    },
    "apply": {
     "model": "quantimium:block/isolator_out_south"
+   }
+  },
+  {
+   "when": {
+    "south": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_south"
    }
   },
   {
@@ -31,10 +47,42 @@
   },
   {
    "when": {
+    "west": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_west"
+   }
+  },
+  {
+   "when": {
     "east": "true"
    },
    "apply": {
     "model": "quantimium:block/isolator_out_east"
+   }
+  },
+  {
+   "when": {
+    "east": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_east"
+   }
+  },
+  {
+   "when": {
+    "up": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_out_up"
+   }
+  },
+  {
+   "when": {
+    "up": "false"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_up"
    }
   },
   {
@@ -47,10 +95,10 @@
   },
   {
    "when": {
-    "up": "true"
+    "down": "false"
    },
    "apply": {
-    "model": "quantimium:block/isolator_out_up"
+    "model": "quantimium:block/isolator_plain_down"
    }
   }
  ]

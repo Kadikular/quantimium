@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "quantimium:block/isolator_side",
-    "particle": "quantimium:block/isolator_side"
-  }
-}

@@ -1,31 +1,8 @@
 {
+  "parent": "quantimium:block/laser_emitter_out_south",
   "textures": {
-    "plate": "quantimium:block/isolator_face",
-    "particle": "quantimium:block/isolator_side"
-  },
-  "elements": [
-    {
-      "from": [
-        0,
-        0,
-        16.01
-      ],
-      "to": [
-        16,
-        16,
-        16.01
-      ],
-      "faces": {
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#plate"
-        }
-      }
-    }
-  ]
+    "steel": "quantimium:block/laser_mirror_steel",
+    "particle": "quantimium:block/laser_mirror_steel",
+    "tip": "quantimium:block/isolator_tip"
+  }
 }

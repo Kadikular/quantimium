@@ -1,49 +1,9 @@
 {
-  "parent": "minecraft:block/block",
+  "parent": "quantimium:block/laser_emitter_item_shape",
   "textures": {
-    "front": "quantimium:block/isolator_face",
-    "back": "quantimium:block/isolator_side",
-    "side": "quantimium:block/isolator_side",
-    "particle": "quantimium:block/isolator_side"
-  },
-  "elements": [
-    {
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ],
-      "faces": {
-        "north": {
-          "texture": "#front",
-          "cullface": "north"
-        },
-        "south": {
-          "texture": "#back",
-          "cullface": "south"
-        },
-        "east": {
-          "texture": "#side",
-          "cullface": "east"
-        },
-        "west": {
-          "texture": "#side",
-          "cullface": "west"
-        },
-        "up": {
-          "texture": "#side",
-          "cullface": "up"
-        },
-        "down": {
-          "texture": "#side",
-          "cullface": "down"
-        }
-      }
-    }
-  ]
+    "steel": "quantimium:block/laser_mirror_steel",
+    "particle": "quantimium:block/laser_mirror_steel",
+    "panel": "quantimium:block/isolator_panel",
+    "tip": "quantimium:block/isolator_tip"
+  }
 }

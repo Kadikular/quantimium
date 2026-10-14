@@ -290,18 +290,6 @@ def area_prism_face() -> Image.Image:
     return img
 
 
-def isolator_face() -> Image.Image:
-    """A dark plate behind a grey bar: light through, nothing else."""
-    img = stone(("1b1b1e", "26262b", "33333a"), 81)
-    for x in range(2, 14):
-        for y in range(2, 14):
-            img.putpixel((x, y), hx("3b3b45") if (x + y) % 4 else hx("4d4d59"))
-    for x in range(2, 14):
-        for y in (7, 8):
-            img.putpixel((x, y), hx("8a8a96"))
-    return img
-
-
 def creative_void() -> Image.Image:
     """The Creative Energy Void: the Cell's magenta frame round a dark well that light falls into."""
     img = Image.new("RGBA", (16, 16), hx("1b0f24"))
@@ -842,6 +830,48 @@ def solid_emitter(name: str, panel: Image.Image, spec) -> None:
             os.remove(path)
 
 
+def isolator_panel() -> Image.Image:
+    """The Isolator's plain face: the steel, with dark bars set in it, red between: light through, nothing else."""
+    img = steel(31)
+    for x in range(4, 12):
+        for y in range(4, 12):
+            img.putpixel((x, y), hx("16171b"))
+    for x in (5, 7, 9):
+        for y in range(5, 11):
+            img.putpixel((x, y), hx("8a8a96"))
+            img.putpixel((x + 1, y), hx("6b1414") if y % 2 else hx("b03a33"))
+    return img
+
+
+def solid_outputs(name: str, panel: Image.Image, spec) -> None:
+    """
+    A solid block light leaves by any faces you set (the Isolator): the solid emitters' frame and shapes, its plain
+    face where light doesn't leave, and an emitter, its tip in {@code spec}'s colour, where it does. Never lit.
+    """
+    panel.save(os.path.join(TEX, f"{name}_panel.png"))
+    emitter_tip(spec, True).save(os.path.join(TEX, f"{name}_tip.png"))
+    steel_tex = "quantimium:block/laser_mirror_steel"
+
+    def child(model, parent, **textures):
+        with open(os.path.join(MODELS, model + ".json"), "w") as handle:
+            json.dump({"parent": f"quantimium:block/{parent}", "textures": dict(steel=steel_tex, particle=steel_tex, **textures)}, handle, indent=2)
+    parts = [{"apply": {"model": "quantimium:block/laser_emitter_edges"}}]
+    for direction in FACE_FRAMES:
+        child(f"{name}_plain_{direction}", f"laser_emitter_plain_{direction}", panel=f"quantimium:block/{name}_panel")
+        child(f"{name}_out_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip")
+        parts.append({"when": {direction: "true"}, "apply": {"model": f"quantimium:block/{name}_out_{direction}"}})
+        parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+    child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip")
+    with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
+        json.dump({"multipart": parts}, handle, indent=1)
+    with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
+    for stale in (f"models/block/{name}.json", f"textures/block/{name}_face.png", f"textures/block/{name}_side.png"):
+        path = os.path.join(ASSETS, stale)
+        if os.path.exists(path):
+            os.remove(path)
+
+
 LOGISTICS_VIOLET = "b49cff"
 ROLE_COLOURS = {"storage": "3485ff", "provider": "f0a040", "requester": "5be38a"}
 
@@ -1123,9 +1153,7 @@ def main() -> None:
             json.dump({"variants": variants}, handle, indent=1)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_lit"}}, handle, indent=2)
-    isolator_face().save(os.path.join(TEX, "isolator_face.png"))
-    stone(("1b1b1e", "26262b", "33333a"), 92).save(os.path.join(TEX, "isolator_side.png"))
-    outputs_block("isolator", "isolator_face", "isolator_side")
+    solid_outputs("isolator", isolator_panel(), {"lens": "ff5050"})
     lens_mount()
     laser_port()
     logistics_receptacle()
