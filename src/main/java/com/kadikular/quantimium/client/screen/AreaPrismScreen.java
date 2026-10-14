@@ -91,7 +91,8 @@ public class AreaPrismScreen extends QuantumMachineScreen<AreaPrismMenu> {
 
     @Override
     protected Component statusLabel() {
-        return Component.translatable("gui.quantimium.area_prism.shape." + prism().shape().name().toLowerCase(java.util.Locale.ROOT));
+        // The shape is on its tab; the panel says what it covers.
+        return Component.empty();
     }
 
     @Override
@@ -108,7 +109,8 @@ public class AreaPrismScreen extends QuantumMachineScreen<AreaPrismMenu> {
             case CUBE -> Component.translatable("gui.quantimium.area_prism.cube", prism().radius(), 2 * prism().radius() + 1);
             case SPHERE -> Component.translatable("gui.quantimium.area_prism.sphere", prism().radius());
         };
-        graphics.text(font, area, leftPos + 8, topPos + 24, textColour(), false);
-        graphics.text(font, Component.translatable("gui.quantimium.area_prism.reach"), leftPos + 8, topPos + 40, dimColour(), false);
+        graphics.textWithWordWrap(font, area, leftPos + 8, topPos + 22, imageWidth - 16, textColour());
+        graphics.textWithWordWrap(font, Component.translatable("gui.quantimium.area_prism.reach"), leftPos + 8, topPos + 48,
+                imageWidth - 16, dimColour());
     }
 }

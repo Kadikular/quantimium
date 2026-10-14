@@ -298,7 +298,7 @@ public final class SidesPage extends Page {
         SideMode mode = mode(face);
         graphics.fill(x, y, x + TILE, y + TILE, QuantumUiColours.modeFill(mode));
         QuantumWidgets.outline(graphics, x, y, TILE, TILE, face == selected ? QuantumUiColours.SELECTION : rail.edge());
-        String letter = face.label().getString().substring(0, 1);
+        String letter = Component.translatable("gui.quantimium.sides.face." + face.key + ".short").getString();
         graphics.text(font, letter, x + (TILE - font.width(letter)) / 2 + 1, y + 5,
                 face == Face.FRONT ? QuantumUiColours.ACCENT : rail.text(), false);
         if (mode.allowsInput() && pulls(face)) graphics.fill(x + 2, y + 2, x + 5, y + 5, QuantumUiColours.CHIP_IN);

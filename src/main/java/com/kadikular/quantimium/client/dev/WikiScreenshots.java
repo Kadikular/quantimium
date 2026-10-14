@@ -145,6 +145,10 @@ public final class WikiScreenshots {
             new BlockPos(2, 0, -4), new BlockPos(4, 0, -4), new BlockPos(6, 0, -4),
             new BlockPos(0, 0, 7), new BlockPos(7, 0, 0), new BlockPos(-5, 0, 5), new BlockPos(-5, 0, -6),
             new BlockPos(5, 0, 5), new BlockPos(-7, 0, -1), new BlockPos(-7, 0, 1),
+            // Over the room's roof: the laser and logistics blocks.
+            new BlockPos(-5, 5, 0), new BlockPos(-3, 5, 0), new BlockPos(-1, 5, 0), new BlockPos(1, 5, 0),
+            new BlockPos(3, 5, 0), new BlockPos(5, 5, 0), new BlockPos(-3, 5, 2), new BlockPos(-1, 5, 2),
+            new BlockPos(1, 5, 2), new BlockPos(3, 5, 2), new BlockPos(-3, 5, -2), new BlockPos(-1, 5, -2),
     };
     private static final int HALL = 7;
     private static final int FOUNDRY = 8;
@@ -153,6 +157,17 @@ public final class WikiScreenshots {
     private static final int QUANTUM_CHAMBER = 11;
     private static final int MAINTAINER = 12;
     private static final int REGULATOR = 13;
+    private static final int RECEPTACLE = 14;
+    private static final int LOGISTICS_PORT = 15;
+    private static final int LASER_PORT = 16;
+    private static final int EMITTER = 17;
+    private static final int LENS_MOUNT = 18;
+    private static final int PRISM = 19;
+    private static final int CATALYST_BAY = 20;
+    private static final int TERMINAL = 21;
+    private static final int MONITOR = 22;
+    private static final int ME_PORT = 23;
+    private static final int MATERIALISER = 24;
     private static final Identifier SUPERPOSITION_ID =
             Identifier.fromNamespaceAndPath(Quantimium.MODID, "me_superposition_crafter");
 
@@ -202,6 +217,23 @@ public final class WikiScreenshots {
         shoot("anomaly_containment_hall", HALL, null);
         shoot("quantum_foundry", FOUNDRY, null);
         shoot("zeno_field_controller", ZENO, null);
+        shoot("materialiser", MATERIALISER, null);
+        shoot("field_monitor", MONITOR, null);
+        shoot("logistics_receptacle", RECEPTACLE, null);
+        shoot("logistics_receptacle_priority", RECEPTACLE, Overlay.PRIORITY);
+        shoot("reactor_logistics_port", LOGISTICS_PORT, null);
+        shoot("logistics_terminal", TERMINAL, null);
+        shoot("laser_port", LASER_PORT, null);
+        shoot("laser_port_filter", LASER_PORT, Overlay.FILTER_VIEW);
+        shoot("laser_emitter", EMITTER, null);
+        shoot("lens_mount", LENS_MOUNT, null);
+        shoot("area_prism", PRISM, null);
+        shoot("catalyst_bay", CATALYST_BAY, null);
+        shoot("catalyst_bay_filter", CATALYST_BAY, Overlay.FILTER_VIEW);
+        if (ModList.get().isLoaded("ae2")) {
+            shoot("reactor_me_port", ME_PORT, null);
+            shoot("reactor_me_port_filter", ME_PORT, Overlay.FILTER_VIEW);
+        }
         if (ModList.get().isLoaded("ae2")) {
             shoot("me_superposition_crafter", SUPERPOSITION, null);
             shoot("me_superposition_crafter_filter", SUPERPOSITION, Overlay.FILTER_VIEW);
@@ -218,7 +250,7 @@ public final class WikiScreenshots {
         });
     }
 
-    private enum Overlay { SIDES, SLOTS, FILTER_VIEW, INPUT_LIST }
+    private enum Overlay { SIDES, SLOTS, FILTER_VIEW, INPUT_LIST, PRIORITY }
 
     private static void shoot(String name, int index, Overlay overlay) {
         then(10, () -> onServer(player -> {
@@ -229,6 +261,12 @@ public final class WikiScreenshots {
         }));
         if (overlay == Overlay.FILTER_VIEW || overlay == Overlay.INPUT_LIST) {
             then(30, () -> showFilterView(overlay == Overlay.INPUT_LIST));
+        } else if (overlay == Overlay.PRIORITY) {
+            then(30, () -> {
+                if (Minecraft.getInstance().screen instanceof QuantumMachineScreen<?> machine) {
+                    machine.openPage(QuantumMachineScreen.RailSlot.PRIORITY);
+                }
+            });
         } else if (overlay != null) {
             then(30, () -> {
                 BlockPos pos = slot(Minecraft.getInstance().getSingleplayerServer().getPlayerList()
@@ -558,7 +596,8 @@ public final class WikiScreenshots {
         if (!(minecraft.screen instanceof AbstractContainerScreen<?> screen)) return;
         try {
             screen.getMenu().getClass().getMethod("setFilterView", boolean.class).invoke(screen.getMenu(), true);
-            screen.getMenu().getClass().getMethod("setInputList", boolean.class).invoke(screen.getMenu(), inputs);
+            // Only the Catalyst Bay and the Superposition Crafter have a second list.
+            if (inputs) screen.getMenu().getClass().getMethod("setInputList", boolean.class).invoke(screen.getMenu(), true);
         } catch (ReflectiveOperationException e) {
             Quantimium.LOGGER.warn("Could not open the filter view for wiki screenshots", e);
         }
@@ -664,6 +703,28 @@ public final class WikiScreenshots {
             zeno.getEnergyStorage().setEnergy(ZenoFieldControllerBlockEntity.ENERGY_CAPACITY);
         }
         buildFoundry(level, slot(player, FOUNDRY));
+
+        // The laser and logistics blocks, standing alone: their screens, not their networks.
+        place(level, slot(player, MATERIALISER), ModBlocks.MATERIALISER.get().defaultBlockState());
+        place(level, slot(player, MONITOR), ModBlocks.FIELD_MONITOR.get().defaultBlockState());
+        place(level, slot(player, RECEPTACLE), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState());
+        if (level.getBlockEntity(slot(player, RECEPTACLE)) instanceof com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity receptacle) {
+            receptacle.cycleRole();
+            receptacle.addPriority(5);
+            receptacle.setFilterSlot(0, new ItemStack(Items.IRON_INGOT));
+            receptacle.setFilterSlot(1, new ItemStack(Items.GOLD_INGOT));
+        }
+        place(level, slot(player, LOGISTICS_PORT), ModBlocks.REACTOR_LOGISTICS_PORT.get().defaultBlockState());
+        place(level, slot(player, TERMINAL), ModBlocks.LOGISTICS_TERMINAL.get().defaultBlockState());
+        place(level, slot(player, LASER_PORT), ModBlocks.LASER_PORT.get().defaultBlockState());
+        place(level, slot(player, EMITTER), ModBlocks.LASER_EMITTER_2.get().defaultBlockState());
+        place(level, slot(player, LENS_MOUNT), ModBlocks.LENS_MOUNT.get().defaultBlockState());
+        place(level, slot(player, PRISM), ModBlocks.AREA_PRISM.get().defaultBlockState());
+        place(level, slot(player, CATALYST_BAY), ModBlocks.CATALYST_BAY.get().defaultBlockState());
+        if (ModList.get().isLoaded("ae2")) {
+            place(level, slot(player, ME_PORT), BuiltInRegistries.BLOCK.getValue(
+                    Identifier.fromNamespaceAndPath(Quantimium.MODID, "reactor_me_port")).defaultBlockState());
+        }
     }
 
     /**

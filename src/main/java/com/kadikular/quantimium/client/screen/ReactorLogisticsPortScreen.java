@@ -102,7 +102,7 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
 
     @Override
     protected Component statusLabel() {
-        return Component.translatable("gui.quantimium.priority.value", port().priorityValue());
+        return Component.empty();
     }
 
     @Override

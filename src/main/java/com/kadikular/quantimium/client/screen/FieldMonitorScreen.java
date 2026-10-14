@@ -93,17 +93,17 @@ public class FieldMonitorScreen extends QuantumMachineScreen<FieldMonitorMenu> {
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         if (map != null) FieldMapRenderer.draw(graphics, map, leftPos + MAP_X, topPos + MAP_Y, 0, 0);
+        // A narrow column beside the map: what it watches and how many alert, then each peak, its label over it.
         List<Component> lines = List.of(
-                Component.translatable("gui.quantimium.field_monitor.watching"),
-                Component.translatable("gui.quantimium.field_monitor.watch." + menu.getWatch().key()),
+                Component.translatable("gui.quantimium.field_monitor.watch." + menu.getWatch().key() + ".short"),
                 Component.translatable("gui.quantimium.field_monitor.alerting", menu.getAlerting(), menu.getWatched()),
-                Component.translatable("gui.quantimium.field_monitor.peak_flux", FluxMeterReadout.flux(menu.getPeakFlux()),
-                        band(menu.getPeakFlux())),
-                Component.translatable("gui.quantimium.field_monitor.peak_anomaly", FluxMeterReadout.flux(menu.getPeakAnomaly()),
-                        band(menu.getPeakAnomaly())));
+                Component.translatable("gui.quantimium.field_monitor.peak_flux"),
+                Component.translatable("gui.quantimium.field_monitor.peak", FluxMeterReadout.flux(menu.getPeakFlux()), band(menu.getPeakFlux())),
+                Component.translatable("gui.quantimium.field_monitor.peak_anomaly"),
+                Component.translatable("gui.quantimium.field_monitor.peak", FluxMeterReadout.flux(menu.getPeakAnomaly()), band(menu.getPeakAnomaly())));
         for (int i = 0; i < lines.size(); i++) {
-            graphics.text(font, lines.get(i), leftPos + INFO_X, topPos + INFO_Y + i * LINE + (i >= 2 ? 6 : 0),
-                    i == 1 || i == 2 ? textColour() : dimColour(), false);
+            graphics.text(font, lines.get(i), leftPos + INFO_X, topPos + INFO_Y + i * LINE + (i >= 2 ? 4 : 0),
+                    i == 2 || i == 4 ? dimColour() : textColour(), false);
         }
     }
 

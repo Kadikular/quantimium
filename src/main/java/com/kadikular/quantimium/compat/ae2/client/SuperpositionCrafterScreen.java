@@ -3,6 +3,7 @@ package com.kadikular.quantimium.compat.ae2.client;
 import com.kadikular.quantimium.client.screen.EnergyBarTooltip;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.client.screen.QuantumMachineScreen;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.compat.ae2.SuperpositionCrafterBlockEntity;
 import com.kadikular.quantimium.compat.ae2.SuperpositionCrafterMenu;
@@ -16,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,36 +58,28 @@ public class SuperpositionCrafterScreen extends QuantumMachineScreen<Superpositi
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of("F", () -> menu.setFilterView(!menu.isFilterView()),
-                                List.of(Component.translatable("gui.quantimium.me_superposition_crafter.filter"),
-                                        Component.translatable("gui.quantimium.me_superposition_crafter.filter.tip")))
-                        .icon(() -> new ItemStack(menu.isFilterView() ? Items.CRAFTING_TABLE : Items.ITEM_FRAME)),
+                filterTab(menu::isFilterView, menu::setFilterView, Component.translatable("gui.quantimium.me_superposition_crafter.filter"),
+                        "gui.quantimium.me_superposition_crafter.filter.tip"),
+                // How many each request makes: click to step on.
                 Tab.of(() -> Component.literal(menu.getBatch() + "x"), () -> press(SuperpositionCrafterMenu.BUTTON_BATCH),
                                 () -> List.of(Component.translatable("gui.quantimium.me_superposition_crafter.batch", menu.getBatch()),
-                                        Component.translatable("gui.quantimium.me_superposition_crafter.batch.tip")))
-                        .width(28)
-                        .visible(() -> !menu.isFilterView()),
-                // Which list the filter view is editing: outputs offered, or inputs never consumed.
-                Tab.of(() -> Component.literal(menu.isInputList() ? "I" : "O"),
+                                        hint("gui.quantimium.tab.cycle.on")))
+                        .width(28),
+                // Which list the filter is editing: outputs offered, or inputs never consumed.
+                Tab.glyph(() -> menu.isInputList() ? GuiIcon.ACTIVE_IMPORT : GuiIcon.ACTIVE_EXPORT,
                                 () -> menu.setInputList(!menu.isInputList()),
                                 () -> List.of(Component.translatable(menu.isInputList()
                                                 ? "gui.quantimium.me_superposition_crafter.list.inputs"
                                                 : "gui.quantimium.me_superposition_crafter.list.outputs"),
-                                        Component.translatable("gui.quantimium.me_superposition_crafter.list.tip")))
-                        .icon(() -> new ItemStack(menu.isInputList() ? Items.HOPPER : Items.DROPPER))
-                        .visible(menu::isFilterView),
-                // Whitelist or blacklist, for the list on show; each list has its own.
-                Tab.of(() -> Component.literal(shownListAllows() ? "W" : "B"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .during(menu::isFilterView),
+                // Allow or deny, for the list on show; each list has its own.
+                Tab.glyph(() -> shownListAllows() ? GuiIcon.ALLOW : GuiIcon.DENY,
                                 () -> press(menu.isInputList() ? SuperpositionCrafterMenu.BUTTON_INPUT_MODE
                                         : SuperpositionCrafterMenu.BUTTON_MODE),
-                                () -> List.of(Component.translatable(shownListAllows()
-                                                ? "gui.quantimium.me_superposition_crafter.mode.allow"
-                                                : "gui.quantimium.me_superposition_crafter.mode.deny"),
-                                        Component.translatable(menu.isInputList()
-                                                ? "gui.quantimium.me_superposition_crafter.mode.inputs.tip"
-                                                : "gui.quantimium.me_superposition_crafter.mode.tip")))
-                        .icon(() -> new ItemStack(shownListAllows() ? Items.WHITE_WOOL : Items.BLACK_WOOL))
-                        .visible(menu::isFilterView));
+                                () -> List.of(Component.translatable(shownListAllows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .during(menu::isFilterView));
     }
 
     private void press(int button) {
@@ -150,12 +142,8 @@ public class SuperpositionCrafterScreen extends QuantumMachineScreen<Superpositi
 
     @Override
     protected Component statusLabel() {
-        if (menu.isFilterView()) {
-            if (!menu.isInputList()) return Component.translatable("gui.quantimium.me_superposition_crafter.list.outputs.short");
-            return Component.translatable(inputsAllow()
-                    ? "gui.quantimium.me_superposition_crafter.list.inputs.allow.short"
-                    : "gui.quantimium.me_superposition_crafter.list.inputs.short");
-        }
+        // On the filter, its tabs on the left say which list and how it filters.
+        if (menu.isFilterView()) return Component.empty();
         return Component.translatable("gui.quantimium.me_superposition_crafter.status." + statusKey());
     }
 

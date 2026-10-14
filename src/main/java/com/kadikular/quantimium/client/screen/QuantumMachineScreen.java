@@ -63,6 +63,8 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     private static final int TITLE_X = 6;
     private static final int STATUS_RIGHT_MARGIN = 6;
     private static final int TITLE_STATUS_GAP = 8;
+    /** The size of the light a status becomes when the name leaves it no room. */
+    private static final int STATUS_LIGHT = 6;
 
     /** The rails: tabs 22 square, joined to the panel's edges, in a fixed order of {@link RailSlot}s. */
     public static final int TAB_TOP = 4;
@@ -474,9 +476,9 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
 
     /**
      * The title strip: the machine's name on the left, its status on the right, in the theme's colours. The
-     * name always reads in full; the status takes the room left and is shortened with an ellipsis if it must
-     * (in full on hover), so the two never overlap. There is no "Inventory" label: the rule above the player's
-     * slots says the same thing.
+     * name always reads in full; a status with no room beside it becomes a light in its colour, read on hover,
+     * so the two never overlap and neither is cut short. There is no "Inventory" label: the rule above the
+     * player's slots says the same thing.
      */
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -492,11 +494,19 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
 
         Component status = statusLabel();
         int room = right - (titleX + font.width(name) + TITLE_STATUS_GAP);
-        FormattedText shown = room < font.width("…") ? FormattedText.EMPTY : fit(status, room);
+        int colour = theme().tone(statusTone());
         statusShortened = font.width(status) > room;
-        statusWidth = font.width(shown);
-        statusX = right - statusWidth;
-        graphics.text(font, Language.getInstance().getVisualOrder(shown), statusX, TITLE_Y, theme().tone(statusTone()), false);
+        if (font.width(status) == 0) {
+            statusWidth = 0;
+        } else if (statusShortened) {
+            statusWidth = STATUS_LIGHT;
+            statusX = right - STATUS_LIGHT;
+            graphics.fill(statusX, TITLE_Y + 1, statusX + STATUS_LIGHT, TITLE_Y + 1 + STATUS_LIGHT, colour);
+        } else {
+            statusWidth = font.width(status);
+            statusX = right - statusWidth;
+            graphics.text(font, status, statusX, TITLE_Y, colour, false);
+        }
     }
 
     /** {@code text} cut to {@code room} with an ellipsis, or whole if it fits. */
@@ -623,6 +633,13 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    /** Opens the page in {@code slot}, as clicking its tab would; for tools that capture the screen. */
+    public final void openPage(RailSlot slot) {
+        for (Tab tab : tabs) {
+            if (tab.open != null && tab.slot == slot && !tab.open.getAsBoolean()) switchPage(tab);
+        }
     }
 
     /** A page tab clicked: whatever page is open closes, and this one opens unless it was the one open. */

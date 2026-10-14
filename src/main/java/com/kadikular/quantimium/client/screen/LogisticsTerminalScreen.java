@@ -1,6 +1,7 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
@@ -38,15 +39,9 @@ import java.util.Locale;
 public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTerminalMenu> {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_terminal.png");
-    private static final int SORT_X = 8;
-    private static final int SORT_Y = 18;
-    private static final int SORT_W = 34;
-    private static final int VIEW_X = 44;
-    private static final int VIEW_W = 36;
-    private static final int SORT_H = 12;
-    private static final int SEARCH_X = 95;
+    private static final int SEARCH_X = 9;
     private static final int SEARCH_Y = 20;
-    private static final int SEARCH_W = 72;
+    private static final int SEARCH_W = 158;
     private static final int GRID_X = 8;
     private static final int GRID_Y = 34;
     private static final int COLUMNS = 9;
@@ -65,6 +60,19 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
         View next() {
             return values()[(ordinal() + 1) % values().length];
+        }
+
+        View previous() {
+            return values()[(ordinal() + values().length - 1) % values().length];
+        }
+
+        GuiIcon icon() {
+            return switch (this) {
+                case ALL -> GuiIcon.VIEW_ALL;
+                case SPLIT -> GuiIcon.VIEW_BOTH;
+                case REAL -> GuiIcon.VIEW_REAL;
+                case CRAFT -> GuiIcon.VIEW_CRAFT;
+            };
         }
 
         String key() {
@@ -181,19 +189,29 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         return index < shown.size() ? shown.get(index) : null;
     }
 
+    /** Sort and view on the left rail. */
+    @Override
+    protected List<Tab> createTabs() {
+        return List.of(
+                Tab.glyph(() -> byName ? GuiIcon.SORT_NAME : GuiIcon.SORT_COUNT, () -> {
+                                    byName = !byName;
+                                    scrollRow = 0;
+                                },
+                                () -> List.of(Component.translatable(byName ? "gui.quantimium.logistics_terminal.sort.name" : "gui.quantimium.logistics_terminal.sort.count"),
+                                        hint("gui.quantimium.tab.switch"))),
+                Tab.glyph(() -> view.icon(), () -> {
+                                    view = view.next();
+                                    scrollRow = 0;
+                                },
+                                () -> List.of(Component.translatable(view.key() + ".tip"), hint("gui.quantimium.tab.cycle")))
+                        .onRightClick(() -> {
+                            view = view.previous();
+                            scrollRow = 0;
+                        }));
+    }
+
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
-        int left = leftPos + SORT_X;
-        int top = topPos + SORT_Y;
-        boolean sortHovered = QuantumWidgets.hit(mouseX, mouseY, left, top, SORT_W, SORT_H);
-        graphics.fill(left, top, left + SORT_W, top + SORT_H, sortHovered ? 0x66303650 : 0x33303650);
-        graphics.centeredText(font, Component.translatable(byName ? "gui.quantimium.horizon_core.sort.name" : "gui.quantimium.horizon_core.sort.count"),
-                left + SORT_W / 2, top + 2, textColour());
-        int viewLeft = leftPos + VIEW_X;
-        boolean viewHovered = QuantumWidgets.hit(mouseX, mouseY, viewLeft, top, VIEW_W, SORT_H);
-        graphics.fill(viewLeft, top, viewLeft + VIEW_W, top + SORT_H, viewHovered ? 0x66303650 : 0x33303650);
-        graphics.centeredText(font, Component.translatable(view.key()), viewLeft + VIEW_W / 2, top + 2, textColour());
-
         List<LogisticsTerminalViewPayload.Entry> shown = shown();
         scrollRow = Mth.clamp(scrollRow, 0, maxScroll(shown));
         LogisticsTerminalViewPayload.Entry hovered = cellAt(shown, mouseX, mouseY);
@@ -226,11 +244,6 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     @Override
     protected void renderMachineTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        if (QuantumWidgets.hit(mouseX, mouseY, leftPos + VIEW_X, topPos + SORT_Y, VIEW_W, SORT_H)) {
-            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable(view.key() + ".tip"),
-                    Component.translatable("gui.quantimium.logistics_terminal.view.tip").withStyle(ChatFormatting.DARK_GRAY)), mouseX, mouseY);
-            return;
-        }
         if (!menu.getCarried().isEmpty()) return;
         LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
         if (cell == null) return;
@@ -249,18 +262,6 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         double mouseX = event.x();
         double mouseY = event.y();
-        if (activeOverlay() == null && event.button() == 0 && QuantumWidgets.hit(mouseX, mouseY, leftPos + SORT_X, topPos + SORT_Y, SORT_W, SORT_H)) {
-            byName = !byName;
-            scrollRow = 0;
-            click();
-            return true;
-        }
-        if (activeOverlay() == null && event.button() == 0 && QuantumWidgets.hit(mouseX, mouseY, leftPos + VIEW_X, topPos + SORT_Y, VIEW_W, SORT_H)) {
-            view = view.next();
-            scrollRow = 0;
-            click();
-            return true;
-        }
         if (activeOverlay() == null && onGrid(mouseX, mouseY) && (event.button() == 0 || event.button() == 1)) {
             var pos = menu.pos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);

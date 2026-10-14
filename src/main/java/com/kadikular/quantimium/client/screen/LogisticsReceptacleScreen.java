@@ -117,7 +117,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
 
     @Override
     protected Component statusLabel() {
-        return receptacle().describe();
+        return Component.translatable(receptacle().isConnected() ? "gui.quantimium.logistics.status.on" : "gui.quantimium.logistics.status.off");
     }
 
     @Override
