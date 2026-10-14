@@ -21,6 +21,9 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
     public static final int BUTTON_ROLE = 0;
     public static final int BUTTON_ACTIVE = 1;
     public static final int BUTTON_ALLOW = 2;
+    public static final int BUTTON_KEEP = 3;
+    /** A keep count changed: {@code BUTTON_COUNT + slot * 4}, plus 1 for down, plus 2 for sixteen at a time. */
+    public static final int BUTTON_COUNT = 20;
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 35;
     public static final int FILTER_START = 0;
@@ -90,10 +93,17 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
             receptacle.addPriority(PriorityButton.decode(id) - receptacle.priority());
             return true;
         }
+        if (id >= BUTTON_COUNT && id < BUTTON_COUNT + LogisticsReceptacleBlockEntity.FILTER_SLOTS * 4) {
+            int at = id - BUTTON_COUNT;
+            int step = (at & 2) != 0 ? 16 : 1;
+            receptacle.addKeepCount(at / 4, (at & 1) != 0 ? -step : step);
+            return true;
+        }
         switch (id) {
             case BUTTON_ROLE -> receptacle.cycleRole();
             case BUTTON_ACTIVE -> receptacle.toggleActive();
             case BUTTON_ALLOW -> receptacle.toggleAllow();
+            case BUTTON_KEEP -> receptacle.toggleKeep();
             default -> {
                 return false;
             }

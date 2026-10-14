@@ -57,6 +57,14 @@ public interface LogisticsMember {
         return null;
     }
 
+    /**
+     * How many more of {@code stack} it will take in: a requester keeping counts stocked takes only what it's short
+     * of; anything else, as much as fits.
+     */
+    default int wants(ItemStack stack) {
+        return Integer.MAX_VALUE;
+    }
+
     /** The network has found it, joined to a controller's light, or not: it shows it. */
     default void connected(boolean connected) {}
 

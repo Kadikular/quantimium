@@ -303,7 +303,9 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
   storage.
 - [[mechanic:laser.logistics.requester]] **Requester**: passive, it takes what active providers push, as its
   filter lets in; active, it pulls what its filter lists from providers first, then storage.
-  [[mechanic:laser.logistics.filter]] Only what its filter lists comes, as far as the inventory takes it.
+  [[mechanic:laser.logistics.filter]] Only what its filter lists comes, as far as the inventory takes it. With **Keep stocked** on, each
+  entry's count (the stack you set it with; scroll over it to change, shift for 16) is how many it keeps
+  there: it takes only what it's short of.
 
 [[mechanic:laser.logistics.port]] A [[block:laser_port]] on the network, collecting, is a passive provider of
 what it's caught. A receptacle on a Laser Port works with its nine slots whatever its faces are set to, in

@@ -64,7 +64,13 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
                                 () -> press(LogisticsReceptacleMenu.BUTTON_ACTIVE),
                                 () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle." + (receptacle().active() ? "active" : "passive") + "." + role()),
                                         hint("gui.quantimium.tab.switch")))
-                        .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE));
+                        .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE),
+                // A requester keeping counts stocked: each entry's count is how many it keeps.
+                Tab.glyph(() -> GuiIcon.KEEP, () -> press(LogisticsReceptacleMenu.BUTTON_KEEP),
+                                () -> List.of(Component.translatable(receptacle().keeps() ? "gui.quantimium.logistics_receptacle.keep.on" : "gui.quantimium.logistics_receptacle.keep.off"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .on(() -> receptacle().keeps())
+                        .visible(() -> receptacle().role() == LogisticsMember.Role.REQUESTER));
     }
 
     private void press(int button) {
@@ -135,15 +141,45 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
 
     }
 
-    /** A small # on entries standing for a tag rather than an item. */
+    private boolean keeping() {
+        return receptacle().keeps() && receptacle().role() == LogisticsMember.Role.REQUESTER;
+    }
+
+    /** A small # on entries standing for a tag rather than an item; keeping counts, each entry's count. */
     @Override
     protected void renderMachineForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         graphics.nextStratum();
         for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
             ItemStack entry = receptacle().getFilter().getItem(i);
-            if (entry.isEmpty() || FilterEntry.tagOf(entry).isEmpty()) continue;
-            graphics.text(font, "#", leftPos + LogisticsReceptacleMenu.FILTER_X + i * 18 + 11, topPos + LogisticsReceptacleMenu.FILTER_Y - 1, QuantumUiColours.ACCENT, true);
+            if (entry.isEmpty()) continue;
+            int x = leftPos + LogisticsReceptacleMenu.FILTER_X + i * 18;
+            int y = topPos + LogisticsReceptacleMenu.FILTER_Y;
+            if (FilterEntry.tagOf(entry).isPresent()) graphics.text(font, "#", x + 11, y - 1, QuantumUiColours.ACCENT, true);
+            if (keeping()) {
+                String count = HorizonCoreScreen.slotCount(receptacle().keepCount(i));
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(x + 16, y + 11);
+                graphics.pose().scale(0.5f, 0.5f);
+                graphics.text(font, count, -font.width(count), 0, 0xFF5BE38A, true);
+                graphics.pose().popMatrix();
+            }
         }
+    }
+
+    /** Keeping counts, the wheel over an entry changes its count: up for more, down for fewer; shift, sixteen. */
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (activeOverlay() == null && keeping() && scrollY != 0) {
+            for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
+                int x = leftPos + LogisticsReceptacleMenu.FILTER_X + i * 18;
+                int y = topPos + LogisticsReceptacleMenu.FILTER_Y;
+                if (mouseX < x || mouseX >= x + 16 || mouseY < y || mouseY >= y + 16) continue;
+                boolean shift = minecraft != null && minecraft.hasShiftDown();
+                press(LogisticsReceptacleMenu.BUTTON_COUNT + i * 4 + (scrollY < 0 ? 1 : 0) + (shift ? 2 : 0));
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     /** Filter entries say what they match and how to change them. */
@@ -155,6 +191,11 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
         lines.add(FilterEntry.tagOf(stack)
                 .map(tag -> Component.translatable("gui.quantimium.me_superposition_crafter.entry.tag", "#" + tag.location()).withStyle(ChatFormatting.AQUA))
                 .orElse(Component.translatable("gui.quantimium.me_superposition_crafter.entry.item").withStyle(ChatFormatting.AQUA)));
+        if (keeping()) {
+            lines.add(Component.translatable("gui.quantimium.logistics_receptacle.keep.count", receptacle().keepCount(index - LogisticsReceptacleMenu.FILTER_START))
+                    .withStyle(ChatFormatting.GREEN));
+            lines.add(Component.translatable("gui.quantimium.logistics_receptacle.keep.hint").withStyle(ChatFormatting.GRAY));
+        }
         lines.add(Component.translatable("gui.quantimium.me_superposition_crafter.entry.hint").withStyle(ChatFormatting.GRAY));
         return lines;
     }

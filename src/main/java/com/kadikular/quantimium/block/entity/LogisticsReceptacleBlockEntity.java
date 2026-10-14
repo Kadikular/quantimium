@@ -60,6 +60,10 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         }
     };
     private boolean allow = true;
+    /** A requester keeping counts stocked: each entry's count is how many it keeps in the inventory. */
+    private boolean keep;
+    private final int[] keepCounts = new int[FILTER_SLOTS];
+    public static final int MAX_KEEP = 9_999;
     private Role role = Role.STORAGE;
     private boolean active;
     private int priority;
@@ -103,12 +107,36 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         return allow;
     }
 
+    public boolean keeps() {
+        return keep;
+    }
+
+    public void toggleKeep() {
+        keep = !keep;
+        changed();
+    }
+
+    /** How many of entry {@code slot} it keeps stocked. */
+    public int keepCount(int slot) {
+        return slot >= 0 && slot < FILTER_SLOTS ? Math.max(1, keepCounts[slot]) : 0;
+    }
+
+    public void addKeepCount(int slot, int by) {
+        if (slot < 0 || slot >= FILTER_SLOTS || filter.getItem(slot).isEmpty()) return;
+        keepCounts[slot] = Math.clamp((long) keepCount(slot) + by, 1, MAX_KEEP);
+        changed();
+    }
+
     public SimpleContainer getFilter() {
         return filter;
     }
 
+    /** An entry, and as many as the stack held: what it keeps stocked when keeping counts. */
     public void setFilterSlot(int slot, ItemStack stack) {
-        if (slot >= 0 && slot < FILTER_SLOTS) filter.setItem(slot, FilterEntry.of(stack));
+        if (slot < 0 || slot >= FILTER_SLOTS) return;
+        filter.setItem(slot, FilterEntry.of(stack));
+        keepCounts[slot] = Math.max(1, stack.getCount());
+        changed();
     }
 
     public void cycleFilterTag(int slot) {
@@ -171,6 +199,27 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         // Nothing listed: storage and providers take or give anything; a requester asks for nothing on a whitelist, everything on a blacklist.
         if (!any) return role != Role.REQUESTER || !allow;
         return listed == allow;
+    }
+
+    /** Keeping counts, a requester on an allow list takes only what it's short of each entry. */
+    @Override
+    public int wants(ItemStack stack) {
+        if (!keep || role != Role.REQUESTER || !allow) return Integer.MAX_VALUE;
+        IItemHandler inventory = inventory();
+        int short_ = 0;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (entry.isEmpty() || !FilterEntry.matches(entry, stack)) continue;
+            int held = 0;
+            if (inventory != null) {
+                for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                    ItemStack there = inventory.getStackInSlot(slot);
+                    if (!there.isEmpty() && FilterEntry.matches(entry, there)) held += there.getCount();
+                }
+            }
+            short_ += Math.max(0, keepCount(i) - held);
+        }
+        return short_;
     }
 
     @Override
@@ -314,6 +363,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         out.putBoolean("Active", active);
         out.putInt("Priority", priority);
         out.putBoolean("Allow", allow);
+        out.putBoolean("Keep", keep);
+        out.putIntArray("KeepCounts", keepCounts);
         out.putBoolean("Connected", connected);
         List<ItemStack> entries = new ArrayList<>();
         for (int i = 0; i < FILTER_SLOTS; i++) entries.add(filter.getItem(i));
@@ -327,6 +378,9 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         active = in.getBooleanOr("Active", false);
         priority = in.getIntOr("Priority", 0);
         allow = in.getBooleanOr("Allow", true);
+        keep = in.getBooleanOr("Keep", false);
+        int[] counts = in.getIntArray("KeepCounts").orElse(new int[0]);
+        for (int i = 0; i < FILTER_SLOTS; i++) keepCounts[i] = i < counts.length ? counts[i] : 1;
         connected = in.getBooleanOr("Connected", false);
         List<ItemStack> entries = in.read("Filter", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         for (int i = 0; i < FILTER_SLOTS; i++) filter.getItems().set(i, i < entries.size() ? entries.get(i) : ItemStack.EMPTY);

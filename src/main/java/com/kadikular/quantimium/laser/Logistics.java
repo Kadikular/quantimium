@@ -133,7 +133,9 @@ public final class Logistics {
                 for (LogisticsMember to : highestFirst) {
                     if (budget <= 0 || from.getStackInSlot(slot).isEmpty()) break;
                     if (to.role() != role || to.inventoryPos().equals(provider.inventoryPos()) || !to.lets(there)) continue;
-                    int moved = move(level, controller, provider, from, slot, to.inventory(), budget);
+                    int room = Math.min(budget, to.wants(there));
+                    if (room <= 0) continue;
+                    int moved = move(level, controller, provider, from, slot, to.inventory(), room);
                     if (moved == UNPAID) return UNPAID;
                     budget -= moved;
                 }
@@ -157,7 +159,9 @@ public final class Logistics {
                     ItemStack there = from.getStackInSlot(slot);
                     // Storage gives up anything it holds; a provider only what its filter lets go.
                     if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
-                    int moved = move(level, controller, source, from, slot, into, budget);
+                    int room = Math.min(budget, requester.wants(there));
+                    if (room <= 0) continue;
+                    int moved = move(level, controller, source, from, slot, into, room);
                     if (moved == UNPAID) return UNPAID;
                     budget -= moved;
                 }
@@ -185,7 +189,12 @@ public final class Logistics {
                 if (left.isEmpty()) return ItemStack.EMPTY;
                 if (to.role() != role || !to.lets(left)) continue;
                 IItemHandler into = to.inventory();
-                if (into != null) left = ItemHandlerHelper.insertItem(into, left, simulate);
+                if (into == null) continue;
+                // A requester keeping counts takes only what it's short of.
+                int room = Math.min(left.getCount(), to.wants(left));
+                if (room <= 0) continue;
+                ItemStack rest = ItemHandlerHelper.insertItem(into, left.copyWithCount(room), simulate);
+                left = left.copyWithCount(left.getCount() - room + rest.getCount());
             }
         }
         return left;

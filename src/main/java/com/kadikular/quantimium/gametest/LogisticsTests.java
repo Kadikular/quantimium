@@ -119,6 +119,22 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.requester
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 120)
+    public static void aRequesterKeepingCountsTakesOnlyWhatItsShortOf(GameTestHelper helper) {
+        // Keeping 10 cobblestone with 3 already there: it pulls 7 of storage's 64 and stops.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 64));
+        LogisticsReceptacleBlockEntity requester = onChest(helper, 7, LogisticsMember.Role.REQUESTER, true, new ItemStack(Items.COBBLESTONE, 3));
+        requester.setFilterSlot(0, new ItemStack(Items.COBBLESTONE, 10));
+        requester.toggleKeep();
+        helper.runAfterDelay(90, () -> {
+            helper.assertValueEqual(count(helper, 7, Items.COBBLESTONE), 10, "the requester holds just 10");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 57, "storage gave 7");
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.priority
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void storageFillsHighestPriorityFirst(GameTestHelper helper) {
