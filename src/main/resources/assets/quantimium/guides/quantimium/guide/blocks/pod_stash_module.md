@@ -2,7 +2,7 @@
 navigation:
   title: Pod Stash Module
   parent: blocks/index.md
-  position: 55
+  position: 54
   icon: quantimium:pod_stash_module
 ---
 

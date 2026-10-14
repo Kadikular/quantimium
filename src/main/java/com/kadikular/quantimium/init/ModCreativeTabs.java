@@ -120,7 +120,6 @@ public class ModCreativeTabs {
                         output.accept(ModItems.RIFT_RESIDUE.get());
                         output.accept(ModItems.VEIL_THREAD.get());
                         output.accept(ModItems.DECOHERENCE_PROJECTOR_ITEM.get());
-                        output.accept(ModItems.HARVEST_LASER_ITEM.get());
                         output.accept(ModItems.RIFT_LENS_ITEM.get());
                         output.accept(ModItems.RIFT_SEED.get());
                         output.accept(ModItems.RIFT_ANCHOR_ITEM.get());

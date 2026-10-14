@@ -18,7 +18,6 @@ import com.kadikular.quantimium.block.entity.LaserRelayBlockEntity;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.ReactorPortBlockEntity;
-import com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity;
 import com.kadikular.quantimium.block.entity.MaterialiserBlockEntity;
 import com.kadikular.quantimium.block.entity.ObservationChamberBlockEntity;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
@@ -141,9 +140,6 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("decoherence_projector_be", () ->
                     new BlockEntityType<>(DecoherenceProjectorBlockEntity::new, ModBlocks.DECOHERENCE_PROJECTOR.get()));
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HarvestLaserBlockEntity>> HARVEST_LASER_BE =
-            BLOCK_ENTITIES.register("harvest_laser_be", () ->
-                    new BlockEntityType<>(HarvestLaserBlockEntity::new, ModBlocks.HARVEST_LASER.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RiftAnchorBlockEntity>> RIFT_ANCHOR_BE =
             BLOCK_ENTITIES.register("rift_anchor_be", () ->

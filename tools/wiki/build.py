@@ -230,9 +230,9 @@ def _render_block(block: str) -> Optional[Image.Image]:
              "powered": "true", "link": "active"}
     if block == "anomalite_crystal":
         state["facing"] = "up"
-    if block in ("harvest_laser", "decoherence_projector"):
-        # Pointing at the viewer: the muzzle or orb end is what reads.
-        state["facing"] = "south" if block == "harvest_laser" else "up"
+    if block == "decoherence_projector":
+        # Pointing at the viewer: the orb end is what reads.
+        state["facing"] = "up"
     if block == "rift_lens":
         # Open, standing on a floor.
         state.update({"axis": "z", "open": "true", "down": "true"})

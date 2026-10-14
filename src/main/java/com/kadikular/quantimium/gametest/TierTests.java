@@ -23,7 +23,7 @@ public final class TierTests {
 
     private static final List<String> MID = List.of("quantum_crafter", "quantum_simulator", "tesseract_stabilizer",
             "flux_maintainer", "anomaly_siphon", "zeno_field_controller", "decoherence_lance", "decoherence_projector",
-            "mirror_lens", "tether", "rift_seed", "materialiser", "harvest_laser", "rift_lens", "fold_pylon");
+            "mirror_lens", "tether", "rift_seed", "materialiser", "rift_lens", "fold_pylon");
     private static final List<String> HIGH = List.of("quantum_foundry_controller", "anomaly_containment_hall",
             "field_regulator", "rift_anchor", "rift_stabiliser", "superposition_pod", "unfolding_array", "entangled_dock", "fold_core");
     private static final Set<String> MID_MATERIALS = Set.of("anomaly_fragment", "anomalite_shard", "anomalite_lattice", "anomalite_emitter");

@@ -89,6 +89,7 @@ lets it out at once.
 
 ## Veil Thread
 
-A <ItemLink id="quantimium:harvest_laser" /> can draw <ItemLink id="quantimium:veil_thread" /> out of the Veiled a hall holds, firing through
-a <ItemLink id="quantimium:rift_lens" /> and the middle of any wall of glass. A lens right against the glass seats onto it
-with a studded collar. One laser draws from a hall at a time.
+Laser light in the mirror, with a Pickup lens, can draw <ItemLink id="quantimium:veil_thread" /> out of the Veiled a hall
+holds, through the middle of any wall of glass (see [Into the mirror](../machines/lasers.md)).
+A <ItemLink id="quantimium:rift_lens" /> right against the glass seats onto it with a studded collar. One draw to a hall at
+a time.

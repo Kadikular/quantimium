@@ -36,7 +36,6 @@ import com.kadikular.quantimium.client.renderer.ContainmentHallBER;
 import com.kadikular.quantimium.client.renderer.TesseractStabilizerBER;
 import com.kadikular.quantimium.client.renderer.StabilisedPortalBER;
 import com.kadikular.quantimium.client.renderer.DecoherenceProjectorBER;
-import com.kadikular.quantimium.client.renderer.HarvestLaserBER;
 import com.kadikular.quantimium.client.renderer.RiftStabiliserBER;
 import com.kadikular.quantimium.client.renderer.EntangledDockBER;
 import com.kadikular.quantimium.client.renderer.SuperpositionPodBER;
@@ -101,7 +100,6 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.TESSERACT_STABILIZER_BE.get(), TesseractStabilizerBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STABILISED_PORTAL_BE.get(), StabilisedPortalBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.DECOHERENCE_PROJECTOR_BE.get(), DecoherenceProjectorBER::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.HARVEST_LASER_BE.get(), HarvestLaserBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_EMITTER_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_RELAY_BE.get(),

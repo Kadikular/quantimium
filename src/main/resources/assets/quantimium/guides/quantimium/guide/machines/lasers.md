@@ -374,12 +374,12 @@ into the mirror, and through another rift back out of it. The tear opens while l
 doesn't refocus the light or take anything for it. Light in the mirror:
 
 - acts only on what's in the mirror. Harvest takes a fully grown <ItemLink id="quantimium:anomalite_crystal" /> apart, on the
-  mirror's side, for its shards, as a <ItemLink id="quantimium:harvest_laser" /> does, and the tear leaks anomaly and now and
-  then a mirror mite the same way. Without Pickup the shards fall on the mirror's side: only a phased
+  mirror's side, for its shards (fifteen seconds at 60 FE/t), and the tear leaks anomaly and now and
+  then a mirror mite. Without Pickup the shards fall on the mirror's side: only a phased
   player sees them or can take them, and only mirrored Pickup light carries them off. Damage hits only the
   Veiled and mirror mites. Placement does nothing.
 - draws <ItemLink id="quantimium:veil_thread" /> with Pickup: through a Containment Hall's glass, into the cell where a Veiled
-  is held, it draws a thread at a Harvest Laser's pace, one draw to a hall at a time, and the thread goes
+  is held, it draws a thread every three minutes at 120 FE/t, one draw to a hall at a time, and the thread goes
   up the beam to a Laser Port.
 - charges nothing of the real world: a machine just stops it.
 - is stopped by solid blocks as any light is: blocks are solid in the mirror too.

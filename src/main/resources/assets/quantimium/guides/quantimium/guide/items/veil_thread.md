@@ -14,9 +14,9 @@ item_ids:
 
 > *In game:* A strand of the Veiled itself, drawn out through the mirror while it is held
 
-A strand of the Veiled itself. A <ItemLink id="quantimium:harvest_laser" /> draws one out of a Veiled held in an
-[Anomaly Containment Hall](../multiblocks/containment-hall.md), through a <ItemLink id="quantimium:rift_lens" />
-and the hall's glass, every three minutes. It's the only way to get it.
+A strand of the Veiled itself. Laser light in the mirror, with a Pickup lens, draws one out of a Veiled held
+in an [Anomaly Containment Hall](../multiblocks/containment-hall.md), through the hall's glass,
+every three minutes. It's the only way to get it.
 
 It goes into upgrades and capstones, not everyday recipes; nothing uses it yet.
 

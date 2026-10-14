@@ -55,6 +55,8 @@ NeoForge 26.1.2.109. Worlds from 0.4.x carry on.
 
 ### Changed
 
+- **The Harvest Laser is gone**: laser light through a Rift Lens with Harvest and Pickup lenses does its
+  work, cutting crystals and drawing Veil Thread. One already placed becomes a Laser Emitter I.
 - The old **Collector** and **Sender** are the **Laser Port**; the old **Filter Lens** is the **Item
   Filter Lens** and keeps its settings.
 - New `lasers` options: `maxRange` (64), `phantomFePerBlock` (20, and Phantom light's actions cost

@@ -11,10 +11,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * A Rift Lens's light, and the tear in its middle while laser light goes through it: the Harvest Laser's
- * tear, the brighter the more the light carries.
+ * A Rift Lens's light, and the tear in its middle while laser light goes through it: a small mirror
+ * rift's tear, the brighter the more the light carries.
  */
 public class RiftLensBER extends LaserBeamBER<RiftLensBlockEntity> {
+
+    /** The tear is the Mirror Rift's shape, cut down to fit in the lens. */
+    static final float TEAR_SCALE = 0.24f;
+    static final MirrorRiftRenderer.Tint TEAR_TINT =
+            new MirrorRiftRenderer.Tint(0.62f, 0.16f, 0.82f, 0.55f, 0.16f);
 
     public RiftLensBER(BlockEntityRendererProvider.Context context) {
         super(context);
@@ -35,7 +40,7 @@ public class RiftLensBER extends LaserBeamBER<RiftLensBlockEntity> {
         float leak = 0.15f + 0.08f * bright;
         LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> {
             float breathe = 0.9f + 0.1f * Mth.sin(time * 0.15f);
-            MirrorRiftRenderer.render(ring, seed, breathe, HarvestLaserBER.TEAR_SCALE, 0.70f, 0.42f, 1.0f, HarvestLaserBER.TEAR_TINT,
+            MirrorRiftRenderer.render(ring, seed, breathe, TEAR_SCALE, 0.70f, 0.42f, 1.0f, TEAR_TINT,
                     0.15f + leak * 1.4f, late, lateBuffers, camera, middle, time);
         });
     }

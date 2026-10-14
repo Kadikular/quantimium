@@ -27,7 +27,6 @@ Used on a block that has something to say, it adds a line about it:
 | <ItemLink id="quantimium:rift_anchor" /> | The rift's stage, how many stabilisers hold it and the residue an hour; or that it is loose, or that there is no rift |
 | <ItemLink id="quantimium:rift_stabiliser" /> | Beaming at a rift (and at what FE/t), claimed but idle, or free |
 | <ItemLink id="quantimium:decoherence_projector" /> | Firing, watching, or out of power, and its FE/t |
-| <ItemLink id="quantimium:harvest_laser" /> | Firing (its FE/t and how near the next shard is), or what's wrong with its line, and the shards it holds |
 | <ItemLink id="quantimium:flux_suppressor" />, <ItemLink id="quantimium:basic_anomaly_siphon" />, and the other field control blocks | Its setpoints and its FE/t |
 | <ItemLink id="quantimium:anomaly_containment_hall" /> | Its FE/t, its pull and its rating |
 | <ItemLink id="quantimium:budding_anomalite" />, <ItemLink id="quantimium:anomalite_crystal" /> | What it feeds on, and a crystal's stage |

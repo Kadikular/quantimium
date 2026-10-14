@@ -1348,7 +1348,7 @@ public final class LensTests {
         // A crystal takes a while: an Emitter III's worth of light, so the test needn't wait 15 seconds.
         helper.setBlock(new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_3.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.EAST));
         helper.succeedWhen(() -> {
-            helper.assertValueEqual(count(collector, ModItems.ANOMALITE_SHARD.get()), com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.SHARDS,
+            helper.assertValueEqual(count(collector, ModItems.ANOMALITE_SHARD.get()), com.kadikular.quantimium.laser.MirrorHarvest.SHARDS,
                     "the crystal's shards came back");
             helper.assertBlockNotPresent(ModBlocks.ANOMALITE_CRYSTAL.get(), new BlockPos(10, Y, 8));
             TestSupport.finishLasers(helper);

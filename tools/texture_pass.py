@@ -920,82 +920,6 @@ def decoherence_projector_bottom() -> Image.Image:
     return polished_deepslate("decoherence_projector_bottom")
 
 
-def _laser_side(lit: bool) -> Image.Image:
-    """
-    Laid out for the laser housing pointing up, whose faces read this by height: rows 0–1 the muzzle
-    (columns 5–10), 2–4 the top plate, 5–12 the corner posts (1–3 and 12–14) round the window, 13–15
-    the base plate. Seen sideways the muzzle is at the left or right; the texture only cares for height.
-    """
-    img = deepslate_grain("harvest_laser_side")
-    # Muzzle collar: polished, with an azure band round the lens.
-    fill(img, 5, 0, 10, 1, DEEPSLATE_MID)
-    hline(img, 5, 10, 1, FLUX if lit else FLUX_OFF)
-    # Top and base plates: polished bands, lit along their top edge.
-    for top, bottom in ((2, 4), (13, 15)):
-        fill(img, 0, top, 15, bottom, DEEPSLATE_MID)
-        hline(img, 0, 15, top, TILE)
-        hline(img, 0, 15, bottom, DEEP_SEAM)
-    # Posts: grooved, with an azure pip each.
-    for x in (1, 12):
-        fill(img, x, 5, x + 2, 12, DEEPSLATE)
-        vline(img, x, 5, 12, TILE)
-        vline(img, x + 2, 5, 12, DEEP_SEAM)
-        put(img, x + 1, 8, FLUX_CORE if lit else FLUX_DIM)
-    return img
-
-
-def _laser_lens(lit: bool) -> Image.Image:
-    """The muzzle's face (columns 4–11): a steel rim round an azure ring, the bore (6–9) cut through."""
-    img = polished_deepslate("harvest_laser_lens")
-    fill(img, 4, 4, 11, 11, EDGE)
-    rect(img, 5, 5, 10, 10, FLUX if lit else FLUX_OFF)
-    rect(img, 4, 4, 11, 11, TILE)
-    if lit:
-        for x, y in ((5, 5), (10, 10)):
-            put(img, x, y, FLUX_CORE)
-    return img
-
-
-def _laser_top() -> Image.Image:
-    """The top plate round the muzzle, and the base plate's top seen through the window."""
-    img = polished_deepslate("harvest_laser_top")
-    rect(img, 4, 4, 11, 11, DEEP_SEAM)
-    return img
-
-
-@texture("block/harvest_laser_side")
-def harvest_laser_side() -> Image.Image:
-    return _laser_side(False)
-
-
-@texture("block/harvest_laser_side_active")
-def harvest_laser_side_active() -> Image.Image:
-    return _laser_side(True)
-
-
-@texture("block/harvest_laser_lens")
-def harvest_laser_lens() -> Image.Image:
-    return _laser_lens(False)
-
-
-@texture("block/harvest_laser_lens_active")
-def harvest_laser_lens_active() -> Image.Image:
-    return _laser_lens(True)
-
-
-@texture("block/harvest_laser_top")
-def harvest_laser_top() -> Image.Image:
-    return _laser_top()
-
-
-@texture("block/harvest_laser_inner")
-def harvest_laser_inner() -> Image.Image:
-    """Inside the window: dark, so the orb carries it."""
-    img = canvas(fill=DEEP_SEAM)
-    speckle(img, rng_for("harvest_laser_inner"), [DEEP_SEAM, DEEPSLATE], [5, 1])
-    return img
-
-
 def _ring_face(lit: bool) -> Image.Image:
     """
     The ring seen along its axis: an octagon of bars (outer 2–13, opening 4–11, the rest cut away) in polished deepslate,
@@ -2107,7 +2031,7 @@ def anomalite_cell() -> Image.Image:
 @texture("item/anomalite_emitter")
 def anomalite_emitter() -> Image.Image:
     """A faceted Anomalite shard seated in a dark machined collar, point outwards: the light of the
-    Lance and the Harvest Laser. The collar's azure ring is where the light goes in; the shard is the
+    Lance. The collar's azure ring is where the light goes in; the shard is the
     same violet as the crystals it was cut from."""
     img = canvas()
     dark, deep = hexc("#2a1a52"), hexc("#4a2f8f")

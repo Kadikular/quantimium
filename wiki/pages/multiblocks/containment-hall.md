@@ -79,6 +79,7 @@ lets it out at once.
 
 ## Veil Thread
 
-A [[block:harvest_laser]] can draw [[item:veil_thread]] out of the Veiled a hall holds, firing through
-a [[block:rift_lens]] and the middle of any wall of glass. A lens right against the glass seats onto it
-with a studded collar. One laser draws from a hall at a time.
+Laser light in the mirror, with a Pickup lens, can draw [[item:veil_thread]] out of the Veiled a hall
+holds, through the middle of any wall of glass (see [Into the mirror](../machines/lasers.md#into-the-mirror)).
+A [[block:rift_lens]] right against the glass seats onto it with a studded collar. One draw to a hall at
+a time.

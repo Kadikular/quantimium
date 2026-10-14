@@ -251,10 +251,10 @@ back after a cooldown. See the [Containment Hall](../multiblocks/containment-hal
 
 ## Drawing thread from it
 
-[[mechanic:harvester.thread]] A held Veiled can be made to give up [[item:veil_thread]]: a
-[[block:harvest_laser]] fired through a [[block:rift_lens]] and one wall of the hall's glass reaches it
-in the mirror and draws a thread out of it every three minutes. See the
-[Harvest Laser](../blocks/harvest_laser.md#veil-thread). It costs the hall nothing for now.
+[[mechanic:laser.rift]] A held Veiled can be made to give up [[item:veil_thread]]: laser light in the
+mirror, with a Pickup lens, through one wall of the hall's glass reaches it and draws a thread out of it
+every three minutes. See [Into the mirror](../machines/lasers.md#into-the-mirror). It costs the hall
+nothing for now.
 
 ## After release from a hall
 

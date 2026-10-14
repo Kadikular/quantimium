@@ -32,7 +32,6 @@ import com.kadikular.quantimium.block.FluxDetectorBlock;
 import com.kadikular.quantimium.block.FoldCoreBlock;
 import com.kadikular.quantimium.block.FoldPylonBlock;
 import com.kadikular.quantimium.block.FoldRailBlock;
-import com.kadikular.quantimium.block.HarvestLaserBlock;
 import com.kadikular.quantimium.block.MaterialiserBlock;
 import com.kadikular.quantimium.block.MirrorHangingRootsBlock;
 import com.kadikular.quantimium.block.MirrorPlantBlock;
@@ -791,7 +790,7 @@ public class ModBlocks {
                     .sound(SoundType.AMETHYST)
                     .lightLevel(state -> state.getValue(BuddingAnomaliteBlock.ACTIVE) ? 8 : 3)));
 
-    /** Mid tier: the ring a Harvest Laser fires through. Lit while the tear in it is open. */
+    /** Mid tier: the ring laser light fires through into the mirror. Lit while the tear in it is open. */
     public static final DeferredBlock<Block> RIFT_LENS = BLOCKS.register(
             "rift_lens",
             id -> new RiftLensBlock(BlockBehaviour.Properties.of()
@@ -804,16 +803,6 @@ public class ModBlocks {
                     .lightLevel(state -> state.getValue(RiftLensBlock.OPEN) ? 9 : 0)));
 
     /** Mid tier: fires through a Rift Lens to harvest the Anomalite crystal behind it. */
-    public static final DeferredBlock<Block> HARVEST_LASER = BLOCKS.register(
-            "harvest_laser",
-            id -> new HarvestLaserBlock(BlockBehaviour.Properties.of()
-                    .setId(ResourceKey.create(Registries.BLOCK, id))
-                    .mapColor(MapColor.DEEPSLATE)
-                    .strength(3.5f)
-                    .requiresCorrectToolForDrops()
-                    .sound(SoundType.DEEPSLATE)
-                    .noOcclusion()
-                    .lightLevel(state -> state.getValue(HarvestLaserBlock.ACTIVE) ? 7 : 1)));
 
     public static void register(IEventBus eventBus) {
         // Renamed before release; worlds from then keep their lenses.
@@ -827,6 +816,9 @@ public class ModBlocks {
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
         BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "sender"),
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
+        // The Harvest Laser is gone: Harvest and Pickup lenses in mirrored light do its work. One placed in 0.4 is an emitter now.
+        BLOCKS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "harvest_laser"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_emitter_1"));
         BLOCKS.register(eventBus);
     }
 

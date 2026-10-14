@@ -32,7 +32,6 @@ navigation:
 - <ItemLink id="quantimium:fold_core" />
 - <ItemLink id="quantimium:fold_pylon" />
 - <ItemLink id="quantimium:fold_rail" />
-- <ItemLink id="quantimium:harvest_laser" />
 - <ItemLink id="quantimium:horizon_core" />
 - <ItemLink id="quantimium:isolator" />
 - <ItemLink id="quantimium:laser_emitter_1" />

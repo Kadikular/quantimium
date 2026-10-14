@@ -3,7 +3,6 @@ package com.kadikular.quantimium.block;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
-import com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
 import com.kadikular.quantimium.init.ModTags;
 import com.mojang.serialization.MapCodec;
@@ -19,7 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.Rotation;
@@ -40,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Rift Lens: a stone ring a Harvest Laser fires through. The beam tears a small hole in the world at
+ * Rift Lens: a stone ring laser light fires through. The beam tears a small hole in the world at
  * its middle, and through that hole it reaches the crystal on the other side. The ring does nothing
  * alone; the laser opens and closes it.
  *
@@ -101,14 +99,13 @@ public class RiftLensBlock extends net.minecraft.world.level.block.BaseEntityBlo
     }
 
     /**
-     * Turned along the line of a Harvest Laser aimed at this spot, if there is one. Placed against a
-     * hall's glass, it faces into the glass, ready to seat on it. Otherwise along the way the player
-     * faces, unless that would point it into the face it was placed on.
+     * Placed against a hall's glass, it faces into the glass, ready to seat on it. Otherwise along the way
+     * the player faces, unless that would point it into the face it was placed on.
      */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction.Axis axis = laserAxis(context.getLevel(), context.getClickedPos());
+        Direction.Axis axis = null;
         BlockPos against = context.getClickedPos().relative(context.getClickedFace().getOpposite());
         if (axis == null && context.getLevel().getBlockState(against).is(ModBlocks.QUANTUM_ATTUNED_GLASS.get())) {
             axis = context.getClickedFace().getAxis();
@@ -120,22 +117,7 @@ public class RiftLensBlock extends net.minecraft.world.level.block.BaseEntityBlo
         return connect(defaultBlockState().setValue(AXIS, axis), context.getLevel(), context.getClickedPos());
     }
 
-    /** The axis of a Harvest Laser within reach whose beam passes through {@code pos}, if any. */
-    @Nullable
-    private static Direction.Axis laserAxis(BlockGetter level, BlockPos pos) {
-        for (Direction toward : Direction.values()) {
-            for (int i = 1; i <= HarvestLaserBlockEntity.REACH; i++) {
-                BlockState state = level.getBlockState(pos.relative(toward, i));
-                if (state.is(ModBlocks.HARVEST_LASER.get()) && state.getValue(HarvestLaserBlock.FACING) == toward.getOpposite()) {
-                    return toward.getAxis();
-                }
-                if (!state.isAir()) break;
-            }
-        }
-        return null;
-    }
-
-    /** Turned to {@code axis}, with its struts worked out again. For a laser lining it up. */
+    /** Turned to {@code axis}, with its struts worked out again. */
     public static BlockState turnedTo(BlockState state, Direction.Axis axis, BlockGetter level, BlockPos pos) {
         return connect(state.setValue(AXIS, axis), level, pos);
     }

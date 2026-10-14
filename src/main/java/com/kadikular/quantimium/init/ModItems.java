@@ -122,8 +122,6 @@ public class ModItems {
 
     public static final DeferredItem<BlockItem> DECOHERENCE_PROJECTOR_ITEM = ITEMS.registerSimpleBlockItem(
             "decoherence_projector", ModBlocks.DECOHERENCE_PROJECTOR);
-    public static final DeferredItem<BlockItem> HARVEST_LASER_ITEM = ITEMS.registerSimpleBlockItem(
-            "harvest_laser", ModBlocks.HARVEST_LASER);
     public static final DeferredItem<BlockItem> RIFT_LENS_ITEM = ITEMS.registerSimpleBlockItem(
             "rift_lens", ModBlocks.RIFT_LENS);
     public static final DeferredItem<BlockItem> RIFT_ANCHOR_ITEM = ITEMS.registerSimpleBlockItem(
@@ -363,7 +361,7 @@ public class ModItems {
                 }
             });
 
-    /** Drawn out of a held Veiled by a Harvest Laser. For upgrades and capstones. */
+    /** Drawn out of a held Veiled by laser light in the mirror. For upgrades and capstones. */
     public static final DeferredItem<Item> VEIL_THREAD = ITEMS.registerItem("veil_thread",
             props -> new Item(props) {
                 @Override
@@ -393,6 +391,8 @@ public class ModItems {
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
         ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "sender"),
                 Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_port"));
+        ITEMS.addAlias(Identifier.fromNamespaceAndPath(Quantimium.MODID, "harvest_laser"),
+                Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_emitter_1"));
         ITEMS.register(eventBus);
     }
 }

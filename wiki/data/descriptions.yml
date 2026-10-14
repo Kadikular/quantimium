@@ -56,9 +56,8 @@ anomalite_shard: "What a full-grown Anomalite Crystal breaks into."
 anomalite_dust: "What a crystal broken too early leaves. The Foundry turns it back into shards."
 anomalite_lattice: "Four Anomalite Shards packed together, for sturdier parts."
 anomalite_cell: "A prism of Anomalite in glass. The fuel a Decoherence Projector burns."
-anomalite_emitter: "A shard set in a mount: the light of the Decoherence Lance and the Harvest Laser."
-harvest_laser: "Harvests Anomalite Crystals through a Rift Lens without stepping into the mirror. Through a Containment Hall's glass it draws Veil Thread instead."
-rift_lens: "The stone ring a Harvest Laser fires through, holding a small tear open while it does."
+anomalite_emitter: "A shard set in a mount: the light of the Decoherence Lance."
+rift_lens: "The stone ring laser light goes through into the mirror, holding a small tear open while it does."
 
 # ---- The mirror ----
 mirror_lens: "Goggles that let the mirror show through: the field around you, and what lives in it."

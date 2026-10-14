@@ -2,7 +2,7 @@
 navigation:
   title: Laser Relay
   parent: blocks/index.md
-  position: 33
+  position: 32
   icon: quantimium:laser_relay
 item_ids:
 - quantimium:laser_relay

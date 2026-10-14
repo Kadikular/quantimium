@@ -28,6 +28,6 @@ open from the mirror stands open for everyone, and a lever drives real redstone.
   [[mechanic:mirror.mite_traces]] One killed by a player leaves a [[item:quantimium_trace]] a quarter
   of the time, in the mirror, for whoever killed it.
 - **Anomalite crystals.** They grow on real machines but can only be seen and mined from the mirror,
-  or harvested from the real world by a [[block:harvest_laser]] firing through a [[block:rift_lens]].
+  or cut from the real world by laser light with a Harvest lens sent through a [[block:rift_lens]].
 - **Souls.** Living things on the other side show as pale folding tesseracts.
 - **Rifts**, and [the Veiled](../mechanics/veiled.md).

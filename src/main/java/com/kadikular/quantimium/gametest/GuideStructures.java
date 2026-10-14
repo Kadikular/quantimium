@@ -1,9 +1,6 @@
 package com.kadikular.quantimium.gametest;
 
 import com.kadikular.quantimium.Quantimium;
-import com.kadikular.quantimium.block.AnomaliteCrystalBlock;
-import com.kadikular.quantimium.block.HarvestLaserBlock;
-import com.kadikular.quantimium.block.RiftLensBlock;
 import com.kadikular.quantimium.block.SuperpositionPodBlock;
 import com.kadikular.quantimium.block.entity.UnfoldingArrayBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
@@ -98,20 +95,6 @@ public final class GuideStructures {
             BlockPos pad = new BlockPos(8, 2, 8);
             h.setBlock(pad, ModBlocks.UNFOLDING_ARRAY.get());
             for (BlockPos pylon : UnfoldingArrayBlockEntity.pylons(pad)) h.setBlock(pylon, ModBlocks.ARRAY_PYLON.get());
-        });
-    }
-
-    @GameTest(template = TestSupport.FLOOR_17, batch = "guide_structures", timeoutTicks = 60)
-    public static void harvester(GameTestHelper helper) {
-        export(helper, "harvester", h -> {
-            BlockPos laser = new BlockPos(3, 2, 8);
-            h.setBlock(laser.east(4), ModBlocks.BUDDING_ANOMALITE.get());
-            h.setBlock(laser.east(3), ModBlocks.ANOMALITE_CRYSTAL.get().defaultBlockState()
-                    .setValue(AnomaliteCrystalBlock.FACING, Direction.WEST).setValue(AnomaliteCrystalBlock.AGE, 3));
-            h.setBlock(laser.east(2), ModBlocks.RIFT_LENS.get().defaultBlockState().setValue(RiftLensBlock.AXIS, Direction.Axis.X));
-            h.setBlock(laser, ModBlocks.HARVEST_LASER.get().defaultBlockState().setValue(HarvestLaserBlock.FACING, Direction.EAST));
-            // Powered, so it's caught firing.
-            TestSupport.fill(h.getBlockEntity(laser, com.kadikular.quantimium.block.entity.HarvestLaserBlockEntity.class).getEnergyStorage());
         });
     }
 

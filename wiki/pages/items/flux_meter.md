@@ -11,7 +11,6 @@ its [flux and anomaly](../concepts/flux-and-anomaly.md), each with its band, on 
 | [[block:rift_anchor]] | The rift's stage, how many stabilisers hold it and the residue an hour; or that it is loose, or that there is no rift |
 | [[block:rift_stabiliser]] | Beaming at a rift (and at what FE/t), claimed but idle, or free |
 | [[block:decoherence_projector]] | Firing, watching, or out of power, and its FE/t |
-| [[block:harvest_laser]] | Firing (its FE/t and how near the next shard is), or what's wrong with its line, and the shards it holds |
 | [[block:flux_suppressor]], [[block:basic_anomaly_siphon]], and the other field control blocks | Its setpoints and its FE/t |
 | [[block:anomaly_containment_hall]] | Its FE/t, its pull and its rating |
 | [[block:budding_anomalite]], [[block:anomalite_crystal]] | What it feeds on, and a crystal's stage |

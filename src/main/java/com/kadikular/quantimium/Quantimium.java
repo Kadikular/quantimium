@@ -82,7 +82,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.energy.ComponentEnergyStorage;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
@@ -373,16 +372,6 @@ public class Quantimium {
                 ModBlocks.QUANTUM_FOUNDRY_ATTUNEMENT_TANK.get()
         );
 
-        event.registerBlockEntity(
-                Capabilities.Item.BLOCK,
-                ModBlockEntities.HARVEST_LASER_BE.get(),
-                (be, context) -> be.getOutputPort()
-        );
-        event.registerBlockEntity(
-                Capabilities.Energy.BLOCK,
-                ModBlockEntities.HARVEST_LASER_BE.get(),
-                (be, context) -> be.getEnergyStorage()
-        );
 
         event.registerBlockEntity(
                 Capabilities.Energy.BLOCK,

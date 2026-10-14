@@ -447,7 +447,7 @@ public class ContainmentHallBlockEntity extends BlockEntity implements Multibloc
         return armMask != 0;
     }
 
-    /** The Harvest Laser drawing thread from its occupant, and when it last did. Not saved. */
+    /** The light drawing thread from its occupant, and when it last did. Not saved. */
     @Nullable
     private BlockPos threadedBy;
     private long threadedAt;
