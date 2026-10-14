@@ -121,6 +121,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         /** A setting that belongs to a page, shown only while it's open; null for the main view's. */
         @Nullable
         private BooleanSupplier during;
+        private boolean awaits;
         @Nullable
         private Runnable onRightClick;
         @Nullable
@@ -185,6 +186,15 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             this.slot = slot;
             this.open = open;
             this.close = close;
+            return this;
+        }
+
+        /**
+         * A page the server opens, once asked: the page open now stays up until it does, so switching doesn't show
+         * the machine for a moment between.
+         */
+        public Tab awaits() {
+            this.awaits = true;
             return this;
         }
 
@@ -360,7 +370,8 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     protected final Tab sidesTab(BlockPos pos) {
         return Tab.glyph(() -> GuiIcon.SIDES, () -> ClientPacketDistributor.sendToServer(new RequestSideConfigPayload(pos)),
                         () -> List.of(Component.translatable("gui.quantimium.sides")))
-                .page(RailSlot.SIDES, () -> activeOverlay() instanceof SidesPage, this::closeOverlay);
+                .page(RailSlot.SIDES, () -> activeOverlay() instanceof SidesPage, this::closeOverlay)
+                .awaits();
     }
 
     public final void openSideConfig(OpenSideConfigPayload payload) {
@@ -645,7 +656,10 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     /** A page tab clicked: whatever page is open closes, and this one opens unless it was the one open. */
     private void switchPage(Tab tab) {
         boolean wasOpen = tab.open.getAsBoolean();
+        QuantumOverlay showing = !wasOpen && tab.awaits ? activeOverlay() : null;
         closePages();
+        // Still drawn until the server's answer replaces it.
+        if (showing != null) overlay = showing;
         if (!wasOpen) tab.onClick.run();
     }
 

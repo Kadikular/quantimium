@@ -82,6 +82,8 @@ public class ZenoFieldControllerBlockEntity extends BlockEntity implements MenuP
     public static final int BUTTON_MODE = 0;
     public static final int BUTTON_RADIUS = 1;
     public static final int BUTTON_FACTOR = 2;
+    public static final int BUTTON_RADIUS_DOWN = 3;
+    public static final int BUTTON_FACTOR_DOWN = 4;
 
     private final QuantumEnergyStorage energyStorage = new QuantumEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0) {
         @Override
@@ -206,13 +208,18 @@ public class ZenoFieldControllerBlockEntity extends BlockEntity implements MenuP
         setChanged();
     }
 
-    /** The menu buttons: mode toggles, radius and factor cycle upwards and wrap. */
+    /** The menu buttons: mode toggles, radius and factor step up or down and wrap. */
     public void pressButton(int id) {
         switch (id) {
             case BUTTON_MODE -> setMode(mode == MODE_PAUSE ? MODE_ACCELERATE : MODE_PAUSE);
             case BUTTON_RADIUS -> setRadius(radius >= MAX_RADIUS ? MIN_RADIUS : radius + 1);
+            case BUTTON_RADIUS_DOWN -> setRadius(radius <= MIN_RADIUS ? MAX_RADIUS : radius - 1);
             case BUTTON_FACTOR -> {
                 factorIndex = (factorIndex + 1) % FACTORS.length;
+                setChanged();
+            }
+            case BUTTON_FACTOR_DOWN -> {
+                factorIndex = Math.floorMod(factorIndex - 1, FACTORS.length);
                 setChanged();
             }
             default -> {}

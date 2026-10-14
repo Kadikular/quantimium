@@ -69,6 +69,7 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
                                 () -> List.of(Component.translatable("gui.quantimium.quantum_simulator.slots"),
                                         hint(menu.isEngaged() ? "gui.quantimium.quantum_simulator.slots.tip" : "gui.quantimium.quantum_simulator.slots.disengaged")))
                         .page(RailSlot.SLOTS, () -> activeOverlay() instanceof SlotsPage, this::closeOverlay)
+                        .awaits()
                         .enabled(menu::isEngaged),
                 // On the slot page: bind each slot to what fits it.
                 Tab.glyph(() -> GuiIcon.AUTO, () -> ClientPacketDistributor.sendToServer(

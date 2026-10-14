@@ -54,9 +54,11 @@ public class ZenoFieldControllerScreen extends QuantumMachineScreen<ZenoFieldCon
                                         hint("gui.quantimium.tab.switch"))),
                 Tab.of(() -> Component.literal(Integer.toString(menu.getRadius())), () -> press(ZenoFieldControllerBlockEntity.BUTTON_RADIUS),
                                 () -> List.of(Component.translatable("gui.quantimium.zeno_field_controller.radius", menu.getRadius()),
-                                        hint("gui.quantimium.tab.cycle.on"))),
+                                        hint("gui.quantimium.tab.number.step")))
+                        .onRightClick(() -> press(ZenoFieldControllerBlockEntity.BUTTON_RADIUS_DOWN)),
                 Tab.of(() -> Component.literal(menu.getFactor() + "x"), () -> press(ZenoFieldControllerBlockEntity.BUTTON_FACTOR),
                                 this::factorTooltip)
+                        .onRightClick(() -> press(ZenoFieldControllerBlockEntity.BUTTON_FACTOR_DOWN))
                         .width(28)
                         .enabled(this::accelerating));
     }
@@ -133,7 +135,7 @@ public class ZenoFieldControllerScreen extends QuantumMachineScreen<ZenoFieldCon
             lines.add(Component.translatable("gui.quantimium.zeno_field_controller.factor.running", menu.getRunningFactor()));
             lines.add(BandGate.refusal(needed, menu.getBand(), menu.getHeading()).withStyle(ChatFormatting.GRAY));
         }
-        lines.add(hint("gui.quantimium.tab.cycle.on"));
+        lines.add(hint("gui.quantimium.tab.number.step"));
         return lines;
     }
 

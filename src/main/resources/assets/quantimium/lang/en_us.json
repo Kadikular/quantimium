@@ -1239,6 +1239,7 @@
   "gui.quantimium.quantum_simulator.tank.holds": "%s: %s / %s mB",
   "gui.quantimium.quantum_simulator.input": "Input",
   "gui.quantimium.quantum_simulator.output": "Output",
+  "gui.quantimium.tab.number.step": "Click for more, right-click for less",
   "gui.quantimium.page.back": "Back",
   "gui.quantimium.page.close": "Click to close",
   "gui.quantimium.priority": "Priority",
