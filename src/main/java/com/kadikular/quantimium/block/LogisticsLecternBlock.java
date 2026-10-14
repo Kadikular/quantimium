@@ -24,7 +24,7 @@ public class LogisticsLecternBlock extends LogisticsTerminalBlock implements com
 
     /** Drawn facing north: base, post, focus, neck, and the screen's box round its tilt. */
     private static final double[][] BOXES = {
-            {2, 0, 2, 14, 2, 14}, {7, 2, 7, 9, 6, 9}, {6, 6, 6, 10, 10, 10}, {7, 10, 8, 9, 12, 10}, {2, 9, 3, 14, 16, 14}};
+            {2, 0, 2, 14, 2, 14}, {7, 2, 7, 9, 6, 9}, {6, 6, 6, 10, 10, 10}, {7, 10, 7, 9, 12, 9}, {2, 9, 2, 14, 16, 14}};
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
     static {
