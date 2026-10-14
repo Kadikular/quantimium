@@ -1272,6 +1272,7 @@
   "gui.quantimium.logistics_receptacle.passive.requester": "Passive: takes what's pushed",
   "gui.quantimium.logistics_receptacle.active.requester": "Active: pulls from the network",
   "gui.quantimium.logistics_receptacle.status.tip": "Its part faces the inventory it serves. A controller's light must reach it, not past an Isolator.",
+  "block.quantimium.logistics_lectern": "Logistics Lectern",
   "block.quantimium.logistics_terminal": "Logistics Terminal",
   "block.quantimium.logistics_terminal.tip": "Logistics: put it where a Logistics Controller's light ends, and it shows everything that network's storage holds and its providers offer, to take or put away.",
   "gui.quantimium.logistics_terminal.count": "%s in the network",

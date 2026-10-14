@@ -135,6 +135,7 @@ logistics_receptacle: "Logistics: puts the inventory it's on into a controller's
 reactor_logistics_port: "A Reactor port that makes the Reactor storage on a logistics network, and takes power from light."
 logistics_materialiser: "Logistics: offers a whole network to any mod's pipes and storage buses."
 logistics_terminal: "Logistics: shows everything a network holds, to take or put away."
+logistics_lectern: "Logistics: the Logistics Terminal on a stand, its screen over a focus."
 laser_port: "Light passes through it; it catches what a Pickup lens brings back up the beam, sends what it holds down it, or both."
 harvest_lens: "A lens: the beam breaks the block it ends on."
 damage_lens: "A lens: the beam hurts what stands in it."

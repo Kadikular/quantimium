@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:logistics_terminal"
+  ],
+  "result": {
+    "id": "quantimium:logistics_lectern",
+    "count": 1
+  }
+}

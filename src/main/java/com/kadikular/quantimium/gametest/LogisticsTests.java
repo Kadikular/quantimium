@@ -373,6 +373,24 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.terminal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aLecternIsATerminal(GameTestHelper helper) {
+        // On a stand, the light coming in to its focus: it shows and takes as the block does.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 20));
+        BlockPos at = new BlockPos(7, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_LECTERN.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LogisticsTerminalBlock.FACING, Direction.WEST));
+        var lectern = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        helper.runAfterDelay(40, () -> {
+            var cobblestone = net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE));
+            helper.assertTrue(lectern.contents().containsKey(cobblestone), "storage's cobblestone shows");
+            helper.assertValueEqual(lectern.take(cobblestone, 5).getCount(), 5, "and can be taken");
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.reactor
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 120)
     public static void theReactorLogisticsPortIsStorage(GameTestHelper helper) {

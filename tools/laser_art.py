@@ -1041,6 +1041,38 @@ def logistics_terminal() -> None:
     with open(os.path.join(ITEMS, "logistics_terminal.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_terminal"}}, handle, indent=2)
 
+def logistics_lectern() -> None:
+    """
+    The Logistics Lectern: the terminal as a stand, not a block. A base and a post up to a focus the light comes in
+    to, and over it the screen on a short neck, tilted towards whoever reads it; drawn facing north, turned to face
+    whoever placed it.
+    """
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
+         "screen": "quantimium:block/logistics_terminal_front", "particle": "quantimium:block/laser_mirror_steel"}
+
+    def cube(start, end, faces_texture="#steel", **extra):
+        faces = {f: {"texture": faces_texture} for f in ("north", "south", "east", "west", "up", "down")}
+        element = {"from": start, "to": end, "faces": faces}
+        element.update(extra)
+        return element
+
+    focus = cube([6, 4, 6], [10, 8, 10], "#focus")
+    for face in focus["faces"].values():
+        face["uv"] = [6, 6, 10, 10]
+    base = cube([2, 0, 2], [14, 1, 14])
+    base["faces"]["down"]["cullface"] = "down"
+    screen = cube([2, 10, 4], [14, 12, 14], rotation={"origin": [8, 11, 9], "axis": "x", "angle": -30})
+    screen["faces"]["up"] = {"texture": "#screen", "uv": [0, 0, 16, 16]}
+    elements = [base, cube([4, 1, 4], [12, 2, 12]), cube([7, 2, 7], [9, 4, 9]), focus, cube([7, 8, 8], [9, 11, 10]), screen]
+    with open(os.path.join(MODELS, "logistics_lectern.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements}, handle, indent=2)
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}}
+    with open(os.path.join(STATES, "logistics_lectern.json"), "w") as handle:
+        json.dump({"variants": {f"facing={f}": dict({"model": "quantimium:block/logistics_lectern"}, **r) for f, r in turns.items()}}, handle, indent=1)
+    with open(os.path.join(ITEMS, "logistics_lectern.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_lectern"}}, handle, indent=2)
+
+
 def materialiser_face() -> Image.Image:
     """A Logistics Materialiser's face: the steel, a socket framed in the network's blue, and the Materialiser's eye in it."""
     import math
@@ -1158,6 +1190,7 @@ def main() -> None:
     laser_port()
     logistics_receptacle()
     logistics_terminal()
+    logistics_lectern()
     logistics_materialiser()
     for name, colour in LENSES.items():
         lens_item(colour, GLYPHS.get(name)).save(os.path.join(ASSETS, "textures", "item", f"{name}.png"))

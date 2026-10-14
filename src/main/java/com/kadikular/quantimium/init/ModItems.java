@@ -257,6 +257,8 @@ public class ModItems {
             "logistics_receptacle", ModBlocks.LOGISTICS_RECEPTACLE);
     public static final DeferredItem<BlockItem> LOGISTICS_TERMINAL_ITEM = ITEMS.registerSimpleBlockItem(
             "logistics_terminal", ModBlocks.LOGISTICS_TERMINAL);
+    public static final DeferredItem<BlockItem> LOGISTICS_LECTERN_ITEM = ITEMS.registerSimpleBlockItem(
+            "logistics_lectern", ModBlocks.LOGISTICS_LECTERN);
     public static final DeferredItem<BlockItem> LOGISTICS_MATERIALISER_ITEM = ITEMS.registerSimpleBlockItem(
             "logistics_materialiser", ModBlocks.LOGISTICS_MATERIALISER);
     public static final DeferredItem<BlockItem> LASER_PORT_ITEM = ITEMS.registerSimpleBlockItem(

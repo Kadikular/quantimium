@@ -754,6 +754,8 @@ public class ModBlocks {
             "logistics_receptacle", id -> new com.kadikular.quantimium.block.LogisticsReceptacleBlock(laserBlock(id, MapColor.COLOR_GRAY).noOcclusion()));
     public static final DeferredBlock<Block> LOGISTICS_TERMINAL = BLOCKS.register(
             "logistics_terminal", id -> new com.kadikular.quantimium.block.LogisticsTerminalBlock(laserBlock(id, MapColor.COLOR_GRAY)));
+    public static final DeferredBlock<Block> LOGISTICS_LECTERN = BLOCKS.register(
+            "logistics_lectern", id -> new com.kadikular.quantimium.block.LogisticsLecternBlock(laserBlock(id, MapColor.COLOR_GRAY).noOcclusion()));
     public static final DeferredBlock<Block> LOGISTICS_MATERIALISER = BLOCKS.register(
             "logistics_materialiser", id -> new com.kadikular.quantimium.block.LogisticsMaterialiserBlock(laserBlock(id, MapColor.COLOR_BLUE)));
     public static final DeferredBlock<Block> LASER_PORT = BLOCKS.register(

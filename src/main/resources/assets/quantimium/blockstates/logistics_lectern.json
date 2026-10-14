@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "quantimium:block/logistics_lectern"
+  },
+  "facing=east": {
+   "model": "quantimium:block/logistics_lectern",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "quantimium:block/logistics_lectern",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "quantimium:block/logistics_lectern",
+   "y": 270
+  }
+ }
+}

@@ -49,6 +49,7 @@ navigation:
 - <ItemLink id="quantimium:logistics_materialiser" />
 - <ItemLink id="quantimium:logistics_receptacle" />
 - <ItemLink id="quantimium:logistics_terminal" />
+- <ItemLink id="quantimium:logistics_lectern" />
 - <ItemLink id="quantimium:materialiser" />
 - <ItemLink id="quantimium:me_superposition_crafter" />
 - <ItemLink id="quantimium:observation_chamber" />

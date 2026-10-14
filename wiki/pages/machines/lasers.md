@@ -315,7 +315,7 @@ Light from a controller is drawn a deeper blue, and always as if at work.
 everything the network's storage holds and its providers offer, searchable and sorted by count or name,
 like an ME terminal. Click an item for a stack on the cursor, right-click for one, shift-click for a stack
 into your inventory; click the grid holding something to put it away into storage (right-click: one), or
-shift-click it in your inventory. Each take or put costs the controller as a move does.
+shift-click it in your inventory. Each take or put costs the controller as a move does. A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 
 [[mechanic:laser.logistics.materialiser]] A [[block:logistics_materialiser]] where a controller's light ends
 offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus

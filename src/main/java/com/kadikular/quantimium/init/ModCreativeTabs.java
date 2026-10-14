@@ -82,6 +82,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.LOGISTICS_CONTROLLER_ITEM.get());
                         output.accept(ModItems.LOGISTICS_RECEPTACLE_ITEM.get());
                         output.accept(ModItems.LOGISTICS_TERMINAL_ITEM.get());
+                        output.accept(ModItems.LOGISTICS_LECTERN_ITEM.get());
                         output.accept(ModItems.LOGISTICS_MATERIALISER_ITEM.get());
                         output.accept(ModItems.HARVEST_LENS.get());
                         output.accept(ModItems.DAMAGE_LENS.get());
