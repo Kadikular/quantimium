@@ -1,6 +1,7 @@
 package com.kadikular.quantimium.client.screen;
 
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
@@ -12,7 +13,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.client.gui.components.Button;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
+import com.kadikular.quantimium.client.screen.ui.PriorityPage;
+import com.kadikular.quantimium.client.screen.ui.Rail;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -21,13 +28,16 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 /**
  * Common shell for Quantimium machine screens: the panel, the energy bar, the title strip with the
- * status, the right-edge tab column, and hosting for a modal overlay.
+ * status, the rail of tabs attached to the right edge, and hosting for a modal overlay or a page.
  *
  * <p>Overlay input is routed in one place on purpose. Each screen used to forward its own subset of
  * events, which is how the crafter ended up closing its whole GUI when Escape was pressed inside a
@@ -45,9 +55,10 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     private static final int STATUS_RIGHT_MARGIN = 6;
     private static final int TITLE_STATUS_GAP = 8;
 
-    private static final int TAB_TOP = 10;
-    private static final int TAB_HEIGHT = 20;
-    private static final int TAB_SPACING = 22;
+    /** The rail: tabs 22 square, joined to the panel's right edge, in a fixed order of {@link RailSlot}s. */
+    public static final int TAB_TOP = 4;
+    public static final int TAB_SIZE = 22;
+    public static final int TAB_SPACING = 24;
 
     private final List<Tab> tabs = new ArrayList<>();
 
@@ -62,17 +73,37 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         super(menu, playerInventory, title, imageWidth, imageHeight);
     }
 
-    /** A button in the column down the right edge of the panel. */
+    /**
+     * Where a tab sits on the rail. Settings every block shares come first and always in this order, so
+     * the filter and the priority are in the same place on every screen that has them; the block's own
+     * modes follow. A page's Back tab takes the top of the rail.
+     */
+    public enum RailSlot { FILTER, PRIORITY, REDSTONE, SIDES, MODE }
+
+    /** A tab on the rail. It shows an icon (or, until a screen is redrawn, a short label or an item). */
     protected static final class Tab {
         private final Supplier<Component> label;
         private final Runnable onClick;
         private final Supplier<List<Component>> tooltip;
         private BooleanSupplier enabled = () -> true;
         private BooleanSupplier visible = () -> true;
-        private int width = 20;
+        private int width = TAB_SIZE;
         private Supplier<ItemStack> icon = () -> ItemStack.EMPTY;
         @Nullable
-        private Button button;
+        private Supplier<GuiIcon> glyph;
+        @Nullable
+        private BooleanSupplier on;
+        private boolean opens;
+        @Nullable
+        private Supplier<String> badge;
+        @Nullable
+        private Runnable onRightClick;
+        @Nullable
+        private IntConsumer onScroll;
+        private RailSlot slot = RailSlot.MODE;
+        private int x;
+        private int y;
+        private boolean shown;
 
         private Tab(Supplier<Component> label, Runnable onClick, Supplier<List<Component>> tooltip) {
             this.label = label;
@@ -86,6 +117,13 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
 
         public static Tab of(String label, Runnable onClick, List<Component> tooltip) {
             return new Tab(() -> Component.literal(label), onClick, () -> tooltip);
+        }
+
+        /** A tab drawn with one of the shared icons; the tooltip names it. */
+        public static Tab glyph(Supplier<GuiIcon> glyph, Runnable onClick, Supplier<List<Component>> tooltip) {
+            Tab tab = new Tab(Component::empty, onClick, tooltip);
+            tab.glyph = glyph;
+            return tab;
         }
 
         public Tab width(int width) {
@@ -105,6 +143,41 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             return this;
         }
 
+        /** A toggle: lit while on, its icon dimmed while off. */
+        public Tab on(BooleanSupplier on) {
+            this.on = on;
+            return this;
+        }
+
+        /** It opens a page rather than changing a setting: a tick in its corner says so. */
+        public Tab opens() {
+            this.opens = true;
+            return this;
+        }
+
+        /** A short value in its corner, such as the priority, so it reads without opening. */
+        public Tab badge(Supplier<String> badge) {
+            this.badge = badge;
+            return this;
+        }
+
+        /** Right-click: a choice steps back. */
+        public Tab onRightClick(Runnable onRightClick) {
+            this.onRightClick = onRightClick;
+            return this;
+        }
+
+        /** Scrolling over it: +1 up, -1 down. */
+        public Tab onScroll(IntConsumer onScroll) {
+            this.onScroll = onScroll;
+            return this;
+        }
+
+        public Tab slot(RailSlot slot) {
+            this.slot = slot;
+            return this;
+        }
+
         /** A tab that only belongs to one view of the screen, hidden (not just greyed) otherwise. */
         public Tab visible(BooleanSupplier visible) {
             this.visible = visible;
@@ -114,6 +187,10 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         public Tab enabled(BooleanSupplier enabled) {
             this.enabled = enabled;
             return this;
+        }
+
+        private boolean hit(double mouseX, double mouseY) {
+            return shown && QuantumWidgets.hit(mouseX, mouseY, x, y, width, TAB_SIZE);
         }
     }
 
@@ -175,10 +252,39 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         overlay.layout(width, height);
     }
 
+    /** The panel's frame on screen, where pages are drawn. */
+    public final Rect2i panelArea() {
+        return new Rect2i(leftPos, topPos, imageWidth, imageHeight);
+    }
+
+    /**
+     * The shared Priority tab: the value in its corner, scroll over it to nudge (shift for tens), click for the
+     * page. {@code set} sends the new value; it arrives already clamped to {@code max}.
+     */
+    protected final Tab priorityTab(IntSupplier value, IntConsumer set, int max) {
+        IntConsumer clamped = to -> {
+            int next = Math.clamp(to, -max, max);
+            if (next != value.getAsInt()) set.accept(next);
+        };
+        return Tab.glyph(() -> GuiIcon.PRIORITY, () -> openOverlay(new PriorityPage(this::panelArea, value, clamped, max)),
+                        () -> List.of(Component.translatable("gui.quantimium.priority.value", value.getAsInt()),
+                                Component.translatable("gui.quantimium.priority.tab.hint").withStyle(ChatFormatting.GRAY)))
+                .slot(RailSlot.PRIORITY).opens()
+                .badge(() -> priorityBadge(value.getAsInt()))
+                .onScroll(step -> clamped.accept(value.getAsInt() + step * (Minecraft.getInstance().hasShiftDown() ? 10 : 1)));
+    }
+
+    private static String priorityBadge(int value) {
+        if (value == 0) return "";
+        if (value > 99) return "99+";
+        if (value < -99) return "-99";
+        return Integer.toString(value);
+    }
+
     /** How far the tab column reaches past the panel's right edge; for tools that capture the screen. */
     public final int tabColumnWidth() {
         int widest = 0;
-        for (Tab tab : tabs) widest = Math.max(widest, tab.width);
+        for (Tab tab : tabs) widest = Math.max(widest, tab.width - 1);
         return widest;
     }
 
@@ -189,9 +295,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     public final List<Rect2i> tabAreas() {
         List<Rect2i> areas = new ArrayList<>();
         for (Tab tab : tabs) {
-            if (tab.button != null && tab.button.visible) {
-                areas.add(new Rect2i(tab.button.getX(), tab.button.getY(), tab.button.getWidth(), tab.button.getHeight()));
-            }
+            if (tab.shown) areas.add(new Rect2i(tab.x, tab.y, tab.width, TAB_SIZE));
         }
         return areas;
     }
@@ -213,40 +317,20 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         super.init();
         tabs.clear();
         tabs.addAll(createTabs());
-
-        int tabX = leftPos + imageWidth;
-        int tabY = topPos + TAB_TOP;
-        for (Tab tab : tabs) {
-            Button button = Button.builder(tab.label.get(), b -> tab.onClick.run())
-                    .bounds(tabX, tabY, tab.width, TAB_HEIGHT).build();
-            tab.button = button;
-            addRenderableWidget(button);
-            tabY += TAB_SPACING;
-        }
+        tabs.sort(Comparator.comparing(tab -> tab.slot));
+        layoutTabs();
 
         if (overlay != null) overlay.layout(width, height);
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        // Hidden tabs close up, so a view's tabs sit together at the top of the column.
-        int tabY = topPos + TAB_TOP;
-        for (Tab tab : tabs) {
-            if (tab.button == null) continue;
-            tab.button.setMessage(tab.icon.get().isEmpty() ? tab.label.get() : Component.empty());
-            tab.button.active = tab.enabled.getAsBoolean();
-            tab.button.visible = tab.visible.getAsBoolean();
-            if (!tab.button.visible) continue;
-            tab.button.setY(tabY);
-            tabY += TAB_SPACING;
-        }
-
+        layoutTabs();
         QuantumOverlay open = activeOverlay();
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         for (Tab tab : tabs) {
-            ItemStack icon = tab.button == null || !tab.button.visible ? ItemStack.EMPTY : tab.icon.get();
-            if (icon.isEmpty()) continue;
-            graphics.item(icon, tab.button.getX() + (tab.width - 16) / 2, tab.button.getY() + 2);
+            ItemStack icon = !tab.shown || tab.glyph != null ? ItemStack.EMPTY : tab.icon.get();
+            if (!icon.isEmpty()) graphics.item(icon, tab.x + (tab.width - 16) / 2, tab.y + 3);
         }
         renderMachineForeground(graphics, mouseX, mouseY);
         if (open != null) {
@@ -271,7 +355,7 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             return;
         }
         for (Tab tab : tabs) {
-            if (tab.button == null || !tab.button.visible || !tab.button.isHovered()) continue;
+            if (!tab.hit(mouseX, mouseY)) continue;
             List<Component> lines = tab.tooltip.get();
             if (!lines.isEmpty()) graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
             return;
@@ -319,6 +403,52 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         }
 
         renderMachineBg(graphics, partialTick, mouseX, mouseY);
+        boolean paged = activeOverlay() != null;
+        for (Tab tab : tabs) {
+            if (tab.shown) drawTab(graphics, tab, !paged && tab.hit(mouseX, mouseY));
+        }
+    }
+
+    /** Hidden tabs close up, so the rest keep their order from the top. */
+    private void layoutTabs() {
+        int tabY = topPos + TAB_TOP;
+        for (Tab tab : tabs) {
+            tab.shown = tab.visible.getAsBoolean();
+            if (!tab.shown) continue;
+            tab.x = leftPos + imageWidth - 1;
+            tab.y = tabY;
+            tabY += TAB_SPACING;
+        }
+    }
+
+    private void drawTab(GuiGraphicsExtractor graphics, Tab tab, boolean hovered) {
+        boolean lit = tab.on != null && tab.on.getAsBoolean();
+        boolean usable = tab.enabled.getAsBoolean();
+        Rail.tab(graphics, tab.x, tab.y, tab.width, lit, hovered && usable);
+        if (tab.glyph != null) {
+            boolean dim = !usable || (tab.on != null && !lit);
+            tab.glyph.get().draw(graphics, tab.x + (tab.width - GuiIcon.SIZE) / 2, tab.y + 3, dim ? GuiIcon.DIMMED : 0xFFFFFFFF);
+        } else if (tab.icon.get().isEmpty()) {
+            Component text = tab.label.get();
+            graphics.text(font, text, tab.x + (tab.width - font.width(text)) / 2, tab.y + 7,
+                    usable ? Rail.TEXT : Rail.TEXT_DIM, false);
+        }
+        if (tab.opens) Rail.opensTick(graphics, tab.x, tab.y, tab.width);
+        if (tab.badge != null) Rail.badge(graphics, font, tab.badge.get(), tab.x, tab.y, tab.width);
+    }
+
+    /** A tab under the cursor, if the rail is in use. */
+    @Nullable
+    private Tab tabAt(double mouseX, double mouseY) {
+        if (activeOverlay() != null) return null;
+        for (Tab tab : tabs) {
+            if (tab.hit(mouseX, mouseY) && tab.enabled.getAsBoolean()) return tab;
+        }
+        return null;
+    }
+
+    private static void clickSound() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
     }
 
     @Override
@@ -327,9 +457,17 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         double mouseY = event.y();
         int button = event.button();
         QuantumOverlay open = activeOverlay();
-        return open != null
-                ? open.mouseClicked(mouseX, mouseY, button)
-                : super.mouseClicked(event, doubleClick);
+        if (open != null) return open.mouseClicked(mouseX, mouseY, button);
+        Tab tab = tabAt(mouseX, mouseY);
+        if (tab != null) {
+            Runnable action = button == 0 ? tab.onClick : button == 1 ? tab.onRightClick : null;
+            if (action != null) {
+                clickSound();
+                action.run();
+            }
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
@@ -357,9 +495,19 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         QuantumOverlay open = activeOverlay();
-        return open != null
-                ? open.mouseScrolled(mouseX, mouseY, scrollX, scrollY)
-                : super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        if (open != null) return open.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        Tab tab = tabAt(mouseX, mouseY);
+        if (tab != null && tab.onScroll != null && scrollY != 0) {
+            tab.onScroll.accept(scrollY > 0 ? 1 : -1);
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        QuantumOverlay open = activeOverlay();
+        return open != null ? open.charTyped(event.codepoint()) : super.charTyped(event);
     }
 
     @Override

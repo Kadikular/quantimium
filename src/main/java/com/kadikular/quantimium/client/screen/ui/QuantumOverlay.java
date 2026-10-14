@@ -35,6 +35,11 @@ public interface QuantumOverlay {
         return true;
     }
 
+    /** A typed character, for overlays with a text field. */
+    default boolean charTyped(int codepoint) {
+        return true;
+    }
+
     /** Where the overlay is drawn, in GUI pixels, once laid out; used to crop wiki screenshots. */
     @Nullable
     default Rect2i bounds() {

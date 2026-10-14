@@ -2,10 +2,12 @@ package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.laser.LogisticsMember;
 import com.kadikular.quantimium.menu.LogisticsReceptacleMenu;
+import com.kadikular.quantimium.menu.PriorityButton;
 import com.kadikular.quantimium.recipe.FilterEntry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,14 +16,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A Logistics Receptacle's screen: its filter, nine ghost entries (click one with an item, drag one in from JEI,
- * shift-click for its tags), and tabs for its role, active or passive, priority (shift for tens) and allow/deny.
+ * shift-click for its tags), and on the rail allow/deny, priority, its role, and active or passive.
  */
 public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsReceptacleMenu> implements GhostFilterScreen {
 
@@ -42,33 +43,33 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(() -> Component.literal(role().substring(0, 1).toUpperCase(java.util.Locale.ROOT)), () -> press(LogisticsReceptacleMenu.BUTTON_ROLE),
+                Tab.glyph(() -> receptacle().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LogisticsReceptacleMenu.BUTTON_ALLOW),
+                                () -> List.of(Component.translatable(receptacle().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .slot(RailSlot.FILTER),
+                priorityTab(() -> receptacle().priority(), value -> press(PriorityButton.encode(value)), PriorityButton.MAX),
+                Tab.glyph(() -> switch (receptacle().role()) {
+                                    case STORAGE -> GuiIcon.STORAGE;
+                                    case PROVIDER -> GuiIcon.PROVIDER;
+                                    case REQUESTER -> GuiIcon.REQUESTER;
+                                }, () -> press(LogisticsReceptacleMenu.BUTTON_ROLE),
                                 () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle.role." + role()),
-                                        Component.translatable("gui.quantimium.logistics_receptacle.role.tip")))
-                        .icon(() -> new ItemStack(switch (receptacle().role()) {
-                            case STORAGE -> Items.CHEST;
-                            case PROVIDER -> Items.DROPPER;
-                            case REQUESTER -> Items.HOPPER;
-                        })),
-                Tab.of(() -> Component.literal(receptacle().active() ? "A" : "P"), () -> press(LogisticsReceptacleMenu.BUTTON_ACTIVE),
+                                        hint("gui.quantimium.tab.cycle")))
+                        // Three roles: two steps forward is one back.
+                        .onRightClick(() -> {
+                            press(LogisticsReceptacleMenu.BUTTON_ROLE);
+                            press(LogisticsReceptacleMenu.BUTTON_ROLE);
+                        }),
+                Tab.glyph(() -> !receptacle().active() ? GuiIcon.PASSIVE
+                                        : receptacle().role() == LogisticsMember.Role.PROVIDER ? GuiIcon.ACTIVE_EXPORT : GuiIcon.ACTIVE_IMPORT,
+                                () -> press(LogisticsReceptacleMenu.BUTTON_ACTIVE),
                                 () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle." + (receptacle().active() ? "active" : "passive") + "." + role()),
-                                        Component.translatable("gui.quantimium.logistics_receptacle.active.tip")))
-                        .icon(() -> new ItemStack(receptacle().active() ? Items.REDSTONE_TORCH : Items.LEVER))
-                        .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE),
-                Tab.of(() -> Component.literal("+"), () -> press(shift() ? LogisticsReceptacleMenu.BUTTON_PRIORITY_UP_TEN : LogisticsReceptacleMenu.BUTTON_PRIORITY_UP),
-                        () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle.priority", receptacle().priority()),
-                                Component.translatable("gui.quantimium.logistics_receptacle.priority.tip"))),
-                Tab.of(() -> Component.literal("-"), () -> press(shift() ? LogisticsReceptacleMenu.BUTTON_PRIORITY_DOWN_TEN : LogisticsReceptacleMenu.BUTTON_PRIORITY_DOWN),
-                        () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle.priority", receptacle().priority()),
-                                Component.translatable("gui.quantimium.logistics_receptacle.priority.tip"))),
-                Tab.of(() -> Component.literal(receptacle().allows() ? "W" : "B"), () -> press(LogisticsReceptacleMenu.BUTTON_ALLOW),
-                                () -> List.of(Component.translatable(receptacle().allows() ? "gui.quantimium.logistics_receptacle.allow" : "gui.quantimium.logistics_receptacle.deny"),
-                                        Component.translatable("gui.quantimium.logistics_receptacle.allow.tip")))
-                        .icon(() -> new ItemStack(receptacle().allows() ? Items.WHITE_WOOL : Items.BLACK_WOOL)));
+                                        hint("gui.quantimium.tab.switch")))
+                        .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE));
     }
 
-    private boolean shift() {
-        return minecraft != null && minecraft.hasShiftDown();
+    private static Component hint(String key) {
+        return Component.translatable(key).withStyle(ChatFormatting.GRAY);
     }
 
     private void press(int button) {

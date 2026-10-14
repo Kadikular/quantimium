@@ -2,8 +2,10 @@ package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity;
+import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
+import com.kadikular.quantimium.menu.PriorityButton;
 import com.kadikular.quantimium.menu.ReactorLogisticsPortMenu;
 import com.kadikular.quantimium.recipe.FilterEntry;
 import net.minecraft.ChatFormatting;
@@ -13,15 +15,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A Reactor Logistics Port's screen: its filter on what it offers the network, nine ghost entries (click one with an
- * item, drag one in from JEI, shift-click for its tags), and tabs for storing, sharing, priority (shift for tens) and
- * allow/deny.
+ * item, drag one in from JEI, shift-click for its tags), and on the rail allow/deny, priority, Store and Share.
  */
 public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogisticsPortMenu> implements GhostFilterScreen {
 
@@ -38,28 +38,23 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of(() -> Component.literal(port().storing() ? "S" : "-"), () -> press(ReactorLogisticsPortMenu.BUTTON_STORING),
+                Tab.glyph(() -> port().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(ReactorLogisticsPortMenu.BUTTON_ALLOW),
+                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.reactor_logistics_port.filter.tip")))
+                        .slot(RailSlot.FILTER),
+                priorityTab(() -> port().priorityValue(), value -> press(PriorityButton.encode(value)), PriorityButton.MAX),
+                Tab.glyph(() -> GuiIcon.STORAGE, () -> press(ReactorLogisticsPortMenu.BUTTON_STORING),
                                 () -> List.of(Component.translatable("gui.quantimium.reactor_logistics_port.storing." + port().storing()),
-                                        Component.translatable("gui.quantimium.reactor_logistics_port.storing.tip")))
-                        .icon(() -> new ItemStack(port().storing() ? Items.CHEST : Items.BARRIER)),
-                Tab.of(() -> Component.literal(port().sharing() ? "C" : "-"), () -> press(ReactorLogisticsPortMenu.BUTTON_SHARING),
+                                        hint("gui.quantimium.tab.switch")))
+                        .on(() -> port().storing()),
+                Tab.glyph(() -> GuiIcon.SHARE, () -> press(ReactorLogisticsPortMenu.BUTTON_SHARING),
                                 () -> List.of(Component.translatable("gui.quantimium.reactor_logistics_port.sharing." + port().sharing()),
-                                        Component.translatable("gui.quantimium.reactor_logistics_port.sharing.tip")))
-                        .icon(() -> new ItemStack(port().sharing() ? Items.CRAFTING_TABLE : Items.BARRIER)),
-                Tab.of(() -> Component.literal("+"), () -> press(shift() ? ReactorLogisticsPortMenu.BUTTON_PRIORITY_UP_TEN : ReactorLogisticsPortMenu.BUTTON_PRIORITY_UP),
-                        () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle.priority", port().priorityValue()),
-                                Component.translatable("gui.quantimium.logistics_receptacle.priority.tip"))),
-                Tab.of(() -> Component.literal("-"), () -> press(shift() ? ReactorLogisticsPortMenu.BUTTON_PRIORITY_DOWN_TEN : ReactorLogisticsPortMenu.BUTTON_PRIORITY_DOWN),
-                        () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle.priority", port().priorityValue()),
-                                Component.translatable("gui.quantimium.logistics_receptacle.priority.tip"))),
-                Tab.of(() -> Component.literal(port().allows() ? "W" : "B"), () -> press(ReactorLogisticsPortMenu.BUTTON_ALLOW),
-                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.reactor_logistics_port.allow" : "gui.quantimium.reactor_logistics_port.deny"),
-                                        Component.translatable("gui.quantimium.reactor_logistics_port.allow.tip")))
-                        .icon(() -> new ItemStack(port().allows() ? Items.WHITE_WOOL : Items.BLACK_WOOL)));
+                                        hint("gui.quantimium.tab.switch")))
+                        .on(() -> port().sharing()));
     }
 
-    private boolean shift() {
-        return minecraft != null && minecraft.hasShiftDown();
+    private static Component hint(String key) {
+        return Component.translatable(key).withStyle(ChatFormatting.GRAY);
     }
 
     private void press(int button) {
@@ -112,7 +107,7 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
 
     @Override
     protected Component statusLabel() {
-        return Component.translatable("gui.quantimium.logistics_receptacle.priority", port().priorityValue());
+        return Component.translatable("gui.quantimium.priority.value", port().priorityValue());
     }
 
     @Override

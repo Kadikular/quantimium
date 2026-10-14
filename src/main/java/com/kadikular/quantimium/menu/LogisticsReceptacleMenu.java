@@ -21,10 +21,6 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
     public static final int BUTTON_ROLE = 0;
     public static final int BUTTON_ACTIVE = 1;
     public static final int BUTTON_ALLOW = 2;
-    public static final int BUTTON_PRIORITY_UP = 3;
-    public static final int BUTTON_PRIORITY_DOWN = 4;
-    public static final int BUTTON_PRIORITY_UP_TEN = 5;
-    public static final int BUTTON_PRIORITY_DOWN_TEN = 6;
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 35;
     public static final int FILTER_START = 0;
@@ -90,14 +86,14 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (PriorityButton.is(id)) {
+            receptacle.addPriority(PriorityButton.decode(id) - receptacle.priority());
+            return true;
+        }
         switch (id) {
             case BUTTON_ROLE -> receptacle.cycleRole();
             case BUTTON_ACTIVE -> receptacle.toggleActive();
             case BUTTON_ALLOW -> receptacle.toggleAllow();
-            case BUTTON_PRIORITY_UP -> receptacle.addPriority(1);
-            case BUTTON_PRIORITY_DOWN -> receptacle.addPriority(-1);
-            case BUTTON_PRIORITY_UP_TEN -> receptacle.addPriority(10);
-            case BUTTON_PRIORITY_DOWN_TEN -> receptacle.addPriority(-10);
             default -> {
                 return false;
             }
