@@ -3,7 +3,6 @@ package com.kadikular.quantimium.block.entity;
 import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.flux.FluxMeterReadout;
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.init.ModDataComponents;
 import com.kadikular.quantimium.item.LensItem;
 import com.kadikular.quantimium.laser.LaserBeam;
 import com.kadikular.quantimium.laser.LaserBeamView;
@@ -156,8 +155,7 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
     public List<LensUse> lensesFor(Direction face) {
         ItemStack stack = lens(face);
         if (!(stack.getItem() instanceof LensItem lens)) return List.of();
-        return List.of(new LensUse(lens.lens(), stack.get(ModDataComponents.LENS_FILTER.get()),
-                Boolean.TRUE.equals(stack.get(ModDataComponents.INTERACT_HITS.get()))));
+        return List.of(LensUse.of(stack, lens.lens()));
     }
 
     @Override

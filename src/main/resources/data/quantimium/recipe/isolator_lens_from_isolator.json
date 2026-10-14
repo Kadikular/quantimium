@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:isolator"
+  ],
+  "result": {
+    "id": "quantimium:isolator_lens",
+    "count": 1
+  }
+}

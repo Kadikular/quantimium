@@ -40,6 +40,11 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
     @Override
     protected void init() {
         super.init();
+        restoreCursor(minecraft);
+    }
+
+    /** Puts the pointer back where {@link #keepCursor} kept it, if it did: for any lens's settings screen. */
+    static void restoreCursor(@org.jetbrains.annotations.Nullable net.minecraft.client.Minecraft minecraft) {
         if (!Double.isNaN(keptX) && minecraft != null) {
             org.lwjgl.glfw.GLFW.glfwSetCursorPos(minecraft.getWindow().handle(), keptX, keptY);
             keptX = Double.NaN;

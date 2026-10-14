@@ -77,15 +77,8 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
             relay.setLens(face, lens);
             return true;
         }
-        if (!(lens.getItem() instanceof com.kadikular.quantimium.item.FilterLensItem)) return false;
-        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
-            server.openMenu(new net.minecraft.world.SimpleMenuProvider((containerId, inventory, who) -> new FilterLensMenu(containerId, inventory, relay, face),
-                    lens.getHoverName()), buf -> {
-                buf.writeByte(FilterLensMenu.IN_RELAY);
-                buf.writeBlockPos(relay.getBlockPos());
-                buf.writeEnum(face);
-            });
-        }
+        if (!(lens.getItem() instanceof com.kadikular.quantimium.item.LensWithSettings)) return false;
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) com.kadikular.quantimium.menu.LensHolder.openInRelay(server, relay, face);
         return true;
     }
 

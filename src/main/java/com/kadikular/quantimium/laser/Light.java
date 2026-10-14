@@ -150,6 +150,18 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1), steps, inWorld);
         }
 
+        /** Through an Isolator Lens: without the modifiers it stops. */
+        Stream keeping(java.util.function.Predicate<Lens> passes) {
+            int kept = 0;
+            for (Lens lens : Lens.values()) {
+                if (has(lens) && passes.test(lens)) kept |= 1 << lens.ordinal();
+            }
+            List<Lens> keptSteps = steps.stream().filter(passes).toList();
+            return new Stream(action, kept, payers,
+                    passes.test(Lens.AMPLIFY) ? amps : 0, passes.test(Lens.FILTER) ? filter : null, passes.test(Lens.SPEED) ? speed : 0, hits,
+                    passes.test(Lens.HARMONIC) ? fortune : 0, keptSteps, inWorld);
+        }
+
         /** Through a Smelting or Crushing lens: one more step, after those it had, up to {@link LaserTuning#PROCESS_STEPS}. */
         Stream processedBy(Lens lens) {
             List<Lens> more = new java.util.ArrayList<>(steps);
@@ -244,6 +256,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         for (Stream stream : this.streams) streams.put(stream.action(), stream);
         int marks = this.marks;
         int boosts = this.boosts;
+        Set<BlockPos> logistics = this.logistics;
         for (LensUse use : lenses) {
             Lens lens = use.lens();
             if (lens.action) {
@@ -266,6 +279,16 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 case FILTER -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(),
                                 (use.filter() == null ? LensFilter.EMPTY : use.filter()).over(stream.filter() == null ? LensFilter.EMPTY : stream.filter())));
+                case ISOLATE -> {
+                    // What came before it, but for what it passes; power and reach always do.
+                    IsolatorSettings passing = use.isolator() == null ? IsolatorSettings.POWER_ONLY : use.isolator();
+                    streams.keySet().removeIf(action -> !passing.passes(action));
+                    streams.replaceAll((action, stream) -> stream.keeping(passing::passes));
+                    if (!passing.passes(Lens.UV)) marks &= ~UV;
+                    if (!passing.passes(Lens.PHANTOM)) marks &= ~PHANTOM;
+                    if (!passing.passes(Lens.SPEED)) marks = withSpeeds(marks, 0);
+                    if (!passing.logistics()) logistics = Set.of();
+                }
                 case SPEED -> {
                     streams.replaceAll((action, stream) -> stream.faster());
                     marks = withSpeeds(marks, ((marks & SPEEDS) >> SPEEDS_SHIFT) + 1);

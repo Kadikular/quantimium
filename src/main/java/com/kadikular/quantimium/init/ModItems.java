@@ -276,6 +276,8 @@ public class ModItems {
             "block_filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1), com.kadikular.quantimium.laser.LensFilter.BLOCKS));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> ENTITY_FILTER_LENS = ITEMS.registerItem(
             "entity_filter_lens", props -> new com.kadikular.quantimium.item.FilterLensItem(props.stacksTo(1), com.kadikular.quantimium.laser.LensFilter.ENTITIES));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> ISOLATOR_LENS = ITEMS.registerItem(
+            "isolator_lens", props -> new com.kadikular.quantimium.item.IsolatorLensItem(props.stacksTo(1)));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> UV_LENS = ITEMS.registerItem(
             "uv_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.UV));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> AMPLIFY_LENS = ITEMS.registerItem(

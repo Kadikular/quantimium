@@ -58,16 +58,8 @@ public class LensMountMenu extends AbstractContainerMenu {
             mount.lensChanged();
             return true;
         }
-        if (!(lens.getItem() instanceof com.kadikular.quantimium.item.FilterLensItem)) return false;
-        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
-            net.minecraft.core.BlockPos pos = mount.getBlockPos();
-            server.openMenu(new net.minecraft.world.SimpleMenuProvider((containerId, inventory, who) -> new FilterLensMenu(containerId, inventory, mount, id),
-                    lens.getHoverName()), buf -> {
-                buf.writeByte(FilterLensMenu.IN_MOUNT);
-                buf.writeBlockPos(pos);
-                buf.writeByte(id);
-            });
-        }
+        if (!(lens.getItem() instanceof com.kadikular.quantimium.item.LensWithSettings)) return false;
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) LensHolder.openInMount(server, mount, id);
         return true;
     }
 

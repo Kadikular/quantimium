@@ -157,5 +157,6 @@ crushing_lens: "A lens: what the actions before it free or move is crushed; alon
 unrealising_lens: "A lens: ore a Harvest beam cuts comes away as Unrealised Matter."
 extract_lens: "A lens: takes from the inventory the beam ends on, back up to Laser Ports."
 isolator: "Lets power through, and nothing a beam did: actions and items stop at it."
+isolator_lens: "A lens: lets power through, and only what else it's set to pass."
 area_prism: "Spreads the actions of light reaching it over an area, set with the Laser Linker."
 spectroscope: "Splits the light leaving a laser block into what it carries: reach, actions, who pays."

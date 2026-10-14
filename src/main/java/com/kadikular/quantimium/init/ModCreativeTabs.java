@@ -90,6 +90,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.FILTER_LENS.get());
                         output.accept(ModItems.BLOCK_FILTER_LENS.get());
                         output.accept(ModItems.ENTITY_FILTER_LENS.get());
+                        output.accept(ModItems.ISOLATOR_LENS.get());
                         output.accept(ModItems.UV_LENS.get());
                         output.accept(ModItems.AMPLIFY_LENS.get());
                         output.accept(ModItems.PLACE_LENS.get());

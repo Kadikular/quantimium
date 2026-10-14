@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -22,7 +21,7 @@ import java.util.function.Consumer;
  * A filter lens: an Item, Block or Entity Filter Lens, each setting its own part of what the actions it changes may
  * act on ({@link LensFilter}). Use it in the air to set it.
  */
-public class FilterLensItem extends LensItem {
+public class FilterLensItem extends LensItem implements LensWithSettings {
 
     /** {@link LensFilter#ITEMS}, {@link LensFilter#BLOCKS} or {@link LensFilter#ENTITIES}. */
     private final int part;
@@ -43,14 +42,14 @@ public class FilterLensItem extends LensItem {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        if (player instanceof ServerPlayer server) {
-            server.openMenu(new SimpleMenuProvider((id, inventory, who) -> new FilterLensMenu(id, inventory, hand),
-                    player.getItemInHand(hand).getHoverName()), buf -> {
-                buf.writeByte(FilterLensMenu.IN_HAND);
-                buf.writeBoolean(hand == InteractionHand.MAIN_HAND);
-            });
-        }
+        if (player instanceof ServerPlayer server) com.kadikular.quantimium.menu.LensHolder.openInHand(server, hand);
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu menu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+                                                                   com.kadikular.quantimium.menu.LensHolder holder) {
+        return new FilterLensMenu(containerId, inventory, holder);
     }
 
     @Override

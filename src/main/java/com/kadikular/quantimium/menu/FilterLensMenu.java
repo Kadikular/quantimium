@@ -5,7 +5,6 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import com.kadikular.quantimium.item.FilterLensItem;
 import com.kadikular.quantimium.laser.LensFilter;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -35,11 +34,6 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     public static final int FILTER_Y = 35;
     public static final int FILTER_END = LensFilter.SLOTS;
 
-    /** Where the lens is: in a hand, or in a Lens Mount's slot. */
-    public static final int IN_HAND = 0;
-    public static final int IN_MOUNT = 1;
-    public static final int IN_RELAY = 2;
-
     private final java.util.function.Supplier<ItemStack> lens;
     /** After a change: a mount's light changes with its lens. */
     private final Runnable changed;
@@ -48,52 +42,15 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     private final SimpleContainer shown = new SimpleContainer(LensFilter.SLOTS);
 
     public static FilterLensMenu fromNetwork(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        byte where = extraData.readByte();
-        if (where == IN_RELAY) {
-            net.minecraft.core.BlockPos pos = extraData.readBlockPos();
-            net.minecraft.core.Direction face = extraData.readEnum(net.minecraft.core.Direction.class);
-            if (playerInv.player.level().getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LaserRelayBlockEntity relay) {
-                return new FilterLensMenu(containerId, playerInv, relay, face);
-            }
-            return new FilterLensMenu(containerId, playerInv, InteractionHand.MAIN_HAND);
-        }
-        if (where == IN_MOUNT) {
-            net.minecraft.core.BlockPos pos = extraData.readBlockPos();
-            int slot = extraData.readByte();
-            if (playerInv.player.level().getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LensMountBlockEntity mount) {
-                return new FilterLensMenu(containerId, playerInv, mount, slot);
-            }
-            return new FilterLensMenu(containerId, playerInv, InteractionHand.MAIN_HAND);
-        }
-        return new FilterLensMenu(containerId, playerInv, extraData.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
+        return new FilterLensMenu(containerId, playerInv, LensHolder.read(playerInv, extraData));
     }
 
-    public FilterLensMenu(int containerId, Inventory playerInv, InteractionHand hand) {
-        this(containerId, playerInv, () -> playerInv.player.getItemInHand(hand), () -> {},
-                who -> who.getItemInHand(hand).getItem() instanceof FilterLensItem, hand == InteractionHand.MAIN_HAND ? playerInv.getSelectedSlot() : -1);
-    }
-
-    /** For a Filter lens in a Lens Mount's slot. */
-    public FilterLensMenu(int containerId, Inventory playerInv, com.kadikular.quantimium.block.entity.LensMountBlockEntity mount, int slot) {
-        this(containerId, playerInv, () -> mount.getLensSlots().getStackInSlot(slot), mount::lensChanged,
-                who -> !mount.isRemoved() && mount.getLensSlots().getStackInSlot(slot).getItem() instanceof FilterLensItem
-                        && who.distanceToSqr(mount.getBlockPos().getCenter()) <= 64, -1);
-    }
-
-    /** For a filter lens in one of a Laser Relay's emitters. */
-    public FilterLensMenu(int containerId, Inventory playerInv, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity relay,
-                          net.minecraft.core.Direction face) {
-        this(containerId, playerInv, () -> relay.lens(face), () -> relay.setLens(face, relay.lens(face)),
-                who -> !relay.isRemoved() && relay.lens(face).getItem() instanceof FilterLensItem
-                        && who.distanceToSqr(relay.getBlockPos().getCenter()) <= 64, -1);
-    }
-
-    private FilterLensMenu(int containerId, Inventory playerInv, java.util.function.Supplier<ItemStack> lens, Runnable changed,
-                           java.util.function.Predicate<Player> valid, int heldSlot) {
+    public FilterLensMenu(int containerId, Inventory playerInv, LensHolder holder) {
         super(ModMenuTypes.FILTER_LENS_MENU.get(), containerId);
-        this.lens = lens;
-        this.changed = changed;
-        this.valid = valid;
+        this.lens = holder.lens();
+        this.changed = holder.changed();
+        this.valid = holder.valid();
+        int heldSlot = holder.heldSlot();
         for (int i = 0; i < LensFilter.SLOTS; i++) {
             addSlot(new Slot(shown, i, FILTER_X + i * 18, FILTER_Y) {
                 @Override

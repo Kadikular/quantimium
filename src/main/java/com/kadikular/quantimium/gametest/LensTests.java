@@ -555,6 +555,36 @@ public final class LensTests {
         return lens;
     }
 
+    // covers: laser.isolator
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anUnsetIsolatorLensStopsTheActionsBeforeIt(GameTestHelper helper) {
+        // Harvest, then an Isolator Lens: the light past it carries power only, so the stone stays.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.ISOLATOR_LENS.get());
+        helper.setBlock(new BlockPos(6, Y, 8), Blocks.STONE);
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(6, Y, 8));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.isolator
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 20)
+    public static void anIsolatorLensPassesWhatItsSetTo(GameTestHelper helper) {
+        var settings = com.kadikular.quantimium.laser.IsolatorSettings.POWER_ONLY;
+        helper.assertTrue(!settings.passes(com.kadikular.quantimium.laser.Lens.HARVEST) && !settings.passes(com.kadikular.quantimium.laser.Lens.AMPLIFY),
+                "unset, it passes neither actions nor modifiers");
+        var noHarvest = settings.withActions(true).withModifiers(true).withEntry(0, new ItemStack(ModItems.HARVEST_LENS.get()));
+        helper.assertTrue(!noHarvest.passes(com.kadikular.quantimium.laser.Lens.HARVEST), "a listed lens, denied, stops");
+        helper.assertTrue(noHarvest.passes(com.kadikular.quantimium.laser.Lens.DAMAGE) && noHarvest.passes(com.kadikular.quantimium.laser.Lens.AMPLIFY),
+                "the rest pass");
+        var onlyHarvest = noHarvest.withAllow(true);
+        helper.assertTrue(onlyHarvest.passes(com.kadikular.quantimium.laser.Lens.HARVEST) && !onlyHarvest.passes(com.kadikular.quantimium.laser.Lens.DAMAGE),
+                "allowed, only the listed lens passes");
+        helper.succeed();
+    }
+
     // covers: laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 20)
     public static void filterLensesEachSetTheirOwnPart(GameTestHelper helper) {
@@ -1124,7 +1154,7 @@ public final class LensTests {
         LensMountBlockEntity mount = mount(helper, new BlockPos(8, Y + 2, 8), Direction.DOWN, ModItems.HARVEST_LENS.get());
         mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.BLOCK_FILTER_LENS.get()));
         var player = TestSupport.player(helper, new BlockPos(6, Y, 6));
-        var menu = new com.kadikular.quantimium.menu.FilterLensMenu(1, player.getInventory(), mount, 1);
+        var menu = new com.kadikular.quantimium.menu.FilterLensMenu(1, player.getInventory(), com.kadikular.quantimium.menu.LensHolder.mount(mount, 1));
         menu.clickMenuButton(player, com.kadikular.quantimium.menu.FilterLensMenu.BUTTON_RIPE);
         helper.runAfterDelay(70, () -> {
             helper.assertBlockPresent(Blocks.WHEAT, crop);

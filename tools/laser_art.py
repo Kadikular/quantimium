@@ -171,6 +171,7 @@ GLYPHS = {
     "filter_lens": ["#####", ".###.", "..#..", "..#..", "..#.."],    # a funnel: the Item Filter Lens
     "entity_filter_lens": [".###.", "#.#.#", "#####", ".###.", "#.#.#"],  # a face
     "block_filter_lens": ["#####", "#.#.#", "#####", "#.#.#", "#####"],   # a block, in its grain
+    "isolator_lens": ["#.#.#", "#.#.#", "#.#.#", "#.#.#", "#.#.#"],       # bars: only power through
     "uv_lens": [".###.", "#...#", "#.#.#", "#...#", ".###."],        # an eye, shut to most
     "amplify_lens": ["..#..", "..#..", "#####", "..#..", "..#.."],   # more
     "place_lens": ["#####", "#...#", "#...#", "#...#", "#####"],     # a block
@@ -227,7 +228,7 @@ def spectroscope() -> Image.Image:
 
 
 LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
-          "filter_lens": "e8e0c0", "entity_filter_lens": "f0a8a0", "block_filter_lens": "a8d090", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
+          "filter_lens": "e8e0c0", "entity_filter_lens": "f0a8a0", "block_filter_lens": "a8d090", "isolator_lens": "ff6a5a", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
           "speed_lens": "ffa0d0", "phantom_lens": "b8c4d8",
           "insert_lens": "6fa8ff", "extract_lens": "ffc46f", "interact_lens": "c0ff7f",
           "precision_lens": "e0f0ff", "harmonic_lens": "ffd0f0", "unrealising_lens": "b070ff", "smelting_lens": "ff8040", "crushing_lens": "b09070"}
@@ -273,7 +274,7 @@ def spectroscope() -> Image.Image:
 
 
 LENSES = {"harvest_lens": "f0a040", "damage_lens": "ff4a4a", "pickup_lens": "5be38a", "range_lens": "7fb2ff",
-          "filter_lens": "e8e0c0", "entity_filter_lens": "f0a8a0", "block_filter_lens": "a8d090", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
+          "filter_lens": "e8e0c0", "entity_filter_lens": "f0a8a0", "block_filter_lens": "a8d090", "isolator_lens": "ff6a5a", "uv_lens": "9a7bff", "amplify_lens": "ffe070", "place_lens": "4ac8c8",
           "speed_lens": "ffa0d0", "phantom_lens": "b8c4d8",
           "insert_lens": "6fa8ff", "extract_lens": "ffc46f", "interact_lens": "c0ff7f",
           "precision_lens": "e0f0ff", "harmonic_lens": "ffd0f0", "unrealising_lens": "b070ff", "smelting_lens": "ff8040", "crushing_lens": "b09070"}

@@ -22,6 +22,7 @@ navigation:
 - <ItemLink id="quantimium:filter_lens" />
 - <ItemLink id="quantimium:block_filter_lens" />
 - <ItemLink id="quantimium:entity_filter_lens" />
+- <ItemLink id="quantimium:isolator_lens" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
 - <ItemLink id="quantimium:harmonic_lens" />

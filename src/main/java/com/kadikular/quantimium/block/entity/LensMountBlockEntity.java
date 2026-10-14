@@ -136,8 +136,7 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         for (int slot = 0; slot < SLOTS; slot++) {
             ItemStack stack = lensSlots.getStackInSlot(slot);
             if (stack.getItem() instanceof LensItem lens) {
-                lenses.add(new com.kadikular.quantimium.laser.LensUse(lens.lens(), stack.get(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get()),
-                        Boolean.TRUE.equals(stack.get(com.kadikular.quantimium.init.ModDataComponents.INTERACT_HITS.get()))));
+                lenses.add(com.kadikular.quantimium.laser.LensUse.of(stack, lens.lens()));
             }
         }
         return lenses;

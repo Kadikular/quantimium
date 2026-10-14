@@ -88,6 +88,10 @@ public class ModMenuTypes {
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.AreaPrismMenu::new));
 
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.IsolatorLensMenu>> ISOLATOR_LENS_MENU =
+            MENUS.register("isolator_lens_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.IsolatorLensMenu::fromNetwork));
+
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.FilterLensMenu>> FILTER_LENS_MENU =
             MENUS.register("filter_lens_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.FilterLensMenu::fromNetwork));

@@ -81,7 +81,7 @@ public class RelayEmitterScreen extends QuantumMachineScreen<RelayEmitterMenu> {
     private boolean hasSettings() {
         LaserRelayBlockEntity relay = menu.getBlockEntity();
         var item = relay == null ? null : relay.lens(menu.face()).getItem();
-        return item instanceof com.kadikular.quantimium.item.FilterLensItem || item instanceof com.kadikular.quantimium.item.InteractLensItem;
+        return item instanceof com.kadikular.quantimium.item.LensWithSettings || item instanceof com.kadikular.quantimium.item.InteractLensItem;
     }
 
     private boolean overSettings(double mouseX, double mouseY) {

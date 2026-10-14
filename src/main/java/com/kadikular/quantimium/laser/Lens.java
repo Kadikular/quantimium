@@ -41,7 +41,9 @@ public enum Lens {
     /** With Pickup, what comes back up the beam is smelted on the way. */
     SMELT(false, 0xFFFF8040),
     /** Crushes what the actions before it free or move: stone to gravel to sand, ore to dust. */
-    CRUSH(false, 0xFFB09070);
+    CRUSH(false, 0xFFB09070),
+    /** Lets only power through, or what it's set to pass: a network, actions, modifiers, listed lenses. */
+    ISOLATE(false, 0xFFFF5050);
 
     /** The lens item's translation key: its name, but for the two named for what they do to things. */
     public String itemKey() {
@@ -49,6 +51,7 @@ public enum Lens {
             case UNREALISE -> "unrealising";
             case SMELT -> "smelting";
             case CRUSH -> "crushing";
+            case ISOLATE -> "isolator";
             default -> name().toLowerCase(java.util.Locale.ROOT);
         };
         return "item.quantimium." + name + "_lens";

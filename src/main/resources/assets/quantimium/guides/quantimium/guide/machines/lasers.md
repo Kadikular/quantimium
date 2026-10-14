@@ -102,6 +102,12 @@ it, so Pickup's items stop short of it. It's a plain block: sneak-click or wrenc
 there or take one away (one always stays), and use an empty hand to step through how it listens to
 redstone.
 
+An <ItemLink id="quantimium:isolator_lens" /> does the same in a Lens Mount or a Relay emitter, and can be set to let more through: switch on
+a logistics network, actions or modifiers to let them pass, and list lenses to let through only those, or
+to stop just those (an Isolator Lens passing actions but stopping Harvest). Power and the light's reach
+always pass. Unset, it passes power only, as the Isolator does; an Isolator alone in a crafting grid
+makes one. Use it in the air to set it.
+
 ## Prisms
 
 A <ItemLink id="quantimium:laser_prism" /> sends the light that reaches it to each block

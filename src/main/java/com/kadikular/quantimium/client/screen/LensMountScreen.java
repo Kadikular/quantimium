@@ -95,7 +95,7 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
     /** Whether the lens in {@code slot} has settings of its own: a Filter lens, an Interact lens. */
     private boolean hasSettings(int slot) {
         var item = menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem();
-        return item instanceof com.kadikular.quantimium.item.FilterLensItem || item instanceof com.kadikular.quantimium.item.InteractLensItem;
+        return item instanceof com.kadikular.quantimium.item.LensWithSettings || item instanceof com.kadikular.quantimium.item.InteractLensItem;
     }
 
     @Override
