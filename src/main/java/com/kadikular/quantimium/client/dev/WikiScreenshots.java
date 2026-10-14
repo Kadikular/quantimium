@@ -54,7 +54,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Files;
@@ -764,8 +763,9 @@ public final class WikiScreenshots {
             return;
         }
         double scale = minecraft.getWindow().getGuiScale();
-        int tabs = screen instanceof QuantumMachineScreen<?> machine ? machine.tabColumnWidth() : 0;
-        Rect2i area = new Rect2i(screen.getGuiLeft(), screen.getGuiTop(), screen.getXSize() + tabs, screen.getYSize());
+        int left = screen instanceof QuantumMachineScreen<?> machine ? machine.railWidth(true) : 0;
+        int right = screen instanceof QuantumMachineScreen<?> machine ? machine.railWidth(false) : 0;
+        Rect2i area = new Rect2i(screen.getGuiLeft() - left, screen.getGuiTop(), screen.getXSize() + left + right, screen.getYSize());
         if (screen instanceof QuantumMachineScreen<?> machine) {
             QuantumOverlay overlay = machine.currentOverlay();
             if (overlay != null && overlay.bounds() != null) area = overlay.bounds();

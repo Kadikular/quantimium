@@ -1,6 +1,5 @@
 package com.kadikular.quantimium.client.screen.ui;
 
-import com.kadikular.quantimium.client.screen.QuantumMachineScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,8 +13,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * A page a rail tab opens: drawn in the panel's own frame, over it, so the screen doesn't jump. Its Back tab
- * is always at the top of the rail; Escape goes back too, not out of the screen.
+ * A page a rail tab opens: drawn in the panel's own frame, over it, so the screen doesn't jump. A back arrow
+ * sits before its title; its tab, clicked again, or Escape also go back, not out of the screen.
  */
 public abstract class Page implements QuantumOverlay {
 
@@ -54,19 +53,18 @@ public abstract class Page implements QuantumOverlay {
 
     @Override
     public Rect2i bounds() {
-        return new Rect2i(left, top, width + QuantumMachineScreen.TAB_SIZE, height);
+        return new Rect2i(left, top, width, height);
     }
 
-    private int backX() {
-        return left + width - 1;
-    }
-
-    private int backY() {
-        return top + QuantumMachineScreen.TAB_TOP;
-    }
+    /** The back arrow before the title: the shared icon at half size, in a box the height of the title row. */
+    public static final int BACK_X = 3;
+    public static final int BACK_Y = 2;
+    public static final int BACK_SIZE = 11;
+    /** Where the title starts after it. */
+    public static final int TITLE_AFTER_BACK = BACK_X + BACK_SIZE + 3;
 
     private boolean overBack(double mouseX, double mouseY) {
-        return QuantumWidgets.hit(mouseX, mouseY, backX(), backY(), QuantumMachineScreen.TAB_SIZE, QuantumMachineScreen.TAB_SIZE);
+        return QuantumWidgets.hit(mouseX, mouseY, left + BACK_X, top + BACK_Y, BACK_SIZE, BACK_SIZE);
     }
 
     @Override
@@ -75,14 +73,21 @@ public abstract class Page implements QuantumOverlay {
         graphics.fill(left, top, left + width, top + height, rail.fill());
         QuantumWidgets.outline(graphics, left, top, width, height, rail.edge());
         graphics.fill(left + 3, top + 15, left + width - 3, top + 16, rail.edge());
-        graphics.text(font, title, left + 6, top + 4, rail.title(), false);
-
-        boolean overBack = overBack(mouseX, mouseY);
-        rail.tab(graphics, backX(), backY(), QuantumMachineScreen.TAB_SIZE, false, overBack);
-        GuiIcon.BACK.draw(graphics, backX() + 3, backY() + 3);
+        backArrow(graphics, rail, left, top, overBack(mouseX, mouseY));
+        graphics.text(font, title, left + TITLE_AFTER_BACK, top + 4, rail.title(), false);
 
         renderPage(graphics, font, mouseX, mouseY);
-        if (overBack) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.page.back")), mouseX, mouseY);
+        if (overBack(mouseX, mouseY)) graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.page.back")), mouseX, mouseY);
+    }
+
+    /** The back arrow for a panel whose top-left corner is at ({@code left}, {@code top}). */
+    public static void backArrow(GuiGraphicsExtractor graphics, Rail rail, int left, int top, boolean hovered) {
+        if (hovered) rail.button(graphics, left + BACK_X, top + BACK_Y, BACK_SIZE, BACK_SIZE, true, true);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(left + BACK_X + 1.5f, top + BACK_Y + 1.5f);
+        graphics.pose().scale(0.5f, 0.5f);
+        GuiIcon.BACK.draw(graphics, 0, 0, hovered ? 0xFFFFFFFF : rail.text());
+        graphics.pose().popMatrix();
     }
 
     protected abstract void renderPage(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY);

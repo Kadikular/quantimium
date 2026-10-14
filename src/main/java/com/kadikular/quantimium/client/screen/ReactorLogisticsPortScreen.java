@@ -38,10 +38,6 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.glyph(() -> port().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(ReactorLogisticsPortMenu.BUTTON_ALLOW),
-                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
-                                        hint("gui.quantimium.reactor_logistics_port.filter.tip")))
-                        .slot(RailSlot.FILTER),
                 priorityTab(() -> port().priorityValue(), value -> press(PriorityButton.encode(value)), PriorityButton.MAX),
                 Tab.glyph(() -> GuiIcon.STORAGE, () -> press(ReactorLogisticsPortMenu.BUTTON_STORING),
                                 () -> List.of(Component.translatable("gui.quantimium.reactor_logistics_port.storing." + port().storing()),
@@ -50,7 +46,10 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
                 Tab.glyph(() -> GuiIcon.SHARE, () -> press(ReactorLogisticsPortMenu.BUTTON_SHARING),
                                 () -> List.of(Component.translatable("gui.quantimium.reactor_logistics_port.sharing." + port().sharing()),
                                         hint("gui.quantimium.tab.switch")))
-                        .on(() -> port().sharing()));
+                        .on(() -> port().sharing()),
+                Tab.glyph(() -> port().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(ReactorLogisticsPortMenu.BUTTON_ALLOW),
+                                () -> List.of(Component.translatable(port().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.reactor_logistics_port.filter.tip"))));
     }
 
     private void press(int button) {

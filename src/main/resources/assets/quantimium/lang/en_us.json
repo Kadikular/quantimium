@@ -1229,6 +1229,7 @@
   "gui.quantimium.sides.slot": "Slot %s",
   "gui.quantimium.sides.tank": "Tank %s",
   "gui.quantimium.page.back": "Back",
+  "gui.quantimium.page.close": "Click to close",
   "gui.quantimium.priority": "Priority",
   "gui.quantimium.priority.value": "Priority: %s",
   "gui.quantimium.priority.tab.hint": "Scroll or click",

@@ -51,11 +51,8 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.glyph(() -> GuiIcon.FILTER, () -> menu.setFilterView(!menu.isFilterView()),
-                                () -> List.of(Component.translatable("gui.quantimium.reactor_me_port.filter"),
-                                        hint("gui.quantimium.reactor_me_port.filter.tip")))
-                        .on(menu::isFilterView)
-                        .slot(RailSlot.FILTER),
+                filterTab(menu::isFilterView, menu::setFilterView, Component.translatable("gui.quantimium.reactor_me_port.filter"),
+                        "gui.quantimium.reactor_me_port.filter.tip"),
                 priorityTab(menu::priority, value -> press(PriorityButton.encode(value, ReactorMePortBlockEntity.MAX_PRIORITY)),
                         ReactorMePortBlockEntity.MAX_PRIORITY),
                 // How the Reactor's making is offered: both, whole trees or steps.
@@ -81,16 +78,14 @@ public class ReactorMePortScreen extends QuantumMachineScreen<ReactorMePortMenu>
                                                 ? "gui.quantimium.reactor_me_port.list.storage"
                                                 : "gui.quantimium.reactor_me_port.list.patterns"),
                                         hint("gui.quantimium.tab.switch")))
-                        .visible(menu::isFilterView)
-                        .slot(RailSlot.VIEW),
+                        .during(menu::isFilterView),
                 // Allow or deny, for the list on show; each list has its own.
                 Tab.glyph(() -> shownListAllows() ? GuiIcon.ALLOW : GuiIcon.DENY,
                                 () -> press(menu.isStorageList() ? ReactorMePortMenu.BUTTON_STORAGE_ALLOW
                                         : ReactorMePortMenu.BUTTON_PATTERNS_ALLOW),
                                 () -> List.of(Component.translatable(shownListAllows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
                                         hint("gui.quantimium.tab.switch")))
-                        .visible(menu::isFilterView)
-                        .slot(RailSlot.VIEW));
+                        .during(menu::isFilterView));
     }
 
     private boolean shownListAllows() {

@@ -43,10 +43,6 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.glyph(() -> receptacle().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LogisticsReceptacleMenu.BUTTON_ALLOW),
-                                () -> List.of(Component.translatable(receptacle().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
-                                        hint("gui.quantimium.tab.switch")))
-                        .slot(RailSlot.FILTER),
                 priorityTab(() -> receptacle().priority(), value -> press(PriorityButton.encode(value)), PriorityButton.MAX),
                 Tab.glyph(() -> switch (receptacle().role()) {
                                     case STORAGE -> GuiIcon.STORAGE;
@@ -60,6 +56,9 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
                             press(LogisticsReceptacleMenu.BUTTON_ROLE);
                             press(LogisticsReceptacleMenu.BUTTON_ROLE);
                         }),
+                Tab.glyph(() -> receptacle().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LogisticsReceptacleMenu.BUTTON_ALLOW),
+                                () -> List.of(Component.translatable(receptacle().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch"))),
                 Tab.glyph(() -> !receptacle().active() ? GuiIcon.PASSIVE
                                         : receptacle().role() == LogisticsMember.Role.PROVIDER ? GuiIcon.ACTIVE_EXPORT : GuiIcon.ACTIVE_IMPORT,
                                 () -> press(LogisticsReceptacleMenu.BUTTON_ACTIVE),

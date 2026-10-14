@@ -49,11 +49,8 @@ public class CatalystBayScreen extends QuantumMachineScreen<CatalystBayMenu> imp
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.glyph(() -> GuiIcon.FILTER, () -> menu.setFilterView(!menu.isFilterView()),
-                                () -> List.of(Component.translatable("gui.quantimium.catalyst_bay.filter"),
-                                        hint("gui.quantimium.catalyst_bay.filter.tip")))
-                        .on(menu::isFilterView)
-                        .slot(RailSlot.FILTER),
+                filterTab(menu::isFilterView, menu::setFilterView, Component.translatable("gui.quantimium.catalyst_bay.filter"),
+                        "gui.quantimium.catalyst_bay.filter.tip"),
                 // Which list the filter view is editing: outputs made, or inputs used up.
                 Tab.glyph(() -> menu.isInputList() ? GuiIcon.ACTIVE_IMPORT : GuiIcon.ACTIVE_EXPORT,
                                 () -> menu.setInputList(!menu.isInputList()),
@@ -61,16 +58,14 @@ public class CatalystBayScreen extends QuantumMachineScreen<CatalystBayMenu> imp
                                                 ? "gui.quantimium.catalyst_bay.list.inputs"
                                                 : "gui.quantimium.catalyst_bay.list.outputs"),
                                         hint("gui.quantimium.tab.switch")))
-                        .visible(menu::isFilterView)
-                        .slot(RailSlot.VIEW),
+                        .during(menu::isFilterView),
                 // Allow or deny, for the list on show; each list has its own.
                 Tab.glyph(() -> shownListAllows() ? GuiIcon.ALLOW : GuiIcon.DENY,
                                 () -> press(menu.isInputList() ? CatalystBayMenu.BUTTON_INPUT_MODE
                                         : CatalystBayMenu.BUTTON_OUTPUT_MODE),
                                 () -> List.of(Component.translatable(shownListAllows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
                                         hint("gui.quantimium.tab.switch")))
-                        .visible(menu::isFilterView)
-                        .slot(RailSlot.VIEW));
+                        .during(menu::isFilterView));
     }
 
     private void press(int button) {

@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * How rail tabs, and the pages they open, are drawn on a panel of each tier: the panel's own stone, so a tab
- * reads as part of it. A tab is open on its left, where it joins the panel.
+ * reads as part of it. A tab is open on the side where it joins the panel.
  */
 public record Rail(int fill, int edge, int litFill, int litEdge, int hoverEdge, int text, int textDim, int well, int title) {
 
@@ -28,25 +28,20 @@ public record Rail(int fill, int edge, int litFill, int litEdge, int hoverEdge, 
         };
     }
 
-    public void tab(GuiGraphicsExtractor graphics, int x, int y, int width, boolean lit, boolean hovered) {
+    /** A tab on the right rail ({@code left} false) or the left, open towards the panel. */
+    public void tab(GuiGraphicsExtractor graphics, int x, int y, int width, boolean lit, boolean hovered, boolean left) {
         int edgeColour = hovered ? hoverEdge : lit ? litEdge : edge;
         graphics.fill(x, y, x + width, y + SIZE, lit ? litFill : fill);
         graphics.fill(x, y, x + width, y + 1, edgeColour);
         graphics.fill(x, y + SIZE - 1, x + width, y + SIZE, edgeColour);
-        graphics.fill(x + width - 1, y, x + width, y + SIZE, edgeColour);
+        int side = left ? x : x + width - 1;
+        graphics.fill(side, y, side + 1, y + SIZE, edgeColour);
     }
 
     /** A framed button: the rail's colours, lit or not. */
     public void button(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean lit, boolean hovered) {
         graphics.fill(x, y, x + width, y + height, lit ? litFill : fill);
         QuantumWidgets.outline(graphics, x, y, width, height, hovered ? hoverEdge : lit ? litEdge : edge);
-    }
-
-    /** The corner tick on a tab that opens a page. */
-    public void opensTick(GuiGraphicsExtractor graphics, int x, int y, int width) {
-        int right = x + width - 2;
-        graphics.fill(right - 3, y + 2, right, y + 3, textDim);
-        graphics.fill(right - 1, y + 2, right, y + 5, textDim);
     }
 
     /** A value in the tab's bottom-right corner, at the small size of an item count. */
