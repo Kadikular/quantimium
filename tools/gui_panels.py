@@ -478,13 +478,6 @@ def logistics_terminal() -> Panel:
     return panel
 
 
-def entity_filter_lens() -> Panel:
-    """An Entity Filter Lens: no entries, its settings on the left rail; the inventory under it (FilterLensMenu)."""
-    panel = Panel(HIGH)
-    panel.player()
-    return panel
-
-
 PANELS = {
     "relay_emitter": relay_emitter,
     "quantum_crafter": lambda: crafter(MID, basic=False),
@@ -512,8 +505,6 @@ PANELS = {
     "laser_port": laser_port,
     "area_prism": area_prism,
     "laser_port_filter": laser_port_filter,
-    # An Entity Filter Lens has no entries: its settings are all on the rail.
-    "entity_filter_lens": lambda: entity_filter_lens(),
     # The same note and nine ghost entries as the Laser Port's filter view.
     "logistics_receptacle": laser_port_filter,
     "logistics_terminal": logistics_terminal,

@@ -34,4 +34,11 @@ public class LensItem extends Item {
         tooltip.accept(Component.translatable(BuiltInRegistries.ITEM.getKey(stack.getItem()).toLanguageKey("item") + ".tip")
                 .withStyle(ChatFormatting.GRAY));
     }
+
+    /** Sneaking with a lens on a Relay, the Relay decides: it takes the emitter off, rather than the lens being used. */
+    @Override
+    public boolean doesSneakBypassUse(ItemStack stack, net.minecraft.world.level.LevelReader level, net.minecraft.core.BlockPos pos,
+                                      net.minecraft.world.entity.player.Player player) {
+        return level.getBlockState(pos).getBlock() instanceof com.kadikular.quantimium.block.LaserRelayBlock;
+    }
 }

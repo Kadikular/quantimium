@@ -57,16 +57,16 @@ public class FilterLensItem extends LensItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
         LensFilter filter = filterOf(stack);
+        long listed = filter.entries(part).stream().filter(entry -> !entry.isEmpty()).count();
+        if (listed > 0) {
+            tooltip.accept(Component.translatable(filter.allows(part) ? "item.quantimium.filter_lens.allows" : "item.quantimium.filter_lens.denies", listed)
+                    .withStyle(ChatFormatting.AQUA));
+        }
         if (part == LensFilter.ENTITIES) {
             tooltip.accept(kinds(filter.kinds()).withStyle(ChatFormatting.AQUA));
             if (filter.spareYoung()) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.young.on").withStyle(ChatFormatting.AQUA));
             if (filter.keep() > 0) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.keep", filter.keep()).withStyle(ChatFormatting.AQUA));
             return;
-        }
-        long entries = filter.entries(part).stream().filter(entry -> !entry.isEmpty()).count();
-        if (entries > 0) {
-            tooltip.accept(Component.translatable(filter.allows(part) ? "item.quantimium.filter_lens.allows" : "item.quantimium.filter_lens.denies", entries)
-                    .withStyle(ChatFormatting.AQUA));
         }
         if (part == LensFilter.BLOCKS && filter.ripe()) tooltip.accept(Component.translatable("gui.quantimium.filter_lens.ripe.on").withStyle(ChatFormatting.AQUA));
     }

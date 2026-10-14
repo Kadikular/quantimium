@@ -131,19 +131,29 @@ public final class LensAction {
         worldSteps = steps;
     }
 
-    /** What it asks of the network this tick: only a cut in progress asks; the rest pay as they act. */
-    long demand() {
-        return want;
+    /**
+     * What an action costs over its own price: twice, carried by Phantom light, on top of the light's upkeep for
+     * the blocks it passes through.
+     */
+    int costFactor() {
+        return (marks & Light.PHANTOM) != 0 && key.action() != Lens.PHANTOM ? 2 : 1;
     }
 
-    /** Takes up to {@code fe} into the cut; what it took. */
+    /** What it asks of the network this tick: only a cut in progress asks; the rest pay as they act. */
+    long demand() {
+        return want * costFactor();
+    }
+
+    /** Takes up to {@code fe} into the cut; what it took. Phantom light's cuts take twice what they get. */
     long fill(long fe) {
-        long took = Math.min(fe, want);
-        if (took > 0 && key.action() == Lens.HARVEST) lastWorked = now;
-        if (key.action() == Lens.DAMAGE) charged += took;
-        else if (key.action() == Lens.HARVEST) cut += took;
-        else if (key.action() == Lens.PICKUP) threadCut += took;
-        want -= took;
+        int factor = costFactor();
+        long took = Math.min(fe, want * factor);
+        long into = took / factor;
+        if (into > 0 && key.action() == Lens.HARVEST) lastWorked = now;
+        if (key.action() == Lens.DAMAGE) charged += into;
+        else if (key.action() == Lens.HARVEST) cut += into;
+        else if (key.action() == Lens.PICKUP) threadCut += into;
+        want -= into;
         return took;
     }
 

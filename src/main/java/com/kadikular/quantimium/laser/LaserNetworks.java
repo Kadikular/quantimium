@@ -988,6 +988,7 @@ public final class LaserNetworks {
      * tick, each by what it has; nothing if they haven't enough between them. Whether it was paid.
      */
     boolean pay(LensAction action, long fe) {
+        fe *= action.costFactor();
         ActionSink at = actionSinks.get(action.key());
         if (at == null || fe <= 0) return fe <= 0;
         long[] left = at.network().left();

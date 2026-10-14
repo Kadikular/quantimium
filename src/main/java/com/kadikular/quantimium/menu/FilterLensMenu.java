@@ -15,9 +15,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * A filter lens in hand or in a mount. An Item or Block Filter Lens has nine ghost entries in a row and allow or
- * deny (a Block lens also ripe-only); an Entity Filter Lens has no entries, only which kinds of living thing, whether
- * to spare the young, and how many to spare. Changes go straight onto the lens. Layout: tools/gui_panels.py
+ * A filter lens in hand or in a mount: nine ghost entries in a row and allow or deny. A Block Filter Lens also has
+ * ripe-only; an Entity Filter Lens's entries are spawn eggs, and it also has which kinds of living thing, whether to
+ * spare the young, and how many to spare. Changes go straight onto the lens. Layout: tools/gui_panels.py
  * laser_port_filter.
  */
 public class FilterLensMenu extends AbstractContainerMenu implements GhostFilterMenu {
@@ -27,6 +27,8 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     public static final int BUTTON_YOUNG = 2;
     public static final int BUTTON_KEEP_MORE = 3;
     public static final int BUTTON_KEEP_FEWER = 4;
+    public static final int BUTTON_KEEP_MORE_TEN = 5;
+    public static final int BUTTON_KEEP_FEWER_TEN = 6;
     /** Toggling a kind of living thing: this plus {@link LensFilter#HOSTILE}, {@link LensFilter#ANIMALS} or {@link LensFilter#PLAYERS}. */
     public static final int BUTTON_KIND = 8;
     public static final int FILTER_X = 8;
@@ -94,12 +96,6 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
         this.valid = valid;
         for (int i = 0; i < LensFilter.SLOTS; i++) {
             addSlot(new Slot(shown, i, FILTER_X + i * 18, FILTER_Y) {
-                // An Entity lens has no entries.
-                @Override
-                public boolean isActive() {
-                    return part() != LensFilter.ENTITIES;
-                }
-
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
@@ -157,8 +153,8 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     @Override
     public void clicked(int slotId, int button, ContainerInput clickType, Player who) {
         if (slotId >= 0 && slotId < FILTER_END) {
-            if (part() == LensFilter.ENTITIES) return;
-            if (clickType == ContainerInput.QUICK_MOVE) set(filter().cycledTag(part(), slotId));
+            // Spawn eggs have no tags to step through.
+            if (clickType == ContainerInput.QUICK_MOVE && part() != LensFilter.ENTITIES) set(filter().cycledTag(part(), slotId));
             else if (clickType == ContainerInput.PICKUP) setGhost(slotId, getCarried());
             return;
         }
@@ -167,18 +163,22 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
 
     @Override
     public void setGhost(int index, ItemStack stack) {
-        if (part() != LensFilter.ENTITIES) set(filter().withEntry(part(), index, stack));
+        // An Entity lens lists mobs by their spawn eggs.
+        if (part() == LensFilter.ENTITIES && !stack.isEmpty() && !(stack.getItem() instanceof net.minecraft.world.item.SpawnEggItem)) return;
+        set(filter().withEntry(part(), index, stack));
     }
 
     @Override
     public boolean clickMenuButton(Player who, int id) {
         LensFilter filter = filter();
         int part = part();
-        if (id == BUTTON_ALLOW && part != LensFilter.ENTITIES) set(filter.withAllow(part, !filter.allows(part)));
+        if (id == BUTTON_ALLOW) set(filter.withAllow(part, !filter.allows(part)));
         else if (id == BUTTON_RIPE && part == LensFilter.BLOCKS) set(filter.withRipe(!filter.ripe()));
         else if (id == BUTTON_YOUNG && part == LensFilter.ENTITIES) set(filter.withSpareYoung(!filter.spareYoung()));
         else if (id == BUTTON_KEEP_MORE && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() + 1));
         else if (id == BUTTON_KEEP_FEWER && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() - 1));
+        else if (id == BUTTON_KEEP_MORE_TEN && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() + 10));
+        else if (id == BUTTON_KEEP_FEWER_TEN && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() - 10));
         else if (id > BUTTON_KIND && id <= BUTTON_KIND + LensFilter.PLAYERS && part == LensFilter.ENTITIES) set(filter.withKinds(filter.kinds() ^ (id - BUTTON_KIND)));
         else return false;
         return true;

@@ -22,8 +22,6 @@ import java.util.List;
 public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> implements GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port_filter.png");
-    /** No entries: just the panel over the inventory. */
-    private static final Identifier ENTITY_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/entity_filter_lens.png");
 
     /** Where the pointer was when a Lens Mount's button opened this, to put it back: or NaN. */
     private static double keptX = Double.NaN;
@@ -55,8 +53,12 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
 
     @Override
     protected List<Tab> createTabs() {
+        Tab allow = Tab.glyph(() -> menu.filter().allows(menu.part()) ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(FilterLensMenu.BUTTON_ALLOW),
+                () -> List.of(Component.translatable(menu.filter().allows(menu.part()) ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                        hint("gui.quantimium.tab.switch")));
         if (entities()) {
             return List.of(
+                    allow,
                     kind(LensFilter.HOSTILE, GuiIcon.HOSTILE, "hostile"),
                     kind(LensFilter.ANIMALS, GuiIcon.ANIMAL, "animals"),
                     kind(LensFilter.PLAYERS, GuiIcon.PLAYER, "players"),
@@ -64,22 +66,26 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
                                     () -> List.of(Component.translatable(menu.filter().spareYoung() ? "gui.quantimium.filter_lens.young.on" : "gui.quantimium.filter_lens.young.off"),
                                             hint("gui.quantimium.tab.switch")))
                             .on(() -> menu.filter().spareYoung()),
-                    // How many it spares, on the tab: click or scroll up for one more, right-click or scroll down for one fewer.
-                    Tab.of(() -> Component.literal(Integer.toString(menu.filter().keep())), () -> press(FilterLensMenu.BUTTON_KEEP_MORE),
+                    // How many it spares, on the tab: click or scroll up for more, right-click or scroll down for fewer; shift, ten.
+                    Tab.of(() -> Component.literal(Integer.toString(menu.filter().keep())), () -> keep(true),
                                     () -> List.of(Component.translatable("gui.quantimium.filter_lens.keep", menu.filter().keep()),
                                             hint("gui.quantimium.filter_lens.keep.hint")))
-                            .onRightClick(() -> press(FilterLensMenu.BUTTON_KEEP_FEWER))
-                            .onScroll(step -> press(step > 0 ? FilterLensMenu.BUTTON_KEEP_MORE : FilterLensMenu.BUTTON_KEEP_FEWER)));
+                            .onRightClick(() -> keep(false))
+                            .onScroll(step -> keep(step > 0)));
         }
         return List.of(
-                Tab.glyph(() -> menu.filter().allows(menu.part()) ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(FilterLensMenu.BUTTON_ALLOW),
-                        () -> List.of(Component.translatable(menu.filter().allows(menu.part()) ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
-                                hint("gui.quantimium.tab.switch"))),
+                allow,
                 Tab.glyph(() -> GuiIcon.CROP, () -> press(FilterLensMenu.BUTTON_RIPE),
                                 () -> List.of(Component.translatable(menu.filter().ripe() ? "gui.quantimium.filter_lens.ripe.on" : "gui.quantimium.filter_lens.ripe.off"),
                                         hint("gui.quantimium.tab.switch")))
                         .on(() -> menu.filter().ripe())
                         .visible(() -> menu.part() == LensFilter.BLOCKS));
+    }
+
+    private void keep(boolean more) {
+        boolean ten = minecraft != null && minecraft.hasShiftDown();
+        press(more ? (ten ? FilterLensMenu.BUTTON_KEEP_MORE_TEN : FilterLensMenu.BUTTON_KEEP_MORE)
+                : (ten ? FilterLensMenu.BUTTON_KEEP_FEWER_TEN : FilterLensMenu.BUTTON_KEEP_FEWER));
     }
 
     /** A kind of living thing it may hit: lit while it's among them. None lit, any. */
@@ -98,7 +104,6 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
     @Override
     public List<Rect2i> ghostTargets() {
         List<Rect2i> targets = new ArrayList<>();
-        if (entities()) return targets;
         for (int i = 0; i < LensFilter.SLOTS; i++) targets.add(new Rect2i(leftPos + FilterLensMenu.FILTER_X + i * 18, topPos + FilterLensMenu.FILTER_Y, 16, 16));
         return targets;
     }
@@ -115,7 +120,7 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
 
     @Override
     protected Identifier panelTexture() {
-        return entities() ? ENTITY_TEXTURE : TEXTURE;
+        return TEXTURE;
     }
 
     @Override
@@ -158,7 +163,6 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
     protected void renderMachineForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         graphics.nextStratum();
         for (int i = 0; i < LensFilter.SLOTS; i++) {
-            if (entities()) break;
             ItemStack entry = menu.filter().entry(menu.part(), i);
             if (entry.isEmpty() || FilterEntry.tagOf(entry).isEmpty()) continue;
             graphics.text(font, "#", leftPos + FilterLensMenu.FILTER_X + i * 18 + 11, topPos + FilterLensMenu.FILTER_Y - 1, QuantumUiColours.ACCENT, true);

@@ -332,8 +332,8 @@ public final class Config {
             .define("unrealisingLens", true);
 
     public static final ModConfigSpec.IntValue PHANTOM_FE_PER_BLOCK = BUILDER
-            .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on.")
-            .defineInRange("phantomFePerBlock", 15, 0, 100_000);
+            .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on. On top of this, the actions it carries cost twice as much.")
+            .defineInRange("phantomFePerBlock", 20, 0, 100_000);
 
     public static final ModConfigSpec.IntValue LASER_IDLE_SECONDS = BUILDER
             .comment("The longest an idle Insert or Extract lens, or an active logistics receptacle, waits between looks, in seconds. Idle, its wait doubles up to this; each move halves it again, down to its own pace.")
@@ -363,7 +363,7 @@ public final class Config {
     }
 
     public static int phantomFePerBlock() {
-        return SPEC.isLoaded() ? PHANTOM_FE_PER_BLOCK.get() : 15;
+        return SPEC.isLoaded() ? PHANTOM_FE_PER_BLOCK.get() : 20;
     }
 
     @SuppressWarnings("unchecked")

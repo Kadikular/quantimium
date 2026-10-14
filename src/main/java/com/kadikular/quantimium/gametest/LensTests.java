@@ -590,6 +590,25 @@ public final class LensTests {
 
     // covers: laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anEntityLensListsMobsBySpawnEgg(GameTestHelper helper) {
+        // A cow's egg listed: the cow behind the pig is hurt, the pig isn't.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.DAMAGE_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.entities(
+                java.util.List.of(new ItemStack(Items.COW_SPAWN_EGG)), true, 0, false, 0)));
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(6, Y, 8));
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(9, Y, 8));
+        float pigFull = pig.getHealth();
+        float cowFull = cow.getHealth();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(cow.getHealth() < cowFull || !cow.isAlive(), "the cow is hurt");
+            helper.assertValueEqual(pig.getHealth(), pigFull, "the pig isn't");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aFilteredHarvestBeamCutsOnlyWhatItLists(GameTestHelper helper) {
         // Listed: cobblestone. Stone drops it, so the stone goes; the dirt behind it doesn't.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
