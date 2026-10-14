@@ -53,15 +53,9 @@ public class LaserPortScreen extends QuantumMachineScreen<LaserPortMenu> impleme
                                 () -> List.of(Component.translatable("gui.quantimium.laser_port.mode." + port().mode().name().toLowerCase(java.util.Locale.ROOT)),
                                         Component.translatable("gui.quantimium.laser_port.mode.tip")))
                         .icon(() -> new ItemStack(switch (port().mode()) { case COLLECT -> Items.HOPPER; case SEND -> Items.DISPENSER; case BOTH -> Items.DROPPER; })),
-                Tab.of("S", () -> net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
-                                        new com.kadikular.quantimium.network.RequestSideConfigPayload(port().getBlockPos())),
-                                List.of(Component.translatable("gui.quantimium.laser_port.sides"), Component.translatable("gui.quantimium.laser_port.sides.tip")))
-                        .icon(new ItemStack(Items.HOPPER)));
+                sidesTab(port().getBlockPos()));
     }
 
-    public void openSideConfig(com.kadikular.quantimium.network.OpenSideConfigPayload payload) {
-        openOverlay(new SideConfigScreen(payload.pos(), payload.configs(), payload.profile(), false));
-    }
 
     private void press(int button) {
         if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);

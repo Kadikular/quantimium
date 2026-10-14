@@ -5,8 +5,6 @@ import com.kadikular.quantimium.block.entity.TesseractStabilizerBlockEntity;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.init.ModDataComponents;
 import com.kadikular.quantimium.menu.TesseractStabilizerMenu;
-import com.kadikular.quantimium.network.OpenSideConfigPayload;
-import com.kadikular.quantimium.network.RequestSideConfigPayload;
 import com.kadikular.quantimium.recipe.EntangledLinks;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
@@ -17,8 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,10 +96,7 @@ public class TesseractStabilizerScreen extends QuantumMachineScreen<TesseractSta
 
     @Override
     protected List<Tab> createTabs() {
-        return List.of(Tab.of("S", this::requestSideConfig,
-                        List.of(Component.literal("§6Configure Sides"),
-                                Component.literal("§7Set which faces offer the linked inventory.")))
-                .icon(new ItemStack(Items.HOPPER)));
+        return List.of(sidesTab(menu.getBlockEntity().getBlockPos()));
     }
 
     @Override
@@ -153,12 +146,5 @@ public class TesseractStabilizerScreen extends QuantumMachineScreen<TesseractSta
         };
     }
 
-    private void requestSideConfig() {
-        ClientPacketDistributor.sendToServer(new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos()));
-    }
 
-    public void openSideConfig(OpenSideConfigPayload payload) {
-        // The linked inventory's slots are not ours to mask, so the editor shows modes only.
-        openOverlay(new SideConfigScreen(payload.pos(), payload.configs(), payload.profile(), false));
-    }
 }

@@ -11,8 +11,6 @@ import com.kadikular.quantimium.flux.BandGate;
 import com.kadikular.quantimium.flux.FluxBand;
 import com.kadikular.quantimium.menu.MaterialiserMenu;
 import com.kadikular.quantimium.network.MaterialiserOptionsPayload;
-import com.kadikular.quantimium.network.OpenSideConfigPayload;
-import com.kadikular.quantimium.network.RequestSideConfigPayload;
 import com.kadikular.quantimium.network.SetMaterialiserTargetPayload;
 import com.kadikular.quantimium.recipe.EntangledLinks;
 import com.kadikular.quantimium.unrealised.Materialising;
@@ -29,7 +27,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -128,16 +125,9 @@ public class MaterialiserScreen extends QuantumMachineScreen<MaterialiserMenu> {
 
     @Override
     protected List<Tab> createTabs() {
-        return List.of(Tab.of("S", () -> ClientPacketDistributor.sendToServer(
-                                new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos())),
-                        List.of(Component.translatable("gui.quantimium.materialiser.sides"),
-                                Component.translatable("gui.quantimium.materialiser.sides.tip")))
-                .icon(new ItemStack(Items.HOPPER)));
+        return List.of(sidesTab(menu.getBlockEntity().getBlockPos()));
     }
 
-    public void openSideConfig(OpenSideConfigPayload payload) {
-        openOverlay(new SideConfigScreen(payload.pos(), payload.configs(), payload.profile(), false));
-    }
 
     @Override
     protected Identifier panelTexture() {

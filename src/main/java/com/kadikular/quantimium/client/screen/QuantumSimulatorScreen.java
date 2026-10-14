@@ -17,9 +17,7 @@ import com.kadikular.quantimium.block.entity.simulation.SimulatorFluidTanks;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.menu.QuantumSimulatorMenu;
 import com.kadikular.quantimium.network.OpenSlotConfigPayload;
-import com.kadikular.quantimium.network.OpenSideConfigPayload;
 import com.kadikular.quantimium.network.RequestSlotConfigPayload;
-import com.kadikular.quantimium.network.RequestSideConfigPayload;
 import com.kadikular.quantimium.network.SetBatchSizePayload;
 import com.kadikular.quantimium.network.ToggleEngagePayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -27,7 +25,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
@@ -74,11 +71,7 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
                                 Component.literal("§8Requires an engaged containment field.")))
                         .enabled(menu::isEngaged)
                         .icon(new ItemStack(Items.COMPARATOR)),
-                Tab.of("S", () -> ClientPacketDistributor.sendToServer(
-                                new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos())),
-                        List.of(Component.literal("§6Configure Sides"),
-                                Component.literal("§7Set input/output faces and auto transfer.")))
-                        .icon(new ItemStack(Items.HOPPER)),
+                sidesTab(menu.getBlockEntity().getBlockPos()),
                 Tab.of(() -> Component.literal(menu.getBatchSize() + "x"),
                         () -> {
                             int current = menu.getBatchSize();
@@ -116,8 +109,10 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
                 payload.machineTanks(), payload.fluidMappings()));
     }
 
-    public void openSideConfig(OpenSideConfigPayload payload) {
-        openOverlay(new SideConfigScreen(payload.pos(), payload.configs(), payload.profile()));
+
+    @Override
+    protected boolean sideSlotMasks() {
+        return true;
     }
 
     @Override

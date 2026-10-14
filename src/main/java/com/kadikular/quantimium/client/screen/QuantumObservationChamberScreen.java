@@ -6,15 +6,12 @@ import com.kadikular.quantimium.block.entity.QuantumObservationChamberBlockEntit
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.menu.QuantumObservationChamberMenu;
-import com.kadikular.quantimium.network.OpenSideConfigPayload;
-import com.kadikular.quantimium.network.RequestSideConfigPayload;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.List;
 
@@ -37,11 +34,7 @@ public class QuantumObservationChamberScreen extends QuantumMachineScreen<Quantu
     @Override
     protected List<Tab> createTabs() {
         return List.of(
-                Tab.of("S", () -> ClientPacketDistributor.sendToServer(
-                                new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos())),
-                        List.of(Component.translatable("gui.quantimium.quantum_observation_chamber.sides"),
-                                Component.translatable("gui.quantimium.quantum_observation_chamber.sides.tip")))
-                        .icon(new ItemStack(Items.HOPPER)),
+                sidesTab(menu.getBlockEntity().getBlockPos()),
                 // A lava bucket while excess Trace is destroyed, a chest while it is kept.
                 Tab.of(() -> Component.literal("T"),
                         () -> minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
@@ -56,10 +49,6 @@ public class QuantumObservationChamberScreen extends QuantumMachineScreen<Quantu
                         .icon(() -> new ItemStack(menu.isVoidExcessTrace() ? Items.LAVA_BUCKET : Items.CHEST)));
     }
 
-    public void openSideConfig(OpenSideConfigPayload payload) {
-        // Whole faces only: its three Matter slots and eight results would not fit the crafter's grid.
-        openOverlay(new SideConfigScreen(payload.pos(), payload.configs(), payload.profile(), false));
-    }
 
     @Override
     protected Identifier panelTexture() {

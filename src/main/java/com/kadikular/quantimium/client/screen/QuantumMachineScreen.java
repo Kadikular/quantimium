@@ -16,6 +16,11 @@ import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PriorityPage;
 import com.kadikular.quantimium.client.screen.ui.Rail;
+import com.kadikular.quantimium.client.screen.ui.SidesPage;
+import com.kadikular.quantimium.network.OpenSideConfigPayload;
+import com.kadikular.quantimium.network.RequestSideConfigPayload;
+import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -272,6 +277,22 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
                 .slot(RailSlot.PRIORITY).opens()
                 .badge(() -> priorityBadge(value.getAsInt()))
                 .onScroll(step -> clamped.accept(value.getAsInt() + step * (Minecraft.getInstance().hasShiftDown() ? 10 : 1)));
+    }
+
+    /** The shared Sides tab: asks the server for the faces, which answers with {@link #openSideConfig}. */
+    protected final Tab sidesTab(BlockPos pos) {
+        return Tab.glyph(() -> GuiIcon.SIDES, () -> ClientPacketDistributor.sendToServer(new RequestSideConfigPayload(pos)),
+                        () -> List.of(Component.translatable("gui.quantimium.sides")))
+                .slot(RailSlot.SIDES).opens();
+    }
+
+    public final void openSideConfig(OpenSideConfigPayload payload) {
+        openOverlay(new SidesPage(this::panelArea, payload.pos(), payload.configs(), payload.profile(), sideSlotMasks()));
+    }
+
+    /** Whether each face also picks which of the machine's input slots it may fill or empty. */
+    protected boolean sideSlotMasks() {
+        return false;
     }
 
     private static String priorityBadge(int value) {

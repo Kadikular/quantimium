@@ -1,12 +1,8 @@
 package com.kadikular.quantimium.client;
 
 import com.kadikular.quantimium.client.renderer.MirrorLightningRenderer;
-import com.kadikular.quantimium.client.screen.QuantumCrafterScreen;
-import com.kadikular.quantimium.client.screen.QuantumObservationChamberScreen;
 import com.kadikular.quantimium.client.screen.QuantumSimulatorScreen;
-import com.kadikular.quantimium.client.screen.TesseractStabilizerScreen;
 import com.kadikular.quantimium.init.ModAttachments;
-import com.kadikular.quantimium.init.ModSounds;
 import com.kadikular.quantimium.network.CollapseOutcomesPayload;
 import com.kadikular.quantimium.network.MirrorFloraPayload;
 import com.kadikular.quantimium.network.MirrorPhaseSyncPayload;
@@ -51,17 +47,7 @@ public final class ClientPayloadHandler {
     }
 
     public static void handleOpenSideConfig(OpenSideConfigPayload payload) {
-        if (Minecraft.getInstance().screen instanceof QuantumSimulatorScreen screen) {
-            screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof QuantumCrafterScreen screen) {
-            screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof TesseractStabilizerScreen screen) {
-            screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof QuantumObservationChamberScreen screen) {
-            screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.LaserPortScreen screen) {
-            screen.openSideConfig(payload);
-        } else if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.MaterialiserScreen screen) {
+        if (Minecraft.getInstance().screen instanceof com.kadikular.quantimium.client.screen.QuantumMachineScreen<?> screen) {
             screen.openSideConfig(payload);
         }
     }

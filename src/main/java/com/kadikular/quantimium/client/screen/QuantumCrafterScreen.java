@@ -1,14 +1,12 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
-import net.minecraft.world.item.Items;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.flux.BandGate;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
 import com.kadikular.quantimium.menu.QuantumCrafterMenu;
-import com.kadikular.quantimium.network.RequestSideConfigPayload;
 import com.kadikular.quantimium.network.SetCrafterLockPayload;
 import com.kadikular.quantimium.network.SetCrafterPagePayload;
 import net.minecraft.ChatFormatting;
@@ -65,11 +63,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     protected List<Tab> createTabs() {
         if (menu.isBasic()) return List.of();
         return List.of(
-                Tab.of("S", () -> ClientPacketDistributor.sendToServer(
-                                new RequestSideConfigPayload(menu.getBlockEntity().getBlockPos())),
-                        List.of(Component.literal("\u00a76Configure Sides"),
-                                Component.literal("\u00a77Set input/output faces and auto transfer.")))
-                        .icon(new ItemStack(Items.HOPPER)),
+                sidesTab(menu.getBlockEntity().getBlockPos()),
                 Tab.of(() -> Component.literal(menu.isRecipeLocked() ? "L" : "U"),
                         () -> ClientPacketDistributor.sendToServer(new SetCrafterLockPayload(
                                 menu.getBlockEntity().getBlockPos(), !menu.isRecipeLocked())),
@@ -81,8 +75,10 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                                         : "\u00a77Automation may pick any available recipe."))));
     }
 
-    public void openSideConfig(com.kadikular.quantimium.network.OpenSideConfigPayload payload) {
-        openOverlay(new SideConfigScreen(payload.pos(), payload.configs(), payload.profile()));
+
+    @Override
+    protected boolean sideSlotMasks() {
+        return true;
     }
 
     @Override
