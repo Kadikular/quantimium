@@ -56,6 +56,21 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
     public static final int PHANTOM = 2;
     /** Through a rift, in the mirror: it acts only on what's in the mirror, and is seen only through a Mirror Lens. */
     public static final int MIRRORED = 4;
+    /**
+     * Speed lenses the light has met, up to {@link LaserTuning#SPEED_LENSES}, in two bits of the marks: they quicken a
+     * logistics beam's receptacles as they do an action's.
+     */
+    private static final int SPEEDS_SHIFT = 8;
+    private static final int SPEEDS = 3 << SPEEDS_SHIFT;
+
+    /** Speed lenses met: what a logistics receptacle this light reaches is quickened by. */
+    public int speeds() {
+        return (marks & SPEEDS) >> SPEEDS_SHIFT;
+    }
+
+    private static int withSpeeds(int marks, int speeds) {
+        return marks & ~SPEEDS | Math.min(LaserTuning.SPEED_LENSES, speeds) << SPEEDS_SHIFT;
+    }
 
     public boolean uv() {
         return (marks & UV) != 0;
@@ -212,7 +227,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         // Through a photodetector a side has only so far left: the joined light reaches as far as the farther side.
         int left = a.left < 0 && b.left < 0 ? -1 : Math.max(a.reach(), b.reach());
         return new Light(Math.max(a.range, b.range), Math.max(a.boosts, b.boosts),
-                List.copyOf(streams.values()), Set.copyOf(feeders), left, a.marks | b.marks, Set.copyOf(logistics));
+                List.copyOf(streams.values()), Set.copyOf(feeders), left,
+                withSpeeds(a.marks | b.marks, Math.max(a.speeds(), b.speeds())), Set.copyOf(logistics));
     }
 
     /**
@@ -250,7 +266,10 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 case FILTER -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << Lens.FILTER.ordinal(), stream.amps(),
                                 (use.filter() == null ? LensFilter.EMPTY : use.filter()).over(stream.filter() == null ? LensFilter.EMPTY : stream.filter())));
-                case SPEED -> streams.replaceAll((action, stream) -> stream.faster());
+                case SPEED -> {
+                    streams.replaceAll((action, stream) -> stream.faster());
+                    marks = withSpeeds(marks, ((marks & SPEEDS) >> SPEEDS_SHIFT) + 1);
+                }
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
                 case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
@@ -366,7 +385,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** Whether this has everything {@code other} has, payers aside: what a cavity checks before it remembers more. */
     public boolean covers(Light other) {
-        if (range < other.range || boosts < other.boosts || (other.marks & ~marks) != 0) return false;
+        if (range < other.range || boosts < other.boosts || (other.marks & ~marks & ~SPEEDS) != 0 || speeds() < other.speeds()) return false;
         for (Stream theirs : other.streams) {
             Stream mine = streams.stream().filter(stream -> stream.action() == theirs.action()).findFirst().orElse(null);
             if (mine == null || (mine.modifiers() & theirs.modifiers()) != theirs.modifiers() || mine.amps() < theirs.amps()

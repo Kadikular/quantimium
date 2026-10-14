@@ -64,6 +64,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     private boolean active;
     private int priority;
     private boolean connected;
+    /** How often it looks, when active: see {@link LogisticsMember#pace()}. Not saved: a reload starts it looking. */
+    private final int[] pace = new int[2];
     private Set<Direction> passing = EnumSet.noneOf(Direction.class);
     private List<LaserBeam> shownBeams = List.of();
 
@@ -184,6 +186,11 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     @Override
     public BlockPos inventoryPos() {
         return worldPosition.relative(facing());
+    }
+
+    @Override
+    public int[] pace() {
+        return pace;
     }
 
     @Override

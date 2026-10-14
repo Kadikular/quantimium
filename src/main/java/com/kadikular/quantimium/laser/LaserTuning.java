@@ -64,11 +64,6 @@ public final class LaserTuning {
     public static final int IDLE_RETRY = 10;
     /** Ticks a network whose blocks took no power waits before charging them again. */
     public static final int FULL_REST = 10;
-    /**
-     * The longest an Insert or Extract beam waits between looks: two seconds. Idle, its wait doubles up to this; each
-     * move halves it again, down to its own pace (PLACE_COOLDOWN, quicker with Speed lenses).
-     */
-    public static final int IDLE_MAX = 40;
     /** Ticks an area action takes a clear line to a block as still clear, before tracing it again. */
     public static final int SIGHT_KEPT = 10;
     /** Kinds of thing an Interact beam tries from its sending Laser Ports in one go, before it gives up till next time. */
@@ -117,8 +112,6 @@ public final class LaserTuning {
     public static final int MOVE_ITEMS = 8;
     /** FE to carry one stack back up the beam. */
     public static final long PICKUP_FE_PER_STACK = 200;
-    /** Items each active logistics provider or requester moves a second. */
-    public static final int LOGISTICS_ITEMS = 64;
     /** FE a Logistics Controller pays for each transfer (up to a stack). */
     public static final long LOGISTICS_FE_PER_MOVE = 100;
     /** What a Logistics Controller holds, and takes in a tick. */

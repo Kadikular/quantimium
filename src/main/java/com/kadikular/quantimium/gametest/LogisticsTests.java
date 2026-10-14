@@ -103,6 +103,22 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.provider
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aSpeedLensQuickensTheReceptaclesPastIt(GameTestHelper helper) {
+        // Unquickened, a provider moves 16 a pass; past one Speed lens, 64: by the time two passes could have run, more
+        // than two unquickened passes' worth has moved.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        mount(helper, 3, com.kadikular.quantimium.init.ModItems.SPEED_LENS.get());
+        onChest(helper, 5, LogisticsMember.Role.PROVIDER, true, new ItemStack(Items.COBBLESTONE, 64), new ItemStack(Items.COBBLESTONE, 64));
+        onChest(helper, 8, LogisticsMember.Role.STORAGE, false);
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(count(helper, 8, Items.COBBLESTONE) >= 64, "a quickened pass moved 64, not 16");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.priority
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void storageFillsHighestPriorityFirst(GameTestHelper helper) {

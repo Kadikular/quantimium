@@ -335,6 +335,10 @@ public final class Config {
             .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on.")
             .defineInRange("phantomFePerBlock", 15, 0, 100_000);
 
+    public static final ModConfigSpec.IntValue LASER_IDLE_SECONDS = BUILDER
+            .comment("The longest an idle Insert or Extract lens, or an active logistics receptacle, waits between looks, in seconds. Idle, its wait doubles up to this; each move halves it again, down to its own pace.")
+            .defineInRange("laserIdleSeconds", 4, 1, 60);
+
     public static final ModConfigSpec.ConfigValue<List<? extends String>> CRUSHING_RECIPE_TYPES = BUILDER
             .comment("Recipe types a Crushing lens crushes by, after its own stone chain, the first that crushes a thing winning. Only their sure outputs, never chance ones. Types a pack doesn't have are skipped.")
             .defineList("crushingRecipeTypes", List.of("energizedpower:pulverizer", "energizedpower:crusher", "enderio:sag_milling",
@@ -351,6 +355,11 @@ public final class Config {
 
     public static boolean unrealisingLens() {
         return !SPEC.isLoaded() || UNREALISING_LENS.get();
+    }
+
+    /** {@link #LASER_IDLE_SECONDS}, in ticks. */
+    public static int laserIdleTicks() {
+        return 20 * (SPEC.isLoaded() ? LASER_IDLE_SECONDS.get() : 4);
     }
 
     public static int phantomFePerBlock() {

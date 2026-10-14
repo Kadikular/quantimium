@@ -28,7 +28,9 @@ import java.util.Set;
  *       priority first.</li>
  * </ul>
  *
- * Each active member moves up to {@link LaserTuning#LOGISTICS_ITEMS} items a second, and every transfer costs the
+ * Each active member moves as an Insert or Extract lens does: {@link #budget} items a second, four times as many for
+ * each Speed lens its light met, and idle it looks less often, waiting twice as long each time up to
+ * {@link com.kadikular.quantimium.Config#laserIdleTicks()}, then half as long again after each move. Every transfer costs the
  * controller {@link LaserTuning#LOGISTICS_FE_PER_MOVE} FE; without it, the network waits.
  */
 public final class Logistics {
@@ -51,6 +53,7 @@ public final class Logistics {
         if (controllers.isEmpty() ? slice != 0 : !due) return;
         // Whose light reaches each member; light from two controllers on one member stops both.
         Map<LogisticsMember, BlockPos> owners = new HashMap<>();
+        Map<LogisticsMember, Integer> speeds = new HashMap<>();
         Set<BlockPos> clashing = new HashSet<>();
         List<LogisticsMember> all = new ArrayList<>();
         for (LaserNode node : nodes) {
@@ -59,6 +62,7 @@ public final class Logistics {
             all.add(member);
             Light light = lights.get(node.nodePos());
             if (light == null) continue;
+            speeds.put(member, light.speeds());
             BlockPos owner = null;
             for (BlockPos feeder : light.logistics()) {
                 if (!controllers.containsKey(feeder)) continue;
@@ -83,29 +87,45 @@ public final class Logistics {
             List<LogisticsMember> members = networks.getOrDefault(entry.getKey(), List.of());
             boolean clash = clashing.contains(entry.getKey());
             entry.getValue().report(members, clash);
-            if (!clash && !members.isEmpty()) runNetwork(level, entry.getValue(), members);
+            if (!clash && !members.isEmpty()) runNetwork(level, entry.getValue(), members, speeds);
         }
     }
 
-    private static void runNetwork(Level level, LogisticsController controller, List<LogisticsMember> members) {
+    /** Items an active member may move in a pass: an Insert lens's second's worth, quickened by the Speed lenses it met. */
+    static int budget(int speeds) {
+        return LaserTuning.MOVE_ITEMS * (20 / LaserTuning.PLACE_COOLDOWN) << 2 * speeds;
+    }
+
+    private static void runNetwork(Level level, LogisticsController controller, List<LogisticsMember> members, Map<LogisticsMember, Integer> speeds) {
         List<LogisticsMember> highestFirst = new ArrayList<>(members);
         highestFirst.sort(Comparator.comparingInt(LogisticsMember::priority).reversed()
                 .thenComparing(LogisticsMember::inventoryPos));
         List<LogisticsMember> lowestFirst = new ArrayList<>(highestFirst);
         java.util.Collections.reverse(lowestFirst);
-        for (LogisticsMember member : highestFirst) {
-            if (member.role() == LogisticsMember.Role.PROVIDER && member.active() && push(level, controller, member, highestFirst) == UNPAID) return;
-        }
-        for (LogisticsMember member : highestFirst) {
-            if (member.role() == LogisticsMember.Role.REQUESTER && member.active() && pull(level, controller, member, highestFirst, lowestFirst) == UNPAID) return;
+        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.REQUESTER}) {
+            for (LogisticsMember member : highestFirst) {
+                if (member.role() != role || !member.active()) continue;
+                int[] pace = member.pace();
+                if (pace != null && --pace[0] > 0) continue;
+                int budget = budget(speeds.getOrDefault(member, 0));
+                int moved = role == LogisticsMember.Role.PROVIDER ? push(level, controller, member, highestFirst, budget)
+                        : pull(level, controller, member, highestFirst, lowestFirst, budget);
+                if (moved == UNPAID) return;
+                if (pace != null) {
+                    // Busy, it looks again next second; idle, it waits twice as long as last time, up to the most.
+                    int most = Math.max(1, com.kadikular.quantimium.Config.laserIdleTicks() / 20);
+                    pace[1] = moved > 0 ? Math.max(1, pace[1] / 2) : Math.min(most, Math.max(1, pace[1] * 2));
+                    pace[0] = pace[1];
+                }
+            }
         }
     }
 
     /** An active provider pushes what it lets go: to requesters listing it, then storage. How many it moved, or {@link #UNPAID}. */
-    private static int push(Level level, LogisticsController controller, LogisticsMember provider, List<LogisticsMember> highestFirst) {
+    private static int push(Level level, LogisticsController controller, LogisticsMember provider, List<LogisticsMember> highestFirst, int most) {
         IItemHandler from = provider.inventory();
         if (from == null) return 0;
-        int budget = LaserTuning.LOGISTICS_ITEMS;
+        int budget = most;
         for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
             ItemStack there = from.getStackInSlot(slot);
             if (there.isEmpty() || !provider.lets(there)) continue;
@@ -119,15 +139,15 @@ public final class Logistics {
                 }
             }
         }
-        return LaserTuning.LOGISTICS_ITEMS - budget;
+        return most - budget;
     }
 
     /** An active requester pulls what it lists: from providers, then storage, lowest priority first. How many it moved, or {@link #UNPAID}. */
     private static int pull(Level level, LogisticsController controller, LogisticsMember requester, List<LogisticsMember> highestFirst,
-                            List<LogisticsMember> lowestFirst) {
+                            List<LogisticsMember> lowestFirst, int most) {
         IItemHandler into = requester.inventory();
         if (into == null) return 0;
-        int budget = LaserTuning.LOGISTICS_ITEMS;
+        int budget = most;
         for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
             for (LogisticsMember source : role == LogisticsMember.Role.PROVIDER ? highestFirst : lowestFirst) {
                 if (source.role() != role || source.inventoryPos().equals(requester.inventoryPos())) continue;
@@ -141,10 +161,10 @@ public final class Logistics {
                     if (moved == UNPAID) return UNPAID;
                     budget -= moved;
                 }
-                if (budget <= 0) return LaserTuning.LOGISTICS_ITEMS;
+                if (budget <= 0) return most;
             }
         }
-        return LaserTuning.LOGISTICS_ITEMS - budget;
+        return most - budget;
     }
 
     /**

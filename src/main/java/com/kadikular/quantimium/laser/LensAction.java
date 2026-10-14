@@ -91,13 +91,14 @@ public final class LensAction {
     }
 
     /**
-     * The wait after a look: idle, twice the last, up to {@link LaserTuning#IDLE_MAX}; after a move, half the last, down
+     * The wait after a look: idle, twice the last, up to {@link com.kadikular.quantimium.Config#laserIdleTicks()}; after a move, half the last, down
      * to its own pace. A little of its own offset keeps idle beams from lining up.
      */
     private int nextWait(boolean moved) {
         int pace = Math.max(1, LaserTuning.PLACE_COOLDOWN / stream.pace());
-        int last = wait <= 0 ? LaserTuning.IDLE_MAX : wait;
-        wait = moved ? Math.max(pace, last / 2) : Math.min(LaserTuning.IDLE_MAX, Math.max(pace, last * 2));
+        int most = com.kadikular.quantimium.Config.laserIdleTicks();
+        int last = wait <= 0 ? most : wait;
+        wait = moved ? Math.max(pace, last / 2) : Math.min(most, Math.max(pace, last * 2));
         return moved ? wait : wait + Math.floorMod(key.hashCode(), 4);
     }
 

@@ -59,4 +59,13 @@ public interface LogisticsMember {
 
     /** The network has found it, joined to a controller's light, or not: it shows it. */
     default void connected(boolean connected) {}
+
+    /**
+     * An active member's pace, kept by the logistics pass: {@code [seconds before it looks again, its last wait]}.
+     * Null, it looks every second.
+     */
+    @org.jetbrains.annotations.Nullable
+    default int[] pace() {
+        return null;
+    }
 }
