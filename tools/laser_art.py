@@ -1056,14 +1056,15 @@ def logistics_lectern() -> None:
         element.update(extra)
         return element
 
-    focus = cube([6, 4, 6], [10, 8, 10], "#focus")
+    # The focus in the block's middle, where light meets it, so beams through it run straight.
+    focus = cube([6, 6, 6], [10, 10, 10], "#focus")
     for face in focus["faces"].values():
         face["uv"] = [6, 6, 10, 10]
     base = cube([2, 0, 2], [14, 1, 14])
     base["faces"]["down"]["cullface"] = "down"
-    screen = cube([2, 10, 4], [14, 12, 14], rotation={"origin": [8, 11, 9], "axis": "x", "angle": -30})
+    screen = cube([2, 11, 4], [14, 13, 14], rotation={"origin": [8, 12, 9], "axis": "x", "angle": -30})
     screen["faces"]["up"] = {"texture": "#screen", "uv": [0, 0, 16, 16]}
-    elements = [base, cube([4, 1, 4], [12, 2, 12]), cube([7, 2, 7], [9, 4, 9]), focus, cube([7, 8, 8], [9, 11, 10]), screen]
+    elements = [base, cube([4, 1, 4], [12, 2, 12]), cube([7, 2, 7], [9, 6, 9]), focus, cube([7, 10, 8], [9, 12, 10]), screen]
     with open(os.path.join(MODELS, "logistics_lectern.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "textures": t, "elements": elements}, handle, indent=2)
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}}
