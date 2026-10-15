@@ -64,8 +64,15 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
 
     // ---- outputs ----
 
-    /** Turns light out of {@code face} on or off; the last output stays. Whether it changed. */
+    /** The face light comes in by to go on through: behind the way it was placed facing. Never an output. */
+    public Direction back() {
+        BlockState state = getBlockState();
+        return state.hasProperty(LogisticsControllerBlock.FACING) ? state.getValue(LogisticsControllerBlock.FACING).getOpposite() : Direction.SOUTH;
+    }
+
+    /** Turns light out of {@code face} on or off; never its back, and the last output stays. Whether it changed. */
     public boolean toggleOutput(Direction face) {
+        if (face == back()) return false;
         if (outputs.contains(face)) {
             if (outputs.size() == 1) return false;
             outputs.remove(face);
@@ -79,14 +86,13 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         return true;
     }
 
-    /** The block shows which faces light leaves by, and faces one of them. */
+    /** The block shows which faces light leaves by; its facing, and so its back, stays as placed. */
     private void showOutputs() {
         if (level == null || level.isClientSide()) return;
         BlockState state = getBlockState();
         if (!state.hasProperty(LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH))) return;
         BlockState shown = state;
         for (Direction face : Direction.values()) shown = shown.setValue(LogisticsControllerBlock.OUTPUTS.get(face), outputs.contains(face));
-        if (!outputs.contains(shown.getValue(LogisticsControllerBlock.FACING))) shown = shown.setValue(LogisticsControllerBlock.FACING, outputs.iterator().next());
         if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
     }
 
@@ -178,10 +184,16 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         return LaserTuning.RELAY_RANGE;
     }
 
-    /** Light reaching it goes on out of its outputs, marked as the network's. */
+    /** Light in by its back goes on out of its outputs, marked as the network's. */
     @Override
     public boolean relays() {
         return true;
+    }
+
+    /** Only light in by its back goes on through; light on any other side only charges it. */
+    @Override
+    public boolean accepts(Direction travel) {
+        return travel.getOpposite() == back();
     }
 
     /** And it gives out light of its own, which joins what it passes on. */
@@ -268,6 +280,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
             outputs.clear();
             for (Direction face : Direction.values()) if ((mask & 1 << face.get3DDataValue()) != 0) outputs.add(face);
         }
+        // From before it had a back: light out of there goes.
+        outputs.remove(back());
+        if (outputs.isEmpty()) outputs.add(back().getOpposite());
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 

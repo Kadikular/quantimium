@@ -25,7 +25,16 @@
   },
   {
    "when": {
-    "north": "false"
+    "facing": "south"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_in_north"
+   }
+  },
+  {
+   "when": {
+    "north": "false",
+    "facing": "north|east|west|up|down"
    },
    "apply": {
     "model": "quantimium:block/logistics_controller_plain_north"
@@ -51,7 +60,16 @@
   },
   {
    "when": {
-    "south": "false"
+    "facing": "north"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_in_south"
+   }
+  },
+  {
+   "when": {
+    "south": "false",
+    "facing": "south|east|west|up|down"
    },
    "apply": {
     "model": "quantimium:block/logistics_controller_plain_south"
@@ -77,7 +95,16 @@
   },
   {
    "when": {
-    "west": "false"
+    "facing": "east"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_in_west"
+   }
+  },
+  {
+   "when": {
+    "west": "false",
+    "facing": "north|south|west|up|down"
    },
    "apply": {
     "model": "quantimium:block/logistics_controller_plain_west"
@@ -103,7 +130,16 @@
   },
   {
    "when": {
-    "east": "false"
+    "facing": "west"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_in_east"
+   }
+  },
+  {
+   "when": {
+    "east": "false",
+    "facing": "north|south|east|up|down"
    },
    "apply": {
     "model": "quantimium:block/logistics_controller_plain_east"
@@ -129,8 +165,16 @@
   },
   {
    "when": {
+    "facing": "down"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_in_up"
+   }
+  },
+  {
+   "when": {
     "up": "false",
-    "facing": "east|west|up|down"
+    "facing": "east|west|up"
    },
    "apply": {
     "model": "quantimium:block/logistics_controller_plain_up"
@@ -165,8 +209,16 @@
   },
   {
    "when": {
+    "facing": "up"
+   },
+   "apply": {
+    "model": "quantimium:block/logistics_controller_in_down"
+   }
+  },
+  {
+   "when": {
     "down": "false",
-    "facing": "east|west|up|down"
+    "facing": "east|west|down"
    },
    "apply": {
     "model": "quantimium:block/logistics_controller_plain_down"

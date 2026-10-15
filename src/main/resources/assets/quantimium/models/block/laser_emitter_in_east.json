@@ -1,0 +1,169 @@
+{
+  "textures": {
+    "particle": "#steel",
+    "focus": "quantimium:block/laser_focus"
+  },
+  "elements": [
+    {
+      "from": [
+        14,
+        12,
+        2
+      ],
+      "to": [
+        16,
+        14,
+        14
+      ],
+      "faces": {
+        "east": {
+          "texture": "#steel",
+          "cullface": "east"
+        },
+        "down": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        2,
+        2
+      ],
+      "to": [
+        16,
+        4,
+        14
+      ],
+      "faces": {
+        "east": {
+          "texture": "#steel",
+          "cullface": "east"
+        },
+        "up": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        4,
+        2
+      ],
+      "to": [
+        16,
+        12,
+        4
+      ],
+      "faces": {
+        "east": {
+          "texture": "#steel",
+          "cullface": "east"
+        },
+        "south": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        4,
+        12
+      ],
+      "to": [
+        16,
+        12,
+        14
+      ],
+      "faces": {
+        "east": {
+          "texture": "#steel",
+          "cullface": "east"
+        },
+        "north": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        4,
+        4
+      ],
+      "to": [
+        14,
+        12,
+        12
+      ],
+      "faces": {
+        "east": {
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "from": [
+        14,
+        6,
+        6
+      ],
+      "to": [
+        16,
+        10,
+        10
+      ],
+      "faces": {
+        "east": {
+          "texture": "#focus",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "cullface": "east"
+        },
+        "south": {
+          "texture": "#focus",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#focus",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#focus",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#focus",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      }
+    }
+  ]
+}

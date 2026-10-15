@@ -290,9 +290,9 @@ are in it, for 15 s. The <ItemLink id="quantimium:mirror_lens" /> protects the w
 
 ## Logistics
 
-A <ItemLink id="quantimium:logistics_controller" /> is a relay: light reaching it goes on
-out of its outputs (set as an emitter's are), and it gives out light of its own too. Everything the light
-leaving it reaches, through mirrors, splitters and relays, joined with other light or not, is one
+A <ItemLink id="quantimium:logistics_controller" /> is a relay with a back: light in by
+its back, where a focus is set, goes on out of its outputs (set as an emitter's are, never the back), with
+light of its own. Light on any other side only charges it. Everything its light reaches, through mirrors, splitters and relays, joined with other light or not, is one
 **logistics network**, as any light is a laser network. An Isolator lets power through but not the
 network. One controller to a network: where light from two meets, both stop, go dark and say why.
 

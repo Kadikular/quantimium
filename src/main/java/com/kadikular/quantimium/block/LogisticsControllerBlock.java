@@ -78,20 +78,24 @@ public class LogisticsControllerBlock extends BaseEntityBlock implements com.kad
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
         if (!stack.is(ModTags.TOOLS_WRENCH)) return LaserTools.isOne(stack) ? InteractionResult.PASS : InteractionResult.TRY_WITH_EMPTY_HAND;
-        return toggle(level, pos, hit.getDirection());
+        return toggle(level, pos, player, hit.getDirection());
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player.isSecondaryUseActive()) return toggle(level, pos, hit.getDirection());
+        if (player.isSecondaryUseActive()) return toggle(level, pos, player, hit.getDirection());
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsControllerBlockEntity controller) {
             player.sendOverlayMessage(controller.status());
         }
         return InteractionResult.SUCCESS;
     }
 
-    private static InteractionResult toggle(Level level, BlockPos pos, Direction face) {
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsControllerBlockEntity controller && controller.toggleOutput(face)) {
+    private static InteractionResult toggle(Level level, BlockPos pos, Player player, Direction face) {
+        if (level.isClientSide() || !(level.getBlockEntity(pos) instanceof LogisticsControllerBlockEntity controller)) return InteractionResult.SUCCESS;
+        if (face == controller.back()) {
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_controller.back")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (controller.toggleOutput(face)) {
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, controller.outputs().contains(face) ? 1.3f : 0.8f);
         }
         return InteractionResult.SUCCESS;

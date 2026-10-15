@@ -241,6 +241,24 @@ public final class LogisticsTests {
 
     // covers: laser.logistics.controller
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void lightInByAControllersSideOnlyChargesIt(GameTestHelper helper) {
+        // Facing east, its back to the west: an emitter shining into its north side charges it, and its light stops there.
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(8, Y, 8), Direction.EAST, false);
+        helper.setBlock(new BlockPos(8, Y, 4), ModBlocks.LASER_EMITTER_1.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserEmitterBlock.FACING, Direction.SOUTH));
+        helper.setBlock(new BlockPos(8, Y, 3), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        helper.setBlock(new BlockPos(12, Y, 8), ModBlocks.FOLD_CORE.get());
+        var sink = helper.getBlockEntity(new BlockPos(12, Y, 8), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(controller.getEnergyStorage().getEnergyStored() > 0, "charged by light on its side");
+            helper.assertValueEqual(sink.getEnergyStorage().getEnergyStored(), 0, "none of that light went on through");
+            helper.assertFalse(controller.toggleOutput(Direction.WEST), "its back is never an output");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.controller
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void aControllersOwnStoreChargesNoMachines(GameTestHelper helper) {
         LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(3, Y, 8), Direction.EAST, true);
         helper.setBlock(new BlockPos(8, Y, 8), ModBlocks.FOLD_CORE.get());

@@ -784,6 +784,11 @@ def laser_emitters() -> None:
         for name, elements in ((f"laser_emitter_plain_{direction}", plain), (f"laser_emitter_out_{direction}", recess)):
             with open(os.path.join(MODELS, name + ".json"), "w") as handle:
                 json.dump({"textures": {"particle": "#steel"}, "elements": elements}, handle, indent=2)
+        # The way in: the same recess with half a focus set in it, as the Laser Port's.
+        focus = {"texture": "#focus", "uv": [6, 6, 10, 10]}
+        inward = recess[:5] + [on_face(direction, (6, 6, 0), (10, 10, 2), {k: focus for k in ("out", "+u", "-u", "+v", "-v")})]
+        with open(os.path.join(MODELS, f"laser_emitter_in_{direction}.json"), "w") as handle:
+            json.dump({"textures": {"particle": "#steel", "focus": "quantimium:block/laser_focus"}, "elements": inward}, handle, indent=2)
         if direction in ("up", "down"):
             # Turned a quarter, for a block facing north or south: its tier marks run front to back, as facing east or west.
             turned = [on_face(direction, (2, 2, 0), (14, 14, 2), {"out": {"texture": "#panel", "uv": [2, 2, 14, 14], "rotation": 90}})]
@@ -802,11 +807,18 @@ def laser_emitters() -> None:
 
     for name, spec in TIERS.items():
         solid_emitter(name, emitter_panel(spec), spec)
-    solid_emitter("logistics_controller", controller_panel(), {"lens": LOGISTICS_VIOLET})
+    solid_emitter("logistics_controller", controller_panel(), {"lens": LOGISTICS_VIOLET}, back=True)
 
 
-def solid_emitter(name: str, panel: Image.Image, spec) -> None:
-    """One solid emitter: its plain face, its tip in {@code spec}'s lens colour, and its multipart blockstate over the shared shapes."""
+FACINGS_ALL = ("north", "south", "east", "west", "up", "down")
+OPPOSITE = {"north": "south", "south": "north", "east": "west", "west": "east", "up": "down", "down": "up"}
+
+
+def solid_emitter(name: str, panel: Image.Image, spec, back: bool = False) -> None:
+    """
+    One solid emitter: its plain face, its tip in {@code spec}'s lens colour, and its multipart blockstate over the shared
+    shapes. With {@code back}, the face behind its facing is a recessed focus, the way light comes in (the Logistics Controller).
+    """
     panel.save(os.path.join(TEX, f"{name}_panel.png"))
     emitter_tip(spec, False).save(os.path.join(TEX, f"{name}_tip.png"))
     emitter_tip(spec, True).save(os.path.join(TEX, f"{name}_tip_lit.png"))
@@ -822,10 +834,20 @@ def solid_emitter(name: str, panel: Image.Image, spec) -> None:
             tag = "_lit" if lit else ""
             child(f"{name}_out{tag}_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip{tag}")
             parts.append({"when": {direction: "true", "lit": str(lit).lower()}, "apply": {"model": f"quantimium:block/{name}_out{tag}_{direction}"}})
+        # Facings it shows plain on: all, but with a back, not the one it's the back of.
+        facings = [f for f in FACINGS_ALL if not (back and f == OPPOSITE[direction])]
+        if back:
+            child(f"{name}_in_{direction}", f"laser_emitter_in_{direction}")
+            parts.append({"when": {"facing": OPPOSITE[direction]}, "apply": {"model": f"quantimium:block/{name}_in_{direction}"}})
         if direction in ("up", "down"):
             child(f"{name}_plain_{direction}_turned", f"laser_emitter_plain_{direction}_turned", panel=f"quantimium:block/{name}_panel")
-            parts.append({"when": {direction: "false", "facing": "east|west|up|down"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
-            parts.append({"when": {direction: "false", "facing": "north|south"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}_turned"}})
+            straight = [f for f in facings if f not in ("north", "south")]
+            turned = [f for f in facings if f in ("north", "south")]
+            parts.append({"when": {direction: "false", "facing": "|".join(straight)}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+            if turned:
+                parts.append({"when": {direction: "false", "facing": "|".join(turned)}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}_turned"}})
+        elif back:
+            parts.append({"when": {direction: "false", "facing": "|".join(facings)}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
         else:
             parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
     child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip_lit")
