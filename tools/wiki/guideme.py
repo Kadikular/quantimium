@@ -109,6 +109,9 @@ class Guide:
                 body, i = self.indented(lines, i + 1)
                 if tab:
                     out += [f"#### {tab.group(1)}", ""] + body
+                elif any(b.lstrip().startswith("Badges like") for b in body):
+                    # About the badges, which the guide drops.
+                    pass
                 else:
                     title = admonition.group(3) or admonition.group(2).capitalize()
                     quoted = [f"> {b}" if b else ">" for b in body]

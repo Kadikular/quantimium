@@ -30,11 +30,6 @@ Where the [Quantum Crafter](quantum-crafter.md) skips a machine's wait, the Simu
 wait and multiplies the output. It works with machines the Crafter can't read, since it doesn't
 need to understand their recipes: it runs the machine itself and watches what it does.
 
-> **Badges**
->
-> Badges like show whether an in-game test backs the rule next to
-> them. See Mechanics coverage.
-
 ## Engaging the field
 
 ![A Quantum Simulator running an engaged furnace at 4×](../assets/gui/quantum_simulator.png)

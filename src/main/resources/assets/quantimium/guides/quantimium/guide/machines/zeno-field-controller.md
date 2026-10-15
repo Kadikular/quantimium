@@ -30,11 +30,6 @@ Machines, redstone, furnaces and other block entities in the field work as norma
 
 ![A Zeno Field Controller accelerating a 9×9×9 field at 8×](../assets/gui/zeno_field_controller.png)
 
-> **Badges**
->
-> Badges like show whether an in-game test backs the rule next to them. See
-> Mechanics coverage.
-
 ## Settings
 
 The three tabs down the left of its screen (right-click steps a value back):

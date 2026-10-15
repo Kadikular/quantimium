@@ -41,11 +41,6 @@ the open frame.
 
 ![The ME Superposition Crafter with a furnace catalyst, a five-item whitelist and two blocked inputs](../assets/gui/me_superposition_crafter.png)
 
-> **Badges**
->
-> Badges like show whether an in-game test backs the rule
-> next to them. See Mechanics coverage.
-
 ## Superposed patterns
 
 The catalyst decides everything. A furnace offers every

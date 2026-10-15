@@ -28,11 +28,6 @@ tank in the Nether.
 It holds nothing itself. Every item and fluid moves straight between the remote block and whatever
 is using the Stabilizer. It uses no power and emits no flux.
 
-> **Badges**
->
-> Badges like show whether an in-game test backs the rule next to
-> them. See Mechanics coverage.
-
 ## Tesseracts
 
 A **Tesseract** is bound to one face of one block. Both kinds bind the same way:

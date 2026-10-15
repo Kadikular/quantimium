@@ -30,8 +30,6 @@ one at a full battery, or at nothing, and it keeps its power, but for a small co
 | [[block:laser_emitter_2]] | 32,000 FE/t | 32 blocks | 3,200,000 FE | 16 FE/t |
 | [[block:laser_emitter_3]] | 512,000 FE/t | 64 blocks | 51,200,000 FE | 128 FE/t |
 
-These are starting values for the first playtest.
-
 [[mechanic:laser.flash]] The **Flash Emitter** can also burn furnace fuel: each tick of burn time
 makes {{c:LaserTuning.FLASH_FE_PER_BURN_TICK}} FE, so a coal gives 160,000. It's power for a base that
 has no generator yet. It only starts a new fuel once it has room for what that makes.
@@ -59,7 +57,7 @@ through a right angle, both ways. It stands on the block it was placed against, 
 half way between two sides at right angles, neither the one it stands on: click one side (by hand or with
 a wrench) and sneak-click another. Light in by either side leaves by the other; light from anywhere else
 hits the back of the plate and stops. Sneak-click the side it already takes light from and it's **flat**, facing that side: light goes straight back the way it came, and facing a
-Cavity Mirror across a gap it's the far end of the cavity. It never sends light straight on. A redstone
+Cavity Mirror across a gap it's the far end of the cavity; click another side and it turns light from there back out where it faced. It never sends light straight on. A redstone
 signal turns it off.
 
 [[mechanic:laser.splitter]] A [[block:laser_splitter]] is a Laser Mirror with a half-silvered plate, set

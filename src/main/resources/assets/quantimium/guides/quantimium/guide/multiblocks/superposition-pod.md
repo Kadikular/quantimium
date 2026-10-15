@@ -28,11 +28,6 @@ trip back. With a Rescue module a pod is also your death save.
 
 ![Two Superposition Pods: one holding a double, one empty](../assets/gui/world_superposition_pod.png)
 
-> **Badges**
->
-> Badges like show whether an in-game test backs the rule next to them. See
-> Mechanics coverage.
-
 ## The one rule
 
 You are always in exactly one body. Swapping never makes a body, it only moves you between the ones

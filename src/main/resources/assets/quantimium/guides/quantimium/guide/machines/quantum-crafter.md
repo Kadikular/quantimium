@@ -28,11 +28,6 @@ the output grid as a faint **preview**. Taking one makes it real.
 It never runs on its own schedule. Nothing is crafted until something takes an output: you, a
 hopper, a pipe, or its own auto-output.
 
-> **Badges**
->
-> Badges like show whether an in-game test backs the rule next to
-> them. See Mechanics coverage.
-
 ## At a glance
 
 | | Basic Quantum Crafter | Quantum Crafter |
