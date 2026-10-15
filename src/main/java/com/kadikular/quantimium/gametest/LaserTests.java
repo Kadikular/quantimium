@@ -168,6 +168,26 @@ public final class LaserTests {
     }
 
     // covers: laser.solar
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_roof", timeoutTicks = 100)
+    public static void aSolarEmitterUnderARoofMakesNothing(GameTestHelper helper) {
+        // A roof three up, open at the sides, shades it; glass over the other lets the sky through.
+        long was = noon(helper);
+        solar(helper, new BlockPos(4, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(4, Y + 3, 8), Blocks.STONE);
+        solar(helper, new BlockPos(12, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(12, Y + 3, 8), Blocks.GLASS);
+        helper.runAfterDelay(50, () -> {
+            var roofed = helper.getBlockEntity(new BlockPos(4, Y, 8), com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity.class);
+            var glazed = helper.getBlockEntity(new BlockPos(12, Y, 8), com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity.class);
+            helper.assertValueEqual(roofed.sun(), 0, "no sun under a roof");
+            helper.assertTrue(glazed.sun() > 0, "sun through glass");
+            helper.setTime(was);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.solar
     @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_chain", timeoutTicks = 200)
     public static void solarEmittersChainUpToEight(GameTestHelper helper) {
         // Three in a row give three's worth; ten in a row, only eight's.
@@ -242,6 +262,30 @@ public final class LaserTests {
             helper.assertTrue(gained < full && gained >= full * (1.0 - LaserTuning.HOP_TAX) - LaserTuning.Tier.ONE.rate,
                     "the mirror takes its tax: " + gained + " of " + full);
             helper.assertTrue(LaserNetworks.of(helper.getLevel()).throughput(helper.absolutePos(mirror)) > 0, "light passes the mirror");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.relay, laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void noLightGetsInThroughABase(GameTestHelper helper) {
+        // A Relay and a Laser Mirror each stood on glass, with an emitter shining through the glass into the base.
+        emitter(helper, new BlockPos(3, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(8, Y, 3), Blocks.GLASS);
+        helper.setBlock(new BlockPos(9, Y, 3), ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(LaserRelayBlock.FACING, Direction.SOUTH).setValue(LaserRelayBlock.MOUNT, Direction.WEST));
+        FoldCoreBlockEntity relayed = sink(helper, new BlockPos(9, Y, 7));
+        emitter(helper, new BlockPos(3, Y, 10), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(8, Y, 10), Blocks.GLASS);
+        helper.setBlock(new BlockPos(9, Y, 10), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.WEST)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.NORTH)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.SOUTH));
+        FoldCoreBlockEntity mirrored = sink(helper, new BlockPos(9, Y, 14));
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(relayed.getEnergyStorage().getEnergyStored(), 0, "nothing through the Relay's base");
+            helper.assertValueEqual(mirrored.getEnergyStorage().getEnergyStored(), 0, "nothing through the Mirror's base");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

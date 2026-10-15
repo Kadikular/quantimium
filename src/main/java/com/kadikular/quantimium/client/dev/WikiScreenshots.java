@@ -200,7 +200,56 @@ public final class WikiScreenshots {
         }
     }
 
+    /**
+     * With {@code -Dquantimium.wikiShots.guide=page#anchor,...}, only the guide: each page opened at its anchor
+     * and the whole frame saved, to check its scenes draw.
+     */
+    private static final String GUIDE_PROPERTY = "quantimium.wikiShots.guide";
+
+    private static void planGuide(Minecraft minecraft, String pages) {
+        int i = 0;
+        for (String page : pages.split(",")) {
+            String name = "guide_" + i++;
+            then(i == 1 ? 60 : 10, () -> openGuide(minecraft, page));
+            then(60, () -> captureFrame(name));
+        }
+        then(20, () -> {
+            Quantimium.LOGGER.info("Guide screenshots written to {}", out.toAbsolutePath());
+            minecraft.stop();
+        });
+    }
+
+    /** GuideME is only there at runtime: reached by name. */
+    private static void openGuide(Minecraft minecraft, String page) {
+        try {
+            Class<?> anchor = Class.forName("guideme.PageAnchor");
+            Object at = anchor.getMethod("parse", String.class).invoke(null, Quantimium.MODID + ":" + page);
+            Class.forName("guideme.GuidesCommon").getMethod("openGuide", net.minecraft.world.entity.player.Player.class,
+                    net.minecraft.resources.Identifier.class, anchor).invoke(null, minecraft.player,
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath(Quantimium.MODID, "guide"), at);
+        } catch (ReflectiveOperationException e) {
+            Quantimium.LOGGER.warn("Could not open the guide at {}", page, e);
+        }
+    }
+
+    /** The whole frame as a PNG. */
+    private static void captureFrame(String name) {
+        Screenshot.takeScreenshot(Minecraft.getInstance().getMainRenderTarget(), taken -> {
+            try (NativeImage frame = taken) {
+                Files.createDirectories(out);
+                frame.writeToFile(out.resolve(name + ".png"));
+            } catch (Exception e) {
+                Quantimium.LOGGER.error("Guide screenshot {} failed", name, e);
+            }
+        });
+    }
+
     private static void plan(Minecraft minecraft) {
+        String guide = System.getProperty(GUIDE_PROPERTY);
+        if (guide != null) {
+            planGuide(minecraft, guide);
+            return;
+        }
         hideRecipeViewers();
         // Let the world settle (chunks, the first sync) before building anything.
         then(40, () -> onServer(WikiScreenshots::build));

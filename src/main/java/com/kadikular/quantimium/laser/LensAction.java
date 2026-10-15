@@ -616,7 +616,7 @@ public final class LensAction {
 
     /** Whether {@code stack} would go in where {@code at} says, and the stream's filter lets it. */
     private boolean placeable(ServerLevel level, ItemStack stack, net.minecraft.world.phys.BlockHitResult at) {
-        if (stream.filter() != null && !stream.filter().lets(stack)) return false;
+        if (stream.filter() != null && !stream.filter().letsPlace(stack)) return false;
         if (stack.getItem() instanceof net.minecraft.world.item.BucketItem bucket) {
             return bucket.getContent() != net.minecraft.world.level.material.Fluids.EMPTY
                     && level.getBlockState(at.getBlockPos().relative(at.getDirection())).canBeReplaced();

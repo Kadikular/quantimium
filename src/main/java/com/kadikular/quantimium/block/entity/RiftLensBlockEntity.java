@@ -39,8 +39,6 @@ public class RiftLensBlockEntity extends BlockEntity implements LaserNode, Laser
     /** The ways light goes on out, as the network last found it arriving. */
     private Set<Direction> passing = EnumSet.noneOf(Direction.class);
     private List<LaserBeam> shownBeams = List.of();
-    /** Whether laser light opened its tear (and so may close it). */
-    private boolean openedByLight;
 
     public RiftLensBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.RIFT_LENS_BE.get(), pos, state);
@@ -112,15 +110,11 @@ public class RiftLensBlockEntity extends BlockEntity implements LaserNode, Laser
         boolean same = LaserBeamView.sameLook(shownBeams, beams);
         shownBeams = beams;
         if (level == null || level.isClientSide()) return;
-        // The tear opens while lit light passes through it; it closes only a tear it opened, not a Harvest Laser's.
+        // The tear is open while lit light passes through it.
         boolean lit = beams.stream().anyMatch(LaserBeam::live);
         BlockState state = getBlockState();
-        if (lit && !state.getValue(RiftLensBlock.OPEN)) {
-            openedByLight = true;
-            level.setBlock(worldPosition, state.setValue(RiftLensBlock.OPEN, true), Block.UPDATE_ALL);
-        } else if (!lit && openedByLight) {
-            openedByLight = false;
-            level.setBlock(worldPosition, state.setValue(RiftLensBlock.OPEN, false), Block.UPDATE_ALL);
+        if (lit != state.getValue(RiftLensBlock.OPEN)) {
+            level.setBlock(worldPosition, state.setValue(RiftLensBlock.OPEN, lit), Block.UPDATE_ALL);
         } else if (!same) {
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }

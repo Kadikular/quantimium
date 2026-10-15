@@ -62,7 +62,7 @@ public class DecoherenceProjectorBER extends SubmittingBER<DecoherenceProjectorB
         if (end == null) return;
         // Drawn after the mirror's flora, which would otherwise paint over glow that writes no depth.
         Vec3 from = projector.orb();
-        LateGlow.draw(buffers, partialTick, (late, shared, camera, middle, now) -> {
+        LateGlow.draw(poses, projector.getBlockPos(), buffers, partialTick, (late, shared, camera, middle, now) -> {
             Vec3[] points = BeamRibbon.wave(from.subtract(camera), end.subtract(camera), BEAM_SEGMENTS, now, 0.08f);
             // Same colours as the Lance: coherent azure core in a violet halo.
             // The halo writes no depth; the core does, so translucent blocks behind stay behind it.

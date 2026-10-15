@@ -813,6 +813,22 @@ public final class LensTests {
     }
 
     // covers: laser.lens.place, laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aBlockFilterLensPicksWhatPlacementPlaces(GameTestHelper helper) {
+        // Dirt first in the sender, but the Block Filter lists only cobblestone: cobblestone goes down.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        var sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.DIRT, 4), new ItemStack(Items.COBBLESTONE, 4));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PLACE_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filterLens(com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(new ItemStack(Items.COBBLESTONE)), true, false)));
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.COBBLESTONE, new BlockPos(10, Y, 8));
+            helper.assertValueEqual(sender.getItems().getStackInSlot(0).getCount(), 4, "the dirt stays");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.place, laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 160)
     public static void aWheatFieldCutRipeAndReplanted(GameTestHelper helper) {
         // Down onto farmland: Harvest with Pickup, filtered to fully grown, and Placement of seeds from the sending Laser Port.
@@ -1364,7 +1380,7 @@ public final class LensTests {
     }
 
     // covers: laser.rift
-    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 130)
     public static void lightThroughARiftIsMirroredAndChargesNothing(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         rift(helper, new BlockPos(4, Y, 8), Direction.Axis.X);
@@ -1376,8 +1392,28 @@ public final class LensTests {
             helper.assertValueEqual(helper.getBlockEntity(new BlockPos(9, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0,
                     "and charges nothing of the real world");
             helper.assertBlockProperty(new BlockPos(4, Y, 8), com.kadikular.quantimium.block.RiftLensBlock.OPEN, true);
+            // The emitter gone, the light stops and the tear closes.
+            helper.setBlock(new BlockPos(1, Y, 8), Blocks.AIR);
+        });
+        helper.runAfterDelay(110, () -> {
+            helper.assertBlockProperty(new BlockPos(4, Y, 8), com.kadikular.quantimium.block.RiftLensBlock.OPEN, false);
             TestSupport.finishLasers(helper);
             helper.succeed();
+        });
+    }
+
+    // covers: laser.blocked
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void realLightGoesThroughAnomalite(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.ANOMALITE_CRYSTAL.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.FACING, Direction.UP)
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.AGE, 3));
+        helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.FOLD_CORE.get());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(10, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
+                    "charged past the crystal");
+            TestSupport.finishLasers(helper);
         });
     }
 

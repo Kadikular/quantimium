@@ -291,7 +291,14 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     protected void renderMachineTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
     }
 
+    /** Whether the pages open now close when the server answers with the one asked for. */
+    private boolean closingOnAnswer;
+
     protected final void openOverlay(QuantumOverlay overlay) {
+        if (closingOnAnswer) {
+            closingOnAnswer = false;
+            closePages();
+        }
         this.overlay = overlay;
         overlay.layout(width, height);
     }
@@ -411,6 +418,12 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     }
 
     @Nullable
+    /** Under a page, nothing of the machine or inventory is hovered: no item tooltips through it. */
+    @Override
+    protected boolean isHovering(int left, int top, int w, int h, double xm, double ym) {
+        return activeOverlay() == null && super.isHovering(left, top, w, h, xm, ym);
+    }
+
     protected final QuantumOverlay activeOverlay() {
         if (overlay != null && overlay.isClosed()) overlay = null;
         return overlay;
@@ -656,10 +669,14 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     /** A page tab clicked: whatever page is open closes, and this one opens unless it was the one open. */
     private void switchPage(Tab tab) {
         boolean wasOpen = tab.open.getAsBoolean();
-        QuantumOverlay showing = !wasOpen && tab.awaits ? activeOverlay() : null;
+        if (!wasOpen && tab.awaits) {
+            // What's open stays drawn until the server's answer replaces it, in the same frame.
+            closingOnAnswer = true;
+            tab.onClick.run();
+            return;
+        }
+        closingOnAnswer = false;
         closePages();
-        // Still drawn until the server's answer replaces it.
-        if (showing != null) overlay = showing;
         if (!wasOpen) tab.onClick.run();
     }
 

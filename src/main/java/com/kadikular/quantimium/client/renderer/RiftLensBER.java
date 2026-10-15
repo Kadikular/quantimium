@@ -38,7 +38,7 @@ public class RiftLensBER extends LaserBeamBER<RiftLensBlockEntity> {
         Vec3 ring = lens.getBlockPos().getCenter();
         int seed = lens.getBlockPos().hashCode();
         float leak = 0.15f + 0.08f * bright;
-        LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> {
+        LateGlow.draw(poses, lens.getBlockPos(), buffers, partialTick, (late, lateBuffers, camera, middle, time) -> {
             float breathe = 0.9f + 0.1f * Mth.sin(time * 0.15f);
             MirrorRiftRenderer.render(ring, seed, breathe, TEAR_SCALE, 0.70f, 0.42f, 1.0f, TEAR_TINT,
                     0.15f + leak * 1.4f, late, lateBuffers, camera, middle, time);

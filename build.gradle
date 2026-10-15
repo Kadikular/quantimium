@@ -101,7 +101,9 @@ neoForge {
             client()
             gameDirectory = project.file('runs-26.1/wikishots')
             programArguments.addAll('--width', '1280', '--height', '800')
-            systemProperty 'quantimium.wikiShots', project.file('wiki/pages/assets/gui').absolutePath
+            systemProperty 'quantimium.wikiShots', project.hasProperty('shotsDir') ? project.shotsDir : project.file('wiki/pages/assets/gui').absolutePath
+            // -PguidePages=machines/lasers.md#lenses,... captures only those guide pages.
+            if (project.hasProperty('guidePages')) systemProperty 'quantimium.wikiShots.guide', project.guidePages
         }
 
         server {

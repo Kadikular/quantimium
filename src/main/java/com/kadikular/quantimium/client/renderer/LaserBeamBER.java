@@ -29,7 +29,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         if (beams.isEmpty()) return;
         Vec3 centre = node.getBlockPos().getCenter();
         boolean aiming = aiming();
-        LateGlow.draw(buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, node, beams, aiming));
+        LateGlow.draw(poses, node.getBlockPos(), buffers, partialTick, (late, lateBuffers, camera, middle, time) -> draw(late, lateBuffers, camera, time, centre, node, beams, aiming));
     }
 
     /** Beams run far: drawn as far off as one can reach, and then some. */
@@ -130,14 +130,16 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         return new float[] {0.45f + 0.55f * halo[0], 0.45f + 0.55f * halo[1], 0.45f + 0.55f * halo[2]};
     }
 
-    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. Light into a Rift Lens or Mirror goes on to its tear or plate. */
+    /** From the node's side to what the beam ends on, or to where it fades; camera-relative. Light into a Rift Lens or Mirror goes on to its tear or plate, if it gets in. */
     private static Vec3[] line(LaserBeamView view, LaserBeam beam, Vec3 camera) {
         Vec3[] ends = view.endsOf(beam);
         Vec3 end = ends[1];
         var level = net.minecraft.client.Minecraft.getInstance().level;
         if (beam.hit() != null && level != null) {
             var state = level.getBlockState(beam.hit());
-            if (state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
+            // Light it won't take (into a base, onto a plate's back) stops at its side.
+            boolean refused = level.getBlockEntity(beam.hit()) instanceof com.kadikular.quantimium.laser.LaserNode node && !node.accepts(beam.face());
+            if (!refused && state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
         }
         return new Vec3[] {ends[0].subtract(camera), end.subtract(camera)};
     }

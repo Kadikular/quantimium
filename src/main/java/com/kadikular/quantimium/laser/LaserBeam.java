@@ -137,6 +137,8 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         boolean entity = state.hasBlockEntity();
         if (entity && level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
         if (passes(level, pos, state)) return null;
+        // Anomalite is of the mirror: light in the real world goes through it as if it weren't there.
+        if ((marks & Light.MIRRORED) == 0 && state.getBlock() instanceof com.kadikular.quantimium.block.AnomaliteCrystalBlock) return null;
         // In the mirror, light charges nothing of the real world: a block that takes power just stops it.
         boolean takes = entity && (marks & Light.MIRRORED) == 0 && level.getCapability(Capabilities.Energy.BLOCK, pos, face.getOpposite()) != null;
         // Phantom light goes through anything but a laser block, or a block it charges.

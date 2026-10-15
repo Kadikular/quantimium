@@ -68,9 +68,13 @@ public class SolarEmitterBlockEntity extends BlockEntity implements LaserNode, L
         if (was != solar.sun) level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
     }
 
-    /** How bright the sky is above it, 0 to 15, the way a daylight detector reads it. */
+    /**
+     * How bright the sky is above it, 0 to 15, the way a daylight detector reads it; nothing under a roof,
+     * however high (glass lets the sky through).
+     */
     private static int skyLight(Level level, BlockPos pos) {
         BlockPos above = pos.above();
+        if (level.getBrightness(net.minecraft.world.level.LightLayer.SKY, above) < 15) return 0;
         int target = level.getEffectiveSkyBrightness(above);
         if (target > 0) {
             float sunAngle = level.environmentAttributes().getValue(net.minecraft.world.attribute.EnvironmentAttributes.SUN_ANGLE, above)

@@ -144,6 +144,12 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return listed(items, stack) == itemsAllow;
     }
 
+    /** Whether it lets a Placement beam place this item: the item, and as a block, the block it places. */
+    public boolean letsPlace(ItemStack stack) {
+        if (!lets(stack)) return false;
+        return !any(blocks) || listed(blocks, stack) == blocksAllow;
+    }
+
     /**
      * Whether it lets a Harvest beam break this block, which would drop {@code drops}: listed if its item or any
      * drop is. So "wheat" lets only ripe wheat through: unripe, it drops only seeds.
