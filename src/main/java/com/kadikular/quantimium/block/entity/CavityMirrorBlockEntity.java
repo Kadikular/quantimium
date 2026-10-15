@@ -339,10 +339,10 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (!same) sync();
     }
 
-    /** The glow of the light held is twice as wide as a beam carrying as much. */
+    /** The glow of the light held is wider than a beam carrying as much. */
     @Override
     public float widthScale(LaserBeam beam) {
-        return beam.end() == LaserBeam.End.OPEN && beam.aim() == null && beam.face() == facing() && beam.length() == gap ? 2.0f : 1.0f;
+        return beam.end() == LaserBeam.End.OPEN && beam.aim() == null && beam.face() == facing() && beam.length() == gap ? 1.8f : 1.0f;
     }
 
     /** The light held runs on into a flat Laser Mirror at the far end, to its plate in the block's middle. */

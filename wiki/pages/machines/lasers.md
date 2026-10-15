@@ -280,7 +280,7 @@ are in it, for {{c:LaserTuning.BLIND_TICKS|s}}. The [[item:mirror_lens]] protect
 out of its outputs (set as an emitter's are), and it gives out light of its own too. Everything the light
 leaving it reaches, through mirrors, splitters and relays, joined with other light or not, is one
 **logistics network**, as any light is a laser network. An Isolator lets power through but not the
-network. One controller to a network: where light from two meets, both stop and say so.
+network. One controller to a network: where light from two meets, both stop, go dark and say why.
 
 [[structure:logistics]]
 

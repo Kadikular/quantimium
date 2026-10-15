@@ -196,6 +196,7 @@ public final class LogisticsTests {
             helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 8, "nothing moved");
             helper.assertTrue(west.status().getString().equals(net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_controller.clash").getString()),
                     "the controller says why");
+            helper.assertBlockProperty(new BlockPos(2, Y, 8), com.kadikular.quantimium.block.LogisticsControllerBlock.LIT, false);
             helper.succeed();
         });
     }

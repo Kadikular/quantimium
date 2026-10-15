@@ -189,8 +189,6 @@ public class CavityMirrorBlock extends BaseEntityBlock implements com.kadikular.
             } else {
                 boolean on = mirror.outputFaces().contains(face);
                 level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, on ? 1.3f : 0.8f);
-                player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable(on
-                        ? "message.quantimium.cavity.output_on" : "message.quantimium.cavity.output_off"));
             }
         }
         return InteractionResult.SUCCESS;

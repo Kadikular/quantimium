@@ -108,7 +108,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
         this.members = List.copyOf(members);
+        boolean changed = this.clash != clash;
         this.clash = clash;
+        if (changed) showLit();
     }
 
     /** The members still standing, or none while another controller's light stops the network. */
@@ -203,12 +205,17 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         boolean same = LaserBeamView.sameLook(shownBeams, beams);
         shownBeams = beams;
         if (same) return;
-        boolean lit = beams.stream().anyMatch(LaserBeam::live);
+        showLit();
+        sync();
+    }
+
+    /** Lit while its light is: dark while another controller's light stops its network. */
+    private void showLit() {
+        boolean lit = !clash && shownBeams.stream().anyMatch(LaserBeam::live);
         BlockState state = getBlockState();
-        if (level != null && state.hasProperty(LogisticsControllerBlock.LIT) && state.getValue(LogisticsControllerBlock.LIT) != lit) {
+        if (level != null && !level.isClientSide() && state.hasProperty(LogisticsControllerBlock.LIT) && state.getValue(LogisticsControllerBlock.LIT) != lit) {
             level.setBlock(worldPosition, state.setValue(LogisticsControllerBlock.LIT, lit), Block.UPDATE_CLIENTS);
         }
-        sync();
     }
 
     @Override

@@ -784,6 +784,11 @@ def laser_emitters() -> None:
         for name, elements in ((f"laser_emitter_plain_{direction}", plain), (f"laser_emitter_out_{direction}", recess)):
             with open(os.path.join(MODELS, name + ".json"), "w") as handle:
                 json.dump({"textures": {"particle": "#steel"}, "elements": elements}, handle, indent=2)
+        if direction in ("up", "down"):
+            # Turned a quarter, for a block facing north or south: its tier marks run front to back, as facing east or west.
+            turned = [on_face(direction, (2, 2, 0), (14, 14, 2), {"out": {"texture": "#panel", "uv": [2, 2, 14, 14], "rotation": 90}})]
+            with open(os.path.join(MODELS, f"laser_emitter_plain_{direction}_turned.json"), "w") as handle:
+                json.dump({"textures": {"particle": "#steel"}, "elements": turned}, handle, indent=2)
     with open(os.path.join(MODELS, "laser_emitter_edges.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "textures": {"steel": "quantimium:block/laser_mirror_steel", "particle": "quantimium:block/laser_mirror_steel"},
                    "elements": edges()}, handle, indent=2)
@@ -817,7 +822,12 @@ def solid_emitter(name: str, panel: Image.Image, spec) -> None:
             tag = "_lit" if lit else ""
             child(f"{name}_out{tag}_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip{tag}")
             parts.append({"when": {direction: "true", "lit": str(lit).lower()}, "apply": {"model": f"quantimium:block/{name}_out{tag}_{direction}"}})
-        parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+        if direction in ("up", "down"):
+            child(f"{name}_plain_{direction}_turned", f"laser_emitter_plain_{direction}_turned", panel=f"quantimium:block/{name}_panel")
+            parts.append({"when": {direction: "false", "facing": "east|west|up|down"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+            parts.append({"when": {direction: "false", "facing": "north|south"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}_turned"}})
+        else:
+            parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
     child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip_lit")
     with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
@@ -860,7 +870,12 @@ def solid_outputs(name: str, panel: Image.Image, spec) -> None:
         child(f"{name}_plain_{direction}", f"laser_emitter_plain_{direction}", panel=f"quantimium:block/{name}_panel")
         child(f"{name}_out_{direction}", f"laser_emitter_out_{direction}", tip=f"quantimium:block/{name}_tip")
         parts.append({"when": {direction: "true"}, "apply": {"model": f"quantimium:block/{name}_out_{direction}"}})
-        parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+        if direction in ("up", "down"):
+            child(f"{name}_plain_{direction}_turned", f"laser_emitter_plain_{direction}_turned", panel=f"quantimium:block/{name}_panel")
+            parts.append({"when": {direction: "false", "facing": "east|west|up|down"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
+            parts.append({"when": {direction: "false", "facing": "north|south"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}_turned"}})
+        else:
+            parts.append({"when": {direction: "false"}, "apply": {"model": f"quantimium:block/{name}_plain_{direction}"}})
     child(f"{name}_item", "laser_emitter_item_shape", panel=f"quantimium:block/{name}_panel", tip=f"quantimium:block/{name}_tip")
     with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)

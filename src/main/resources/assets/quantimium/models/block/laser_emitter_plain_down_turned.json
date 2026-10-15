@@ -1,0 +1,32 @@
+{
+  "textures": {
+    "particle": "#steel"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        2,
+        14
+      ],
+      "faces": {
+        "down": {
+          "texture": "#panel",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "rotation": 90,
+          "cullface": "down"
+        }
+      }
+    }
+  ]
+}

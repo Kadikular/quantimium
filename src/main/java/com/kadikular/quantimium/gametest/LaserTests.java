@@ -267,6 +267,21 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void clickingANewSideOfAFlatMirrorTurnsItToWhereItFaced(GameTestHelper helper) {
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, mirror(Direction.DOWN, Direction.NORTH, Direction.NORTH));
+        var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        BlockPos pos = helper.absolutePos(at);
+        helper.getLevel().getBlockState(pos).useWithoutItem(helper.getLevel(), player,
+                new net.minecraft.world.phys.BlockHitResult(pos.getCenter(), Direction.EAST, pos, false));
+        var state = helper.getLevel().getBlockState(pos);
+        helper.assertValueEqual(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT), Direction.EAST, "in by the side clicked");
+        helper.assertValueEqual(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT), Direction.NORTH, "out where it faced");
+        helper.succeed();
+    }
+
     // covers: laser.relay, laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void noLightGetsInThroughABase(GameTestHelper helper) {

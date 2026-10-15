@@ -79,10 +79,20 @@
   },
   {
    "when": {
-    "up": "false"
+    "up": "false",
+    "facing": "east|west|up|down"
    },
    "apply": {
     "model": "quantimium:block/isolator_plain_up"
+   }
+  },
+  {
+   "when": {
+    "up": "false",
+    "facing": "north|south"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_up_turned"
    }
   },
   {
@@ -95,10 +105,20 @@
   },
   {
    "when": {
-    "down": "false"
+    "down": "false",
+    "facing": "east|west|up|down"
    },
    "apply": {
     "model": "quantimium:block/isolator_plain_down"
+   }
+  },
+  {
+   "when": {
+    "down": "false",
+    "facing": "north|south"
+   },
+   "apply": {
+    "model": "quantimium:block/isolator_plain_down_turned"
    }
   }
  ]
