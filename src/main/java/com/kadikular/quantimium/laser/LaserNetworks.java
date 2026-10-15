@@ -708,6 +708,7 @@ public final class LaserNetworks {
                                 sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
+                        action.sweeps(sweeps(streamsOf(light)));
                         actions.put(key, action);
                     }
                 }
@@ -722,6 +723,7 @@ public final class LaserNetworks {
                                 sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 node.area(), core.reach(), core.marks(), 0);
                         action.within(node::inArea);
+                        action.sweeps(sweeps(core.acting()));
                         actions.put(key, action);
                     }
                 }
@@ -747,6 +749,12 @@ public final class LaserNetworks {
     }
 
     /** What Smelting and Crushing do to the world on {@code light}'s beam first: a Harvest waits for them. */
+    /** Whether Pickup on this light takes up all that lies in it: not when Harvest or Damage free what it takes. */
+    private static boolean sweeps(Iterable<Light.Stream> streams) {
+        for (Light.Stream stream : streams) if (stream.action() == Lens.HARVEST || stream.action() == Lens.DAMAGE) return false;
+        return true;
+    }
+
     private static List<Lens> worldSteps(Light light) {
         return light.acting().stream().filter(Light.Stream::inWorld).findFirst().map(Light.Stream::steps).orElse(List.of());
     }

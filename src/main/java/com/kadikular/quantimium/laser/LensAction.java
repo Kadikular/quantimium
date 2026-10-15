@@ -131,6 +131,13 @@ public final class LensAction {
         worldSteps = steps;
     }
 
+    /** Whether Pickup takes up whatever lies in the light: only alone; with Harvest or Damage, only what they free. */
+    private boolean sweeps = true;
+
+    void sweeps(boolean sweeps) {
+        this.sweeps = sweeps;
+    }
+
     /**
      * What an action costs over its own price: twice, carried by Phantom light, on top of the light's upkeep for
      * the blocks it passes through.
@@ -173,7 +180,7 @@ public final class LensAction {
             case PICKUP -> {
                 // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
                 if (mirrored()) drawThread(level, networks);
-                if (phase != 0 || collectors.isEmpty()) return;
+                if (phase != 0 || collectors.isEmpty() || !sweeps) return;
                 // Items are small: anything within nearly a block of the beam's line counts. Each light takes
                 // only what lies on its own side.
                 for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)

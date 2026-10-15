@@ -1021,7 +1021,7 @@
   "item.quantimium.damage_lens": "Damage Lens",
   "item.quantimium.damage_lens.tip": "Hurts anything standing in the beam.",
   "item.quantimium.pickup_lens": "Pickup Lens",
-  "item.quantimium.pickup_lens.tip": "Brings items in the beam back up to the nearest Laser Port.",
+  "item.quantimium.pickup_lens.tip": "Brings items in the beam back up; with Harvest or Damage, only what they free.",
   "item.quantimium.range_lens": "Range Lens",
   "item.quantimium.range_lens.tip": "Doubles how far the light reaches.",
   "item.quantimium.spectroscope": "Spectroscope",

@@ -812,6 +812,26 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void harvestWithPickupBringsBackOnlyWhatItCuts(GameTestHelper helper) {
+        // A flower lies in the beam: Harvest with Pickup brings back the stone it cuts, and leaves the flower be.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.STONE);
+        var flower = helper.spawnItem(Items.POPPY, new net.minecraft.world.phys.Vec3(8.5, Y + 0.2, 8.5));
+        flower.setNoPickUpDelay();
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(count(collector, Items.COBBLESTONE) > 0, "the cut stone came back");
+            helper.assertValueEqual(count(collector, Items.POPPY), 0, "the flower didn't");
+            helper.assertTrue(flower.isAlive(), "it still lies there");
+            flower.discard();
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.place, laser.lens.filter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aBlockFilterLensPicksWhatPlacementPlaces(GameTestHelper helper) {
