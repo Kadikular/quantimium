@@ -1242,8 +1242,9 @@ public final class LaserNetworks {
         long supply = 0;
         for (long has : left) supply += has;
         if (supply <= 0 || network.sinks().isEmpty()) return;
-        // Nothing it reaches took power last time: it asks again in a while, not every tick.
-        if (network.rest()[0] > 0) {
+        // Nothing it reaches took power last time: it asks again in a while, not every tick. An action that
+        // wants power now (a Harvest beam on to its next block) wakes it, so a rest never sets a beam's pace.
+        if (network.rest()[0] > 0 && !anyActionWants(network)) {
             network.rest()[0]--;
             return;
         }
@@ -1261,6 +1262,11 @@ public final class LaserNetworks {
             }
         }
         network.rest()[0] = gave ? 0 : LaserTuning.FULL_REST;
+    }
+
+    private static boolean anyActionWants(Network network) {
+        for (Sink sink : network.sinks()) if (sink.action() != null && sink.action().demand() > 0) return true;
+        return false;
     }
 
     /**

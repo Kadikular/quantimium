@@ -585,8 +585,7 @@ public final class LensAction {
                 taken = ItemStack.EMPTY;
             }
         } else if (taken.getItem() instanceof net.minecraft.world.item.BlockItem item) {
-            done = item.place(new net.minecraft.world.item.context.BlockPlaceContext(
-                    level, null, net.minecraft.world.InteractionHand.MAIN_HAND, taken, at)).consumesAction();
+            done = item.place(new BeamPlaceContext(level, taken, at)).consumesAction();
         } else {
             done = false;
         }
@@ -623,10 +622,15 @@ public final class LensAction {
                     && level.getBlockState(at.getBlockPos().relative(at.getDirection())).canBeReplaced();
         }
         if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem item)) return false;
-        var context = new net.minecraft.world.item.context.BlockPlaceContext(level, null, net.minecraft.world.InteractionHand.MAIN_HAND, stack.copyWithCount(1), at);
+        var context = new BeamPlaceContext(level, stack.copyWithCount(1), at);
         if (!context.canPlace()) return false;
-        BlockState state = item.getBlock().getStateForPlacement(context);
-        return state != null && state.canSurvive(level, context.getClickedPos());
+        try {
+            BlockState state = item.getBlock().getStateForPlacement(context);
+            return state != null && state.canSurvive(level, context.getClickedPos());
+        } catch (RuntimeException e) {
+            // Some block that can't be placed without a player to ask: a lens leaves it be.
+            return false;
+        }
     }
 
     /** The next free space in the area something could be placed in: one resting on a block below it. */

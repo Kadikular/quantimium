@@ -333,6 +333,55 @@ public final class LensTests {
         });
     }
 
+
+    // covers: laser.lens.speed, laser.lens.harvest
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void eachSpeedLensCutsSooner(GameTestHelper helper) {
+        // Rows of dirt cut with none, one and two Speed lenses: the wait between blocks halves with each.
+        int[][] broke = new int[3][4];
+        for (int n = 0; n < 3; n++) {
+            int z = 2 + n * 5;
+            emitter(helper, new BlockPos(1, Y, z), Direction.EAST, true);
+            Item[] lenses = new Item[1 + n];
+            lenses[0] = ModItems.HARVEST_LENS.get();
+            for (int k = 1; k <= n; k++) lenses[k] = ModItems.SPEED_LENS.get();
+            mount(helper, new BlockPos(3, Y, z), Direction.EAST, lenses);
+            for (int x = 4; x < 8; x++) helper.setBlock(new BlockPos(x, Y, z), Blocks.DIRT);
+        }
+        int[] tick = {0};
+        helper.onEachTick(() -> {
+            tick[0]++;
+            for (int n = 0; n < 3; n++) for (int x = 4; x < 8; x++)
+                if (broke[n][x - 4] == 0 && helper.getBlockState(new BlockPos(x, Y, 2 + n * 5)).isAir()) broke[n][x - 4] = tick[0];
+        });
+        helper.runAfterDelay(100, () -> {
+            int[] gap = new int[3];
+            for (int n = 0; n < 3; n++) {
+                helper.assertTrue(broke[n][3] > 0, n + " Speed lenses cut all four: " + java.util.Arrays.toString(broke[n]));
+                gap[n] = (broke[n][3] - broke[n][0]) / 3;
+            }
+            helper.assertTrue(gap[1] < gap[0] && gap[2] < gap[1], "each Speed lens cuts sooner: " + java.util.Arrays.toString(gap));
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.place
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aPlacementBeamPlacesABlockThatFacesItsPlacer(GameTestHelper helper) {
+        // A Logistics Controller faces whoever looks at it: placed by a beam, it faces back up the beam.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(ModItems.LOGISTICS_CONTROLLER_ITEM.get()));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PLACE_LENS.get());
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.DIRT);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(ModBlocks.LOGISTICS_CONTROLLER.get(), new BlockPos(10, Y, 8));
+            Direction facing = helper.getBlockState(new BlockPos(10, Y, 8)).getValue(com.kadikular.quantimium.block.LogisticsControllerBlock.FACING);
+            helper.assertTrue(facing == Direction.WEST, "faces up the beam: " + facing);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.light.range
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
     public static void aMirrorRefocusesToItsSourcesRange(GameTestHelper helper) {
