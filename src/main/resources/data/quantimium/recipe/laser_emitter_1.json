@@ -5,12 +5,13 @@
     "S": "quantimium:anomalite_shard",
     "G": "quantimium:quantum_attuned_glass",
     "F": "quantimium:flash_emitter",
-    "R": "minecraft:redstone"
+    "R": "minecraft:redstone",
+    "I": "#c:ingots/iron"
   },
   "pattern": [
-    "SGS",
+    "IGI",
     "SFS",
-    "SRS"
+    "IRI"
   ],
   "result": {
     "id": "quantimium:laser_emitter_1",

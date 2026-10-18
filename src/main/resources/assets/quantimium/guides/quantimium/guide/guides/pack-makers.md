@@ -21,7 +21,7 @@ to be sure every value is picked up.
 | Key | Default | What it does |
 | --- | --- | --- |
 | `craftSurcharge` | `true` | Crafter and Simulator work costs extra FE in uncontained anomaly above Low. |
-| `surchargePercentMedium` / `High` / `Critical` / `Singularity` | 25 / 50 / 100 / 200 | The extra, in percent, by band. |
+| `surchargePercentMedium` / `High` / `Critical` / `Singularity` | 10 / 25 / 50 / 100 | The extra, in percent, by band. |
 | `passiveDrain` | `true` | Quantimium machine buffers leak FE in uncontained anomaly above Low. |
 | `passiveDrainFePerTickMedium` / `High` / `Critical` / `Singularity` | 16 / 40 / 80 / 160 | The leak, in FE/t per machine, by band. |
 
@@ -29,8 +29,10 @@ to be sure every value is picked up.
 
 | Key | Default | What it does |
 | --- | --- | --- |
-| `enabled` | `true` | Crystals seed on powered blocks in uncontained High+ anomaly. |
-| `spawnIntervalSecondsHigh` | 120 | Mean seconds between spawn rolls per High chunk. |
+| `enabled` | `true` | Crystals seed on powered blocks in uncontained Medium+ anomaly. |
+| `spawnIntervalSecondsHigh` | 60 | Mean seconds between spawn rolls per High chunk. |
+| `mediumFrequencyMultiplier` | 0.25 | How often they roll at Medium, against High. |
+| `maxCrystalsPerChunk` | 2, 8, 16, 0 | Most crystals a chunk grows by itself at Medium, High, Critical and Singularity (0: no limit). |
 | `criticalFrequencyMultiplier` / `singularityFrequencyMultiplier` | 2 / 5 | How much more often they roll above High. |
 | `hostSamplesPerRoll` | 3 | Block entities tried per successful roll. |
 | `growthChancePercentPerRandomTick` | 20 | Chance a feeding crystal grows a stage. |
@@ -196,10 +198,10 @@ structure.
 
 ```toml
 [anomaly]
-surchargePercentMedium = 10
-surchargePercentHigh = 25
-surchargePercentCritical = 50
-surchargePercentSingularity = 100
+surchargePercentMedium = 0
+surchargePercentHigh = 10
+surchargePercentCritical = 25
+surchargePercentSingularity = 50
 passiveDrain = false
 
 [anomalite]

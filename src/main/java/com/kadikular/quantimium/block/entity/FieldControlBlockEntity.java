@@ -10,7 +10,6 @@ import net.minecraft.world.Containers;
 import com.kadikular.quantimium.block.FieldControlBlock;
 import com.kadikular.quantimium.block.entity.simulation.SimulatedEffect;
 import com.kadikular.quantimium.block.entity.simulation.SimulationContext;
-import com.kadikular.quantimium.flux.AnomalyEffects;
 import com.kadikular.quantimium.flux.FluxBand;
 import com.kadikular.quantimium.flux.FluxMeterReadout;
 import com.kadikular.quantimium.flux.QuantumFlux;
@@ -266,8 +265,7 @@ public class FieldControlBlockEntity extends BlockEntity
         FieldControlBlock.Kind kind = be.kind();
         if (now % READ_TICKS == 0) be.decide(server, kind);
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(server, pos);
-        if (leak > 0) be.energyStorage.consume(leak);
+        // The tools for the field don't leak to it: what they show drawing is what they draw.
 
         boolean powered = true;
         boolean working = false;

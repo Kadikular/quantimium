@@ -4,7 +4,6 @@ import com.kadikular.quantimium.util.NbtCompat;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import com.kadikular.quantimium.block.QuantumExciterBlock;
-import com.kadikular.quantimium.flux.AnomalyEffects;
 import com.kadikular.quantimium.flux.QuantumFlux;
 import com.kadikular.quantimium.init.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -100,11 +99,7 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
             }
         }
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(serverLevel, pos);
-        if (leak > 0) {
-            leak = be.energyStorage.consume(leak);
-            if (leak > 0) be.setChanged();
-        }
+        // A tool for the field doesn't leak to it.
 
         be.recordPowerUse(spent);
 

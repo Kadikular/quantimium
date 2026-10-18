@@ -39,6 +39,9 @@ import java.util.Set;
  */
 public class SolarEmitterBlockEntity extends BlockEntity implements LaserNode, LaserBeamView, FluxMeterReadout {
 
+    /** The sun counts as full this many times over: up to about 48 degrees either side of noon. */
+    static final float SUN_FULL = 1.5f;
+
     /** How bright the sky is to it, 0 to 15, as last looked: what it makes, and how its focus glows. */
     private int sun;
     private List<LaserBeam> shownBeams = List.of();
@@ -81,7 +84,8 @@ public class SolarEmitterBlockEntity extends BlockEntity implements LaserNode, L
                     * (float) (Math.PI / 180.0);
             float offset = sunAngle < (float) Math.PI ? 0.0f : (float) (Math.PI * 2);
             sunAngle += (offset - sunAngle) * 0.2f;
-            target = Math.round(target * Mth.cos(sunAngle));
+            // Full through the middle of the day, as panels are: it only dims in the morning and evening.
+            target = Math.round(target * Math.min(1.0f, SUN_FULL * Mth.cos(sunAngle)));
         }
         return Mth.clamp(target, 0, 15);
     }

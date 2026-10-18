@@ -14,7 +14,7 @@ quantimium_trace: "The residue of measuring something into existence, left behin
 flux_meter: "Shows the flux and anomaly of the chunk you stand in. Point it at a machine to see what it's doing."
 flux_detector: "Turns the flux or anomaly of its chunk into a redstone signal."
 field_monitor: "Watches the chunks around it on a map and sounds an alarm when the field gets dangerous."
-quantum_exciter: "Turns power into flux, to warm the field around it."
+quantum_exciter: "Turns power into flux, ten times as well as work does, to hold the field at Medium; click it to aim for High."
 flux_suppressor: "Keeps the flux around it below a ceiling you choose. Makes firebreaks, starves rifts, keeps a quiet corner quiet."
 basic_anomaly_siphon: "The first way to hold anomaly down around a small workshop. It yields Anomaly Fragments as it works."
 anomaly_siphon: "Keeps anomaly at or below a ceiling you choose, across a wider area, and yields Anomaly Fragments."

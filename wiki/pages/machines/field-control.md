@@ -3,7 +3,7 @@
 Blocks that hold a chunk's [field](../concepts/flux-and-anomaly.md) where you set it, instead of
 leaving it to whatever your machines happen to do. The **Flux Maintainer** keeps flux up to a floor you
 choose, the **Anomaly Siphon** keeps anomaly down under a ceiling, and the **Field Regulator** does both.
-They are the step up from the [[block:quantum_exciter]] (which only ever holds Medium) and the
+They are the step up from the [[block:quantum_exciter]] (which holds Medium, or High when clicked) and the
 [[block:basic_anomaly_siphon]] (which only ever holds the top of Low).
 
 Two early members of the family work the same way: the [[block:basic_anomaly_siphon]], a fixed, small

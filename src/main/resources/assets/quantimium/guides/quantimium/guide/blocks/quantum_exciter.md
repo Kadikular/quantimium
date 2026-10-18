@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:quantum_exciter" scale="2" />
 
-Turns power into flux, to warm the field around it.
+Turns power into flux, ten times as well as work does, to hold the field at Medium; click it to aim for High.
 
 ## Recipes
 

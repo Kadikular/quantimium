@@ -11,10 +11,10 @@ jumps when a field crosses from one to the next.
 | Band | From | Anomaly surcharge on crafts | Buffer leak |
 | --- | --- | --- | --- |
 | Low | 0 | none | none |
-| Medium | 100 | +25% | 16 FE/t |
-| High | 1,000 | +50% | 40 FE/t |
-| Critical | 10,000 | +100% | 80 FE/t |
-| Singularity | 100,000 | +200% | 160 FE/t |
+| Medium | 100 | +10% | 16 FE/t |
+| High | 1,000 | +25% | 40 FE/t |
+| Critical | 10,000 | +50% | 80 FE/t |
+| Singularity | 100,000 | +100% | 160 FE/t |
 
 [[mechanic:flux.bands]] Machines and meters read the field **where they stand**, blended between the
 chunks round them, so it changes smoothly as you walk and never jumps at a chunk line. Anything that
@@ -82,13 +82,14 @@ The field updates once a second, for every chunk holding one.
 [[mechanic:anomaly.coupling]] Anomaly climbs towards a target each second, closing 4% of the gap. With
 nothing containing it, the target is all the flux. Under containment, the target is the flux its
 capacity can't hold, plus a small leak (3%) of what it does hold. Anomaly decays
-on the same curve as flux, but separately, so it lingers after flux drops.
+on the same curve as flux at half the rate, so it settles nearer the flux and lingers after work stops.
 
 What anomaly does in a chunk that isn't contained, by band:
 
 - [[mechanic:anomaly.surcharge]] **Surcharge.** Crafter and Simulator work costs extra FE (the table above).
-- [[mechanic:anomaly.leak]] **Leak.** Quantimium machine buffers bleed a flat amount of FE every tick.
-- **Crystals.** From High, Anomalite Crystals seed on powered machines and eat their buffers.
+- [[mechanic:anomaly.leak]] **Leak.** Quantimium machine buffers bleed a flat amount of FE every tick; the Exciter and the field-control blocks, which manage the field, don't.
+- **Crystals.** From Medium, Anomalite Crystals seed on powered machines and eat their buffers: slowly
+  and only two to a chunk at Medium, faster and up to 8 at High, 16 at Critical, without limit at Singularity.
   [[mechanic:anomalite.host_removed]] Break or move the machine and its crystals go with it.
 - **Tears and mites.** From Medium, the field tears into the [mirror](mirror-phase.md) on its own,
   and mirror mites hunt.

@@ -1,0 +1,26 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/silver"
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "minecraft:glass_pane",
+    "I": "#c:ingots/silver"
+  },
+  "pattern": [
+    " P ",
+    " I ",
+    "I I"
+  ],
+  "result": {
+    "id": "quantimium:laser_mirror",
+    "count": 4
+  }
+}

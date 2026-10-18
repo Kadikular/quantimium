@@ -3,7 +3,7 @@
   "ingredients": [
     {
       "ingredient": "minecraft:glass",
-      "count": 2
+      "count": 8
     },
     {
       "ingredient": "quantimium:anomalite_shard"
@@ -17,6 +17,6 @@
   "anomaly": 1.0,
   "result": {
     "id": "quantimium:quantum_attuned_glass",
-    "count": 2
+    "count": 8
   }
 }

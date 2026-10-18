@@ -6,12 +6,12 @@
     "G": "#c:glass_blocks"
   },
   "pattern": [
-    " A ",
-    "AGA",
-    " A "
+    " G ",
+    "GAG",
+    " G "
   ],
   "result": {
     "id": "quantimium:quantum_attuned_glass",
-    "count": 2
+    "count": 4
   }
 }

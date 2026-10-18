@@ -95,8 +95,9 @@ public final class FieldControlTests {
             TestSupport.fill(siphon.getEnergyStorage());
             if (helper.getTick() < 100) return;
             double worst = QuantumFlux.peakAnomaly(helper.getLevel(), helper.absolutePos(AT), QuantumFlux.SOURCE_RADIUS);
-            helper.assertTrue(worst <= FieldControlBlockEntity.Ceiling.LOW.target() + 1.0,
-                    "every chunk round it should be held at 80 or under, just inside Low: " + worst);
+            // At its mark, give or take what spreads in from the workshop's chunks between its pulls.
+            helper.assertTrue(worst <= FieldControlBlockEntity.Ceiling.LOW.target() * 1.025,
+                    "every chunk round it should be held at about 80, inside Low: " + worst);
             boolean pulling = (siphon.status() & FieldControlBlockEntity.STATUS_PULLING) != 0;
             if (pulling) started[0] = true;
             else if (started[0]) offAgain[0] = true;

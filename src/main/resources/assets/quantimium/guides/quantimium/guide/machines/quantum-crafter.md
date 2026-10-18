@@ -182,8 +182,8 @@ Medium, 80% of it at High, 65% at Critical and 55% at Singularity: at the defaul
   energy economies agree. A recipe drawing 8 EU/t for 200 ticks is 1,600 EU, or 16,000 FE before the
   multiplier and 32,000 FE after it.
 - **Anomaly surcharge.** Above Low anomaly, every craft costs more:
-  +25% at Medium, +50% at High, +100% at Critical, +200% at Singularity. A 4,000 FE smelt costs
-  6,000 FE at High. The GUI's energy bar shows the surcharge in force.
+  +10% at Medium, +25% at High, +50% at Critical, +100% at Singularity. A 4,000 FE smelt costs
+  5,000 FE at High. The GUI's energy bar shows the surcharge in force.
 - **Passive drain.** Above Low anomaly the buffer also leaks a flat 16–160 FE/t. See
   [Flux and anomaly](../concepts/flux-and-anomaly.md).
 

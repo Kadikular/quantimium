@@ -4,11 +4,12 @@
   "key": {
     "G": "#c:ingots/gold",
     "L": "quantimium:anomalite_lattice",
-    "C": "quantimium:anomalite_crystal"
+    "S": "quantimium:anomalite_shard",
+    "A": "#c:storage_blocks/amethyst"
   },
   "pattern": [
     "GLG",
-    "LCL",
+    "SAS",
     "GLG"
   ],
   "result": {

@@ -530,17 +530,17 @@ public final class ReactorTests {
         helper.setBlock(OUTPUT, ModBlocks.REACTOR_OUTPUT_PORT.get());
         core.revalidate(helper.getLevel());
         core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
-        core.getLedger().add(ItemResource.of(Items.SAND), 2);
+        core.getLedger().add(ItemResource.of(Items.SAND), 8);
         core.getLedger().add(ItemResource.of(ModItems.ANOMALITE_SHARD.get()), 1);
 
         helper.runAfterDelay(2, () -> {
             // Sand to glass in the furnace, then glass and a shard to attuned glass in the folded Foundry.
-            ReactorPlanner.Result made = core.request(ItemResource.of(ModItems.QUANTUM_ATTUNED_GLASS_ITEM.get()), 2);
+            ReactorPlanner.Result made = core.request(ItemResource.of(ModItems.QUANTUM_ATTUNED_GLASS_ITEM.get()), 8);
             helper.assertTrue(made.planned(), "attuned glass from sand: " + made.problem());
             helper.assertValueEqual(made.plan().steps().size(), 2, "two steps, two machines");
             helper.assertValueEqual(core.getLedger().mass(), 0L, "all of it used");
             ReactorPortBlockEntity output = helper.getBlockEntity(OUTPUT, ReactorPortBlockEntity.class);
-            helper.assertValueEqual(output.getOutput().getStackInSlot(0).getCount(), 2, "two attuned glass delivered");
+            helper.assertValueEqual(output.getOutput().getStackInSlot(0).getCount(), 8, "a run of attuned glass delivered");
             TestSupport.clearField(helper);
             helper.succeed();
         });

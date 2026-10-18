@@ -3,8 +3,8 @@
   "category": "misc",
   "pattern": [
     "FGF",
-    "LML",
-    "FDF"
+    "DMD",
+    "FLF"
   ],
   "key": {
     "F": "quantimium:anomaly_fragment",

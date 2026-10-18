@@ -37,7 +37,7 @@ down where you want none: a firebreak round a hot base, or near a rift.
 ## 5. What comes next
 
 The [[block:quantum_crafter]] and [[block:quantum_simulator]] take over your crafting. Anomalite
-crystals start growing on your machines once anomaly runs High, and they are both a hazard and a
+crystals start growing on your machines once anomaly runs Medium (a few; more at High), and they are both a hazard and a
 resource. Then come the [Quantum Foundry](../multiblocks/quantum-foundry.md), the
 [mirror](../concepts/mirror-phase.md), [rifts](../mechanics/flux-rifts.md), and
 [the Veiled](../mechanics/veiled.md). At the end of it all stands the
