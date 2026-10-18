@@ -245,6 +245,34 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.demand
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aBigBufferDoesntStarveTheMachineBesideIt(GameTestHelper helper) {
+        // One emitter's 2,000 FE/t split two ways: a Quantum Crafter that would take it all, and a Decoherence Projector
+        // that takes at most 1,000. Short of power, each gets a fair share: the Projector all it asks, not a third less.
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos relay = new BlockPos(8, Y, 8);
+        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.NORTH));
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        helper.setBlock(new BlockPos(8, Y, 4), ModBlocks.QUANTUM_CRAFTER.get());
+        var crafter = helper.getBlockEntity(new BlockPos(8, Y, 4), com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.class);
+        helper.setBlock(new BlockPos(8, Y, 12), ModBlocks.DECOHERENCE_PROJECTOR.get());
+        var core = helper.getBlockEntity(new BlockPos(8, Y, 12), com.kadikular.quantimium.block.entity.DecoherenceProjectorBlockEntity.class);
+        long[] before = new long[2];
+        helper.runAfterDelay(40, () -> {
+            before[0] = crafter.getEnergyStorage().getEnergyStored();
+            before[1] = core.getEnergyStorage().getEnergyStored();
+        });
+        helper.runAfterDelay(60, () -> {
+            long big = crafter.getEnergyStorage().getEnergyStored() - before[0];
+            long small = core.getEnergyStorage().getEnergyStored() - before[1];
+            helper.assertTrue(small >= 20L * com.kadikular.quantimium.block.entity.DecoherenceProjectorBlockEntity.MAX_RECEIVE * 9 / 10,
+                    "the Projector got all it asks: " + small + " in 20 ticks, beside " + big);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aRelayTurnsTheBeamAndTakesItsTax(GameTestHelper helper) {

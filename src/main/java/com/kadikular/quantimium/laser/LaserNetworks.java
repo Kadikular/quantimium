@@ -1316,8 +1316,7 @@ public final class LaserNetworks {
         }
         if (!any) return;
         if (limited) limitPassing(sinks, asks, asked);
-        double[] scale = new double[left.length];
-        for (int i = 0; i < left.length; i++) scale[i] = asked[i] > 0 ? Math.min(1.0, left[i] / asked[i]) : 0;
+        double[] cap = fairShares(asks, sinks, asked, left);
         for (int i = 0; i < sinks.size(); i++) {
             double[] ask = asks[i];
             if (ask == null) continue;
@@ -1328,7 +1327,7 @@ public final class LaserNetworks {
                 if (ask[r] <= 0) continue;
                 int source = routes.get(r).index();
                 // Up, so the last FE of a small ask still arrives after the tax; never more than the source has left.
-                give[r] = Math.min(left[source], (long) Math.ceil(ask[r] * scale[source]));
+                give[r] = Math.min(left[source], (long) Math.ceil(Math.min(ask[r], cap[source])));
                 deliver += (long) Math.floor(give[r] * routes.get(r).efficiency());
             }
             if (deliver <= 0) continue;
@@ -1347,6 +1346,54 @@ public final class LaserNetworks {
                 }
             }
         }
+    }
+
+    /**
+     * The most each source gives any one block this pass. A source with enough for every ask has no cap. One
+     * asked for more than it has shares it out fairly: each block an even share, a block asking for less taking
+     * only what it asks, the rest split again among the others. So one big buffer filling up can't starve the
+     * machines beside it.
+     */
+    private static double[] fairShares(double[][] asks, List<Sink> sinks, double[] asked, long[] left) {
+        double[] cap = new double[left.length];
+        java.util.Arrays.fill(cap, Double.POSITIVE_INFINITY);
+        int[] count = new int[left.length];
+        boolean short_ = false;
+        for (int s = 0; s < left.length; s++) short_ |= asked[s] > left[s];
+        if (!short_) return cap;
+        for (int i = 0; i < sinks.size(); i++) {
+            if (asks[i] == null) continue;
+            List<Route> routes = sinks.get(i).routes();
+            for (int r = 0; r < routes.size(); r++) if (asks[i][r] > 0 && asked[routes.get(r).index()] > left[routes.get(r).index()]) count[routes.get(r).index()]++;
+        }
+        double[][] bySource = new double[left.length][];
+        for (int s = 0; s < left.length; s++) if (count[s] > 0) bySource[s] = new double[count[s]];
+        int[] filled = new int[left.length];
+        for (int i = 0; i < sinks.size(); i++) {
+            if (asks[i] == null) continue;
+            List<Route> routes = sinks.get(i).routes();
+            for (int r = 0; r < routes.size(); r++) {
+                int s = routes.get(r).index();
+                if (asks[i][r] > 0 && bySource[s] != null) bySource[s][filled[s]++] = asks[i][r];
+            }
+        }
+        for (int s = 0; s < left.length; s++) {
+            double[] each = bySource[s];
+            if (each == null) continue;
+            java.util.Arrays.sort(each);
+            double remaining = left[s];
+            cap[s] = 0;
+            for (int k = 0; k < each.length; k++) {
+                double share = remaining / (each.length - k);
+                if (each[k] > share) {
+                    cap[s] = share;
+                    break;
+                }
+                remaining -= each[k];
+                cap[s] = each[k];
+            }
+        }
+        return cap;
     }
 
     /** What each relay with a limit (a Solar Emitter) still lets through this tick. */
