@@ -180,13 +180,14 @@ public final class LensAction {
             case PICKUP -> {
                 // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
                 if (mirrored()) drawThread(level, networks);
-                if (phase != 0 || collectors.isEmpty() || !sweeps) return;
+                if (phase != 0 || collectors.isEmpty()) return;
                 // Items are small: anything within nearly a block of the beam's line counts. Each light takes
                 // only what lies on its own side.
                 for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
+                        && (sweeps || FREED.contains(item))
                         && com.kadikular.quantimium.event.MirrorPhaseInteractions.mirrorOnly(item) == mirrored()
                         && (stream.filter() == null || stream.filter().lets(item.getItem())))) {
-                    carry(networks, item, true);
+                    carry(networks, item, !FREED.contains(item));
                 }
             }
             // Nothing in the mirror to place, fill or empty.
@@ -940,10 +941,17 @@ public final class LensAction {
         want = Math.min(MirrorHarvest.THREAD_FE_PER_TICK, whole - threadCut);
     }
 
+    /**
+     * Items light's actions freed and left lying (no room up the beam yet, or no power that tick): Pickup alongside
+     * those actions goes on taking these, and only these. Server thread only; forgotten with the item.
+     */
+    private static final java.util.Set<ItemEntity> FREED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+
     /** Items a kill just dropped, near where it fell. */
     private void gatherDrops(ServerLevel level, LaserNetworks networks, LivingEntity killed) {
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, killed.getBoundingBox().inflate(1.5),
                 item -> item.isAlive() && item.tickCount <= 1)) {
+            FREED.add(item);
             // All of it: the filter chose what to hit, not what it drops.
             carry(networks, item, false);
         }

@@ -370,6 +370,14 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
         // only starts waiting for a run's results after this returns, and anything that arrives
         // before then goes into plain storage, stranding the job that asked for it.
         pending.addAll(pattern.getOutputs());
+        // Tools come back, worn if they wear: AE2 is waiting for them.
+        IPatternDetails.IInput[] patternInputs = pattern.getInputs();
+        for (int i = 0; i < patternInputs.length && i < inputs.length; i++) {
+            for (var entry : inputs[i]) {
+                appeng.api.stacks.AEKey left = patternInputs[i].getRemainingKey(entry.getKey());
+                if (left != null) pending.add(new GenericStack(left, entry.getLongValue()));
+            }
+        }
         setChanged();
         return true;
     }
@@ -433,10 +441,9 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
         }
         RecipeFilter filter = recipeFilter();
         for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst.getStackInSlot(0))) {
-            // A pattern can't keep a press between crafts: recipes with tools are the Reactor's alone.
-            if (!shape.tools().isEmpty()) continue;
+            // A tool (an Inscriber's press) is lent for the run and handed back with the results.
             RecipeShape allowed = filter.apply(shape);
-            if (allowed != null) built.add(new SuperpositionPattern(allowed, batch()));
+            if (allowed != null) built.add(new SuperpositionPattern(allowed, batch(), Ae2Content.SUPERPOSITION_CRAFTER_ITEM.get(), true));
         }
         patterns = List.copyOf(built);
         ICraftingProvider.requestUpdate(mainNode);

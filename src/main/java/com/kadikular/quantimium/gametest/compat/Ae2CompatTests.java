@@ -220,6 +220,42 @@ public final class Ae2CompatTests {
         });
     }
 
+    // covers: ae2.superposition.push, compat.ae2.inscriber
+    @GameTest(template = TestSupport.FLOOR_9, templateNamespace = NS, batch = "ae2_superposition_press", timeoutTicks = 200)
+    public static void anInscriberRunHandsItsPressBack(GameTestHelper helper) {
+        TestSupport.clearField(helper);
+        SuperpositionCrafterBlockEntity crafter = superposition(helper, AT);
+        crafter.getCatalyst().setStackInSlot(0, new ItemStack(item("ae2:inscriber")));
+        helper.setBlock(AT.east(), block("ae2:creative_energy_cell"));
+        helper.setBlock(AT.west(), block("ae2:drive"));
+        var drive = LegacyItems.legacy(helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(AT.west()), null));
+        helper.assertTrue(drive.insertItem(0, new ItemStack(item("ae2:item_storage_cell_1k")), false).isEmpty(), "a 1k cell");
+        boolean[] pushed = {false};
+        helper.succeedWhen(() -> {
+            helper.assertTrue(crafter.getMainNode().isActive(), "the network is still booting");
+            if (!pushed[0]) {
+                SuperpositionPattern print = patternFor(crafter, item("ae2:printed_silicon"), item("ae2:silicon"));
+                helper.assertTrue(print != null, "printing silicon is offered");
+                var patternInputs = print.getInputs();
+                KeyCounter[] inputs = new KeyCounter[patternInputs.length];
+                for (int i = 0; i < patternInputs.length; i++) {
+                    inputs[i] = new KeyCounter();
+                    for (Item option : List.of(item("ae2:silicon"), item("ae2:silicon_press"))) {
+                        if (patternInputs[i].isValid(AEItemKey.of(option), null)) {
+                            inputs[i].add(AEItemKey.of(option), patternInputs[i].getMultiplier());
+                            break;
+                        }
+                    }
+                }
+                helper.assertTrue(crafter.pushPattern(print, inputs), "the crafter should take the run");
+                pushed[0] = true;
+            }
+            var stock = crafter.getMainNode().getGrid().getStorageService().getCachedInventory();
+            helper.assertTrue(stock.get(AEItemKey.of(item("ae2:printed_silicon"))) >= 1, "printed silicon in the network");
+            helper.assertValueEqual(stock.get(AEItemKey.of(item("ae2:silicon_press"))), 1L, "the press is back");
+        });
+    }
+
     // covers: ae2.superposition.autocrafting
     @GameTest(template = TestSupport.FLOOR_9, templateNamespace = NS, batch = "ae2_superposition_job", timeoutTicks = 300)
     public static void anAe2CraftingJobRunsThroughIt(GameTestHelper helper) {
