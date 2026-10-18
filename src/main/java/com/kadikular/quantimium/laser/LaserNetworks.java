@@ -1328,6 +1328,14 @@ public final class LaserNetworks {
                 int source = routes.get(r).index();
                 // Up, so the last FE of a small ask still arrives after the tax; never more than the source has left.
                 give[r] = Math.min(left[source], (long) Math.ceil(Math.min(ask[r], cap[source])));
+                // Rounding up never takes a route past what a relay with a limit still lets through.
+                if (limited) {
+                    for (Hop hop : routes.get(r).path()) {
+                        if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) {
+                            give[r] = Math.min(give[r], Math.max(0, passingLeft(hop.relay())[0]));
+                        }
+                    }
+                }
                 deliver += (long) Math.floor(give[r] * routes.get(r).efficiency());
             }
             if (deliver <= 0) continue;
@@ -1410,30 +1418,45 @@ public final class LaserNetworks {
      * than that, each of them is asked for less, in proportion. {@code asked} is worked out again to match.
      */
     private void limitPassing(List<Sink> sinks, double[][] asks, double[] asked) {
-        Map<LaserNode, Double> through = new HashMap<>();
-        for (int i = 0; i < sinks.size(); i++) {
-            if (asks[i] == null) continue;
-            List<Route> routes = sinks.get(i).routes();
-            for (int r = 0; r < routes.size(); r++) {
-                if (asks[i][r] <= 0) continue;
-                for (Hop hop : routes.get(r).path()) {
-                    if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) through.merge(hop.relay(), asks[i][r], Double::sum);
+        // A few rounds: each relay over its limit scales down the routes through it, which can leave another
+        // with room or still over; each round only ever lowers asks, by the tightest relay on the route.
+        for (int round = 0; round < 8; round++) {
+            Map<LaserNode, Double> through = new HashMap<>();
+            for (int i = 0; i < sinks.size(); i++) {
+                if (asks[i] == null) continue;
+                List<Route> routes = sinks.get(i).routes();
+                for (int r = 0; r < routes.size(); r++) {
+                    if (asks[i][r] <= 0) continue;
+                    for (Hop hop : routes.get(r).path()) {
+                        if (hop.relay() != null && hop.relay().passLimit() != Long.MAX_VALUE) through.merge(hop.relay(), asks[i][r], Double::sum);
+                    }
+                }
+            }
+            Map<LaserNode, Double> factor = new HashMap<>();
+            for (Map.Entry<LaserNode, Double> entry : through.entrySet()) {
+                double room = Math.max(0, passingLeft(entry.getKey())[0]);
+                if (entry.getValue() > room * 1.0001) factor.put(entry.getKey(), entry.getValue() > 0 ? room / entry.getValue() : 0.0);
+            }
+            if (factor.isEmpty()) break;
+            for (int i = 0; i < sinks.size(); i++) {
+                if (asks[i] == null) continue;
+                List<Route> routes = sinks.get(i).routes();
+                for (int r = 0; r < routes.size(); r++) {
+                    if (asks[i][r] <= 0) continue;
+                    double scale = 1.0;
+                    for (Hop hop : routes.get(r).path()) {
+                        Double f = hop.relay() == null ? null : factor.get(hop.relay());
+                        if (f != null) scale = Math.min(scale, f);
+                    }
+                    asks[i][r] *= scale;
                 }
             }
         }
-        if (through.isEmpty()) return;
         java.util.Arrays.fill(asked, 0);
         for (int i = 0; i < sinks.size(); i++) {
             if (asks[i] == null) continue;
             List<Route> routes = sinks.get(i).routes();
-            for (int r = 0; r < routes.size(); r++) {
-                if (asks[i][r] <= 0) continue;
-                for (Hop hop : routes.get(r).path()) {
-                    Double total = hop.relay() == null ? null : through.get(hop.relay());
-                    if (total != null && total > 0) asks[i][r] *= Math.min(1.0, Math.max(0, passingLeft(hop.relay())[0]) / total);
-                }
-                asked[routes.get(r).index()] += asks[i][r];
-            }
+            for (int r = 0; r < routes.size(); r++) if (asks[i][r] > 0) asked[routes.get(r).index()] += asks[i][r];
         }
     }
 

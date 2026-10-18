@@ -167,6 +167,78 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.solar, laser.demand
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_split", timeoutTicks = 200)
+    public static void solarLightSplitByARelayStillArrivesInFull(GameTestHelper helper) {
+        // Two chains of Solar Emitters into a relay with two emitters: a Quantum Crafter filling its buffer, and an
+        // empty machine. Between them they get nearly all the light, the empty one a fair part.
+        long was = noon(helper);
+        // Two chains, from the west and from the north, into the relay; it sends east and south.
+        for (int x = 1; x <= 8; x++) solar(helper, new BlockPos(x, Y, 8), Direction.EAST);
+        for (int z = 0; z <= 7; z++) solar(helper, new BlockPos(11, Y, z), Direction.SOUTH);
+        BlockPos relay = new BlockPos(11, Y, 8);
+        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        helper.setBlock(new BlockPos(15, Y, 8), ModBlocks.QUANTUM_CRAFTER.get());
+        var crafter = helper.getBlockEntity(new BlockPos(15, Y, 8), com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.class);
+        FoldCoreBlockEntity empty = sink(helper, new BlockPos(11, Y, 12));
+        long[] before = new long[2];
+        helper.runAfterDelay(80, () -> {
+            before[0] = empty.getEnergyStorage().getEnergyStored();
+            before[1] = crafter.getEnergyStorage().getEnergyStored();
+        });
+        helper.runAfterDelay(120, () -> {
+            long got = empty.getEnergyStorage().getEnergyStored() - before[0];
+            long both = got + crafter.getEnergyStorage().getEnergyStored() - before[1];
+            long made = 40L * 16 * LaserTuning.SOLAR_FE;
+            helper.assertTrue(both >= made * 8 / 10, "between them they got " + both + " of about " + made);
+            helper.assertTrue(got >= made * 3 / 10, "the empty machine got a fair part: " + got + " of " + both);
+            helper.setTime(was);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.solar, laser.demand, laser.splitter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_tree", timeoutTicks = 200)
+    public static void solarLinesJoinedAndSplitArriveInFull(GameTestHelper helper) {
+        // Two lines of eight Solar Emitters joined by a Splitter, into a relay: one beam to a machine, the other to
+        // a Splitter between a Quantum Crafter filling its buffer and another machine. All of it arrives.
+        long was = noon(helper);
+        for (int x = 1; x <= 8; x++) solar(helper, new BlockPos(x, Y, 8), Direction.EAST);
+        for (int z = 0; z <= 7; z++) solar(helper, new BlockPos(9, Y, z), Direction.SOUTH);
+        helper.setBlock(new BlockPos(9, Y, 8), splitter(Direction.WEST, Direction.SOUTH));
+        BlockPos relay = new BlockPos(9, Y, 11);
+        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        FoldCoreBlockEntity first = sink(helper, new BlockPos(13, Y, 11));
+        helper.setBlock(new BlockPos(9, Y, 14), splitter(Direction.NORTH, Direction.EAST));
+        helper.setBlock(new BlockPos(12, Y, 14), ModBlocks.QUANTUM_CRAFTER.get());
+        var crafter = helper.getBlockEntity(new BlockPos(12, Y, 14), com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.class);
+        FoldCoreBlockEntity last = sink(helper, new BlockPos(9, Y, 16));
+        long[] before = new long[3];
+        helper.runAfterDelay(80, () -> {
+            before[0] = first.getEnergyStorage().getEnergyStored();
+            before[1] = crafter.getEnergyStorage().getEnergyStored();
+            before[2] = last.getEnergyStorage().getEnergyStored();
+        });
+        helper.runAfterDelay(120, () -> {
+            long a = first.getEnergyStorage().getEnergyStored() - before[0];
+            long b = crafter.getEnergyStorage().getEnergyStored() - before[1];
+            long c = last.getEnergyStorage().getEnergyStored() - before[2];
+            long made = 40L * 16 * LaserTuning.SOLAR_FE;
+            helper.assertTrue(a + b + c >= made * 8 / 10, "all of it should arrive: " + a + " + " + b + " + " + c + " of about " + made);
+            helper.setTime(was);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    private static BlockState splitter(Direction input, Direction output) {
+        return ModBlocks.LASER_SPLITTER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, input).setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, output);
+    }
+
     // covers: laser.solar
     @GameTest(template = TestSupport.FLOOR_17, batch = "laser_solar_roof", timeoutTicks = 100)
     public static void aSolarEmitterUnderARoofMakesNothing(GameTestHelper helper) {
@@ -204,8 +276,9 @@ public final class LaserTests {
         helper.runAfterDelay(100, () -> {
             long gotThree = three.getEnergyStorage().getEnergyStored() - before[0];
             long gotTen = ten.getEnergyStorage().getEnergyStored() - before[1];
-            helper.assertTrue(gotThree > 40L * 2 * LaserTuning.SOLAR_FE && gotThree <= 40L * 3 * LaserTuning.SOLAR_FE, "three's worth: " + gotThree);
-            helper.assertTrue(gotTen > 40L * 7 * LaserTuning.SOLAR_FE && gotTen <= 40L * LaserTuning.SOLAR_CHAIN_MAX, "eight's worth at most: " + gotTen);
+            // Forty ticks between the readings, give or take the one the light lands in.
+            helper.assertTrue(gotThree > 40L * 2 * LaserTuning.SOLAR_FE && gotThree <= 41L * 3 * LaserTuning.SOLAR_FE, "three's worth: " + gotThree);
+            helper.assertTrue(gotTen > 40L * 7 * LaserTuning.SOLAR_FE && gotTen <= 41L * LaserTuning.SOLAR_CHAIN_MAX, "eight's worth at most: " + gotTen);
             // The first of a chain feeds the next: its beam shows lit, carrying what it makes.
             var first = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(1, Y, 3)));
             helper.assertTrue(first.stream().anyMatch(beam -> beam.live() && beam.flow() > 0), "a feeding emitter's beam shows: " + first);
