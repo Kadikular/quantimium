@@ -11,8 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -49,10 +47,12 @@ public final class FluxRiftHazard {
     /** Last time each player was thrown for swinging at a rift, so one swing is one throw. */
     private static final Map<UUID, Long> TOUCHED = new HashMap<>();
 
+    /** One swing in this many throws the player back. */
+    static final int SWING_THROW_ODDS = 5;
+
     /**
-     * Swung at with a weapon — before the Lance, the only way to reach it. It can be touched, not
-     * beaten: it throws the player back, stings, and blinds them for two seconds. Reach and sight are
-     * checked here, not trusted from the client.
+     * Swung at with a weapon. It can be touched, not beaten: it zaps and says what closes it, and now and
+     * then throws the player back with a sting. Reach and sight are checked here, not trusted from the client.
      */
     public static void touched(ServerPlayer player, FluxRift rift) {
         ServerLevel level = player.level();
@@ -66,15 +66,17 @@ public final class FluxRiftHazard {
             return;
         }
         TOUCHED.put(player.getUUID(), now);
+        level.playSound(null, centre.x, centre.y, centre.z, ModSounds.RIFT_ZAP.get(), SoundSource.HOSTILE, 1.0f, 0.7f);
+        level.sendParticles(ParticleTypes.REVERSE_PORTAL, centre.x, centre.y, centre.z, 30, 0.3, 0.6, 0.3, 0.1);
+        player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.flux_rift.swing")
+                .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+        if (level.getRandom().nextInt(SWING_THROW_ODDS) != 0) return;
         player.hurt(level.damageSources().source(ModDamageTypes.FLUX_RIFT), 2.0f);
-        player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0, false, false, true));
         Vec3 away = new Vec3(player.getX() - centre.x, 0.0, player.getZ() - centre.z);
         away = away.lengthSqr() < 1.0E-4 ? new Vec3(1.0, 0.0, 0.0) : away.normalize();
         player.setDeltaMovement(away.x * 0.9, 0.35, away.z * 0.9);
         player.hurtMarked = true;
         player.connection.send(new ClientboundSetEntityMotionPacket(player));
-        level.playSound(null, centre.x, centre.y, centre.z, ModSounds.RIFT_ZAP.get(), SoundSource.HOSTILE, 1.0f, 0.7f);
-        level.sendParticles(ParticleTypes.REVERSE_PORTAL, centre.x, centre.y, centre.z, 30, 0.3, 0.6, 0.3, 0.1);
     }
 
     /**

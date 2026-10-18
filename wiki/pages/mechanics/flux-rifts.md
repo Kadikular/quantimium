@@ -52,8 +52,8 @@ rift anywhere: see the [stabilised rift](../multiblocks/stabilised-rift.md).
 - [[mechanic:rift.contact]] **Touch.** Walking into it burns and throws you: 2 / 3 / 4 / 5 damage by stage, and
   from the real world it drags you through into the mirror. One touch is one throw
   ({{c:FluxRiftHazard.LAUNCH_COOLDOWN|s}} cooldown).
-- [[mechanic:rift.swing]] **Swinging at it** before you have a Lance throws you back, stings for 2 and blinds
-  you for 2 seconds.
+- [[mechanic:rift.swing]] **Swinging at it** does nothing to it: only a Lance closes it. One swing in
+  {{c:FluxRiftHazard.SWING_THROW_ODDS}} throws you back and stings for 2.
 - [[mechanic:rift.lightning]] **Lightning.** Anything within 2 blocks of its surface at stage 1, up to 8 at
   stage 4, draws lightning out of the wound: every 2.5 s at the edge of range down to every
   {{c:FluxRiftHazard.MIN_INTERVAL|s}} point blank, for 3 / 3.5 / 4 / 4.5 damage by stage. Mirror mites

@@ -57,8 +57,8 @@ A contained chunk freezes a rift's growth and its leak. Nothing shrinks a rift o
 - **Touch.** Walking into it burns and throws you: 2 / 3 / 4 / 5 damage by stage, and
   from the real world it drags you through into the mirror. One touch is one throw
   (1 s cooldown).
-- **Swinging at it** before you have a Lance throws you back, stings for 2 and blinds
-  you for 2 seconds.
+- **Swinging at it** does nothing to it: only a Lance closes it. One swing in
+  5 throws you back and stings for 2.
 - **Lightning.** Anything within 2 blocks of its surface at stage 1, up to 8 at
   stage 4, draws lightning out of the wound: every 2.5 s at the edge of range down to every
   0.5 s point blank, for 3 / 3.5 / 4 / 4.5 damage by stage. Mirror mites
