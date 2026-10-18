@@ -39,6 +39,48 @@ public final class TierTests {
         helper.succeed();
     }
 
+    // covers: tiers.materials
+    @GameTest(template = TestSupport.FLOOR_9)
+    public static void midTierNeedsNothingFromTheHighTier(GameTestHelper helper) {
+        // Each Mid machine, and each of our parts in it, can be made without Rift Residue, a Tesseract or the Foundry:
+        // the Lance closes the rifts that pay the residue the Foundry is built with.
+        for (String machine : MID) {
+            Item item = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(Quantimium.MODID, machine));
+            helper.assertTrue(makeableBelowHigh(helper, item, new java.util.HashSet<>()), machine + " needs the High tier somewhere in its parts");
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Whether {@code item} can be had without the High tier: not ours, found rather than made (no recipe), or made by
+     * some recipe outside the Foundry whose parts all can. Parts already being looked at count as reachable.
+     */
+    private static boolean makeableBelowHigh(GameTestHelper helper, Item item, Set<Item> seen) {
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
+        if (!id.getNamespace().equals(Quantimium.MODID)) return true;
+        if (HIGH_MATERIALS.contains(id.getPath())) return false;
+        if (!seen.add(item)) return true;
+        boolean any = false;
+        for (RecipeHolder<?> holder : helper.getLevel().getServer().getRecipeManager().getRecipes()) {
+            Recipe<?> recipe = holder.value();
+            // The Foundry's own recipes show no result to recipe viewers' displays: read it from the recipe.
+            if (recipe instanceof com.kadikular.quantimium.recipe.foundry.QuantumFoundryRecipe foundry) {
+                any |= foundry.result().is(item);
+                continue;
+            }
+            if (!RecipeCompat.result(recipe, helper.getLevel().registryAccess()).is(item)) continue;
+            any = true;
+            boolean all = true;
+            for (Ingredient ingredient : RecipeCompat.ingredients(recipe)) {
+                boolean option = false;
+                for (ItemStack stack : RecipeCompat.stacks(ingredient)) option |= makeableBelowHigh(helper, stack.getItem(), seen);
+                all &= option;
+            }
+            if (all) return true;
+        }
+        return !any;
+    }
+
     /** The recipe making {@code machine} takes at least one of {@code materials}. */
     private static void needs(GameTestHelper helper, String machine, Set<String> materials) {
         Item result = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(Quantimium.MODID, machine));

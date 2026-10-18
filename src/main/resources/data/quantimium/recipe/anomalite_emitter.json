@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "T": "quantimium:quantimium_trace",
+    "S": "quantimium:anomalite_shard",
+    "C": "#c:ingots/copper",
+    "L": "quantimium:anomalite_lattice"
+  },
+  "pattern": [
+    "TST",
+    "CLC",
+    "TST"
+  ],
+  "result": {
+    "count": 1,
+    "id": "quantimium:anomalite_emitter"
+  }
+}

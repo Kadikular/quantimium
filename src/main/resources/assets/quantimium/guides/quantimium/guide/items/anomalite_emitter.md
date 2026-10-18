@@ -15,8 +15,9 @@ item_ids:
 > *In game:* A shard of Anomalite set in a mount. The light of a Decoherence Lance.
 
 A shard of Anomalite set in a mount: the light of a <ItemLink id="quantimium:decoherence_lance" />, built into it for
-good. Made in the [Quantum Foundry](../multiblocks/quantum-foundry.md) at Medium flux, so a Lance
-comes after your first Foundry.
+good. Crafted from an Anomalite Lattice, shards, Traces and copper, so a Lance can close your first rift
+and pay the Rift Residue your first [Quantum Foundry](../multiblocks/quantum-foundry.md) needs. The
+Foundry makes two at a time.
 
 ## Recipes
 
