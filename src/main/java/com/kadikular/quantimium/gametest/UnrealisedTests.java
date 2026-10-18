@@ -106,7 +106,7 @@ public final class UnrealisedTests {
             helper.assertTrue(smelt != null, "a furnace should offer Matter, smelted but unobserved");
             helper.assertValueEqual(MatterHistory.of(smelt.primaryOutput()).steps(), List.of(smelting), "its history");
             helper.assertValueEqual(smelt.batchSize(), 4, "all four at once");
-            ItemStack taken = crafter.getAutomationItemHandler(null)
+            ItemStack taken = crafter.pullHandler()
                     .extractItem(CrafterTests.ghostSlot(crafter, ModItems.UNREALISED_MATTER.get()), 4, false);
             helper.assertValueEqual(taken.getCount(), 4, "four smelted Matter taken");
             helper.assertValueEqual(MatterHistory.of(taken).steps(), List.of(smelting), "taken with its history");

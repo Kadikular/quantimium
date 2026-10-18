@@ -131,6 +131,8 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     private final IItemHandler[] sidedHandlers = new IItemHandler[6];
     private final IItemHandler unsidedHandler = new SidedHandler(null);
+    /** Asked with no face (viewers, other mods' screens): only what's really there, nothing made on a pull. */
+    private final IItemHandler viewerHandler = new com.kadikular.quantimium.util.OnDemandSlots.RealOnly(unsidedHandler);
     private List<SideConfig> sideConfigs = defaultSideConfigs();
     private final BandGate gate = new BandGate();
     /** The ore and form chosen; null for none. */
@@ -610,7 +612,7 @@ public class MaterialiserBlockEntity extends BlockEntity
     /** What a pipe or hopper on {@code side} sees: Matter and Trace in, results out, where the face allows. */
     @Nullable
     public IItemHandler getAutomationItemHandler(@Nullable Direction side) {
-        if (side == null) return unsidedHandler;
+        if (side == null) return viewerHandler;
         SideConfig config = sideConfigs.get(side.get3DDataValue());
         return config.itemMode() == SideMode.DISABLED ? null : sidedHandlers[side.get3DDataValue()];
     }

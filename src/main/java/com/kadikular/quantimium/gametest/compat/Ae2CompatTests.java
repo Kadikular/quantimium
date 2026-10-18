@@ -68,7 +68,7 @@ public final class Ae2CompatTests {
             helper.assertTrue(print != null, "silicon and a silicon press should print silicon");
             helper.assertValueEqual(print.feCost() / print.batchSize(), ADAPTER_FE * Config.instantCraftMultiplier(),
                     "FE per print");
-            crafter.getAutomationItemHandler(null).extractItem(CrafterTests.ghostSlot(crafter, printed), 1, false);
+            crafter.pullHandler().extractItem(CrafterTests.ghostSlot(crafter, printed), 1, false);
             helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 3, "silicon left");
             helper.assertTrue(crafter.getInventory().getStackInSlot(1).is(item("ae2:silicon_press")),
                     "the press is not an ingredient and should stay in the grid");

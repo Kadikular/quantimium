@@ -186,6 +186,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private final IItemHandler[] sidedItemHandlers = new IItemHandler[6];
     private final IItemHandler unsidedItemHandler = new SidedAutomationHandler(null);
+    /** Asked with no face (viewers, other mods' screens): only what's really there, no crafting on a pull. */
+    private final IItemHandler viewerItemHandler = new com.kadikular.quantimium.util.OnDemandSlots.RealOnly(unsidedItemHandler);
 
     public static final int ENERGY_CAPACITY = 100_000_000;
     public static final int ENERGY_MAX_RECEIVE = 10_000_000;
@@ -390,10 +392,15 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         setChanged();
     }
 
+    /** Every slot as a pipe on any face sees it, outputs crafting on a pull: what our own automation (and tests) use. */
+    public IItemHandler pullHandler() {
+        return unsidedItemHandler;
+    }
+
     @Nullable
     public IItemHandler getAutomationItemHandler(@Nullable Direction side) {
+        if (side == null) return viewerItemHandler;
         if (isBasic()) return unsidedItemHandler;
-        if (side == null) return unsidedItemHandler;
         if (!SIDE_AUTOMATION_PROFILE.supportsItems(side)) return null;
         SideConfig config = sideConfigs.get(side.get3DDataValue());
         return config.itemMode() == SideMode.DISABLED ? null : sidedItemHandlers[side.get3DDataValue()];

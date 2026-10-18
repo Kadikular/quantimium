@@ -151,6 +151,38 @@ public final class CrafterTests {
     }
 
     // covers: crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_viewer", timeoutTicks = 60)
+    public static void aScreenShowingItsSlotsLosesAndMakesNothing(GameTestHelper helper) {
+        // As the Crafting Station mod shows a neighbour: asked with no face, every slot read, and an item set into an
+        // output slot by taking out what shows there and putting the new one in, keeping no remainder.
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
+        grid(crafter, new ItemStack(Items.RAW_IRON, 64));
+        helper.runAfterDelay(5, () -> {
+            var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
+                    helper.absolutePos(CRAFTER), null);
+            helper.assertTrue(handler != null, "a screen can see it");
+            int slot = ghostSlot(crafter, Items.IRON_INGOT);
+            helper.assertTrue(crafter.pullHandler().getStackInSlot(slot).is(Items.IRON_INGOT), "a pipe sees what it would make");
+            helper.assertTrue(handler.getResource(slot).isEmpty(), "a screen sees only what's there");
+            int energy = crafter.getEnergyStorage().getEnergyStored();
+            try (var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                var shown = handler.getResource(slot);
+                if (!shown.isEmpty()) handler.extract(slot, shown, handler.getAmountAsInt(slot), tx);
+                handler.insert(slot, net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE)), 1, tx);
+                tx.commit();
+            }
+            helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 64, "nothing was crafted");
+            helper.assertValueEqual(crafter.getEnergyStorage().getEnergyStored(), energy, "no FE spent");
+            int cobble = 0;
+            for (int i = 0; i < crafter.getInventory().getSlots(); i++) {
+                if (crafter.getInventory().getStackInSlot(i).is(Items.COBBLESTONE)) cobble += crafter.getInventory().getStackInSlot(i).getCount();
+            }
+            helper.assertValueEqual(cobble, 1, "the cobblestone set into an output went into the inputs, not nowhere");
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.collapse
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_collapse", timeoutTicks = 60)
     public static void aPullCommitsOnlyWhatItTakes(GameTestHelper helper) {
         TestSupport.clearField(helper);
@@ -158,7 +190,7 @@ public final class CrafterTests {
         grid(crafter, new ItemStack(Items.RAW_IRON, 64));
         int before = crafter.getEnergyStorage().getEnergyStored();
         helper.runAfterDelay(5, () -> {
-            IItemHandler hopper = crafter.getAutomationItemHandler(null);
+            IItemHandler hopper = crafter.pullHandler();
             int slot = ghostSlot(crafter, Items.IRON_INGOT);
             ItemStack taken = hopper.extractItem(slot, 1, false);
             helper.assertTrue(taken.is(Items.IRON_INGOT) && taken.getCount() == 1, "the pull should hand over one ingot");
@@ -174,7 +206,7 @@ public final class CrafterTests {
         QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.CRAFTING_TABLE);
         grid(crafter, new ItemStack(Items.OAK_PLANKS, 2));
         helper.runAfterDelay(5, () -> {
-            ItemStack taken = crafter.getAutomationItemHandler(null)
+            ItemStack taken = crafter.pullHandler()
                     .extractItem(ghostSlot(crafter, Items.STICK), 1, false);
             helper.assertValueEqual(taken.getCount(), 1, "sticks handed over");
             helper.assertValueEqual(realOutputs(crafter, Items.STICK), 3, "sticks kept in the output grid");
@@ -190,7 +222,7 @@ public final class CrafterTests {
         grid(crafter, new ItemStack(Items.OAK_PLANKS, 32));
         helper.runAfterDelay(5, () -> {
             helper.assertTrue(crafter.getPreview().size() > 1, "planks should offer several crafts");
-            crafter.getAutomationItemHandler(null).extractItem(ghostSlot(crafter, Items.STICK), 4, false);
+            crafter.pullHandler().extractItem(ghostSlot(crafter, Items.STICK), 4, false);
             crafter.setRecipeLocked(true);
         });
         helper.runAfterDelay(10, () -> {
@@ -211,7 +243,7 @@ public final class CrafterTests {
         QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
         grid(crafter, new ItemStack(Items.RAW_IRON, 25));
         helper.runAfterDelay(5, () -> {
-            crafter.getAutomationItemHandler(null).extractItem(ghostSlot(crafter, Items.IRON_INGOT), 25, false);
+            crafter.pullHandler().extractItem(ghostSlot(crafter, Items.IRON_INGOT), 25, false);
             // 25 smelts, 100,000 FE: 100 flux, times the field's gain, a fifth of it to the crafter's chunk
             // (in its pool or already eased into the field).
             double flux = QuantumFlux.chunkCommittedFlux(helper.getLevel(), helper.absolutePos(CRAFTER));
@@ -233,7 +265,7 @@ public final class CrafterTests {
             ResolvedCraft smelt = craftOf(crafter, Items.IRON_INGOT);
             helper.assertTrue(smelt != null, "the linked chest's raw iron should be offered");
             helper.assertValueEqual(smelt.batchSize(), 16, "runs from the linked chest");
-            crafter.getAutomationItemHandler(null).extractItem(ghostSlot(crafter, Items.IRON_INGOT), 1, false);
+            crafter.pullHandler().extractItem(ghostSlot(crafter, Items.IRON_INGOT), 1, false);
             helper.assertValueEqual(chest.getItem(0).getCount(), 15, "raw iron left in the chest");
             helper.assertTrue(crafter.getInventory().getStackInSlot(0).is(ModItems.TESSERACT.get()),
                     "the Tesseract stays in the grid");
@@ -328,7 +360,7 @@ public final class CrafterTests {
         helper.runAfterDelay(5, () -> {
             ResolvedCraft smelt = craftOf(basic, Items.IRON_INGOT);
             helper.assertValueEqual(smelt.batchSize(), 32, "a batch never exceeds the coherence reserve");
-            basic.getAutomationItemHandler(null).extractItem(ghostSlot(basic, Items.IRON_INGOT), 32, false);
+            basic.pullHandler().extractItem(ghostSlot(basic, Items.IRON_INGOT), 32, false);
             helper.assertValueEqual(basic.getCoherenceReserve(), 0, "reserve after 32 runs");
         });
         helper.runAfterDelay(8, () -> helper.assertValueEqual(basic.getStatusCode(),

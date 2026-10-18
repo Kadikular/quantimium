@@ -101,7 +101,7 @@ public final class HnnCompatTests {
             // 256 FE/t for the Fabricator's 60 ticks, times the multiplier.
             int cost = HnnFabricatorFamily.fabFePerTick() * HnnFabricatorFamily.FAB_TICKS * Config.instantCraftMultiplier();
             helper.assertValueEqual(feathers.feCost() / feathers.batchSize(), cost, "FE per fabrication");
-            ItemStack taken = crafter.getAutomationItemHandler(null)
+            ItemStack taken = crafter.pullHandler()
                     .extractItem(CrafterTests.ghostSlot(crafter, Items.FEATHER), 24, false);
             helper.assertValueEqual(taken.getCount(), 24, "feathers from one prediction");
             helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 3, "predictions left");
