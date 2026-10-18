@@ -53,6 +53,18 @@ NeoForge 26.1.2.109. Worlds from 0.4.x carry on.
 - **Sides** and **Simulator slot binding** open in the machine's own frame and save as you change them.
   **Priority** has its own page: type it, step it or scroll it.
 
+### Progression
+
+- **Anomalite from Medium anomaly**: crystals seed slowly at Medium, two to a chunk, and faster at High
+  (up to 8), Critical (16) and Singularity (no limit). A **Quantum Exciter** clicked aims for High, so a
+  modest base can get there.
+- **Anomaly lingers**: it fades at half flux's rate. Craft surcharges are halved (Medium +10%, High +25%).
+- **The Decoherence Lance no longer needs the Foundry**: its Anomalite Emitter has a crafting-table recipe.
+- Cheaper Anomalite recipes: Budding Anomalite (no crystal), Attuned Glass (a shard tunes four), the
+  Simulator, Laser Emitter I. Laser Mirrors from silver where a pack has it.
+- The Exciter and field-control blocks no longer leak FE to anomaly. Solar Emitters run full at midday.
+- Swinging at a rift says what closes it, and only now and then throws you back.
+
 ### Changed
 
 - **The Harvest Laser is gone**: laser light through a Rift Lens with Harvest and Pickup lenses does its
