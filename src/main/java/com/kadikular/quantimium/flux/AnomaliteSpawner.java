@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Rare once-per-second rolls over a few existing block entities in an active anomaly chunk. */
+/** Rare once-per-second rolls over a few existing block entities in an uncontained Medium+ anomaly chunk, up to its band's cap. */
 public final class AnomaliteSpawner {
 
     private record Candidate(BlockPos host, long storedFe, List<Direction> openFaces) {}
@@ -27,13 +27,15 @@ public final class AnomaliteSpawner {
     public static void tick(ServerLevel level, LevelChunk chunk, ChunkFlux data) {
         if (!Config.anomaliteEnabled() || data == null) return;
         FluxBand band = FluxBand.of(data.anomaly());
-        if (band.ordinal() < FluxBand.HIGH.ordinal() || data.isContained(level.getGameTime())) return;
+        if (band.ordinal() < FluxBand.MEDIUM.ordinal() || data.isContained(level.getGameTime())) return;
 
         RandomSource random = level.getRandom();
         if (random.nextDouble() >= Config.anomaliteSpawnChance(band)) return;
 
         List<BlockEntity> blockEntities = List.copyOf(chunk.getBlockEntities().values());
         if (blockEntities.isEmpty()) return;
+        // Each band lets a chunk grow so many of its own: a little anomaly gives a first few, not a field of them.
+        if (wild(level, blockEntities) >= Config.anomaliteChunkCap(band)) return;
 
         int samples = Math.min(Config.anomaliteHostSamples(), blockEntities.size());
         Set<Integer> sampledIndices = new HashSet<>(samples);
@@ -53,6 +55,18 @@ public final class AnomaliteSpawner {
         level.setBlock(crystalPos, ModBlocks.ANOMALITE_CRYSTAL.get().defaultBlockState()
                 .setValue(AnomaliteCrystalBlock.FACING, outward)
                 .setValue(AnomaliteCrystalBlock.AGE, 0), 3);
+    }
+
+    /** The crystals in the chunk that grew by themselves: not on a Budding Anomalite. */
+    private static int wild(ServerLevel level, List<BlockEntity> blockEntities) {
+        int count = 0;
+        for (BlockEntity entity : blockEntities) {
+            BlockState state = entity.getBlockState();
+            if (!state.is(ModBlocks.ANOMALITE_CRYSTAL.get())) continue;
+            BlockPos host = entity.getBlockPos().relative(state.getValue(AnomaliteCrystalBlock.FACING).getOpposite());
+            if (!level.getBlockState(host).is(ModBlocks.BUDDING_ANOMALITE.get())) count++;
+        }
+        return count;
     }
 
     private static Candidate inspect(ServerLevel level, BlockPos host) {

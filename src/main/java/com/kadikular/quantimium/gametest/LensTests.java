@@ -507,8 +507,11 @@ public final class LensTests {
         zombie.setHealth(1.0f);
         helper.succeedWhen(() -> {
             helper.assertTrue(!zombie.isAlive(), "killed");
-            helper.assertTrue(count(collector, Items.ROTTEN_FLESH) > 0 || helper.getLevel().getEntitiesOfClass(ItemEntity.class,
-                    new AABB(helper.absolutePos(new BlockPos(9, Y, 8))).inflate(3)).isEmpty(), "its drops came back, if it dropped any");
+            // Its own drop only: other mods in the test pack (Mystical Agriculture's essence) add drops of their own.
+            var lying = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(9, Y, 8))).inflate(3),
+                    item -> item.getItem().is(Items.ROTTEN_FLESH));
+            helper.assertTrue(count(collector, Items.ROTTEN_FLESH) > 0 || lying.isEmpty(), "its drops came back, if it dropped any: "
+                    + lying.stream().map(item -> item.getItem() + " at " + helper.relativeVec(item.position()) + " age " + item.tickCount).toList());
             TestSupport.finishLasers(helper);
         });
     }

@@ -947,9 +947,9 @@ public final class LensAction {
      */
     private static final java.util.Set<ItemEntity> FREED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
 
-    /** Items a kill just dropped, near where it fell. */
+    /** Items a kill just dropped, near where it fell: as far as they scatter on the tick it dies. */
     private void gatherDrops(ServerLevel level, LaserNetworks networks, LivingEntity killed) {
-        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, killed.getBoundingBox().inflate(1.5),
+        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, killed.getBoundingBox().inflate(3.0),
                 item -> item.isAlive() && item.tickCount <= 1)) {
             FREED.add(item);
             // All of it: the filter chose what to hit, not what it drops.

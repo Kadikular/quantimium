@@ -34,6 +34,20 @@ public class QuantumExciterBlock extends BaseEntityBlock {
         registerDefaultState(stateDefinition.any().setValue(ACTIVE, false).setValue(FACING, Direction.NORTH));
     }
 
+    /** A click switches what it aims for: Medium flux, or High. */
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                                                  net.minecraft.world.entity.player.Player player,
+                                                                  net.minecraft.world.phys.BlockHitResult hit) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof QuantumExciterBlockEntity exciter) {
+            exciter.setAimsHigh(!exciter.aimsHigh());
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable(exciter.aimsHigh()
+                    ? "message.quantimium.quantum_exciter.high" : "message.quantimium.quantum_exciter.medium")
+                    .withStyle(net.minecraft.ChatFormatting.AQUA));
+        }
+        return net.minecraft.world.InteractionResult.SUCCESS;
+    }
+
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;

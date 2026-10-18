@@ -1174,6 +1174,8 @@
   "message.quantimium.logistics_controller.status": "Logistics network: %s members, %s FE",
   "message.quantimium.logistics_controller.unpowered": "Logistics network: %s members, out of power",
   "message.quantimium.flux_rift.swing": "Blows can't close a rift: hold a Decoherence Lance on it from the mirror",
+  "message.quantimium.quantum_exciter.high": "Aiming for High flux",
+  "message.quantimium.quantum_exciter.medium": "Aiming for Medium flux",
   "message.quantimium.logistics_controller.back": "Light comes in here",
   "message.quantimium.logistics_controller.clash": "Stopped: another controller's light joins this network",
   "message.quantimium.logistics_receptacle.storage": "Storage, priority %s",

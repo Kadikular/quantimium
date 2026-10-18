@@ -19,9 +19,9 @@ import com.kadikular.quantimium.flux.FluxMeterReadout;
 import net.minecraft.network.chat.MutableComponent;
 
 /**
- * Basic Quantum Exciter: burns FE at 10× flux efficiency to hold Medium flux. It works in proportion
- * to how far the chunk is below {@link #TARGET}, counting flux still easing in, so it settles in the
- * middle of Medium instead of switching on and off round it.
+ * Basic Quantum Exciter: burns FE at 10× flux efficiency to hold Medium flux, or, clicked, High. It works
+ * in proportion to how far the chunk is below its target, counting flux still easing in, so it settles in
+ * the middle of the band instead of switching on and off round it.
  */
 public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEnergyHost, FluxMeterReadout {
 
@@ -30,6 +30,9 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
     /** Where it aims: it works flat out at no flux and not at all from here up. */
     public static final double TARGET = 400.0;
     public static final int FE_PER_TICK = 100;
+    /** Aiming for High: the middle of High, at ten times the burn. A thousand FE/t holds a chunk there. */
+    public static final double TARGET_HIGH = 4_000.0;
+    public static final int FE_PER_TICK_HIGH = 1_000;
     public static final int ENERGY_CAPACITY = 100_000;
     public static final int MAX_RECEIVE = 2_000;
 
@@ -46,6 +49,7 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
     private int powerSampleIndex;
     private final int[] powerSamples = new int[20];
     private boolean exciting;
+    private boolean aimsHigh;
 
     public QuantumExciterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.QUANTUM_EXCITER_BE.get(), pos, state);
@@ -53,6 +57,15 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
 
     public QuantumEnergyStorage getEnergyStorage() {
         return energyStorage;
+    }
+
+    public boolean aimsHigh() {
+        return aimsHigh;
+    }
+
+    public void setAimsHigh(boolean aimsHigh) {
+        this.aimsHigh = aimsHigh;
+        setChanged();
     }
 
     public int getAveragePowerUse() {
@@ -72,8 +85,8 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
     public static void tick(Level level, BlockPos pos, BlockState state, QuantumExciterBlockEntity be) {
         if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) return;
 
-        double throttle = throttle(QuantumFlux.chunkCommittedFlux(serverLevel, pos), TARGET);
-        int want = (int) Math.ceil(FE_PER_TICK * throttle);
+        double throttle = throttle(QuantumFlux.chunkCommittedFlux(serverLevel, pos), be.aimsHigh ? TARGET_HIGH : TARGET);
+        int want = (int) Math.ceil((be.aimsHigh ? FE_PER_TICK_HIGH : FE_PER_TICK) * throttle);
         boolean wasExciting = be.exciting;
         be.exciting = want > 0;
         if (be.exciting != wasExciting) be.setChanged();
@@ -120,6 +133,7 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
     private void saveLegacy(CompoundTag tag, HolderLookup.Provider registries) {
         tag.putInt("Energy", energyStorage.getEnergyStored());
         tag.putBoolean("Exciting", exciting);
+        tag.putBoolean("AimsHigh", aimsHigh);
     }
 
     @Override
@@ -131,6 +145,7 @@ public class QuantumExciterBlockEntity extends BlockEntity implements QuantumEne
     private void loadLegacy(CompoundTag tag, HolderLookup.Provider registries) {
         if (tag.contains("Energy")) energyStorage.setEnergy(tag.getIntOr("Energy", 0));
         exciting = tag.getBooleanOr("Exciting", false);
+        aimsHigh = tag.getBooleanOr("AimsHigh", false);
     }
 
     @Override

@@ -78,8 +78,20 @@ public final class FieldModel {
 
     /** {@code value} after {@code seconds} of decay, never below 0; the floor lets a small field finish clearing. */
     public static double decayed(double value, int seconds) {
+        return decayed(value, seconds, 1.0);
+    }
+
+    /** Anomaly decays at this fraction of flux's rate, so it lingers after the work that raised it. */
+    public static final double ANOMALY_DECAY_SCALE = 0.5;
+
+    /** Anomaly after {@code seconds} of its own, slower decay. */
+    public static double anomalyDecayed(double value, int seconds) {
+        return decayed(value, seconds, ANOMALY_DECAY_SCALE);
+    }
+
+    private static double decayed(double value, int seconds, double scale) {
         for (int i = 0; i < seconds && value > 0.0; i++) {
-            value = Math.max(0.0, value - Math.max(ChunkFlux.DRAIN_FLOOR, value * decayRate(value)));
+            value = Math.max(0.0, value - Math.max(ChunkFlux.DRAIN_FLOOR, value * decayRate(value) * scale));
         }
         return value;
     }
@@ -120,7 +132,7 @@ public final class FieldModel {
     static boolean catchUp(ChunkFlux data, int seconds) {
         if (seconds <= 0 || data.isEmpty()) return false;
         data.releasePending(1.0);
-        data.setField(decayed(data.flux(), seconds), decayed(data.anomaly(), seconds));
+        data.setField(decayed(data.flux(), seconds), anomalyDecayed(data.anomaly(), seconds));
         return true;
     }
 
@@ -159,7 +171,7 @@ public final class FieldModel {
             anomaly = data.anomaly();
             double afterDecay = decayed(flux, 1);
             ledger.put(entry.getKey(), new double[] {atStart, flux - afterDecay});
-            data.setField(afterDecay, decayed(anomaly, 1));
+            data.setField(afterDecay, anomalyDecayed(anomaly, 1));
             data.setLastDrainTick(now);
         }
 

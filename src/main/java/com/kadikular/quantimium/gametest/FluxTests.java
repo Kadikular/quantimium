@@ -31,6 +31,23 @@ public final class FluxTests {
 
     private FluxTests() {}
 
+    // covers: field.exciter
+    @GameTest(template = TestSupport.FLOOR_9, batch = "flux_exciter", timeoutTicks = 40)
+    public static void anExciterAimedHighBurnsTenTimesAsHard(GameTestHelper helper) {
+        // Aimed for High, an empty chunk gets a thousand FE/t of flux work at ten times efficiency: High's worth.
+        TestSupport.clearField(helper);
+        helper.setBlock(MIDDLE, com.kadikular.quantimium.init.ModBlocks.QUANTUM_EXCITER.get());
+        var exciter = helper.getBlockEntity(MIDDLE, com.kadikular.quantimium.block.entity.QuantumExciterBlockEntity.class);
+        exciter.setAimsHigh(true);
+        TestSupport.fill(exciter.getEnergyStorage());
+        helper.runAfterDelay(3, () -> {
+            helper.assertTrue(exciter.getCurrentPowerUse() > com.kadikular.quantimium.block.entity.QuantumExciterBlockEntity.FE_PER_TICK * 9,
+                    "burning for High: " + exciter.getCurrentPowerUse());
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: flux_meter.readouts
     @GameTest(template = TestSupport.FLOOR_9, batch = "flux_meter", timeoutTicks = 40)
     public static void theMeterReadsTheNewerMachines(GameTestHelper helper) {

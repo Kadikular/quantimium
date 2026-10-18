@@ -23,17 +23,17 @@ public final class Config {
             .define("craftSurcharge", true);
 
     public static final ModConfigSpec.IntValue SURCHARGE_MEDIUM = BUILDER
-            .comment("Extra percent at Medium anomaly (25 = +25%).")
-            .defineInRange("surchargePercentMedium", 25, 0, 1000);
+            .comment("Extra percent at Medium anomaly (10 = +10%).")
+            .defineInRange("surchargePercentMedium", 10, 0, 1000);
     public static final ModConfigSpec.IntValue SURCHARGE_HIGH = BUILDER
             .comment("Extra percent at High anomaly.")
-            .defineInRange("surchargePercentHigh", 50, 0, 1000);
+            .defineInRange("surchargePercentHigh", 25, 0, 1000);
     public static final ModConfigSpec.IntValue SURCHARGE_CRITICAL = BUILDER
             .comment("Extra percent at Critical anomaly.")
-            .defineInRange("surchargePercentCritical", 100, 0, 1000);
+            .defineInRange("surchargePercentCritical", 50, 0, 1000);
     public static final ModConfigSpec.IntValue SURCHARGE_SINGULARITY = BUILDER
             .comment("Extra percent at Singularity anomaly.")
-            .defineInRange("surchargePercentSingularity", 200, 0, 1000);
+            .defineInRange("surchargePercentSingularity", 100, 0, 1000);
 
     public static final ModConfigSpec.BooleanValue PASSIVE_DRAIN = BUILDER
             .comment("Leak a flat FE/t from each Quantimium machine buffer while anomaly is above Low. Does not emit flux.")
@@ -58,11 +58,17 @@ public final class Config {
     }
 
     public static final ModConfigSpec.BooleanValue ANOMALITE = BUILDER
-            .comment("Allow Anomalite Crystals to appear on powered blocks in uncontained High+ anomaly chunks.")
+            .comment("Allow Anomalite Crystals to appear on powered blocks in uncontained Medium+ anomaly chunks.")
             .define("enabled", true);
     public static final ModConfigSpec.IntValue ANOMALITE_SPAWN_INTERVAL_SECONDS = BUILDER
             .comment("Mean seconds between spawn rolls per eligible High-anomaly chunk.")
-            .defineInRange("spawnIntervalSecondsHigh", 120, 1, 86_400);
+            .defineInRange("spawnIntervalSecondsHigh", 60, 1, 86_400);
+    public static final ModConfigSpec.DoubleValue ANOMALITE_MEDIUM_FREQUENCY = BUILDER
+            .comment("Spawn-frequency multiplier at Medium anomaly: the first crystals, slowly.")
+            .defineInRange("mediumFrequencyMultiplier", 0.25, 0.0, 100.0);
+    public static final ModConfigSpec.ConfigValue<List<? extends Integer>> ANOMALITE_CHUNK_CAP = BUILDER
+            .comment("Most crystals a chunk grows by itself at Medium, High, Critical and Singularity anomaly; 0 for no limit. Crystals a Budding Anomalite grows don't count.")
+            .defineList("maxCrystalsPerChunk", List.of(2, 8, 16, 0), () -> 0, o -> o instanceof Integer i && i >= 0 && i <= 4096);
     public static final ModConfigSpec.DoubleValue ANOMALITE_CRITICAL_FREQUENCY = BUILDER
             .comment("Spawn-frequency multiplier at Critical anomaly.")
             .defineInRange("criticalFrequencyMultiplier", 2.0, 0.0, 100.0);
@@ -568,15 +574,25 @@ public final class Config {
 
     /** Once-per-second roll probability for one eligible active chunk. */
     public static double anomaliteSpawnChance(FluxBand band) {
-        if (!anomaliteEnabled() || band.ordinal() < FluxBand.HIGH.ordinal()) return 0.0;
-        int interval = SPEC.isLoaded() ? ANOMALITE_SPAWN_INTERVAL_SECONDS.get() : 120;
+        if (!anomaliteEnabled() || band.ordinal() < FluxBand.MEDIUM.ordinal()) return 0.0;
+        int interval = SPEC.isLoaded() ? ANOMALITE_SPAWN_INTERVAL_SECONDS.get() : 60;
         double multiplier = switch (band) {
+            case MEDIUM -> SPEC.isLoaded() ? ANOMALITE_MEDIUM_FREQUENCY.get() : 0.25;
             case HIGH -> 1.0;
             case CRITICAL -> SPEC.isLoaded() ? ANOMALITE_CRITICAL_FREQUENCY.get() : 2.0;
             case SINGULARITY -> SPEC.isLoaded() ? ANOMALITE_SINGULARITY_FREQUENCY.get() : 5.0;
             default -> 0.0;
         };
         return Math.min(1.0, multiplier / Math.max(1, interval));
+    }
+
+    /** Most crystals a chunk grows by itself at {@code band}; {@link Integer#MAX_VALUE} for no limit, 0 below Medium. */
+    public static int anomaliteChunkCap(FluxBand band) {
+        if (band.ordinal() < FluxBand.MEDIUM.ordinal()) return 0;
+        List<? extends Integer> caps = SPEC.isLoaded() ? ANOMALITE_CHUNK_CAP.get() : ANOMALITE_CHUNK_CAP.getDefault();
+        int index = band.ordinal() - FluxBand.MEDIUM.ordinal();
+        int cap = index < caps.size() ? caps.get(index) : 0;
+        return cap <= 0 ? Integer.MAX_VALUE : cap;
     }
 
     public static int anomaliteHostSamples() {
