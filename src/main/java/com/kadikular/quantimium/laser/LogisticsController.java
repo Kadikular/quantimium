@@ -14,4 +14,12 @@ public interface LogisticsController {
 
     /** Its network's members, as last found; none while another controller's light stops it. */
     java.util.List<LogisticsMember> members();
+
+    /** What its network offers, real and craftable, as last worked out (see {@link OfferTable}). */
+    default OfferTable offers() {
+        return OfferTable.EMPTY;
+    }
+
+    /** Something moved on its network: the offers are worked out again when next read. */
+    default void stockMoved() {}
 }

@@ -68,7 +68,7 @@ import net.minecraft.network.chat.MutableComponent;
  * is taken (or auto-pushed), then one craft is committed and billed.
  */
 public class QuantumCrafterBlockEntity extends BlockEntity
-        implements MenuProvider, SideConfigurable, QuantumEnergyHost, FluxMeterReadout {
+        implements MenuProvider, SideConfigurable, QuantumEnergyHost, FluxMeterReadout, com.kadikular.quantimium.laser.OfferMaker {
     private static final SideAutomationProfile SIDE_AUTOMATION_PROFILE =
             new SideAutomationProfile(SideAutomationProfile.ALL_SIDES, 0);
 
@@ -584,6 +584,86 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return changed;
     }
 
+    // ---- on a logistics network ----
+
+    /**
+     * What its links to Logistics Materialisers should see instead of the live network: each network's offers as last
+     * worked out (its own left out), or for {@code network}, {@code stock}. Empty if it draws on no network.
+     */
+    private java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> networkViews(
+            @Nullable com.kadikular.quantimium.laser.LogisticsController network,
+            @Nullable java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock) {
+        java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views = new java.util.HashMap<>();
+        if (level == null) return views;
+        for (int slot = 0; slot < INPUT_SLOTS; slot++) {
+            ItemStack link = inventory.getStackInSlot(slot);
+            if (!EntangledLinks.isLink(link)) continue;
+            GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
+            if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
+            if (level.getBlockEntity(bound.pos()) instanceof QuantumCrafterBlockEntity crafter && crafter != this) {
+                // Another Crafter, linked straight to it: what that one's preview offers, as stock, not asked live.
+                views.put(bound, new com.kadikular.quantimium.laser.StockHandler(crafter.previewOutputs()));
+                continue;
+            }
+            if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
+            com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
+            if (controller == null) continue;
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> seen = network != null && controller == network && stock != null
+                    ? stock : controller.offers().stock(worldPosition, materialiser.offersReal(), materialiser.offersCraftable());
+            views.put(bound, new com.kadikular.quantimium.laser.StockHandler(seen));
+        }
+        return views;
+    }
+
+    /** Runs {@code body} with its network links seeing the networks' offers rather than the live networks. */
+    private <T> T onOffers(java.util.function.Supplier<T> body) {
+        var views = networkViews(null, null);
+        return views.isEmpty() ? body.get() : EntangledLinks.withOverrides(views, body);
+    }
+
+    @Override
+    public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> makes(
+            com.kadikular.quantimium.laser.LogisticsController network,
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock) {
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> made = new java.util.LinkedHashMap<>();
+        if (level == null || level.isClientSide() || linkLoopDetected) return made;
+        ItemStack catalyst = inventory.getStackInSlot(CATALYST_SLOT);
+        if (catalyst.isEmpty() || isCatalystDenied(catalyst) || needsHotterField(catalyst)) return made;
+        double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
+        int fe = energyStorage.getEnergyStored();
+        var views = networkViews(network, stock);
+        List<ResolvedCraft> crafts = EntangledLinks.withOverrides(views,
+                () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier));
+        if (isBasic()) crafts = limitToCoherence(crafts);
+        if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
+        for (ResolvedCraft craft : crafts) {
+            for (ItemStack output : craft.outputs()) {
+                if (!output.isEmpty()) made.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(output), (long) output.getCount(), Long::max);
+            }
+        }
+        return made;
+    }
+
+    /** What its preview offers, by item: the most of each one craft would make, plus what's really in its outputs. */
+    public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> previewOutputs() {
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> outputs = new java.util.LinkedHashMap<>();
+        for (ResolvedCraft craft : preview) {
+            for (ItemStack output : craft.outputs()) {
+                if (!output.isEmpty()) outputs.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(output), (long) output.getCount(), Long::max);
+            }
+        }
+        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
+            ItemStack real = inventory.getStackInSlot(slot);
+            if (!real.isEmpty()) outputs.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(real), (long) real.getCount(), Long::sum);
+        }
+        return outputs;
+    }
+
+    @Override
+    public boolean makesOnDemand(int slot) {
+        return slot >= OUTPUT_START && slot <= OUTPUT_END && inventory.getStackInSlot(slot).isEmpty();
+    }
+
     public void rebuildPreview() {
         if (level == null || level.isClientSide()) return;
 
@@ -626,7 +706,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         boolean priorBusy = automationBusy;
         enterChain();
         try {
-            crafts = previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier);
+            crafts = onOffers(() -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
         } finally {
             exitChain(priorBusy);
         }
@@ -673,7 +753,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         boolean priorBusy = automationBusy;
         enterChain();
         try {
-            pool = IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS);
+            pool = onOffers(() -> IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS));
         } finally {
             exitChain(priorBusy);
         }
@@ -987,11 +1067,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         boolean priorBusy = automationBusy;
         enterChain();
         try {
-            for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
-                if (withdrawal.count() <= 0) continue;
-                if (!canWithdraw(withdrawal)) return false;
-            }
-            return true;
+            // What it would draw from a network is judged by the network's offers, not by asking it live.
+            return onOffers(() -> {
+                for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
+                    if (withdrawal.count() <= 0) continue;
+                    if (!canWithdraw(withdrawal)) return false;
+                }
+                return true;
+            });
         } finally {
             exitChain(priorBusy);
         }

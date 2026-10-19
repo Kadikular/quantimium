@@ -68,6 +68,29 @@ public interface LogisticsMember {
     /** The network has found it, joined to a controller's light, or not: it shows it. */
     default void connected(boolean connected) {}
 
+    /** The machine behind it that makes things to order (a Quantum Crafter), whose made things are craftable, not stock. */
+    @Nullable
+    default OfferMaker maker() {
+        return null;
+    }
+
+    /** Whether what it offers may include what a machine would make (a provider's mode), or only what's really there. */
+    default boolean offersCraftable() {
+        return true;
+    }
+
+    /** Whether a pull from {@code slot} would make something (see {@link #maker}) rather than hand over what's there. */
+    default boolean onDemand(int slot) {
+        OfferMaker maker = maker();
+        return maker != null && maker.makesOnDemand(slot);
+    }
+
+    /** Another network's offers, when it sits on that network's Logistics Materialiser; null otherwise. */
+    @Nullable
+    default OfferTable imports() {
+        return null;
+    }
+
     /**
      * An active member's pace, kept by the logistics pass: {@code [seconds before it looks again, its last wait]}.
      * Null, it looks every second.

@@ -110,6 +110,7 @@ public final class Logistics {
                 int budget = budget(speeds.getOrDefault(member, 0));
                 int moved = role == LogisticsMember.Role.PROVIDER ? push(level, controller, member, highestFirst, budget)
                         : pull(level, controller, member, highestFirst, lowestFirst, budget);
+                if (moved > 0) controller.stockMoved();
                 if (moved == UNPAID) return;
                 if (pace != null) {
                     // Busy, it looks again next second; idle, it waits twice as long as last time, up to the most.
@@ -228,6 +229,15 @@ public final class Logistics {
      * priority first.
      */
     public static ItemStack take(List<LogisticsMember> members, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate) {
+        return take(members, wants, max, simulate, true, true);
+    }
+
+    /**
+     * As {@link #take}, from what's really there ({@code reals}), from what machines would make ({@code made}), or
+     * both. A provider whose mode is "only what's there" never makes anything for it.
+     */
+    public static ItemStack take(List<LogisticsMember> members, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate,
+                                 boolean reals, boolean made) {
         for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
             for (LogisticsMember source : byPriority(members, role == LogisticsMember.Role.PROVIDER)) {
                 if (source.role() != role) continue;
@@ -236,6 +246,8 @@ public final class Logistics {
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     ItemStack there = from.getStackInSlot(slot);
                     if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
+                    boolean onDemand = source.onDemand(slot);
+                    if (onDemand ? !made || !source.offersCraftable() : !reals) continue;
                     ItemStack taken = from.extractItem(slot, Math.min(max, there.getCount()), simulate);
                     if (!taken.isEmpty()) return taken;
                 }

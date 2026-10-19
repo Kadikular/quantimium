@@ -27,6 +27,7 @@ import com.kadikular.quantimium.util.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -89,12 +90,28 @@ public final class EntangledLinks {
         return resolveItems(level, null, link);
     }
 
+    /** While a network works out its offers: what links bound to its Logistics Materialisers see instead of the network. */
+    private static final ThreadLocal<Map<GlobalPos, ResourceHandler<ItemResource>>> OVERRIDES = new ThreadLocal<>();
+
+    /** Runs {@code body} with links bound to the places in {@code overrides} seeing those handlers instead. */
+    public static <T> T withOverrides(Map<GlobalPos, ResourceHandler<ItemResource>> overrides, java.util.function.Supplier<T> body) {
+        Map<GlobalPos, ResourceHandler<ItemResource>> before = OVERRIDES.get();
+        OVERRIDES.set(overrides);
+        try {
+            return body.get();
+        } finally {
+            OVERRIDES.set(before);
+        }
+    }
+
     @Nullable
     public static ResourceHandler<ItemResource> resolveItems(@Nullable Level level, @Nullable BlockPos source,
                                                              ItemStack link) {
         if (level == null || level.isClientSide() || !isBound(link)) return null;
         GlobalPos bound = link.get(ModDataComponents.BOUND_POS.get());
         if (bound == null || !inRange(level, source, bound, link)) return null;
+        Map<GlobalPos, ResourceHandler<ItemResource>> overrides = OVERRIDES.get();
+        if (overrides != null && overrides.containsKey(bound)) return overrides.get(bound);
 
         ServerLevel target = resolveLevel(level, bound);
         if (target == null || !matchesBoundBlock(target, bound.pos(), link)) return null;

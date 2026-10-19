@@ -88,6 +88,35 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         changed();
     }
 
+    /** A provider on a machine that makes things to order: whether it offers what that machine would make, or only what's there. */
+    private boolean offersMade = true;
+
+    @Override
+    public boolean offersCraftable() {
+        return offersMade;
+    }
+
+    public void toggleOffersMade() {
+        offersMade = !offersMade;
+        changed();
+    }
+
+    @Override
+    @Nullable
+    public com.kadikular.quantimium.laser.OfferMaker maker() {
+        if (level == null) return null;
+        return level.getBlockEntity(worldPosition.relative(facing())) instanceof com.kadikular.quantimium.laser.OfferMaker maker ? maker : null;
+    }
+
+    /** On another network's Logistics Materialiser: that network's offers, as its mode lets them out. */
+    @Override
+    @Nullable
+    public com.kadikular.quantimium.laser.OfferTable imports() {
+        if (level == null || !(level.getBlockEntity(worldPosition.relative(facing())) instanceof LogisticsMaterialiserBlockEntity materialiser)) return null;
+        com.kadikular.quantimium.laser.LogisticsController theirs = materialiser.controller();
+        return theirs == null ? null : materialiser.offersFor(theirs);
+    }
+
     public void toggleActive() {
         active = !active;
         changed();
@@ -364,6 +393,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         super.saveAdditional(out);
         out.putInt("Role", role.ordinal());
         out.putBoolean("Active", active);
+        out.putBoolean("OffersMade", offersMade);
         out.putInt("Priority", priority);
         out.putBoolean("Allow", allow);
         out.putBoolean("Keep", keep);
@@ -379,6 +409,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         super.loadAdditional(in);
         role = Role.values()[Math.floorMod(in.getIntOr("Role", 0), Role.values().length)];
         active = in.getBooleanOr("Active", false);
+        offersMade = in.getBooleanOr("OffersMade", true);
         priority = in.getIntOr("Priority", 0);
         allow = in.getBooleanOr("Allow", true);
         keep = in.getBooleanOr("Keep", false);

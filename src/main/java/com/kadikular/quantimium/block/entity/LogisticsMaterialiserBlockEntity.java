@@ -37,9 +37,11 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     /** One thing on offer, and how many. */
     private record Entry(ItemResource item, long amount) {}
 
-    private long entriesTick = Long.MIN_VALUE;
-    private long entriesEpoch = Long.MIN_VALUE;
-    private final Map<Long, List<Entry>> entriesByContext = new java.util.HashMap<>();
+    /** The list last made, and the offers (and mode) it was made from: a pipe reads it slot by slot. */
+    private List<Entry> entries = List.of();
+    @Nullable
+    private com.kadikular.quantimium.laser.OfferTable entriesFrom;
+    private Mode entriesMode;
 
     private final NetworkHandler handler = new NetworkHandler();
 
@@ -48,6 +50,39 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     }
 
     /** What pipes and storage buses see on any face. */
+    /** What it offers: what's really there, what machines could make, or both (the default). */
+    public enum Mode {
+        BOTH, REAL, CRAFTABLE;
+
+        public Mode next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+    }
+
+    private Mode mode = Mode.BOTH;
+
+    public Mode mode() {
+        return mode;
+    }
+
+    public void cycleMode() {
+        mode = mode.next();
+        setChanged();
+    }
+
+    public boolean offersReal() {
+        return mode != Mode.CRAFTABLE;
+    }
+
+    public boolean offersCraftable() {
+        return mode != Mode.REAL;
+    }
+
+    /** {@code network}'s offers, as this Materialiser's mode lets them out. */
+    public com.kadikular.quantimium.laser.OfferTable offersFor(LogisticsController network) {
+        return network.offers().only(offersReal(), offersCraftable());
+    }
+
     public ResourceHandler<ItemResource> itemHandler() {
         return handler;
     }
@@ -99,7 +134,7 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     };
 
     @Nullable
-    private LogisticsController controller() {
+    public LogisticsController controller() {
         return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);
     }
 
@@ -112,38 +147,20 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
                 .toList();
     }
 
+    /** What it shows pipes and buses: the network's offers, as its mode lets them out, a slot an item. */
     private List<Entry> entries() {
-        if (level == null) return List.of();
-        long tick = level.getGameTime();
-        // A tick at most, and not past a transaction settling: a Crafter on the network may just have been put back.
-        long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
-        // Reading the network can ask a Crafter what it can make, which can read this list again: a list is kept
-        // only once built, per chain (a machine on it offers nothing), for a tick and within a settled transaction,
-        // and never one built while a transaction closes.
-        long context = com.kadikular.quantimium.recipe.CraftChain.context();
-        if (entriesTick != tick || entriesEpoch != epoch) {
-            entriesByContext.clear();
-            entriesTick = tick;
-            entriesEpoch = epoch;
+        LogisticsController controller = controller();
+        if (level == null || controller == null) return List.of();
+        com.kadikular.quantimium.laser.OfferTable offers = controller.offers();
+        if (offers == entriesFrom && mode == entriesMode) return entries;
+        List<Entry> list = new ArrayList<>();
+        for (var entry : offers.only(offersReal(), offersCraftable()).entries()) {
+            long amount = (offersReal() ? entry.real() : 0) + (offersCraftable() ? entry.craftable() : 0);
+            if (amount > 0) list.add(new Entry(entry.item(), amount));
         }
-        List<Entry> known = entriesByContext.get(context);
-        if (known != null) return known;
-        boolean keep = com.kadikular.quantimium.recipe.CraftChain.cacheable();
-        Map<ItemResource, Long> counts = new LinkedHashMap<>();
-        for (LogisticsMember member : members()) {
-            if (member.role() == LogisticsMember.Role.REQUESTER) continue;
-            IItemHandler inventory = member.inventory();
-            if (inventory == null) continue;
-            for (int slot = 0; slot < inventory.getSlots(); slot++) {
-                ItemStack stack = inventory.getStackInSlot(slot);
-                if (stack.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
-                counts.merge(ItemResource.of(stack), (long) stack.getCount(), Long::sum);
-            }
-        }
-        List<Entry> list = new ArrayList<>(counts.size());
-        counts.forEach((item, amount) -> list.add(new Entry(item, amount)));
-        if (keep && entriesTick == tick && entriesEpoch == epoch) entriesByContext.put(context, list);
-        return list;
+        entriesFrom = offers;
+        entriesMode = mode;
+        return entries = list;
     }
 
     /**
@@ -200,7 +217,8 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             int got = 0;
             List<LogisticsMember> members = members();
             while (got < amount) {
-                ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(resource), amount - got, false);
+                ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(resource), amount - got, false,
+                        offersReal(), offersCraftable());
                 if (more.isEmpty()) break;
                 got += more.getCount();
             }
@@ -211,7 +229,6 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         private void moved(TransactionContext transaction) {
             updateSnapshots(transaction);
             moves++;
-            entriesTick = Long.MIN_VALUE;
         }
 
         @Override
@@ -222,15 +239,16 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         @Override
         protected void revertToSnapshot(Integer snapshot) {
             moves = snapshot;
-            entriesTick = Long.MIN_VALUE;
         }
 
         @Override
         protected void onRootCommit(Integer originalState) {
             LogisticsController controller = controller();
-            if (controller != null) for (int i = 0; i < moves; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
+            if (controller != null) {
+                for (int i = 0; i < moves; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
+                if (moves > 0) controller.stockMoved();
+            }
             moves = 0;
-            entriesTick = Long.MIN_VALUE;
         }
     }
 

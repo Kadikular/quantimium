@@ -54,24 +54,12 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         return controller == null ? List.of() : controller.members();
     }
 
-    /** Everything it can reach: what storage holds and what providers let go, by item, with how many, and how many more could be made. */
+    /** Everything it can reach: what's really there and what could be made, by item, from the network's offers. */
     public Map<ItemResource, long[]> contents() {
         Map<ItemResource, long[]> counts = new LinkedHashMap<>();
-        for (LogisticsMember member : members()) {
-            if (member.role() == LogisticsMember.Role.REQUESTER) continue;
-            Map<ItemResource, long[]> listing = member.listing();
-            if (listing != null) {
-                listing.forEach((item, both) -> counts.merge(item, both.clone(), (a, b) -> new long[] {a[0] + b[0], a[1] + b[1]}));
-                continue;
-            }
-            IItemHandler inventory = member.inventory();
-            if (inventory == null) continue;
-            for (int slot = 0; slot < inventory.getSlots(); slot++) {
-                ItemStack stack = inventory.getStackInSlot(slot);
-                if (stack.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
-                counts.merge(ItemResource.of(stack), new long[] {stack.getCount(), 0}, (a, b) -> new long[] {a[0] + b[0], a[1] + b[1]});
-            }
-        }
+        LogisticsController controller = controller();
+        if (controller == null) return counts;
+        for (var entry : controller.offers().entries()) counts.put(entry.item(), new long[] {entry.real(), entry.craftable()});
         return counts;
     }
 
@@ -84,6 +72,7 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
                 || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
             return ItemStack.EMPTY;
         }
+        controller.stockMoved();
         ItemStack got = ItemStack.EMPTY;
         while (got.getCount() < count) {
             ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(item), count - got.getCount(), false);
@@ -102,6 +91,7 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         if (Logistics.insert(members, stack, true, false).getCount() == stack.getCount() || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
             return stack;
         }
+        controller.stockMoved();
         return Logistics.insert(members, stack, false, false);
     }
 

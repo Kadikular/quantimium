@@ -113,10 +113,42 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
 
     @Override
     public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
+        if (!this.members.equals(members)) offersStale = true;
         this.members = List.copyOf(members);
         boolean changed = this.clash != clash;
         this.clash = clash;
         if (changed) showLit();
+    }
+
+    /** The offers as last worked out, when, and whether something has moved since. */
+    private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.EMPTY;
+    private long offersTick = Long.MIN_VALUE;
+    private boolean offersStale = true;
+    private boolean workingOut;
+
+    /**
+     * Worked out at most once a second, sooner after a move it saw; never while it's being worked out (a network
+     * that reads another's offers which read this one back gets what this one last had).
+     */
+    @Override
+    public com.kadikular.quantimium.laser.OfferTable offers() {
+        if (level == null || workingOut) return offers;
+        long now = level.getGameTime();
+        if (!offersStale && now - offersTick < 20) return offers;
+        workingOut = true;
+        try {
+            offers = com.kadikular.quantimium.laser.OfferTable.build(level, this, worldPosition, members());
+        } finally {
+            workingOut = false;
+        }
+        offersTick = now;
+        offersStale = false;
+        return offers;
+    }
+
+    @Override
+    public void stockMoved() {
+        offersStale = true;
     }
 
     /** The members still standing, or none while another controller's light stops the network. */

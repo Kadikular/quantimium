@@ -762,6 +762,38 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_steady", timeoutTicks = 200)
+    public static void whatANetworkOffersHoldsSteady(GameTestHelper helper) {
+        // Two furnace Crafters and a crafting-table one, all drawing on the network and offering to it: once settled,
+        // the network offers the same every tick, whatever else reads it, and it offers stone and smooth stone.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 64));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.FURNACE, true, true);
+        crafterOn(helper, 8, Items.FURNACE, true, true);
+        crafterOn(helper, 10, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (++t[0] < 60) return;
+            // Something else reading first, in a different order each tick: a crafter's screen, then the network.
+            if (t[0] % 2 == 0) first.rebuildPreview();
+            var handler = network(helper);
+            java.util.List<String> list = new java.util.ArrayList<>();
+            for (int i = 0; i < handler.size(); i++) if (!handler.getResource(i).isEmpty()) list.add(handler.getResource(i).getItem() + "x" + handler.getAmountAsLong(i));
+            seen.add(list.toString());
+        });
+        helper.runAfterDelay(100, () -> {
+            helper.assertValueEqual(seen.size(), 1, "one answer every tick: " + seen);
+            String offered = seen.iterator().next();
+            helper.assertTrue(offered.contains("minecraft:stonex") && offered.contains("minecraft:smooth_stonex"), "stone and smooth stone: " + offered);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_basic_pair", timeoutTicks = 200)
     public static void twoBasicCraftersOnOneNetworkSettle(GameTestHelper helper) {
         // A chest of cobblestone as a provider; two Basic Crafters with furnaces, both drawing on the network, the
