@@ -29,8 +29,9 @@ import java.util.Locale;
 
 /**
  * A Quantum Crafter: its inputs and catalyst, and under them, as in a logistics terminal, a scrolling grid of what's
- * in its outputs and every craft it could make, searchable. Click an output for the batch on the cursor, right-click
- * for half, shift-right-click (or shift and the wheel down) for one, shift-click for the batch into the inventory;
+ * in its outputs and every craft it could make, searchable. Click an output for a stack on the cursor (what's there
+ * first, the rest made), right-click for half, shift-right-click (or shift and the wheel down) for one, shift-click
+ * for a stack into the inventory;
  * while shift is held the grid holds still. Layout: tools/gui_panels.py crafter.
  */
 public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMenu> {
@@ -40,8 +41,6 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private static final Identifier BASIC_TEXTURE = Identifier.fromNamespaceAndPath(
             Quantimium.MODID, "textures/gui/container/basic_quantum_crafter.png");
 
-    /** Tint marking an output cell as a preview rather than a stack that is really there. */
-    private static final int GHOST_TINT = 0x4020A0FF;
     /** The Basic crafter's coherence gauge, flat under the catalyst socket (tools/gui_panels.py). */
     private static final int COHERENCE_X = 72;
     private static final int COHERENCE_Y = 60;
@@ -63,11 +62,6 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private record Cell(int slot, ItemStack stack, long stored, long craftable, int previewSlot) {
         long count() {
             return stored + craftable;
-        }
-
-        /** Only to be made: none of it's there. */
-        boolean preview() {
-            return stored == 0;
         }
 
         /** The same item across updates. */
@@ -217,9 +211,11 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                 }
                 continue;
             }
+            // Several previews of one item (two recipes for it): the one that can make the most speaks for it.
             Cell was = latest.get(at);
+            boolean better = craftable > was.craftable();
             latest.set(at, new Cell(was.slot(), was.stack(), was.stored() + stored, Math.max(was.craftable(), craftable),
-                    was.previewSlot() >= 0 ? was.previewSlot() : previewSlot));
+                    better ? previewSlot : was.previewSlot()));
         }
         java.util.Comparator<Cell> name = java.util.Comparator.comparing(c -> c.stack().getHoverName().getString());
         latest.sort(byName ? name : java.util.Comparator.comparingLong(Cell::count).reversed().thenComparing(name));
@@ -283,20 +279,25 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                 int x = leftPos + GRID_X + col * CELL;
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
-                // A preview is marked apart from what's really there; its count is how many it can make in all.
-                if (cell.preview()) graphics.fill(x, y, x + 16, y + 16, GHOST_TINT);
                 graphics.item(cell.stack().copyWithCount(1), x, y);
-                if (cell.count() > 1) {
-                    String count = HorizonCoreScreen.slotCount(cell.count());
-                    graphics.nextStratum();
-                    graphics.pose().pushMatrix();
-                    graphics.pose().translate(x + 16, y + 11);
-                    graphics.pose().scale(0.5f, 0.5f);
-                    graphics.text(font, count, -font.width(count), 0, cell.preview() ? 0xFFB49CFF : 0xFFFFFFFF, true);
-                    graphics.pose().popMatrix();
+                // What's in its outputs at the top right; under it, in violet, that and what it can make besides.
+                boolean makes = cell.craftable() > 0;
+                if (makes && cell.stored() > 0) smallCount(graphics, HorizonCoreScreen.slotCount(cell.stored()), x, y, 0, 0xFFFFFFFF);
+                if (makes || cell.stored() > 1) {
+                    smallCount(graphics, HorizonCoreScreen.slotCount(cell.count()), x, y, 11, makes ? 0xFFB49CFF : 0xFFFFFFFF);
                 }
             }
         }
+    }
+
+    /** A small number against a cell's right edge, {@code dy} down from its top. */
+    private void smallCount(GuiGraphicsExtractor graphics, String count, int x, int y, int dy, int colour) {
+        graphics.nextStratum();
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x + 16, y + dy);
+        graphics.pose().scale(0.5f, 0.5f);
+        graphics.text(font, count, -font.width(count), 0, colour, true);
+        graphics.pose().popMatrix();
     }
 
     @Override

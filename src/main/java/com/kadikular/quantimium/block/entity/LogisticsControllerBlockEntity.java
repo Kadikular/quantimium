@@ -113,7 +113,10 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
 
     @Override
     public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
-        if (!this.members.equals(members)) offersStale = true;
+        if (!this.members.equals(members)) {
+            offersStale = true;
+            spots = null;
+        }
         this.members = List.copyOf(members);
         boolean changed = this.clash != clash;
         this.clash = clash;
@@ -149,6 +152,27 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     public void stockMoved() {
         offersStale = true;
+        spots = null;
+    }
+
+    /** Where each thing on the network is, and the tick it was looked over. */
+    @org.jetbrains.annotations.Nullable
+    private java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots;
+    private long spotsTick = Long.MIN_VALUE;
+
+    @Override
+    public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots() {
+        long now = level == null ? 0 : level.getGameTime();
+        // What a machine making things to order shows depends on what's asking: midway through a craft, worked out
+        // for that alone and not kept.
+        if (com.kadikular.quantimium.recipe.CraftChain.depth() > 0 || com.kadikular.quantimium.recipe.CraftChain.storedOnly()) {
+            return com.kadikular.quantimium.laser.Logistics.locate(members());
+        }
+        if (spots == null || spotsTick != now) {
+            spots = com.kadikular.quantimium.laser.Logistics.locate(members());
+            spotsTick = now;
+        }
+        return spots;
     }
 
     /** The members still standing, or none while another controller's light stops the network. */

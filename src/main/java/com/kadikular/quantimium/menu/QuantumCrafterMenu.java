@@ -163,10 +163,9 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
     }
 
     /**
-     * Menu buttons taking what output {@code slot} (0 to 53) shows: {@code mode * TAKE + slot}. As in a logistics
-     * terminal, what's in its outputs comes first, from every output holding it, and only with none there is more
-     * made. A batch is a stack of what's there, or a preview's batch; half of that; one; or the batch into the
-     * inventory.
+     * Menu buttons taking what output {@code slot} (0 to 53) shows: {@code mode * TAKE + slot}. A stack onto the
+     * cursor, half a stack, one, or a stack into the inventory: what's in its outputs first, from every output holding
+     * it, and the rest made, by whichever preview of it can make the most.
      */
     public static final int TAKE = 100, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
 
@@ -179,43 +178,42 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         ItemStack real = blockEntity.getInventory().getStackInSlot(absolute);
         ItemStack shown = real.isEmpty() ? blockEntity.getGhost(absolute) : real;
         if (shown.isEmpty()) return false;
-        // What of it is really there, in every output.
-        int there = 0;
-        for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END; slot++) {
-            ItemStack held = blockEntity.getInventory().getStackInSlot(slot);
-            if (ItemStack.isSameItemSameComponents(held, shown)) there += held.getCount();
-        }
-        int batch = there > 0 ? Math.min(there, shown.getMaxStackSize()) : shown.getCount();
-        ItemStack carried = getCarried();
         boolean toInventory = mode == TO_INVENTORY;
+        ItemStack carried = getCarried();
         if (!toInventory && !carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, shown)) return false;
-        int room = toInventory ? batch : shown.getMaxStackSize() - carried.getCount();
+        int stack = shown.getMaxStackSize();
+        int room = toInventory ? stack : stack - carried.getCount();
         int wanted = Math.min(room, switch (mode) {
-            case HALF -> Math.max(1, (batch + 1) / 2);
+            case HALF -> Math.max(1, stack / 2);
             case ONE -> 1;
-            default -> batch;
+            default -> stack;
         });
         if (wanted <= 0) return false;
-        ItemStack got;
-        if (there > 0) {
-            got = ItemStack.EMPTY;
-            for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END && got.getCount() < wanted; slot++) {
-                if (!ItemStack.isSameItemSameComponents(blockEntity.getInventory().getStackInSlot(slot), shown)) continue;
-                ItemStack more = blockEntity.getInventory().extractItem(slot, wanted - got.getCount(), false);
-                got = got.isEmpty() ? more : got.copyWithCount(got.getCount() + more.getCount());
-            }
-        } else {
-            got = toInventory ? blockEntity.takeGhost(absolute) : blockEntity.takeGhost(absolute, wanted);
+        ItemStack got = ItemStack.EMPTY;
+        // What's there first.
+        for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END && got.getCount() < wanted; slot++) {
+            if (!ItemStack.isSameItemSameComponents(blockEntity.getInventory().getStackInSlot(slot), shown)) continue;
+            ItemStack more = blockEntity.getInventory().extractItem(slot, wanted - got.getCount(), false);
+            got = got.isEmpty() ? more : got.copyWithCount(got.getCount() + more.getCount());
+        }
+        // Then made, a batch at a time.
+        for (int tries = 0; got.getCount() < wanted && tries < 8; tries++) {
+            int ghost = blockEntity.bestGhostFor(shown);
+            if (ghost < 0) break;
+            ItemStack made = blockEntity.takeGhost(ghost, wanted - got.getCount());
+            if (made.isEmpty()) break;
+            got = got.isEmpty() ? made : got.copyWithCount(got.getCount() + made.getCount());
         }
         if (got.isEmpty()) return false;
+        // What a run made past what was asked for (eight more nuggets) stays in its outputs.
+        int keep = Math.min(wanted, got.getCount());
+        if (got.getCount() > keep) blockEntity.storeOutput(got.copyWithCount(got.getCount() - keep));
+        got = got.copyWithCount(keep);
         if (toInventory) {
             ItemStack left = toInventory(got);
             if (!left.isEmpty()) blockEntity.storeOutput(left);
         } else {
-            // What a run made past what was asked for (eight more nuggets) stays in its outputs.
-            int onto = Math.min(wanted, got.getCount());
-            setCarried(carried.isEmpty() ? got.copyWithCount(onto) : carried.copyWithCount(carried.getCount() + onto));
-            if (got.getCount() > onto) blockEntity.storeOutput(got.copyWithCount(got.getCount() - onto));
+            setCarried(carried.isEmpty() ? got : carried.copyWithCount(carried.getCount() + got.getCount()));
         }
         blockEntity.rebuildPreview();
         broadcastChanges();

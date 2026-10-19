@@ -22,4 +22,9 @@ public interface LogisticsController {
 
     /** Something moved on its network: the offers are worked out again when next read. */
     default void stockMoved() {}
+
+    /** Where each thing on its network is, looked over at most once a tick and again after a move (see {@link Logistics#locate}). */
+    default java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<Logistics.Spot>> spots() {
+        return Logistics.locate(members());
+    }
 }

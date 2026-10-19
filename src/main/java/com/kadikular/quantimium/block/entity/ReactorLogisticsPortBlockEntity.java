@@ -270,7 +270,13 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
      */
     private final Promises promises = new Promises();
 
-    private final class Promises extends SnapshotJournal<Integer> {
+    /**
+     * Where a transaction stood: how many promises were made, and the offers as worked out then, if they were still
+     * good; an abort puts the Reactor back as it was, so they're good again.
+     */
+    private record PromisesSnapshot(int ops, List<Offer> offers, long tick, boolean fresh) {}
+
+    private final class Promises extends SnapshotJournal<PromisesSnapshot> {
         private record Op(ItemResource item, long held, @Nullable com.kadikular.quantimium.reactor.ReactorPlanner.Plan plan, long fe, long in) {}
 
         private final List<Op> ops = new ArrayList<>();
@@ -290,18 +296,23 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
             HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null || amount <= 0) return ItemStack.EMPTY;
             ItemResource item = offer.item();
-            Map<ItemResource, Long> stock = horizon.available();
-            long held = Math.min(amount, stock.getOrDefault(item, 0L));
+            long held = Math.min(amount, horizon.availableCount(item));
             com.kadikular.quantimium.reactor.ReactorPlanner.Plan plan = null;
             long fe = 0;
             long want = amount - held;
             if (want > 0 && offer.craftable() > 0 && horizon.isActive()) {
-                if (held > 0) stock.computeIfPresent(item, (k, have) -> have > held ? have - held : null);
+                // With none of it held, what's held is the plan's stock as it stands, and a plan may be one worked out
+                // before; with some held (to be handed over first), from what's left.
+                Map<ItemResource, Long> stock = null;
+                if (held > 0) {
+                    stock = horizon.available();
+                    stock.computeIfPresent(item, (k, have) -> have > held ? have - held : null);
+                }
                 long spare = horizon.getEnergyStorage().getEnergyStored();
                 for (Op op : ops) spare -= op.fe();
                 // The whole of the rest if it can be made and paid for, else a half, a quarter: a few plans at most.
                 for (long tryAmount = Math.min(want, offer.craftable()); tryAmount > 0 && plan == null; tryAmount /= 2) {
-                    var result = horizon.plan(stock, item, tryAmount);
+                    var result = stock == null ? horizon.planFromHeld(item, tryAmount) : horizon.plan(stock, item, tryAmount);
                     if (result.planned() && HorizonCoreBlockEntity.feFor(result.plan()) <= spare) {
                         plan = result.plan();
                         fe = HorizonCoreBlockEntity.feFor(plan);
@@ -320,24 +331,36 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         }
 
         @Override
-        protected Integer createSnapshot() {
-            return ops.size();
+        protected PromisesSnapshot createSnapshot() {
+            HorizonCoreBlockEntity horizon = core();
+            boolean fresh = horizon != null && offersTick != Long.MIN_VALUE && offersVersion == horizon.ledgerVersion()
+                    && offersCounts == horizon.getCounts();
+            return new PromisesSnapshot(ops.size(), offers, offersTick, fresh);
         }
 
         @Override
-        protected void revertToSnapshot(Integer snapshot) {
+        protected void revertToSnapshot(PromisesSnapshot snapshot) {
             HorizonCoreBlockEntity horizon = core();
-            while (ops.size() > snapshot) {
+            while (ops.size() > snapshot.ops()) {
                 Op op = ops.removeLast();
                 if (horizon == null) continue;
                 if (op.held() > 0) horizon.release(Map.of(op.item(), op.held()));
                 if (op.plan() != null) horizon.release(op.plan().consumed());
             }
-            offersTick = Long.MIN_VALUE;
+            // Back as it was: the offers worked out then stand (a storage bus asking what it could take, and
+            // calling it off, doesn't make the Reactor plan everything again).
+            if (snapshot.fresh() && horizon != null) {
+                offers = snapshot.offers();
+                offersTick = snapshot.tick();
+                offersVersion = horizon.ledgerVersion();
+                offersCounts = horizon.getCounts();
+            } else {
+                offersTick = Long.MIN_VALUE;
+            }
         }
 
         @Override
-        protected void onRootCommit(Integer originalState) {
+        protected void onRootCommit(PromisesSnapshot originalState) {
             HorizonCoreBlockEntity horizon = core();
             if (horizon != null && level instanceof ServerLevel server) {
                 for (Op op : ops) {
@@ -455,10 +478,20 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     @Override
     @Nullable
     public Map<ItemResource, long[]> listing() {
-        Map<ItemResource, long[]> listing = new LinkedHashMap<>();
-        for (Offer offer : offers()) listing.put(offer.item(), new long[] {offer.held() + offer.passed(), offer.craftable()});
-        return listing;
+        List<Offer> now = offers();
+        // Worked out once for each list of offers: a take asks for it every time.
+        if (listingFor != now) {
+            Map<ItemResource, long[]> listing = new LinkedHashMap<>();
+            for (Offer offer : now) listing.put(offer.item(), new long[] {offer.held() + offer.passed(), offer.craftable()});
+            listingCache = java.util.Collections.unmodifiableMap(listing);
+            listingFor = now;
+        }
+        return listingCache;
     }
+
+    @Nullable
+    private List<Offer> listingFor;
+    private Map<ItemResource, long[]> listingCache = Map.of();
 
     // ---- the network, to the Reactor ----
 

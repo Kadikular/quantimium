@@ -70,7 +70,7 @@ public final class CrafterTests {
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_screen_takes", timeoutTicks = 60)
     public static void theScreenTakesFromAnyOutput(GameTestHelper helper) {
         // Nine outputs holding dirt, so the stone preview sits past them, where the old first page ended. From the
-        // screen: half the batch onto the cursor, one more, the rest into the inventory; and half of some dirt.
+        // screen: half a stack onto the cursor, one more, the rest into the inventory; and half a stack of the dirt.
         QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
         TestSupport.fill(crafter.getEnergyStorage());
         crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 40));
@@ -83,12 +83,12 @@ public final class CrafterTests {
             java.util.function.IntSupplier stone = () -> ghostSlot(crafter, Items.STONE) - QuantumCrafterBlockEntity.OUTPUT_START;
             helper.assertTrue(stone.getAsInt() >= 9, "the preview is past the dirt (" + stone.getAsInt() + ")");
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.HALF * take + stone.getAsInt()), "half taken");
-            helper.assertValueEqual(menu.getCarried().getCount(), 20, "half of forty");
+            helper.assertValueEqual(menu.getCarried().getCount(), 32, "half a stack");
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.ONE * take + stone.getAsInt()), "one more");
-            helper.assertValueEqual(menu.getCarried().getCount(), 21, "one more onto the cursor");
-            helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 19, "twenty-one cobblestone spent");
+            helper.assertValueEqual(menu.getCarried().getCount(), 33, "one more onto the cursor");
+            helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 7, "thirty-three cobblestone spent");
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.TO_INVENTORY * take + stone.getAsInt()), "the rest to the inventory");
-            helper.assertValueEqual(player.getInventory().countItem(Items.STONE), 19, "nineteen stone in the inventory");
+            helper.assertValueEqual(player.getInventory().countItem(Items.STONE), 7, "the last seven in the inventory");
             menu.setCarried(ItemStack.EMPTY);
             // Dirt is in nine outputs, 72 in all: half a stack of it, from across them.
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.HALF * take + 3), "half the dirt");

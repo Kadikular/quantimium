@@ -150,14 +150,13 @@ runs and a stack of ingots allows 64, but at 4,000 FE a smelt the energy allows 
 shows **25 iron ingots**.
 
 Its screen works like a logistics terminal: one cell for each item in its outputs or its previews, in a
-scrolling grid with a search box over it, sorted by count or by name (a tab on its left). A cell's number is
-what's in its outputs plus how many it **can make** in all, past one stack: 128 iron ingots, in the grid or
-behind a Tesseract (a logistics network counts every stack), show 14 iron blocks. A cell with none there is
-tinted; its tooltip says how many are there and what making more costs. Click for a stack, right-click for
-half, shift-right-click (or shift and the wheel down) for one, onto what you're holding if it's the same;
-shift-click sends a stack to your inventory. What's there comes out first; only with none there is more
-made, and what a run makes past what you asked for (eight more nuggets) stays in its outputs. While shift is
-held the grid holds still.
+scrolling grid with a search box over it, sorted by count or by name (a tab on its left). The small white number
+at a cell's top right is what's in its outputs; the violet one under it is that plus how many it **can make** in
+all, past one stack: 128 iron ingots, in the grid or behind a Tesseract (a logistics network counts every
+stack), show 14 iron blocks. The tooltip says what making more costs. Click for a stack, right-click for half a
+stack, shift-right-click (or shift and the wheel down) for one, onto what you're holding if it's the same;
+shift-click sends a stack to your inventory. What's there comes out first and the rest is made; what a run makes
+past what you asked for (eight more nuggets) stays in its outputs. While shift is held the grid holds still.
 
 **Unrealised Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see [[item:unrealised_matter]]).

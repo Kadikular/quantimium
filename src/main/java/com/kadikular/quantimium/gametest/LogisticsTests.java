@@ -430,6 +430,58 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.reactor
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_bus_probe", timeoutTicks = 100)
+    public static void askingForEveryItemAndCallingItOffStaysQuick(GameTestHelper helper) {
+        // What an AE2 storage bus does every few ticks: for each item the network offers, take one in a transaction
+        // and call it off. With a Reactor on the network holding and able to make things, that stays quick.
+        ItemStack[] chest = new ItemStack[27];
+        Item[] kinds = {Items.STONE, Items.DIRT, Items.SAND, Items.GRAVEL, Items.COBBLESTONE, Items.GRANITE, Items.DIORITE, Items.ANDESITE,
+                Items.IRON_INGOT, Items.GOLD_INGOT, Items.COPPER_INGOT, Items.REDSTONE, Items.COAL, Items.FLINT, Items.CLAY_BALL, Items.BRICK,
+                Items.OAK_LOG, Items.BIRCH_LOG, Items.SPRUCE_LOG, Items.STRING, Items.BONE, Items.FEATHER, Items.LEATHER, Items.PAPER,
+                Items.SUGAR, Items.WHEAT, Items.EGG};
+        for (int i = 0; i < 27; i++) chest[i] = new ItemStack(kinds[i], 16);
+        reactorOnNetwork(helper, chest);
+        var core = helper.getBlockEntity(ReactorTests.CORE, com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.class);
+        for (Item item : List.of(Items.OAK_LOG, Items.BIRCH_LOG, Items.SPRUCE_LOG, Items.JUNGLE_LOG, Items.ACACIA_LOG, Items.DARK_OAK_LOG,
+                Items.COBBLESTONE, Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND, Items.REDSTONE, Items.STICK)) {
+            core.getLedger().add(resource(item), 64);
+        }
+        var controller = helper.getBlockEntity(ReactorTests.CORE.below().east(8), LogisticsControllerBlockEntity.class);
+        helper.runAfterDelay(40, () -> {
+            core.recountNow();
+            List<LogisticsMember> members = controller.members();
+            var entries = controller.offers().entries();
+            helper.assertTrue(entries.size() > 40, "plenty on offer: " + entries.size());
+            long start = System.nanoTime();
+            int asked = 0;
+            for (int round = 0; round < 2; round++) {
+                for (var entry : entries) {
+                    try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                        com.kadikular.quantimium.laser.Logistics.take(controller.spots(), entry.item(), 1, false, true, true);
+                        asked++;
+                    }
+                }
+            }
+            double millis = (System.nanoTime() - start) / 1e6;
+            com.kadikular.quantimium.Quantimium.LOGGER.info("Asking about every item: {} asks in {} ms", asked, millis);
+            double realMs = 0, craftMs = 0; int reals = 0, crafts = 0;
+            for (var entry : entries) {
+                long t0 = System.nanoTime();
+                try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                    com.kadikular.quantimium.laser.Logistics.take(controller.spots(), entry.item(), 1, false, true, true);
+                }
+                double t = (System.nanoTime() - t0) / 1e6;
+                if (entry.real() > 0) { realMs += t; reals++; } else { craftMs += t; crafts++; }
+            }
+            // Once the Reactor has planned each thing (the first round), asking again is quick.
+            helper.assertTrue(realMs + craftMs < 10, "a round of asking took " + (realMs + craftMs) + " ms: "
+                    + reals + " held in " + realMs + " ms, " + crafts + " to be made in " + craftMs + " ms");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.reactor
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 120)
     public static void theReactorLogisticsPortIsStorage(GameTestHelper helper) {
         var core = ReactorTests.buildReactor(helper, 1);

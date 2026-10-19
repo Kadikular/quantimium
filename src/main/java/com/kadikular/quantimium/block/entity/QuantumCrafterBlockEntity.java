@@ -1385,6 +1385,22 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return commitCraft(preview.get(ghost.craftIndex()), ghost.outputIndex());
     }
 
+    /** The output slot previewing {@code item} that can make the most of it; -1 for none. */
+    public int bestGhostFor(ItemStack item) {
+        int best = -1;
+        long most = 0;
+        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
+            GhostSlot ghost = ghostAt(slot);
+            if (ghost == null || !ItemStack.isSameItemSameComponents(getGhost(slot), item)) continue;
+            long can = Math.max(1, ghost.available());
+            if (can > most) {
+                most = can;
+                best = slot;
+            }
+        }
+        return best;
+    }
+
     /**
      * Makes at least {@code wanted} of what an output slot previews, in as few runs as cover it (all a run makes
      * comes out, so a little more for a recipe that makes several), at most the previewed batch.

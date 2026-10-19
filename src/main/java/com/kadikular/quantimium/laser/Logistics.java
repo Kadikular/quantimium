@@ -135,7 +135,7 @@ public final class Logistics {
                 for (LogisticsMember to : highestFirst) {
                     if (budget <= 0 || from.getStackInSlot(slot).isEmpty()) break;
                     if (to.role() != role || to.inventoryPos().equals(provider.inventoryPos()) || !to.lets(there)) continue;
-                    if (role == LogisticsMember.Role.REQUESTER && !to.requestsCraftable() && split(provider, slot, there)[0] <= 0) continue;
+                    if (role == LogisticsMember.Role.REQUESTER && !to.requestsCraftable() && split(provider, provider.listing(), slot, there)[0] <= 0) continue;
                     int room = Math.min(budget, to.wants(there));
                     if (room <= 0) continue;
                     int moved = move(level, controller, provider, from, slot, to.inventory(), room);
@@ -162,11 +162,12 @@ public final class Logistics {
                     if (source.role() != role || source.inventoryPos().equals(requester.inventoryPos())) continue;
                     IItemHandler from = source.inventory();
                     if (from == null) continue;
+                    Map<ItemResource, long[]> listing = source.listing();
                     for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
                         ItemStack there = from.getStackInSlot(slot);
                         // Storage gives up anything it holds; a provider only what its filter lets go.
                         if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
-                        int room = Math.min(Math.min(budget, requester.wants(there)), split(source, slot, there)[made ? 1 : 0]);
+                        int room = Math.min(Math.min(budget, requester.wants(there)), split(source, listing, slot, there)[made ? 1 : 0]);
                         if (room <= 0) continue;
                         int at = slot;
                         int moved = pulling(source, slot, () -> move(level, controller, source, from, at, into, room));
@@ -261,10 +262,11 @@ public final class Logistics {
                 if (source.role() != role) continue;
                 IItemHandler from = source.inventory();
                 if (from == null) continue;
+                Map<ItemResource, long[]> listing = source.listing();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     ItemStack there = from.getStackInSlot(slot);
                     if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
-                    int[] parts = split(source, slot, there);
+                    int[] parts = split(source, listing, slot, there);
                     int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
                     if (most <= 0) continue;
                     int at = slot;
@@ -276,13 +278,77 @@ public final class Logistics {
         return ItemStack.EMPTY;
     }
 
+    /** One slot of a member's inventory where something was seen. */
+    public record Spot(LogisticsMember member, int slot) {}
+
+    /**
+     * Where each thing on a network is, in the order a take looks: providers (as their filters let go), highest
+     * priority first, then storage, lowest first. One look over everything, so a take after it looks at the few slots
+     * holding what it wants rather than at every slot again.
+     */
+    public static Map<ItemResource, List<Spot>> locate(List<LogisticsMember> members) {
+        Map<ItemResource, List<Spot>> spots = new HashMap<>();
+        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
+            for (LogisticsMember source : byPriority(members, role == LogisticsMember.Role.PROVIDER)) {
+                if (source.role() != role) continue;
+                IItemHandler from = source.inventory();
+                if (from == null) continue;
+                for (int slot = 0; slot < from.getSlots(); slot++) {
+                    ItemStack there = from.getStackInSlot(slot);
+                    if (there.isEmpty() || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
+                    spots.computeIfAbsent(ItemResource.of(there), k -> new ArrayList<>(2)).add(new Spot(source, slot));
+                }
+            }
+        }
+        return spots;
+    }
+
+    /**
+     * As {@link #take(List, java.util.function.Predicate, int, boolean, boolean, boolean)} for one thing, looking only
+     * where {@code spots} last saw it ({@link LogisticsController#spots()}); each slot is checked to hold it still.
+     */
+    public static ItemStack take(Map<ItemResource, List<Spot>> spots, ItemResource item, int max, boolean simulate, boolean reals, boolean made) {
+        return take(spots, null, item, max, simulate, reals, made);
+    }
+
+    /** As {@link #take(Map, ItemResource, int, boolean, boolean, boolean)}, from {@code only} those members, if set. */
+    public static ItemStack take(Map<ItemResource, List<Spot>> spots, @org.jetbrains.annotations.Nullable Set<LogisticsMember> only,
+                                 ItemResource item, int max, boolean simulate, boolean reals, boolean made) {
+        List<Spot> where = spots.get(item);
+        if (where == null) return ItemStack.EMPTY;
+        if (only != null) where = where.stream().filter(spot -> only.contains(spot.member())).toList();
+        if (reals) {
+            ItemStack stored = takeAt(where, item, max, simulate, true, false);
+            if (!stored.isEmpty() || !made) return stored;
+        }
+        return made ? takeAt(where, item, max, simulate, false, true) : ItemStack.EMPTY;
+    }
+
+    private static ItemStack takeAt(List<Spot> where, ItemResource item, int max, boolean simulate, boolean reals, boolean made) {
+        Map<LogisticsMember, Map<ItemResource, long[]>> listings = new HashMap<>();
+        for (Spot spot : where) {
+            LogisticsMember source = spot.member();
+            IItemHandler from = source.inventory();
+            if (from == null || spot.slot() >= from.getSlots()) continue;
+            ItemStack there = from.getStackInSlot(spot.slot());
+            if (there.isEmpty() || !item.matches(there)) continue;
+            Map<ItemResource, long[]> listing = listings.computeIfAbsent(source, LogisticsMember::listing);
+            int[] parts = split(source, listing, spot.slot(), there);
+            int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
+            if (most <= 0) continue;
+            int at = spot.slot();
+            ItemStack taken = pulling(source, at, () -> from.extractItem(at, most, simulate));
+            if (!taken.isEmpty()) return taken;
+        }
+        return ItemStack.EMPTY;
+    }
+
     /**
      * How much of what a member shows in {@code slot} is really there, and how much more a pull would make: a
      * Crafter's preview is all made, a Reactor port's slot is what it holds and then what it could make.
      */
-    private static int[] split(LogisticsMember source, int slot, ItemStack there) {
+    private static int[] split(LogisticsMember source, @org.jetbrains.annotations.Nullable Map<ItemResource, long[]> listing, int slot, ItemStack there) {
         if (source.onDemand(slot)) return new int[] {0, source.offersCraftable() ? there.getCount() : 0};
-        Map<ItemResource, long[]> listing = source.listing();
         long[] both = listing == null ? null : listing.get(ItemResource.of(there));
         if (both == null) return new int[] {there.getCount(), 0};
         int held = (int) Math.min(there.getCount(), both[0]);

@@ -815,6 +815,36 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         return (long) Math.ceil(plan.energy() * Config.crafterTaxFraction(FluxBand.SINGULARITY));
     }
 
+    /** Plans worked out from the whole of what's held, while it, the counts and the recipes stand. */
+    private final java.util.Map<ItemResource, java.util.Map<Long, ReactorPlanner.Result>> plans = new java.util.HashMap<>();
+    private int plansVersion = -1;
+    @org.jetbrains.annotations.Nullable
+    private Object plansCounts;
+    @org.jetbrains.annotations.Nullable
+    private Object plansRecipes;
+
+    /**
+     * Plans {@code count} of {@code item} from what's held and not promised. With nothing promised, the same question
+     * gets the same answer until the horizon changes: a storage bus asking about every item each time it looks
+     * doesn't make the Reactor plan them all again.
+     */
+    public ReactorPlanner.Result planFromHeld(ItemResource item, long count) {
+        if (!reserved.isEmpty()) return plan(available(), item, count);
+        if (plansVersion != ledgerVersion || plansCounts != getCounts() || plansRecipes != recipes) {
+            plans.clear();
+            plansVersion = ledgerVersion;
+            plansCounts = getCounts();
+            plansRecipes = recipes;
+        }
+        java.util.Map<Long, ReactorPlanner.Result> forItem = plans.computeIfAbsent(item, k -> new java.util.HashMap<>());
+        ReactorPlanner.Result result = forItem.get(count);
+        if (result == null) {
+            result = plan(available(), item, count);
+            if (forItem.size() < 16) forItem.put(count, result);
+        }
+        return result;
+    }
+
     /** Plans {@code count} of {@code item} from {@code stock}, which may differ from the ledger. Changes nothing. */
     public ReactorPlanner.Result plan(java.util.Map<ItemResource, Long> stock, ItemResource item, long count) {
         if (!isActive()) return refused("message.quantimium.reactor.offline");

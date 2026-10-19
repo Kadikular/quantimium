@@ -230,9 +230,12 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             LogisticsController controller = controller();
             if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
             int got = 0;
-            List<LogisticsMember> members = members();
+            // Only where the network last saw it: a storage bus asking about every item each time it looks would
+            // otherwise look over every slot of the network for each.
+            java.util.Set<LogisticsMember> members = new java.util.HashSet<>(members());
+            var spots = controller.spots();
             while (got < amount) {
-                ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(resource), amount - got, false,
+                ItemStack more = Logistics.take(spots, members, resource, amount - got, false,
                         offersReal(), offersCraftable() && !com.kadikular.quantimium.recipe.CraftChain.storedOnly());
                 if (more.isEmpty()) break;
                 got += more.getCount();
