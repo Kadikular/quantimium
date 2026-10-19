@@ -127,17 +127,20 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.EMPTY;
     private long offersTick = Long.MIN_VALUE;
     private boolean offersStale = true;
+    /** The fewest ticks between workings out of what the network offers, after a move. */
+    private static final int OFFERS_SOONEST = 5;
     private boolean workingOut;
 
     /**
-     * Worked out at most once a second, sooner after a move it saw; never while it's being worked out (a network
-     * that reads another's offers which read this one back gets what this one last had).
+     * Worked out at most once a second, sooner after a move it saw (but not more than every few ticks, however busy
+     * the network); never while it's being worked out (a network that reads another's offers which read this one
+     * back gets what this one last had).
      */
     @Override
     public com.kadikular.quantimium.laser.OfferTable offers() {
         if (level == null || workingOut) return offers;
         long now = level.getGameTime();
-        if (!offersStale && now - offersTick < 20) return offers;
+        if (offersTick != Long.MIN_VALUE && now - offersTick < (offersStale ? OFFERS_SOONEST : 20)) return offers;
         workingOut = true;
         try {
             offers = com.kadikular.quantimium.laser.OfferTable.build(level, this, worldPosition, members());

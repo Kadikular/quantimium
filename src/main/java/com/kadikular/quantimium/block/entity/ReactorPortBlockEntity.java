@@ -414,7 +414,8 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             }
             // What's held less what any open transaction has promised (this one's included), and what this
             // one's own earlier steps leave or put in.
-            java.util.Map<ItemResource, Long> stock = horizon.available();
+            // With nothing pending, what's held is the stock as it stands, and the Reactor keeps its plans from that.
+            java.util.Map<ItemResource, Long> stock = clean ? null : horizon.available();
             long fe = horizon.getEnergyStorage().getEnergyStored();
             for (Op op : ops) {
                 if (op.plan() == null) {
@@ -432,7 +433,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             while (low <= high && plans < MAX_PLANS) {
                 int tryAmount = plans == 0 ? high : (low + high) / 2;
                 plans++;
-                com.kadikular.quantimium.reactor.ReactorPlanner.Result result = horizon.plan(stock, item, tryAmount);
+                com.kadikular.quantimium.reactor.ReactorPlanner.Result result = clean ? horizon.planFromHeld(item, tryAmount) : horizon.plan(stock, item, tryAmount);
                 long cost = result.planned() ? HorizonCoreBlockEntity.feFor(result.plan()) : Long.MAX_VALUE;
                 if (result.planned() && cost <= fe) {
                     best = new Op(item, tryAmount, result.plan(), cost);

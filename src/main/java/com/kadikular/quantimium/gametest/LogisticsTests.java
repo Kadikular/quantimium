@@ -985,6 +985,28 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_many", timeoutTicks = 200)
+    public static void aNetworkListsEverythingACrafterCouldMake(GameTestHelper helper) {
+        // Eight kinds of planks and sticks stored, a crafting-table Crafter on the network: more than its screen's 54
+        // outputs could be made, and the network lists them all.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.OAK_PLANKS, 64), new ItemStack(Items.BIRCH_PLANKS, 64),
+                new ItemStack(Items.SPRUCE_PLANKS, 64), new ItemStack(Items.JUNGLE_PLANKS, 64), new ItemStack(Items.ACACIA_PLANKS, 64),
+                new ItemStack(Items.DARK_OAK_PLANKS, 64), new ItemStack(Items.MANGROVE_PLANKS, 64), new ItemStack(Items.CHERRY_PLANKS, 64),
+                new ItemStack(Items.STICK, 64), new ItemStack(Items.COBBLESTONE, 64), new ItemStack(Items.IRON_INGOT, 64));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        LogisticsControllerBlockEntity controller = helper.getBlockEntity(new BlockPos(2, Y, 8), LogisticsControllerBlockEntity.class);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            int made = controller.offers().madeBy(helper.absolutePos(new BlockPos(6, Y - 1, 8))).size();
+            helper.assertTrue(made > 54, "the network lists all it could make: " + made);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_own_chain", timeoutTicks = 200)
     public static void aLoneCrafterChainsItsOwnCrafts(GameTestHelper helper) {
         // One crafting-table Crafter on the network, 35 iron blocks and 4 ingots stored: it offers leggings (ingots it

@@ -26,6 +26,17 @@ public final class StockHandler implements ResourceHandler<ItemResource> {
         });
     }
 
+    /** The same stock, item for item: what a machine was shown before, so it needn't work it out again. */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof StockHandler stock && items.equals(stock.items) && amounts.equals(stock.amounts);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * items.hashCode() + amounts.hashCode();
+    }
+
     @Override
     public int size() {
         return items.size();

@@ -39,6 +39,15 @@ public final class CrafterPreview {
 
     public List<ResolvedCraft> preview(Level level, BlockPos source, ItemStack catalyst, ItemStackHandler grid,
                                        int inputSlots, int availableFe, double feMultiplier) {
+        return preview(level, source, catalyst, grid, inputSlots, availableFe, feMultiplier, MAX_OUTPUTS);
+    }
+
+    /**
+     * As {@link #preview(Level, BlockPos, ItemStack, ItemStackHandler, int, int, double)}, up to {@code maxOutputs}
+     * output stacks: a network working out what a crafter could make wants all of it, not one screenful.
+     */
+    public List<ResolvedCraft> preview(Level level, BlockPos source, ItemStack catalyst, ItemStackHandler grid,
+                                       int inputSlots, int availableFe, double feMultiplier, int maxOutputs) {
         if (level == null || catalyst.isEmpty()) return List.of();
         if (!CatalystResolver.isCatalystAllowed(catalyst)) return List.of();
 
@@ -88,12 +97,12 @@ public final class CrafterPreview {
             for (ItemStack output : craft.outputs()) {
                 if (!output.isEmpty()) outputs++;
             }
-            if (outputs == 0 || outputs > MAX_OUTPUTS) continue;
+            if (outputs == 0 || outputs > maxOutputs) continue;
             // Keep multi-output recipes atomic rather than cutting their byproducts off at the cap.
-            if (usedOutputs + outputs > MAX_OUTPUTS) continue;
+            if (usedOutputs + outputs > maxOutputs) continue;
             capped.add(craft);
             usedOutputs += outputs;
-            if (usedOutputs == MAX_OUTPUTS) break;
+            if (usedOutputs == maxOutputs) break;
         }
         return capped;
     }

@@ -660,8 +660,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
         int fe = energyStorage.getEnergyStored();
         var views = networkViews(network, stock, fromCraftable, true);
+        // Asked the same again (the same stock shown, nothing of its own changed), it answers as before: a network
+        // works out its offers often, and most of the time nothing a crafter would make from has moved.
+        List<Object> asked = List.of(views, fromCraftable, contentRevision, fe, Math.round(multiplier * 1000), catalyst.getItem(),
+                recipeLocked, String.valueOf(preferredRecipeId), coherenceReserve);
+        List<com.kadikular.quantimium.laser.OfferMaker.Made> known = makesAnswers.get(asked);
+        if (known != null) return known;
         List<ResolvedCraft> crafts = EntangledLinks.withOverrides(views,
-                () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier));
+                () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
         for (ResolvedCraft craft : crafts) {
@@ -675,7 +681,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         canMake(craft, i), java.util.Set.copyOf(from)));
             }
         }
-        return made;
+        List<com.kadikular.quantimium.laser.OfferMaker.Made> answer = List.copyOf(made);
+        makesAnswers.put(asked, answer);
+        return answer;
     }
 
     /** How many of output {@code index} a craft could make from what it has: "Can make", not one batch. */
@@ -692,6 +700,15 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
         return outputs;
     }
+
+    /** The last few things a network asked it could make, and the answers (see {@link #makes}): one a tier, and a few more. */
+    private final java.util.Map<List<Object>, List<com.kadikular.quantimium.laser.OfferMaker.Made>> makesAnswers =
+            new java.util.LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<List<Object>, List<com.kadikular.quantimium.laser.OfferMaker.Made>> eldest) {
+                    return size() > 12;
+                }
+            };
 
     /** What its preview offers, by item: the most of each one craft would make, plus what's really in its outputs. */
     public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> previewOutputs() {
