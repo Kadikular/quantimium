@@ -180,7 +180,7 @@ public final class LaserNetworks {
         Set<BlockPos> crossing = new HashSet<>();
         beams.forEach((from, list) -> {
             for (LaserBeam beam : list) {
-                if (pos.equals(beam.hit())) {
+                if (pos.equals(beam.hit()) || beam.jumps() && pos.equals(beam.aim())) {
                     crossing.add(from);
                 } else if (beam.aim() == null) {
                     // A straight beam: on its line, within its length.
@@ -1103,7 +1103,7 @@ public final class LaserNetworks {
                 node.forget(target);
                 continue;
             }
-            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, range, marks));
+            traced.add(node.entangles() ? LaserBeam.jump(level, node.nodePos(), target) : LaserBeam.traceTo(level, node.nodePos(), target, range, marks));
         }
         return traced;
     }

@@ -23,6 +23,7 @@ navigation:
 - <ItemLink id="quantimium:creative_energy_void" />
 - <ItemLink id="quantimium:decoherence_projector" />
 - <ItemLink id="quantimium:entangled_dock" />
+- <ItemLink id="quantimium:entangled_mirror" />
 - <ItemLink id="quantimium:field_monitor" />
 - <ItemLink id="quantimium:field_regulator" />
 - <ItemLink id="quantimium:flash_emitter" />

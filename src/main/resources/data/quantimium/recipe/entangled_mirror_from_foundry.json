@@ -1,0 +1,29 @@
+{
+  "type": "quantimium:quantum_foundry",
+  "ingredients": [
+    {
+      "ingredient": "quantimium:tesseract"
+    },
+    {
+      "ingredient": "quantimium:laser_mirror",
+      "count": 2
+    },
+    {
+      "ingredient": "quantimium:anomalite_lattice"
+    },
+    {
+      "ingredient": "quantimium:quantimium_trace",
+      "count": 4
+    }
+  ],
+  "minimum_pillars": 2,
+  "minimum_flux_band": "medium",
+  "duration": 300,
+  "fe_per_tick": 120,
+  "flux_cost": 80.0,
+  "anomaly": 10.0,
+  "result": {
+    "id": "quantimium:entangled_mirror",
+    "count": 2
+  }
+}

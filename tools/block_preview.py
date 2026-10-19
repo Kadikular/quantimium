@@ -638,7 +638,15 @@ def scene_stabilizer() -> List[Placement]:
     return [((0, 0, 0), "tesseract_stabilizer", {})]
 
 
+def scene_mirrors() -> List[Placement]:
+    """The Entangled Mirror facing south, east and up."""
+    return [((0, 0, 0), "entangled_mirror", {"facing": "south", "powered": "false"}),
+            ((2, 0, 0), "entangled_mirror", {"facing": "east", "powered": "false"}),
+            ((4, 0, 0), "entangled_mirror", {"facing": "up", "powered": "false"})]
+
+
 SCENES = {
+    "mirrors": scene_mirrors,
     "foundry": scene_foundry,
     "crafters": scene_crafters,
     "superposition": scene_superposition,

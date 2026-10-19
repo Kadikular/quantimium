@@ -25,7 +25,7 @@ public final class TierTests {
             "flux_maintainer", "anomaly_siphon", "zeno_field_controller", "decoherence_lance", "decoherence_projector",
             "mirror_lens", "tether", "rift_seed", "materialiser", "rift_lens", "fold_pylon", "entangled_dock");
     private static final List<String> HIGH = List.of("quantum_foundry_controller", "anomaly_containment_hall",
-            "field_regulator", "rift_anchor", "rift_stabiliser", "superposition_pod", "unfolding_array", "fold_core");
+            "field_regulator", "rift_anchor", "rift_stabiliser", "superposition_pod", "unfolding_array", "fold_core", "entangled_mirror");
     private static final Set<String> MID_MATERIALS = Set.of("anomaly_fragment", "anomalite_shard", "anomalite_lattice", "anomalite_emitter");
     /** Low machines, the lasers' first blocks among them: made before any anomaly is siphoned or grown. */
     private static final List<String> LOW = List.of("observation_chamber", "basic_quantum_crafter", "flux_meter", "flux_detector",
@@ -109,9 +109,17 @@ public final class TierTests {
         boolean made = false;
         for (RecipeHolder<?> holder : helper.getLevel().getServer().getRecipeManager().getRecipes()) {
             Recipe<?> recipe = holder.value();
-            if (!RecipeCompat.result(recipe, helper.getLevel().registryAccess()).is(result)) continue;
+            // The Foundry's own recipes show no result to recipe viewers' displays: read them from the recipe.
+            List<Ingredient> ingredients;
+            if (recipe instanceof com.kadikular.quantimium.recipe.foundry.QuantumFoundryRecipe foundry) {
+                if (!foundry.result().is(result)) continue;
+                ingredients = foundry.ingredients().stream().map(com.kadikular.quantimium.recipe.foundry.FoundryIngredient::ingredient).toList();
+            } else {
+                if (!RecipeCompat.result(recipe, helper.getLevel().registryAccess()).is(result)) continue;
+                ingredients = RecipeCompat.ingredients(recipe);
+            }
             made = true;
-            for (Ingredient ingredient : RecipeCompat.ingredients(recipe)) {
+            for (Ingredient ingredient : ingredients) {
                 for (ItemStack option : RecipeCompat.stacks(ingredient)) {
                     Identifier id = BuiltInRegistries.ITEM.getKey(option.getItem());
                     if (id.getNamespace().equals(Quantimium.MODID) && materials.contains(id.getPath())) found = true;

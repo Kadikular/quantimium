@@ -128,6 +128,22 @@ spot, so a Harvest lens's light breaks whatever comes back there.
 Holding the Linker, or a wrench, shows every beam faintly, even ones carrying nothing, so you can see
 where light would go.
 
+## Entangled mirrors
+
+An <ItemLink id="quantimium:entangled_mirror" /> carries light any distance, through anything,
+to another one in the same dimension. It's made in pairs in the <ItemLink id="quantimium:quantum_foundry_controller" />, from a
+<ItemLink id="quantimium:tesseract" /> and two Laser Mirrors. It faces you as you place it.
+
+- Bind a Tesseract to the mirror the light should come out of (sneak and use it on that mirror), then use it on the
+  mirror the light goes into. It floats in that mirror's core, and glows while light crosses.
+- Light into the face of the mirror holding the Tesseract leaves by the face of the one it's bound to, refocused,
+  as from any mirror. That jump takes 5% of what crosses (a few relays' worth), as flux.
+- A mirror without a Tesseract only receives. Put one in each, bound to the other, and the pair works both ways.
+- Both mirrors must be loaded for light to cross; the Tesseract stays bound while one isn't, and light crosses again
+  when it's back. A Tesseract bound to a mirror in another dimension sends nothing.
+- Sneak with an empty hand to take the Tesseract out. A redstone signal switches a mirror off.
+- Light reaching a mirror from behind also leaves by its face.
+
 ## Optical cavities
 
 A <ItemLink id="quantimium:cavity_mirror" /> facing a flat <ItemLink id="quantimium:laser_mirror" />, a <ItemLink id="quantimium:laser_relay" />, or another Cavity

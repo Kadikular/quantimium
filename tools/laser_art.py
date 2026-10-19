@@ -86,11 +86,28 @@ def mirror_plate() -> Image.Image:
 
 
 def splitter_plate() -> Image.Image:
-    """The Laser Splitter's plate: the Mirror's, with a 4x4 mark of the focus's light blue in the middle, white at its heart."""
+    """
+    The Laser Splitter's plate (and the Cavity Mirror's): the Mirror's, with a 4x4 mark of the focus's light blue in
+    the middle and a 2x2 window through it at its heart, where the light gets through.
+    """
     img = mirror_plate()
     for x in range(6, 10):
         for y in range(6, 10):
-            img.putpixel((x, y), hx("f4f8ff") if 7 <= x <= 8 and 7 <= y <= 8 else hx("a8d0ff"))
+            img.putpixel((x, y), (0, 0, 0, 0) if 7 <= x <= 8 and 7 <= y <= 8 else hx("a8d0ff"))
+    return img
+
+
+def entangled_plate() -> Image.Image:
+    """The Entangled Mirror's plate: the Mirror's silver gone violet, with a 4x4 window in the middle onto its Tesseract."""
+    img = mirror_plate()
+    for x in range(3, 13):
+        for y in range(3, 13):
+            r, g, b, a = img.getpixel((x, y))
+            img.putpixel((x, y), (int(r * 0.78 + 0xb4 * 0.22), int(g * 0.70 + 0x9c * 0.10), int(b * 0.9 + 0xff * 0.1), a))
+    for x in range(5, 11):
+        for y in range(5, 11):
+            inside = 6 <= x <= 9 and 6 <= y <= 9
+            img.putpixel((x, y), (0, 0, 0, 0) if inside else hx("b49cff"))
     return img
 
 
@@ -1194,6 +1211,38 @@ def cavity_mirror() -> None:
 ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y": 90}, "up": {"x": 270}, "down": {"x": 90}}
 
 
+def entangled_mirror() -> None:
+    """
+    The Entangled Mirror: a steel cage, a violet plate with a window on its face (north, drawn) and a steel back; its
+    Tesseract floats in the middle (EntangledMirrorBER).
+    """
+    entangled_plate().save(os.path.join(TEX, "entangled_mirror_plate.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "plate": "quantimium:block/entangled_mirror_plate",
+         "particle": "quantimium:block/laser_mirror_steel"}
+
+    def box(start, end, texture="#steel"):
+        return {"from": start, "to": end, "faces": {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}}
+
+    plate = box([3, 3, 0], [13, 13, 1])
+    plate["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+    plate["faces"]["south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+    ring_front = [box([1, 13, 0], [15, 15, 2]), box([1, 1, 0], [15, 3, 2]), box([1, 3, 0], [3, 13, 2]), box([13, 3, 0], [15, 13, 2])]
+    ring_back = [box([1, 13, 14], [15, 15, 16]), box([1, 1, 14], [15, 3, 16]), box([1, 3, 14], [3, 13, 16]), box([13, 3, 14], [15, 13, 16])]
+    posts = [box([x, y, 2], [x + 2, y + 2, 14]) for x in (1, 13) for y in (1, 13)]
+    back = box([3, 3, 15], [13, 13, 16])
+    elements = [plate] + ring_front + ring_back + posts + [back]
+    with open(os.path.join(MODELS, "entangled_mirror.json"), "w") as handle:
+        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": elements}, handle, indent=2)
+    variants = {}
+    for facing, rot in ROTATIONS.items():
+        for powered in ("false", "true"):
+            variants[f"facing={facing},powered={powered}"] = dict({"model": "quantimium:block/entangled_mirror"}, **rot)
+    with open(os.path.join(STATES, "entangled_mirror.json"), "w") as handle:
+        json.dump({"variants": variants}, handle, indent=1)
+    with open(os.path.join(ITEMS, "entangled_mirror.json"), "w") as handle:
+        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/entangled_mirror"}}, handle, indent=2)
+
+
 def main() -> None:
     written = 0
     laser_emitters()
@@ -1203,6 +1252,7 @@ def main() -> None:
     laser_mirror("laser_splitter", splits=True)
     solar_emitter()
     cavity_mirror()
+    entangled_mirror()
     for name, face, back_of, side_seed in (("photodetector", detector_face, None, 52),):
         stone(("1b1e38", "262a4a", "323760") if name == "cavity_mirror" else ("2b2b33", "3b3b45", "4d4d59"), side_seed).save(
             os.path.join(TEX, f"{name}_side.png"))

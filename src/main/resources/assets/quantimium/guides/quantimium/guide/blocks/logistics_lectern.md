@@ -2,7 +2,7 @@
 navigation:
   title: Logistics Lectern
   parent: blocks/index.md
-  position: 37
+  position: 38
   icon: quantimium:logistics_lectern
 item_ids:
 - quantimium:logistics_lectern

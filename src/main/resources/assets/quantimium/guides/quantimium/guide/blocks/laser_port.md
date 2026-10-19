@@ -2,7 +2,7 @@
 navigation:
   title: Laser Port
   parent: blocks/index.md
-  position: 30
+  position: 31
   icon: quantimium:laser_port
 item_ids:
 - quantimium:laser_port

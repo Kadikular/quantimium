@@ -127,6 +127,7 @@ laser_relay: "A focus on a base with emitters on its other sides: light reaching
 laser_prism: "Sends the light that reaches it to each block it's linked to, in a straight line at any angle: splits and joins beams."
 laser_linker: "Links a Laser Prism to the blocks its light should reach."
 cavity_mirror: "Two facing each other across a clear gap hold light: a laser network's battery, which leaks a little."
+entangled_mirror: "A pair carries light any distance: light into one's face leaves by the other's."
 photodetector: "Light passes through it, and it gives a redstone signal for how much."
 lens_mount: "A holder for four lenses: light goes straight through it, through each in turn."
 logistics_controller: "Logistics: a relay whose light makes one network of everything it reaches; lenses past it put into and take from it."

@@ -239,6 +239,8 @@ public class ModItems {
             "laser_relay", ModBlocks.LASER_RELAY);
     public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerItem(
             "cavity_mirror", props -> new TooltipBlockItem(ModBlocks.CAVITY_MIRROR.get(), props.useBlockDescriptionPrefix()));
+    public static final DeferredItem<BlockItem> ENTANGLED_MIRROR_ITEM = ITEMS.registerItem(
+            "entangled_mirror", props -> new TooltipBlockItem(ModBlocks.ENTANGLED_MIRROR.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> PHOTODETECTOR_ITEM = ITEMS.registerSimpleBlockItem(
             "photodetector", ModBlocks.PHOTODETECTOR);
     public static final DeferredItem<BlockItem> LASER_PRISM_ITEM = ITEMS.registerSimpleBlockItem(

@@ -346,6 +346,59 @@ public final class LaserTests {
         });
     }
 
+    /** An Entangled Mirror at {@code pos} facing {@code facing}, with a Tesseract bound to the one at {@code partner} if set. */
+    private static com.kadikular.quantimium.block.entity.EntangledMirrorBlockEntity entangled(GameTestHelper helper, BlockPos pos, Direction facing,
+                                                                                             @org.jetbrains.annotations.Nullable BlockPos partner) {
+        helper.setBlock(pos, ModBlocks.ENTANGLED_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.EntangledMirrorBlock.FACING, facing));
+        var mirror = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.EntangledMirrorBlockEntity.class);
+        if (partner != null) mirror.insert(CrafterTests.link(helper, partner, ModBlocks.ENTANGLED_MIRROR.get()));
+        return mirror;
+    }
+
+    // covers: laser.entangled_mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 140)
+    public static void anEntangledMirrorSendsLightToItsPartner(GameTestHelper helper) {
+        // Light into one's face leaves by its partner's, across a wall, less the jump's tax; taken out, its Tesseract
+        // sends nothing.
+        emitter(helper, new BlockPos(1, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos partner = new BlockPos(12, Y, 10);
+        var sender = entangled(helper, new BlockPos(5, Y, 3), Direction.WEST, partner);
+        entangled(helper, partner, Direction.SOUTH, null);
+        for (int x = 0; x < 17; x++) helper.setBlock(new BlockPos(x, Y, 7), net.minecraft.world.level.block.Blocks.STONE);
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 14));
+        long[] before = {-1};
+        helper.runAfterDelay(40, () -> before[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(60, () -> {
+            long gained = core.getEnergyStorage().getEnergyStored() - before[0];
+            long full = 20L * LaserTuning.Tier.ONE.rate;
+            helper.assertTrue(gained > 0, "the light crossed to the partner");
+            helper.assertTrue(gained <= full * (1.0 - LaserTuning.JUMP_TAX) + LaserTuning.Tier.ONE.rate, "the jump takes its tax: " + gained + " of " + full);
+            sender.remove();
+        });
+        helper.runAfterDelay(100, () -> before[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(120, () -> {
+            helper.assertValueEqual((long) core.getEnergyStorage().getEnergyStored(), before[0], "with no Tesseract, nothing crosses");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.entangled_mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPairWithATesseractEachSendsFromEitherSide(GameTestHelper helper) {
+        // Two mirrors, each with a Tesseract bound to the other: light into b's face leaves by a's, though a sends
+        // back to b too.
+        BlockPos a = new BlockPos(4, Y, 3), b = new BlockPos(12, Y, 13);
+        entangled(helper, a, Direction.WEST, b);
+        entangled(helper, b, Direction.EAST, a);
+        FoldCoreBlockEntity atA = sink(helper, new BlockPos(1, Y, 3));
+        emitter(helper, new BlockPos(15, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.WEST, true);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(atA.getEnergyStorage().getEnergyStored() > 0, "light into b's face leaves by a's");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.relay
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aRelayTurnsTheBeamAndTakesItsTax(GameTestHelper helper) {

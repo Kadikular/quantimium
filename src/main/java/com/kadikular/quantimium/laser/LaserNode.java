@@ -23,6 +23,20 @@ public interface LaserNode {
         return List.of();
     }
 
+    /**
+     * Whether its links ({@link #targets()}) are entangled: light reaches each at once, however far and whatever's
+     * between, rather than along a line. An Entangled Mirror's, to its partner.
+     */
+    default boolean entangles() {
+        return false;
+    }
+
+    /** For an Entangled Mirror: the way light from its partner leaves it, out of its face; null for any other node. */
+    @org.jetbrains.annotations.Nullable
+    default Direction entangledFace() {
+        return null;
+    }
+
     /** Lets go of a linked block that's gone. */
     default void forget(BlockPos target) {}
 

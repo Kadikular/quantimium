@@ -42,6 +42,25 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         OPEN
     }
 
+    /** The length an entangled beam is given: it crosses nothing, so it has no path and isn't drawn. */
+    public static final int JUMP = -1;
+
+    /** Whether it's entangled light: from an Entangled Mirror straight to its partner, crossing nothing between. */
+    public boolean jumps() {
+        return length == JUMP;
+    }
+
+    /**
+     * Light from an Entangled Mirror at {@code from} to its partner at {@code target}: there at once, if the partner
+     * is loaded and is one (it arrives as if from behind it, to leave by its face); otherwise it goes nowhere.
+     */
+    public static LaserBeam jump(Level level, BlockPos from, BlockPos target) {
+        if (level.isLoaded(target) && level.getBlockEntity(target) instanceof LaserNode node && node.entangledFace() != null && !target.equals(from)) {
+            return new LaserBeam(from, node.entangledFace(), target, JUMP, target, End.NODE, 0, false, Lens.NONE);
+        }
+        return new LaserBeam(from, Direction.UP, target, JUMP, null, End.OPEN, 0, false, Lens.NONE);
+    }
+
     public LaserBeam withFlow(long flow) {
         return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses);
     }
@@ -203,6 +222,7 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
 
     /** Traces this beam again the same way: light from a face, or aimed at a block. */
     public LaserBeam retrace(Level level, int range) {
+        if (jumps()) return jump(level, from, aim);
         return aim == null ? trace(level, from, face, range, marks()) : traceTo(level, from, aim, range, marks());
     }
 
@@ -214,6 +234,7 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
     /** Where the light starts and stops, block-world coordinates: from the node's side to what it ends on. */
     public Vec3[] ends() {
         Vec3 centre = from.getCenter();
+        if (jumps()) return new Vec3[] {centre, centre};
         if (aim == null) {
             Vec3 dir = Vec3.atLowerCornerOf(face.getUnitVec3i());
             return new Vec3[] {centre.add(dir.scale(0.5)), centre.add(dir.scale(length + 0.5))};

@@ -74,6 +74,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.LASER_RELAY_ITEM.get());
                         output.accept(ModItems.LASER_PRISM_ITEM.get());
                         output.accept(ModItems.CAVITY_MIRROR_ITEM.get());
+                        output.accept(ModItems.ENTANGLED_MIRROR_ITEM.get());
                         output.accept(ModItems.PHOTODETECTOR_ITEM.get());
                         output.accept(ModItems.AREA_PRISM_ITEM.get());
                         output.accept(ModItems.ISOLATOR_ITEM.get());

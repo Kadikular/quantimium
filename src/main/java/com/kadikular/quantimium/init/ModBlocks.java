@@ -739,6 +739,8 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> CAVITY_MIRROR = BLOCKS.register(
             "cavity_mirror", id -> new CavityMirrorBlock(laserBlock(id, MapColor.QUARTZ)));
+    public static final DeferredBlock<Block> ENTANGLED_MIRROR = BLOCKS.register(
+            "entangled_mirror", id -> new com.kadikular.quantimium.block.EntangledMirrorBlock(laserBlock(id, MapColor.COLOR_PURPLE).noOcclusion().sound(SoundType.AMETHYST)));
     public static final DeferredBlock<Block> PHOTODETECTOR = BLOCKS.register(
             "photodetector", id -> new PhotodetectorBlock(laserBlock(id, MapColor.COLOR_GRAY)));
     public static final DeferredBlock<Block> AREA_PRISM = BLOCKS.register(

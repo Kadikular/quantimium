@@ -87,6 +87,7 @@
     "quantimium:lens_mount",
     "quantimium:laser_prism",
     "quantimium:cavity_mirror",
+    "quantimium:entangled_mirror",
     "quantimium:photodetector"
   ]
 }

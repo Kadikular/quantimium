@@ -10,6 +10,8 @@ public final class LaserTuning {
 
     /** What each relay a beam passes takes of what passes, as flux. */
     public static final double HOP_TAX = 0.01;
+    /** What an Entangled Mirror takes of what it sends to its partner, as flux: a few relays' worth, for any distance. */
+    public static final double JUMP_TAX = 0.05;
     /** How far a mirror's light reaches before it needs refocusing again. */
     public static final int RELAY_RANGE = 32;
     /** How far a prism reaches, in a straight line to each block it's linked to, and how many it links. */
