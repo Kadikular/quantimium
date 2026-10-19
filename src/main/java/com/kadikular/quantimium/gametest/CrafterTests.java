@@ -90,9 +90,36 @@ public final class CrafterTests {
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.TO_INVENTORY * take + stone.getAsInt()), "the rest to the inventory");
             helper.assertValueEqual(player.getInventory().countItem(Items.STONE), 19, "nineteen stone in the inventory");
             menu.setCarried(ItemStack.EMPTY);
+            // Dirt is in nine outputs, 72 in all: half a stack of it, from across them.
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.HALF * take + 3), "half the dirt");
-            helper.assertValueEqual(menu.getCarried().getCount(), 4, "four dirt");
-            helper.assertValueEqual(crafter.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + 3).getCount(), 4, "four left");
+            helper.assertValueEqual(menu.getCarried().getCount(), 32, "half a stack of dirt");
+            int dirt = 0;
+            for (int i = 0; i < 9; i++) dirt += crafter.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + i).getCount();
+            helper.assertValueEqual(dirt, 40, "forty left");
+            TestSupport.removePlayer(helper, player);
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.preview
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_screen_one", timeoutTicks = 60)
+    public static void oneNuggetTakenLeavesTheRestMade(GameTestHelper helper) {
+        // One nugget asked for from the screen: a run makes nine, one comes onto the cursor, eight stay in the outputs.
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.CRAFTING_TABLE);
+        TestSupport.fill(crafter.getEnergyStorage());
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 2));
+        ServerPlayer player = TestSupport.player(helper, CRAFTER.west(2));
+        helper.runAfterDelay(20, () -> {
+            var menu = (com.kadikular.quantimium.menu.QuantumCrafterMenu) crafter.createMenu(1, player.getInventory(), player);
+            int nugget = ghostSlot(crafter, Items.IRON_NUGGET) - QuantumCrafterBlockEntity.OUTPUT_START;
+            helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.ONE
+                    * com.kadikular.quantimium.menu.QuantumCrafterMenu.TAKE + nugget), "one taken");
+            helper.assertValueEqual(menu.getCarried().getCount(), 1, "one nugget in hand");
+            int kept = 0;
+            for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END; slot++) {
+                if (crafter.getInventory().getStackInSlot(slot).is(Items.IRON_NUGGET)) kept += crafter.getInventory().getStackInSlot(slot).getCount();
+            }
+            helper.assertValueEqual(kept, 8, "eight kept");
             TestSupport.removePlayer(helper, player);
             helper.succeed();
         });

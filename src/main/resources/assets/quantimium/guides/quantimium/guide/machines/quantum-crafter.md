@@ -150,12 +150,15 @@ One take makes as many runs as the **smallest** of three limits allows:
 runs and a stack of ingots allows 64, but at 4,000 FE a smelt the energy allows only 25. The ghost
 shows **25 iron ingots**.
 
-Its screen works like a logistics terminal: everything in its outputs and every preview in one scrolling
-grid, with a search box over it, sorted by count or by name (a tab on its left). Previews are tinted, and their small number is how many they **can
-make** in all, past one stack: 128 iron ingots, in the grid or behind a Tesseract (a logistics network
-counts every stack), show 14 iron blocks. Click for the batch, right-click for half, shift-right-click (or
-shift and the wheel down) for one, onto what you're holding if it's the same; shift-click sends the batch
-to your inventory. While shift is held the grid holds still.
+Its screen works like a logistics terminal: one cell for each item in its outputs or its previews, in a
+scrolling grid with a search box over it, sorted by count or by name (a tab on its left). A cell's number is
+what's in its outputs plus how many it **can make** in all, past one stack: 128 iron ingots, in the grid or
+behind a Tesseract (a logistics network counts every stack), show 14 iron blocks. A cell with none there is
+tinted; its tooltip says how many are there and what making more costs. Click for a stack, right-click for
+half, shift-right-click (or shift and the wheel down) for one, onto what you're holding if it's the same;
+shift-click sends a stack to your inventory. What's there comes out first; only with none there is more
+made, and what a run makes past what you asked for (eight more nuggets) stays in its outputs. While shift is
+held the grid holds still.
 
 **Unrealised Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see <ItemLink id="quantimium:unrealised_matter" />).
@@ -240,7 +243,8 @@ crafter can plan its craft from another's preview: plank → stick → torch in 
 network in the pool, and a provider Receptacle on a crafter offers what it can make to the network, as
 **craftable**, not as stock. So crafters with different catalysts chain through it: a furnace crafter offering
 stone, a stonecutter crafter drawing on the network, and stone bricks show in the terminal as craftable, each
-step made by its own crafter and paid for there when they're taken. The network works out what's craftable
+step made by its own crafter and paid for there when they're taken. One crafter can make two steps of the same chain (a
+furnace smelting stone for the bricks it then cracks), as long as they're different recipes. The network works out what's craftable
 once a second, tier by tier (up to four crafters in a chain): each crafter is shown what's really there and
 what the others could make, never its own, so a loop can't feed itself. A craftable counts what the crafter
 **can make** of it, not one craft's worth. Each craftable remembers what it's made from, all the way down, and a

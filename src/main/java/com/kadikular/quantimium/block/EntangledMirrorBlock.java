@@ -27,19 +27,21 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An Entangled Mirror (see {@link EntangledMirrorBlockEntity}): placed facing you. Bind a Tesseract to another one
- * (sneak and use it on that one), then use it on this one to put it in: light into this one's face leaves by that
- * one's. Sneak with an empty hand to take the Tesseract back out.
+ * An Entangled Mirror (see {@link EntangledMirrorBlockEntity}): placed with its muzzle facing you. Bind a Tesseract to
+ * a laser block (sneak and use it on, say, a Relay), then use it on this one to put it in: light reaching that block
+ * leaves by this one's muzzle. Sneak with an empty hand to take the Tesseract back out.
  */
 public class EntangledMirrorBlock extends BaseEntityBlock implements com.kadikular.quantimium.item.BlockTooltip {
 
     public static final MapCodec<EntangledMirrorBlock> CODEC = simpleCodec(EntangledMirrorBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    /** Light it draws is leaving it: its housing glows. */
+    public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
 
     public EntangledMirrorBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, false));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, false).setValue(ACTIVE, false));
     }
 
     @Override
@@ -49,7 +51,7 @@ public class EntangledMirrorBlock extends BaseEntityBlock implements com.kadikul
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWERED);
+        builder.add(FACING, POWERED, ACTIVE);
     }
 
     @Nullable
@@ -71,15 +73,20 @@ public class EntangledMirrorBlock extends BaseEntityBlock implements com.kadikul
         if (player.isSecondaryUseActive() || !EntangledMirrorBlockEntity.fits(stack)) return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof EntangledMirrorBlockEntity mirror) {
             var bound = stack.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
-            if (bound != null && bound.pos().equals(pos) && bound.dimension().equals(level.dimension())) {
+            boolean here = bound != null && bound.dimension().equals(level.dimension());
+            if (here && bound.pos().equals(pos)) {
                 player.sendOverlayMessage(Component.translatable("message.quantimium.entangled_mirror.itself"));
+                return InteractionResult.CONSUME;
+            }
+            if (here && level.isLoaded(bound.pos()) && !(level.getBlockEntity(bound.pos()) instanceof com.kadikular.quantimium.laser.LaserNode)) {
+                player.sendOverlayMessage(Component.translatable("message.quantimium.entangled_mirror.not_laser"));
                 return InteractionResult.CONSUME;
             }
             ItemStack out = mirror.insert(stack);
             if (!player.getAbilities().instabuild) stack.shrink(1);
             if (!out.isEmpty() && !player.addItem(out)) player.drop(out, false);
             level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.0f, 1.2f);
-            player.sendOverlayMessage(bound != null && bound.dimension().equals(level.dimension())
+            player.sendOverlayMessage(here
                     ? Component.translatable("message.quantimium.entangled_mirror.linked", bound.pos().getX(), bound.pos().getY(), bound.pos().getZ())
                     : Component.translatable("message.quantimium.entangled_mirror.elsewhere"));
         }

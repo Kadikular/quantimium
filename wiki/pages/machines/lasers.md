@@ -124,19 +124,21 @@ where light would go.
 
 ## Entangled mirrors
 
-[[mechanic:laser.entangled_mirror]] An [[block:entangled_mirror]] carries light any distance, through anything,
-to another one in the same dimension. It's made in pairs in the [[block:quantum_foundry_controller]], from a
-[[item:tesseract]] and two Laser Mirrors. It faces you as you place it.
+[[mechanic:laser.entangled_mirror]] An [[block:entangled_mirror]] sends on the light of another laser block, any
+distance away, through anything, in the same dimension. It's made in pairs in the
+[[block:quantum_foundry_controller]], from a [[item:tesseract]] and two Laser Mirrors. Its muzzle faces you as you
+place it.
 
-- Bind a Tesseract to the mirror the light should come out of (sneak and use it on that mirror), then use it on the
-  mirror the light goes into. It floats in that mirror's core, and glows while light crosses.
-- Light into the face of the mirror holding the Tesseract leaves by the face of the one it's bound to, refocused,
-  as from any mirror. That jump takes 5% of what crosses (a few relays' worth), as flux.
-- A mirror without a Tesseract only receives. Put one in each, bound to the other, and the pair works both ways.
-- Both mirrors must be loaded for light to cross; the Tesseract stays bound while one isn't, and light crosses again
-  when it's back. A Tesseract bound to a mirror in another dimension sends nothing.
-- Sneak with an empty hand to take the Tesseract out. A redstone signal switches a mirror off.
-- Light reaching a mirror from behind also leaves by its face.
+- Bind a Tesseract to the laser block the light should come from, a [[block:laser_relay]] say (sneak and use it on
+  that block), then use it on the Entangled Mirror. It floats in the mirror's window.
+- Light reaching that block reaches the mirror too, at once, and leaves by its muzzle, refocused, as from any
+  mirror; the block still sends its own light on as well. The jump takes 5% of what crosses (a few relays' worth),
+  as flux. While light leaves it, its housing glows and the Tesseract turns faster.
+- Several mirrors can draw on one block; their light shares what reaches it, as two outputs of a relay would.
+- No other light gets into it: it only gives out what it draws.
+- Both blocks must be loaded for light to cross; the Tesseract stays bound while one isn't, and light crosses again
+  when it's back. A Tesseract bound to a block in another dimension sends nothing.
+- Sneak with an empty hand to take the Tesseract out. A redstone signal switches it off.
 
 ## Optical cavities
 

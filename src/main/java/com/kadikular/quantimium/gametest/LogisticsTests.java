@@ -933,6 +933,30 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_twice", timeoutTicks = 200)
+    public static void aCrafterMakesTwoStepsOfOneChain(GameTestHelper helper) {
+        // Cobblestone stored; a furnace Crafter and a crafting-table one, both drawing on the network and offering to
+        // it. Cracked stone bricks need the furnace twice: stone for the bricks, then the bricks cracked. One taken
+        // costs four cobblestone; what's left over stays as stone bricks.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 16));
+        QuantumCrafterBlockEntity furnace = crafterOn(helper, 6, Items.FURNACE, true, true);
+        QuantumCrafterBlockEntity table = crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(listed(helper, Items.CRACKED_STONE_BRICKS), "cracked stone bricks are offered");
+            helper.assertValueEqual(take(helper, Items.CRACKED_STONE_BRICKS, 1, true), 1, "one taken");
+            int bricks = countIn(furnace, Items.STONE_BRICKS) + countIn(table, Items.STONE_BRICKS) + count(helper, 4, Items.STONE_BRICKS);
+            int stone = countIn(furnace, Items.STONE) + countIn(table, Items.STONE);
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 12, "for four cobblestone");
+            helper.assertValueEqual(bricks + stone, 3, "the rest kept: " + bricks + " bricks, " + stone + " stone");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_one_craft", timeoutTicks = 200)
     public static void aLoopingCraftLeavesTheOthersBe(GameTestHelper helper) {
         // 35 iron blocks and 4 ingots stored, two crafting-table Crafters on the network. Blocks made from ingots

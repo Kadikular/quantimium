@@ -97,20 +97,6 @@ def splitter_plate() -> Image.Image:
     return img
 
 
-def entangled_plate() -> Image.Image:
-    """The Entangled Mirror's plate: the Mirror's silver gone violet, with a 4x4 window in the middle onto its Tesseract."""
-    img = mirror_plate()
-    for x in range(3, 13):
-        for y in range(3, 13):
-            r, g, b, a = img.getpixel((x, y))
-            img.putpixel((x, y), (int(r * 0.78 + 0xb4 * 0.22), int(g * 0.70 + 0x9c * 0.10), int(b * 0.9 + 0xff * 0.1), a))
-    for x in range(5, 11):
-        for y in range(5, 11):
-            inside = 6 <= x <= 9 and 6 <= y <= 9
-            img.putpixel((x, y), (0, 0, 0, 0) if inside else hx("b49cff"))
-    return img
-
-
 def laser_focus() -> Image.Image:
     """The focus, where light gathers: white, edged in the beam's light blue. Its 4x4 face is the middle of the texture."""
     img = Image.new("RGBA", (16, 16), hx("f4f8ff", 200))
@@ -1213,34 +1199,31 @@ ROTATIONS = {"north": {}, "south": {"y": 180}, "west": {"y": 270}, "east": {"y":
 
 def entangled_mirror() -> None:
     """
-    The Entangled Mirror: a steel cage, a violet plate with a window on its face (north, drawn) and a steel back; its
-    Tesseract floats in the middle (EntangledMirrorBER).
+    The Entangled Mirror: the old Harvest Laser's housing (harvest_laser_template: posts round a window, its muzzle
+    up), its Tesseract floating in the window (EntangledMirrorBER), its sides lit while light it draws leaves it.
     """
-    entangled_plate().save(os.path.join(TEX, "entangled_mirror_plate.png"))
-    t = {"steel": "quantimium:block/laser_mirror_steel", "plate": "quantimium:block/entangled_mirror_plate",
-         "particle": "quantimium:block/laser_mirror_steel"}
-
-    def box(start, end, texture="#steel"):
-        return {"from": start, "to": end, "faces": {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}}
-
-    plate = box([3, 3, 0], [13, 13, 1])
-    plate["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-    plate["faces"]["south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
-    ring_front = [box([1, 13, 0], [15, 15, 2]), box([1, 1, 0], [15, 3, 2]), box([1, 3, 0], [3, 13, 2]), box([13, 3, 0], [15, 13, 2])]
-    ring_back = [box([1, 13, 14], [15, 15, 16]), box([1, 1, 14], [15, 3, 16]), box([1, 3, 14], [3, 13, 16]), box([13, 3, 14], [15, 13, 16])]
-    posts = [box([x, y, 2], [x + 2, y + 2, 14]) for x in (1, 13) for y in (1, 13)]
-    back = box([3, 3, 15], [13, 13, 16])
-    elements = [plate] + ring_front + ring_back + posts + [back]
-    with open(os.path.join(MODELS, "entangled_mirror.json"), "w") as handle:
-        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": elements}, handle, indent=2)
+    for active in (False, True):
+        tag = "_active" if active else ""
+        model = {"parent": "quantimium:block/harvest_laser_template", "textures": {
+            "side": f"quantimium:block/entangled_mirror_side{tag}", "lens": f"quantimium:block/entangled_mirror_lens{tag}",
+            "top": "quantimium:block/entangled_mirror_top", "inner": "quantimium:block/entangled_mirror_inner",
+            "bottom": "quantimium:block/machine_bottom_mid"}}
+        with open(os.path.join(MODELS, f"entangled_mirror{tag}.json"), "w") as handle:
+            json.dump(model, handle, indent=2)
+    turns = {"up": {}, "down": {"x": 180}, "north": {"x": 90}, "south": {"x": 90, "y": 180}, "west": {"x": 90, "y": 270}, "east": {"x": 90, "y": 90}}
     variants = {}
-    for facing, rot in ROTATIONS.items():
+    for facing, rot in turns.items():
         for powered in ("false", "true"):
-            variants[f"facing={facing},powered={powered}"] = dict({"model": "quantimium:block/entangled_mirror"}, **rot)
+            for active in ("false", "true"):
+                model = "quantimium:block/entangled_mirror" + ("_active" if active == "true" else "")
+                variants[f"active={active},facing={facing},powered={powered}"] = dict({"model": model}, **rot)
     with open(os.path.join(STATES, "entangled_mirror.json"), "w") as handle:
         json.dump({"variants": variants}, handle, indent=1)
     with open(os.path.join(ITEMS, "entangled_mirror.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/entangled_mirror"}}, handle, indent=2)
+    stale = os.path.join(TEX, "entangled_mirror_plate.png")
+    if os.path.exists(stale):
+        os.remove(stale)
 
 
 def main() -> None:

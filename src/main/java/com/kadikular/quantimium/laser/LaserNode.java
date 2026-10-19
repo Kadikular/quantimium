@@ -24,14 +24,15 @@ public interface LaserNode {
     }
 
     /**
-     * Whether its links ({@link #targets()}) are entangled: light reaches each at once, however far and whatever's
-     * between, rather than along a line. An Entangled Mirror's, to its partner.
+     * For an Entangled Mirror: the laser block its Tesseract is bound to. Light reaching that block reaches this one
+     * too, at once, however far and whatever's between; null for none, and for any other node.
      */
-    default boolean entangles() {
-        return false;
+    @org.jetbrains.annotations.Nullable
+    default BlockPos entangledSource() {
+        return null;
     }
 
-    /** For an Entangled Mirror: the way light from its partner leaves it, out of its face; null for any other node. */
+    /** For an Entangled Mirror: the way light it draws leaves it, out of its muzzle; null for any other node. */
     @org.jetbrains.annotations.Nullable
     default Direction entangledFace() {
         return null;

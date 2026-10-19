@@ -143,6 +143,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private boolean suppressInventoryNotify;
     /** Guards against two crafters linked to each other committing through one another forever. */
     private boolean automationBusy;
+    /**
+     * The recipes it's making right now. While one runs it may run another, which the first needs made from what
+     * it would draw on (a furnace smelting stone for bricks it will smelt again), but never one already running.
+     */
+    private final java.util.Set<Identifier> running = new java.util.HashSet<>();
     /** Recipe runs left before the early crafter must rebuild its coherence reserve. */
     private int coherenceReserve = 32;
     private int coherenceRefillProgress;
@@ -1252,15 +1257,18 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (energyStorage.getEnergyStored() < craft.feCost()) return ItemStack.EMPTY;
         if (isBasic() && coherenceReserve < craft.batchSize()) return ItemStack.EMPTY;
 
-        // A link can lead back here, so hide our own previews for the duration: a craft that ran
-        // again halfway through itself would be working from inputs it had already spent.
+        // A link can lead back here: a craft that ran again halfway through itself would be working from inputs it
+        // had already spent, so while it runs, that recipe isn't offered. Another may be, made for it.
+        if (!running.add(craft.recipeId())) return ItemStack.EMPTY;
         boolean priorBusy = automationBusy;
+        boolean priorSuppress = suppressInventoryNotify;
         enterChain();
         suppressInventoryNotify = true;
         try {
             return commitWithdrawnCraft(craft, handedOutIndex);
         } finally {
-            suppressInventoryNotify = false;
+            running.remove(craft.recipeId());
+            suppressInventoryNotify = priorSuppress;
             exitChain(priorBusy);
             // Slot writes during the craft skipped their own notification, so ask for the sync here.
             clientSyncDirty = true;
@@ -1286,6 +1294,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             }
             taken.add(withdrawal);
             takenStacks.add(pulled);
+        }
+        // What it made for itself on the way spent power (and coherence) too: if too little's left, it all goes back.
+        if (energyStorage.getEnergyStored() < craft.feCost() || isBasic() && coherenceReserve < craft.batchSize()) {
+            for (int i = 0; i < taken.size(); i++) refundWithdrawal(taken.get(i), takenStacks.get(i));
+            rescaleCachedPreview();
+            return ItemStack.EMPTY;
         }
 
         if (isBasic()) {
@@ -1341,7 +1355,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private ItemStack automationView(int absoluteOutputSlot) {
         ItemStack real = inventory.getStackInSlot(absoluteOutputSlot);
         if (!real.isEmpty()) return real;
-        if (level == null || level.isClientSide() || automationBusy || com.kadikular.quantimium.recipe.CraftChain.full()
+        // Busy working out what it could make, it offers nothing; busy making something, it may make something else.
+        if (level == null || level.isClientSide() || automationBusy && running.isEmpty() || com.kadikular.quantimium.recipe.CraftChain.full()
                 || com.kadikular.quantimium.recipe.CraftChain.storedOnly()) return ItemStack.EMPTY;
         if (statusCode == STATUS_NO_POWER || statusCode == STATUS_ENTANGLED_LOOP
                 || statusCode == STATUS_IDLE || statusCode == STATUS_NO_RECIPE
@@ -1367,13 +1382,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         // Deciding whether a preview is committable can walk a link that leads back here; the guard
         // makes the second visit report nothing rather than recursing.
+        boolean priorBusy = automationBusy;
         enterChain();
         ItemStack shown = ItemStack.EMPTY;
         try {
             GhostSlot ghost = ghostAt(absoluteOutputSlot);
             if (ghost != null) {
                 ResolvedCraft craft = preview.get(ghost.craftIndex());
-                if (canCommitCached(ghost.craftIndex())) {
+                if (!running.contains(craft.recipeId()) && canCommitCached(ghost.craftIndex())) {
                     List<ItemStack> outputs = craft.outputs();
                     if (ghost.outputIndex() < outputs.size()) {
                         shown = outputs.get(ghost.outputIndex()).copy();
@@ -1381,7 +1397,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 }
             }
         } finally {
-            exitChain(false);
+            exitChain(priorBusy);
         }
         if (!com.kadikular.quantimium.recipe.CraftChain.cacheable() || automationViewRevision != contentRevision || automationViewTick != now) return shown;
         automationViewCache.computeIfAbsent(context, key -> new ItemStack[OUTPUT_SLOTS])[local] = shown;

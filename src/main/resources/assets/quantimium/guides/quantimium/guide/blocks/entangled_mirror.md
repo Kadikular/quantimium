@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:entangled_mirror" scale="2" />
 
-A pair carries light any distance: light into one's face leaves by the other's.
+Sends on the light of the laser block its Tesseract is bound to, any distance away.
 
 ## Recipes
 

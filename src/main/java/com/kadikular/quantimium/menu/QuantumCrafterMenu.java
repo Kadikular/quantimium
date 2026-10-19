@@ -163,8 +163,9 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
     }
 
     /**
-     * Menu buttons taking from output {@code slot} (0 to 53, the whole output grid): {@code mode * TAKE + slot}. A
-     * batch is what's there or a preview's batch, onto the cursor; half of that; one; or the batch into the
+     * Menu buttons taking what output {@code slot} (0 to 53) shows: {@code mode * TAKE + slot}. As in a logistics
+     * terminal, what's in its outputs comes first, from every output holding it, and only with none there is more
+     * made. A batch is a stack of what's there, or a preview's batch; half of that; one; or the batch into the
      * inventory.
      */
     public static final int TAKE = 100, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
@@ -178,28 +179,43 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         ItemStack real = blockEntity.getInventory().getStackInSlot(absolute);
         ItemStack shown = real.isEmpty() ? blockEntity.getGhost(absolute) : real;
         if (shown.isEmpty()) return false;
-        int batch = shown.getCount();
-        if (mode == TO_INVENTORY) {
-            ItemStack got = real.isEmpty() ? blockEntity.takeGhost(absolute) : blockEntity.getInventory().extractItem(absolute, batch, false);
-            if (got.isEmpty()) return false;
+        // What of it is really there, in every output.
+        int there = 0;
+        for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END; slot++) {
+            ItemStack held = blockEntity.getInventory().getStackInSlot(slot);
+            if (ItemStack.isSameItemSameComponents(held, shown)) there += held.getCount();
+        }
+        int batch = there > 0 ? Math.min(there, shown.getMaxStackSize()) : shown.getCount();
+        ItemStack carried = getCarried();
+        boolean toInventory = mode == TO_INVENTORY;
+        if (!toInventory && !carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, shown)) return false;
+        int room = toInventory ? batch : shown.getMaxStackSize() - carried.getCount();
+        int wanted = Math.min(room, switch (mode) {
+            case HALF -> Math.max(1, (batch + 1) / 2);
+            case ONE -> 1;
+            default -> batch;
+        });
+        if (wanted <= 0) return false;
+        ItemStack got;
+        if (there > 0) {
+            got = ItemStack.EMPTY;
+            for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END && got.getCount() < wanted; slot++) {
+                if (!ItemStack.isSameItemSameComponents(blockEntity.getInventory().getStackInSlot(slot), shown)) continue;
+                ItemStack more = blockEntity.getInventory().extractItem(slot, wanted - got.getCount(), false);
+                got = got.isEmpty() ? more : got.copyWithCount(got.getCount() + more.getCount());
+            }
+        } else {
+            got = toInventory ? blockEntity.takeGhost(absolute) : blockEntity.takeGhost(absolute, wanted);
+        }
+        if (got.isEmpty()) return false;
+        if (toInventory) {
             ItemStack left = toInventory(got);
             if (!left.isEmpty()) blockEntity.storeOutput(left);
         } else {
-            // Onto what's in hand, if it's the same, as far as it fits.
-            ItemStack carried = getCarried();
-            if (!carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, shown)) return false;
-            int room = shown.getMaxStackSize() - carried.getCount();
-            int wanted = Math.min(room, switch (mode) {
-                case BATCH -> batch;
-                case HALF -> Math.max(1, (batch + 1) / 2);
-                default -> 1;
-            });
-            if (wanted <= 0) return false;
-            ItemStack made = real.isEmpty() ? blockEntity.takeGhost(absolute, wanted) : blockEntity.getInventory().extractItem(absolute, wanted, false);
-            if (made.isEmpty()) return false;
-            int onto = Math.min(room, made.getCount());
-            setCarried(carried.isEmpty() ? made.copyWithCount(onto) : carried.copyWithCount(carried.getCount() + onto));
-            if (made.getCount() > onto) blockEntity.storeOutput(made.copyWithCount(made.getCount() - onto));
+            // What a run made past what was asked for (eight more nuggets) stays in its outputs.
+            int onto = Math.min(wanted, got.getCount());
+            setCarried(carried.isEmpty() ? got.copyWithCount(onto) : carried.copyWithCount(carried.getCount() + onto));
+            if (got.getCount() > onto) blockEntity.storeOutput(got.copyWithCount(got.getCount() - onto));
         }
         blockEntity.rebuildPreview();
         broadcastChanges();

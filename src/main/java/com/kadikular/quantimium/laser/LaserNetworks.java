@@ -85,6 +85,8 @@ public final class LaserNetworks {
     private final Map<BlockPos, Set<BlockPos>> chargedBy = new HashMap<>();
     /** Nodes whose beams changed on their own (a block cut, placed, switched): only their networks are worked out again. */
     private final Set<BlockPos> dirtyAt = new HashSet<>();
+    /** Each Entangled Mirror, by where it stands, and the node it draws light from. */
+    private final Map<BlockPos, BlockPos> drawsOn = new HashMap<>();
     /** The nodes light ran through at the last settle. */
     private Set<BlockPos> litNow = Set.of();
 
@@ -133,6 +135,7 @@ public final class LaserNetworks {
         BlockPos pos = node.nodePos().immutable();
         LaserNode was = nodes.put(pos, node);
         bucketsStale = true;
+        if (node.entangledSource() != null) relink(node);
         // One block entity in place of another at the same spot: everything again, to be safe.
         if (was != null && was != node) {
             dirty = true;
@@ -159,6 +162,8 @@ public final class LaserNetworks {
             unindex(pos, old);
         }
         nodes.remove(pos);
+        BlockPos source = drawsOn.remove(pos);
+        if (source != null) seeds.add(source);
         into.remove(pos);
         carried.remove(pos);
         lost.remove(pos);
@@ -800,7 +805,7 @@ public final class LaserNetworks {
     /** Whether light from {@code from} gets into {@code node}: one of its beams ends there, travelling a way it accepts. */
     private boolean letsIn(BlockPos from, LaserNode node) {
         for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
-            if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit()) && node.accepts(beam.face())) return true;
+            if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit()) && admits(node, beam)) return true;
         }
         return false;
     }
@@ -1040,7 +1045,7 @@ public final class LaserNetworks {
         Light joined = null;
         for (BlockPos from : new HashSet<>(into.getOrDefault(pos, List.of()))) {
             for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
-                if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit()) || !node.accepts(beam.face())) continue;
+                if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit()) || !admits(node, beam)) continue;
                 Light light = lightOf(from, beam);
                 if (light == null) continue;
                 joined = Light.join(joined, node.refocuses() ? light : light.passedOn(beam.length()));
@@ -1089,7 +1094,7 @@ public final class LaserNetworks {
         Set<Direction> arriving = java.util.EnumSet.noneOf(Direction.class);
         for (BlockPos from : into.getOrDefault(node.nodePos(), List.of())) {
             for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
-                if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit())) arriving.add(beam.face());
+                if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit()) && admits(node, beam)) arriving.add(beam.face());
             }
         }
         for (Direction face : node.outputsFor(arriving)) {
@@ -1103,9 +1108,41 @@ public final class LaserNetworks {
                 node.forget(target);
                 continue;
             }
-            traced.add(node.entangles() ? LaserBeam.jump(level, node.nodePos(), target) : LaserBeam.traceTo(level, node.nodePos(), target, range, marks));
+            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, range, marks));
         }
+        // And to each Entangled Mirror drawing on it, at once.
+        for (BlockPos mirror : drawing(node.nodePos())) traced.add(LaserBeam.jump(level, node.nodePos(), mirror));
         return traced;
+    }
+
+    /**
+     * Whether light along {@code beam} gets into {@code node}: entangled light into an Entangled Mirror only, and
+     * light down a line as the node accepts it.
+     */
+    private static boolean admits(LaserNode node, LaserBeam beam) {
+        return beam.jumps() ? node.entangledFace() != null : node.accepts(beam.face());
+    }
+
+    /** The Entangled Mirrors drawing on the node at {@code source}, in a fixed order. */
+    private List<BlockPos> drawing(BlockPos source) {
+        List<BlockPos> mirrors = new ArrayList<>();
+        for (Map.Entry<BlockPos, BlockPos> entry : drawsOn.entrySet()) if (entry.getValue().equals(source)) mirrors.add(entry.getKey());
+        if (mirrors.size() > 1) mirrors.sort(java.util.Comparator.naturalOrder());
+        return mirrors;
+    }
+
+    /** An Entangled Mirror's Tesseract went in, came out or was changed: light from the old and new source is traced again. */
+    public static void relinked(Level level, LaserNode mirror) {
+        if (level instanceof ServerLevel server) of(server).relink(mirror);
+    }
+
+    private void relink(LaserNode mirror) {
+        BlockPos pos = mirror.nodePos().immutable();
+        BlockPos source = mirror.entangledSource();
+        BlockPos old = source == null ? drawsOn.remove(pos) : drawsOn.put(pos, source.immutable());
+        if (old != null) dirtyAt.add(old);
+        if (source != null) dirtyAt.add(source.immutable());
+        dirtyAt.add(pos);
     }
 
     /** Whether one of the node's links is to a block that's gone: light passes through both, so its beam alone doesn't show it. */
@@ -1168,7 +1205,7 @@ public final class LaserNetworks {
                     if (next != null && next.chargedByLight() && next != source) {
                         route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
                     }
-                    if (next != null && next.relays() && next.accepts(beam.face()) && seen.add(beam.hit())) {
+                    if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {
                         queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
                     }
                 }
@@ -1205,7 +1242,7 @@ public final class LaserNetworks {
             }
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
                 List<LaserBeam> was = beams.get(node.nodePos());
-                if (was == null || was.size() != node.outputs().size() + node.targets().size() || linkGone(node)) {
+                if (was == null || was.size() != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) {
                     dirtyAt.add(node.nodePos());
                     continue;
                 }

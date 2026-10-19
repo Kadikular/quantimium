@@ -2,7 +2,6 @@ package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.block.EntangledMirrorBlock;
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.init.ModBlocks;
 import com.kadikular.quantimium.init.ModDataComponents;
 import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.laser.LaserBeam;
@@ -27,22 +26,21 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * An Entangled Mirror's light. With a Tesseract bound to another Entangled Mirror floating in its core, light into its
- * face reaches that one at once, however far (in the same dimension, while both are loaded), and leaves by that one's
- * face, refocused. Light reaching it from a partner leaves by its own face; a mirror with no Tesseract only receives.
- * A Tesseract in each makes the pair work both ways. Off while a redstone signal reaches it.
+ * An Entangled Mirror's light. With a Tesseract bound to a laser block (a Relay, say) floating in its window, light
+ * reaching that block reaches this one too, at once, however far (in the same dimension, while both are loaded), and
+ * leaves by its muzzle, refocused, less the jump's tax. Light from anywhere else stops on it. Off while a redstone
+ * signal reaches it.
  */
 public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView, com.kadikular.quantimium.flux.FluxMeterReadout {
 
     private ItemStack tesseract = ItemStack.EMPTY;
     private List<LaserBeam> shownBeams = List.of();
-    /** Whether light is crossing to its partner, as last worked out: the Tesseract glows. */
+    /** Whether light it draws is leaving it, as last worked out: the Tesseract glows. */
     private boolean jumping;
 
     public EntangledMirrorBlockEntity(BlockPos pos, BlockState state) {
@@ -55,12 +53,9 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
 
     // ---- the Tesseract ----
 
-    /** Whether {@code stack} can go in: a Tesseract bound to an Entangled Mirror. */
+    /** Whether {@code stack} can go in: a bound Tesseract. */
     public static boolean fits(ItemStack stack) {
-        if (!stack.is(ModItems.TESSERACT.get())) return false;
-        var block = stack.get(ModDataComponents.BOUND_BLOCK.get());
-        return stack.get(ModDataComponents.BOUND_POS.get()) != null && block != null
-                && block.equals(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(ModBlocks.ENTANGLED_MIRROR.get()));
+        return stack.is(ModItems.TESSERACT.get()) && stack.get(ModDataComponents.BOUND_POS.get()) != null;
     }
 
     public ItemStack tesseract() {
@@ -84,7 +79,8 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
 
     /** Where its Tesseract points, in this dimension; null with none, or one bound elsewhere. */
     @Nullable
-    public BlockPos partner() {
+    @Override
+    public BlockPos entangledSource() {
         if (tesseract.isEmpty() || level == null) return null;
         GlobalPos bound = tesseract.get(ModDataComponents.BOUND_POS.get());
         if (bound == null || !bound.dimension().equals(level.dimension()) || bound.pos().equals(worldPosition)) return null;
@@ -94,7 +90,7 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
     private void changed() {
         setChanged();
         if (level != null && !level.isClientSide()) {
-            LaserNetworks.changed(level, worldPosition);
+            LaserNetworks.relinked(level, this);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -114,23 +110,6 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
     }
 
     @Override
-    public List<BlockPos> targets() {
-        BlockPos partner = partner();
-        return partner == null ? List.of() : List.of(partner);
-    }
-
-    @Override
-    public boolean entangles() {
-        return true;
-    }
-
-    /** It never lets go of its partner: the Tesseract stays bound, and light crosses again once that one's back. */
-    @Override
-    public boolean keepsLinks() {
-        return true;
-    }
-
-    @Override
     public Direction entangledFace() {
         return facing();
     }
@@ -143,18 +122,18 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
         return passing;
     }
 
-    /** Light from its partner (arriving as if from behind it) leaves by its face; light into its face goes to its partner. */
+    /** What it draws leaves by its muzzle. */
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {
-        Set<Direction> out = arriving.contains(facing()) ? EnumSet.of(facing()) : EnumSet.noneOf(Direction.class);
+        Set<Direction> out = arriving.isEmpty() ? EnumSet.noneOf(Direction.class) : EnumSet.of(facing());
         passing = out;
         return out;
     }
 
-    /** Light into its face, and light from a partner; the rest stops on its frame. */
+    /** Only light it draws through its Tesseract gets in: the rest stops on its housing. */
     @Override
     public boolean accepts(Direction travel) {
-        return travel == facing().getOpposite() || travel == facing();
+        return false;
     }
 
     @Override
@@ -169,7 +148,7 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
 
     @Override
     public double tax() {
-        return partner() == null ? LaserTuning.HOP_TAX : LaserTuning.JUMP_TAX;
+        return LaserTuning.JUMP_TAX;
     }
 
     @Override
@@ -177,19 +156,18 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
         return !getBlockState().getValue(EntangledMirrorBlock.POWERED);
     }
 
+    /** Its beam out of the muzzle; the Tesseract glows while light runs along it. */
     @Override
     public void showBeams(List<LaserBeam> beams) {
-        // Entangled light crosses nothing, so it isn't drawn; the Tesseract glows while it's crossing.
-        List<LaserBeam> drawn = new ArrayList<>();
         boolean crossing = false;
-        for (LaserBeam beam : beams) {
-            if (beam.jumps()) crossing |= beam.live();
-            else drawn.add(beam);
-        }
-        boolean same = LaserBeamView.sameLook(shownBeams, drawn) && crossing == jumping;
-        shownBeams = drawn;
+        for (LaserBeam beam : beams) crossing |= beam.live();
+        boolean same = LaserBeamView.sameLook(shownBeams, beams) && crossing == jumping;
+        shownBeams = beams;
         jumping = crossing;
-        if (!same && level != null && !level.isClientSide()) {
+        if (level == null || level.isClientSide()) return;
+        if (getBlockState().getValue(EntangledMirrorBlock.ACTIVE) != crossing) {
+            level.setBlock(worldPosition, getBlockState().setValue(EntangledMirrorBlock.ACTIVE, crossing), Block.UPDATE_CLIENTS);
+        } else if (!same) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -199,7 +177,7 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
         return shownBeams;
     }
 
-    /** Whether light is crossing from it to its partner. */
+    /** Whether light it draws is leaving it. */
     public boolean jumping() {
         return jumping;
     }
@@ -249,15 +227,15 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    /** Where its Tesseract points, or that it only receives; what's passing. */
+    /** Where its Tesseract points, or that it has none; what's passing. */
     @Override
     public net.minecraft.network.chat.MutableComponent fluxMeterLine() {
         long passing = level instanceof net.minecraft.server.level.ServerLevel server ? LaserNetworks.of(server).throughput(worldPosition) : 0;
-        BlockPos partner = partner();
-        net.minecraft.network.chat.MutableComponent line = partner != null
-                ? net.minecraft.network.chat.Component.translatable("message.quantimium.entangled_mirror.sends", partner.getX(), partner.getY(), partner.getZ(), passing)
+        BlockPos source = entangledSource();
+        net.minecraft.network.chat.MutableComponent line = source != null
+                ? net.minecraft.network.chat.Component.translatable("message.quantimium.entangled_mirror.draws", source.getX(), source.getY(), source.getZ(), passing)
                 : !tesseract.isEmpty() ? net.minecraft.network.chat.Component.translatable("message.quantimium.entangled_mirror.elsewhere")
-                : net.minecraft.network.chat.Component.translatable("message.quantimium.entangled_mirror.receives", passing);
+                : net.minecraft.network.chat.Component.translatable("message.quantimium.entangled_mirror.empty");
         return line.withStyle(enabled() ? net.minecraft.ChatFormatting.AQUA : net.minecraft.ChatFormatting.GRAY);
     }
 }

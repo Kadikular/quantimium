@@ -639,10 +639,10 @@ def scene_stabilizer() -> List[Placement]:
 
 
 def scene_mirrors() -> List[Placement]:
-    """The Entangled Mirror facing south, east and up."""
-    return [((0, 0, 0), "entangled_mirror", {"facing": "south", "powered": "false"}),
-            ((2, 0, 0), "entangled_mirror", {"facing": "east", "powered": "false"}),
-            ((4, 0, 0), "entangled_mirror", {"facing": "up", "powered": "false"})]
+    """The Entangled Mirror facing south, east (lit) and up."""
+    return [((0, 0, 0), "entangled_mirror", {"facing": "south", "powered": "false", "active": "false"}),
+            ((2, 0, 0), "entangled_mirror", {"facing": "east", "powered": "false", "active": "true"}),
+            ((4, 0, 0), "entangled_mirror", {"facing": "up", "powered": "false", "active": "false"})]
 
 
 SCENES = {
