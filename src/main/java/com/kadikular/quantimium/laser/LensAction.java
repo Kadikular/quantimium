@@ -120,7 +120,11 @@ public final class LensAction {
         this.stream = stream;
         this.collectors = List.copyOf(collectors);
         this.senders = List.copyOf(senders);
-        if (!java.util.Objects.equals(this.area, area)) cursor = 0;
+        if (!java.util.Objects.equals(this.area, area)) {
+            // A new area starts over; the same one, first seen since a reload, picks up where it was.
+            if (this.area != null) cursor = 0;
+            else cursorRead = false;
+        }
         this.area = area;
     }
 
@@ -164,6 +168,24 @@ public final class LensAction {
         return took;
     }
 
+    /** Whether the area's cursor has been read back from the prism since this action was made. */
+    private boolean cursorRead;
+
+    /**
+     * An Area Prism keeps where its actions had got to: read once, written back each second, so after a reload
+     * it carries on rather than sweeping the area it already cleared.
+     */
+    private void keepCursor(ServerLevel level) {
+        if (area == null || !(level.getBlockEntity(key.node()) instanceof com.kadikular.quantimium.block.entity.AreaPrismBlockEntity prism)) return;
+        String name = key.action().name();
+        if (!cursorRead) {
+            cursorRead = true;
+            cursor = Math.floorMod(prism.cursor(name), Math.max(1, areaVolume()));
+        } else if (now % 20 == 0) {
+            prism.setCursor(name, cursor);
+        }
+    }
+
     /** The level, while it acts: for sight lines from inside entity filters. */
     @Nullable
     private ServerLevel sightLevel;
@@ -172,6 +194,7 @@ public final class LensAction {
     void act(ServerLevel level, LaserNetworks networks) {
         sightLevel = level;
         now = level.getGameTime();
+        keepCursor(level);
         boolean pickup = stream.has(Lens.PICKUP) && !collectors.isEmpty();
         int phase = Math.floorMod(key.hashCode() + (int) level.getGameTime(), LaserTuning.DAMAGE_INTERVAL);
         switch (key.action()) {

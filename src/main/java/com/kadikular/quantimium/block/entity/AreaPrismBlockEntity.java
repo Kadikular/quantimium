@@ -201,9 +201,26 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         if (level != null) LaserNetworks.remove(level, this);
     }
 
+    /** Where each action working the area had got to, by action: kept, so a reload picks up there. */
+    private final java.util.Map<String, Integer> cursors = new java.util.HashMap<>();
+
+    public int cursor(String action) {
+        return cursors.getOrDefault(action, 0);
+    }
+
+    public void setCursor(String action, int cursor) {
+        Integer was = cursors.put(action, cursor);
+        if (was == null || was != cursor) setChanged();
+    }
+
     @Override
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
+        if (!cursors.isEmpty()) {
+            CompoundTag tag = new CompoundTag();
+            cursors.forEach(tag::putInt);
+            out.store("Cursors", CompoundTag.CODEC, tag);
+        }
         if (area != null) out.store("Area", BoundingBox.CODEC, area);
         out.putInt("Shape", shape.ordinal());
         out.putInt("Radius", radius);
@@ -213,6 +230,8 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         area = in.read("Area", BoundingBox.CODEC).orElse(null);
+        cursors.clear();
+        in.read("Cursors", CompoundTag.CODEC).ifPresent(tag -> tag.keySet().forEach(name -> cursors.put(name, tag.getIntOr(name, 0))));
         shape = Shape.values()[Math.floorMod(in.getIntOr("Shape", 0), Shape.values().length)];
         radius = Math.clamp(in.getIntOr("Radius", 4), 1, maxRadius());
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
