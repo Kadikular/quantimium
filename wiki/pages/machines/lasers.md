@@ -312,8 +312,9 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
 - [[mechanic:laser.logistics.provider]] **Provider**: passive, the network may take what its filter lets go
   (a furnace's output, say); active, it pushes it out itself, to requesters listing it first, then into
   storage.
-  On a machine that makes things to order (a Quantum Crafter), what it would make is offered as craftable;
-  its screen can switch that off, to offer only what's really there.
+  On a machine that makes things to order (a Quantum Crafter), what it would make is offered as craftable.
+  A tab on its screen says what it may make from: anything (stored items and what other machines would make,
+  a chain), stored items only, or nothing, offering only what's really in the machine's outputs.
 - [[mechanic:laser.logistics.requester]] **Requester**: passive, it takes what active providers push, as its
   filter lets in; active, it pulls what its filter lists from providers first, then storage.
   [[mechanic:laser.logistics.filter]] Only what its filter lists comes, as far as the inventory takes it. With **Keep stocked** on, each
@@ -332,17 +333,18 @@ like an ME terminal; sort and view are tabs on its left. Click an item for a sta
 right-click for half, shift-right-click for one, shift-click for a stack into your inventory; while
 shift is held the grid holds still, and shift with the wheel takes one more onto the cursor (down) or
 puts one back (up). Click the grid holding something to put it away into storage (right-click: one), or
-shift-click it in your inventory. Each take or put costs the controller as a move does. A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
+shift-click it in your inventory. What's stored comes out first: if any is, that's all you get, and only when
+none is left does a machine make more. Each take or put costs the controller as a move does. A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 
 [[mechanic:laser.logistics.materialiser]] A [[block:logistics_materialiser]] where a controller's light ends
 offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus
 or a pipe on any face sees everything storage holds and providers offer (a Reactor on the network, with what it
 can make), takes from it, and puts things away into storage. Moves happen as part of the other side's transaction,
 so one called off puts everything back and looking is free; each move costs the controller as a receptacle's does.
-Click it to choose what it offers: what's there and what can be made (the default), only what's there, or only
-what can be made. A provider Receptacle on another network's Materialiser brings that network's offers into its
-own, real as real and craftable as craftable. A receptacle on a Logistics
-Materialiser is ignored: it would read the network into itself.
+Click it to choose what it offers: stored and craftable items (the default), stored items, or craftable items.
+A provider Receptacle on another network's Materialiser brings that network's offers into its own, stored as
+stored and craftable as craftable. A receptacle of the same network on its Materialiser is ignored: it would read
+the network into itself.
 
 [[mechanic:laser.logistics.reactor]] A [[block:reactor_logistics_port]] on the Reactor's plinth rim, where a
 controller's light ends, joins the Reactor to that network both ways, as the ME Superposition Port does for

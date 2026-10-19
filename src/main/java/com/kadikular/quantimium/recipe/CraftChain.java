@@ -19,6 +19,8 @@ public final class CraftChain {
         int depth;
         long context;
         long epoch;
+        /** From how deep on the chain machines may only use what's stored, making nothing (none: never). */
+        int storedFrom = Integer.MAX_VALUE;
     }
 
     private static final ThreadLocal<State> STATE = ThreadLocal.withInitial(State::new);
@@ -68,6 +70,27 @@ public final class CraftChain {
     /** Whether a machine asked now may offer only what it really holds: the chain is as long as it goes. */
     public static boolean full() {
         return STATE.get().depth >= MAX_DEPTH;
+    }
+
+    /**
+     * Runs {@code pull}, a pull from a machine that may craft only from what's stored: whatever it draws on while it
+     * crafts makes nothing for it.
+     */
+    public static <T> T storedOnly(java.util.function.Supplier<T> pull) {
+        State state = STATE.get();
+        int prior = state.storedFrom;
+        state.storedFrom = Math.min(prior, state.depth + 1);
+        try {
+            return pull.get();
+        } finally {
+            state.storedFrom = prior;
+        }
+    }
+
+    /** Whether a machine asked now may hand over only what's stored: one up the chain crafts from stored items only. */
+    public static boolean storedOnly() {
+        State state = STATE.get();
+        return state.depth >= state.storedFrom;
     }
 
     /**

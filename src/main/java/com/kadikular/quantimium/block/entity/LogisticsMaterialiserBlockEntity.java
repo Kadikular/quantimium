@@ -233,7 +233,7 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             List<LogisticsMember> members = members();
             while (got < amount) {
                 ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(resource), amount - got, false,
-                        offersReal(), offersCraftable());
+                        offersReal(), offersCraftable() && !com.kadikular.quantimium.recipe.CraftChain.storedOnly());
                 if (more.isEmpty()) break;
                 got += more.getCount();
             }

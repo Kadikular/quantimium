@@ -79,6 +79,14 @@ public interface LogisticsMember {
         return true;
     }
 
+    /**
+     * Whether what the machine behind it makes may come from what other machines would make (a chain), or only
+     * from what's really stored.
+     */
+    default boolean craftsFromCraftable() {
+        return true;
+    }
+
     /** Whether a pull from {@code slot} would make something (see {@link #maker}) rather than hand over what's there. */
     default boolean onDemand(int slot) {
         OfferMaker maker = maker();

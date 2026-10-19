@@ -63,19 +63,24 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         return counts;
     }
 
-    /** Takes up to {@code count} of {@code item} from the network, if the controller pays; what it got. */
+    /**
+     * Takes up to {@code count} of {@code item} from the network, if the controller pays; what it got. What's stored
+     * comes out first, and if any is, that's all: only when none is does a machine make some.
+     */
     public ItemStack take(ItemResource item, int count) {
         LogisticsController controller = controller();
         if (controller == null || count <= 0) return ItemStack.EMPTY;
         List<LogisticsMember> members = controller.members();
-        if (Logistics.take(members, stack -> ItemResource.of(stack).equals(item), count, true).isEmpty()
+        java.util.function.Predicate<ItemStack> wants = stack -> ItemResource.of(stack).equals(item);
+        boolean stored = !Logistics.take(members, wants, count, true, true, false).isEmpty();
+        if (!stored && Logistics.take(members, wants, count, true, false, true).isEmpty()
                 || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
             return ItemStack.EMPTY;
         }
         controller.stockMoved();
         ItemStack got = ItemStack.EMPTY;
         while (got.getCount() < count) {
-            ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(item), count - got.getCount(), false);
+            ItemStack more = Logistics.take(members, wants, count - got.getCount(), false, stored, !stored);
             if (more.isEmpty()) break;
             if (got.isEmpty()) got = more;
             else got.grow(more.getCount());

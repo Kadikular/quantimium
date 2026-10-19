@@ -6,6 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -234,10 +235,20 @@ public final class Logistics {
 
     /**
      * As {@link #take}, from what's really there ({@code reals}), from what machines would make ({@code made}), or
-     * both. A provider whose mode is "only what's there" never makes anything for it.
+     * both, what's there first: nothing is made while it's stored somewhere. A provider whose mode is "only what's
+     * there" never makes anything for it.
      */
     public static ItemStack take(List<LogisticsMember> members, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate,
                                  boolean reals, boolean made) {
+        if (reals) {
+            ItemStack stored = takeFrom(members, wants, max, simulate, true, false);
+            if (!stored.isEmpty() || !made) return stored;
+        }
+        return made ? takeFrom(members, wants, max, simulate, false, true) : ItemStack.EMPTY;
+    }
+
+    private static ItemStack takeFrom(List<LogisticsMember> members, java.util.function.Predicate<ItemStack> wants, int max, boolean simulate,
+                                      boolean reals, boolean made) {
         for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
             for (LogisticsMember source : byPriority(members, role == LogisticsMember.Role.PROVIDER)) {
                 if (source.role() != role) continue;
@@ -248,7 +259,19 @@ public final class Logistics {
                     if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
                     boolean onDemand = source.onDemand(slot);
                     if (onDemand ? !made || !source.offersCraftable() : !reals) continue;
-                    ItemStack taken = from.extractItem(slot, Math.min(max, there.getCount()), simulate);
+                    int most = Math.min(max, there.getCount());
+                    if (!made) {
+                        // A Reactor's port offers what it holds and what it could make in one slot: only the held.
+                        Map<ItemResource, long[]> listing = source.listing();
+                        long[] both = listing == null ? null : listing.get(ItemResource.of(there));
+                        if (both != null) most = (int) Math.min(most, both[0]);
+                        if (most <= 0) continue;
+                    }
+                    int amount = most, at = slot;
+                    // A machine that crafts from stored items only: what it draws on makes nothing for it.
+                    ItemStack taken = onDemand && !source.craftsFromCraftable()
+                            ? com.kadikular.quantimium.recipe.CraftChain.storedOnly(() -> from.extractItem(at, amount, simulate))
+                            : from.extractItem(slot, most, simulate);
                     if (!taken.isEmpty()) return taken;
                 }
             }

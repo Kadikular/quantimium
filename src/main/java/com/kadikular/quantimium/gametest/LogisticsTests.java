@@ -932,6 +932,90 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.terminal, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_stored_first", timeoutTicks = 200)
+    public static void aTerminalHandsOverWhatsStoredBeforeMakingMore(GameTestHelper helper) {
+        // One furnace stored, and a Crafter offering to the network that could make four from its 32 cobblestone. The
+        // terminal lists four craftable, not one craft's worth; a stack asked for brings the one stored furnace, and
+        // only asked again does the Crafter make some.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.FURNACE, 1));
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, false, true);
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 32));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var furnace = resource(Items.FURNACE);
+        helper.runAfterDelay(80, () -> {
+            long[] listed = terminal.contents().get(furnace);
+            helper.assertTrue(listed != null, "furnaces are listed");
+            helper.assertValueEqual(listed[0], 1L, "one stored");
+            helper.assertValueEqual(listed[1], 4L, "four can be made");
+            helper.assertValueEqual(terminal.take(furnace, 64).getCount(), 1, "the stored one, and no more");
+            helper.assertValueEqual(countIn(crafter, Items.COBBLESTONE), 32, "nothing made for it");
+            helper.assertTrue(terminal.take(furnace, 64).getCount() > 0, "asked again, some are made");
+            helper.assertTrue(countIn(crafter, Items.COBBLESTONE) < 32, "out of the Crafter's cobblestone");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_count", timeoutTicks = 200)
+    public static void ingotsMadeBackFromTheirOwnBlocksArentCounted(GameTestHelper helper) {
+        // Two Crafters drawing on the network and offering to it, each able to make a block from nine ingots and nine
+        // ingots from a block. With nine ingots stored, the network offers those nine: none more made from blocks
+        // that would be made from them.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_INGOT, 9));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(amount(helper, Items.IRON_INGOT), 9L, "the nine stored ingots only");
+            helper.assertTrue(amount(helper, Items.IRON_BLOCK) > 0, "blocks can still be made");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    private static long amount(GameTestHelper helper, Item item) {
+        var handler = network(helper);
+        for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(resource(item))) return handler.getAmountAsLong(i);
+        return 0;
+    }
+
+    // covers: laser.logistics.receptacle, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_stored_only", timeoutTicks = 200)
+    public static void aCrafterMakingFromStoredItemsOnlyMakesNoChain(GameTestHelper helper) {
+        // Two furnace Crafters drawing on the network and offering to it, their providers set to craft from stored
+        // items only: stone is offered, smooth stone (stone the other would have to make first) isn't, and can't be
+        // taken.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 16));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.FURNACE, true, true);
+        QuantumCrafterBlockEntity second = crafterOn(helper, 9, Items.FURNACE, true, true);
+        for (int x : new int[] {6, 9}) {
+            var provider = helper.getBlockEntity(new BlockPos(x, Y, 8), LogisticsReceptacleBlockEntity.class);
+            while (provider.crafts() != LogisticsReceptacleBlockEntity.Crafts.STORED) provider.cycleCrafts();
+        }
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(listed(helper, Items.STONE), "stone, from the stored cobblestone");
+            helper.assertFalse(listed(helper, Items.SMOOTH_STONE), "no smooth stone: that would take a chain");
+            ItemStack smooth = com.kadikular.quantimium.laser.Logistics.take(controller.members(), stack -> stack.is(Items.SMOOTH_STONE), 1, false);
+            helper.assertTrue(smooth.isEmpty(), "and none can be taken");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE) + countIn(first, Items.STONE) + countIn(second, Items.STONE), 16,
+                    "no cobblestone spent trying");
+            helper.assertValueEqual(take(helper, Items.STONE, 1, true), 1, "stone is made");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: pod.logistics
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void aPodLogisticsModuleIsATerminal(GameTestHelper helper) {

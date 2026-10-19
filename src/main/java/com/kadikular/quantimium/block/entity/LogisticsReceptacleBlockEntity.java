@@ -88,16 +88,30 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         changed();
     }
 
-    /** A provider on a machine that makes things to order: whether it offers what that machine would make, or only what's there. */
-    private boolean offersMade = true;
+    /**
+     * A provider on a machine that makes things to order: what that machine may make for the network from anything
+     * on it (other machines' crafts too), only from what's stored, or nothing, offering only what's there.
+     */
+    public enum Crafts { ANYTHING, STORED, NOTHING }
+
+    private Crafts crafts = Crafts.ANYTHING;
+
+    public Crafts crafts() {
+        return crafts;
+    }
 
     @Override
     public boolean offersCraftable() {
-        return offersMade;
+        return crafts != Crafts.NOTHING;
     }
 
-    public void toggleOffersMade() {
-        offersMade = !offersMade;
+    @Override
+    public boolean craftsFromCraftable() {
+        return crafts == Crafts.ANYTHING;
+    }
+
+    public void cycleCrafts() {
+        crafts = Crafts.values()[(crafts.ordinal() + 1) % Crafts.values().length];
         changed();
     }
 
@@ -393,7 +407,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         super.saveAdditional(out);
         out.putInt("Role", role.ordinal());
         out.putBoolean("Active", active);
-        out.putBoolean("OffersMade", offersMade);
+        out.putInt("Crafts", crafts.ordinal());
         out.putInt("Priority", priority);
         out.putBoolean("Allow", allow);
         out.putBoolean("Keep", keep);
@@ -409,7 +423,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         super.loadAdditional(in);
         role = Role.values()[Math.floorMod(in.getIntOr("Role", 0), Role.values().length)];
         active = in.getBooleanOr("Active", false);
-        offersMade = in.getBooleanOr("OffersMade", true);
+        crafts = Crafts.values()[Math.floorMod(in.getIntOr("Crafts", in.getBooleanOr("OffersMade", true) ? 0 : 2), Crafts.values().length)];
         priority = in.getIntOr("Priority", 0);
         allow = in.getBooleanOr("Allow", true);
         keep = in.getBooleanOr("Keep", false);

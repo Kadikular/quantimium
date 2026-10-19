@@ -235,8 +235,11 @@ network in the pool, and a provider Receptacle on a crafter offers what it can m
 stone, a stonecutter crafter drawing on the network, and stone bricks show in the terminal as craftable, each
 step made by its own crafter and paid for there when they're taken. The network works out what's craftable
 once a second, tier by tier (up to four crafters in a chain): each crafter is shown what's really there and
-what the others could make, never its own, so a loop can't feed itself. Two crafters offering the same thing
-both count, as two providers would. Taking something makes it for real; one only asked about, or called off,
+what the others could make, never its own, so a loop can't feed itself. A craftable counts what the crafter
+**can make** of it, not one craft's worth. Each craftable remembers what it's made from, all the way down, and a
+crafter isn't shown what was made out of what it makes: nine ingots a crafter could turn into a block don't
+show as nine more ingots from the crafter that would turn that block back. Where it can't tell, it counts less
+rather than more. Two crafters offering the same thing both count, as two providers would. Taking something makes it for real; one only asked about, or called off,
 undoes everything it made.
 
 Crafters linked in a ring (A reads B, B reads A, or a longer

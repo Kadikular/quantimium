@@ -592,7 +592,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> networkViews(
             @Nullable com.kadikular.quantimium.laser.LogisticsController network,
-            @Nullable java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock) {
+            @Nullable java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock, boolean fromCraftable) {
         java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views = new java.util.HashMap<>();
         if (level == null) return views;
         for (int slot = 0; slot < INPUT_SLOTS; slot++) {
@@ -602,14 +602,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
             if (level.getBlockEntity(bound.pos()) instanceof QuantumCrafterBlockEntity crafter && crafter != this) {
                 // Another Crafter, linked straight to it: what that one's preview offers, as stock, not asked live.
-                views.put(bound, new com.kadikular.quantimium.laser.StockHandler(crafter.previewOutputs()));
+                views.put(bound, new com.kadikular.quantimium.laser.StockHandler(fromCraftable ? crafter.previewOutputs() : crafter.realOutputs()));
                 continue;
             }
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
             com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
             if (controller == null) continue;
             java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> seen = network != null && controller == network && stock != null
-                    ? stock : controller.offers().stock(worldPosition, materialiser.offersReal(), materialiser.offersCraftable());
+                    ? stock : controller.offers().stock(worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable);
             views.put(bound, new com.kadikular.quantimium.laser.StockHandler(seen));
         }
         return views;
@@ -617,45 +617,64 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** Runs {@code body} with its network links seeing the networks' offers rather than the live networks. */
     private <T> T onOffers(java.util.function.Supplier<T> body) {
-        var views = networkViews(null, null);
+        var views = networkViews(null, null, true);
         return views.isEmpty() ? body.get() : EntangledLinks.withOverrides(views, body);
     }
 
     @Override
-    public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> makes(
+    public List<com.kadikular.quantimium.laser.OfferMaker.Made> makes(
             com.kadikular.quantimium.laser.LogisticsController network,
-            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock) {
-        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> made = new java.util.LinkedHashMap<>();
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock, boolean fromCraftable) {
+        List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
         if (level == null || level.isClientSide() || linkLoopDetected) return made;
         ItemStack catalyst = inventory.getStackInSlot(CATALYST_SLOT);
         if (catalyst.isEmpty() || isCatalystDenied(catalyst) || needsHotterField(catalyst)) return made;
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
         int fe = energyStorage.getEnergyStored();
-        var views = networkViews(network, stock);
+        var views = networkViews(network, stock, fromCraftable);
         List<ResolvedCraft> crafts = EntangledLinks.withOverrides(views,
                 () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier));
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
         for (ResolvedCraft craft : crafts) {
-            for (ItemStack output : craft.outputs()) {
-                if (!output.isEmpty()) made.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(output), (long) output.getCount(), Long::max);
+            java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
+            for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) from.add(withdrawal.expected());
+            List<ItemStack> outputs = craft.outputs();
+            for (int i = 0; i < outputs.size(); i++) {
+                ItemStack output = outputs.get(i);
+                if (output.isEmpty()) continue;
+                made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(net.neoforged.neoforge.transfer.item.ItemResource.of(output),
+                        canMake(craft, i), java.util.Set.copyOf(from)));
             }
         }
         return made;
+    }
+
+    /** How many of output {@code index} a craft could make from what it has: "Can make", not one batch. */
+    private static long canMake(ResolvedCraft craft, int index) {
+        return Math.max(craft.outputs().get(index).getCount(), craft.availableOutputCount(index));
+    }
+
+    /** What's really in its outputs, by item. */
+    public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> realOutputs() {
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> outputs = new java.util.LinkedHashMap<>();
+        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
+            ItemStack real = inventory.getStackInSlot(slot);
+            if (!real.isEmpty()) outputs.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(real), (long) real.getCount(), Long::sum);
+        }
+        return outputs;
     }
 
     /** What its preview offers, by item: the most of each one craft would make, plus what's really in its outputs. */
     public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> previewOutputs() {
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> outputs = new java.util.LinkedHashMap<>();
         for (ResolvedCraft craft : preview) {
-            for (ItemStack output : craft.outputs()) {
-                if (!output.isEmpty()) outputs.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(output), (long) output.getCount(), Long::max);
+            for (int i = 0; i < craft.outputs().size(); i++) {
+                ItemStack output = craft.outputs().get(i);
+                if (!output.isEmpty()) outputs.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(output), canMake(craft, i), Long::max);
             }
         }
-        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
-            ItemStack real = inventory.getStackInSlot(slot);
-            if (!real.isEmpty()) outputs.merge(net.neoforged.neoforge.transfer.item.ItemResource.of(real), (long) real.getCount(), Long::sum);
-        }
+        realOutputs().forEach((item, count) -> outputs.merge(item, count, Long::sum));
         return outputs;
     }
 
@@ -1295,7 +1314,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private ItemStack automationView(int absoluteOutputSlot) {
         ItemStack real = inventory.getStackInSlot(absoluteOutputSlot);
         if (!real.isEmpty()) return real;
-        if (level == null || level.isClientSide() || automationBusy || com.kadikular.quantimium.recipe.CraftChain.full()) return ItemStack.EMPTY;
+        if (level == null || level.isClientSide() || automationBusy || com.kadikular.quantimium.recipe.CraftChain.full()
+                || com.kadikular.quantimium.recipe.CraftChain.storedOnly()) return ItemStack.EMPTY;
         if (statusCode == STATUS_NO_POWER || statusCode == STATUS_ENTANGLED_LOOP
                 || statusCode == STATUS_IDLE || statusCode == STATUS_NO_RECIPE
                 || statusCode == STATUS_DENIED) {

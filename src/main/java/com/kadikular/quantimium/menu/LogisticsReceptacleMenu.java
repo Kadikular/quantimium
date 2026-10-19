@@ -105,7 +105,7 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
             case BUTTON_ACTIVE -> receptacle.toggleActive();
             case BUTTON_ALLOW -> receptacle.toggleAllow();
             case BUTTON_KEEP -> receptacle.toggleKeep();
-            case BUTTON_MADE -> receptacle.toggleOffersMade();
+            case BUTTON_MADE -> receptacle.cycleCrafts();
             default -> {
                 return false;
             }
