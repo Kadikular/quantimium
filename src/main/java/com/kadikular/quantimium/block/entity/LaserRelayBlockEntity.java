@@ -227,6 +227,12 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         return false;
     }
 
+    /** Its switch is only its emitters': an Entangled Mirror drawing on it still gets its light. */
+    @Override
+    public boolean passesEntangled() {
+        return true;
+    }
+
     @Override
     public boolean switches() {
         if (mode != RelayMode.IGNORED) return true;

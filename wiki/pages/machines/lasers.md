@@ -139,6 +139,8 @@ place it.
 - Both blocks must be loaded for light to cross; the Tesseract stays bound while one isn't, and light crosses again
   when it's back. A Tesseract bound to a block in another dimension sends nothing.
 - Sneak with an empty hand to take the Tesseract out. A redstone signal switches it off.
+- A Relay with all its emitters switched off still passes its light to the mirrors drawing on it; a Laser Mirror
+  switched off by redstone passes nothing.
 
 ## Optical cavities
 

@@ -242,10 +242,12 @@ crafter can plan its craft from another's preview: plank → stick → torch in 
 network in the pool, and a provider Receptacle on a crafter offers what it can make to the network, as
 **craftable**, not as stock. So crafters with different catalysts chain through it: a furnace crafter offering
 stone, a stonecutter crafter drawing on the network, and stone bricks show in the terminal as craftable, each
-step made by its own crafter and paid for there when they're taken. One crafter can make two steps of the same chain (a
-furnace smelting stone for the bricks it then cracks), as long as they're different recipes. The network works out what's craftable
-once a second, tier by tier (up to four crafters in a chain): each crafter is shown what's really there and
-what the others could make, never its own, so a loop can't feed itself. A craftable counts what the crafter
+step made by its own crafter and paid for there when they're taken. One crafter can make several steps of a chain itself (a
+furnace smelting stone for the bricks it then cracks; a lone crafting-table crafter making ingots from blocks
+for leggings), as long as they're different recipes; on its own, off a network, a crafter shows only what it
+makes straight from its inputs. The network works out what's craftable once a second, tier by tier (up to
+four steps in a chain): each crafter is shown what's really there and what every crafter could make so far,
+itself too. A craftable counts what the crafter
 **can make** of it, not one craft's worth. Each craftable remembers what it's made from, all the way down, and a
 recipe isn't shown what was made out of what it makes: nine ingots a crafter could turn into a block don't
 show as nine more ingots from the crafter that would turn that block back. Where it can't tell, it counts less

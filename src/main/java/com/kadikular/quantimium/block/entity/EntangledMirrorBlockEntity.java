@@ -172,6 +172,14 @@ public class EntangledMirrorBlockEntity extends BlockEntity implements LaserNode
         }
     }
 
+    /** Its light starts at the Tesseract, a pixel behind the housing's middle, and leaves by the muzzle. */
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        net.minecraft.world.phys.Vec3[] ends = beam.ends();
+        net.minecraft.world.phys.Vec3 back = net.minecraft.world.phys.Vec3.atLowerCornerOf(facing().getUnitVec3i()).scale(-1.0 / 16.0);
+        return new net.minecraft.world.phys.Vec3[] {worldPosition.getCenter().add(back), ends[1]};
+    }
+
     @Override
     public List<LaserBeam> syncedBeams() {
         return shownBeams;

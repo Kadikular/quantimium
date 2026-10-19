@@ -547,7 +547,7 @@ public final class LaserNetworks {
             BlockPos at = work.poll();
             LaserNode node = nodes.get(at);
             // A switched-off relay passes nothing on: the light beyond it is only what reaches it some other way.
-            if (node == null || !node.relays() || !node.enabled()) continue;
+            if (node == null || !node.relays() || !passes(node)) continue;
             Light in = incoming(node);
             if (in == null) continue;
             Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
@@ -881,7 +881,7 @@ public final class LaserNetworks {
             for (LaserBeam beam : beams.getOrDefault(at, List.of())) {
                 if (beam.end() != LaserBeam.End.NODE || !seen.add(beam.hit())) continue;
                 LaserNode next = nodes.get(beam.hit());
-                if (next == null || !next.relays() || next.isolates() || !next.enabled()) continue;
+                if (next == null || !next.relays() || next.isolates() || !passes(next)) continue;
                 if (next.collects()) found.add(beam.hit());
                 queue.add(beam.hit());
             }
@@ -1121,6 +1121,14 @@ public final class LaserNetworks {
      */
     private static boolean admits(LaserNode node, LaserBeam beam) {
         return beam.jumps() ? node.entangledFace() != null : node.accepts(beam.face());
+    }
+
+    /**
+     * Whether light gets through a relay: it's switched on, or it's a Relay with every emitter off and an Entangled
+     * Mirror drawing on it, which gets the light all the same.
+     */
+    private boolean passes(LaserNode node) {
+        return node.enabled() || node.passesEntangled() && !drawing(node.nodePos()).isEmpty();
     }
 
     /** The Entangled Mirrors drawing on the node at {@code source}, in a fixed order. */
@@ -1540,7 +1548,7 @@ public final class LaserNetworks {
     /** Whether every relay on the route is switched on. */
     private boolean open(Route route) {
         for (Hop hop : route.path()) {
-            if (hop.relay() != null && !hop.relay().enabled()) return false;
+            if (hop.relay() != null && !passes(hop.relay())) return false;
         }
         return true;
     }
@@ -1629,7 +1637,7 @@ public final class LaserNetworks {
             for (LaserBeam beam : beams.getOrDefault(queue.poll(), List.of())) {
                 if (beam.end() != LaserBeam.End.NODE) continue;
                 LaserNode next = nodes.get(beam.hit());
-                if (next != null && next.relays() && next.enabled() && live.add(beam.hit())) queue.add(beam.hit());
+                if (next != null && next.relays() && passes(next) && live.add(beam.hit())) queue.add(beam.hit());
             }
         }
         return live;

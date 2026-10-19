@@ -143,6 +143,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private boolean suppressInventoryNotify;
     /** Guards against two crafters linked to each other committing through one another forever. */
     private boolean automationBusy;
+    /** The previewed recipes that chain its own crafts (worked out with them on offer), to be sized the same way. */
+    private java.util.Set<Identifier> chained = java.util.Set.of();
     /**
      * The recipes it's making right now. While one runs it may run another, which the first needs made from what
      * it would draw on (a furnace smelting stone for bricks it will smelt again), but never one already running.
@@ -597,7 +599,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> networkViews(
             @Nullable com.kadikular.quantimium.laser.LogisticsController network,
-            @Nullable java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock, boolean fromCraftable) {
+            @Nullable java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock, boolean fromCraftable, boolean withOwn) {
         java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views = new java.util.HashMap<>();
         if (level == null) return views;
         for (int slot = 0; slot < INPUT_SLOTS; slot++) {
@@ -614,7 +616,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
             if (controller == null) continue;
             java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> seen = network != null && controller == network && stock != null
-                    ? stock : controller.offers().stock(worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable);
+                    ? stock : controller.offers().stock(withOwn ? null : worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable);
             views.put(bound, new com.kadikular.quantimium.laser.StockHandler(seen));
         }
         return views;
@@ -622,8 +624,29 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** Runs {@code body} with its network links seeing the networks' offers rather than the live networks. */
     private <T> T onOffers(java.util.function.Supplier<T> body) {
-        var views = networkViews(null, null, true);
+        return onOffers(false, body);
+    }
+
+    /** As {@link #onOffers(java.util.function.Supplier)}; {@code withOwn}, what it could make itself is on offer too. */
+    private <T> T onOffers(boolean withOwn, java.util.function.Supplier<T> body) {
+        var views = networkViews(null, null, true, withOwn);
         return views.isEmpty() ? body.get() : EntangledLinks.withOverrides(views, body);
+    }
+
+    /** What the networks it draws on say it could make, chaining its own crafts as well as other machines'. */
+    private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> madeOnItsNetworks() {
+        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> made = new java.util.HashSet<>();
+        if (level == null) return made;
+        for (int slot = 0; slot < INPUT_SLOTS; slot++) {
+            ItemStack link = inventory.getStackInSlot(slot);
+            if (!EntangledLinks.isLink(link)) continue;
+            GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
+            if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
+            if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
+            com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
+            if (controller != null) made.addAll(controller.offers().madeBy(worldPosition));
+        }
+        return made;
     }
 
     @Override
@@ -636,7 +659,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (catalyst.isEmpty() || isCatalystDenied(catalyst) || needsHotterField(catalyst)) return made;
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
         int fe = energyStorage.getEnergyStored();
-        var views = networkViews(network, stock, fromCraftable);
+        var views = networkViews(network, stock, fromCraftable, true);
         List<ResolvedCraft> crafts = EntangledLinks.withOverrides(views,
                 () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier));
         if (isBasic()) crafts = limitToCoherence(crafts);
@@ -729,11 +752,31 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         List<ResolvedCraft> crafts;
         boolean priorBusy = automationBusy;
         enterChain();
+        java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
         try {
             crafts = onOffers(() -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
+            // On a network that says it could chain its own crafts (leggings from ingots it would make from blocks),
+            // those too: worked out again with its own crafts on offer, kept only for what the network says.
+            java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = madeOnItsNetworks();
+            for (ResolvedCraft craft : crafts) {
+                for (ItemStack output : craft.outputs()) if (!output.isEmpty()) chainable.remove(net.neoforged.neoforge.transfer.item.ItemResource.of(output));
+            }
+            if (!chainable.isEmpty()) {
+                List<ResolvedCraft> more = onOffers(true, () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
+                List<ResolvedCraft> joined = new ArrayList<>(crafts);
+                for (ResolvedCraft craft : more) {
+                    boolean wanted = false;
+                    for (ItemStack output : craft.outputs()) {
+                        if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
+                    }
+                    if (wanted && joined.size() < com.kadikular.quantimium.recipe.CrafterPreview.MAX_OUTPUTS && chainedNow.add(craft.recipeId())) joined.add(craft);
+                }
+                crafts = joined;
+            }
         } finally {
             exitChain(priorBusy);
         }
+        chained = chainedNow;
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) {
             List<ResolvedCraft> locked = new ArrayList<>();
@@ -773,11 +816,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private void rescaleCachedPreview() {
         if (level == null || level.isClientSide() || linkLoopDetected || preview.isEmpty()) return;
 
-        IngredientPool pool;
+        IngredientPool own;
+        IngredientPool withOwn = null;
         boolean priorBusy = automationBusy;
         enterChain();
         try {
-            pool = onOffers(() -> IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS));
+            own = onOffers(() -> IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS));
+            if (!chained.isEmpty()) withOwn = onOffers(true, () -> IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS));
         } finally {
             exitChain(priorBusy);
         }
@@ -785,6 +830,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         List<ResolvedCraft> next = new ArrayList<>(preview.size());
         boolean stale = false;
         for (ResolvedCraft craft : preview) {
+            IngredientPool pool = withOwn != null && chained.contains(craft.recipeId()) ? withOwn : own;
             if (!craft.runSatisfiedBy(pool)) {
                 stale = true;
                 continue;
@@ -1089,8 +1135,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         boolean priorBusy = automationBusy;
         enterChain();
         try {
-            // What it would draw from a network is judged by the network's offers, not by asking it live.
-            return onOffers(() -> {
+            // What it would draw from a network is judged by the network's offers (its own crafts too: it may make
+            // another recipe on the way), not by asking it live.
+            return onOffers(true, () -> {
                 for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
                     if (withdrawal.count() <= 0) continue;
                     if (!canWithdraw(withdrawal)) return false;
@@ -1762,7 +1809,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-        if (level != null && !level.isClientSide()) rebuildPreview();
+        if (level != null && !level.isClientSide()) {
+            rebuildPreview();
+            // Straight to the one opening it, ahead of the screen: sent with the level's other updates at the end of the
+            // tick, the previews would arrive after the screen had opened empty.
+            if (player instanceof net.minecraft.server.level.ServerPlayer server) server.connection.send(ClientboundBlockEntityDataPacket.create(this));
+        }
         return new QuantumCrafterMenu(containerId, playerInventory, this, data);
     }
 

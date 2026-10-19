@@ -385,6 +385,26 @@ public final class LaserTests {
     }
 
     // covers: laser.entangled_mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aRelayWithItsEmittersOffStillFeedsItsMirror(GameTestHelper helper) {
+        // A Relay whose one emitter waits for a signal that never comes sends nothing itself, but the Entangled Mirror
+        // drawing on it still gets its light.
+        emitter(helper, new BlockPos(1, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos relay = new BlockPos(5, Y, 3);
+        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.NORTH));
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).cycleMode(Direction.NORTH);
+        FoldCoreBlockEntity north = sink(helper, new BlockPos(5, Y, 0));
+        entangled(helper, new BlockPos(12, Y, 10), Direction.SOUTH, relay);
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 14));
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "the mirror sends the relay's light");
+            helper.assertValueEqual(north.getEnergyStorage().getEnergyStored(), 0, "the relay's own emitter stays off");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.entangled_mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 80)
     public static void anEntangledMirrorLetsNoLightInByItsHousing(GameTestHelper helper) {
         // Light shone into its back, or into its muzzle, goes no further.

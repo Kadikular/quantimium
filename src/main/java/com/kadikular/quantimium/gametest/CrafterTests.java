@@ -125,6 +125,20 @@ public final class CrafterTests {
         });
     }
 
+    // covers: crafter.preview
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_alone", timeoutTicks = 60)
+    public static void aCrafterOnItsOwnChainsNothing(GameTestHelper helper) {
+        // 64 iron blocks in a crafting-table Crafter on no network: it makes ingots from them, not leggings.
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.CRAFTING_TABLE);
+        TestSupport.fill(crafter.getEnergyStorage());
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.IRON_BLOCK, 64));
+        helper.runAfterDelay(20, () -> {
+            helper.assertTrue(craftOf(crafter, Items.IRON_INGOT) != null, "ingots from the blocks");
+            helper.assertTrue(craftOf(crafter, Items.IRON_LEGGINGS) == null, "no leggings: that would chain");
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.catalyst
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_catalyst", timeoutTicks = 60)
     public static void catalystChoosesTheRecipes(GameTestHelper helper) {

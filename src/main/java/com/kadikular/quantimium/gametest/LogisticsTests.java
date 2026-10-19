@@ -933,6 +933,31 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_own_chain", timeoutTicks = 200)
+    public static void aLoneCrafterChainsItsOwnCrafts(GameTestHelper helper) {
+        // One crafting-table Crafter on the network, 35 iron blocks and 4 ingots stored: it offers leggings (ingots it
+        // would make from blocks first), shows them itself, and one taken costs seven ingots' worth of iron. No more
+        // blocks are offered than are stored.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 35), new ItemStack(Items.IRON_INGOT, 4));
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(amount(helper, Items.IRON_LEGGINGS) > 0, "leggings offered");
+            helper.assertValueEqual(amount(helper, Items.IRON_BLOCK), 35L, "only the stored blocks");
+            crafter.rebuildPreview();
+            helper.assertTrue(CrafterTests.craftOf(crafter, Items.IRON_LEGGINGS) != null, "the Crafter shows leggings too");
+            helper.assertValueEqual(take(helper, Items.IRON_LEGGINGS, 1, true), 1, "a pair taken");
+            int iron = 9 * (count(helper, 4, Items.IRON_BLOCK) + countIn(crafter, Items.IRON_BLOCK))
+                    + count(helper, 4, Items.IRON_INGOT) + countIn(crafter, Items.IRON_INGOT);
+            helper.assertValueEqual(iron, 35 * 9 + 4 - 7, "for seven ingots' worth");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_twice", timeoutTicks = 200)
     public static void aCrafterMakesTwoStepsOfOneChain(GameTestHelper helper) {
         // Cobblestone stored; a furnace Crafter and a crafting-table one, both drawing on the network and offering to

@@ -23,8 +23,8 @@ import java.util.Set;
  * read first, and stays put while the stock does.
  *
  * <p>Tier 0 is what's really there. Then each machine that makes things to order behind a provider Receptacle
- * ({@link OfferMaker}) is shown the real items and what the other machines could make so far, never its own, and
- * what it could make from that is its craftable offer; that's done again, so a chain of machines is found, up to
+ * ({@link OfferMaker}) is shown the real items and what the machines (itself too) could make so far, and what it
+ * could make from that is its craftable offer; that's done again, so a chain of machines is found, up to
  * {@link #TIERS} deep. Two machines offering the same thing both count, as two providers would.
  *
  * <p>Each craftable remembers every item it's made from, all the way down. A machine isn't shown what was made out of
@@ -126,6 +126,22 @@ public final class OfferTable {
             }
         }
         return stock;
+    }
+
+    /** What the machine at {@code maker} could make, by the table. */
+    public Set<ItemResource> madeBy(BlockPos maker) {
+        Set<ItemResource> made = new java.util.LinkedHashSet<>();
+        for (Map.Entry<ItemResource, Map<BlockPos, List<Source>>> entry : craftable.entrySet()) {
+            List<Source> sources = entry.getValue().get(maker);
+            if (sources == null) continue;
+            for (Source source : sources) {
+                if (source.count() > 0) {
+                    made.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return made;
     }
 
     /** Every item on offer, real and craftable apart. */
@@ -243,13 +259,15 @@ public final class OfferTable {
     private Map<ItemResource, List<Source>> offersOf(LogisticsController network, BlockPos pos, OfferMaker maker, LogisticsMember member) {
         Map<ItemResource, List<Source>> kept = new LinkedHashMap<>();
         boolean chains = member.craftsFromCraftable();
-        Set<Item> looped = collect(maker.makes(network, stock(pos, true, chains, Set.of()), chains), pos, member, Set.of(), null, kept);
+        // Shown its own crafts too, so one machine can chain its own steps (ingots from blocks, then leggings); what
+        // would loop back through itself is caught as any loop is.
+        Set<Item> looped = collect(maker.makes(network, stock(null, true, chains, Set.of()), chains), pos, member, Set.of(), null, kept);
         int asked = 0;
         for (Item out : looped) {
             if (asked++ >= MOST_LOOPS) break;
             Set<Item> avoid = new HashSet<>(Set.of(out));
             for (int attempt = 0; attempt < LOOP_RETRIES; attempt++) {
-                Set<Item> still = collect(maker.makes(network, stock(pos, true, chains, avoid), chains), pos, member, avoid, out, kept);
+                Set<Item> still = collect(maker.makes(network, stock(null, true, chains, avoid), chains), pos, member, avoid, out, kept);
                 if (still.isEmpty() || !avoid.addAll(still)) break;
             }
         }
@@ -271,7 +289,7 @@ public final class OfferTable {
             Set<Item> from = new HashSet<>(one.from());
             boolean loops = false;
             for (Item input : one.from()) {
-                Set<Item> under = below.computeIfAbsent(input, i -> madeFrom(i, pos, avoid));
+                Set<Item> under = below.computeIfAbsent(input, i -> madeFrom(i, null, avoid));
                 if (under.contains(out)) loops = true;
                 from.addAll(under);
             }

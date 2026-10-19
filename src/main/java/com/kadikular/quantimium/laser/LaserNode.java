@@ -32,6 +32,14 @@ public interface LaserNode {
         return null;
     }
 
+    /**
+     * Whether light reaching it still reaches the Entangled Mirrors drawing on it while it's switched off: a Relay's
+     * switch is only its emitters', so yes; a Laser Mirror's stops all its light.
+     */
+    default boolean passesEntangled() {
+        return false;
+    }
+
     /** For an Entangled Mirror: the way light it draws leaves it, out of its muzzle; null for any other node. */
     @org.jetbrains.annotations.Nullable
     default Direction entangledFace() {
