@@ -55,8 +55,8 @@ Right-click a face to step its mode on, shift-right-click to step back.
 choose which slots the picked face works on. Click a cell to allow or block it.
 
 - **In** covers the nine input slots of the grid.
-- **Out** covers the nine output slots. The Quantum Crafter's output grid has six pages of nine;
-  each cell stands for that position on **every** page.
+- **Out** covers the nine output slots. The Quantum Crafter has 54 outputs; each cell stands for every
+  ninth of them (the first cell: outputs 1, 10, 19 and so on).
 - On the **Fluids** tab the cells are the three input tanks and the three output tanks.
 - A Tesseract Stabiliser has no slots of its own; its faces reach *all remote slots* the link
   exposes.

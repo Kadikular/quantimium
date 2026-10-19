@@ -150,11 +150,12 @@ One take makes as many runs as the **smallest** of three limits allows:
 runs and a stack of ingots allows 64, but at 4,000 FE a smelt the energy allows only 25. The ghost
 shows **25 iron ingots**.
 
-The small number on a ghost is how many it **can make** in all, past one stack: 128 iron ingots, in the grid
-or behind a Tesseract (a logistics network counts every stack), show 14 iron blocks. Taking works as in a
-logistics terminal: click for the batch, right-click for half, shift-right-click (or shift and the wheel
-down) for one, onto what you're holding if it's the same; shift-click sends the batch to your inventory.
-A preview keeps its slot while its craft is still on offer, so taking from one doesn't shuffle the rest.
+Its screen works like a logistics terminal: everything in its outputs and every preview in one scrolling
+grid, with a search box over it. Previews are tinted, and their small number is how many they **can
+make** in all, past one stack: 128 iron ingots, in the grid or behind a Tesseract (a logistics network
+counts every stack), show 14 iron blocks. Click for the batch, right-click for half, shift-right-click (or
+shift and the wheel down) for one, onto what you're holding if it's the same; shift-click sends the batch
+to your inventory. While shift is held the grid holds still.
 
 **Unrealised Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see <ItemLink id="quantimium:unrealised_matter" />).

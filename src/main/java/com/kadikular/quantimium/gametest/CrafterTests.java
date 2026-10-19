@@ -50,7 +50,6 @@ public final class CrafterTests {
 
     private CrafterTests() {}
 
-    // covers: crafter.catalyst
     // covers: crafter.preview
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_take_some", timeoutTicks = 60)
     public static void aPreviewTakesOnlyWhatsAskedFor(GameTestHelper helper) {
@@ -68,24 +67,38 @@ public final class CrafterTests {
     }
 
     // covers: crafter.preview
-    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_ghosts_stay", timeoutTicks = 60)
-    public static void previewsStayWhereTheyAre(GameTestHelper helper) {
-        // A furnace Crafter previewing stone and iron: all the stone taken, the iron's preview stays in its slot.
-        QuantumCrafterBlockEntity crafter = crafter(helper, new BlockPos(2, 1, 2), Items.FURNACE);
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_screen_takes", timeoutTicks = 60)
+    public static void theScreenTakesFromAnyOutput(GameTestHelper helper) {
+        // Nine outputs holding dirt, so the stone preview sits past them, where the old first page ended. From the
+        // screen: half the batch onto the cursor, one more, the rest into the inventory; and half of some dirt.
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
         TestSupport.fill(crafter.getEnergyStorage());
-        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 4));
-        crafter.getInventory().setStackInSlot(1, new ItemStack(Items.RAW_IRON, 4));
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 40));
+        for (int i = 0; i < 9; i++) crafter.getInventory().setStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + i, new ItemStack(Items.DIRT, 8));
+        ServerPlayer player = TestSupport.player(helper, CRAFTER.west(2));
         helper.runAfterDelay(20, () -> {
-            int stone = ghostSlot(crafter, Items.STONE);
-            int iron = ghostSlot(crafter, Items.IRON_INGOT);
-            ItemStack taken = crafter.takeGhost(stone);
-            helper.assertValueEqual(taken.getCount(), 4, "all the stone");
             crafter.rebuildPreview();
-            helper.assertValueEqual(ghostSlot(crafter, Items.IRON_INGOT), iron, "the iron stays put (stone was in " + stone + ")");
+            var menu = (com.kadikular.quantimium.menu.QuantumCrafterMenu) crafter.createMenu(1, player.getInventory(), player);
+            int take = com.kadikular.quantimium.menu.QuantumCrafterMenu.TAKE;
+            java.util.function.IntSupplier stone = () -> ghostSlot(crafter, Items.STONE) - QuantumCrafterBlockEntity.OUTPUT_START;
+            helper.assertTrue(stone.getAsInt() >= 9, "the preview is past the dirt (" + stone.getAsInt() + ")");
+            helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.HALF * take + stone.getAsInt()), "half taken");
+            helper.assertValueEqual(menu.getCarried().getCount(), 20, "half of forty");
+            helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.ONE * take + stone.getAsInt()), "one more");
+            helper.assertValueEqual(menu.getCarried().getCount(), 21, "one more onto the cursor");
+            helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 19, "twenty-one cobblestone spent");
+            helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.TO_INVENTORY * take + stone.getAsInt()), "the rest to the inventory");
+            helper.assertValueEqual(player.getInventory().countItem(Items.STONE), 19, "nineteen stone in the inventory");
+            menu.setCarried(ItemStack.EMPTY);
+            helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.HALF * take + 3), "half the dirt");
+            helper.assertValueEqual(menu.getCarried().getCount(), 4, "four dirt");
+            helper.assertValueEqual(crafter.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + 3).getCount(), 4, "four left");
+            TestSupport.removePlayer(helper, player);
             helper.succeed();
         });
     }
 
+    // covers: crafter.catalyst
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_catalyst", timeoutTicks = 60)
     public static void catalystChoosesTheRecipes(GameTestHelper helper) {
         QuantumCrafterBlockEntity furnace = crafter(helper, CRAFTER, Items.FURNACE);

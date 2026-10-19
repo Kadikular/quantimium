@@ -55,7 +55,6 @@ import com.kadikular.quantimium.network.RequestSideConfigPayload;
 import com.kadikular.quantimium.network.RequestSlotConfigPayload;
 import com.kadikular.quantimium.network.SetBatchSizePayload;
 import com.kadikular.quantimium.network.SetCrafterLockPayload;
-import com.kadikular.quantimium.network.SetCrafterPagePayload;
 import com.kadikular.quantimium.network.SetGhostFilterPayload;
 import com.kadikular.quantimium.network.SetMaterialiserTargetPayload;
 import com.kadikular.quantimium.network.SuperpositionFlashPayload;
@@ -441,18 +440,6 @@ public class Quantimium {
                         && player.containerMenu.containerId == payload.containerId()
                         && player.containerMenu instanceof GhostFilterMenu menu) {
                     menu.setGhost(payload.index(), payload.stack());
-                }
-            })
-        );
-
-        registrar.playToServer(
-            SetCrafterPagePayload.TYPE,
-            SetCrafterPagePayload.STREAM_CODEC,
-            (payload, context) -> context.enqueueWork(() -> {
-                if (context.player() instanceof ServerPlayer player
-                        && player.containerMenu.containerId == payload.containerId()
-                        && player.containerMenu instanceof QuantumCrafterMenu menu) {
-                    menu.setOutputPage(payload.page());
                 }
             })
         );

@@ -149,22 +149,27 @@ class Panel:
 # ---- Panels ----
 
 def crafter(palette: Palette, basic: bool) -> Panel:
-    panel = Panel(palette)
+    """The Quantum Crafter: inputs, catalyst and a search box across the top; under them a scrolling 9x3 grid of
+    everything in its outputs and every preview (QuantumCrafterScreen.GRID_*), then the player's inventory
+    (QuantumCrafterMenu.PLAYER_Y)."""
+    panel = Panel(palette, height=CRAFTER_H)
     panel.energy()
     panel.grid(INPUT_ORIGIN, 3, 3, "inputs")
-    panel.grid(OUTPUT_ORIGIN, 3, 3, "outputs")
     panel.socket(*CENTRE_SLOT, "catalyst")
     panel.arrow(66, 44, 8)
-    panel.arrow(100, 44, 12)
-    # The page bar sits under the output grid, in the gap above the inventory rule.
-    panel.well(113, 72, 60, 11)
-    panel.region("page", (113, 72, 60, 11))
     if basic:
         # Coherence reserve, a flat gauge under the catalyst (QuantumCrafterScreen.COHERENCE_*).
         panel.gauge((72, 60, 32, 4), "coherence")
-    panel.player()
-    panel.rule(79, 3, 108)
+    # What the catalyst makes: a search box over the output grid.
+    panel.well(7, 72, 162, 12)
+    panel.region("search", (9, 74, 158, 9))
+    panel.grid((8, 88), 9, 3, "outputs")
+    panel.player(CRAFTER_PLAYER_Y)
     return panel
+
+
+CRAFTER_H = 232
+CRAFTER_PLAYER_Y = 152
 
 
 SIM_HEIGHT = 186

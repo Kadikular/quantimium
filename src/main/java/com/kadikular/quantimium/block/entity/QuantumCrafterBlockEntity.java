@@ -335,63 +335,29 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (level != null && level.isClientSide()) return NO_GHOSTS;
 
         GhostSlot[] layout = new GhostSlot[OUTPUT_END - OUTPUT_START + 1];
-        boolean[] open = new boolean[layout.length];
-        for (int local = 0; local < layout.length; local++) open[local] = inventory.getStackInSlot(OUTPUT_START + local).isEmpty();
-
-        // A craft still on offer keeps the slots it had, so taking from a preview doesn't shuffle the rest; new ones
-        // fill what's free, in preview order.
-        boolean[] placed = new boolean[preview.size()];
-        for (int craftIndex = 0; craftIndex < preview.size(); craftIndex++) {
-            ResolvedCraft craft = preview.get(craftIndex);
-            List<Integer> at = new ArrayList<>();
-            for (int outputIndex = 0; outputIndex < craft.outputs().size(); outputIndex++) {
-                if (craft.outputs().get(outputIndex).isEmpty()) continue;
-                Integer before = ghostPlaces.get(craft.recipeId() + "#" + outputIndex);
-                if (before == null || before >= layout.length || !open[before] || layout[before] != null || at.contains(before)) {
-                    at = null;
-                    break;
-                }
-                at.add(before);
-            }
-            if (at == null || at.isEmpty()) continue;
-            place(layout, craftIndex, at);
-            placed[craftIndex] = true;
-        }
-        for (int craftIndex = 0; craftIndex < preview.size(); craftIndex++) {
-            if (placed[craftIndex]) continue;
-            ResolvedCraft craft = preview.get(craftIndex);
-            List<Integer> at = new ArrayList<>();
-            int local = 0;
-            for (int outputIndex = 0; outputIndex < craft.outputs().size() && at != null; outputIndex++) {
-                if (craft.outputs().get(outputIndex).isEmpty()) continue;
-                while (local < layout.length && (!open[local] || layout[local] != null)) local++;
-                if (local >= layout.length) at = null;
-                else at.add(local++);
-            }
-            if (at != null && !at.isEmpty()) place(layout, craftIndex, at);
-        }
-
-        ghostPlaces.clear();
+        List<Integer> free = new ArrayList<>(layout.length);
         for (int local = 0; local < layout.length; local++) {
-            GhostSlot ghost = layout[local];
-            if (ghost != null) ghostPlaces.put(preview.get(ghost.craftIndex()).recipeId() + "#" + ghost.outputIndex(), local);
+            if (inventory.getStackInSlot(OUTPUT_START + local).isEmpty()) free.add(local);
         }
+
+        int cursor = 0;
+        for (int craftIndex = 0; craftIndex < preview.size() && cursor < free.size(); craftIndex++) {
+            ResolvedCraft craft = preview.get(craftIndex);
+            List<ItemStack> outputs = craft.outputs();
+            int needed = 0;
+            for (ItemStack output : outputs) {
+                if (!output.isEmpty()) needed++;
+            }
+            if (needed == 0 || cursor + needed > free.size()) continue;
+            for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
+                if (outputs.get(outputIndex).isEmpty()) continue;
+                layout[free.get(cursor++)] = new GhostSlot(craftIndex, outputIndex, craft.feCost(),
+                        craft.batchSize(), craft.energyCapped(), craft.availableOutputCount(outputIndex));
+            }
+        }
+
         ghostLayout = layout;
         return layout;
-    }
-
-    /** Where each craft's outputs were last shown (recipe and output), so they stay put while still on offer. */
-    private final java.util.Map<String, Integer> ghostPlaces = new java.util.HashMap<>();
-
-    /** Shows the outputs of craft {@code craftIndex}, in order, in the slots {@code at}. */
-    private void place(GhostSlot[] layout, int craftIndex, List<Integer> at) {
-        ResolvedCraft craft = preview.get(craftIndex);
-        int next = 0;
-        for (int outputIndex = 0; outputIndex < craft.outputs().size(); outputIndex++) {
-            if (craft.outputs().get(outputIndex).isEmpty()) continue;
-            layout[at.get(next++)] = new GhostSlot(craftIndex, outputIndex, craft.feCost(),
-                    craft.batchSize(), craft.energyCapped(), craft.availableOutputCount(outputIndex));
-        }
     }
 
     /** The preview shown by an output slot, or null. Server-assigned, so both sides agree. */

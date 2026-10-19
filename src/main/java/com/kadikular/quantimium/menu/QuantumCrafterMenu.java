@@ -10,7 +10,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import com.kadikular.quantimium.util.SlotItemHandler;
@@ -18,16 +17,13 @@ import com.kadikular.quantimium.util.SlotItemHandler;
 public class QuantumCrafterMenu extends AbstractContainerMenu {
 
     private static final int DATA_COUNT = 19;
-    public static final int OUTPUTS_PER_PAGE = 9;
-    public static final int PAGE_COUNT = QuantumCrafterBlockEntity.OUTPUT_SLOTS / OUTPUTS_PER_PAGE;
-    private static final int MENU_CATALYST_SLOT = 18;
-    private static final int MACHINE_MENU_SLOTS = 19;
+    private static final int MENU_CATALYST_SLOT = 9;
+    private static final int MACHINE_MENU_SLOTS = 10;
+    /** Where the player's inventory starts on the panel (tools/gui_panels.py quantum_crafter). */
+    public static final int PLAYER_Y = 152;
 
     private final QuantumCrafterBlockEntity blockEntity;
     private final ContainerData data;
-    private int outputPage;
-    /** Stable, synchronised slot contents used to display previews without lying about real storage. */
-    private final SimpleContainer displayOutputs = new SimpleContainer(QuantumCrafterBlockEntity.INPUT_SLOTS);
 
     public QuantumCrafterMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
         this(containerId, playerInv,
@@ -48,29 +44,20 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
             }
         }
 
-        // 3x3 paged Outputs (menu slots 9-17) — ghost-aware
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                int local = col + row * 3;
-                this.addSlot(new GhostOutputSlot(this, blockEntity, displayOutputs, local,
-                        116 + col * 18, 18 + row * 18));
-            }
-        }
-
-        // Catalyst (menu slot 18; backing slot follows all 54 outputs)
+        // The outputs aren't slots: the screen shows them all in a grid, and takes from them by button.
+        // Catalyst (menu slot 9; backing slot follows all 54 outputs)
         this.addSlot(new SlotItemHandler(blockEntity.getInventory(), QuantumCrafterBlockEntity.CATALYST_SLOT, 80, 36));
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, PLAYER_Y + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
         }
 
         addDataSlots(data);
-        syncDisplayOutputs();
     }
 
     public QuantumCrafterBlockEntity getBlockEntity() {
@@ -132,50 +119,11 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         return data.get(15);
     }
 
-    public int getOutputPage() {
-        return outputPage;
-    }
-
-    public void setOutputPage(int page) {
-        outputPage = Math.max(0, Math.min(PAGE_COUNT - 1, page));
-        syncDisplayOutputs();
-        broadcastChanges();
-    }
-
-    public int absoluteOutputSlot(int localOutput) {
-        return QuantumCrafterBlockEntity.OUTPUT_START + outputPage * OUTPUTS_PER_PAGE + localOutput;
-    }
-
-    public int absoluteOutputForMenuSlot(int menuSlot) {
-        return absoluteOutputSlot(menuSlot - QuantumCrafterBlockEntity.OUTPUT_START);
-    }
-
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
         if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
-
-        // A preview is not an inventory stack. Commit it once, then move the paid result. The old
-        // generic path copied the preview straight into the player inventory without ever consuming
-        // ingredients or energy.
-        if (index >= QuantumCrafterBlockEntity.OUTPUT_START
-                && index < QuantumCrafterBlockEntity.OUTPUT_START + OUTPUTS_PER_PAGE) {
-            int absoluteOutput = absoluteOutputForMenuSlot(index);
-            if (!blockEntity.getInventory().getStackInSlot(absoluteOutput).isEmpty()) {
-                return moveRealOutput(player, index, absoluteOutput);
-            }
-            if (player.level().isClientSide()) return ItemStack.EMPTY;
-            ItemStack produced = blockEntity.takeGhost(absoluteOutput);
-            if (produced.isEmpty()) return ItemStack.EMPTY;
-            ItemStack original = produced.copy();
-            if (!moveItemStackTo(produced, MACHINE_MENU_SLOTS, slots.size(), true)
-                    || !produced.isEmpty()) {
-                blockEntity.storeOutput(produced);
-            }
-            syncDisplayOutputs();
-            return original;
-        }
 
         ItemStack stackInSlot = slot.getItem();
         itemstack = stackInSlot.copy();
@@ -207,68 +155,55 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         return itemstack;
     }
 
-    private ItemStack moveRealOutput(Player player, int menuSlot, int absoluteOutput) {
-        ItemStack held = blockEntity.getInventory().getStackInSlot(absoluteOutput);
-        if (held.isEmpty()) return ItemStack.EMPTY;
-        ItemStack moving = held.copy();
-        ItemStack original = moving.copy();
-        if (!moveItemStackTo(moving, MACHINE_MENU_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        int moved = original.getCount() - moving.getCount();
-        if (moved <= 0) return ItemStack.EMPTY;
-        blockEntity.getInventory().extractItem(absoluteOutput, moved, false);
-        syncDisplayOutputs();
-        return original.copyWithCount(moved);
+    /** Moves {@code stack} into the player's inventory; what didn't fit. */
+    private ItemStack toInventory(ItemStack stack) {
+        ItemStack moving = stack.copy();
+        moveItemStackTo(moving, MACHINE_MENU_SLOTS, slots.size(), true);
+        return moving;
     }
 
-    @Override
-    public void broadcastChanges() {
-        syncDisplayOutputs();
-        super.broadcastChanges();
-    }
-
-    /** Menu buttons taking from a previewed output onto the cursor: the base, plus the output's place on the page. */
-    public static final int BUTTON_TAKE_BATCH = 100, BUTTON_TAKE_HALF = 120, BUTTON_TAKE_ONE = 140;
+    /**
+     * Menu buttons taking from output {@code slot} (0 to 53, the whole output grid): {@code mode * TAKE + slot}. A
+     * batch is what's there or a preview's batch, onto the cursor; half of that; one; or the batch into the
+     * inventory.
+     */
+    public static final int TAKE = 100, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
-        int mode = id - id % 20;
-        int local = id % 20;
-        if (mode != BUTTON_TAKE_BATCH && mode != BUTTON_TAKE_HALF && mode != BUTTON_TAKE_ONE || local >= OUTPUTS_PER_PAGE) return false;
-        int absolute = absoluteOutputSlot(local);
-        if (!blockEntity.getInventory().getStackInSlot(absolute).isEmpty()) return false;
-        QuantumCrafterBlockEntity.GhostSlot ghost = blockEntity.ghostAt(absolute);
-        ItemStack preview = blockEntity.getGhost(absolute);
-        if (ghost == null || preview.isEmpty()) return false;
-        // Onto what's in hand, if it's the same, as far as it fits.
-        ItemStack carried = getCarried();
-        if (!carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, preview)) return false;
-        int room = preview.getMaxStackSize() - carried.getCount();
-        int batch = preview.getCount();
-        int wanted = Math.min(room, switch (mode) {
-            case BUTTON_TAKE_BATCH -> batch;
-            case BUTTON_TAKE_HALF -> Math.max(1, (batch + 1) / 2);
-            default -> 1;
-        });
-        if (wanted <= 0) return false;
-        ItemStack made = blockEntity.takeGhost(absolute, wanted);
-        if (made.isEmpty()) return false;
-        int onto = Math.min(room, made.getCount());
-        setCarried(carried.isEmpty() ? made.copyWithCount(onto) : carried.copyWithCount(carried.getCount() + onto));
-        if (made.getCount() > onto) blockEntity.storeOutput(made.copyWithCount(made.getCount() - onto));
+        int mode = id / TAKE;
+        int local = id % TAKE;
+        if (mode < BATCH || mode > TO_INVENTORY || local >= QuantumCrafterBlockEntity.OUTPUT_SLOTS) return false;
+        int absolute = QuantumCrafterBlockEntity.OUTPUT_START + local;
+        ItemStack real = blockEntity.getInventory().getStackInSlot(absolute);
+        ItemStack shown = real.isEmpty() ? blockEntity.getGhost(absolute) : real;
+        if (shown.isEmpty()) return false;
+        int batch = shown.getCount();
+        if (mode == TO_INVENTORY) {
+            ItemStack got = real.isEmpty() ? blockEntity.takeGhost(absolute) : blockEntity.getInventory().extractItem(absolute, batch, false);
+            if (got.isEmpty()) return false;
+            ItemStack left = toInventory(got);
+            if (!left.isEmpty()) blockEntity.storeOutput(left);
+        } else {
+            // Onto what's in hand, if it's the same, as far as it fits.
+            ItemStack carried = getCarried();
+            if (!carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, shown)) return false;
+            int room = shown.getMaxStackSize() - carried.getCount();
+            int wanted = Math.min(room, switch (mode) {
+                case BATCH -> batch;
+                case HALF -> Math.max(1, (batch + 1) / 2);
+                default -> 1;
+            });
+            if (wanted <= 0) return false;
+            ItemStack made = real.isEmpty() ? blockEntity.takeGhost(absolute, wanted) : blockEntity.getInventory().extractItem(absolute, wanted, false);
+            if (made.isEmpty()) return false;
+            int onto = Math.min(room, made.getCount());
+            setCarried(carried.isEmpty() ? made.copyWithCount(onto) : carried.copyWithCount(carried.getCount() + onto));
+            if (made.getCount() > onto) blockEntity.storeOutput(made.copyWithCount(made.getCount() - onto));
+        }
         blockEntity.rebuildPreview();
         broadcastChanges();
         return true;
-    }
-
-    private void syncDisplayOutputs() {
-        for (int local = 0; local < OUTPUTS_PER_PAGE; local++) {
-            int absolute = absoluteOutputSlot(local);
-            ItemStack real = blockEntity.getInventory().getStackInSlot(absolute);
-            // A preview shows one, its count drawn apart: how many it can make, not just one batch.
-            ItemStack ghost = blockEntity.getGhost(absolute);
-            ItemStack shown = real.isEmpty() ? (ghost.isEmpty() ? ghost : ghost.copyWithCount(1)) : real;
-            displayOutputs.setItem(local, shown.copy());
-        }
     }
 
     @Override
@@ -276,58 +211,6 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         Level level = this.blockEntity.getLevel() != null ? this.blockEntity.getLevel() : player.level();
         return level.getBlockEntity(blockEntity.getBlockPos()) == blockEntity
                 && blockEntity.isUsableBy(player);
-    }
-
-    /**
-     * Output slot that shows ghost previews and commits a craft when the ghost is taken.
-     */
-    private static final class GhostOutputSlot extends Slot {
-        private final QuantumCrafterMenu menu;
-        private final QuantumCrafterBlockEntity be;
-        private final int localSlot;
-
-        private GhostOutputSlot(QuantumCrafterMenu menu, QuantumCrafterBlockEntity be,
-                                SimpleContainer display, int localSlot, int x, int y) {
-            super(display, localSlot, x, y);
-            this.menu = menu;
-            this.be = be;
-            this.localSlot = localSlot;
-        }
-
-        private int absoluteSlot() {
-            return menu.absoluteOutputSlot(localSlot);
-        }
-
-        @Override
-        public boolean mayPlace(ItemStack stack) {
-            return false;
-        }
-
-        @Override
-        public boolean mayPickup(Player player) {
-            return be.mayTakeOutput(absoluteSlot());
-        }
-
-        @Override
-        public ItemStack remove(int amount) {
-            int absoluteSlot = absoluteSlot();
-            ItemStack real = be.getInventory().getStackInSlot(absoluteSlot);
-            if (!real.isEmpty()) {
-                return be.getInventory().extractItem(absoluteSlot, amount, false);
-            }
-            if (be.getLevel() != null && !be.getLevel().isClientSide()) {
-                return be.takeGhost(absoluteSlot, amount);
-            }
-            return super.remove(amount);
-        }
-
-        @Override
-        public void onTake(Player player, ItemStack stack) {
-            super.onTake(player, stack);
-            if (be.getLevel() != null && !be.getLevel().isClientSide()) {
-                be.rebuildPreview();
-            }
-        }
     }
 
     /** The flux band here, where it's heading, and the band the catalyst in the slot needs. */
