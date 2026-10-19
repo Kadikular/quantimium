@@ -156,12 +156,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private long commitCheckTick = Long.MIN_VALUE;
     private long automationViewEpoch = Long.MIN_VALUE;
     private long commitCheckEpoch = Long.MIN_VALUE;
-    @Nullable
-    private ItemStack[] automationViewCache;
+    private final java.util.Map<Long, ItemStack[]> automationViewCache = new java.util.HashMap<>();
     /** Per-preview-entry commit answers, keyed by content revision. 0 unknown, 1 yes, 2 no. */
     private long commitCheckRevision = Long.MIN_VALUE;
-    @Nullable
-    private byte[] commitCheckCache;
+    private final java.util.Map<Long, byte[]> commitCheckCache = new java.util.HashMap<>();
 
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
@@ -952,6 +950,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     public boolean canCommit(ResolvedCraft craft) {
         if (craft == null || level == null || linkLoopDetected) return false;
+        com.kadikular.quantimium.recipe.CraftChain.tick(level.getGameTime());
+        com.kadikular.quantimium.recipe.CraftChain.work();
         if (energyStorage.getEnergyStored() < craft.feCost()) return false;
         if (isBasic() && coherenceReserve < craft.batchSize()) return false;
         return withdrawalsAvailable(craft);
@@ -963,24 +963,23 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private boolean canCommitCached(int craftIndex) {
         if (craftIndex < 0 || craftIndex >= preview.size()) return false;
-        // Inside a chain the answer depends on the chain (a machine on it offers nothing): only a top answer is kept.
-        if (com.kadikular.quantimium.recipe.CraftChain.depth() > 1 || !com.kadikular.quantimium.recipe.CraftChain.cacheable()) {
-            return canCommit(preview.get(craftIndex));
-        }
-        // Kept while its own contents stand, and for a tick at most: what it draws on elsewhere moves on its own.
+        if (!com.kadikular.quantimium.recipe.CraftChain.cacheable()) return canCommit(preview.get(craftIndex));
+        // Kept while its own contents stand, a tick at most, and not past a settled transaction; and per chain, since
+        // what it can draw on depends on which machines are busy.
         long now = level == null ? 0 : level.getGameTime();
         long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
-        if (commitCheckCache == null || commitCheckCache.length != preview.size()
-                || commitCheckRevision != contentRevision || commitCheckTick != now || commitCheckEpoch != epoch) {
-            commitCheckCache = new byte[preview.size()];
+        if (commitCheckRevision != contentRevision || commitCheckTick != now || commitCheckEpoch != epoch) {
+            commitCheckCache.clear();
             commitCheckRevision = contentRevision;
             commitCheckTick = now;
             commitCheckEpoch = epoch;
         }
-        byte cached = commitCheckCache[craftIndex];
+        byte[] cache = commitCheckCache.computeIfAbsent(com.kadikular.quantimium.recipe.CraftChain.context(), key -> new byte[preview.size()]);
+        if (cache.length != preview.size()) return canCommit(preview.get(craftIndex));
+        byte cached = cache[craftIndex];
         if (cached != 0) return cached == 1;
         boolean allowed = canCommit(preview.get(craftIndex));
-        commitCheckCache[craftIndex] = (byte) (allowed ? 1 : 2);
+        cache[craftIndex] = (byte) (allowed ? 1 : 2);
         return allowed;
     }
 
@@ -1003,12 +1002,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      * chain's length counts machines, so only joining it (not a second step of the same work) lengthens it.
      */
     private void enterChain() {
-        if (!automationBusy) com.kadikular.quantimium.recipe.CraftChain.enter();
+        if (!automationBusy) com.kadikular.quantimium.recipe.CraftChain.enter(worldPosition.asLong());
         automationBusy = true;
     }
 
     private void exitChain(boolean priorBusy) {
-        if (!priorBusy) com.kadikular.quantimium.recipe.CraftChain.exit();
+        if (!priorBusy) com.kadikular.quantimium.recipe.CraftChain.exit(worldPosition.asLong());
         automationBusy = priorBusy;
     }
 
@@ -1215,7 +1214,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private ItemStack automationView(int absoluteOutputSlot) {
         ItemStack real = inventory.getStackInSlot(absoluteOutputSlot);
         if (!real.isEmpty()) return real;
-        if (level == null || level.isClientSide() || automationBusy || com.kadikular.quantimium.recipe.CraftChain.full()) return ItemStack.EMPTY;
+        if (level == null || level.isClientSide() || automationBusy) return ItemStack.EMPTY;
+        com.kadikular.quantimium.recipe.CraftChain.tick(level.getGameTime());
+        if (com.kadikular.quantimium.recipe.CraftChain.full()) return ItemStack.EMPTY;
         if (statusCode == STATUS_NO_POWER || statusCode == STATUS_ENTANGLED_LOOP
                 || statusCode == STATUS_IDLE || statusCode == STATUS_NO_RECIPE
                 || statusCode == STATUS_DENIED) {
@@ -1224,16 +1225,19 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         int local = absoluteOutputSlot - OUTPUT_START;
         if (local < 0 || local >= OUTPUT_SLOTS) return ItemStack.EMPTY;
-        // Asked from inside a chain, the answer depends on the chain (a machine on it offers nothing), so only
-        // an answer worked out at the top is kept for the next ask.
-        boolean top = com.kadikular.quantimium.recipe.CraftChain.depth() == 0;
+        // Kept per chain (a machine on it offers nothing), while its contents stand, a tick at most, and not past a
+        // settled transaction.
         long now = level.getGameTime();
         long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
-        if (top && automationViewCache != null && automationViewRevision == contentRevision && automationViewTick == now
-                && automationViewEpoch == epoch) {
-            ItemStack cached = automationViewCache[local];
-            if (cached != null) return cached;
+        long context = com.kadikular.quantimium.recipe.CraftChain.context();
+        if (automationViewRevision != contentRevision || automationViewTick != now || automationViewEpoch != epoch) {
+            automationViewCache.clear();
+            automationViewRevision = contentRevision;
+            automationViewTick = now;
+            automationViewEpoch = epoch;
         }
+        ItemStack[] views = automationViewCache.get(context);
+        if (views != null && views[local] != null) return views[local];
 
         // Deciding whether a preview is committable can walk a link that leads back here; the guard
         // makes the second visit report nothing rather than recursing.
@@ -1253,16 +1257,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         } finally {
             exitChain(false);
         }
-        if (!top || !com.kadikular.quantimium.recipe.CraftChain.cacheable()) return shown;
-
-        if (automationViewCache == null || automationViewRevision != contentRevision || automationViewTick != now
-                || automationViewEpoch != epoch) {
-            automationViewCache = new ItemStack[OUTPUT_SLOTS];
-            automationViewRevision = contentRevision;
-            automationViewTick = now;
-            automationViewEpoch = epoch;
-        }
-        automationViewCache[local] = shown;
+        if (!com.kadikular.quantimium.recipe.CraftChain.cacheable() || automationViewRevision != contentRevision || automationViewTick != now) return shown;
+        automationViewCache.computeIfAbsent(context, key -> new ItemStack[OUTPUT_SLOTS])[local] = shown;
         return shown;
     }
 

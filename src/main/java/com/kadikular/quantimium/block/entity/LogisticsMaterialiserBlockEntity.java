@@ -37,9 +37,9 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     /** One thing on offer, and how many. */
     private record Entry(ItemResource item, long amount) {}
 
-    private List<Entry> entries = List.of();
     private long entriesTick = Long.MIN_VALUE;
     private long entriesEpoch = Long.MIN_VALUE;
+    private final Map<Long, List<Entry>> entriesByContext = new java.util.HashMap<>();
 
     private final NetworkHandler handler = new NetworkHandler();
 
@@ -117,11 +117,18 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         long tick = level.getGameTime();
         // A tick at most, and not past a transaction settling: a Crafter on the network may just have been put back.
         long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
-        // Reading the network can ask a Crafter what it can make, which can read this list again: a list is marked
-        // as this tick's only once it's built, and only one built at the top of a chain (where no machine is busy and
-        // offering nothing) and outside a closing transaction is kept.
-        if (entriesTick == tick && entriesEpoch == epoch) return entries;
-        boolean keep = com.kadikular.quantimium.recipe.CraftChain.cacheable() && com.kadikular.quantimium.recipe.CraftChain.depth() == 0;
+        // Reading the network can ask a Crafter what it can make, which can read this list again: a list is kept
+        // only once built, per chain (a machine on it offers nothing), for a tick and within a settled transaction,
+        // and never one built while a transaction closes.
+        long context = com.kadikular.quantimium.recipe.CraftChain.context();
+        if (entriesTick != tick || entriesEpoch != epoch) {
+            entriesByContext.clear();
+            entriesTick = tick;
+            entriesEpoch = epoch;
+        }
+        List<Entry> known = entriesByContext.get(context);
+        if (known != null) return known;
+        boolean keep = com.kadikular.quantimium.recipe.CraftChain.cacheable();
         Map<ItemResource, Long> counts = new LinkedHashMap<>();
         for (LogisticsMember member : members()) {
             if (member.role() == LogisticsMember.Role.REQUESTER) continue;
@@ -135,11 +142,7 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         }
         List<Entry> list = new ArrayList<>(counts.size());
         counts.forEach((item, amount) -> list.add(new Entry(item, amount)));
-        if (keep) {
-            entries = list;
-            entriesTick = tick;
-            entriesEpoch = epoch;
-        }
+        if (keep && entriesTick == tick && entriesEpoch == epoch) entriesByContext.put(context, list);
         return list;
     }
 

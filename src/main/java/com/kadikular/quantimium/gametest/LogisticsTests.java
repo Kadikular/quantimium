@@ -733,6 +733,35 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_three", timeoutTicks = 200)
+    public static void threeCraftersOnOneNetworkStayQuick(GameTestHelper helper) {
+        // Two furnace Crafters and a crafting-table one, all drawing on the network and offering to it, 64 cobblestone
+        // in storage: it settles, a tick of reading the network stays quick, and what's taken adds up.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 64));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.FURNACE, true, true);
+        QuantumCrafterBlockEntity second = crafterOn(helper, 8, Items.FURNACE, true, true);
+        QuantumCrafterBlockEntity third = crafterOn(helper, 10, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            long start = System.nanoTime();
+            var handler = network(helper);
+            int kinds = 0;
+            for (int i = 0; i < handler.size(); i++) if (!handler.getResource(i).isEmpty()) kinds++;
+            long millis = (System.nanoTime() - start) / 1_000_000;
+            helper.assertTrue(millis < 50, "reading the network took " + millis + " ms");
+            helper.assertTrue(kinds > 1, "it offers more than the cobblestone");
+            int took = take(helper, Items.SMOOTH_STONE, 4, true);
+            int stone = countIn(first, Items.STONE) + countIn(second, Items.STONE) + countIn(third, Items.STONE)
+                    + countIn(first, Items.SMOOTH_STONE) + countIn(second, Items.SMOOTH_STONE) + countIn(third, Items.SMOOTH_STONE);
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE) + stone + took, 64, "every cobblestone accounted for");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_basic_pair", timeoutTicks = 200)
     public static void twoBasicCraftersOnOneNetworkSettle(GameTestHelper helper) {
         // A chest of cobblestone as a provider; two Basic Crafters with furnaces, both drawing on the network, the
