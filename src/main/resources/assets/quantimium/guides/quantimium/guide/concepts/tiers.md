@@ -26,8 +26,8 @@ climb by doing what the mod is about, not by mining more:
 | Tier | Needs | From | Machines |
 | --- | --- | --- | --- |
 | Low | <ItemLink id="quantimium:quantimium_trace" /> | Observing <ItemLink id="quantimium:unrealised_matter" /> | Observation Chamber, Basic Quantum Crafter, Flux Meter and Detector, Field Monitor, Quantum Exciter, Basic Anomaly Siphon, Flux Suppressor |
-| Mid | <ItemLink id="quantimium:anomaly_fragment" />, Anomalite | Siphoning anomaly; crystals that grew on your machines | Rift Seed, Stabilised Portal, Quantum Crafter, Simulator, Tesseract Stabiliser, Flux Maintainer, Anomaly Siphon, Zeno Field Controller, Decoherence Lance and Projector, Rift Lens, Mirror Lens, Tether, the Pod's modules |
-| High | <ItemLink id="quantimium:rift_residue" />, Tesseracts | Closing [flux rifts](../mechanics/flux-rifts.md); the Foundry | Quantum Foundry, Containment Hall, Field Regulator, Rift Anchor and Stabiliser, Superposition Pod and Unfolding Array, Entangled Dock, ME Superposition Crafter |
+| Mid | <ItemLink id="quantimium:anomaly_fragment" />, Anomalite | Siphoning anomaly; crystals that grew on your machines | Rift Seed, Stabilised Portal, Quantum Crafter, Simulator, Tesseract Stabiliser, Flux Maintainer, Anomaly Siphon, Zeno Field Controller, Decoherence Lance and Projector, Entangled Dock, Rift Lens, Mirror Lens, Tether, the Pod's modules |
+| High | <ItemLink id="quantimium:rift_residue" />, Tesseracts | Closing [flux rifts](../mechanics/flux-rifts.md); the Foundry | Quantum Foundry, Containment Hall, Field Regulator, Rift Anchor and Stabiliser, Superposition Pod and Unfolding Array, ME Superposition Crafter |
 
 High starts with your first rift, found or planted with a <ItemLink id="quantimium:rift_seed" />: Residue builds the Foundry, which makes Tesseracts, and the
 Containment Hall that lets a base run hot. The tier a machine looks (the stone above) and the tier

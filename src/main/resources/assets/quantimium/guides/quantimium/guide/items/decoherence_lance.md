@@ -18,6 +18,9 @@ The one tool that reaches into the rift. Held from the [mirror](../concepts/mirr
 [closes flux rifts](../mechanics/flux-rifts.md), unmakes mirror mites, and
 [wears down the Veiled](../mechanics/veiled.md).
 
+It runs on FE, holding 200,000: charge it in any mod's item charger, or keep it
+topped up from an <ItemLink id="quantimium:entangled_dock" />.
+
 ## Recipes
 
 <RecipesFor id="quantimium:decoherence_lance" />

@@ -31,5 +31,5 @@ somewhere quiet, or contained.
 
 ## Recipe
 
-A [[item:tesseract]] over an [[item:anomaly_fragment]] between two blocks of redstone, on three
+A [[item:semi_stable_tesseract]] over an [[item:anomaly_fragment]] between two blocks of redstone, on three
 polished deepslate.

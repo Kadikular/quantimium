@@ -45,7 +45,7 @@ somewhere quiet, or contained.
 
 ## Recipe
 
-A <ItemLink id="quantimium:tesseract" /> over an <ItemLink id="quantimium:anomaly_fragment" /> between two blocks of redstone, on three
+A <ItemLink id="quantimium:semi_stable_tesseract" /> over an <ItemLink id="quantimium:anomaly_fragment" /> between two blocks of redstone, on three
 polished deepslate.
 
 ## Recipes

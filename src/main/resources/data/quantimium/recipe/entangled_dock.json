@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "D": "minecraft:polished_deepslate",
-    "L": "quantimium:tesseract",
+    "L": "quantimium:semi_stable_tesseract",
     "R": "#c:storage_blocks/redstone",
     "F": "quantimium:anomaly_fragment"
   },
