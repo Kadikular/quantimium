@@ -1262,6 +1262,8 @@
   "gui.quantimium.reactor_logistics_port.filter.tip": "What the Reactor offers",
   "gui.quantimium.logistics_receptacle.crafts.anything": "Crafts from anything: stored items and other machines' crafts",
   "gui.quantimium.logistics_receptacle.crafts.stored": "Crafts from stored items only",
+  "gui.quantimium.logistics_receptacle.requests.made": "Requests stored items, then has the rest crafted",
+  "gui.quantimium.logistics_receptacle.requests.stored": "Requests stored items only: nothing is crafted for it",
   "gui.quantimium.logistics_receptacle.crafts.nothing": "Doesn't craft: offers only what's in its outputs",
   "gui.quantimium.logistics_receptacle.keep.on": "Keep stocked: on",
   "gui.quantimium.logistics_receptacle.keep.off": "Keep stocked: off",

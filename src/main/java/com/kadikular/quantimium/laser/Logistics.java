@@ -135,6 +135,7 @@ public final class Logistics {
                 for (LogisticsMember to : highestFirst) {
                     if (budget <= 0 || from.getStackInSlot(slot).isEmpty()) break;
                     if (to.role() != role || to.inventoryPos().equals(provider.inventoryPos()) || !to.lets(there)) continue;
+                    if (role == LogisticsMember.Role.REQUESTER && !to.requestsCraftable() && split(provider, slot, there)[0] <= 0) continue;
                     int room = Math.min(budget, to.wants(there));
                     if (room <= 0) continue;
                     int moved = move(level, controller, provider, from, slot, to.inventory(), room);
@@ -146,28 +147,34 @@ public final class Logistics {
         return most - budget;
     }
 
-    /** An active requester pulls what it lists: from providers, then storage, lowest priority first. How many it moved, or {@link #UNPAID}. */
+    /**
+     * An active requester pulls what it lists: from providers, then storage, lowest priority first; what's stored
+     * first, and only then, if it may, what machines would make. How many it moved, or {@link #UNPAID}.
+     */
     private static int pull(Level level, LogisticsController controller, LogisticsMember requester, List<LogisticsMember> highestFirst,
                             List<LogisticsMember> lowestFirst, int most) {
         IItemHandler into = requester.inventory();
         if (into == null) return 0;
         int budget = most;
-        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
-            for (LogisticsMember source : role == LogisticsMember.Role.PROVIDER ? highestFirst : lowestFirst) {
-                if (source.role() != role || source.inventoryPos().equals(requester.inventoryPos())) continue;
-                IItemHandler from = source.inventory();
-                if (from == null) continue;
-                for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
-                    ItemStack there = from.getStackInSlot(slot);
-                    // Storage gives up anything it holds; a provider only what its filter lets go.
-                    if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
-                    int room = Math.min(budget, requester.wants(there));
-                    if (room <= 0) continue;
-                    int moved = move(level, controller, source, from, slot, into, room);
-                    if (moved == UNPAID) return UNPAID;
-                    budget -= moved;
+        for (boolean made : requester.requestsCraftable() ? new boolean[] {false, true} : new boolean[] {false}) {
+            for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
+                for (LogisticsMember source : role == LogisticsMember.Role.PROVIDER ? highestFirst : lowestFirst) {
+                    if (source.role() != role || source.inventoryPos().equals(requester.inventoryPos())) continue;
+                    IItemHandler from = source.inventory();
+                    if (from == null) continue;
+                    for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
+                        ItemStack there = from.getStackInSlot(slot);
+                        // Storage gives up anything it holds; a provider only what its filter lets go.
+                        if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
+                        int room = Math.min(Math.min(budget, requester.wants(there)), split(source, slot, there)[made ? 1 : 0]);
+                        if (room <= 0) continue;
+                        int at = slot;
+                        int moved = pulling(source, slot, () -> move(level, controller, source, from, at, into, room));
+                        if (moved == UNPAID) return UNPAID;
+                        budget -= moved;
+                    }
+                    if (budget <= 0) return most;
                 }
-                if (budget <= 0) return most;
             }
         }
         return most - budget;
@@ -257,26 +264,34 @@ public final class Logistics {
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     ItemStack there = from.getStackInSlot(slot);
                     if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
-                    boolean onDemand = source.onDemand(slot);
-                    if (onDemand ? !made || !source.offersCraftable() : !reals) continue;
-                    int most = Math.min(max, there.getCount());
-                    if (!made) {
-                        // A Reactor's port offers what it holds and what it could make in one slot: only the held.
-                        Map<ItemResource, long[]> listing = source.listing();
-                        long[] both = listing == null ? null : listing.get(ItemResource.of(there));
-                        if (both != null) most = (int) Math.min(most, both[0]);
-                        if (most <= 0) continue;
-                    }
-                    int amount = most, at = slot;
-                    // A machine that crafts from stored items only: what it draws on makes nothing for it.
-                    ItemStack taken = onDemand && !source.craftsFromCraftable()
-                            ? com.kadikular.quantimium.recipe.CraftChain.storedOnly(() -> from.extractItem(at, amount, simulate))
-                            : from.extractItem(slot, most, simulate);
+                    int[] parts = split(source, slot, there);
+                    int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
+                    if (most <= 0) continue;
+                    int at = slot;
+                    ItemStack taken = pulling(source, slot, () -> from.extractItem(at, most, simulate));
                     if (!taken.isEmpty()) return taken;
                 }
             }
         }
         return ItemStack.EMPTY;
+    }
+
+    /**
+     * How much of what a member shows in {@code slot} is really there, and how much more a pull would make: a
+     * Crafter's preview is all made, a Reactor port's slot is what it holds and then what it could make.
+     */
+    private static int[] split(LogisticsMember source, int slot, ItemStack there) {
+        if (source.onDemand(slot)) return new int[] {0, source.offersCraftable() ? there.getCount() : 0};
+        Map<ItemResource, long[]> listing = source.listing();
+        long[] both = listing == null ? null : listing.get(ItemResource.of(there));
+        if (both == null) return new int[] {there.getCount(), 0};
+        int held = (int) Math.min(there.getCount(), both[0]);
+        return new int[] {held, source.offersCraftable() ? there.getCount() - held : 0};
+    }
+
+    /** Runs {@code pull} from {@code slot}: from a machine set to craft from stored items only, what it draws on makes nothing for it. */
+    private static <T> T pulling(LogisticsMember source, int slot, java.util.function.Supplier<T> pull) {
+        return source.onDemand(slot) && !source.craftsFromCraftable() ? com.kadikular.quantimium.recipe.CraftChain.storedOnly(pull) : pull.get();
     }
 
     private static List<LogisticsMember> byPriority(List<LogisticsMember> members, boolean highestFirst) {

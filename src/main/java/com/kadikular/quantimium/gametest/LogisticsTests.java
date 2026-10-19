@@ -932,6 +932,48 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_whole_stock", timeoutTicks = 200)
+    public static void aCrafterOnTheNetworkCountsEveryStack(GameTestHelper helper) {
+        // Two stacks of iron in storage, a crafting-table Crafter drawing on the network and offering to it: it can
+        // make fourteen blocks, not one stack's worth, and ten taken cost ninety ingots.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_INGOT, 64), new ItemStack(Items.IRON_INGOT, 64));
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            var craft = CrafterTests.craftOf(crafter, Items.IRON_BLOCK);
+            helper.assertTrue(craft != null, "it previews iron blocks");
+            helper.assertValueEqual(craft.availableOutputCount(0), 14L, "it can make fourteen");
+            helper.assertValueEqual(amount(helper, Items.IRON_BLOCK), 14L, "the network offers fourteen");
+            helper.assertValueEqual(take(helper, Items.IRON_BLOCK, 10, true), 10, "ten taken");
+            helper.assertValueEqual(count(helper, 4, Items.IRON_INGOT) + countIn(crafter, Items.IRON_INGOT), 128 - 90, "for ninety ingots");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.requester, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_request_stored", timeoutTicks = 300)
+    public static void aRequesterForStoredItemsHasNothingMade(GameTestHelper helper) {
+        // An active requester for stone, and a furnace Crafter offering stone it can make from its cobblestone. Set to
+        // request stored items only, it gets none and nothing is made; let it have things made, and stone comes.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        QuantumCrafterBlockEntity furnace = crafterOn(helper, 4, Items.FURNACE, false, true);
+        furnace.getInventory().setStackInSlot(1, new ItemStack(Items.COBBLESTONE, 16));
+        LogisticsReceptacleBlockEntity requester = onChest(helper, 8, LogisticsMember.Role.REQUESTER, true);
+        requester.setFilterSlot(0, new ItemStack(Items.STONE));
+        requester.toggleRequestsMade();
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(count(helper, 8, Items.STONE), 0, "no stone made for it");
+            helper.assertValueEqual(countIn(furnace, Items.COBBLESTONE), 16, "no cobblestone spent");
+            requester.toggleRequestsMade();
+            helper.succeedWhen(() -> helper.assertTrue(count(helper, 8, Items.STONE) > 0, "allowed, stone is made for it"));
+        });
+    }
+
     // covers: laser.logistics.terminal, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_stored_first", timeoutTicks = 200)
     public static void aTerminalHandsOverWhatsStoredBeforeMakingMore(GameTestHelper helper) {

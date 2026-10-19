@@ -14,10 +14,8 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -270,7 +268,6 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             if (event.button() == 1 && cell != null && !carried.isEmpty()
                     && net.neoforged.neoforge.transfer.item.ItemResource.of(carried).equals(cell.item())) {
                 ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), rightClickCount(cell, event.hasShiftDown()), false));
-                click();
                 return true;
             }
             if (!carried.isEmpty()) {
@@ -281,7 +278,6 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 int stack = cell.item().toStack(1).getMaxStackSize();
                 int count = event.button() == 1 ? rightClickCount(cell, event.hasShiftDown()) : stack;
                 ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), count, event.button() == 0 && event.hasShiftDown()));
-                click();
             }
             return true;
         }
@@ -291,10 +287,6 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     /** Half a stack, or one with shift. */
     private static int rightClickCount(LogisticsTerminalViewPayload.Entry cell, boolean shift) {
         return shift ? 1 : Math.max(1, cell.item().toStack(1).getMaxStackSize() / 2);
-    }
-
-    private void click() {
-        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
     }
 
     @Override

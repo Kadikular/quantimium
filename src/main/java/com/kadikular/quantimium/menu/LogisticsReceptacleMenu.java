@@ -23,6 +23,7 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
     public static final int BUTTON_ALLOW = 2;
     public static final int BUTTON_KEEP = 3;
     public static final int BUTTON_MADE = 4;
+    public static final int BUTTON_REQUEST_MADE = 5;
     /** A keep count changed: {@code BUTTON_COUNT + slot * 4}, plus 1 for down, plus 2 for sixteen at a time. */
     public static final int BUTTON_COUNT = 20;
     public static final int FILTER_X = 8;
@@ -106,6 +107,7 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
             case BUTTON_ALLOW -> receptacle.toggleAllow();
             case BUTTON_KEEP -> receptacle.toggleKeep();
             case BUTTON_MADE -> receptacle.cycleCrafts();
+            case BUTTON_REQUEST_MADE -> receptacle.toggleRequestsMade();
             default -> {
                 return false;
             }

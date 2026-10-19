@@ -224,6 +224,68 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         return lines;
     }
 
+    @Override
+    protected void renderMachineForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        // A preview's count: how many it can make from what it has, small, as a terminal shows what's craftable.
+        QuantumCrafterBlockEntity be = menu.getBlockEntity();
+        for (int menuSlot = QuantumCrafterBlockEntity.OUTPUT_START;
+             menuSlot < QuantumCrafterBlockEntity.OUTPUT_START + QuantumCrafterMenu.OUTPUTS_PER_PAGE; menuSlot++) {
+            int absolute = menu.absoluteOutputForMenuSlot(menuSlot);
+            if (!be.getInventory().getStackInSlot(absolute).isEmpty()) continue;
+            QuantumCrafterBlockEntity.GhostSlot ghost = be.ghostAt(absolute);
+            Slot slot = menu.slots.get(menuSlot);
+            if (ghost == null || slot.getItem().isEmpty() || ghost.available() <= 1) continue;
+            String count = HorizonCoreScreen.slotCount(ghost.available());
+            graphics.nextStratum();
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(leftPos + slot.x + 16, topPos + slot.y + 11);
+            graphics.pose().scale(0.5f, 0.5f);
+            graphics.text(font, count, -font.width(count), 0, 0xFFFFFFFF, true);
+            graphics.pose().popMatrix();
+        }
+    }
+
+    /** The place on the page of the previewed output under the mouse, or -1. */
+    private int ghostUnder(double mouseX, double mouseY) {
+        if (activeOverlay() != null) return -1;
+        QuantumCrafterBlockEntity be = menu.getBlockEntity();
+        for (int local = 0; local < QuantumCrafterMenu.OUTPUTS_PER_PAGE; local++) {
+            Slot slot = menu.slots.get(QuantumCrafterBlockEntity.OUTPUT_START + local);
+            if (!isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) continue;
+            int absolute = menu.absoluteOutputSlot(local);
+            return be.getInventory().getStackInSlot(absolute).isEmpty() && be.ghostAt(absolute) != null ? local : -1;
+        }
+        return -1;
+    }
+
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        // On a preview, as in a logistics terminal: click for the batch, right-click for half, shift-right-click for
+        // one, onto what's in hand. Shift-click still sends the batch into the inventory.
+        int local = ghostUnder(event.x(), event.y());
+        if (local >= 0 && (event.button() == 1 || event.button() == 0 && !event.hasShiftDown())) {
+            press((event.button() == 0 ? QuantumCrafterMenu.BUTTON_TAKE_BATCH
+                    : event.hasShiftDown() ? QuantumCrafterMenu.BUTTON_TAKE_ONE : QuantumCrafterMenu.BUTTON_TAKE_HALF) + local);
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        // Shift and the wheel down over a preview: one more onto the cursor.
+        int local = ghostUnder(mouseX, mouseY);
+        if (local >= 0 && minecraft != null && minecraft.hasShiftDown() && scrollY != 0) {
+            if (scrollY < 0) press(QuantumCrafterMenu.BUTTON_TAKE_ONE + local);
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    private void press(int button) {
+        if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
+    }
+
     private void setOutputPage(int page) {
         int bounded = Math.max(0, Math.min(QuantumCrafterMenu.PAGE_COUNT - 1, page));
         if (bounded == menu.getOutputPage()) return;

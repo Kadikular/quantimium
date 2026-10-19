@@ -149,6 +149,11 @@ or auto output, from making something else. When it can't be made, the full prev
 runs and a stack of ingots allows 64, but at 4,000 FE a smelt the energy allows only 25. The ghost
 shows **25 iron ingots**.
 
+The small number on a ghost is how many it **can make** in all, past one stack: 128 iron ingots, in the grid
+or behind a Tesseract (a logistics network counts every stack), show 14 iron blocks. Taking works as in a
+logistics terminal: click for the batch, right-click for half, shift-right-click (or shift and the wheel
+down) for one, onto what you're holding if it's the same; shift-click sends the batch to your inventory.
+
 **Unrealised Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see [[item:unrealised_matter]]).
 

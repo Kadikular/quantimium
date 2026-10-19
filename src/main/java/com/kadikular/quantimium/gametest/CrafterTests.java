@@ -51,6 +51,22 @@ public final class CrafterTests {
     private CrafterTests() {}
 
     // covers: crafter.catalyst
+    // covers: crafter.preview
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_take_some", timeoutTicks = 60)
+    public static void aPreviewTakesOnlyWhatsAskedFor(GameTestHelper helper) {
+        // A furnace Crafter with sixteen cobblestone previews sixteen stone; asked for one, it makes one.
+        QuantumCrafterBlockEntity crafter = crafter(helper, new BlockPos(2, 1, 2), Items.FURNACE);
+        TestSupport.fill(crafter.getEnergyStorage());
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 16));
+        helper.runAfterDelay(20, () -> {
+            int slot = ghostSlot(crafter, Items.STONE);
+            ItemStack one = crafter.takeGhost(slot, 1);
+            helper.assertValueEqual(one.getCount(), 1, "one stone");
+            helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 15, "for one cobblestone");
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_catalyst", timeoutTicks = 60)
     public static void catalystChoosesTheRecipes(GameTestHelper helper) {
         QuantumCrafterBlockEntity furnace = crafter(helper, CRAFTER, Items.FURNACE);

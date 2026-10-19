@@ -1183,6 +1183,23 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 continue;
             }
             gathered = gathered.isEmpty() ? taken : gathered.copyWithCount(gathered.getCount() + taken.getCount());
+            // One pull hands over a stack at most: a slot holding more (a network, a drawer) is pulled again.
+            int fromSlot = taken.getCount();
+            while (gathered.getCount() < need && taken.getCount() >= taken.getMaxStackSize() && present.getCount() > fromSlot) {
+                if (simulate) {
+                    // Asking again would see the same stack: count what's left in the slot instead.
+                    gathered = gathered.copyWithCount(gathered.getCount() + Math.min(present.getCount() - fromSlot, need - gathered.getCount()));
+                    break;
+                }
+                taken = extract.apply(slot, need - gathered.getCount());
+                if (taken.isEmpty()) break;
+                if (!ItemStack.isSameItemSameComponents(gathered, taken)) {
+                    refundWithdrawal(withdrawal, taken);
+                    break;
+                }
+                fromSlot += taken.getCount();
+                gathered = gathered.copyWithCount(gathered.getCount() + taken.getCount());
+            }
         }
         return gathered;
     }
@@ -1305,6 +1322,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         GhostSlot ghost = ghostAt(absoluteOutputSlot);
         if (ghost == null) return ItemStack.EMPTY;
         return commitCraft(preview.get(ghost.craftIndex()), ghost.outputIndex());
+    }
+
+    /**
+     * Makes at least {@code wanted} of what an output slot previews, in as few runs as cover it (all a run makes
+     * comes out, so a little more for a recipe that makes several), at most the previewed batch.
+     */
+    public ItemStack takeGhost(int absoluteOutputSlot, int wanted) {
+        GhostSlot ghost = ghostAt(absoluteOutputSlot);
+        if (ghost == null || wanted <= 0) return ItemStack.EMPTY;
+        return commitCraft(runsFor(preview.get(ghost.craftIndex()), ghost.outputIndex(), wanted), ghost.outputIndex());
     }
 
     /**

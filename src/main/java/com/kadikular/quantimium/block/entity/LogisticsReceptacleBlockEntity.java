@@ -110,6 +110,19 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         return crafts == Crafts.ANYTHING;
     }
 
+    /** An active requester: whether it has machines make what isn't stored, or takes only what's stored. */
+    private boolean requestsMade = true;
+
+    @Override
+    public boolean requestsCraftable() {
+        return requestsMade;
+    }
+
+    public void toggleRequestsMade() {
+        requestsMade = !requestsMade;
+        changed();
+    }
+
     public void cycleCrafts() {
         crafts = Crafts.values()[(crafts.ordinal() + 1) % Crafts.values().length];
         changed();
@@ -408,6 +421,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         out.putInt("Role", role.ordinal());
         out.putBoolean("Active", active);
         out.putInt("Crafts", crafts.ordinal());
+        out.putBoolean("RequestsMade", requestsMade);
         out.putInt("Priority", priority);
         out.putBoolean("Allow", allow);
         out.putBoolean("Keep", keep);
@@ -424,6 +438,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         role = Role.values()[Math.floorMod(in.getIntOr("Role", 0), Role.values().length)];
         active = in.getBooleanOr("Active", false);
         crafts = Crafts.values()[Math.floorMod(in.getIntOr("Crafts", in.getBooleanOr("OffersMade", true) ? 0 : 2), Crafts.values().length)];
+        requestsMade = in.getBooleanOr("RequestsMade", true);
         priority = in.getIntOr("Priority", 0);
         allow = in.getBooleanOr("Allow", true);
         keep = in.getBooleanOr("Keep", false);

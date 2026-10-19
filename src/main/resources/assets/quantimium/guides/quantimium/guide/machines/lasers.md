@@ -328,7 +328,9 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
   A tab on its screen says what it may make from: anything (stored items and what other machines would make,
   a chain), stored items only, or nothing, offering only what's really in the machine's outputs.
 - **Requester**: passive, it takes what active providers push, as its
-  filter lets in; active, it pulls what its filter lists from providers first, then storage.
+  filter lets in; active, it pulls what its filter lists from providers first, then storage, what's stored
+  before anything is made. A tab on an active requester says whether machines may make what isn't stored for
+  it, or it takes only what's stored.
   Only what its filter lists comes, as far as the inventory takes it. With **Keep stocked** on, each
   entry's count (the stack you set it with; scroll over it to change, shift for 16) is how many it keeps
   there: it takes only what it's short of.

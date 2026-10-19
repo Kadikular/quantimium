@@ -95,6 +95,11 @@ public final class IngredientPool {
                     // craft would consume nothing and print items for free.
                     ItemStack takeable = remote.extractItem(r, remoteStack.getCount(), true);
                     if (takeable.isEmpty()) continue;
+                    // One pull hands over a stack at most: a slot holding more (a network, a drawer) that lets a
+                    // whole stack go lets the rest go too, a stack at a time.
+                    if (takeable.getCount() >= takeable.getMaxStackSize() && remoteStack.getCount() > takeable.getCount()) {
+                        takeable = takeable.copyWithCount(remoteStack.getCount());
+                    }
                     offers.add(new Offer(takeable, new Provenance.Remote(slot, r)));
                 }
                 continue;

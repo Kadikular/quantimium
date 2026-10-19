@@ -87,6 +87,11 @@ public interface LogisticsMember {
         return true;
     }
 
+    /** An active requester: whether it may have machines make what it pulls, or takes only what's stored. */
+    default boolean requestsCraftable() {
+        return true;
+    }
+
     /** Whether a pull from {@code slot} would make something (see {@link #maker}) rather than hand over what's there. */
     default boolean onDemand(int slot) {
         OfferMaker maker = maker();

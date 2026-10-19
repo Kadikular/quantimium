@@ -226,11 +226,47 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         super.broadcastChanges();
     }
 
+    /** Menu buttons taking from a previewed output onto the cursor: the base, plus the output's place on the page. */
+    public static final int BUTTON_TAKE_BATCH = 100, BUTTON_TAKE_HALF = 120, BUTTON_TAKE_ONE = 140;
+
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        int mode = id - id % 20;
+        int local = id % 20;
+        if (mode != BUTTON_TAKE_BATCH && mode != BUTTON_TAKE_HALF && mode != BUTTON_TAKE_ONE || local >= OUTPUTS_PER_PAGE) return false;
+        int absolute = absoluteOutputSlot(local);
+        if (!blockEntity.getInventory().getStackInSlot(absolute).isEmpty()) return false;
+        QuantumCrafterBlockEntity.GhostSlot ghost = blockEntity.ghostAt(absolute);
+        ItemStack preview = blockEntity.getGhost(absolute);
+        if (ghost == null || preview.isEmpty()) return false;
+        // Onto what's in hand, if it's the same, as far as it fits.
+        ItemStack carried = getCarried();
+        if (!carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, preview)) return false;
+        int room = preview.getMaxStackSize() - carried.getCount();
+        int batch = preview.getCount();
+        int wanted = Math.min(room, switch (mode) {
+            case BUTTON_TAKE_BATCH -> batch;
+            case BUTTON_TAKE_HALF -> Math.max(1, (batch + 1) / 2);
+            default -> 1;
+        });
+        if (wanted <= 0) return false;
+        ItemStack made = blockEntity.takeGhost(absolute, wanted);
+        if (made.isEmpty()) return false;
+        int onto = Math.min(room, made.getCount());
+        setCarried(carried.isEmpty() ? made.copyWithCount(onto) : carried.copyWithCount(carried.getCount() + onto));
+        if (made.getCount() > onto) blockEntity.storeOutput(made.copyWithCount(made.getCount() - onto));
+        blockEntity.rebuildPreview();
+        broadcastChanges();
+        return true;
+    }
+
     private void syncDisplayOutputs() {
         for (int local = 0; local < OUTPUTS_PER_PAGE; local++) {
             int absolute = absoluteOutputSlot(local);
             ItemStack real = blockEntity.getInventory().getStackInSlot(absolute);
-            ItemStack shown = real.isEmpty() ? blockEntity.getGhost(absolute) : real;
+            // A preview shows one, its count drawn apart: how many it can make, not just one batch.
+            ItemStack ghost = blockEntity.getGhost(absolute);
+            ItemStack shown = real.isEmpty() ? (ghost.isEmpty() ? ghost : ghost.copyWithCount(1)) : real;
             displayOutputs.setItem(local, shown.copy());
         }
     }
