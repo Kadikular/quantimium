@@ -46,6 +46,33 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         }
     }
 
+    /** The order its actions work the area in. */
+    public enum ScanOrder {
+        /** Closest to the prism first. */
+        NEAREST,
+        /** The highest layer first, nearest first in each: a quarry, with nothing falling into what's cleared. */
+        TOP_DOWN,
+        /** The lowest layer first, nearest first in each: building up. */
+        BOTTOM_UP;
+
+        public ScanOrder next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+    }
+
+    private ScanOrder scanOrder = ScanOrder.NEAREST;
+
+    public ScanOrder scanOrder() {
+        return scanOrder;
+    }
+
+    /** The next order; each action starts the area over in it. */
+    public void cycleScanOrder() {
+        scanOrder = scanOrder.next();
+        cursors.clear();
+        changed();
+    }
+
     /** The widest a picked shape's radius goes: as far as light reaches. */
     public static int maxRadius() {
         return com.kadikular.quantimium.Config.maxLaserRange();
@@ -223,6 +250,7 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         }
         if (area != null) out.store("Area", BoundingBox.CODEC, area);
         out.putInt("Shape", shape.ordinal());
+        out.putInt("ScanOrder", scanOrder.ordinal());
         out.putInt("Radius", radius);
     }
 
@@ -233,6 +261,7 @@ public class AreaPrismBlockEntity extends BlockEntity implements LaserNode, Flux
         cursors.clear();
         in.read("Cursors", CompoundTag.CODEC).ifPresent(tag -> tag.keySet().forEach(name -> cursors.put(name, tag.getIntOr(name, 0))));
         shape = Shape.values()[Math.floorMod(in.getIntOr("Shape", 0), Shape.values().length)];
+        scanOrder = ScanOrder.values()[Math.floorMod(in.getIntOr("ScanOrder", 0), ScanOrder.values().length)];
         radius = Math.clamp(in.getIntOr("Radius", 4), 1, maxRadius());
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
         in.read("Points", CompoundTag.CODEC).ifPresent(tag -> {

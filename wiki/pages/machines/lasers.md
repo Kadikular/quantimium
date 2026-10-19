@@ -259,7 +259,10 @@ the prism, and while it's working it shows a beam into what it's working on, fol
 {{c:LaserTuning.AREA_COST}} times as much. Use the [[item:laser_linker]] in the air to switch it to area mode, use it on two
 corners, then on the prism; the area shows as you pick it, and holding the Linker shows the area of any
 prism you look at. Sneak-click the prism with an empty hand to clear its area. [[mechanic:laser.area_prism.shape]] Or open
-the prism and set its area to a **cube** or a **sphere** round it instead, with a radius.
+the prism and set its area to a **cube** or a **sphere** round it instead, with a radius. Its actions
+work the area **nearest first** (the prism's own height outwards, nearest columns first in each layer),
+**top down** (a quarry: nothing falls into what's cleared) or **bottom up**, as set in its screen; after a
+reload they carry on where they were.
 
 Work that happens at once (a hit, an item carried, a block placed) is paid for first each tick, so
 machines on the same light can't starve it; blocks are charged from what's left.

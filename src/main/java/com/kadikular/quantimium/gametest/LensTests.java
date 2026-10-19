@@ -1031,6 +1031,24 @@ public final class LensTests {
     }
 
     // covers: laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void anAreaPrismWorksNearestFirst(GameTestHelper helper) {
+        // An area running past the prism: the stone level with it goes before the one at the far end.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        helper.setBlock(new BlockPos(8, Y, 2), Blocks.STONE);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.STONE);
+        prism.setArea(helper.absolutePos(new BlockPos(8, Y, 1)), helper.absolutePos(new BlockPos(8, Y, 15)));
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(8, Y, 8));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(8, Y, 2));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.area_prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void anAreaPrismOnlyWorksWhereItCanSee(GameTestHelper helper) {
         // A wall of bedrock between the prism and one stone: that one stays.

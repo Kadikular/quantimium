@@ -49,7 +49,19 @@ public class AreaPrismScreen extends QuantumMachineScreen<AreaPrismMenu> {
                                         hint("gui.quantimium.tab.number")))
                         .onRightClick(() -> widen(false))
                         .onScroll(step -> widen(step > 0))
-                        .visible(() -> prism().shape() != AreaPrismBlockEntity.Shape.PICKED));
+                        .visible(() -> prism().shape() != AreaPrismBlockEntity.Shape.PICKED),
+                // The order its actions work the area in; right-click steps back.
+                Tab.glyph(() -> switch (prism().scanOrder()) {
+                                    case NEAREST -> GuiIcon.NEAREST;
+                                    case TOP_DOWN -> GuiIcon.CEILING;
+                                    case BOTTOM_UP -> GuiIcon.FLOOR;
+                                }, () -> press(AreaPrismMenu.BUTTON_ORDER),
+                                () -> List.of(Component.translatable("gui.quantimium.area_prism.order." + prism().scanOrder().name().toLowerCase(java.util.Locale.ROOT)),
+                                        hint("gui.quantimium.tab.cycle")))
+                        .onRightClick(() -> {
+                            press(AreaPrismMenu.BUTTON_ORDER);
+                            press(AreaPrismMenu.BUTTON_ORDER);
+                        }));
     }
 
     private void widen(boolean wider) {

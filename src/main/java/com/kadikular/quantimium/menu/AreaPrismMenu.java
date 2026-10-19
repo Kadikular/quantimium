@@ -19,6 +19,7 @@ public class AreaPrismMenu extends AbstractContainerMenu {
     /** Shift on the radius buttons: eight at a time. */
     public static final int BUTTON_MUCH_WIDER = 3;
     public static final int BUTTON_MUCH_NARROWER = 4;
+    public static final int BUTTON_ORDER = 5;
 
     private final AreaPrismBlockEntity prism;
 
@@ -47,6 +48,7 @@ public class AreaPrismMenu extends AbstractContainerMenu {
             case BUTTON_NARROWER -> prism.setRadius(prism.radius() - 1);
             case BUTTON_MUCH_WIDER -> prism.setRadius(prism.radius() + 8);
             case BUTTON_MUCH_NARROWER -> prism.setRadius(prism.radius() - 8);
+            case BUTTON_ORDER -> prism.cycleScanOrder();
             default -> {
                 return false;
             }

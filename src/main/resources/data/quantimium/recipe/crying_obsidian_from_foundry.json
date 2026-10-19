@@ -1,0 +1,22 @@
+{
+  "type": "quantimium:quantum_foundry",
+  "ingredients": [
+    {
+      "ingredient": "#c:obsidians/normal",
+      "count": 4
+    },
+    {
+      "ingredient": "quantimium:anomaly_fragment"
+    }
+  ],
+  "minimum_pillars": 1,
+  "minimum_flux_band": "medium",
+  "duration": 100,
+  "fe_per_tick": 40,
+  "flux_cost": 20.0,
+  "anomaly": 2.0,
+  "result": {
+    "id": "minecraft:crying_obsidian",
+    "count": 4
+  }
+}

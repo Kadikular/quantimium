@@ -178,6 +178,12 @@ public final class LensAction {
     private void keepCursor(ServerLevel level) {
         if (area == null || !(level.getBlockEntity(key.node()) instanceof com.kadikular.quantimium.block.entity.AreaPrismBlockEntity prism)) return;
         String name = key.action().name();
+        if (prism.scanOrder() != scanOrder) {
+            scanOrder = prism.scanOrder();
+            columns = null;
+            // A new order starts the area over; the order it was in, read back after a reload, carries on.
+            if (cursorRead) cursor = 0;
+        }
         if (!cursorRead) {
             cursorRead = true;
             cursor = Math.floorMod(prism.cursor(name), Math.max(1, areaVolume()));
@@ -702,11 +708,64 @@ public final class LensAction {
     }
 
     /** The {@code index}th block of the area, row by row, bottom up. */
+    /** The prism's order for its area, and the columns and layers it gives, worked out once for each. */
+    private com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.ScanOrder scanOrder =
+            com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.ScanOrder.NEAREST;
+    @Nullable
+    private int[] columns;
+    @Nullable
+    private int[] layers;
+    @Nullable
+    private net.minecraft.world.level.levelgen.structure.BoundingBox orderedArea;
+
+    /**
+     * The {@code index}th block of the area in the prism's order: a layer at a time (from the top, from the bottom,
+     * or the prism's own height outwards), and in each layer the columns nearest the prism first.
+     */
     private BlockPos areaPos(int index) {
         int x = area.getXSpan();
         int z = area.getZSpan();
         int i = Math.floorMod(index, areaVolume());
-        return new BlockPos(area.minX() + i % x, area.minY() + i / (x * z), area.minZ() + (i / x) % z);
+        if (columns == null || !area.equals(orderedArea)) orderArea();
+        int column = columns[i % (x * z)];
+        return new BlockPos(area.minX() + column % x, layers[i / (x * z)], area.minZ() + column / x);
+    }
+
+    private void orderArea() {
+        int x = area.getXSpan();
+        int z = area.getZSpan();
+        BlockPos from = key.node();
+        long[] keyed = new long[x * z];
+        for (int c = 0; c < keyed.length; c++) {
+            long dx = area.minX() + c % x - from.getX();
+            long dz = area.minZ() + c / x - from.getZ();
+            keyed[c] = (dx * dx + dz * dz) << 32 | c;
+        }
+        java.util.Arrays.sort(keyed);
+        columns = new int[keyed.length];
+        for (int c = 0; c < keyed.length; c++) columns[c] = (int) keyed[c];
+        int height = area.getYSpan();
+        layers = new int[height];
+        for (int l = 0; l < height; l++) {
+            layers[l] = switch (scanOrder) {
+                case TOP_DOWN -> area.maxY() - l;
+                case BOTTOM_UP -> area.minY() + l;
+                case NEAREST -> nearestLayer(l);
+            };
+        }
+        orderedArea = area;
+    }
+
+    /** The {@code l}th layer out from the prism's height, alternating above and below, clamped into the area. */
+    private int nearestLayer(int l) {
+        int y = Math.clamp(key.node().getY(), area.minY(), area.maxY());
+        int above = area.maxY() - y;
+        int below = y - area.minY();
+        // Out in rings: 0, +1, -1, +2, -2... while both sides last, then whichever is left.
+        int both = Math.min(above, below);
+        if (l <= 2 * both) return l == 0 ? y : l % 2 == 1 ? y + (l + 1) / 2 : y - l / 2;
+        int beyond = l - 2 * both;
+        return above > below ? y + both + beyond : y - both - beyond;
     }
 
     /** Puts power into cutting the block the beam ends on; breaks it when the cut is through. */
