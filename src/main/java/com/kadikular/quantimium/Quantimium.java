@@ -152,7 +152,7 @@ public class Quantimium {
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,
                 ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
-                (be, context) -> be.itemHandler()
+                (be, context) -> context == null ? be.viewerHandler() : be.itemHandler()
         );
 
         // A Logistics Controller takes the power it pays to move things with on any face.

@@ -310,7 +310,7 @@ up the beam still feeds them). As ever, a stream from one side of a join reaches
 put the controller before the lenses, or on their side of the join.
 
 A <ItemLink id="quantimium:logistics_receptacle" /> goes on the inventory it serves (a chest, a machine, a drawer), and light
-passes straight through it, so one beam along a row of machines joins them all. Open it to set what that
+passes straight through it, so one beam along a row of machines joins them all; light onto its outer face joins it too, and stops there. Open it to set what that
 inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
 with tags (empty, storage and providers take or give everything; a requester asks for nothing as a whitelist,
 everything as a blacklist). Its plate lights in its role's colour while a controller's

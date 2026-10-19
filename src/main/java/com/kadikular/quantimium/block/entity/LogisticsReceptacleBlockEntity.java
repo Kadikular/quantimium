@@ -266,15 +266,18 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {
         Set<Direction> out = EnumSet.noneOf(Direction.class);
-        for (Direction travel : arriving) if (accepts(travel)) out.add(travel);
+        for (Direction travel : arriving) if (travel.getAxis() != facing().getAxis()) out.add(travel);
         passing = out;
         return out;
     }
 
-    /** Light never comes in from, or goes into, the inventory it serves. */
+    /**
+     * Light across it passes straight on; light onto its outer face, towards the inventory, joins it to the
+     * network and stops there. None comes out of the inventory it serves.
+     */
     @Override
     public boolean accepts(Direction travel) {
-        return travel.getAxis() != facing().getAxis();
+        return travel != facing().getOpposite();
     }
 
     @Override

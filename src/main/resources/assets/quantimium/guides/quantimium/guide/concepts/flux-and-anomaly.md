@@ -96,7 +96,8 @@ What anomaly does in a chunk that isn't contained, by band:
 - **Surcharge.** Crafter and Simulator work costs extra FE (the table above).
 - **Leak.** Quantimium machine buffers bleed a flat amount of FE every tick; the Exciter and the field-control blocks, which manage the field, don't.
 - **Crystals.** From Medium, Anomalite Crystals seed on powered machines and eat their buffers: slowly
-  and only two to a chunk at Medium, faster and up to 8 at High, 16 at Critical, without limit at Singularity.
+  and only two to a chunk at Medium, faster and up to 8 at High, 16 at Critical, without limit at Singularity. A machine that
+  holds a charge but gives none up (many mods' are fill-only) feeds them without losing any.
   Break or move the machine and its crystals go with it.
 - **Tears and mites.** From Medium, the field tears into the [mirror](mirror-phase.md) on its own,
   and mirror mites hunt.

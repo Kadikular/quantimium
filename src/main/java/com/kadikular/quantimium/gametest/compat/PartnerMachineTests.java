@@ -103,6 +103,33 @@ public final class PartnerMachineTests {
         helper.succeed();
     }
 
+    // covers: anomalite.host
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_crystal_host", timeoutTicks = 60)
+    public static void aCrystalFeedsOnAFillOnlyMachine(GameTestHelper helper) {
+        // Energized Power's machines let power in but never out: a crystal on one still feeds, taking nothing.
+        if (skip(helper, "energizedpower")) return;
+        com.kadikular.quantimium.gametest.TestSupport.clearField(helper);
+        net.minecraft.core.BlockPos machine = new net.minecraft.core.BlockPos(8, 2, 8);
+        helper.setBlock(machine, BuiltInRegistries.BLOCK.getValue(Identifier.parse("energizedpower:pulverizer")));
+        var energy = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Energy.BLOCK, helper.absolutePos(machine), null);
+        helper.assertTrue(energy != null, "it takes power");
+        try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            energy.insert(1_000, transaction);
+            transaction.commit();
+        }
+        helper.setBlock(machine.above(), com.kadikular.quantimium.init.ModBlocks.ANOMALITE_CRYSTAL.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.FACING, net.minecraft.core.Direction.UP)
+                .setValue(com.kadikular.quantimium.block.AnomaliteCrystalBlock.AGE, 0));
+        helper.runAfterDelay(40, () -> {
+            var crystal = helper.getBlockEntity(machine.above(), com.kadikular.quantimium.block.entity.AnomaliteCrystalBlockEntity.class);
+            var host = com.kadikular.quantimium.flux.AnomaliteEnergy.find(helper.getLevel(), helper.absolutePos(machine));
+            helper.assertTrue(crystal.wasRecentlyFed(helper.getLevel().getGameTime()), "it feeds on the machine's charge: host "
+                    + (host == null ? "none" : host.storedFe() + " FE, drainable " + host.canExtract()) + ", stored " + energy.getAmountAsLong());
+            helper.assertTrue(energy.getAmountAsLong() > 0, "and leaves it be");
+            helper.succeed();
+        });
+    }
+
     private static boolean skip(GameTestHelper helper, String mod) {
         if (ModList.get().isLoaded(mod)) return false;
         helper.succeed();

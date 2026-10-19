@@ -75,7 +75,9 @@ public class AnomaliteCrystalBlockEntity extends BlockEntity implements FluxMete
 
         long removed = energy.extractFe(requested);
         crystal.lastDrainFe = (int) Math.min(Integer.MAX_VALUE, removed);
-        if (removed > 0) crystal.lastFedTick = now;
+        // A machine that holds a charge but gives none up (many mods' are fill-only, whatever they claim) still
+        // feeds it: it grows, and takes nothing.
+        if (removed > 0 || energy.storedFe() > 0) crystal.lastFedTick = now;
     }
 
     /**
@@ -114,7 +116,8 @@ public class AnomaliteCrystalBlockEntity extends BlockEntity implements FluxMete
     @Override
     public MutableComponent fluxMeterLine() {
         int drain = getLastDrainFe();
-        String status = isCultivated() ? "cultivated" : isContained() ? "receding" : drain > 0 ? "feeding" : "dormant";
+        boolean fed = level != null && wasRecentlyFed(level.getGameTime());
+        String status = isCultivated() ? "cultivated" : isContained() ? "receding" : drain > 0 || fed ? "feeding" : "dormant";
         return Component.translatable("item.quantimium.flux_meter.anomalite_crystal",
                         getBlockState().getValue(AnomaliteCrystalBlock.AGE) + 1, FluxMeterReadout.fe(drain),
                         Component.translatable("item.quantimium.flux_meter.anomalite_crystal." + status))

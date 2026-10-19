@@ -51,6 +51,52 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         return handler;
     }
 
+    /**
+     * Asked with no face (other mods' screens, inventory viewers): the same, a stack at most to a slot, since
+     * such screens turn each slot into an item stack, and one of thousands can't be sent to a client.
+     */
+    public ResourceHandler<ItemResource> viewerHandler() {
+        return viewer;
+    }
+
+    private final ResourceHandler<ItemResource> viewer = new ResourceHandler<>() {
+        @Override
+        public int size() {
+            return handler.size();
+        }
+
+        @Override
+        public ItemResource getResource(int index) {
+            return handler.getResource(index);
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            ItemResource item = handler.getResource(index);
+            return item.isEmpty() ? 0 : Math.min(handler.getAmountAsLong(index), item.toStack(1).getMaxStackSize());
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, ItemResource resource) {
+            return resource.isEmpty() ? 64 : resource.toStack(1).getMaxStackSize();
+        }
+
+        @Override
+        public boolean isValid(int index, ItemResource resource) {
+            return handler.isValid(index, resource);
+        }
+
+        @Override
+        public int insert(int index, ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            return handler.insert(index, resource, amount, transaction);
+        }
+
+        @Override
+        public int extract(int index, ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            return handler.extract(index, resource, (int) Math.min(amount, getAmountAsLong(index)), transaction);
+        }
+    };
+
     @Nullable
     private LogisticsController controller() {
         return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);

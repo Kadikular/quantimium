@@ -638,6 +638,25 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.receptacle
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aReceptacleRightBesideARelayJoinsTheNetwork(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        LogisticsReceptacleBlockEntity storage = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
+        // And one shone on from above, onto its outer face: it joins, and the light stops there.
+        helper.setBlock(new BlockPos(12, Y - 1, 12), Blocks.CHEST);
+        helper.setBlock(new BlockPos(12, Y, 12), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        LogisticsReceptacleBlockEntity under = helper.getBlockEntity(new BlockPos(12, Y, 12), LogisticsReceptacleBlockEntity.class);
+        controller(helper, new BlockPos(12, Y + 1, 12), Direction.DOWN, true);
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(storage.isConnected(), "the relay's light reaches it");
+            helper.assertTrue(under.isConnected(), "light onto its outer face joins it");
+            helper.succeed();
+        });
+    }
+
     // covers: pod.logistics
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void aPodLogisticsModuleIsATerminal(GameTestHelper helper) {
