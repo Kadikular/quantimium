@@ -793,6 +793,83 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_import", timeoutTicks = 200)
+    public static void aNetworkReadsAnotherThroughItsMaterialiser(GameTestHelper helper) {
+        // Network A: cobblestone, a furnace crafter offering to it, its Materialiser. Network B, a row above: a provider
+        // on A's Materialiser, and B's own Materialiser. B offers A's cobblestone as real, its stone as craftable.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 23));
+        crafterOn(helper, 6, Items.FURNACE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        controller(helper, new BlockPos(2, Y + 1, 8), Direction.EAST, true);
+        helper.setBlock(MATERIALISER.above(), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        var importer = helper.getBlockEntity(MATERIALISER.above(), LogisticsReceptacleBlockEntity.class);
+        while (importer.role() != LogisticsMember.Role.PROVIDER) importer.cycleRole();
+        BlockPos theirs = new BlockPos(14, Y + 1, 8);
+        helper.setBlock(theirs, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            var b = helper.getBlockEntity(new BlockPos(2, Y + 1, 8), com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class).offers();
+            var cobble = resource(Items.COBBLESTONE);
+            var stone = resource(Items.STONE);
+            helper.assertValueEqual(b.real(cobble), 23L, "A's cobblestone, real: " + b.entries());
+            helper.assertTrue(b.craftable(stone) > 0, "A's stone, craftable: " + b.entries());
+            var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(theirs), Direction.UP);
+            int got = 0;
+            for (int i = 0; i < handler.size(); i++) {
+                if (!handler.getResource(i).equals(stone)) continue;
+                try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                    got = handler.extract(i, stone, 1, transaction);
+                    transaction.commit();
+                }
+            }
+            helper.assertValueEqual(got, 1, "stone through B");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 22, "made from A's cobblestone");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_self_import", timeoutTicks = 200)
+    public static void aMaterialiserReadByItsOwnNetworkCountsOnce(GameTestHelper helper) {
+        // A provider of the network sits on the network's own Materialiser: nothing loops or doubles. And its modes.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 23));
+        crafterOn(helper, 6, Items.FURNACE, true, true);
+        // The light up a level at a relay, and along over the Materialiser, through a provider sitting on it.
+        BlockPos split = new BlockPos(10, Y, 8);
+        helper.setBlock(split, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(split, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.UP);
+        helper.setBlock(split.above(), ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.MOUNT, Direction.NORTH));
+        helper.setBlock(MATERIALISER.above(), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        var onItself = helper.getBlockEntity(MATERIALISER.above(), LogisticsReceptacleBlockEntity.class);
+        while (onItself.role() != LogisticsMember.Role.PROVIDER) onItself.cycleRole();
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var materialiser = helper.getBlockEntity(MATERIALISER, com.kadikular.quantimium.block.entity.LogisticsMaterialiserBlockEntity.class);
+        helper.runAfterDelay(100, () -> {
+            var offers = helper.getBlockEntity(new BlockPos(2, Y, 8), com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class).offers();
+            helper.assertTrue(onItself.isConnected(), "the provider on the Materialiser is on the network");
+            helper.assertValueEqual(offers.real(resource(Items.COBBLESTONE)), 23L, "the cobblestone once: " + offers.entries());
+            helper.assertTrue(offers.craftable(resource(Items.STONE)) > 0, "and stone craftable");
+            materialiser.cycleMode();
+            helper.assertTrue(listed(helper, Items.COBBLESTONE) && !listed(helper, Items.STONE), "real only: no stone");
+            materialiser.cycleMode();
+            helper.assertTrue(!listed(helper, Items.COBBLESTONE) && listed(helper, Items.STONE), "craftable only: no cobblestone");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    private static boolean listed(GameTestHelper helper, Item item) {
+        var handler = network(helper);
+        for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(resource(item))) return true;
+        return false;
+    }
+
     // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_basic_pair", timeoutTicks = 200)
     public static void twoBasicCraftersOnOneNetworkSettle(GameTestHelper helper) {

@@ -65,6 +65,13 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
                                 () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle." + (receptacle().active() ? "active" : "passive") + "." + role()),
                                         hint("gui.quantimium.tab.switch")))
                         .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE),
+                // A provider on a machine that makes things to order: what it would make too, or only what's there.
+                Tab.glyph(() -> receptacle().offersCraftable() ? GuiIcon.VIEW_BOTH : GuiIcon.VIEW_REAL,
+                                () -> press(LogisticsReceptacleMenu.BUTTON_MADE),
+                                () -> List.of(Component.translatable(receptacle().offersCraftable()
+                                                ? "gui.quantimium.logistics_receptacle.made.on" : "gui.quantimium.logistics_receptacle.made.off"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .visible(() -> receptacle().role() == LogisticsMember.Role.PROVIDER && receptacle().maker() != null),
                 // A requester keeping counts stocked: each entry's count is how many it keeps.
                 Tab.glyph(() -> GuiIcon.KEEP, () -> press(LogisticsReceptacleMenu.BUTTON_KEEP),
                                 () -> List.of(Component.translatable(receptacle().keeps() ? "gui.quantimium.logistics_receptacle.keep.on" : "gui.quantimium.logistics_receptacle.keep.off"),

@@ -1030,8 +1030,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     public boolean canCommit(ResolvedCraft craft) {
         if (craft == null || level == null || linkLoopDetected) return false;
-        com.kadikular.quantimium.recipe.CraftChain.tick(level.getGameTime());
-        com.kadikular.quantimium.recipe.CraftChain.work();
         if (energyStorage.getEnergyStored() < craft.feCost()) return false;
         if (isBasic() && coherenceReserve < craft.batchSize()) return false;
         return withdrawalsAvailable(craft);
@@ -1297,9 +1295,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private ItemStack automationView(int absoluteOutputSlot) {
         ItemStack real = inventory.getStackInSlot(absoluteOutputSlot);
         if (!real.isEmpty()) return real;
-        if (level == null || level.isClientSide() || automationBusy) return ItemStack.EMPTY;
-        com.kadikular.quantimium.recipe.CraftChain.tick(level.getGameTime());
-        if (com.kadikular.quantimium.recipe.CraftChain.full()) return ItemStack.EMPTY;
+        if (level == null || level.isClientSide() || automationBusy || com.kadikular.quantimium.recipe.CraftChain.full()) return ItemStack.EMPTY;
         if (statusCode == STATUS_NO_POWER || statusCode == STATUS_ENTANGLED_LOOP
                 || statusCode == STATUS_IDLE || statusCode == STATUS_NO_RECIPE
                 || statusCode == STATUS_DENIED) {

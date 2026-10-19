@@ -8,22 +8,17 @@ import net.neoforged.neoforge.transfer.transaction.Transaction;
  * have to make, so a loop ends there; past {@link #MAX_DEPTH} machines, none does. Only ever the server thread's.
  *
  * <p>What a machine can offer depends on which machines are on the chain when it's asked, so an answer is kept
- * per {@link #context()}: the same question from the same chain is worked out once a tick. And a tick's checks
- * have a {@link #BUDGET}: past it, machines asked from inside a chain offer only what they really hold until the
- * next tick, so no network, however tangled, can stall the server.
+ * per {@link #context()}: the same question from the same chain is worked out once a tick. What a network shows
+ * doesn't come from here at all: it's the network's {@link com.kadikular.quantimium.laser.OfferTable}.
  */
 public final class CraftChain {
     /** The most machines one craft reaches through: past this, only what's really there counts. */
     public static final int MAX_DEPTH = 4;
-    /** Checks of what can be made, a tick, before chains stop reaching further. */
-    public static final int BUDGET = 2048;
 
     private static final class State {
         int depth;
         long context;
         long epoch;
-        long tick = Long.MIN_VALUE;
-        int work;
     }
 
     private static final ThreadLocal<State> STATE = ThreadLocal.withInitial(State::new);
@@ -70,24 +65,9 @@ public final class CraftChain {
         STATE.get().epoch++;
     }
 
-    /** It's now {@code gameTime}: a new tick's checks start from none. Call before asking {@link #full}. */
-    public static void tick(long gameTime) {
-        State state = STATE.get();
-        if (state.tick != gameTime) {
-            state.tick = gameTime;
-            state.work = 0;
-        }
-    }
-
-    /** One more check of what can be made. */
-    public static void work() {
-        STATE.get().work++;
-    }
-
-    /** Whether a machine asked now may offer only what it really holds: too deep, or this tick's checks spent. */
+    /** Whether a machine asked now may offer only what it really holds: the chain is as long as it goes. */
     public static boolean full() {
-        State state = STATE.get();
-        return state.depth >= MAX_DEPTH || state.depth > 0 && state.work > BUDGET;
+        return STATE.get().depth >= MAX_DEPTH;
     }
 
     /**

@@ -70,6 +70,18 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         setChanged();
     }
 
+    @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
+        super.saveAdditional(out);
+        out.putInt("Mode", mode.ordinal());
+    }
+
+    @Override
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
+        super.loadAdditional(in);
+        mode = Mode.values()[Math.floorMod(in.getIntOr("Mode", 0), Mode.values().length)];
+    }
+
     public boolean offersReal() {
         return mode != Mode.CRAFTABLE;
     }
@@ -142,8 +154,11 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     private List<LogisticsMember> members() {
         LogisticsController controller = controller();
         if (controller == null || level == null) return List.of();
+        // Not a member on one of this network's own Materialisers (this one among them): it would read the network
+        // into itself. Another network's is fine: that's another network's stock.
         return controller.members().stream()
-                .filter(member -> !(level.getBlockEntity(member.inventoryPos()) instanceof LogisticsMaterialiserBlockEntity))
+                .filter(member -> !(level.getBlockEntity(member.inventoryPos()) instanceof LogisticsMaterialiserBlockEntity other)
+                        || other.controller() != controller)
                 .toList();
     }
 

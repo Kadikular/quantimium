@@ -34,6 +34,19 @@ public class LogisticsMaterialiserBlock extends BaseEntityBlock implements com.k
         return RenderShape.MODEL;
     }
 
+    /** A click steps what it offers: real and craftable, real only, craftable only. */
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
+                                                                  net.minecraft.world.entity.player.Player player,
+                                                                  net.minecraft.world.phys.BlockHitResult hit) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsMaterialiserBlockEntity materialiser) {
+            materialiser.cycleMode();
+            player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_materialiser.mode."
+                    + materialiser.mode().name().toLowerCase(java.util.Locale.ROOT)).withStyle(net.minecraft.ChatFormatting.AQUA));
+        }
+        return net.minecraft.world.InteractionResult.SUCCESS;
+    }
+
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new LogisticsMaterialiserBlockEntity(pos, state);

@@ -312,6 +312,8 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
 - [[mechanic:laser.logistics.provider]] **Provider**: passive, the network may take what its filter lets go
   (a furnace's output, say); active, it pushes it out itself, to requesters listing it first, then into
   storage.
+  On a machine that makes things to order (a Quantum Crafter), what it would make is offered as craftable;
+  its screen can switch that off, to offer only what's really there.
 - [[mechanic:laser.logistics.requester]] **Requester**: passive, it takes what active providers push, as its
   filter lets in; active, it pulls what its filter lists from providers first, then storage.
   [[mechanic:laser.logistics.filter]] Only what its filter lists comes, as far as the inventory takes it. With **Keep stocked** on, each
@@ -336,7 +338,10 @@ shift-click it in your inventory. Each take or put costs the controller as a mov
 offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus
 or a pipe on any face sees everything storage holds and providers offer (a Reactor on the network, with what it
 can make), takes from it, and puts things away into storage. Moves happen as part of the other side's transaction,
-so one called off puts everything back and looking is free; each move costs the controller as a receptacle's does. A receptacle on a Logistics
+so one called off puts everything back and looking is free; each move costs the controller as a receptacle's does.
+Click it to choose what it offers: what's there and what can be made (the default), only what's there, or only
+what can be made. A provider Receptacle on another network's Materialiser brings that network's offers into its
+own, real as real and craftable as craftable. A receptacle on a Logistics
 Materialiser is ignored: it would read the network into itself.
 
 [[mechanic:laser.logistics.reactor]] A [[block:reactor_logistics_port]] on the Reactor's plinth rim, where a

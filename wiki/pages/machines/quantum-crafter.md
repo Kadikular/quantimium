@@ -229,13 +229,14 @@ A Tesseract can be bound to **another crafter**. Its output ghosts then count as
 crafter can plan its craft from another's preview: plank → stick → torch in one take.
 
 **Chains through the logistics network.** A Tesseract bound to a [[block:logistics_materialiser]] puts the
-whole network in the pool, and a passive provider on a crafter offers what it can make to the network. So
-crafters with different catalysts chain through it: a furnace crafter offering stone, a stonecutter crafter
-drawing on the network, and stone bricks show in the terminal and come out of any pipe, each step made by
-its own crafter and paid for there. A chain reaches at most {{c:CraftChain.MAX_DEPTH}} crafters; a crafter
-already working on a craft offers nothing to it, so a crafter never counts what it would make itself, and a
-loop (one crafter turning ingots into blocks, another blocks into ingots) just ends there. A pull that's
-only asked, or called off, undoes everything it made; what comes out was really made and paid for.
+network in the pool, and a provider Receptacle on a crafter offers what it can make to the network, as
+**craftable**, not as stock. So crafters with different catalysts chain through it: a furnace crafter offering
+stone, a stonecutter crafter drawing on the network, and stone bricks show in the terminal as craftable, each
+step made by its own crafter and paid for there when they're taken. The network works out what's craftable
+once a second, tier by tier (up to four crafters in a chain): each crafter is shown what's really there and
+what the others could make, never its own, so a loop can't feed itself. Two crafters offering the same thing
+both count, as two providers would. Taking something makes it for real; one only asked about, or called off,
+undoes everything it made.
 
 [[mechanic:crafter.entangled_loop]] Crafters linked in a ring (A reads B, B reads A, or a longer
 chain back to itself, up to {{c:QuantumCrafterBlockEntity.MAX_CHAIN_DEPTH}} links deep) would try to
