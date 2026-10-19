@@ -933,6 +933,27 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_one_craft", timeoutTicks = 200)
+    public static void aLoopingCraftLeavesTheOthersBe(GameTestHelper helper) {
+        // 35 iron blocks and 4 ingots stored, two crafting-table Crafters on the network. Blocks made from ingots
+        // made from blocks loop, so no more blocks are offered; but leggings and nuggets from ingots made from blocks
+        // are.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 35), new ItemStack(Items.IRON_INGOT, 4));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(amount(helper, Items.IRON_BLOCK), 35L, "only the stored blocks");
+            helper.assertTrue(amount(helper, Items.IRON_LEGGINGS) >= 45, "leggings from ingots made from blocks: " + amount(helper, Items.IRON_LEGGINGS));
+            helper.assertTrue(amount(helper, Items.IRON_NUGGET) > 36, "nuggets past the four stored ingots: " + amount(helper, Items.IRON_NUGGET));
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_whole_stock", timeoutTicks = 200)
     public static void aCrafterOnTheNetworkCountsEveryStack(GameTestHelper helper) {
         // Two stacks of iron in storage, a crafting-table Crafter drawing on the network and offering to it: it can

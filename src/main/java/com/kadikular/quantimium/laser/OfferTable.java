@@ -37,8 +37,10 @@ public final class OfferTable {
     /** How many machines a chain of crafts on the network reaches through. */
     public static final int TIERS = 4;
 
-    /** How many times a machine is asked again, leaving out more each time, before what still loops is dropped. */
-    private static final int LOOP_RETRIES = 3;
+    /** How many times a machine is asked again for one looping craft, leaving out more each time, before it's dropped. */
+    private static final int LOOP_RETRIES = 2;
+    /** How many looping crafts of one machine are asked about again: past that, they're dropped. */
+    private static final int MOST_LOOPS = 8;
 
     public static final OfferTable EMPTY = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of());
 
@@ -234,39 +236,54 @@ public final class OfferTable {
     }
 
     /**
-     * What the machine at {@code pos} could make, shown this table: a craft out of something that was made out of
-     * what that craft makes is a loop, so the machine is asked again with such things left out, and what still loops
-     * after that is dropped.
+     * What the machine at {@code pos} could make, shown this table. A craft out of something that was made out of
+     * what that craft makes is a loop: the machine is asked again for that thing alone, with what was made from it
+     * left out, and what still loops after that is dropped. Its other crafts keep everything they were shown.
      */
     private Map<ItemResource, List<Source>> offersOf(LogisticsController network, BlockPos pos, OfferMaker maker, LogisticsMember member) {
-        Set<Item> avoid = new HashSet<>();
         Map<ItemResource, List<Source>> kept = new LinkedHashMap<>();
-        for (int attempt = 0; attempt <= LOOP_RETRIES; attempt++) {
-            kept.clear();
-            Map<Item, Set<Item>> below = new HashMap<>();
-            Set<Item> looped = new HashSet<>();
-            boolean chains = member.craftsFromCraftable();
-            for (OfferMaker.Made made : maker.makes(network, stock(pos, true, chains, avoid), chains)) {
-                if (made.count() <= 0 || !member.lets(made.item().toStack(1))) continue;
-                Item out = made.item().getItem();
-                Set<Item> from = new HashSet<>(made.from());
-                boolean loops = false;
-                for (Item input : made.from()) {
-                    Set<Item> under = below.computeIfAbsent(input, i -> madeFrom(i, pos, avoid));
-                    if (under.contains(out)) loops = true;
-                    from.addAll(under);
-                }
-                if (loops) {
-                    looped.add(out);
-                    continue;
-                }
-                Source source = new Source(made.count(), Set.copyOf(from));
-                List<Source> sources = kept.computeIfAbsent(made.item(), k -> new ArrayList<>());
-                if (!sources.contains(source)) sources.add(source);
+        boolean chains = member.craftsFromCraftable();
+        Set<Item> looped = collect(maker.makes(network, stock(pos, true, chains, Set.of()), chains), pos, member, Set.of(), null, kept);
+        int asked = 0;
+        for (Item out : looped) {
+            if (asked++ >= MOST_LOOPS) break;
+            Set<Item> avoid = new HashSet<>(Set.of(out));
+            for (int attempt = 0; attempt < LOOP_RETRIES; attempt++) {
+                Set<Item> still = collect(maker.makes(network, stock(pos, true, chains, avoid), chains), pos, member, avoid, out, kept);
+                if (still.isEmpty() || !avoid.addAll(still)) break;
             }
-            if (looped.isEmpty() || !avoid.addAll(looped)) break;
         }
         return kept;
+    }
+
+    /**
+     * Keeps in {@code kept} the crafts in {@code made} (only those of {@code only}, if set) that don't loop, shown
+     * the table less what's made from {@code avoid}; what the ones that loop make.
+     */
+    private Set<Item> collect(List<OfferMaker.Made> made, BlockPos pos, LogisticsMember member, Set<Item> avoid, Item only,
+                              Map<ItemResource, List<Source>> kept) {
+        Map<Item, Set<Item>> below = new HashMap<>();
+        Set<Item> looped = new java.util.LinkedHashSet<>();
+        for (OfferMaker.Made one : made) {
+            Item out = one.item().getItem();
+            if (only != null && out != only) continue;
+            if (one.count() <= 0 || !member.lets(one.item().toStack(1))) continue;
+            Set<Item> from = new HashSet<>(one.from());
+            boolean loops = false;
+            for (Item input : one.from()) {
+                Set<Item> under = below.computeIfAbsent(input, i -> madeFrom(i, pos, avoid));
+                if (under.contains(out)) loops = true;
+                from.addAll(under);
+            }
+            if (loops) {
+                looped.add(out);
+                continue;
+            }
+            Source source = new Source(one.count(), Set.copyOf(from));
+            List<Source> sources = kept.computeIfAbsent(one.item(), k -> new ArrayList<>());
+            if (!sources.contains(source)) sources.add(source);
+        }
+        return looped;
     }
 
     private static void offer(Map<ItemResource, Map<BlockPos, List<Source>>> craftable, ItemResource item, BlockPos pos, Source source) {

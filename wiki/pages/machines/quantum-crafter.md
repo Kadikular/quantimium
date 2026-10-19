@@ -150,7 +150,7 @@ runs and a stack of ingots allows 64, but at 4,000 FE a smelt the energy allows 
 shows **25 iron ingots**.
 
 Its screen works like a logistics terminal: everything in its outputs and every preview in one scrolling
-grid, with a search box over it. Previews are tinted, and their small number is how many they **can
+grid, with a search box over it, sorted by count or by name (a tab on its left). Previews are tinted, and their small number is how many they **can
 make** in all, past one stack: 128 iron ingots, in the grid or behind a Tesseract (a logistics network
 counts every stack), show 14 iron blocks. Click for the batch, right-click for half, shift-right-click (or
 shift and the wheel down) for one, onto what you're holding if it's the same; shift-click sends the batch
@@ -243,7 +243,7 @@ step made by its own crafter and paid for there when they're taken. The network 
 once a second, tier by tier (up to four crafters in a chain): each crafter is shown what's really there and
 what the others could make, never its own, so a loop can't feed itself. A craftable counts what the crafter
 **can make** of it, not one craft's worth. Each craftable remembers what it's made from, all the way down, and a
-crafter isn't shown what was made out of what it makes: nine ingots a crafter could turn into a block don't
+recipe isn't shown what was made out of what it makes: nine ingots a crafter could turn into a block don't
 show as nine more ingots from the crafter that would turn that block back. Where it can't tell, it counts less
 rather than more. Two crafters offering the same thing both count, as two providers would. Taking something makes it for real; one only asked about, or called off,
 undoes everything it made.

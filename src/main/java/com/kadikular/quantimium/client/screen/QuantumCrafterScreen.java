@@ -64,6 +64,8 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         }
     }
 
+    /** Sorted by name, or by count (how many are there, or can be made); remembered while the game runs. */
+    private static boolean byName;
     private EditBox search;
     private int scrollRow;
     /** The cells as last shown: while shift is held they keep their order, so what's under the mouse stays put. */
@@ -91,8 +93,16 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
 
     @Override
     protected List<Tab> createTabs() {
-        if (menu.isBasic()) return List.of();
+        // Sort, as a logistics terminal's: by count or by name.
+        Tab sort = Tab.glyph(() -> byName ? GuiIcon.SORT_NAME : GuiIcon.SORT_COUNT, () -> {
+                            byName = !byName;
+                            scrollRow = 0;
+                        },
+                        () -> List.of(Component.translatable(byName ? "gui.quantimium.logistics_terminal.sort.name" : "gui.quantimium.logistics_terminal.sort.count"),
+                                hint("gui.quantimium.tab.switch")));
+        if (menu.isBasic()) return List.of(sort);
         return List.of(
+                sort,
                 sidesTab(menu.getBlockEntity().getBlockPos()),
                 Tab.glyph(() -> menu.isRecipeLocked() ? GuiIcon.LOCKED : GuiIcon.UNLOCKED,
                                 () -> ClientPacketDistributor.sendToServer(new SetCrafterLockPayload(
@@ -165,7 +175,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
 
     // ---- the output grid ----
 
-    /** Every output there or previewed, in slot order, filtered by the search; held in place while shift is down. */
+    /** Every output there or previewed, sorted and filtered by the search; held in place while shift is down. */
     private List<Cell> cells() {
         QuantumCrafterBlockEntity be = menu.getBlockEntity();
         String query = search == null ? "" : search.getValue().trim().toLowerCase(Locale.ROOT);
@@ -184,6 +194,8 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
             }
             if (query.isEmpty() || cell.stack().getHoverName().getString().toLowerCase(Locale.ROOT).contains(query)) latest.add(cell);
         }
+        java.util.Comparator<Cell> name = java.util.Comparator.comparing(c -> c.stack().getHoverName().getString());
+        latest.sort(byName ? name : java.util.Comparator.comparingLong(Cell::count).reversed().thenComparing(name));
         if (minecraft == null || !minecraft.hasShiftDown()) {
             shown = latest;
             return latest;
