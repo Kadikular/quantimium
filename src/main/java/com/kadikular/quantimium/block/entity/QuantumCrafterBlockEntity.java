@@ -1535,7 +1535,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (slot >= OUTPUT_START && slot <= OUTPUT_END && config().allowsOutputSlot(slot)) {
                 return automationView(slot);
             }
-            return inventory.getStackInSlot(slot);
+            ItemStack stack = inventory.getStackInSlot(slot);
+            // A Tesseract in the grid is a link, not an ingredient or stock: networks and pipes don't list it.
+            return slot < INPUT_SLOTS && com.kadikular.quantimium.recipe.EntangledLinks.isLink(stack) ? ItemStack.EMPTY : stack;
         }
 
         @Override

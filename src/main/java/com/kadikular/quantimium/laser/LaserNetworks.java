@@ -288,7 +288,7 @@ public final class LaserNetworks {
 
     /** One connected set of nodes: its sources, and each block it charges with how to reach it; whether any of it is a cavity. */
     /** @param rest ticks it waits before charging again, after a tick when nothing it reaches took any power */
-    private record Network(List<LaserNode> sources, List<Sink> sinks, boolean cavities, long[] left, int[] rest) {}
+    private record Network(List<LaserNode> sources, List<Sink> sinks, boolean cavities, long[] left, int[] rest, List<LensAction> actions) {}
 
     /**
      * A block a beam charges: where, from which face, through which beams from a source (each as its
@@ -617,7 +617,10 @@ public final class LaserNetworks {
                 reach(source, sources.size() - 1, sinks);
             }
             boolean cavities = sources.stream().anyMatch(LaserNode::buffers) || sinks.values().stream().anyMatch(sink -> sink.buffer() != null);
-            Network network = new Network(sources, List.copyOf(sinks.values()), cavities, new long[sources.size()], new int[1]);
+            List<Sink> all = List.copyOf(sinks.values());
+            List<LensAction> acting = new ArrayList<>();
+            for (Sink sink : all) if (sink.action() != null) acting.add(sink.action());
+            Network network = new Network(sources, all, cavities, new long[sources.size()], new int[1], List.copyOf(acting));
             built.add(network);
             for (Sink sink : network.sinks()) {
                 if (sink.action() != null) actionSinks.put(sink.action().key(), new ActionSink(network, sink));
@@ -1273,7 +1276,7 @@ public final class LaserNetworks {
     }
 
     private static boolean anyActionWants(Network network) {
-        for (Sink sink : network.sinks()) if (sink.action() != null && sink.action().demand() > 0) return true;
+        for (LensAction action : network.actions()) if (action.demand() > 0) return true;
         return false;
     }
 
