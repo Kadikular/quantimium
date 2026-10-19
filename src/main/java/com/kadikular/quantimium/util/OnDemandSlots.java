@@ -24,6 +24,13 @@ public interface OnDemandSlots {
 
     default void restoreState(@org.jspecify.annotations.Nullable Object state) {}
 
+    /**
+     * Its inventory is about to be put back as it was ({@code true}), or has been ({@code false}): while it is,
+     * the transaction is closing and nothing may be read from or moved in another inventory, so it should not
+     * react to the change.
+     */
+    default void restoring(boolean restoring) {}
+
     /** The transaction its pulls were made in has committed: what waited on that (flux) happens now. */
     default void committed() {}
 

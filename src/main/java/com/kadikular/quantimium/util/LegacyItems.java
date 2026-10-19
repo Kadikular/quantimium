@@ -46,10 +46,16 @@ public final class LegacyItems {
         return handler == null ? null : new Nesting(handler);
     }
 
-    /** A transaction for one slot-based call: inside the open one, or a root of its own. */
+    /** A transaction for one slot-based call: inside the open one, or a root of its own; none while one is closing. */
+    @Nullable
     private static Transaction open() {
-        return Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
-                ? Transaction.open(Transaction.getCurrentOpenedTransaction()) : Transaction.openRoot();
+        try {
+            return Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
+                    ? Transaction.open(Transaction.getCurrentOpenedTransaction()) : Transaction.openRoot();
+        } catch (IllegalStateException closing) {
+            // A transaction's close callbacks are running: nothing may move now, so the call answers nothing.
+            return null;
+        }
     }
 
     private record Nesting(ResourceHandler<ItemResource> handler) implements IItemHandler {
@@ -67,7 +73,9 @@ public final class LegacyItems {
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
             if (stack.isEmpty()) return ItemStack.EMPTY;
-            try (Transaction transaction = open()) {
+            Transaction opened = open();
+            if (opened == null) return stack;
+            try (Transaction transaction = opened) {
                 int in = handler.insert(slot, ItemResource.of(stack), stack.getCount(), transaction);
                 if (!simulate) transaction.commit();
                 return in >= stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - in);
@@ -78,7 +86,9 @@ public final class LegacyItems {
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
             ItemResource resource = handler.getResource(slot);
             if (amount <= 0 || resource.isEmpty()) return ItemStack.EMPTY;
-            try (Transaction transaction = open()) {
+            Transaction opened = open();
+            if (opened == null) return ItemStack.EMPTY;
+            try (Transaction transaction = opened) {
                 int got = handler.extract(slot, resource, Math.min(amount, resource.getMaxStackSize()), transaction);
                 if (!simulate) transaction.commit();
                 return got <= 0 ? ItemStack.EMPTY : resource.toStack(got);
@@ -171,10 +181,15 @@ public final class LegacyItems {
 
             @Override
             protected void revertToSnapshot(Snapshot snapshot) {
-                for (int i = 0; i < backing.length; i++) backing[i].restoreStacks(snapshot.stacks()[i]);
-                if (view instanceof OnDemandSlots onDemand) {
-                    onDemand.restoreState(snapshot.state());
-                    com.kadikular.quantimium.recipe.CraftChain.settled();
+                if (view instanceof OnDemandSlots onDemand) onDemand.restoring(true);
+                try {
+                    for (int i = 0; i < backing.length; i++) backing[i].restoreStacks(snapshot.stacks()[i]);
+                    if (view instanceof OnDemandSlots onDemand) onDemand.restoreState(snapshot.state());
+                } finally {
+                    if (view instanceof OnDemandSlots onDemand) {
+                        onDemand.restoring(false);
+                        com.kadikular.quantimium.recipe.CraftChain.settled();
+                    }
                 }
             }
 

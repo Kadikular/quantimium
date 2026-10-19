@@ -465,7 +465,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** What a pull's craft changes besides the inventory, for an aborted transaction to put back. */
     private record CraftState(int energy, int coherence, int refill, long feSpent, int flux, List<ResolvedCraft> preview,
-                              int status, @Nullable Identifier preferred) {}
+                              int status, @Nullable Identifier preferred, long structure, long localCount, long remoteCount, int scaledAt) {}
 
     private void serverTick(Level level, BlockState state) {
         long gameTime = level.getGameTime();
@@ -964,7 +964,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private boolean canCommitCached(int craftIndex) {
         if (craftIndex < 0 || craftIndex >= preview.size()) return false;
         // Inside a chain the answer depends on the chain (a machine on it offers nothing): only a top answer is kept.
-        if (com.kadikular.quantimium.recipe.CraftChain.depth() > 1) return canCommit(preview.get(craftIndex));
+        if (com.kadikular.quantimium.recipe.CraftChain.depth() > 1 || !com.kadikular.quantimium.recipe.CraftChain.cacheable()) {
+            return canCommit(preview.get(craftIndex));
+        }
         // Kept while its own contents stand, and for a tick at most: what it draws on elsewhere moves on its own.
         long now = level == null ? 0 : level.getGameTime();
         long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
@@ -1012,7 +1014,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** Simulated pull, so a source that only lets us look never counts as a source. */
     private boolean canWithdraw(IngredientPool.Withdrawal withdrawal) {
-        return gatherWithdrawal(withdrawal, true).getCount() >= withdrawal.count();
+        int got = gatherWithdrawal(withdrawal, true).getCount();
+        return got >= withdrawal.count();
     }
 
     @Nullable
@@ -1250,7 +1253,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         } finally {
             exitChain(false);
         }
-        if (!top) return shown;
+        if (!top || !com.kadikular.quantimium.recipe.CraftChain.cacheable()) return shown;
 
         if (automationViewCache == null || automationViewRevision != contentRevision || automationViewTick != now
                 || automationViewEpoch != epoch) {
@@ -1556,7 +1559,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         @Override
         public Object saveState() {
             return new CraftState(energyStorage.getEnergyStored(), coherenceReserve, coherenceRefillProgress, feSpentThisTick, pendingFlux.size(),
-                    preview, statusCode, preferredRecipeId);
+                    preview, statusCode, preferredRecipeId, structureSignature, localCountSignature, remoteCountSignature, scaledAtEnergy);
         }
 
         @Override
@@ -1571,9 +1574,22 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             preview = saved.preview();
             statusCode = saved.status();
             preferredRecipeId = saved.preferred();
+            // Put back as they were, not read again: this runs while the transaction is closing, when nothing
+            // may be asked of another inventory.
+            structureSignature = saved.structure();
+            localCountSignature = saved.localCount();
+            remoteCountSignature = saved.remoteCount();
+            scaledAtEnergy = saved.scaledAt();
+            ghostLayout = null;
             contentRevision++;
-            previewChanged();
+            automationViewRevision = Long.MIN_VALUE;
+            commitCheckRevision = Long.MIN_VALUE;
             setChanged();
+        }
+
+        @Override
+        public void restoring(boolean restoring) {
+            suppressInventoryNotify = restoring;
         }
 
         @Override

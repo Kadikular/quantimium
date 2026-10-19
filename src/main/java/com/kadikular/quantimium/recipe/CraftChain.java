@@ -42,6 +42,16 @@ public final class CraftChain {
         EPOCH.get()[0]++;
     }
 
+    /**
+     * Whether an answer worked out now may be kept: not while a transaction is closing, when nothing can be read
+     * from another inventory and every answer about what could be made comes out empty.
+     */
+    public static boolean cacheable() {
+        var lifecycle = net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle();
+        return lifecycle == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.NONE
+                || lifecycle == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.OPEN;
+    }
+
     /** Whether a machine asked now may offer only what it really holds. */
     public static boolean full() {
         return depth() >= MAX_DEPTH;

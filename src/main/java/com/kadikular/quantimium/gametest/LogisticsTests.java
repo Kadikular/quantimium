@@ -9,6 +9,7 @@ import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
 import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.laser.LogisticsMember;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -726,6 +727,36 @@ public final class LogisticsTests {
             helper.assertValueEqual(take(helper, Items.STONE_BRICKS, 1, true), 1, "a stone brick taken");
             helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 22, "for one cobblestone");
             helper.assertTrue(furnace.getEnergyStorage().getEnergyStored() < energy, "the furnace step paid");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_basic_pair", timeoutTicks = 200)
+    public static void twoBasicCraftersOnOneNetworkSettle(GameTestHelper helper) {
+        // A chest of cobblestone as a provider; two Basic Crafters with furnaces, both drawing on the network, the
+        // first also offering to it. They settle without breaking, and smooth stone taken costs a cobblestone.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.PROVIDER, false, new ItemStack(Items.COBBLESTONE, 16));
+        QuantumCrafterBlockEntity first = CrafterTests.basic(helper, new BlockPos(6, Y - 1, 8), Items.FURNACE);
+        QuantumCrafterBlockEntity second = CrafterTests.basic(helper, new BlockPos(9, Y - 1, 8), Items.FURNACE);
+        for (QuantumCrafterBlockEntity crafter : List.of(first, second)) {
+            TestSupport.fill(crafter.getEnergyStorage());
+            crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get()));
+        }
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        var provider = helper.getBlockEntity(new BlockPos(6, Y, 8), LogisticsReceptacleBlockEntity.class);
+        while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(CrafterTests.craftOf(second, Items.SMOOTH_STONE) != null, "the second makes smooth stone from the first's stone");
+            int slot = CrafterTests.ghostSlot(second, Items.SMOOTH_STONE);
+            ItemStack taken = second.pullHandler().extractItem(slot, 1, false);
+            helper.assertValueEqual(taken.getCount(), 1, "a smooth stone");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE) + countIn(first, Items.STONE) + countIn(second, Items.STONE)
+                    + countIn(second, Items.SMOOTH_STONE), 15, "for one cobblestone");
             TestSupport.clearField(helper);
             helper.succeed();
         });

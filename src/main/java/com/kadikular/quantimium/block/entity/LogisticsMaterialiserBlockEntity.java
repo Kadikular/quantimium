@@ -117,9 +117,11 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         long tick = level.getGameTime();
         // A tick at most, and not past a transaction settling: a Crafter on the network may just have been put back.
         long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
+        // Reading the network can ask a Crafter what it can make, which can read this list again: a list is marked
+        // as this tick's only once it's built, and only one built at the top of a chain (where no machine is busy and
+        // offering nothing) and outside a closing transaction is kept.
         if (entriesTick == tick && entriesEpoch == epoch) return entries;
-        entriesTick = tick;
-        entriesEpoch = epoch;
+        boolean keep = com.kadikular.quantimium.recipe.CraftChain.cacheable() && com.kadikular.quantimium.recipe.CraftChain.depth() == 0;
         Map<ItemResource, Long> counts = new LinkedHashMap<>();
         for (LogisticsMember member : members()) {
             if (member.role() == LogisticsMember.Role.REQUESTER) continue;
@@ -133,7 +135,12 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         }
         List<Entry> list = new ArrayList<>(counts.size());
         counts.forEach((item, amount) -> list.add(new Entry(item, amount)));
-        return entries = list;
+        if (keep) {
+            entries = list;
+            entriesTick = tick;
+            entriesEpoch = epoch;
+        }
+        return list;
     }
 
     /**
