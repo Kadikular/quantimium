@@ -67,6 +67,25 @@ public final class CrafterTests {
         });
     }
 
+    // covers: crafter.preview
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_ghosts_stay", timeoutTicks = 60)
+    public static void previewsStayWhereTheyAre(GameTestHelper helper) {
+        // A furnace Crafter previewing stone and iron: all the stone taken, the iron's preview stays in its slot.
+        QuantumCrafterBlockEntity crafter = crafter(helper, new BlockPos(2, 1, 2), Items.FURNACE);
+        TestSupport.fill(crafter.getEnergyStorage());
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 4));
+        crafter.getInventory().setStackInSlot(1, new ItemStack(Items.RAW_IRON, 4));
+        helper.runAfterDelay(20, () -> {
+            int stone = ghostSlot(crafter, Items.STONE);
+            int iron = ghostSlot(crafter, Items.IRON_INGOT);
+            ItemStack taken = crafter.takeGhost(stone);
+            helper.assertValueEqual(taken.getCount(), 4, "all the stone");
+            crafter.rebuildPreview();
+            helper.assertValueEqual(ghostSlot(crafter, Items.IRON_INGOT), iron, "the iron stays put (stone was in " + stone + ")");
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_catalyst", timeoutTicks = 60)
     public static void catalystChoosesTheRecipes(GameTestHelper helper) {
         QuantumCrafterBlockEntity furnace = crafter(helper, CRAFTER, Items.FURNACE);

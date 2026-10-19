@@ -316,7 +316,7 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
                 return be.getInventory().extractItem(absoluteSlot, amount, false);
             }
             if (be.getLevel() != null && !be.getLevel().isClientSide()) {
-                return be.takeGhost(absoluteSlot);
+                return be.takeGhost(absoluteSlot, amount);
             }
             return super.remove(amount);
         }

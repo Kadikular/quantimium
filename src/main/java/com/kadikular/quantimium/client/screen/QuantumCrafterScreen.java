@@ -266,9 +266,24 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         if (local >= 0 && (event.button() == 1 || event.button() == 0 && !event.hasShiftDown())) {
             press((event.button() == 0 ? QuantumCrafterMenu.BUTTON_TAKE_BATCH
                     : event.hasShiftDown() ? QuantumCrafterMenu.BUTTON_TAKE_ONE : QuantumCrafterMenu.BUTTON_TAKE_HALF) + local);
+            // The release that follows isn't a click on the slot: once what was taken is in hand, the screen would
+            // read it as picking up the rest.
+            swallowRelease = event.button();
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    /** The mouse button whose release belongs to a take handled here, or -1. */
+    private int swallowRelease = -1;
+
+    @Override
+    public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent event) {
+        if (event.button() == swallowRelease) {
+            swallowRelease = -1;
+            return true;
+        }
+        return super.mouseReleased(event);
     }
 
     @Override

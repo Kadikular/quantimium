@@ -154,6 +154,7 @@ The small number on a ghost is how many it **can make** in all, past one stack: 
 or behind a Tesseract (a logistics network counts every stack), show 14 iron blocks. Taking works as in a
 logistics terminal: click for the batch, right-click for half, shift-right-click (or shift and the wheel
 down) for one, onto what you're holding if it's the same; shift-click sends the batch to your inventory.
+A preview keeps its slot while its craft is still on offer, so taking from one doesn't shuffle the rest.
 
 **Unrealised Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see <ItemLink id="quantimium:unrealised_matter" />).
