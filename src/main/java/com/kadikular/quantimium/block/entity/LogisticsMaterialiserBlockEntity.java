@@ -39,6 +39,7 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
 
     private List<Entry> entries = List.of();
     private long entriesTick = Long.MIN_VALUE;
+    private long entriesEpoch = Long.MIN_VALUE;
 
     private final NetworkHandler handler = new NetworkHandler();
 
@@ -111,28 +112,14 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
                 .toList();
     }
 
-    /** How many of {@code resource} storage and providers offer right now. */
-    private long available(ItemResource resource) {
-        long total = 0;
-        for (LogisticsMember member : members()) {
-            if (member.role() == LogisticsMember.Role.REQUESTER) continue;
-            IItemHandler inventory = member.inventory();
-            if (inventory == null) continue;
-            for (int slot = 0; slot < inventory.getSlots(); slot++) {
-                ItemStack stack = inventory.getStackInSlot(slot);
-                if (stack.isEmpty() || !ItemResource.of(stack).equals(resource)) continue;
-                if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
-                total += stack.getCount();
-            }
-        }
-        return total;
-    }
-
     private List<Entry> entries() {
         if (level == null) return List.of();
         long tick = level.getGameTime();
-        if (entriesTick == tick) return entries;
+        // A tick at most, and not past a transaction settling: a Crafter on the network may just have been put back.
+        long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
+        if (entriesTick == tick && entriesEpoch == epoch) return entries;
         entriesTick = tick;
+        entriesEpoch = epoch;
         Map<ItemResource, Long> counts = new LinkedHashMap<>();
         for (LogisticsMember member : members()) {
             if (member.role() == LogisticsMember.Role.REQUESTER) continue;
@@ -150,16 +137,14 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     }
 
     /**
-     * The network as a handler. Nothing moves until the outermost transaction commits, so the simulations storage
-     * buses keep making cost nothing: it promises what's there less what this transaction has already promised,
-     * and room as storage has it less what's already promised in, then moves it all on commit, paying the
-     * controller a move each.
+     * The network as a handler. A move happens at once, inside the caller's transaction: the members' inventories
+     * are reached through {@link com.kadikular.quantimium.util.LegacyItems#legacy}, so they join it, and an abort
+     * puts everything back. What it says it moved, it moved. The controller is paid a move each when the
+     * outermost transaction commits.
      */
     private final class NetworkHandler extends SnapshotJournal<Integer> implements ResourceHandler<ItemResource> {
-        /** A move promised in an open transaction: what, how many, and whether it's taken out (or put in). */
-        private record Move(ItemResource item, int amount, boolean out) {}
-
-        private final List<Move> moves = new ArrayList<>();
+        /** Moves made in open transactions, paid for when the outermost commits. */
+        private int moves;
 
         @Override
         public int size() {
@@ -188,22 +173,13 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             return controller() != null;
         }
 
-        private int promised(ItemResource item, boolean out) {
-            int total = 0;
-            for (Move move : moves) if (move.out() == out && move.item().equals(item)) total += move.amount();
-            return total;
-        }
-
         @Override
         public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
             LogisticsController controller = controller();
             if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
-            // Read, not simulated: a simulated insert would open a transaction inside this one.
-            int already = promised(resource, false);
-            int put = Logistics.roomFor(members(), resource.toStack(1), already + amount) - already;
-            if (put <= 0) return 0;
-            updateSnapshots(transaction);
-            moves.add(new Move(resource, put, false));
+            ItemStack left = Logistics.insert(members(), resource.toStack(amount), false, false);
+            int put = amount - left.getCount();
+            if (put > 0) moved(transaction);
             return put;
         }
 
@@ -211,58 +187,39 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
             LogisticsController controller = controller();
             if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
-            // Counted now, not from the list shown this tick: what a machine offers can change under a craft (a
-            // Crafter hides what it would make while it's making something), and a promise the network can't keep
-            // at commit would hand out items that never left it.
-            long there = available(resource);
-            int got = (int) Math.min(amount, there - promised(resource, true));
-            if (got <= 0) return 0;
-            updateSnapshots(transaction);
-            moves.add(new Move(resource, got, true));
-            return got;
-        }
-
-        private int take(ItemResource resource, int amount) {
-            List<LogisticsMember> members = members();
             int got = 0;
+            List<LogisticsMember> members = members();
             while (got < amount) {
                 ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(resource), amount - got, false);
                 if (more.isEmpty()) break;
                 got += more.getCount();
             }
+            if (got > 0) moved(transaction);
             return got;
+        }
+
+        private void moved(TransactionContext transaction) {
+            updateSnapshots(transaction);
+            moves++;
+            entriesTick = Long.MIN_VALUE;
         }
 
         @Override
         protected Integer createSnapshot() {
-            return moves.size();
+            return moves;
         }
 
         @Override
         protected void revertToSnapshot(Integer snapshot) {
-            while (moves.size() > snapshot) moves.removeLast();
+            moves = snapshot;
+            entriesTick = Long.MIN_VALUE;
         }
 
         @Override
         protected void onRootCommit(Integer originalState) {
             LogisticsController controller = controller();
-            List<Move> due = List.copyOf(moves);
-            moves.clear();
-            for (Move move : due) {
-                if (move.out()) {
-                    int got = take(move.item(), move.amount());
-                    if (got < move.amount()) {
-                        com.kadikular.quantimium.Quantimium.LOGGER.warn("A Logistics Materialiser promised {} {} but the network gave {}",
-                                move.amount(), move.item(), got);
-                    }
-                } else {
-                    ItemStack left = Logistics.insert(members(), move.item().toStack(move.amount()), false, false);
-                    if (!left.isEmpty() && level != null) {
-                        net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1, worldPosition.getZ() + 0.5, left);
-                    }
-                }
-                if (controller != null) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
-            }
+            if (controller != null) for (int i = 0; i < moves; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
+            moves = 0;
             entriesTick = Long.MIN_VALUE;
         }
     }

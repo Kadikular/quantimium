@@ -229,6 +229,15 @@ second, so a chest filled from elsewhere updates the preview within a moment.
 A Tesseract can be bound to **another crafter**. Its output ghosts then count as ingredients, so one
 crafter can plan its craft from another's preview: plank → stick → torch in one take.
 
+**Chains through the logistics network.** A Tesseract bound to a <ItemLink id="quantimium:logistics_materialiser" /> puts the
+whole network in the pool, and a passive provider on a crafter offers what it can make to the network. So
+crafters with different catalysts chain through it: a furnace crafter offering stone, a stonecutter crafter
+drawing on the network, and stone bricks show in the terminal and come out of any pipe, each step made by
+its own crafter and paid for there. A chain reaches at most 4 crafters; a crafter
+already working on a craft offers nothing to it, so a crafter never counts what it would make itself, and a
+loop (one crafter turning ingots into blocks, another blocks into ingots) just ends there. A pull that's
+only asked, or called off, undoes everything it made; what comes out was really made and paid for.
+
 Crafters linked in a ring (A reads B, B reads A, or a longer
 chain back to itself, up to 16 links deep) would try to
 craft from themselves. Every crafter in the loop stops with **Link loop** until a link is taken out.

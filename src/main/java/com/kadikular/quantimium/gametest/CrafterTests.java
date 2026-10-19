@@ -183,6 +183,28 @@ public final class CrafterTests {
     }
 
     // covers: crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_twice", timeoutTicks = 60)
+    public static void twoPullsInOneTransactionShareTheIngredients(GameTestHelper helper) {
+        // One raw iron: asked twice in one transaction, it gives one ingot, not two.
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
+        grid(crafter, new ItemStack(Items.RAW_IRON, 1));
+        helper.runAfterDelay(5, () -> {
+            var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
+                    helper.absolutePos(CRAFTER), Direction.DOWN);
+            int slot = ghostSlot(crafter, Items.IRON_INGOT);
+            var ingot = net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.IRON_INGOT));
+            int got;
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                got = handler.extract(slot, ingot, 1, transaction) + handler.extract(slot, ingot, 1, transaction);
+                transaction.commit();
+            }
+            helper.assertValueEqual(got, 1, "one raw iron, one ingot");
+            helper.assertTrue(crafter.getInventory().getStackInSlot(0).isEmpty(), "and the raw iron is spent");
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.collapse
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_collapse", timeoutTicks = 60)
     public static void aPullCommitsOnlyWhatItTakes(GameTestHelper helper) {
         TestSupport.clearField(helper);

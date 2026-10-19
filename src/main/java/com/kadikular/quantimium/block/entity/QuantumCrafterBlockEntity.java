@@ -151,6 +151,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private GhostSlot[] ghostLayout;
     /** Per-tick cache of what automation already asked about, keyed by content revision. */
     private long automationViewRevision = Long.MIN_VALUE;
+    /** The tick the automation view and commit checks were worked out in: they last that tick at most. */
+    private long automationViewTick = Long.MIN_VALUE;
+    private long commitCheckTick = Long.MIN_VALUE;
+    private long automationViewEpoch = Long.MIN_VALUE;
+    private long commitCheckEpoch = Long.MIN_VALUE;
     @Nullable
     private ItemStack[] automationViewCache;
     /** Per-preview-entry commit answers, keyed by content revision. 0 unknown, 1 yes, 2 no. */
@@ -443,8 +448,29 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         be.serverTick(level, state);
     }
 
+    /** Crafts' flux (their FE; 0 for a craft with none) waiting on the transaction they were made in. */
+    private final List<Long> pendingFlux = new ArrayList<>();
+
+    private void emitCraftFlux(ServerLevel serverLevel, long fe) {
+        if (fe > 0) QuantumFlux.emitFromEnergy(serverLevel, worldPosition, fe);
+        else QuantumFlux.emitNonelectric(serverLevel, worldPosition);
+    }
+
+    /** The transaction committed: the crafts it made emit their flux now. */
+    private void flushFlux() {
+        if (pendingFlux.isEmpty() || !(level instanceof ServerLevel serverLevel)) return;
+        for (long fe : pendingFlux) emitCraftFlux(serverLevel, fe);
+        pendingFlux.clear();
+    }
+
+    /** What a pull's craft changes besides the inventory, for an aborted transaction to put back. */
+    private record CraftState(int energy, int coherence, int refill, long feSpent, int flux, List<ResolvedCraft> preview,
+                              int status, @Nullable Identifier preferred) {}
+
     private void serverTick(Level level, BlockState state) {
         long gameTime = level.getGameTime();
+        // Anything left from a transaction no journal saw commit: it's out of every transaction now.
+        if (net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle() == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.NONE) flushFlux();
         replenishBasicCrafter();
         if (refreshAnomalyReadout()) localDirty = true;
         if (gameTime % 20L == 0L && refreshBand(level)) localDirty = true;
@@ -598,8 +624,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         int availableFe = energyStorage.getEnergyStored();
         // The anomaly surcharge, times the instant-craft tax for the band here: a hot field crafts cheaper.
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
-        List<ResolvedCraft> crafts = previewEngine.preview(
-                level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier);
+        List<ResolvedCraft> crafts;
+        boolean priorBusy = automationBusy;
+        enterChain();
+        try {
+            crafts = previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier);
+        } finally {
+            exitChain(priorBusy);
+        }
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) {
             List<ResolvedCraft> locked = new ArrayList<>();
@@ -639,7 +671,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private void rescaleCachedPreview() {
         if (level == null || level.isClientSide() || linkLoopDetected || preview.isEmpty()) return;
 
-        IngredientPool pool = IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS);
+        IngredientPool pool;
+        boolean priorBusy = automationBusy;
+        enterChain();
+        try {
+            pool = IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS);
+        } finally {
+            exitChain(priorBusy);
+        }
         int availableFe = energyStorage.getEnergyStored();
         List<ResolvedCraft> next = new ArrayList<>(preview.size());
         boolean stale = false;
@@ -924,10 +963,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private boolean canCommitCached(int craftIndex) {
         if (craftIndex < 0 || craftIndex >= preview.size()) return false;
+        // Inside a chain the answer depends on the chain (a machine on it offers nothing): only a top answer is kept.
+        if (com.kadikular.quantimium.recipe.CraftChain.depth() > 1) return canCommit(preview.get(craftIndex));
+        // Kept while its own contents stand, and for a tick at most: what it draws on elsewhere moves on its own.
+        long now = level == null ? 0 : level.getGameTime();
+        long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
         if (commitCheckCache == null || commitCheckCache.length != preview.size()
-                || commitCheckRevision != contentRevision) {
+                || commitCheckRevision != contentRevision || commitCheckTick != now || commitCheckEpoch != epoch) {
             commitCheckCache = new byte[preview.size()];
             commitCheckRevision = contentRevision;
+            commitCheckTick = now;
+            commitCheckEpoch = epoch;
         }
         byte cached = commitCheckCache[craftIndex];
         if (cached != 0) return cached == 1;
@@ -937,11 +983,31 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     }
 
     private boolean withdrawalsAvailable(ResolvedCraft craft) {
-        for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
-            if (withdrawal.count() <= 0) continue;
-            if (!canWithdraw(withdrawal)) return false;
+        boolean priorBusy = automationBusy;
+        enterChain();
+        try {
+            for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
+                if (withdrawal.count() <= 0) continue;
+                if (!canWithdraw(withdrawal)) return false;
+            }
+            return true;
+        } finally {
+            exitChain(priorBusy);
         }
-        return true;
+    }
+
+    /**
+     * Puts this Crafter on the chain: from here until {@link #exitChain}, it offers nothing it would make. The
+     * chain's length counts machines, so only joining it (not a second step of the same work) lengthens it.
+     */
+    private void enterChain() {
+        if (!automationBusy) com.kadikular.quantimium.recipe.CraftChain.enter();
+        automationBusy = true;
+    }
+
+    private void exitChain(boolean priorBusy) {
+        if (!priorBusy) com.kadikular.quantimium.recipe.CraftChain.exit();
+        automationBusy = priorBusy;
     }
 
     /** Simulated pull, so a source that only lets us look never counts as a source. */
@@ -1070,13 +1136,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // A link can lead back here, so hide our own previews for the duration: a craft that ran
         // again halfway through itself would be working from inputs it had already spent.
         boolean priorBusy = automationBusy;
-        automationBusy = true;
+        enterChain();
         suppressInventoryNotify = true;
         try {
             return commitWithdrawnCraft(craft, handedOutIndex);
         } finally {
             suppressInventoryNotify = false;
-            automationBusy = priorBusy;
+            exitChain(priorBusy);
             // Slot writes during the craft skipped their own notification, so ask for the sync here.
             clientSyncDirty = true;
             // Energy and remote sources moved even when none of our own slots did.
@@ -1110,12 +1176,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (craft.feCost() > 0) {
             feSpentThisTick = Math.min(Long.MAX_VALUE - feSpentThisTick, feSpentThisTick + craft.feCost());
         }
-        if (level instanceof ServerLevel serverLevel) {
-            if (craft.feCost() > 0) {
-                QuantumFlux.emitFromEnergy(serverLevel, worldPosition, craft.feCost());
-            } else {
-                QuantumFlux.emitNonelectric(serverLevel, worldPosition);
-            }
+        // Inside a transaction (a pull that may yet be aborted), the flux waits for it to commit.
+        if (net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle() == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.OPEN) {
+            pendingFlux.add((long) craft.feCost());
+        } else if (level instanceof ServerLevel serverLevel) {
+            emitCraftFlux(serverLevel, craft.feCost());
         }
         preferredRecipeId = craft.recipeId();
         List<ItemStack> outputs = craft.outputs();
@@ -1147,7 +1212,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private ItemStack automationView(int absoluteOutputSlot) {
         ItemStack real = inventory.getStackInSlot(absoluteOutputSlot);
         if (!real.isEmpty()) return real;
-        if (level == null || level.isClientSide() || automationBusy) return ItemStack.EMPTY;
+        if (level == null || level.isClientSide() || automationBusy || com.kadikular.quantimium.recipe.CraftChain.full()) return ItemStack.EMPTY;
         if (statusCode == STATUS_NO_POWER || statusCode == STATUS_ENTANGLED_LOOP
                 || statusCode == STATUS_IDLE || statusCode == STATUS_NO_RECIPE
                 || statusCode == STATUS_DENIED) {
@@ -1156,14 +1221,20 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         int local = absoluteOutputSlot - OUTPUT_START;
         if (local < 0 || local >= OUTPUT_SLOTS) return ItemStack.EMPTY;
-        if (automationViewCache != null && automationViewRevision == contentRevision) {
+        // Asked from inside a chain, the answer depends on the chain (a machine on it offers nothing), so only
+        // an answer worked out at the top is kept for the next ask.
+        boolean top = com.kadikular.quantimium.recipe.CraftChain.depth() == 0;
+        long now = level.getGameTime();
+        long epoch = com.kadikular.quantimium.recipe.CraftChain.epoch();
+        if (top && automationViewCache != null && automationViewRevision == contentRevision && automationViewTick == now
+                && automationViewEpoch == epoch) {
             ItemStack cached = automationViewCache[local];
             if (cached != null) return cached;
         }
 
         // Deciding whether a preview is committable can walk a link that leads back here; the guard
         // makes the second visit report nothing rather than recursing.
-        automationBusy = true;
+        enterChain();
         ItemStack shown = ItemStack.EMPTY;
         try {
             GhostSlot ghost = ghostAt(absoluteOutputSlot);
@@ -1177,12 +1248,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 }
             }
         } finally {
-            automationBusy = false;
+            exitChain(false);
         }
+        if (!top) return shown;
 
-        if (automationViewCache == null || automationViewRevision != contentRevision) {
+        if (automationViewCache == null || automationViewRevision != contentRevision || automationViewTick != now
+                || automationViewEpoch != epoch) {
             automationViewCache = new ItemStack[OUTPUT_SLOTS];
             automationViewRevision = contentRevision;
+            automationViewTick = now;
+            automationViewEpoch = epoch;
         }
         automationViewCache[local] = shown;
         return shown;
@@ -1474,6 +1549,34 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
             if (!config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
             return extractForAutomation(slot, amount, simulate);
+        }
+
+        @Override
+        public Object saveState() {
+            return new CraftState(energyStorage.getEnergyStored(), coherenceReserve, coherenceRefillProgress, feSpentThisTick, pendingFlux.size(),
+                    preview, statusCode, preferredRecipeId);
+        }
+
+        @Override
+        public void restoreState(@Nullable Object state) {
+            if (!(state instanceof CraftState saved)) return;
+            energyStorage.setEnergy(saved.energy());
+            coherenceReserve = saved.coherence();
+            coherenceRefillProgress = saved.refill();
+            feSpentThisTick = saved.feSpent();
+            while (pendingFlux.size() > saved.flux()) pendingFlux.removeLast();
+            // What it could make, as it was: a craft undone leaves the preview it had before.
+            preview = saved.preview();
+            statusCode = saved.status();
+            preferredRecipeId = saved.preferred();
+            contentRevision++;
+            previewChanged();
+            setChanged();
+        }
+
+        @Override
+        public void committed() {
+            flushFlux();
         }
 
         /** An output slot with nothing real in it: pulling it crafts what its preview shows. */

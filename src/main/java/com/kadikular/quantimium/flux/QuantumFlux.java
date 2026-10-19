@@ -134,6 +134,18 @@ public final class QuantumFlux {
         return true;
     }
 
+    /** Gives back flux {@link #tryConsumeChunkFlux} spent, for work that was undone. */
+    public static void refundChunkFlux(ServerLevel level, BlockPos pos, double flux) {
+        if (flux <= 0.0) return;
+        ChunkPos chunkPos = ChunkPos.containing(pos);
+        LevelChunk chunk = loaded(level, chunkPos.x(), chunkPos.z());
+        if (chunk == null) return;
+        ChunkFlux data = chunk.getData(ModAttachments.CHUNK_FLUX);
+        data.addFlux(flux);
+        chunk.markUnsaved();
+        FluxEvents.markActive(level, chunkPos);
+    }
+
     // ---- pulls ----
 
     /**

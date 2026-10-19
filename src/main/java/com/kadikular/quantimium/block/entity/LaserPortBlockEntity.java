@@ -372,8 +372,15 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
     };
 
     /** Its nine slots, whole: what a Logistics Receptacle on it works with, whatever its faces are set to. */
+    private final IItemHandler networkView = com.kadikular.quantimium.util.LegacyItems.legacy(
+            com.kadikular.quantimium.util.LegacyItems.of(itemsView, items));
+
+    /**
+     * Its slots whole, for the logistics network: journaled, so a move inside a transaction (a Logistics
+     * Materialiser's) is undone if that transaction is.
+     */
     public IItemHandler slots() {
-        return itemsView;
+        return networkView;
     }
 
     /** On a logistics network, what it's caught is offered: a passive provider. */
@@ -400,7 +407,7 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
 
         @Override
         public IItemHandler inventory() {
-            return itemsView;
+            return networkView;
         }
 
         @Override

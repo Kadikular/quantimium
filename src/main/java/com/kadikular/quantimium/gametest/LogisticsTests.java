@@ -657,6 +657,112 @@ public final class LogisticsTests {
         });
     }
 
+    /**
+     * A Crafter at {@code x} under the controller's light, making with {@code catalyst}: drawing on the network (a
+     * Tesseract bound to the Logistics Materialiser at {@link #MATERIALISER}) if {@code draws}, offering what it can
+     * make to the network (a passive provider on top) if {@code provides}.
+     */
+    private static QuantumCrafterBlockEntity crafterOn(GameTestHelper helper, int x, Item catalyst, boolean draws, boolean provides) {
+        QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, new BlockPos(x, Y - 1, 8), catalyst);
+        TestSupport.fill(crafter.getEnergyStorage());
+        if (draws) crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get()));
+        if (provides) {
+            helper.setBlock(new BlockPos(x, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+            var provider = helper.getBlockEntity(new BlockPos(x, Y, 8), LogisticsReceptacleBlockEntity.class);
+            while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
+        }
+        return crafter;
+    }
+
+    private static final BlockPos MATERIALISER = new BlockPos(12, Y, 8);
+
+    /** The network through the Materialiser, as pipes and buses see it. */
+    private static net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> network(GameTestHelper helper) {
+        return helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(MATERIALISER), Direction.UP);
+    }
+
+    /** Takes {@code amount} of {@code item} from the network, committing or not; how many came. */
+    private static int take(GameTestHelper helper, Item item, int amount, boolean commit) {
+        var handler = network(helper);
+        var wanted = resource(item);
+        for (int i = 0; i < handler.size(); i++) {
+            if (!handler.getResource(i).equals(wanted)) continue;
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                int got = handler.extract(i, wanted, amount, transaction);
+                if (commit) transaction.commit();
+                return got;
+            }
+        }
+        return 0;
+    }
+
+    private static int countIn(QuantumCrafterBlockEntity crafter, Item item) {
+        int total = 0;
+        for (int i = 0; i < crafter.getInventory().getSlots(); i++) {
+            ItemStack stack = crafter.getInventory().getStackInSlot(i);
+            if (stack.is(item)) total += stack.getCount();
+        }
+        return total;
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_chain", timeoutTicks = 200)
+    public static void aChainThroughTheNetworkPaysEachStep(GameTestHelper helper) {
+        // Network -> Crafter A (a furnace, drawing on the network) -> Crafter B (a stonecutter, linked to A) -> back
+        // to the network. Stone bricks taken from the network cost one cobblestone; a take called off costs nothing.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 23));
+        QuantumCrafterBlockEntity furnace = crafterOn(helper, 6, Items.FURNACE, true, false);
+        QuantumCrafterBlockEntity cutter = crafterOn(helper, 9, Items.STONECUTTER, false, true);
+        cutter.getInventory().setStackInSlot(0, CrafterTests.link(helper, new BlockPos(6, Y - 1, 8), ModBlocks.QUANTUM_CRAFTER.get()));
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            int energy = furnace.getEnergyStorage().getEnergyStored();
+            helper.assertValueEqual(take(helper, Items.STONE_BRICKS, 1, false), 1, "the network offers stone bricks, two steps away");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 23, "a take called off moves nothing");
+            helper.assertValueEqual(furnace.getEnergyStorage().getEnergyStored(), energy, "and costs no power");
+            helper.assertValueEqual(countIn(furnace, Items.STONE) + countIn(cutter, Items.STONE), 0, "and leaves nothing made");
+            helper.assertValueEqual(take(helper, Items.STONE_BRICKS, 1, true), 1, "a stone brick taken");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 22, "for one cobblestone");
+            helper.assertTrue(furnace.getEnergyStorage().getEnergyStored() < energy, "the furnace step paid");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop", timeoutTicks = 200)
+    public static void twoCraftersFeedingEachOtherConserveEverything(GameTestHelper helper) {
+        // Both draw on the network and offer to it: one way nine ingots make a block, the other a block makes nine
+        // ingots. What's offered holds steady, and whatever's taken, the iron adds up.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_INGOT, 9));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        QuantumCrafterBlockEntity second = crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        java.util.List<String> seen = new java.util.ArrayList<>();
+        java.util.function.Supplier<String> offered = () -> {
+            var handler = network(helper);
+            java.util.List<String> list = new java.util.ArrayList<>();
+            for (int i = 0; i < handler.size(); i++) if (!handler.getResource(i).isEmpty()) list.add(handler.getResource(i) + " x" + handler.getAmountAsLong(i));
+            return list.toString();
+        };
+        java.util.function.IntSupplier iron = () -> count(helper, 4, Items.IRON_INGOT) + 9 * count(helper, 4, Items.IRON_BLOCK)
+                + countIn(first, Items.IRON_INGOT) + countIn(second, Items.IRON_INGOT)
+                + 9 * (countIn(first, Items.IRON_BLOCK) + countIn(second, Items.IRON_BLOCK));
+        helper.runAfterDelay(78, () -> seen.add(offered.get()));
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(offered.get(), seen.getFirst(), "what's offered holds steady");
+            int blocks = take(helper, Items.IRON_BLOCK, 1, true);
+            int ingots = take(helper, Items.IRON_INGOT, 9, true);
+            helper.assertValueEqual(iron.getAsInt() + 9 * blocks + ingots, 9, "the iron adds up: " + blocks + " block, " + ingots + " ingots taken");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: pod.logistics
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void aPodLogisticsModuleIsATerminal(GameTestHelper helper) {

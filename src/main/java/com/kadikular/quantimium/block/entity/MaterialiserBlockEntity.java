@@ -359,6 +359,8 @@ public class MaterialiserBlockEntity extends BlockEntity
         }
         int leak = AnomalyEffects.passiveDrainFePerTick(server, pos);
         if (leak > 0) be.energyStorage.consume(leak);
+        // Out of every transaction now: nothing left to give back.
+        if (net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle() == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.NONE) be.spentFlux.clear();
         if (now % AUTO_TRANSFER_INTERVAL == 0) be.runAutoTransfers(server);
         be.work(server);
         if (now % FLUX_INTERVAL == 0) {
@@ -461,8 +463,13 @@ public class MaterialiserBlockEntity extends BlockEntity
                 || energyStorage.getEnergyStored() < energy) {
             return false;
         }
-        if (!QuantumFlux.tryConsumeChunkFlux(level, worldPosition, (double) Materialising.fluxCost(ore.rarity()) * runs, 0.0)) {
+        double fluxSpent = (double) Materialising.fluxCost(ore.rarity()) * runs;
+        if (!QuantumFlux.tryConsumeChunkFlux(level, worldPosition, fluxSpent, 0.0)) {
             return false;
+        }
+        // Inside a transaction (a pull that may yet be aborted), remember it, to give back if it is.
+        if (net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle() == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.OPEN) {
+            spentFlux.add(fluxSpent);
         }
         // The flux is spent; if a linked chest changed under it since the check, the rest is still taken
         // as far as it goes rather than handing out something unpaid.
@@ -617,7 +624,38 @@ public class MaterialiserBlockEntity extends BlockEntity
         return config.itemMode() == SideMode.DISABLED ? null : sidedHandlers[side.get3DDataValue()];
     }
 
+    /** Flux pulls in an open transaction spent, to give back if it aborts. */
+    private final List<Double> spentFlux = new java.util.ArrayList<>();
+
+    /** What a pull changes besides the inventory, for an aborted transaction to put back. */
+    private record PullState(int energy, double traceCredit, long unemittedFe, int feThisSecond, int flux) {}
+
     private final class SidedHandler implements IItemHandler, OnDemandSlots {
+        @Override
+        public Object saveState() {
+            return new PullState(energyStorage.getEnergyStored(), traceCredit, unemittedFe, feThisSecond, spentFlux.size());
+        }
+
+        @Override
+        public void restoreState(@Nullable Object state) {
+            if (!(state instanceof PullState saved)) return;
+            energyStorage.setEnergy(saved.energy());
+            traceCredit = saved.traceCredit();
+            unemittedFe = saved.unemittedFe();
+            feThisSecond = saved.feThisSecond();
+            while (spentFlux.size() > saved.flux()) {
+                double flux = spentFlux.removeLast();
+                if (level instanceof ServerLevel server) QuantumFlux.refundChunkFlux(server, worldPosition, flux);
+            }
+            catalogDirty = true;
+            setChanged();
+        }
+
+        @Override
+        public void committed() {
+            spentFlux.clear();
+        }
+
         @Nullable
         private final Direction side;
 

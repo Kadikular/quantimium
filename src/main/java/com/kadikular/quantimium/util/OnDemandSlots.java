@@ -6,12 +6,26 @@ import net.neoforged.neoforge.items.IItemHandler;
 /**
  * A slot-based view whose pulls from some slots do work rather than just move items: a Quantum
  * Crafter's output shows what a pull would craft, and pulling it runs the craft (energy, flux,
- * ingredients). {@link LegacyItems} puts such pulls off until the transaction commits, since a
- * transaction that is only asking ("simulate") is aborted, and the work cannot be rolled back.
+ * ingredients). {@link LegacyItems} runs such a pull inside the caller's transaction, with the machine's
+ * state snapshotted, so a transaction that only asks ("simulate") is undone in full.
  */
 public interface OnDemandSlots {
     /** Whether pulling {@code slot} now would do work rather than hand over items already there. */
     boolean producesOnDemand(int slot);
+
+    /**
+     * What a pull's work changes besides the inventories (power, a reserve), so an aborted transaction can put it
+     * back: taken before a pull in a transaction, given back to {@link #restoreState} if it aborts.
+     */
+    @org.jspecify.annotations.Nullable
+    default Object saveState() {
+        return null;
+    }
+
+    default void restoreState(@org.jspecify.annotations.Nullable Object state) {}
+
+    /** The transaction its pulls were made in has committed: what waited on that (flux) happens now. */
+    default void committed() {}
 
     /**
      * The same slots with only what's really in them: what an on-demand slot would make reads as empty and can't be

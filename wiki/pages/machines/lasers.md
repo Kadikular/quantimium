@@ -335,8 +335,8 @@ shift-click it in your inventory. Each take or put costs the controller as a mov
 [[mechanic:laser.logistics.materialiser]] A [[block:logistics_materialiser]] where a controller's light ends
 offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus
 or a pipe on any face sees everything storage holds and providers offer (a Reactor on the network, with what it
-can make), takes from it, and puts things away into storage. Nothing moves until the other side commits, so
-looking is free; each move costs the controller as a receptacle's does. A receptacle on a Logistics
+can make), takes from it, and puts things away into storage. Moves happen as part of the other side's transaction,
+so one called off puts everything back and looking is free; each move costs the controller as a receptacle's does. A receptacle on a Logistics
 Materialiser is ignored: it would read the network into itself.
 
 [[mechanic:laser.logistics.reactor]] A [[block:reactor_logistics_port]] on the Reactor's plinth rim, where a

@@ -1,8 +1,5 @@
 package com.kadikular.quantimium.util;
 
-import com.kadikular.quantimium.Quantimium;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.core.NonNullList;
@@ -11,6 +8,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
@@ -20,10 +18,11 @@ import org.jspecify.annotations.Nullable;
  * {@link ResourceHandler}s for the item capability.
  *
  * <p>The wrapped view is asked to do the real thing, and every inventory it can touch is snapshotted
- * first, so an aborted transaction puts the inventories back as they were. Pulls from
- * {@link OnDemandSlots} are the exception: they answer from a simulation and happen when the root
- * transaction commits, so a transaction that only asks (as {@code IItemHandler.of} simulates) costs
- * nothing.
+ * first, so an aborted transaction puts the inventories back as they were. A pull from an
+ * {@link OnDemandSlots} slot makes what it hands over there and then, inside the transaction: what the
+ * craft pulls from elsewhere goes through {@link #legacy} and so joins the same transaction, and the
+ * machine's own state (power, and anything else it keeps) is snapshotted with its inventory. An aborted
+ * transaction undoes all of it, and one that commits moved exactly what it said.
  */
 @SuppressWarnings("deprecation")
 public final class LegacyItems {
@@ -37,17 +36,70 @@ public final class LegacyItems {
         return CACHE.computeIfAbsent(view, v -> new Adapter(v, backing));
     }
 
-    /** The reverse, for code that still wants the slot-based contract from a neighbour's handler. */
+    /**
+     * The reverse, for code that still wants the slot-based contract from a neighbour's handler. Each call is a
+     * transaction of its own, nested in the one open if there is one: a craft made inside a pull draws on its
+     * sources as part of that pull, and an aborted pull puts them back too.
+     */
     @Nullable
     public static IItemHandler legacy(@Nullable ResourceHandler<ItemResource> handler) {
-        return handler == null ? null : IItemHandler.of(handler);
+        return handler == null ? null : new Nesting(handler);
+    }
+
+    /** A transaction for one slot-based call: inside the open one, or a root of its own. */
+    private static Transaction open() {
+        return Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
+                ? Transaction.open(Transaction.getCurrentOpenedTransaction()) : Transaction.openRoot();
+    }
+
+    private record Nesting(ResourceHandler<ItemResource> handler) implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return handler.size();
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            ItemResource resource = handler.getResource(slot);
+            return resource.isEmpty() ? ItemStack.EMPTY : resource.toStack(handler.getAmountAsInt(slot));
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (stack.isEmpty()) return ItemStack.EMPTY;
+            try (Transaction transaction = open()) {
+                int in = handler.insert(slot, ItemResource.of(stack), stack.getCount(), transaction);
+                if (!simulate) transaction.commit();
+                return in >= stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - in);
+            }
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            ItemResource resource = handler.getResource(slot);
+            if (amount <= 0 || resource.isEmpty()) return ItemStack.EMPTY;
+            try (Transaction transaction = open()) {
+                int got = handler.extract(slot, resource, Math.min(amount, resource.getMaxStackSize()), transaction);
+                if (!simulate) transaction.commit();
+                return got <= 0 ? ItemStack.EMPTY : resource.toStack(got);
+            }
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return (int) Math.min(Integer.MAX_VALUE, handler.getCapacityAsLong(slot, ItemResource.EMPTY));
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return handler.isValid(slot, ItemResource.of(stack));
+        }
     }
 
     private static final class Adapter implements ResourceHandler<ItemResource> {
         private final IItemHandler view;
         private final ItemStackHandler[] backing;
         private final Journal journal = new Journal();
-        private final Deferred deferred = new Deferred();
 
         private Adapter(IItemHandler view, ItemStackHandler[] backing) {
             this.view = view;
@@ -95,67 +147,43 @@ public final class LegacyItems {
         public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
             if (!resource.matches(view.getStackInSlot(index))) return 0;
             if (view instanceof OnDemandSlots onDemand && onDemand.producesOnDemand(index)) {
-                // Promise what a pull would give, less what this transaction already promised from
-                // the slot, and do the pull once the root commits.
-                int promised = deferred.pending(index);
-                int available = view.extractItem(index, amount + promised, true).getCount() - promised;
-                int taken = Math.min(amount, available);
-                if (taken <= 0) return 0;
-                deferred.updateSnapshots(transaction);
-                deferred.pulls.add(new int[] {index, taken});
-                return taken;
+                // Made now, inside the transaction: the machine is snapshotted first, and what the craft draws on
+                // elsewhere joins this transaction, so an abort undoes the lot.
+                journal.updateSnapshots(transaction);
+                return view.extractItem(index, amount, false).getCount();
             }
             if (view.extractItem(index, amount, true).isEmpty()) return 0;
             journal.updateSnapshots(transaction);
             return view.extractItem(index, amount, false).getCount();
         }
 
-        /** Pulls from on-demand slots, waiting for the root transaction to commit. */
-        private final class Deferred extends SnapshotJournal<List<int[]>> {
-            private final List<int[]> pulls = new ArrayList<>();
+        /** The inventories, and for a machine that makes on demand, its own state (power, and the like). */
+        private record Snapshot(NonNullList<ItemStack>[] stacks, @Nullable Object state) {}
 
-            int pending(int index) {
-                int total = 0;
-                for (int[] pull : pulls) if (pull[0] == index) total += pull[1];
-                return total;
-            }
-
-            @Override
-            protected List<int[]> createSnapshot() {
-                return new ArrayList<>(pulls);
-            }
-
-            @Override
-            protected void revertToSnapshot(List<int[]> snapshot) {
-                pulls.clear();
-                pulls.addAll(snapshot);
-            }
-
-            @Override
-            protected void onRootCommit(List<int[]> originalState) {
-                List<int[]> due = List.copyOf(pulls);
-                pulls.clear();
-                for (int[] pull : due) {
-                    int got = view.extractItem(pull[0], pull[1], false).getCount();
-                    if (got < pull[1]) {
-                        Quantimium.LOGGER.warn("An on-demand pull from slot {} promised {} but gave {}", pull[0], pull[1], got);
-                    }
-                }
-            }
-        }
-
-        private final class Journal extends SnapshotJournal<NonNullList<ItemStack>[]> {
+        private final class Journal extends SnapshotJournal<Snapshot> {
             @Override
             @SuppressWarnings("unchecked")
-            protected NonNullList<ItemStack>[] createSnapshot() {
+            protected Snapshot createSnapshot() {
                 NonNullList<ItemStack>[] copies = new NonNullList[backing.length];
                 for (int i = 0; i < backing.length; i++) copies[i] = backing[i].snapshotStacks();
-                return copies;
+                return new Snapshot(copies, view instanceof OnDemandSlots onDemand ? onDemand.saveState() : null);
             }
 
             @Override
-            protected void revertToSnapshot(NonNullList<ItemStack>[] snapshot) {
-                for (int i = 0; i < backing.length; i++) backing[i].restoreStacks(snapshot[i]);
+            protected void revertToSnapshot(Snapshot snapshot) {
+                for (int i = 0; i < backing.length; i++) backing[i].restoreStacks(snapshot.stacks()[i]);
+                if (view instanceof OnDemandSlots onDemand) {
+                    onDemand.restoreState(snapshot.state());
+                    com.kadikular.quantimium.recipe.CraftChain.settled();
+                }
+            }
+
+            @Override
+            protected void onRootCommit(Snapshot original) {
+                if (view instanceof OnDemandSlots onDemand) {
+                    onDemand.committed();
+                    com.kadikular.quantimium.recipe.CraftChain.settled();
+                }
             }
         }
     }

@@ -11,6 +11,8 @@ import com.kadikular.quantimium.laser.LogisticsMember;
 import com.kadikular.quantimium.reactor.ReactorNetwork;
 import com.kadikular.quantimium.recipe.FilterEntry;
 import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -261,6 +263,103 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         return got <= 0 ? ItemStack.EMPTY : item.toStack((int) got);
     }
 
+    /**
+     * Moves inside a transaction, as the Reactor's Materialiser Port makes them: what's held is reserved, what's
+     * made is planned from what it holds and its ingredients reserved, and on commit they're withdrawn and spent;
+     * an abort releases them. Nothing is drawn from its other networks meanwhile: what it took couldn't be put back.
+     */
+    private final Promises promises = new Promises();
+
+    private final class Promises extends SnapshotJournal<Integer> {
+        private record Op(ItemResource item, long held, @Nullable com.kadikular.quantimium.reactor.ReactorPlanner.Plan plan, long fe, long in) {}
+
+        private final List<Op> ops = new ArrayList<>();
+
+        long pendingIn() {
+            long total = 0;
+            for (Op op : ops) total += op.in();
+            return total;
+        }
+
+        void in(ItemResource item, int amount) {
+            updateSnapshots(Transaction.getCurrentOpenedTransaction());
+            ops.add(new Op(item, 0, null, 0, amount));
+        }
+
+        ItemStack out(Offer offer, int amount) {
+            HorizonCoreBlockEntity horizon = visibleCore();
+            if (horizon == null || amount <= 0) return ItemStack.EMPTY;
+            ItemResource item = offer.item();
+            Map<ItemResource, Long> stock = horizon.available();
+            long held = Math.min(amount, stock.getOrDefault(item, 0L));
+            com.kadikular.quantimium.reactor.ReactorPlanner.Plan plan = null;
+            long fe = 0;
+            long want = amount - held;
+            if (want > 0 && offer.craftable() > 0 && horizon.isActive()) {
+                if (held > 0) stock.computeIfPresent(item, (k, have) -> have > held ? have - held : null);
+                long spare = horizon.getEnergyStorage().getEnergyStored();
+                for (Op op : ops) spare -= op.fe();
+                // The whole of the rest if it can be made and paid for, else a half, a quarter: a few plans at most.
+                for (long tryAmount = Math.min(want, offer.craftable()); tryAmount > 0 && plan == null; tryAmount /= 2) {
+                    var result = horizon.plan(stock, item, tryAmount);
+                    if (result.planned() && HorizonCoreBlockEntity.feFor(result.plan()) <= spare) {
+                        plan = result.plan();
+                        fe = HorizonCoreBlockEntity.feFor(plan);
+                        want = tryAmount;
+                    }
+                }
+            }
+            long made = plan == null ? 0 : want;
+            if (held + made <= 0) return ItemStack.EMPTY;
+            updateSnapshots(Transaction.getCurrentOpenedTransaction());
+            ops.add(new Op(item, held, plan, fe, 0));
+            if (held > 0) horizon.reserve(Map.of(item, held));
+            if (plan != null) horizon.reserve(plan.consumed());
+            offersTick = Long.MIN_VALUE;
+            return item.toStack((int) (held + made));
+        }
+
+        @Override
+        protected Integer createSnapshot() {
+            return ops.size();
+        }
+
+        @Override
+        protected void revertToSnapshot(Integer snapshot) {
+            HorizonCoreBlockEntity horizon = core();
+            while (ops.size() > snapshot) {
+                Op op = ops.removeLast();
+                if (horizon == null) continue;
+                if (op.held() > 0) horizon.release(Map.of(op.item(), op.held()));
+                if (op.plan() != null) horizon.release(op.plan().consumed());
+            }
+            offersTick = Long.MIN_VALUE;
+        }
+
+        @Override
+        protected void onRootCommit(Integer originalState) {
+            HorizonCoreBlockEntity horizon = core();
+            if (horizon != null && level instanceof ServerLevel server) {
+                for (Op op : ops) {
+                    if (op.in() > 0) {
+                        horizon.take(op.item(), (int) op.in());
+                        continue;
+                    }
+                    if (op.held() > 0) {
+                        horizon.release(Map.of(op.item(), op.held()));
+                        horizon.withdraw(op.item(), op.held());
+                    }
+                    if (op.plan() != null) {
+                        horizon.release(op.plan().consumed());
+                        horizon.spend(server, op.plan(), op.fe());
+                    }
+                }
+            }
+            ops.clear();
+            offersTick = Long.MIN_VALUE;
+        }
+    }
+
     private final IItemHandler offered = new IItemHandler() {
         @Override
         public int getSlots() {
@@ -280,11 +379,15 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
             HorizonCoreBlockEntity horizon = visibleCore();
             if (!storing || stack.isEmpty() || horizon == null || !horizon.accepts()) return stack;
-            int fits = (int) Math.min(stack.getCount(), horizon.room());
+            int fits = (int) Math.min(stack.getCount(), horizon.room() - promises.pendingIn());
             if (fits <= 0) return stack;
             if (!simulate) {
-                horizon.take(ItemResource.of(stack), fits);
-                offersTick = Long.MIN_VALUE;
+                if (Transaction.getLifecycle() == Transaction.Lifecycle.OPEN) {
+                    promises.in(ItemResource.of(stack), fits);
+                } else {
+                    horizon.take(ItemResource.of(stack), fits);
+                    offersTick = Long.MIN_VALUE;
+                }
             }
             return stack.copyWithCount(stack.getCount() - fits);
         }
@@ -292,7 +395,10 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
             List<Offer> list = offers();
-            return slot < 0 || slot >= list.size() ? ItemStack.EMPTY : give(list.get(slot), amount, simulate);
+            if (slot < 0 || slot >= list.size()) return ItemStack.EMPTY;
+            // Inside a transaction (a Logistics Materialiser's move, which may yet be undone), only promised.
+            if (!simulate && Transaction.getLifecycle() == Transaction.Lifecycle.OPEN) return promises.out(list.get(slot), amount);
+            return give(list.get(slot), amount, simulate);
         }
 
         @Override
