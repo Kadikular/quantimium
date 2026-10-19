@@ -5,6 +5,8 @@ import com.kadikular.quantimium.block.LogisticsReceptacleBlock;
 import com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity;
 import com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
+import com.kadikular.quantimium.init.ModItems;
+import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
 import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.laser.LogisticsMember;
 import net.minecraft.core.BlockPos;
@@ -580,6 +582,58 @@ public final class LogisticsTests {
                 transaction.commit();
             }
             helper.assertValueEqual(count(helper, 4, Items.DIRT), 7, "put away in storage");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafter_loop", timeoutTicks = 200)
+    public static void aCrafterFedByItsOwnNetworkMakesNothingFromNothing(GameTestHelper helper) {
+        // A Crafter takes its ingredients from the network (a Tesseract bound to a Logistics Materialiser) and
+        // offers what it can make back to it (a passive provider on it). Smooth stone taken out of the network
+        // costs a cobblestone: cobblestone to stone to smooth stone, both crafts paid for.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 23));
+        QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, new BlockPos(6, Y - 1, 8), Items.FURNACE);
+        TestSupport.fill(crafter.getEnergyStorage());
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        var provider = helper.getBlockEntity(new BlockPos(6, Y, 8), LogisticsReceptacleBlockEntity.class);
+        while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
+        BlockPos at = new BlockPos(9, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_MATERIALISER.get());
+        ItemStack tesseract = new ItemStack(ModItems.TESSERACT.get());
+        BlockPos bound = helper.absolutePos(at);
+        tesseract.set(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get(), net.minecraft.core.GlobalPos.of(helper.getLevel().dimension(), bound));
+        tesseract.set(com.kadikular.quantimium.init.ModDataComponents.BOUND_SIDE.get(), Direction.UP);
+        tesseract.set(com.kadikular.quantimium.init.ModDataComponents.BOUND_BLOCK.get(),
+                net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(ModBlocks.LOGISTICS_MATERIALISER.get()));
+        crafter.getInventory().setStackInSlot(0, tesseract);
+        helper.runAfterDelay(80, () -> {
+            var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, bound, null);
+            // Stone it can make from the network's cobblestone; smooth stone only if it can really make that too.
+            for (Item item : java.util.List.of(Items.SMOOTH_STONE, Items.STONE)) {
+                var wanted = resource(item);
+                int slot = -1;
+                for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(wanted)) slot = i;
+                if (slot < 0) {
+                    helper.assertTrue(item != Items.STONE, "the network offers stone the Crafter can make");
+                    continue;
+                }
+                int before = count(helper, 4, Items.COBBLESTONE);
+                int took;
+                try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                    took = handler.extract(slot, wanted, 1, transaction);
+                    transaction.commit();
+                }
+                int kept = 0;
+                for (int i = 0; i < crafter.getInventory().getSlots(); i++) {
+                    ItemStack stack = crafter.getInventory().getStackInSlot(i);
+                    if (stack.is(Items.STONE) || stack.is(Items.SMOOTH_STONE)) kept += stack.getCount();
+                }
+                if (took > 0) helper.assertTrue(count(helper, 4, Items.COBBLESTONE) < before, item + " cost a cobblestone (" + kept + " kept in the Crafter)");
+            }
+            TestSupport.clearField(helper);
             helper.succeed();
         });
     }

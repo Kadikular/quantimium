@@ -65,6 +65,23 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
                 .toList();
     }
 
+    /** How many of {@code resource} storage and providers offer right now. */
+    private long available(ItemResource resource) {
+        long total = 0;
+        for (LogisticsMember member : members()) {
+            if (member.role() == LogisticsMember.Role.REQUESTER) continue;
+            IItemHandler inventory = member.inventory();
+            if (inventory == null) continue;
+            for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                ItemStack stack = inventory.getStackInSlot(slot);
+                if (stack.isEmpty() || !ItemResource.of(stack).equals(resource)) continue;
+                if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
     private List<Entry> entries() {
         if (level == null) return List.of();
         long tick = level.getGameTime();
@@ -148,8 +165,10 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
             LogisticsController controller = controller();
             if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
-            long there = 0;
-            for (Entry entry : entries()) if (entry.item().equals(resource)) there = entry.amount();
+            // Counted now, not from the list shown this tick: what a machine offers can change under a craft (a
+            // Crafter hides what it would make while it's making something), and a promise the network can't keep
+            // at commit would hand out items that never left it.
+            long there = available(resource);
             int got = (int) Math.min(amount, there - promised(resource, true));
             if (got <= 0) return 0;
             updateSnapshots(transaction);
