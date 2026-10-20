@@ -44,7 +44,7 @@ public final class Stress {
     private Stress() {}
 
     public static List<Class<?>> classes() {
-        return List.of(LogisticsStress.class);
+        return List.of(LogisticsStress.class, ReactorStress.class);
     }
 
     public static boolean enabled() {
@@ -80,6 +80,11 @@ public final class Stress {
             BlockEntity entity = helper.getLevel().getBlockEntity(pos);
             if (entity instanceof QuantumCrafterBlockEntity crafter) {
                 for (int i = 0; i < crafter.getInventory().getSlots(); i++) add(counts, crafter.getInventory().getStackInSlot(i));
+            } else if (entity instanceof com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity core) {
+                // What the Reactor holds is only numbers in its ledger.
+                for (var entry : core.getLedger().entries()) counts.merge(entry.item().getItem(), entry.count(), Long::sum);
+            } else if (entity instanceof com.kadikular.quantimium.block.entity.ReactorPortBlockEntity port && port.getOutput() != null) {
+                for (int i = 0; i < port.getOutput().getSlots(); i++) add(counts, port.getOutput().getStackInSlot(i));
             } else if (entity instanceof Container container) {
                 for (int i = 0; i < container.getContainerSize(); i++) add(counts, container.getItem(i));
             }

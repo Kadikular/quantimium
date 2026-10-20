@@ -264,7 +264,7 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     public void stockMoved() {
         offersStale = true;
-        spots = null;
+        // Where things are stands for the tick: each take checks the slot still holds it, and looks again if short.
         liveOffers = null;
         watched = true;
         // A player moved it: what can be made from what's left comes first.
@@ -280,7 +280,6 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
 
     @Override
     public void movedQuietly() {
-        spots = null;
         liveOffers = null;
     }
 

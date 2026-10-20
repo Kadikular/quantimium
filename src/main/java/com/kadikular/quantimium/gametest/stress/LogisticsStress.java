@@ -98,7 +98,7 @@ public final class LogisticsStress {
         QuantumCrafterBlockEntity crafter(boolean basic, ItemStack... grid) {
             BlockPos at = new BlockPos(x, Y - 1, Z);
             QuantumCrafterBlockEntity crafter = basic ? CrafterTests.basic(helper, at, Items.CRAFTING_TABLE) : CrafterTests.crafter(helper, at, Items.CRAFTING_TABLE);
-            crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, MATERIALISER_PLACEHOLDER, ModBlocks.LOGISTICS_MATERIALISER.get()));
+            crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, materialiser, ModBlocks.LOGISTICS_MATERIALISER.get()));
             for (int i = 0; i < grid.length; i++) crafter.getInventory().setStackInSlot(1 + i, grid[i]);
             makers.add(receptacle(LogisticsMember.Role.PROVIDER, false));
             crafters.add(crafter);
@@ -120,8 +120,6 @@ public final class LogisticsStress {
         }
     }
 
-    /** Where the Materialiser goes; Crafters' Tesseracts are bound before it's placed, so it's fixed. */
-    private static final BlockPos MATERIALISER_PLACEHOLDER = new BlockPos(60, Y, Z);
 
     /** Items that crafting among {@link Stress#WORTH} never touches: stock that only moves. */
     private static List<Item> filler() {
@@ -141,13 +139,17 @@ public final class LogisticsStress {
         return new ItemStack(item, 1 + random.nextInt(64));
     }
 
-    @GameTest(template = TestSupport.FLOOR_17, batch = "stress_logistics_busy", timeoutTicks = 20_000, padding = 48)
+    @GameTest(template = TestSupport.FLOOR_17, batch = "stress_logistics_busy", timeoutTicks = 40_000, padding = 112)
     public static void busyNetwork(GameTestHelper helper) {
         String test = "busyNetwork";
         Random random = Stress.random(test);
         TestSupport.clearField(helper);
         Net net = new Net(helper, random);
         List<Item> filler = filler();
+        int stores = Stress.scaled(20), providers = Stress.scaled(3), requesters = Stress.scaled(3), churns = Stress.scaled(3), makers = Stress.scaled(6);
+        // The Materialiser ends the row; Crafters' Tesseracts are bound to it before it's placed.
+        net.materialiser = new BlockPos(net.x + stores + providers + requesters + churns + makers + 2, Y, Z);
+        BlockPos MATERIALISER_PLACEHOLDER = net.materialiser;
 
         // The controller, shining east along the row, and north to the terminal.
         BlockPos controllerAt = new BlockPos(2, Y, Z);
@@ -160,7 +162,7 @@ public final class LogisticsStress {
 
         // Storage: a thousand-odd kinds of filler, and things worth crafting with, scattered.
         int kinds = 0;
-        for (int i = 0; i < Stress.scaled(20); i++) {
+        for (int i = 0; i < stores; i++) {
             List<ItemStack> stock = new ArrayList<>();
             for (int s = 0; s < 24; s++) {
                 stock.add(new ItemStack(filler.get(random.nextInt(filler.size())), 1 + random.nextInt(64)));
@@ -170,12 +172,12 @@ public final class LogisticsStress {
             net.chest(LogisticsMember.Role.STORAGE, false, stock);
         }
         // Providers pushing, requesters pulling (some asking for what's made), all the time.
-        for (int i = 0; i < Stress.scaled(3); i++) {
+        for (int i = 0; i < providers; i++) {
             List<ItemStack> stock = new ArrayList<>();
             for (int s = 0; s < 10; s++) stock.add(worth(random));
             net.chest(LogisticsMember.Role.PROVIDER, true, stock);
         }
-        for (int i = 0; i < Stress.scaled(3); i++) {
+        for (int i = 0; i < requesters; i++) {
             LogisticsReceptacleBlockEntity requester = net.chest(LogisticsMember.Role.REQUESTER, true, List.of());
             requester.setFilterSlot(0, new ItemStack(WANTED[random.nextInt(WANTED.length)], 1 + random.nextInt(64)));
             requester.setFilterSlot(1, new ItemStack(WANTED[random.nextInt(WANTED.length)], 1 + random.nextInt(64)));
@@ -183,14 +185,14 @@ public final class LogisticsStress {
             if (random.nextBoolean()) requester.toggleRequestsMade();
         }
         // Hoppers churning stock in and out.
-        for (int i = 0; i < Stress.scaled(3); i++) {
+        for (int i = 0; i < churns; i++) {
             List<ItemStack> stock = new ArrayList<>(), feed = new ArrayList<>();
             for (int s = 0; s < 8; s++) stock.add(new ItemStack(filler.get(random.nextInt(filler.size())), 64));
             for (int s = 0; s < 27; s++) feed.add(s % 3 == 0 ? worth(random) : new ItemStack(filler.get(random.nextInt(filler.size())), 64));
             net.churning(stock, feed);
         }
         // Crafters: crafting tables drawing on the network and making for it; a few basic, a few with a grid of their own.
-        for (int i = 0; i < Stress.scaled(6); i++) {
+        for (int i = 0; i < makers; i++) {
             boolean basic = i % 3 == 2;
             if (random.nextBoolean()) net.crafter(basic, worth(random), worth(random));
             else net.crafter(basic);
@@ -204,7 +206,6 @@ public final class LogisticsStress {
             net.chest(LogisticsMember.Role.STORAGE, false, List.of());
         }
         helper.setBlock(MATERIALISER_PLACEHOLDER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        net.materialiser = MATERIALISER_PLACEHOLDER;
         Stress.report(test, "built: " + net.receptacles.size() + " receptacles, " + kinds + " filler stacks, " + net.crafters.size() + " crafters, "
                 + net.churn.size() + " hopper loops");
 

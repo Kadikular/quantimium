@@ -290,7 +290,7 @@ public final class ReactorPlanner {
     private long takeMatching(Map<ItemResource, Long> pool, Ingredient ingredient, long n, boolean fromStock,
                               Map<ItemResource, Long> taken) {
         long total = 0;
-        for (ItemResource item : List.copyOf(pool.keySet())) {
+        for (ItemResource item : matching(pool, ingredient)) {
             if (total >= n) break;
             if (!ingredient.test(item.toStack(1))) continue;
             long took = takeFrom(pool, item, n - total, fromStock);
@@ -299,6 +299,33 @@ public final class ReactorPlanner {
         }
         return total;
     }
+
+    /**
+     * What in {@code pool} {@code ingredient} might take, in the pool's order: for the ledger, looked up by the items the
+     * ingredient names (a Reactor holding thousands of kinds is asked this at every step of a plan); otherwise all.
+     */
+    private List<ItemResource> matching(Map<ItemResource, Long> pool, Ingredient ingredient) {
+        if (pool != stock || ingredient.isCustom()) return List.copyOf(pool.keySet());
+        if (stockIndex == null) {
+            stockIndex = new java.util.HashMap<>();
+            stockOrder = new java.util.HashMap<>();
+            for (ItemResource item : stock.keySet()) {
+                stockOrder.put(item, stockOrder.size());
+                stockIndex.computeIfAbsent(item.getItem(), k -> new ArrayList<>(1)).add(item);
+            }
+        }
+        List<ItemResource> found = new ArrayList<>();
+        ingredient.items().forEach(holder -> {
+            List<ItemResource> held = stockIndex.get(holder.value());
+            if (held != null) found.addAll(held);
+        });
+        found.sort(java.util.Comparator.comparingInt(stockOrder::get));
+        return found;
+    }
+
+    /** The ledger's kinds by item, and where each stood in it: worked out when first needed. */
+    private Map<net.minecraft.world.item.Item, List<ItemResource>> stockIndex;
+    private Map<ItemResource, Integer> stockOrder;
 
     private boolean shortOf(ItemResource item, long n) {
         missing = item;
