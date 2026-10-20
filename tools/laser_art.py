@@ -416,15 +416,15 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
 
     def focus(plate_element):
         """
-        A splitter's focus: the 2x2 of the plate's middle, where its window is, a hair proud of both faces (so they
-        don't flicker against the plate's); the relays' see-through focus, turned with the plate.
+        A splitter's focus: the 2x2 of the plate's middle, filling its window flush (the plate has no texture there);
+        the relays' see-through focus, turned with the plate.
         """
         start, end = plate_element["from"], plate_element["to"]
         lo, hi = [], []
         for a, b in zip(start, end):
             middle = (a + b) / 2
-            # The plate's two long sides shrink to its middle 2; its thickness grows a little, so the focus shows.
-            half = 1 if b - a > 2 else (b - a) / 2 + 0.01
+            # The plate's two long sides shrink to its middle 2; its thickness stays.
+            half = 1 if b - a > 2 else (b - a) / 2
             lo.append(round(middle - half, 4))
             hi.append(round(middle + half, 4))
         element = {"from": lo, "to": hi, "faces": {f: {"texture": "#focus", "uv": [7, 7, 9, 9]}
@@ -1199,7 +1199,7 @@ def cavity_mirror() -> None:
     plate["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
     plate["faces"]["south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
     # The Splitter's see-through focus in the plate's window, as on a Laser Splitter.
-    window = cube([7, 7, -0.01], [9, 9, 1.01], "#focus", [7, 7, 9, 9])
+    window = cube([7, 7, 0], [9, 9, 1], "#focus", [7, 7, 9, 9])
     core = [plate, window, cube([7, 7, 1], [9, 9, 6], "#steel"), cube([6, 6, 6], [10, 10, 10], "#focus", [6, 6, 10, 10])]
     # Its stand, as a Relay's (base, boss and post up to the focus), drawn for a floor and turned to each mount.
     stand = [{"from": [2, 0, 2], "to": [14, 1, 14], "faces": {f: {"texture": "#steel", **({"cullface": "down"} if f == "down" else {})}
