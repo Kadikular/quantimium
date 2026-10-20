@@ -189,7 +189,7 @@ public final class OfferTable {
     private Map<ItemResource, Long> shown(boolean craftables) {
         Map<ItemResource, Long> kept = craftables ? shownWithMade : shownStored;
         if (kept == null) {
-            kept = java.util.Collections.unmodifiableMap(stock(null, true, craftables, Set.of()));
+            kept = new Shown(stock(null, true, craftables, Set.of()));
             if (craftables) shownWithMade = kept;
             else shownStored = kept;
         }
@@ -198,6 +198,33 @@ public final class OfferTable {
 
     @org.jetbrains.annotations.Nullable
     private Map<ItemResource, Long> shownWithMade, shownStored;
+
+    /** A stock every machine is shown alike, which keeps one handler for all of them to read it through. */
+    public static final class Shown extends java.util.AbstractMap<ItemResource, Long> {
+        private final Map<ItemResource, Long> stock;
+        @org.jetbrains.annotations.Nullable
+        private StockHandler handler;
+
+        Shown(Map<ItemResource, Long> stock) {
+            this.stock = stock;
+        }
+
+        /** The one handler for it. */
+        public StockHandler handler() {
+            if (handler == null) handler = new StockHandler(stock);
+            return handler;
+        }
+
+        @Override
+        public Long get(Object key) {
+            return stock.get(key);
+        }
+
+        @Override
+        public Set<Map.Entry<ItemResource, Long>> entrySet() {
+            return java.util.Collections.unmodifiableMap(stock).entrySet();
+        }
+    }
 
     /** What the machine at {@code maker} could make, by the table. */
     /** Where the machines are that could make some of {@code item}. */

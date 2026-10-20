@@ -698,6 +698,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** {@code stock} as a handler: the same one while it's the same stock (a network shows every machine one, a tier). */
     private com.kadikular.quantimium.laser.StockHandler handlerFor(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock) {
+        // A stock every machine is shown alike keeps one handler for them all.
+        if (stock instanceof com.kadikular.quantimium.laser.OfferTable.Shown shown) return shown.handler();
         if (stock != handledStock || stockHandler == null) {
             handledStock = stock;
             stockHandler = new com.kadikular.quantimium.laser.StockHandler(stock);
@@ -839,8 +841,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** Every item its views show, and how many. */
     private static java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shownItems(
             java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views) {
+        // Mostly one view, a handler that keeps its counts by item (shown alike to every machine asked).
+        if (views.size() == 1 && views.values().iterator().next() instanceof com.kadikular.quantimium.laser.StockHandler only) return only.amounts();
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown = new java.util.HashMap<>();
         for (var view : views.values()) {
+            if (view instanceof com.kadikular.quantimium.laser.StockHandler stock) {
+                stock.amounts().forEach((item, n) -> shown.merge(item, n, Long::sum));
+                continue;
+            }
             for (int i = 0; i < view.size(); i++) shown.merge(view.getResource(i), view.getAmountAsLong(i), Long::sum);
         }
         return shown;
