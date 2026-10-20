@@ -54,6 +54,9 @@ public final class OfferTable {
     /** What could be made, by item, then by the place of the machine that would make it, craft by craft. */
     private final Map<ItemResource, Map<BlockPos, List<Source>>> craftable;
     private final Map<ItemResource, Integer> tiers;
+    /** Every source of what could be made, by item, gathered when first needed: a table is asked this often while built. */
+    @org.jetbrains.annotations.Nullable
+    private Map<Item, List<Source>> sourcesByItem;
     /** The networks (by controller) it drew on: its own, and any it imports through another's Materialiser. */
     private final Set<BlockPos> origins;
 
@@ -95,6 +98,19 @@ public final class OfferTable {
 
     /** Everything the craftable {@code item} that {@code maker} would be shown is made from, all the way down. */
     private Set<Item> madeFrom(Item item, BlockPos maker, Set<Item> avoid) {
+        if (maker == null) {
+            // Every machine's: from the sources of that item alone, gathered once for this table.
+            if (sourcesByItem == null) {
+                sourcesByItem = new HashMap<>();
+                craftable.forEach((resource, makers) -> makers.values()
+                        .forEach(list -> sourcesByItem.computeIfAbsent(resource.getItem(), k -> new ArrayList<>()).addAll(list)));
+            }
+            Set<Item> from = new HashSet<>();
+            for (Source source : sourcesByItem.getOrDefault(item, List.of())) {
+                if (source.count() > 0 && Collections.disjoint(source.from(), avoid)) from.addAll(source.from());
+            }
+            return from;
+        }
         Set<Item> from = new HashSet<>();
         for (Map.Entry<ItemResource, Map<BlockPos, List<Source>>> entry : craftable.entrySet()) {
             if (entry.getKey().getItem() != item) continue;
