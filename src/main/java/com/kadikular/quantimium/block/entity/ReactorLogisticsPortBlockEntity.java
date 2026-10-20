@@ -490,6 +490,26 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         return listingCache;
     }
 
+    /** By item, as a network takes from it: what a slot showing it would give. */
+    @Override
+    public ItemStack takeListed(ItemResource item, int max, boolean simulate) {
+        List<Offer> now = offers();
+        if (byItemFor != now) {
+            byItem = new HashMap<>();
+            for (Offer offer : now) byItem.put(offer.item(), offer);
+            byItemFor = now;
+        }
+        Offer offer = byItem.get(item);
+        if (offer == null || max <= 0) return ItemStack.EMPTY;
+        // Inside a transaction (a Logistics Materialiser's move, which may yet be undone), only promised.
+        if (!simulate && Transaction.getLifecycle() == Transaction.Lifecycle.OPEN) return promises.out(offer, max);
+        return give(offer, max, simulate);
+    }
+
+    @Nullable
+    private List<Offer> byItemFor;
+    private Map<ItemResource, Offer> byItem = Map.of();
+
     @Nullable
     private List<Offer> listingFor;
     private Map<ItemResource, long[]> listingCache = Map.of();
