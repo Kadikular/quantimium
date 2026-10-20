@@ -1265,6 +1265,27 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: crafter.preview, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_preview_loop", timeoutTicks = 200)
+    public static void aCraftersOwnPreviewLeavesOutLoops(GameTestHelper helper) {
+        // Two crafting-table Crafters on a network of iron blocks: each could make ingots of the blocks, and would
+        // show blocks made of the ingots the other would make, a loop. Worked out on its own (its screen opened), a
+        // Crafter's preview leaves that out from the first, as the network's does.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 4));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            first.rebuildPreview();
+            helper.assertTrue(CrafterTests.craftOf(first, Items.IRON_INGOT) != null, "ingots from the blocks");
+            helper.assertTrue(CrafterTests.craftOf(first, Items.IRON_BLOCK) == null, "no blocks from the ingots the other would make of blocks");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.preview, laser.logistics.offers
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_ninth_nugget", timeoutTicks = 200)
     public static void theNinthNuggetMakesAnIngotCraftable(GameTestHelper helper) {
