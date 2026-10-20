@@ -45,6 +45,9 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     private static final int COLUMNS = 9;
     private static final int ROWS = 5;
     private static final int CELL = 18;
+    /** The scroll bar's track, in the gap right of the grid (tools/gui_panels.py logistics_terminal). */
+    private final com.kadikular.quantimium.client.screen.ui.ScrollBar bar =
+            new com.kadikular.quantimium.client.screen.ui.ScrollBar(GRID_X + COLUMNS * CELL + 1, GRID_Y, 3, ROWS * CELL - 2);
 
     /** The last view the server sent. */
     private static List<LogisticsTerminalViewPayload.Entry> entries = List.of();
@@ -187,6 +190,17 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         return index < shown.size() ? shown.get(index) : null;
     }
 
+    @Override
+    @Nullable
+    public Shown shownAt(double mouseX, double mouseY) {
+        if (activeOverlay() != null) return null;
+        LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
+        if (cell == null) return null;
+        int col = (int) Math.floor((mouseX - leftPos - GRID_X) / CELL);
+        int row = (int) Math.floor((mouseY - topPos - GRID_Y) / CELL);
+        return new Shown(cell.item().toStack(1), new net.minecraft.client.renderer.Rect2i(leftPos + GRID_X + col * CELL, topPos + GRID_Y + row * CELL, 16, 16));
+    }
+
     /** Sort and view on the left rail. */
     @Override
     protected List<Tab> createTabs() {
@@ -212,6 +226,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         List<LogisticsTerminalViewPayload.Entry> shown = shown();
         scrollRow = Mth.clamp(scrollRow, 0, maxScroll(shown));
+        bar.render(graphics, leftPos, topPos, scrollRow, ROWS, Mth.positiveCeilDiv(shown.size(), COLUMNS), scrollColour());
         LogisticsTerminalViewPayload.Entry hovered = cellAt(shown, mouseX, mouseY);
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLUMNS; col++) {
@@ -260,6 +275,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         double mouseX = event.x();
         double mouseY = event.y();
+        if (activeOverlay() == null && event.button() == 0 && bar.over(mouseX, mouseY, leftPos, topPos)) {
+            scrollRow = bar.press(mouseY, topPos, maxScroll(shown()));
+            return true;
+        }
         if (activeOverlay() == null && onGrid(mouseX, mouseY) && (event.button() == 0 || event.button() == 1)) {
             var pos = menu.pos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
@@ -287,6 +306,24 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     /** Half a stack, or one with shift. */
     private static int rightClickCount(LogisticsTerminalViewPayload.Entry cell, boolean shift) {
         return shift ? 1 : Math.max(1, cell.item().toStack(1).getMaxStackSize() / 2);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (bar.dragging()) {
+            scrollRow = bar.scrollAt(event.y(), topPos, maxScroll(shown()));
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (bar.dragging()) {
+            bar.release();
+            return true;
+        }
+        return super.mouseReleased(event);
     }
 
     @Override

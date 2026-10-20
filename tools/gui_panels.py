@@ -164,6 +164,9 @@ def crafter(palette: Palette, basic: bool) -> Panel:
     panel.well(7, 72, 162, 12)
     panel.region("search", (9, 74, 158, 9))
     panel.grid((8, 88), 9, 3, "outputs")
+    # The scroll bar's track, in the gap right of the grid (ScrollBar: three pixels from x 171).
+    panel.well(171, 87, 4, 54)
+    panel.region("scroll", (171, 88, 3, 52))
     panel.player(CRAFTER_PLAYER_Y)
     return panel
 
@@ -479,6 +482,9 @@ def logistics_terminal() -> Panel:
     panel.well(7, 18, 162, 12)
     panel.region("search", (9, 20, 158, 9))
     panel.grid((8, 34), 9, 5, "items")
+    # The scroll bar's track, in the gap right of the grid (ScrollBar: three pixels from x 171).
+    panel.well(171, 33, 4, 90)
+    panel.region("scroll", (171, 34, 3, 88))
     panel.player(140)
     return panel
 

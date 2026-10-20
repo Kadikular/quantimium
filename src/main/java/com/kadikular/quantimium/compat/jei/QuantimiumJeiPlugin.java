@@ -106,6 +106,15 @@ public class QuantimiumJeiPlugin implements IModPlugin {
             public List<Rect2i> getGuiExtraAreas(QuantumMachineScreen<?> screen) {
                 return screen.tabAreas();
             }
+
+            /** An item drawn in a grid rather than a slot (a terminal's, a Crafter's): R and U look it up. */
+            @Override
+            public java.util.Optional<? extends mezz.jei.api.runtime.IClickableIngredient<?>> getClickableIngredientUnderMouse(
+                    mezz.jei.api.gui.builder.IClickableIngredientFactory factory, QuantumMachineScreen<?> screen, double mouseX, double mouseY) {
+                QuantumMachineScreen.Shown shown = screen.shownAt(mouseX, mouseY);
+                if (shown == null || shown.stack().isEmpty()) return java.util.Optional.empty();
+                return factory.createBuilder(shown.stack()).buildWithArea(shown.area());
+            }
         });
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.CatalystBayScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.LaserPortScreen.class);

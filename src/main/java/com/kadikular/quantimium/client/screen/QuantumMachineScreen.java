@@ -411,6 +411,20 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         return areas;
     }
 
+    /** A scroll bar's thumb, in the panel's own colour: light on the light stone panel, where its title is dark. */
+    protected final int scrollColour() {
+        return theme() == PanelTheme.LOW ? 0xFFB4B2AE : theme().title;
+    }
+
+    /** An item drawn on the screen rather than in a slot (a terminal's grid), and where: for recipe viewers. */
+    public record Shown(net.minecraft.world.item.ItemStack stack, Rect2i area) {}
+
+    /** The item drawn under the mouse that isn't in a slot, for recipe viewers (JEI's R and U); null for none. */
+    @Nullable
+    public Shown shownAt(double mouseX, double mouseY) {
+        return null;
+    }
+
     /** The open overlay, if any; for tools that capture the screen. */
     @Nullable
     public final QuantumOverlay currentOverlay() {
