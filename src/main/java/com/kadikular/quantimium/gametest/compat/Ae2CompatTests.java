@@ -555,6 +555,58 @@ public final class Ae2CompatTests {
         });
     }
 
+    // covers: laser.logistics.materialiser.ae2
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_logistics_storage_bus", timeoutTicks = 300)
+    public static void aStorageBusOnALogisticsMaterialiserListsAndMakes(GameTestHelper helper) {
+        // A logistics network of 18 iron ingots and a crafting-table Crafter drawing on it and making for it; a storage
+        // bus on its Materialiser. The ME network lists the iron blocks it could make (read from the network's offers,
+        // not by trial takes), a simulated take makes nothing, and a real one makes a block out of nine ingots.
+        int y = 2, z = 8;
+        helper.setBlock(new BlockPos(2, y, z), ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.FACING, net.minecraft.core.Direction.EAST)
+                .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.OUTPUTS.get(net.minecraft.core.Direction.NORTH), false)
+                .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.OUTPUTS.get(net.minecraft.core.Direction.EAST), true));
+        helper.getBlockEntity(new BlockPos(2, y, z), com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class)
+                .getEnergyStorage().setEnergy(com.kadikular.quantimium.laser.LaserTuning.LOGISTICS_CAPACITY);
+        helper.setBlock(new BlockPos(4, y - 1, z), net.minecraft.world.level.block.Blocks.CHEST);
+        var chest = helper.getBlockEntity(new BlockPos(4, y - 1, z), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        chest.setItem(0, new ItemStack(Items.IRON_INGOT, 18));
+        receptacle(helper, new BlockPos(4, y, z), com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE);
+        BlockPos materialiser = new BlockPos(12, y, z);
+        QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, new BlockPos(6, y - 1, z), Items.CRAFTING_TABLE);
+        crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, materialiser, ModBlocks.LOGISTICS_MATERIALISER.get()));
+        receptacle(helper, new BlockPos(6, y, z), com.kadikular.quantimium.laser.LogisticsMember.Role.PROVIDER);
+        helper.setBlock(materialiser, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var level = helper.getLevel();
+        BlockPos busAt = materialiser.east();
+        PartHelper.setPart(level, helper.absolutePos(busAt), null, null, (appeng.api.parts.IPartItem<?>) item("ae2:fluix_glass_cable"));
+        var bus = PartHelper.setPart(level, helper.absolutePos(busAt), net.minecraft.core.Direction.WEST, null, (appeng.api.parts.IPartItem<?>) item("ae2:storage_bus"));
+        helper.setBlock(busAt.east(), block("ae2:creative_energy_cell"));
+        IActionSource source = IActionSource.empty();
+        boolean[] taken = {false};
+        helper.succeedWhen(() -> {
+            var node = bus.getGridNode();
+            helper.assertTrue(node != null && node.isActive(), "the network is still booting");
+            var storage = node.getGrid().getStorageService();
+            helper.assertTrue(storage.getCachedInventory().get(AEItemKey.of(Items.IRON_BLOCK)) >= 2, "the blocks it could make, listed");
+            if (!taken[0]) {
+                helper.assertValueEqual(storage.getInventory().extract(AEItemKey.of(Items.IRON_BLOCK), 1, Actionable.SIMULATE, source), 1L, "one, if asked");
+                helper.assertValueEqual(chest.getItem(0).getCount(), 18, "and asking made nothing");
+                helper.assertValueEqual(storage.getInventory().extract(AEItemKey.of(Items.IRON_BLOCK), 1, Actionable.MODULATE, source), 1L, "one taken");
+                taken[0] = true;
+            }
+            helper.assertValueEqual(chest.getItem(0).getCount(), 9, "out of nine ingots");
+            TestSupport.clearField(helper);
+        });
+    }
+
+    private static void receptacle(GameTestHelper helper, BlockPos pos, com.kadikular.quantimium.laser.LogisticsMember.Role role) {
+        helper.setBlock(pos, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LogisticsReceptacleBlock.FACING, net.minecraft.core.Direction.DOWN));
+        var receptacle = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity.class);
+        while (receptacle.role() != role) receptacle.cycleRole();
+    }
+
     // covers: reactor.planning.tools
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_reactor_inscriber", timeoutTicks = 40)
     public static void aReactorPrintsCircuitsAndKeepsThePress(GameTestHelper helper) {
