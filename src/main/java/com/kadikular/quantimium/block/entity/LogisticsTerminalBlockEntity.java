@@ -72,17 +72,17 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
     public ItemStack take(ItemResource item, int count) {
         LogisticsController controller = controller();
         if (controller == null || count <= 0) return ItemStack.EMPTY;
-        List<LogisticsMember> members = controller.members();
-        java.util.function.Predicate<ItemStack> wants = stack -> ItemResource.of(stack).equals(item);
-        boolean stored = !Logistics.take(members, wants, count, true, true, false).isEmpty();
-        if (!stored && Logistics.take(members, wants, count, true, false, true).isEmpty()
+        // Only the slots last seen holding it are looked at, not every slot on the network.
+        var spots = controller.spots();
+        boolean stored = !Logistics.take(spots, item, count, true, true, false).isEmpty();
+        if (!stored && Logistics.take(spots, item, count, true, false, true).isEmpty()
                 || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
             return ItemStack.EMPTY;
         }
         controller.stockMoved();
         ItemStack got = ItemStack.EMPTY;
         while (got.getCount() < count) {
-            ItemStack more = Logistics.take(members, wants, count - got.getCount(), false, stored, !stored);
+            ItemStack more = Logistics.take(spots, item, count - got.getCount(), false, stored, !stored);
             if (more.isEmpty()) break;
             if (got.isEmpty()) got = more;
             else got.grow(more.getCount());

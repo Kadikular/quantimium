@@ -270,6 +270,13 @@ public final class Logistics {
                 OfferMaker maker = source.maker();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     if (!onOffer(maker, slot)) continue;
+                    // A machine's preview: nothing stored, and whether it could be made now is worth asking only of
+                    // what's wanted (asking is a look over the network).
+                    if (maker != null && maker.makesOnDemand(slot)) {
+                        if (!made) continue;
+                        ItemStack shown = maker.peekOnDemand(slot);
+                        if (shown.isEmpty() || !wants.test(shown)) continue;
+                    }
                     ItemStack there = from.getStackInSlot(slot);
                     if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
                     int[] parts = split(source, listing, slot, there);
