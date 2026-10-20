@@ -21,6 +21,9 @@ public final class CraftChain {
         long epoch;
         /** From how deep on the chain machines may only use what's stored, making nothing (none: never). */
         int storedFrom = Integer.MAX_VALUE;
+        /** What crafts up the chain are making now, and how many of them make each. */
+        final java.util.Map<net.minecraft.world.item.Item, Integer> making = new java.util.HashMap<>();
+        long makingHash;
     }
 
     private static final ThreadLocal<State> STATE = ThreadLocal.withInitial(State::new);
@@ -52,10 +55,35 @@ public final class CraftChain {
         return STATE.get().depth;
     }
 
-    /** Which machines are on the chain, as one number: what a cached answer about offers is kept under. */
+    /** Which machines are on the chain, and what they're making, as one number: what a cached answer about offers is kept under. */
     public static long context() {
         State state = STATE.get();
-        return state.context ^ ((long) state.depth << 56);
+        return state.context ^ state.makingHash ^ ((long) state.depth << 56);
+    }
+
+    /**
+     * A craft making {@code outputs} starts: till it's done, a craft further down the chain that would use any of
+     * them is a loop (ingots for nuggets for ingots), and isn't made.
+     */
+    public static void startMaking(java.util.Collection<net.minecraft.world.item.Item> outputs) {
+        State state = STATE.get();
+        for (net.minecraft.world.item.Item item : outputs) {
+            state.making.merge(item, 1, Integer::sum);
+            state.makingHash += mix(net.minecraft.core.registries.BuiltInRegistries.ITEM.getId(item) + 1L);
+        }
+    }
+
+    public static void stopMaking(java.util.Collection<net.minecraft.world.item.Item> outputs) {
+        State state = STATE.get();
+        for (net.minecraft.world.item.Item item : outputs) {
+            state.making.computeIfPresent(item, (k, n) -> n > 1 ? n - 1 : null);
+            state.makingHash -= mix(net.minecraft.core.registries.BuiltInRegistries.ITEM.getId(item) + 1L);
+        }
+    }
+
+    /** Whether a craft up the chain is making {@code item} now: a craft using it would loop back. */
+    public static boolean makingUpChain(net.minecraft.world.item.Item item) {
+        return STATE.get().making.containsKey(item);
     }
 
     /** Counts transactions settled that touched what machines make on demand: answers last within one at most. */

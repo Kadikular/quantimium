@@ -141,6 +141,20 @@ public final class OfferTable {
         return stock(maker, reals, craftables, Set.of());
     }
 
+    /**
+     * {@link #stock(BlockPos, boolean, boolean)} as a handler, the same one each time it's asked for the same view: a
+     * Crafter checks what it could draw on many times a tick, and a table doesn't change once it's in use.
+     */
+    public StockHandler view(@org.jetbrains.annotations.Nullable BlockPos maker, boolean reals, boolean craftables) {
+        List<Object> key = java.util.Arrays.asList(maker, reals, craftables);
+        StockHandler handler = views.get(key);
+        if (handler == null) views.put(key, handler = new StockHandler(stock(maker, reals, craftables)));
+        return handler;
+    }
+
+    /** The views handed out, by who for and what they show. */
+    private final Map<List<Object>, StockHandler> views = new HashMap<>();
+
     private Map<ItemResource, Long> stock(BlockPos maker, boolean reals, boolean craftables, Set<Item> avoid) {
         Map<ItemResource, Long> stock = new LinkedHashMap<>();
         if (reals) stock.putAll(real);

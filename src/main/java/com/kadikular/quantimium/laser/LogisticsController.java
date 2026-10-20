@@ -29,6 +29,15 @@ public interface LogisticsController {
     /** Something moved on its network by itself (a pipe, a lens, a receptacle): the offers catch up at their usual pace. */
     default void movedQuietly() {}
 
+    /**
+     * Where each thing is, looked over again now: for a take that came up short of what the network lists, in case
+     * it's been put somewhere new since {@link #spots()} looked. Null if that's been done this tick already.
+     */
+    @org.jetbrains.annotations.Nullable
+    default java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<Logistics.Spot>> spotsAgain() {
+        return null;
+    }
+
     /** A machine making things for it has changed what it could make (its grid, say): its offers are worked out again. */
     default void makerChanged() {}
 

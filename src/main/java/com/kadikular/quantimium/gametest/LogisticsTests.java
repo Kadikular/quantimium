@@ -1265,6 +1265,43 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: crafter.chain, laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_iron_loop", timeoutTicks = 200)
+    public static void craftsDontChaseEachOtherRoundALoop(GameTestHelper helper) {
+        // Three crafting-table Crafters on a network of iron blocks, each able to turn nuggets, ingots and
+        // blocks into one another. A pipe pulling nuggets through the Materialiser once set crafts chasing each other
+        // round that loop, a dozen deep, for minutes. It's quick, and no iron is made or lost.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 9));
+        List<QuantumCrafterBlockEntity> crafters = List.of(crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true),
+                crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true), crafterOn(helper, 8, Items.CRAFTING_TABLE, true, true));
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            var handler = network(helper);
+            var nuggets = resource(Items.IRON_NUGGET);
+            int index = -1;
+            for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(nuggets)) index = i;
+            helper.assertTrue(index >= 0, "nuggets listed");
+            long began = System.nanoTime();
+            int got;
+            try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                got = handler.extract(index, nuggets, 200, transaction);
+                transaction.commit();
+            }
+            long took = (System.nanoTime() - began) / 1_000_000;
+            helper.assertTrue(took < 500, "the pull took " + took + "ms");
+            helper.assertTrue(got > 0, "some nuggets made");
+            long iron = got + 9L * count(helper, 4, Items.IRON_INGOT) + 81L * count(helper, 4, Items.IRON_BLOCK) + count(helper, 4, Items.IRON_NUGGET);
+            for (QuantumCrafterBlockEntity crafter : crafters) {
+                iron += countIn(crafter, Items.IRON_NUGGET) + 9L * countIn(crafter, Items.IRON_INGOT) + 81L * countIn(crafter, Items.IRON_BLOCK);
+            }
+            helper.assertValueEqual(iron, 9L * 81, "as much iron as there was, in nuggets");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.terminal, crafter.preview, work.queue
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_first_try", timeoutTicks = 300)
     public static void aTerminalMakesWhatItListsFirstTime(GameTestHelper helper) {
