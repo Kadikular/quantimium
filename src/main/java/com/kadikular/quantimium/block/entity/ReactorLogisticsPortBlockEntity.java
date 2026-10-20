@@ -84,8 +84,22 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         }
     }
 
-    /** What it offers, worked out once a tick so slot numbers hold still while something reads them. */
+    /**
+     * What it offers, by item, and as a network reads it ([there, could be made]): worked out in full once a second or
+     * when the Reactor's counts change, and between, only the kinds its ledger says changed.
+     */
+    private final Map<ItemResource, Offer> offerMap = new LinkedHashMap<>();
+    private final Map<ItemResource, long[]> listingMap = new LinkedHashMap<>();
+    private final Map<ItemResource, long[]> listingView = java.util.Collections.unmodifiableMap(listingMap);
+    /** What its other networks held when last looked at, less what's been taken from them since. */
+    private Map<ItemResource, Long> passedNow = new HashMap<>();
+    /** The ledger's change mark the offers have caught up to. */
+    private long offersMark = Long.MIN_VALUE;
+    /** Kinds taken from its other networks since, to catch up on with the rest. */
+    private final java.util.Set<ItemResource> passedChanged = new java.util.HashSet<>();
+    /** The offers as slots, for pipes: put together when one reads them after a change. */
     private List<Offer> offers = List.of();
+    private boolean offersListed;
     private long offersTick = Long.MIN_VALUE;
     /** The Reactor's ledger and counts the offers were worked out from. */
     private int offersVersion;
@@ -204,38 +218,68 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
      * What it offers, worked out again only when the Reactor's holdings or counts change, or once a second for what
      * its other networks hold: every Insert lens and terminal on the network reads it.
      */
+    /** The offers as slots (for pipes; a network reads them by item). */
     private List<Offer> offers() {
-        if (level == null) return List.of();
-        long tick = level.getGameTime();
+        if (!catchUp()) return List.of();
+        if (!offersListed) {
+            offers = List.copyOf(offerMap.values());
+            offersListed = true;
+        }
+        return offers;
+    }
+
+    /** Brings the offers up to date; whether there's a Reactor to offer from. */
+    private boolean catchUp() {
+        if (level == null) return false;
         HorizonCoreBlockEntity horizon = visibleCore();
-        if (horizon == null) return List.of();
-        if (offersTick != Long.MIN_VALUE && tick - offersTick < 20 && offersVersion == horizon.ledgerVersion()
-                && offersCounts == horizon.getCounts()) {
-            return offers;
+        if (horizon == null) return false;
+        long tick = level.getGameTime();
+        var ledger = horizon.getLedger();
+        boolean recent = offersTick != Long.MIN_VALUE && tick - offersTick < 20 && offersCounts == horizon.getCounts();
+        if (recent && offersMark == ledger.changes() && passedChanged.isEmpty()) return true;
+        java.util.Set<ItemResource> changed = recent ? ledger.changedSince(offersMark) : null;
+        if (changed != null) {
+            // Only what changed: a take changes a few kinds of thousands.
+            changed.addAll(passedChanged);
+            Map<ItemResource, Long> totals = horizon.getCounts().counts();
+            Map<ItemResource, Long> counted = horizon.countedNetworkStock();
+            for (ItemResource item : changed) put(item, horizon.availableCount(item), passedNow.getOrDefault(item, 0L), totals, counted);
+        } else {
+            offerMap.clear();
+            listingMap.clear();
+            offersTick = tick;
+            offersCounts = horizon.getCounts();
+            Map<ItemResource, Long> held = horizon.available();
+            Map<ItemResource, Long> passed = new HashMap<>();
+            for (ReactorNetwork network : otherNetworks(horizon)) {
+                horizon.whileDrawing(network::stock).forEach((item, amount) -> passed.merge(item, amount, Long::sum));
+            }
+            passedNow = passed;
+            Map<ItemResource, Long> totals = horizon.getCounts().counts();
+            Map<ItemResource, Long> counted = horizon.countedNetworkStock();
+            java.util.Set<ItemResource> items = new java.util.LinkedHashSet<>(held.keySet());
+            items.addAll(passed.keySet());
+            items.addAll(totals.keySet());
+            for (ItemResource item : items) put(item, held.getOrDefault(item, 0L), passed.getOrDefault(item, 0L), totals, counted);
         }
-        offersTick = tick;
+        passedChanged.clear();
+        offersMark = ledger.changes();
         offersVersion = horizon.ledgerVersion();
-        offersCounts = horizon.getCounts();
-        Map<ItemResource, Long> held = horizon.available();
-        Map<ItemResource, Long> passed = new HashMap<>();
-        for (ReactorNetwork network : otherNetworks(horizon)) {
-            horizon.whileDrawing(network::stock).forEach((item, amount) -> passed.merge(item, amount, Long::sum));
+        offersListed = false;
+        return true;
+    }
+
+    /** One kind's offer, from what's held of it, what its other networks hold, and its counts. */
+    private void put(ItemResource item, long held, long passed, Map<ItemResource, Long> totals, Map<ItemResource, Long> counted) {
+        long craftable = Math.max(0, totals.getOrDefault(item, 0L) - held - counted.getOrDefault(item, 0L));
+        Offer offer = new Offer(item, held, passed, craftable);
+        if (offer.total() > 0 && offers(item)) {
+            offerMap.put(item, offer);
+            listingMap.put(item, new long[] {held + passed, craftable});
+        } else {
+            offerMap.remove(item);
+            listingMap.remove(item);
         }
-        Map<ItemResource, Long> totals = horizon.getCounts().counts();
-        Map<ItemResource, Long> counted = horizon.countedNetworkStock();
-        Map<ItemResource, Offer> found = new LinkedHashMap<>();
-        held.forEach((item, amount) -> found.put(item, new Offer(item, amount, 0, 0)));
-        passed.forEach((item, amount) -> found.merge(item, new Offer(item, 0, amount, 0), (a, b) -> new Offer(item, a.held(), b.passed(), 0)));
-        totals.forEach((item, total) -> {
-            long craftable = total - held.getOrDefault(item, 0L) - counted.getOrDefault(item, 0L);
-            if (craftable <= 0) return;
-            found.merge(item, new Offer(item, 0, 0, craftable), (a, b) -> new Offer(item, a.held(), a.passed(), b.craftable()));
-        });
-        List<Offer> list = new ArrayList<>();
-        for (Offer offer : found.values()) {
-            if (offer.total() > 0 && offers(offer.item())) list.add(offer);
-        }
-        return offers = list;
     }
 
     /** Takes up to {@code amount} of {@code item}: held first, then from the other networks, then made. */
@@ -246,10 +290,17 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         long got = 0;
         long fromHeld = Math.min(amount, horizon.availableCount(item));
         got += simulate ? fromHeld : horizon.withdraw(item, fromHeld);
+        long fromNetworks = 0;
         for (ReactorNetwork network : otherNetworks(horizon)) {
             if (got >= amount) break;
             long want = amount - got;
-            got += horizon.whileDrawing(() -> network.extract(item, want, simulate));
+            long drawn = horizon.whileDrawing(() -> network.extract(item, want, simulate));
+            got += drawn;
+            fromNetworks += drawn;
+        }
+        if (!simulate && fromNetworks > 0) {
+            passedNow.merge(item, -fromNetworks, Long::sum);
+            passedChanged.add(item);
         }
         if (got < amount && offer.craftable() > 0) {
             long want = Math.min(amount - got, offer.craftable());
@@ -259,7 +310,6 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
                 got += horizon.withdraw(item, want);
             }
         }
-        if (!simulate && got > 0) offersTick = Long.MIN_VALUE;
         return got <= 0 ? ItemStack.EMPTY : item.toStack((int) got);
     }
 
@@ -274,7 +324,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
      * Where a transaction stood: how many promises were made, and the offers as worked out then, if they were still
      * good; an abort puts the Reactor back as it was, so they're good again.
      */
-    private record PromisesSnapshot(int ops, List<Offer> offers, long tick, boolean fresh) {}
+    private record PromisesSnapshot(int ops) {}
 
     private final class Promises extends SnapshotJournal<PromisesSnapshot> {
         private record Op(ItemResource item, long held, @Nullable com.kadikular.quantimium.reactor.ReactorPlanner.Plan plan, long fe, long in) {}
@@ -327,16 +377,12 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
             ops.add(new Op(item, held, plan, fe, 0));
             if (held > 0) horizon.reserve(Map.of(item, held));
             if (plan != null) horizon.reserve(plan.consumed());
-            offersTick = Long.MIN_VALUE;
             return item.toStack((int) (held + made));
         }
 
         @Override
         protected PromisesSnapshot createSnapshot() {
-            HorizonCoreBlockEntity horizon = core();
-            boolean fresh = horizon != null && offersTick != Long.MIN_VALUE && offersVersion == horizon.ledgerVersion()
-                    && offersCounts == horizon.getCounts();
-            return new PromisesSnapshot(ops.size(), offers, offersTick, fresh);
+            return new PromisesSnapshot(ops.size());
         }
 
         @Override
@@ -348,16 +394,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
                 if (op.held() > 0) horizon.release(Map.of(op.item(), op.held()));
                 if (op.plan() != null) horizon.release(op.plan().consumed());
             }
-            // Back as it was: the offers worked out then stand (a storage bus asking what it could take, and
-            // calling it off, doesn't make the Reactor plan everything again).
-            if (snapshot.fresh() && horizon != null) {
-                offers = snapshot.offers();
-                offersTick = snapshot.tick();
-                offersVersion = horizon.ledgerVersion();
-                offersCounts = horizon.getCounts();
-            } else {
-                offersTick = Long.MIN_VALUE;
-            }
+            // What was promised and released is in the ledger's changes: the offers catch up on just those kinds.
         }
 
         @Override
@@ -380,7 +417,6 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
                 }
             }
             ops.clear();
-            offersTick = Long.MIN_VALUE;
         }
     }
 
@@ -410,7 +446,6 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
                     promises.in(ItemResource.of(stack), fits);
                 } else {
                     horizon.take(ItemResource.of(stack), fits);
-                    offersTick = Long.MIN_VALUE;
                 }
             }
             return stack.copyWithCount(stack.getCount() - fits);
@@ -479,40 +514,21 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     @Override
     @Nullable
     public Map<ItemResource, long[]> listing() {
-        List<Offer> now = offers();
-        // Worked out once for each list of offers: a take asks for it every time.
-        if (listingFor != now) {
-            Map<ItemResource, long[]> listing = new LinkedHashMap<>();
-            for (Offer offer : now) listing.put(offer.item(), new long[] {offer.held() + offer.passed(), offer.craftable()});
-            listingCache = java.util.Collections.unmodifiableMap(listing);
-            listingFor = now;
-        }
-        return listingCache;
+        return catchUp() ? listingView : Map.of();
     }
 
     /** By item, as a network takes from it: what a slot showing it would give. */
     @Override
     public ItemStack takeListed(ItemResource item, int max, boolean simulate) {
-        List<Offer> now = offers();
-        if (byItemFor != now) {
-            byItem = new HashMap<>();
-            for (Offer offer : now) byItem.put(offer.item(), offer);
-            byItemFor = now;
-        }
-        Offer offer = byItem.get(item);
+        if (!catchUp()) return ItemStack.EMPTY;
+        Offer offer = offerMap.get(item);
         if (offer == null || max <= 0) return ItemStack.EMPTY;
         // Inside a transaction (a Logistics Materialiser's move, which may yet be undone), only promised.
         if (!simulate && Transaction.getLifecycle() == Transaction.Lifecycle.OPEN) return promises.out(offer, max);
         return give(offer, max, simulate);
     }
 
-    @Nullable
-    private List<Offer> byItemFor;
-    private Map<ItemResource, Offer> byItem = Map.of();
 
-    @Nullable
-    private List<Offer> listingFor;
-    private Map<ItemResource, long[]> listingCache = Map.of();
 
     // ---- the network, to the Reactor ----
 
