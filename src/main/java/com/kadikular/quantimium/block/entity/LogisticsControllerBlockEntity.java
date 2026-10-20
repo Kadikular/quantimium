@@ -218,6 +218,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         }
         offers = builder.result();
         building = null;
+        // Compared afresh with what's there now, next time it's read: not with the offers this replaced.
+        drifted = false;
+        liveOffers = null;
         // It read another network before that one had worked its offers out: soon again, to catch them.
         if (builder.early()) offersStale = true;
         return true;

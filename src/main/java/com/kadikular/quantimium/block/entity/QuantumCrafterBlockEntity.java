@@ -596,7 +596,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private void queueRefresh(boolean full) {
         rebuildQueued |= full;
-        int priority = watchedNow || watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
+        int priority = watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
         com.kadikular.quantimium.work.WorkQueue.submit(this, priority, () -> {
             if (isRemoved() || level == null) return true;
             boolean rebuild = rebuildQueued;
@@ -612,13 +612,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         queueRefresh(true);
     }
 
+    /** How many players have its screen open, as its menus open and close. */
+    private int viewers;
+
+    /** A player opened its screen ({@code true}) or closed it. */
+    public void viewed(boolean open) {
+        viewers = Math.max(0, viewers + (open ? 1 : -1));
+    }
+
     /** Whether a player has its screen open. */
     private boolean watchedByPlayer() {
-        if (!(level instanceof ServerLevel server)) return false;
-        for (var player : server.players()) {
-            if (player.containerMenu instanceof com.kadikular.quantimium.menu.QuantumCrafterMenu menu && menu.getBlockEntity() == this) return true;
-        }
-        return false;
+        return viewers > 0;
     }
 
     private boolean updateLinkLoopState() {
@@ -672,13 +676,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return views.isEmpty() ? body.get() : EntangledLinks.withOverrides(views, body);
     }
 
-    /** Whether a craft, by what it takes, would loop on a network it draws on. */
-    private boolean loopsOnItsNetworks(ResolvedCraft craft) {
-        if (level == null) return false;
+    /** Whether a craft, by what it takes, would loop on one of the networks it draws on ({@code networks}). */
+    private static boolean loopsOn(List<com.kadikular.quantimium.laser.OfferTable> networks, ResolvedCraft craft) {
         java.util.Set<net.minecraft.world.item.Item> inputs = new java.util.HashSet<>();
         for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) inputs.add(withdrawal.expected());
         net.minecraft.world.item.Item out = craft.primaryOutput().getItem();
-        for (var controller : linkedNetworks()) if (controller.offers().loops(out, inputs)) return true;
+        for (var offers : networks) if (offers.loops(out, inputs)) return true;
         return false;
     }
 
@@ -850,6 +853,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 List<ResolvedCraft> more = onOffers(true, () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
                 List<ResolvedCraft> joined = new ArrayList<>(crafts);
                 java.util.Map<Identifier, Integer> at = new java.util.HashMap<>();
+                List<com.kadikular.quantimium.laser.OfferTable> networks = new ArrayList<>();
+                for (var controller : linkedNetworks()) networks.add(controller.offers());
                 for (int i = 0; i < joined.size(); i++) at.putIfAbsent(joined.get(i).recipeId(), i);
                 for (ResolvedCraft craft : more) {
                     boolean wanted = false;
@@ -858,7 +863,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                     }
                     // Not a craft out of what it would make from this craft's own output (ingots from the nuggets it'd
                     // make from those ingots): the network leaves such loops out, and so does it.
-                    if (!wanted || loopsOnItsNetworks(craft)) continue;
+                    if (!wanted || loopsOn(networks, craft)) continue;
                     Integer was = at.get(craft.recipeId());
                     if (was == null) {
                         at.put(craft.recipeId(), joined.size());

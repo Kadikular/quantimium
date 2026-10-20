@@ -57,6 +57,8 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
             this.addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
         }
 
+        // Its screen open on the server: the Crafter keeps up with what it draws on, for this player.
+        if (!playerInv.player.level().isClientSide()) blockEntity.viewed(true);
         addDataSlots(data);
     }
 
@@ -225,6 +227,12 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         blockEntity.refreshSoon();
         broadcastChanges();
         return true;
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        if (!player.level().isClientSide()) blockEntity.viewed(false);
     }
 
     @Override

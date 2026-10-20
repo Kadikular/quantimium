@@ -7,7 +7,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,33 +83,52 @@ public final class WorkQueue {
     public static void onServerTick(ServerTickEvent.Post event) {
         tick++;
         if (WAITING.isEmpty()) return;
+        // In order of urgency as the tick starts, worked out once; a job keeps the tick while there's budget for it.
+        // Work queued meanwhile waits for the next tick.
+        List<Map.Entry<Object, Entry>> order = new ArrayList<>(WAITING.entrySet());
+        order.sort(Comparator.comparingLong((Map.Entry<Object, Entry> e) -> score(e.getValue())).reversed());
         long start = System.nanoTime();
         boolean first = true;
-        while (!WAITING.isEmpty()) {
-            Map.Entry<Object, Entry> next = mostUrgent();
+        for (Map.Entry<Object, Entry> next : order) {
+            Object key = next.getKey();
+            Entry entry = next.getValue();
             // Work a player is waiting on gets more of the tick than the rest.
-            long budget = next.getValue().priority >= URGENT ? Math.max(Config.workBudgetNanos(), Config.urgentWorkBudgetNanos())
+            long budget = entry.priority >= URGENT ? Math.max(Config.workBudgetNanos(), Config.urgentWorkBudgetNanos())
                     : Config.workBudgetNanos();
-            if (!first && System.nanoTime() - start >= budget) break;
-            first = false;
-            boolean done;
-            try {
-                done = next.getValue().job.step();
-            } catch (RuntimeException failed) {
-                Quantimium.LOGGER.error("Background work for {} failed; dropped", next.getKey(), failed);
-                done = true;
+            boolean done = false;
+            while (WAITING.get(key) == entry && !done) {
+                if (!first && System.nanoTime() - start >= budget) return;
+                first = false;
+                done = step(key, entry);
             }
-            // Queued again while it ran (it found more to do): the new job stands.
-            if (done && WAITING.get(next.getKey()) == next.getValue()) WAITING.remove(next.getKey());
         }
     }
 
-    /** The job to step next: the most urgent, counting a tick's wait as one more; the oldest first among equals. */
+    /** Steps the job waiting for {@code key}; whether it's done (and gone from the queue, unless it was queued again meanwhile). */
+    private static boolean step(Object key, Entry entry) {
+        boolean done;
+        try {
+            done = entry.job.step();
+        } catch (RuntimeException failed) {
+            Quantimium.LOGGER.error("Background work for {} failed; dropped", key, failed);
+            done = true;
+        }
+        // Queued again while it ran (it found more to do): the new job stands.
+        if (done && WAITING.get(key) == entry) WAITING.remove(key);
+        return done;
+    }
+
+    /** How urgent a job is now: its priority, and one more for each tick it's waited. */
+    private static long score(Entry entry) {
+        return entry.priority + (tick - entry.queuedTick);
+    }
+
+    /** The job to step next: the most urgent; the oldest first among equals. */
     private static Map.Entry<Object, Entry> mostUrgent() {
         Map.Entry<Object, Entry> best = null;
         long bestScore = Long.MIN_VALUE;
         for (Map.Entry<Object, Entry> entry : WAITING.entrySet()) {
-            long score = entry.getValue().priority + (tick - entry.getValue().queuedTick);
+            long score = score(entry.getValue());
             if (score > bestScore) {
                 best = entry;
                 bestScore = score;
@@ -120,13 +142,7 @@ public final class WorkQueue {
         int guard = 0;
         while (!WAITING.isEmpty() && guard++ < 1_000_000) {
             Map.Entry<Object, Entry> next = mostUrgent();
-            boolean done;
-            try {
-                done = next.getValue().job.step();
-            } catch (RuntimeException failed) {
-                done = true;
-            }
-            if (done && WAITING.get(next.getKey()) == next.getValue()) WAITING.remove(next.getKey());
+            step(next.getKey(), next.getValue());
         }
     }
 

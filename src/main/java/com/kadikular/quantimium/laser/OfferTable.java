@@ -40,9 +40,9 @@ public final class OfferTable {
     /** How many times a machine is asked again about its looping crafts, leaving out more each time, before they're dropped. */
     private static final int LOOP_RETRIES = 2;
 
-    public static final OfferTable EMPTY = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of());
+    public static final OfferTable EMPTY = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of(), false);
     /** A network's offers before they've first been worked out: nothing yet, and another network reading it should look again soon. */
-    public static final OfferTable PENDING = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of());
+    public static final OfferTable PENDING = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of(), true);
 
     /** One item on offer: how many are there, how many could be made, and the shortest chain that makes it. */
     public record Entry(ItemResource item, long real, long craftable, int tier) {}
@@ -60,8 +60,17 @@ public final class OfferTable {
     /** The networks (by controller) it drew on: its own, and any it imports through another's Materialiser. */
     private final Set<BlockPos> origins;
 
+    /** Whether what could be made hasn't been worked out yet (what's stored may have been looked at since). */
+    private final boolean pending;
+
     private OfferTable(Map<ItemResource, Long> real, Map<ItemResource, Map<BlockPos, List<Source>>> craftable,
                        Map<ItemResource, Integer> tiers, Set<BlockPos> origins) {
+        this(real, craftable, tiers, origins, false);
+    }
+
+    private OfferTable(Map<ItemResource, Long> real, Map<ItemResource, Map<BlockPos, List<Source>>> craftable,
+                       Map<ItemResource, Integer> tiers, Set<BlockPos> origins, boolean pending) {
+        this.pending = pending;
         this.real = real;
         this.craftable = craftable;
         this.tiers = tiers;
@@ -175,8 +184,8 @@ public final class OfferTable {
 
     /** The same offers, only the real ones, only the craftable, or both. */
     public OfferTable only(boolean reals, boolean craftables) {
-        if (reals && craftables || this == PENDING) return this;
-        return new OfferTable(reals ? real : Map.of(), craftables ? craftable : Map.of(), tiers, origins);
+        if (reals && craftables) return this;
+        return new OfferTable(reals ? real : Map.of(), craftables ? craftable : Map.of(), tiers, origins, pending);
     }
 
     public Set<BlockPos> origins() {
@@ -202,8 +211,7 @@ public final class OfferTable {
 
     /** These offers, with what's really there as {@code stored} instead (looked at now, the rest worked out before). */
     public OfferTable withStored(Map<ItemResource, Long> stored) {
-        if (this == PENDING && stored.isEmpty()) return this;
-        return new OfferTable(stored, craftable, tiers, origins);
+        return new OfferTable(stored, craftable, tiers, origins, pending);
     }
 
     /**
@@ -335,7 +343,7 @@ public final class OfferTable {
                 if (imported != null) {
                     // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
                     // offered here too, real as real and craftable as craftable.
-                    if (imported == PENDING) early = true;
+                    if (imported.pending) early = true;
                     if (imported.origins().contains(at)) continue;
                     origins.addAll(imported.origins());
                     imported.real.forEach((item, amount) -> {
