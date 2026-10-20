@@ -29,8 +29,11 @@ import java.util.Set;
  */
 public final class CrafterPreview {
 
-    /** Maximum number of individual output stacks advertised by one crafter. */
-    public static final int MAX_OUTPUTS = 54;
+    /**
+     * Most output stacks one crafter previews: its screen scrolls and its previews aren't slots, so only a bound
+     * for safety (a crafting table on a big network).
+     */
+    public static final int MAX_OUTPUTS = 1024;
 
     public List<ResolvedCraft> preview(Level level, BlockPos source, ItemStack catalyst, ItemStackHandler grid,
                                        int inputSlots, int availableFe) {

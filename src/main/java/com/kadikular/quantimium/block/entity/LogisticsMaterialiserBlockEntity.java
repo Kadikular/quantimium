@@ -264,7 +264,7 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             LogisticsController controller = controller();
             if (controller != null) {
                 for (int i = 0; i < moves; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
-                if (moves > 0) controller.stockMoved();
+                if (moves > 0) controller.movedQuietly();
             }
             moves = 0;
         }

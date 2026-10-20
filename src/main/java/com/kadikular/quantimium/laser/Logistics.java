@@ -111,7 +111,7 @@ public final class Logistics {
                 int budget = budget(speeds.getOrDefault(member, 0));
                 int moved = role == LogisticsMember.Role.PROVIDER ? push(level, controller, member, highestFirst, budget)
                         : pull(level, controller, member, highestFirst, lowestFirst, budget);
-                if (moved > 0) controller.stockMoved();
+                if (moved > 0) controller.movedQuietly();
                 if (moved == UNPAID) return;
                 if (pace != null) {
                     // Busy, it looks again next second; idle, it waits twice as long as last time, up to the most.

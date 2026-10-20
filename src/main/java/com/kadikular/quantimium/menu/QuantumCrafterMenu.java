@@ -163,20 +163,26 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
     }
 
     /**
-     * Menu buttons taking what output {@code slot} (0 to 53) shows: {@code mode * TAKE + slot}. A stack onto the
+     * Menu buttons taking what {@code slot} shows: {@code mode * TAKE + slot}, an output slot (0 to 53) or a preview
+     * ({@link QuantumCrafterBlockEntity#GHOST_BASE} on). A stack onto the
      * cursor, half a stack, one, or a stack into the inventory: what's in its outputs first, from every output holding
      * it, and the rest made, by whichever preview of it can make the most.
      */
-    public static final int TAKE = 100, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
+    public static final int TAKE = 100_000, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
         int mode = id / TAKE;
         int local = id % TAKE;
-        if (mode < BATCH || mode > TO_INVENTORY || local >= QuantumCrafterBlockEntity.OUTPUT_SLOTS) return false;
-        int absolute = QuantumCrafterBlockEntity.OUTPUT_START + local;
-        ItemStack real = blockEntity.getInventory().getStackInSlot(absolute);
-        ItemStack shown = real.isEmpty() ? blockEntity.getGhost(absolute) : real;
+        if (mode < BATCH || mode > TO_INVENTORY) return false;
+        ItemStack shown;
+        if (local < QuantumCrafterBlockEntity.OUTPUT_SLOTS) {
+            shown = blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + local);
+        } else if (local >= QuantumCrafterBlockEntity.GHOST_BASE) {
+            shown = blockEntity.getGhost(local);
+        } else {
+            return false;
+        }
         if (shown.isEmpty()) return false;
         boolean toInventory = mode == TO_INVENTORY;
         ItemStack carried = getCarried();

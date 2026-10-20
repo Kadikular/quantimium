@@ -74,9 +74,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     public static final int INPUT_SLOTS = 9;
     public static final int OUTPUT_START = 9;
-    public static final int OUTPUT_SLOTS = CrafterPreview.MAX_OUTPUTS;
+    /** Its output slots, which hold what it has really made. */
+    public static final int OUTPUT_SLOTS = 54;
     public static final int OUTPUT_END = OUTPUT_START + OUTPUT_SLOTS - 1;
     public static final int CATALYST_SLOT = OUTPUT_END + 1;
+    /**
+     * Where its previews are numbered from: each output of each craft it could make is a preview of its own, as many
+     * as there are, apart from the 54 output slots, which hold only what's really been made. Pipes and networks see
+     * them as slots after the outputs (see {@link SidedAutomationHandler}).
+     */
+    public static final int GHOST_BASE = 1000;
     public static final int TOTAL_SLOTS = CATALYST_SLOT + 1;
     private static final int LEGACY_OUTPUT_END = 17;
     private static final int LEGACY_CATALYST_SLOT = 18;
@@ -326,13 +333,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     public record GhostSlot(int craftIndex, int outputIndex, int feCost, int batchSize,
                             boolean energyCapped, long available) {}
 
-    private static final GhostSlot[] NO_GHOSTS = new GhostSlot[OUTPUT_END - OUTPUT_START + 1];
+    private static final GhostSlot[] NO_GHOSTS = new GhostSlot[0];
 
     /**
-     * Assigns every guaranteed output of a craft its own slot, so a centrifuge preview shows both the
-     * aluminium and the chromium rather than hiding the byproduct until it lands. Crafts are laid out
-     * in preview order over the slots not already holding real items; a craft whose outputs no longer
-     * fit is skipped in favour of the next one that does.
+     * Every guaranteed output of every craft in the preview, in order, so a centrifuge preview shows both the
+     * aluminium and the chromium rather than hiding the byproduct until it lands.
      */
     private GhostSlot[] ghostLayout() {
         GhostSlot[] cached = ghostLayout;
@@ -341,46 +346,38 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // run, which prices the tooltip off a craft the click never touches. Wait for the sync.
         if (level != null && level.isClientSide()) return NO_GHOSTS;
 
-        GhostSlot[] layout = new GhostSlot[OUTPUT_END - OUTPUT_START + 1];
-        List<Integer> free = new ArrayList<>(layout.length);
-        for (int local = 0; local < layout.length; local++) {
-            if (inventory.getStackInSlot(OUTPUT_START + local).isEmpty()) free.add(local);
-        }
-
-        int cursor = 0;
-        for (int craftIndex = 0; craftIndex < preview.size() && cursor < free.size(); craftIndex++) {
+        List<GhostSlot> layout = new ArrayList<>();
+        for (int craftIndex = 0; craftIndex < preview.size(); craftIndex++) {
             ResolvedCraft craft = preview.get(craftIndex);
             List<ItemStack> outputs = craft.outputs();
-            int needed = 0;
-            for (ItemStack output : outputs) {
-                if (!output.isEmpty()) needed++;
-            }
-            if (needed == 0 || cursor + needed > free.size()) continue;
             for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
                 if (outputs.get(outputIndex).isEmpty()) continue;
-                layout[free.get(cursor++)] = new GhostSlot(craftIndex, outputIndex, craft.feCost(),
-                        craft.batchSize(), craft.energyCapped(), craft.availableOutputCount(outputIndex));
+                layout.add(new GhostSlot(craftIndex, outputIndex, craft.feCost(),
+                        craft.batchSize(), craft.energyCapped(), craft.availableOutputCount(outputIndex)));
             }
         }
-
-        ghostLayout = layout;
-        return layout;
+        ghostLayout = layout.toArray(GhostSlot[]::new);
+        return ghostLayout;
     }
 
-    /** The preview shown by an output slot, or null. Server-assigned, so both sides agree. */
+    /** How many previews it has: they're numbered from {@link #GHOST_BASE}. */
+    public int ghostCount() {
+        return ghostLayout().length;
+    }
+
+    /** The preview numbered {@code ghostSlot} ({@link #GHOST_BASE} on), or null. Server-assigned, so both sides agree. */
     @Nullable
-    public GhostSlot ghostAt(int absoluteOutputSlot) {
-        int local = absoluteOutputSlot - OUTPUT_START;
+    public GhostSlot ghostAt(int ghostSlot) {
+        int local = ghostSlot - GHOST_BASE;
         GhostSlot[] layout = ghostLayout();
         if (local < 0 || local >= layout.length) return null;
         GhostSlot ghost = layout[local];
         return ghost != null && ghost.craftIndex() < preview.size() ? ghost : null;
     }
 
-    public ItemStack getGhost(int absoluteOutputSlot) {
-        // Only show a ghost when the slot has no real items waiting.
-        if (!inventory.getStackInSlot(absoluteOutputSlot).isEmpty()) return ItemStack.EMPTY;
-        GhostSlot ghost = ghostAt(absoluteOutputSlot);
+    /** What the preview numbered {@code ghostSlot} would make. */
+    public ItemStack getGhost(int ghostSlot) {
+        GhostSlot ghost = ghostAt(ghostSlot);
         if (ghost == null) return ItemStack.EMPTY;
         List<ItemStack> outputs = preview.get(ghost.craftIndex()).outputs();
         return ghost.outputIndex() < outputs.size() ? outputs.get(ghost.outputIndex()).copy() : ItemStack.EMPTY;
@@ -662,7 +659,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         var views = networkViews(network, stock, fromCraftable, true);
         // Asked the same again (the same stock shown, nothing of its own changed), it answers as before: a network
         // works out its offers often, and most of the time nothing a crafter would make from has moved.
-        List<Object> asked = List.of(views, fromCraftable, contentRevision, fe, Math.round(multiplier * 1000), catalyst.getItem(),
+        // Its power only to a twentieth of what it holds: it charges and drains every tick, and what it could make
+        // barely moves with it.
+        int power = fe >= energyStorage.getMaxEnergyStored() ? 20 : fe * 20 / Math.max(1, energyStorage.getMaxEnergyStored());
+        List<Object> asked = List.of(views, fromCraftable, contentRevision, power, Math.round(multiplier * 1000), catalyst.getItem(),
                 recipeLocked, String.valueOf(preferredRecipeId), coherenceReserve);
         List<com.kadikular.quantimium.laser.OfferMaker.Made> known = makesAnswers.get(asked);
         if (known != null) return known;
@@ -725,7 +725,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     @Override
     public boolean makesOnDemand(int slot) {
-        return slot >= OUTPUT_START && slot <= OUTPUT_END && inventory.getStackInSlot(slot).isEmpty();
+        return slot > OUTPUT_END;
     }
 
     public void rebuildPreview() {
@@ -786,7 +786,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                     for (ItemStack output : craft.outputs()) {
                         if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
                     }
-                    if (wanted && joined.size() < com.kadikular.quantimium.recipe.CrafterPreview.MAX_OUTPUTS && chainedNow.add(craft.recipeId())) joined.add(craft);
+                    if (wanted && chainedNow.add(craft.recipeId())) joined.add(craft);
                 }
                 crafts = joined;
             }
@@ -1110,7 +1110,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      * Whether the player (or menu) may take from this output slot — either real items or a commitable ghost.
      */
     public boolean mayTakeOutput(int absoluteOutputSlot) {
-        if (!inventory.getStackInSlot(absoluteOutputSlot).isEmpty()) return true;
+        if (absoluteOutputSlot >= OUTPUT_START && absoluteOutputSlot <= OUTPUT_END) return !inventory.getStackInSlot(absoluteOutputSlot).isEmpty();
         ResolvedCraft craft = getCraftForOutputSlot(absoluteOutputSlot);
         return craft != null && canCommit(craft);
     }
@@ -1406,7 +1406,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     public int bestGhostFor(ItemStack item) {
         int best = -1;
         long most = 0;
-        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
+        for (int slot = GHOST_BASE; slot < GHOST_BASE + ghostCount(); slot++) {
             GhostSlot ghost = ghostAt(slot);
             if (ghost == null || !ItemStack.isSameItemSameComponents(getGhost(slot), item)) continue;
             long can = Math.max(1, ghost.available());
@@ -1429,12 +1429,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     }
 
     /**
-     * What automation sees in an output slot: real items, or the preview a pull would commit. A hopper
-     * or pipe only asks for what it can already see, so an unadvertised ghost never gets crafted.
+     * What automation sees of a preview ({@link #GHOST_BASE} on): what a pull would commit. A hopper or pipe only
+     * asks for what it can already see, so an unadvertised ghost never gets crafted.
      */
     private ItemStack automationView(int absoluteOutputSlot) {
-        ItemStack real = inventory.getStackInSlot(absoluteOutputSlot);
-        if (!real.isEmpty()) return real;
         // Busy working out what it could make, it offers nothing; busy making something, it may make something else.
         if (level == null || level.isClientSide() || automationBusy && running.isEmpty() || com.kadikular.quantimium.recipe.CraftChain.full()
                 || com.kadikular.quantimium.recipe.CraftChain.storedOnly()) return ItemStack.EMPTY;
@@ -1444,8 +1442,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             return ItemStack.EMPTY;
         }
 
-        int local = absoluteOutputSlot - OUTPUT_START;
-        if (local < 0 || local >= OUTPUT_SLOTS) return ItemStack.EMPTY;
+        int local = absoluteOutputSlot - GHOST_BASE;
+        int ghosts = ghostCount();
+        if (local < 0 || local >= ghosts) return ItemStack.EMPTY;
         // Kept per chain (a machine on it offers nothing), while its contents stand, a tick at most, and not past a
         // settled transaction.
         long now = level.getGameTime();
@@ -1458,7 +1457,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             automationViewEpoch = epoch;
         }
         ItemStack[] views = automationViewCache.get(context);
-        if (views != null && views[local] != null) return views[local];
+        if (views != null && local < views.length && views[local] != null) return views[local];
 
         // Deciding whether a preview is committable can walk a link that leads back here; the guard
         // makes the second visit report nothing rather than recursing.
@@ -1480,7 +1479,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             exitChain(priorBusy);
         }
         if (!com.kadikular.quantimium.recipe.CraftChain.cacheable() || automationViewRevision != contentRevision || automationViewTick != now) return shown;
-        automationViewCache.computeIfAbsent(context, key -> new ItemStack[OUTPUT_SLOTS])[local] = shown;
+        ItemStack[] kept = automationViewCache.get(context);
+        if (kept == null || kept.length != ghosts) automationViewCache.put(context, kept = new ItemStack[ghosts]);
+        kept[local] = shown;
         return shown;
     }
 
@@ -1490,9 +1491,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private ItemStack extractForAutomation(int slot, int amount, boolean simulate) {
         if (amount <= 0) return ItemStack.EMPTY;
-        ItemStack real = inventory.getStackInSlot(slot);
-        if (!real.isEmpty()) return inventory.extractItem(slot, amount, simulate);
-
         ItemStack shown = automationView(slot);
         if (shown.isEmpty()) return ItemStack.EMPTY;
         int handOver = Math.min(amount, shown.getCount());
@@ -1678,14 +1676,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     }
 
     private boolean primaryAllowedOn(int craftIndex, SideConfig config) {
-        GhostSlot[] layout = ghostLayout();
-        for (int local = 0; local < layout.length; local++) {
-            GhostSlot ghost = layout[local];
-            if (ghost != null && ghost.craftIndex() == craftIndex && ghost.outputIndex() == 0) {
-                return config.allowsOutputSlot(OUTPUT_START + local);
-            }
-        }
-        return false;
+        return config.allowsOutputs();
     }
 
     private void pullOneItem(IItemHandler neighbor, SideConfig config) {
@@ -1746,15 +1737,23 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                     : sideConfigs.get(side.get3DDataValue());
         }
 
+        /** Its grid, its outputs, then one slot for each preview. */
         @Override
         public int getSlots() {
-            return OUTPUT_END + 1;
+            return OUTPUT_END + 1 + ghostCount();
+        }
+
+        /** The preview a slot past the outputs shows ({@link #GHOST_BASE} on), or -1 for one that isn't. */
+        private int ghostOf(int slot) {
+            return slot > OUTPUT_END ? GHOST_BASE + slot - OUTPUT_END - 1 : -1;
         }
 
         @Override
         public ItemStack getStackInSlot(int slot) {
-            if (slot >= OUTPUT_START && slot <= OUTPUT_END && config().allowsOutputSlot(slot)) {
-                return automationView(slot);
+            int ghost = ghostOf(slot);
+            if (ghost >= 0) return config().allowsOutputs() ? automationView(ghost) : ItemStack.EMPTY;
+            if (slot >= OUTPUT_START && slot <= OUTPUT_END) {
+                return config().allowsOutputSlot(slot) ? inventory.getStackInSlot(slot) : ItemStack.EMPTY;
             }
             ItemStack stack = inventory.getStackInSlot(slot);
             // A Tesseract in the grid is a link, not an ingredient or stock: networks and pipes don't list it.
@@ -1770,8 +1769,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int ghost = ghostOf(slot);
+            if (ghost >= 0) return config().allowsOutputs() ? extractForAutomation(ghost, amount, simulate) : ItemStack.EMPTY;
             if (!config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
-            return extractForAutomation(slot, amount, simulate);
+            return inventory.extractItem(slot, amount, simulate);
         }
 
         @Override
@@ -1815,10 +1816,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             flushFlux();
         }
 
-        /** An output slot with nothing real in it: pulling it crafts what its preview shows. */
+        /** A slot past the outputs: pulling it crafts what its preview shows. */
         @Override
         public boolean producesOnDemand(int slot) {
-            return slot >= OUTPUT_START && slot <= OUTPUT_END && inventory.getStackInSlot(slot).isEmpty();
+            return slot > OUTPUT_END;
         }
 
         @Override
@@ -2033,8 +2034,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
         if (tag.contains("GhostSlots")) {
             ListTag slots = tag.getListOrEmpty("GhostSlots");
-            GhostSlot[] layout = new GhostSlot[OUTPUT_END - OUTPUT_START + 1];
-            for (int local = 0; local < layout.length && local < slots.size(); local++) {
+            GhostSlot[] layout = new GhostSlot[slots.size()];
+            for (int local = 0; local < layout.length; local++) {
                 CompoundTag entry = slots.getCompoundOrEmpty(local);
                 int craftIndex = entry.getIntOr("C", 0);
                 int outputIndex = entry.getIntOr("O", 0);

@@ -158,6 +158,11 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         spots = null;
     }
 
+    @Override
+    public void movedQuietly() {
+        spots = null;
+    }
+
     /** Where each thing on the network is, and the tick it was looked over. */
     @org.jetbrains.annotations.Nullable
     private java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots;

@@ -58,7 +58,7 @@ public final class CrafterTests {
         TestSupport.fill(crafter.getEnergyStorage());
         crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 16));
         helper.runAfterDelay(20, () -> {
-            int slot = ghostSlot(crafter, Items.STONE);
+            int slot = ghostId(crafter, Items.STONE);
             ItemStack one = crafter.takeGhost(slot, 1);
             helper.assertValueEqual(one.getCount(), 1, "one stone");
             helper.assertValueEqual(crafter.getInventory().getStackInSlot(0).getCount(), 15, "for one cobblestone");
@@ -80,8 +80,8 @@ public final class CrafterTests {
             crafter.rebuildPreview();
             var menu = (com.kadikular.quantimium.menu.QuantumCrafterMenu) crafter.createMenu(1, player.getInventory(), player);
             int take = com.kadikular.quantimium.menu.QuantumCrafterMenu.TAKE;
-            java.util.function.IntSupplier stone = () -> ghostSlot(crafter, Items.STONE) - QuantumCrafterBlockEntity.OUTPUT_START;
-            helper.assertTrue(stone.getAsInt() >= 9, "the preview is past the dirt (" + stone.getAsInt() + ")");
+            java.util.function.IntSupplier stone = () -> ghostId(crafter, Items.STONE);
+            helper.assertTrue(stone.getAsInt() >= QuantumCrafterBlockEntity.GHOST_BASE, "a preview, not an output slot (" + stone.getAsInt() + ")");
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.HALF * take + stone.getAsInt()), "half taken");
             helper.assertValueEqual(menu.getCarried().getCount(), 32, "half a stack");
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.ONE * take + stone.getAsInt()), "one more");
@@ -111,7 +111,7 @@ public final class CrafterTests {
         ServerPlayer player = TestSupport.player(helper, CRAFTER.west(2));
         helper.runAfterDelay(20, () -> {
             var menu = (com.kadikular.quantimium.menu.QuantumCrafterMenu) crafter.createMenu(1, player.getInventory(), player);
-            int nugget = ghostSlot(crafter, Items.IRON_NUGGET) - QuantumCrafterBlockEntity.OUTPUT_START;
+            int nugget = ghostId(crafter, Items.IRON_NUGGET);
             helper.assertTrue(menu.clickMenuButton(player, com.kadikular.quantimium.menu.QuantumCrafterMenu.ONE
                     * com.kadikular.quantimium.menu.QuantumCrafterMenu.TAKE + nugget), "one taken");
             helper.assertValueEqual(menu.getCarried().getCount(), 1, "one nugget in hand");
@@ -135,6 +135,29 @@ public final class CrafterTests {
         helper.runAfterDelay(20, () -> {
             helper.assertTrue(craftOf(crafter, Items.IRON_INGOT) != null, "ingots from the blocks");
             helper.assertTrue(craftOf(crafter, Items.IRON_LEGGINGS) == null, "no leggings: that would chain");
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.preview
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_many", timeoutTicks = 60)
+    public static void aCrafterPreviewsMoreThanItsOutputSlots(GameTestHelper helper) {
+        // Eight kinds of planks and sticks in a crafting-table Crafter: more than 54 outputs previewed, and the last of
+        // them a pipe can still pull.
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.CRAFTING_TABLE);
+        TestSupport.fill(crafter.getEnergyStorage());
+        Item[] planks = {Items.OAK_PLANKS, Items.BIRCH_PLANKS, Items.SPRUCE_PLANKS, Items.JUNGLE_PLANKS, Items.ACACIA_PLANKS,
+                Items.DARK_OAK_PLANKS, Items.MANGROVE_PLANKS, Items.CHERRY_PLANKS};
+        for (int i = 0; i < planks.length; i++) crafter.getInventory().setStackInSlot(i, new ItemStack(planks[i], 64));
+        crafter.getInventory().setStackInSlot(8, new ItemStack(Items.STICK, 64));
+        helper.runAfterDelay(20, () -> {
+            crafter.rebuildPreview();
+            int previews = crafter.ghostCount();
+            helper.assertTrue(previews > 54, "more previews than output slots: " + previews);
+            int last = QuantumCrafterBlockEntity.OUTPUT_END + previews;
+            ItemStack shown = crafter.pullHandler().getStackInSlot(last);
+            ItemStack taken = crafter.pullHandler().extractItem(last, 1, false);
+            helper.assertTrue(!taken.isEmpty() && ItemStack.isSameItem(taken, shown), "the last preview pulled: " + shown + " gave " + taken);
             helper.succeed();
         });
     }
@@ -532,9 +555,14 @@ public final class CrafterTests {
         return null;
     }
 
-    /** The output slot showing a ghost of {@code item}; fails the test if there is none. */
+    /** The slot a pipe pulls a preview of {@code item} from; fails the test if there is none. */
     public static int ghostSlot(QuantumCrafterBlockEntity crafter, Item item) {
-        for (int slot = QuantumCrafterBlockEntity.OUTPUT_START; slot <= QuantumCrafterBlockEntity.OUTPUT_END; slot++) {
+        return QuantumCrafterBlockEntity.OUTPUT_END + 1 + ghostId(crafter, item) - QuantumCrafterBlockEntity.GHOST_BASE;
+    }
+
+    /** The preview of {@code item}, as the Crafter numbers it (from GHOST_BASE); fails the test if there is none. */
+    public static int ghostId(QuantumCrafterBlockEntity crafter, Item item) {
+        for (int slot = QuantumCrafterBlockEntity.GHOST_BASE; slot < QuantumCrafterBlockEntity.GHOST_BASE + crafter.ghostCount(); slot++) {
             if (crafter.getGhost(slot).is(item)) return slot;
         }
         throw new AssertionError("no ghost of " + item + " in the preview");

@@ -56,8 +56,8 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private static final int CELL = 18;
 
     /**
-     * One item shown: an output slot showing it (0 to 53), how many are in its outputs, how many more it can make,
-     * and the slot previewing it (-1 for none).
+     * One item shown: where it's shown (an output slot, 0 to 53, or a preview, from GHOST_BASE), how many are in its
+     * outputs, how many more it can make, and the preview that can make the most of it (-1 for none).
      */
     private record Cell(int slot, ItemStack stack, long stored, long craftable, int previewSlot) {
         long count() {
@@ -185,26 +185,29 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private List<Cell> cells() {
         QuantumCrafterBlockEntity be = menu.getBlockEntity();
         String query = search == null ? "" : search.getValue().trim().toLowerCase(Locale.ROOT);
-        // As a terminal does: what's there and what can be made of one item in one cell.
+        // As a terminal does: what's there and what can be made of one item in one cell. What's there is in its
+        // output slots; what it can make, in its previews, as many as there are.
         List<Cell> latest = new ArrayList<>();
-        for (int slot = 0; slot < QuantumCrafterBlockEntity.OUTPUT_SLOTS; slot++) {
-            int absolute = QuantumCrafterBlockEntity.OUTPUT_START + slot;
-            ItemStack real = be.getInventory().getStackInSlot(absolute);
+        int previews = be.ghostCount();
+        for (int i = 0; i < QuantumCrafterBlockEntity.OUTPUT_SLOTS + previews; i++) {
+            boolean real = i < QuantumCrafterBlockEntity.OUTPUT_SLOTS;
+            int slot = real ? i : QuantumCrafterBlockEntity.GHOST_BASE + i - QuantumCrafterBlockEntity.OUTPUT_SLOTS;
             ItemStack stack;
             long stored = 0, craftable = 0;
             int previewSlot = -1;
-            if (!real.isEmpty()) {
-                stack = real;
-                stored = real.getCount();
+            if (real) {
+                stack = be.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + slot);
+                if (stack.isEmpty()) continue;
+                stored = stack.getCount();
             } else {
-                QuantumCrafterBlockEntity.GhostSlot ghost = be.ghostAt(absolute);
-                stack = be.getGhost(absolute);
+                QuantumCrafterBlockEntity.GhostSlot ghost = be.ghostAt(slot);
+                stack = be.getGhost(slot);
                 if (ghost == null || stack.isEmpty()) continue;
                 craftable = Math.max(stack.getCount(), ghost.available());
                 previewSlot = slot;
             }
             int at = -1;
-            for (int i = 0; i < latest.size(); i++) if (ItemStack.isSameItemSameComponents(latest.get(i).stack(), stack)) at = i;
+            for (int j = 0; j < latest.size(); j++) if (ItemStack.isSameItemSameComponents(latest.get(j).stack(), stack)) at = j;
             if (at < 0) {
                 if (query.isEmpty() || stack.getHoverName().getString().toLowerCase(Locale.ROOT).contains(query)) {
                     latest.add(new Cell(slot, stack, stored, craftable, previewSlot));
@@ -319,7 +322,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
             lines.add(Component.translatable("gui.quantimium.quantum_crafter.stored", String.format(Locale.ROOT, "%,d", cell.stored()))
                     .withStyle(ChatFormatting.GRAY));
         }
-        if (cell.previewSlot() >= 0) lines.addAll(previewLines(QuantumCrafterBlockEntity.OUTPUT_START + cell.previewSlot()));
+        if (cell.previewSlot() >= 0) lines.addAll(previewLines(cell.previewSlot()));
         graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
     }
 

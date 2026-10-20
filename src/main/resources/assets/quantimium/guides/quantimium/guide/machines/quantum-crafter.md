@@ -111,8 +111,9 @@ Every craft the catalyst can make from the grid's contents is shown in
 the output grid as a faint ghost stack, sized to the **largest batch** it could make right now. The
 panel reads *"Wavefunction preview — take to collapse"*.
 
-- The grid holds up to 54 stacks of ghosts. A craft with several
-  outputs is shown whole or not at all.
+- Ghosts aren't slots: it shows every craft it can make (up to 1,024 output
+  stacks), and its 54 output slots hold only what it has really made.
+  A craft with several outputs is shown whole.
 - Block and nugget results come first, then the crafts that use up the most.
 - Ingredients are **pooled**. Nine iron ingots in one slot fill all nine positions of an iron block
   recipe; positions in the grid don't matter.
@@ -223,7 +224,8 @@ uses the preferred recipe when it is available, otherwise the first one in the p
 **Basic Quantum Crafter.** Every face is both an input and an output, with no configuration and no
 auto push or pull. Hoppers and pipes do the moving.
 
-Automation reaches the grid and the output slots only; the catalyst goes in by hand.
+Automation reaches the grid and the output slots only; the catalyst goes in by hand. A pipe or
+network sees each ghost as a slot after the outputs, on any face that lets something out.
 
 ## Tesseracts in the grid
 

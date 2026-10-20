@@ -20,8 +20,11 @@ public interface LogisticsController {
         return OfferTable.EMPTY;
     }
 
-    /** Something moved on its network: the offers are worked out again when next read. */
+    /** Something moved on its network that a player is watching for (a terminal take): the offers are worked out again soon. */
     default void stockMoved() {}
+
+    /** Something moved on its network by itself (a pipe, a lens, a receptacle): the offers catch up at their usual pace. */
+    default void movedQuietly() {}
 
     /** Where each thing on its network is, looked over at most once a tick and again after a move (see {@link Logistics#locate}). */
     default java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<Logistics.Spot>> spots() {

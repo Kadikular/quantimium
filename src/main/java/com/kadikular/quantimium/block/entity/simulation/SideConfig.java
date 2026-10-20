@@ -76,6 +76,11 @@ public record SideConfig(
         return itemMode.allowsInput() && slot >= 0 && slot < 9 && (itemInputMask & (1 << slot)) != 0;
     }
 
+    /** Whether this face lets anything out: a Crafter's previews, which have no output slot of their own, go by this. */
+    public boolean allowsOutputs() {
+        return itemMode.allowsOutput() && itemOutputMask != 0;
+    }
+
     public boolean allowsOutputSlot(int slot) {
         // Crafters repeat the nine-position mask across six catalog pages. Simulators only use
         // the first page, so this remains backwards compatible for both machines.
