@@ -167,6 +167,20 @@ public final class OfferTable {
         return stock;
     }
 
+    /** What every machine is shown on its first look, made or not: the same each time it's asked of this table. */
+    private Map<ItemResource, Long> shown(boolean craftables) {
+        Map<ItemResource, Long> kept = craftables ? shownWithMade : shownStored;
+        if (kept == null) {
+            kept = java.util.Collections.unmodifiableMap(stock(null, true, craftables, Set.of()));
+            if (craftables) shownWithMade = kept;
+            else shownStored = kept;
+        }
+        return kept;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private Map<ItemResource, Long> shownWithMade, shownStored;
+
     /** What the machine at {@code maker} could make, by the table. */
     /** Where the machines are that could make some of {@code item}. */
     public Set<BlockPos> makers(ItemResource item) {
@@ -473,7 +487,8 @@ public final class OfferTable {
                 // Shown its own crafts too, so one machine can chain its own steps (ingots from blocks, then leggings);
                 // what would loop back through itself is caught as any loop is. Looping crafts are asked about again
                 // together, with what was made from any of them left out: one more look whatever their number.
-                making = maker.making(network, stock(null, true, chains, looped == null ? Set.of() : avoid), chains);
+                // First looks see the same stock, machine after machine, this tier: worked out once.
+                making = maker.making(network, looped == null ? shown(chains) : stock(null, true, chains, avoid), chains);
             }
             if (!making.step()) return false;
             List<OfferMaker.Made> made = making.result();

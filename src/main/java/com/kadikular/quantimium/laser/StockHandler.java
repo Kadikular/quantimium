@@ -46,6 +46,23 @@ public final class StockHandler implements ResourceHandler<ItemResource> {
         return hash;
     }
 
+    /** The items it shows. */
+    public List<ItemResource> items() {
+        return java.util.Collections.unmodifiableList(items);
+    }
+
+    /** Which items it shows, not how many, as one number: worked out once. */
+    public int itemsHash() {
+        if (!itemsHashed) {
+            itemsHash = items.hashCode();
+            itemsHashed = true;
+        }
+        return itemsHash;
+    }
+
+    private int itemsHash;
+    private boolean itemsHashed;
+
     @Override
     public int size() {
         return items.size();

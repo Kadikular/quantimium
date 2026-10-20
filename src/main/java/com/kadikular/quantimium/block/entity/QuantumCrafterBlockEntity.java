@@ -690,11 +690,25 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
             if (controller == null) continue;
             views.put(bound, network != null && controller == network && stock != null
-                    ? new com.kadikular.quantimium.laser.StockHandler(stock)
+                    ? handlerFor(stock)
                     : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable));
         }
         return views;
     }
+
+    /** {@code stock} as a handler: the same one while it's the same stock (a network shows every machine one, a tier). */
+    private com.kadikular.quantimium.laser.StockHandler handlerFor(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock) {
+        if (stock != handledStock || stockHandler == null) {
+            handledStock = stock;
+            stockHandler = new com.kadikular.quantimium.laser.StockHandler(stock);
+        }
+        return stockHandler;
+    }
+
+    @Nullable
+    private java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> handledStock;
+    @Nullable
+    private com.kadikular.quantimium.laser.StockHandler stockHandler;
 
     /** Runs {@code body} with its network links seeing the networks' offers rather than the live networks. */
     private <T> T onOffers(java.util.function.Supplier<T> body) {
@@ -771,7 +785,82 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 recipeLocked, String.valueOf(preferredRecipeId), coherenceReserve);
         List<com.kadikular.quantimium.laser.OfferMaker.Made> known = makesAnswers.get(asked);
         if (known != null) return new Making(known);
-        return new Making(asked, views, new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
+        // Shown nothing it wasn't shown a little while ago, only in other numbers, or less of it: the crafts it found
+        // then, their batches worked out again, rather than every recipe matched again (most of a busy network's
+        // working out). Something new to it, or every so often, it matches them all again: more of something can make
+        // a recipe possible that wasn't.
+        List<Object> shape = shapeOf(views, fromCraftable, catalyst, multiplier);
+        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown = shownItems(views);
+        Matched matched = matchedByShape.get(shape);
+        if (matched != null && level.getGameTime() - matched.tick() < REMATCH_TICKS && matched.seen().containsAll(shown)) {
+            return new Making(asked, views, matched.crafts(), fe);
+        }
+        Making making = new Making(asked, views, new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
+        making.shape = shape;
+        making.shown = shown;
+        return making;
+    }
+
+    /** What it's shown, less how many: its grid's items and each view's items, and what it makes things with. */
+    private List<Object> shapeOf(java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views,
+                                 boolean fromCraftable, ItemStack catalyst, double multiplier) {
+        List<Object> shape = new ArrayList<>();
+        shape.add(fromCraftable);
+        shape.add(catalyst.getItem());
+        shape.add(Math.round(multiplier * 1000));
+        shape.add(recipeLocked);
+        shape.add(String.valueOf(preferredRecipeId));
+        long grid = 1;
+        for (int i = 0; i < INPUT_SLOTS; i++) {
+            ItemStack stack = inventory.getStackInSlot(i);
+            grid = grid * 31 + (stack.isEmpty() ? 0 : stack.getItem().hashCode() * 31L + stack.getComponents().hashCode());
+        }
+        shape.add(grid);
+        views.keySet().stream().sorted(java.util.Comparator.comparing(GlobalPos::toString)).forEach(shape::add);
+        return shape;
+    }
+
+    /** Every item its views show. */
+    private static java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shownItems(
+            java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views) {
+        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown = new java.util.HashSet<>();
+        for (var view : views.values()) {
+            if (view instanceof com.kadikular.quantimium.laser.StockHandler stock) shown.addAll(stock.items());
+            else for (int i = 0; i < view.size(); i++) shown.add(view.getResource(i));
+        }
+        return shown;
+    }
+
+    /** How long crafts found for a shape are only resized before every recipe is matched again. */
+    private static final int REMATCH_TICKS = 100;
+
+    /** Crafts found by matching every recipe, by the shape of what it was shown, and when. */
+    private record Matched(List<ResolvedCraft> crafts, long tick, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen) {}
+
+    private final java.util.Map<List<Object>, Matched> matchedByShape = new java.util.LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<List<Object>, Matched> eldest) {
+            return size() > 16;
+        }
+    };
+
+    /**
+     * {@code crafts}, their batches worked out again from what it's shown now (under the views): those it can't make a
+     * run of any more left out. A craft that comes out as it was is the same craft, so a Crafter shown it again
+     * sees nothing's changed.
+     */
+    private List<ResolvedCraft> resized(List<ResolvedCraft> crafts, int fe) {
+        IngredientPool pool = IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS);
+        java.util.Map<Identifier, ResolvedCraft> was = new java.util.HashMap<>();
+        for (ResolvedCraft craft : preview) was.putIfAbsent(craft.recipeId(), craft);
+        List<ResolvedCraft> next = new ArrayList<>(crafts.size());
+        for (ResolvedCraft craft : crafts) {
+            if (!craft.runSatisfiedBy(pool)) continue;
+            ResolvedCraft resized = craft.withRuns(1).largestBatch(pool, fe);
+            ResolvedCraft same = was.get(resized.recipeId());
+            next.add(resized.equals(same) ? same : resized);
+        }
+        return next;
     }
 
     /** Working out what it could make for a network: a preview run under the network's offers, a slice a step. */
@@ -782,6 +871,15 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         private final java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views;
         @Nullable
         private final CrafterPreview.Run run;
+        /** Crafts found before, to resize rather than match every recipe again; null to match them all. */
+        @Nullable
+        private final List<ResolvedCraft> resize;
+        private final int fe;
+        /** What it was shown, less how many: the crafts a full match finds are kept under it, with what was shown. */
+        @Nullable
+        List<Object> shape;
+        @Nullable
+        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown;
         @Nullable
         private List<com.kadikular.quantimium.laser.OfferMaker.Made> result;
 
@@ -790,6 +888,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             this.asked = null;
             this.views = null;
             this.run = null;
+            this.resize = null;
+            this.fe = 0;
             this.result = known;
         }
 
@@ -798,6 +898,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             this.asked = asked;
             this.views = views;
             this.run = run;
+            this.resize = null;
+            this.fe = 0;
+        }
+
+        Making(List<Object> asked, java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views,
+               List<ResolvedCraft> resize, int fe) {
+            this.asked = asked;
+            this.views = views;
+            this.run = null;
+            this.resize = resize;
+            this.fe = fe;
         }
 
         @Override
@@ -807,8 +918,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         boolean step(long nanos) {
             if (result != null) return true;
-            if (!EntangledLinks.withOverrides(views, () -> run.step(nanos))) return false;
-            List<ResolvedCraft> crafts = run.result();
+            List<ResolvedCraft> crafts;
+            if (resize != null) {
+                crafts = EntangledLinks.withOverrides(views, () -> resized(resize, fe));
+            } else {
+                if (!EntangledLinks.withOverrides(views, () -> run.step(nanos))) return false;
+                crafts = run.result();
+                if (shape != null && shown != null && level != null) matchedByShape.put(shape, new Matched(crafts, level.getGameTime(), shown));
+            }
             if (isBasic()) crafts = limitToCoherence(crafts);
             if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
             List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
