@@ -479,7 +479,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // Someone has its screen open: it looks at its links, and tells their screen, every tick.
         watchedNow = watchedByPlayer();
         // Its screen open, the networks it draws on are watched too: they keep what they offer up to date for it.
-        if (watchedNow) for (var network : linkedNetworks()) network.watched();
+        if (watchedNow) {
+            for (var network : linkedNetworks()) network.watched();
+            com.kadikular.quantimium.work.WorkQueue.hurry(this, com.kadikular.quantimium.work.WorkQueue.URGENT);
+        }
         if (localDirty || watchedNow || gameTime >= nextRemotePollTick) {
             nextRemotePollTick = gameTime + REMOTE_POLL_TICKS;
             refreshPreviewIfNeeded();
@@ -589,22 +592,47 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** Whether a full rebuild is waiting in the queue: it covers any resize asked for meanwhile. */
     private boolean rebuildQueued;
 
+    /** Whether a resize is waiting, for after any rebuild under way. */
+    private boolean rescaleQueued;
+    /** The preview being worked out in the queue, between steps; null when none is. */
+    @Nullable
+    private PreviewBuild previewBuilding;
+
     /**
-     * Works its preview out again (all of it, or the batches of what it already shows), in the background (see
-     * {@link com.kadikular.quantimium.work.WorkQueue}): a crafting table on a big network previews a thousand crafts,
-     * and a few crafters doing that in one tick would stall the server. Sooner while someone has its screen open.
+     * Works its preview out again (all of it, or the batches of what it already shows), in the background, a step at
+     * a time (see {@link com.kadikular.quantimium.work.WorkQueue}): a crafting table on a big network previews a
+     * thousand crafts, which done at once would stall the server. Sooner while someone has its screen open.
      */
     private void queueRefresh(boolean full) {
-        rebuildQueued |= full;
+        if (full) rebuildQueued = true;
+        else rescaleQueued = true;
         int priority = watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
-        com.kadikular.quantimium.work.WorkQueue.submit(this, priority, () -> {
-            if (isRemoved() || level == null) return true;
-            boolean rebuild = rebuildQueued;
-            rebuildQueued = false;
-            if (rebuild) rebuildPreview();
-            else rescaleCachedPreview();
+        if (com.kadikular.quantimium.work.WorkQueue.waiting(this)) com.kadikular.quantimium.work.WorkQueue.hurry(this, priority);
+        else com.kadikular.quantimium.work.WorkQueue.submit(this, priority, this::refreshStep);
+    }
+
+    /** A step of what's queued: a rebuild under way, a new one (asked for again while one ran: its inputs changed), or a resize. */
+    private boolean refreshStep() {
+        if (isRemoved() || level == null) {
+            previewBuilding = null;
             return true;
-        });
+        }
+        if (previewBuilding == null) {
+            if (rebuildQueued) {
+                rebuildQueued = false;
+                rescaleQueued = false;
+                previewBuilding = startPreviewBuild();
+                return previewBuilding == null && !rebuildQueued && !rescaleQueued;
+            }
+            if (rescaleQueued) {
+                rescaleQueued = false;
+                rescaleCachedPreview();
+            }
+            return !rebuildQueued && !rescaleQueued;
+        }
+        if (!previewBuilding.step(PREVIEW_SLICE_NANOS)) return false;
+        previewBuilding = null;
+        return !rebuildQueued && !rescaleQueued;
     }
 
     /** Works its whole preview out again soon, first in the queue: after a player took something from its screen. */
@@ -712,40 +740,95 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     public List<com.kadikular.quantimium.laser.OfferMaker.Made> makes(
             com.kadikular.quantimium.laser.LogisticsController network,
             java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock, boolean fromCraftable) {
-        List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
-        if (level == null || level.isClientSide() || linkLoopDetected) return made;
+        Making making = making(network, stock, fromCraftable);
+        while (!making.step(Long.MAX_VALUE)) {
+            // all at once
+        }
+        return making.result();
+    }
+
+    /**
+     * What it could make if a network offered {@code stock}, a step at a time: asked the same again (the same stock
+     * shown, nothing of its own changed), it answers as before at once; otherwise it looks through its recipes a
+     * slice at a time.
+     */
+    @Override
+    public Making making(com.kadikular.quantimium.laser.LogisticsController network,
+                         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock, boolean fromCraftable) {
+        if (level == null || level.isClientSide() || linkLoopDetected) return new Making(List.of());
         ItemStack catalyst = inventory.getStackInSlot(CATALYST_SLOT);
-        if (catalyst.isEmpty() || isCatalystDenied(catalyst) || needsHotterField(catalyst)) return made;
+        if (catalyst.isEmpty() || isCatalystDenied(catalyst) || needsHotterField(catalyst)) return new Making(List.of());
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
         int fe = energyStorage.getEnergyStored();
         var views = networkViews(network, stock, fromCraftable, true);
-        // Asked the same again (the same stock shown, nothing of its own changed), it answers as before: a network
-        // works out its offers often, and most of the time nothing a crafter would make from has moved.
         // Its power only to a twentieth of what it holds: it charges and drains every tick, and what it could make
         // barely moves with it.
         int power = fe >= energyStorage.getMaxEnergyStored() ? 20 : fe * 20 / Math.max(1, energyStorage.getMaxEnergyStored());
         List<Object> asked = List.of(views, fromCraftable, contentRevision, power, Math.round(multiplier * 1000), catalyst.getItem(),
                 recipeLocked, String.valueOf(preferredRecipeId), coherenceReserve);
         List<com.kadikular.quantimium.laser.OfferMaker.Made> known = makesAnswers.get(asked);
-        if (known != null) return known;
-        List<ResolvedCraft> crafts = EntangledLinks.withOverrides(views,
-                () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
-        if (isBasic()) crafts = limitToCoherence(crafts);
-        if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
-        for (ResolvedCraft craft : crafts) {
-            java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
-            for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) from.add(withdrawal.expected());
-            List<ItemStack> outputs = craft.outputs();
-            for (int i = 0; i < outputs.size(); i++) {
-                ItemStack output = outputs.get(i);
-                if (output.isEmpty()) continue;
-                made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(net.neoforged.neoforge.transfer.item.ItemResource.of(output),
-                        canMake(craft, i), java.util.Set.copyOf(from)));
-            }
+        if (known != null) return new Making(known);
+        return new Making(asked, views, new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
+    }
+
+    /** Working out what it could make for a network: a preview run under the network's offers, a slice a step. */
+    private final class Making implements com.kadikular.quantimium.laser.OfferMaker.Making {
+        @Nullable
+        private final List<Object> asked;
+        @Nullable
+        private final java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views;
+        @Nullable
+        private final CrafterPreview.Run run;
+        @Nullable
+        private List<com.kadikular.quantimium.laser.OfferMaker.Made> result;
+
+        /** Already known. */
+        Making(List<com.kadikular.quantimium.laser.OfferMaker.Made> known) {
+            this.asked = null;
+            this.views = null;
+            this.run = null;
+            this.result = known;
         }
-        List<com.kadikular.quantimium.laser.OfferMaker.Made> answer = List.copyOf(made);
-        makesAnswers.put(asked, answer);
-        return answer;
+
+        Making(List<Object> asked, java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views,
+               CrafterPreview.Run run) {
+            this.asked = asked;
+            this.views = views;
+            this.run = run;
+        }
+
+        @Override
+        public boolean step() {
+            return step(PREVIEW_SLICE_NANOS);
+        }
+
+        boolean step(long nanos) {
+            if (result != null) return true;
+            if (!EntangledLinks.withOverrides(views, () -> run.step(nanos))) return false;
+            List<ResolvedCraft> crafts = run.result();
+            if (isBasic()) crafts = limitToCoherence(crafts);
+            if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
+            List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
+            for (ResolvedCraft craft : crafts) {
+                java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
+                for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) from.add(withdrawal.expected());
+                List<ItemStack> outputs = craft.outputs();
+                for (int i = 0; i < outputs.size(); i++) {
+                    ItemStack output = outputs.get(i);
+                    if (output.isEmpty()) continue;
+                    made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(net.neoforged.neoforge.transfer.item.ItemResource.of(output),
+                            canMake(craft, i), java.util.Set.copyOf(from)));
+                }
+            }
+            result = List.copyOf(made);
+            makesAnswers.put(asked, result);
+            return true;
+        }
+
+        @Override
+        public List<com.kadikular.quantimium.laser.OfferMaker.Made> result() {
+            return result == null ? List.of() : result;
+        }
     }
 
     /** How many of output {@code index} a craft could make from what it has: "Can make", not one batch. */
@@ -801,62 +884,107 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return slot > OUTPUT_END;
     }
 
+    /** Works its preview out again, all at once. */
     public void rebuildPreview() {
-        if (level == null || level.isClientSide()) return;
+        PreviewBuild build = startPreviewBuild();
+        if (build == null) return;
+        while (!build.step(Long.MAX_VALUE)) {
+            // all at once
+        }
+    }
+
+    /** How long one step of working a preview out takes, at most: a crafting table's thousand recipes take several. */
+    private static final long PREVIEW_SLICE_NANOS = 1_000_000;
+
+    /**
+     * Starts working its preview out again: what it can't make anything for (no catalyst, a denied one, too cold a
+     * field, a loop of links) is shown at once, and null comes back; otherwise a build to step.
+     */
+    @Nullable
+    private PreviewBuild startPreviewBuild() {
+        if (level == null || level.isClientSide()) return null;
 
         updateLinkLoopState();
         ghostLayout = null;
         if (linkLoopDetected) {
-            preview = List.of();
-            statusCode = STATUS_ENTANGLED_LOOP;
-            previewChanged();
-            sync();
-            return;
+            showNothing(STATUS_ENTANGLED_LOOP);
+            return null;
         }
         ItemStack catalyst = inventory.getStackInSlot(CATALYST_SLOT);
         if (catalyst.isEmpty()) {
-            preview = List.of();
-            statusCode = STATUS_IDLE;
-            previewChanged();
-            sync();
-            return;
+            showNothing(STATUS_IDLE);
+            return null;
         }
         if (isCatalystDenied(catalyst)) {
-            preview = List.of();
-            statusCode = STATUS_DENIED;
-            previewChanged();
-            sync();
-            return;
+            showNothing(STATUS_DENIED);
+            return null;
         }
         if (needsHotterField(catalyst)) {
-            preview = List.of();
-            statusCode = STATUS_NEEDS_FLUX;
-            previewChanged();
-            sync();
-            return;
+            showNothing(STATUS_NEEDS_FLUX);
+            return null;
         }
-
-        int availableFe = energyStorage.getEnergyStored();
         // The anomaly surcharge, times the instant-craft tax for the band here: a hot field crafts cheaper.
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
-        List<ResolvedCraft> crafts;
-        boolean priorBusy = automationBusy;
-        enterChain();
-        java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
-        try {
-            crafts = onOffers(() -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
-            // On a network that says it could chain its own crafts (leggings from ingots it would make from blocks),
-            // those too: worked out again with its own crafts on offer, for what the network says it can make. A
-            // craft it already shows from what's there is shown as the chain would make it, if that's more.
-            java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = madeOnItsNetworks();
-            if (!chainable.isEmpty()) {
-                List<ResolvedCraft> more = onOffers(true, () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
+        return new PreviewBuild(catalyst, energyStorage.getEnergyStored(), multiplier);
+    }
+
+    private void showNothing(int status) {
+        preview = List.of();
+        statusCode = status;
+        previewChanged();
+        sync();
+    }
+
+    /**
+     * Its preview worked out a step at a time: what it makes from what it has, then (on a network that says it could
+     * chain its own crafts) what it makes with its own crafts on offer too, then shown.
+     */
+    private final class PreviewBuild {
+        private final ItemStack catalyst;
+        private final int fe;
+        private final double multiplier;
+        @Nullable
+        private CrafterPreview.Run first;
+        @Nullable
+        private CrafterPreview.Run more;
+        private List<ResolvedCraft> crafts = List.of();
+        private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = java.util.Set.of();
+
+        PreviewBuild(ItemStack catalyst, int fe, double multiplier) {
+            this.catalyst = catalyst.copy();
+            this.fe = fe;
+            this.multiplier = multiplier;
+        }
+
+        /** Works for about {@code nanos}; whether it's done and shown. */
+        boolean step(long nanos) {
+            if (level == null) return true;
+            boolean priorBusy = automationBusy;
+            enterChain();
+            try {
+                if (first == null) first = new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, CrafterPreview.MAX_OUTPUTS);
+                if (!first.done()) {
+                    if (!onOffers(() -> first.step(nanos))) return false;
+                    crafts = first.result();
+                    // On a network that says it could chain its own crafts (leggings from ingots it would make from
+                    // blocks), those too: worked out again with its own crafts on offer, for what the network says.
+                    chainable = madeOnItsNetworks();
+                    if (chainable.isEmpty()) {
+                        show(crafts, java.util.Set.of());
+                        return true;
+                    }
+                    more = new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, CrafterPreview.MAX_OUTPUTS);
+                    if (nanos != Long.MAX_VALUE) return false;
+                }
+                if (!onOffers(true, () -> more.step(nanos))) return false;
+                // A craft it already shows from what's there is shown as the chain would make it, if that's more.
                 List<ResolvedCraft> joined = new ArrayList<>(crafts);
+                java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
                 java.util.Map<Identifier, Integer> at = new java.util.HashMap<>();
                 List<com.kadikular.quantimium.laser.OfferTable> networks = new ArrayList<>();
                 for (var controller : linkedNetworks()) networks.add(controller.offers());
                 for (int i = 0; i < joined.size(); i++) at.putIfAbsent(joined.get(i).recipeId(), i);
-                for (ResolvedCraft craft : more) {
+                for (ResolvedCraft craft : more.result()) {
                     boolean wanted = false;
                     for (ItemStack output : craft.outputs()) {
                         if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
@@ -874,11 +1002,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         chainedNow.add(craft.recipeId());
                     }
                 }
-                crafts = joined;
+                show(joined, chainedNow);
+                return true;
+            } finally {
+                exitChain(priorBusy);
             }
-        } finally {
-            exitChain(priorBusy);
         }
+    }
+
+    /** Shows {@code crafts} as its preview, those in {@code chainedNow} worked out with its own crafts on offer. */
+    private void show(List<ResolvedCraft> crafts, java.util.Set<Identifier> chainedNow) {
         chained = chainedNow;
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) {
@@ -944,7 +1077,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         if (next.isEmpty()) {
             // Cached recipes are spent; discover whatever else the grid can still make.
-            rebuildPreview();
+            queueRefresh(true);
             return;
         }
         if (recipeLocked && preferredRecipeId != null) {
@@ -956,7 +1089,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 }
             }
             if (!stillHasPreferred) {
-                rebuildPreview();
+                queueRefresh(true);
                 return;
             }
         }
@@ -1930,7 +2063,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
         if (level != null && !level.isClientSide()) {
-            rebuildPreview();
+            // Worked out again in the background, first in the queue; meanwhile the screen shows what it had.
+            queueRefresh(true);
             // Straight to the one opening it, ahead of the screen: sent with the level's other updates at the end of the
             // tick, the previews would arrive after the screen had opened empty.
             if (player instanceof net.minecraft.server.level.ServerPlayer server) server.connection.send(ClientboundBlockEntityDataPacket.create(this));

@@ -427,7 +427,7 @@ public class Quantimium {
                 if (context.player().level().getBlockEntity(payload.pos()) instanceof QuantumCrafterBlockEntity be
                         && be.isUsableBy(context.player())) {
                     be.setRecipeLocked(payload.locked());
-                    be.rebuildPreview();
+                    be.refreshSoon();
                 }
             })
         );

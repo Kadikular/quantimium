@@ -412,18 +412,27 @@ public final class OfferTable {
             this.chains = member.craftsFromCraftable();
         }
 
-        /** Asks once; whether it's done. */
+        /** The machine working out what it could make, between steps. */
+        @org.jetbrains.annotations.Nullable
+        private OfferMaker.Making making;
+
+        /** Asks a step's worth (a machine may take several to look through its recipes); whether it's done. */
         boolean look() {
-            if (looped == null) {
+            if (making == null) {
                 // Shown its own crafts too, so one machine can chain its own steps (ingots from blocks, then leggings);
-                // what would loop back through itself is caught as any loop is.
-                looped = collect(maker.makes(network, stock(null, true, chains, Set.of()), chains), pos, member, Set.of(), null, kept);
+                // what would loop back through itself is caught as any loop is. Looping crafts are asked about again
+                // together, with what was made from any of them left out: one more look whatever their number.
+                making = maker.making(network, stock(null, true, chains, looped == null ? Set.of() : avoid), chains);
+            }
+            if (!making.step()) return false;
+            List<OfferMaker.Made> made = making.result();
+            making = null;
+            if (looped == null) {
+                looped = collect(made, pos, member, Set.of(), null, kept);
                 avoid.addAll(looped);
                 return looped.isEmpty();
             }
-            // The crafts that loop, asked about again together, with what was made from any of them left out: one
-            // more look whatever the number of loops (a crafting table has dozens), not one each.
-            Set<Item> still = collect(maker.makes(network, stock(null, true, chains, avoid), chains), pos, member, avoid, looped, kept);
+            Set<Item> still = collect(made, pos, member, avoid, looped, kept);
             return still.isEmpty() || !avoid.addAll(still) || ++attempts >= LOOP_RETRIES;
         }
     }

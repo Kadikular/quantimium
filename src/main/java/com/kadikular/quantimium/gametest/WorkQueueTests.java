@@ -56,4 +56,21 @@ public final class WorkQueueTests {
             helper.assertTrue(ran[0], "the other ran");
         });
     }
+
+    // covers: work.queue
+    @GameTest(template = TestSupport.FLOOR_17, batch = "work_queue_flora", timeoutTicks = 200)
+    public static void floraGrowsAtItsOwnPaceNearSomeoneInTheMirror(GameTestHelper helper) {
+        // A chunk at Singularity flux with a player in the mirror beside it: its flora grows within a few seconds,
+        // as it always did. (With no one in the mirror it grows every half minute, in the background.)
+        net.minecraft.core.BlockPos centre = new net.minecraft.core.BlockPos(8, 2, 8);
+        TestSupport.setField(helper, centre, 5000.0, 0.0);
+        var player = TestSupport.player(helper, centre.above());
+        com.kadikular.quantimium.phase.MirrorPhase.enter(player, false);
+        var chunk = helper.getLevel().getChunkAt(helper.absolutePos(centre));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(com.kadikular.quantimium.phase.MirrorPhase.isPhased(player), "in the mirror");
+            helper.assertFalse(chunk.getData(com.kadikular.quantimium.init.ModAttachments.MIRROR_FLORA).isEmpty(), "flora has grown");
+            TestSupport.removePlayer(helper, player);
+        });
+    }
 }

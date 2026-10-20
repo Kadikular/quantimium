@@ -22,7 +22,8 @@ open from the mirror stands open for everyone, and a lever drives real redstone.
 ## What is there
 
 - **Flora.** Grey plants on every surface, denser as the field gets hotter. They are only records:
-  observers and other mods see air.
+  observers and other mods see air. Within a few chunks of someone in the mirror they grow and wither every
+  second; elsewhere, with no one there to see, every half minute, in the background.
 - **Mirror mites.** They roll in around phased players from Medium flux or anomaly, but only hunt
   from Medium anomaly up. They grow stronger at High, Critical and Singularity.
   [[mechanic:mirror.mite_traces]] One killed by a player leaves a [[item:quantimium_trace]] a quarter

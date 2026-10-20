@@ -26,8 +26,8 @@ import java.util.Map;
 @EventBusSubscriber(modid = Quantimium.MODID)
 public final class WorkQueue {
 
-    /** How urgent a job is: a player looking at what it works out, or not. */
-    public static final int URGENT = 100, NORMAL = 10;
+    /** How urgent a job is: a player looking at what it works out, or not, or what no one will see for a while. */
+    public static final int URGENT = 100, NORMAL = 10, BACKGROUND = 0;
 
     /** A piece of work done in steps. */
     @FunctionalInterface

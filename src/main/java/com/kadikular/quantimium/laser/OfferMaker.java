@@ -23,6 +23,31 @@ public interface OfferMaker {
      */
     List<Made> makes(LogisticsController network, Map<ItemResource, Long> stock, boolean fromCraftable);
 
+    /** Working out {@link #makes} a step at a time. */
+    interface Making {
+        /** Does a step; whether it's done. */
+        boolean step();
+
+        /** What it could make, once done. */
+        List<Made> result();
+    }
+
+    /** As {@link #makes}, a step at a time: a machine with a thousand recipes to look through needn't do it in one. */
+    default Making making(LogisticsController network, Map<ItemResource, Long> stock, boolean fromCraftable) {
+        List<Made> made = makes(network, stock, fromCraftable);
+        return new Making() {
+            @Override
+            public boolean step() {
+                return true;
+            }
+
+            @Override
+            public List<Made> result() {
+                return made;
+            }
+        };
+    }
+
     /** Whether a pull from {@code slot} of its automation view would make something rather than hand over what's there. */
     boolean makesOnDemand(int slot);
 

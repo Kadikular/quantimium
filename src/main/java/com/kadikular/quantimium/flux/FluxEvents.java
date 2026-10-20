@@ -89,6 +89,7 @@ public final class FluxEvents {
         int slice = server.getTickCount() % 20;
         if (slice == 0) stepFields(server);
 
+        Map<ResourceKey<Level>, List<ChunkPos>> phased = phasedPlayers(server);
         Iterator<Map.Entry<ChunkKey, Boolean>> iterator = ACTIVE.entrySet().iterator();
         while (iterator.hasNext()) {
             ChunkKey key = iterator.next().getKey();
@@ -116,13 +117,51 @@ public final class FluxEvents {
                     AnomaliteSpawner.tick(level, chunk, data);
                     AnomalyEntrySpawner.consider(level, chunk, data);
                 }
-                MirrorFloraSpawner.tick(level, chunk, fieldEmpty ? new ChunkFlux() : data);
+                tickFlora(server, level, chunk, key, fieldEmpty ? new ChunkFlux() : data, phased.getOrDefault(key.dimension(), List.of()));
                 flora = chunk.getExistingData(ModAttachments.MIRROR_FLORA).orElse(null);
                 if (fieldEmpty && (flora == null || flora.isEmpty())) iterator.remove();
             }
         }
         // The second's entry candidates, from every slice, rolled together at its end.
         if (slice == 19) AnomalyEntrySpawner.flush();
+    }
+
+    /** How near a player in the mirror flora grows at its own pace, in chunks; farther out, slowly, in the background. */
+    private static final int FLORA_NEAR_CHUNKS = 4;
+    /** How often a chunk's flora grows with no one in the mirror near it, in seconds. */
+    private static final int FLORA_SLOW_SECONDS = 30;
+
+    /** Where the players in the mirror are, by dimension, as chunks. */
+    private static Map<ResourceKey<Level>, List<ChunkPos>> phasedPlayers(MinecraftServer server) {
+        Map<ResourceKey<Level>, List<ChunkPos>> phased = new HashMap<>();
+        for (var player : server.getPlayerList().getPlayers()) {
+            if (com.kadikular.quantimium.phase.MirrorPhase.isPhased(player)) {
+                phased.computeIfAbsent(player.level().dimension(), d -> new ArrayList<>()).add(player.chunkPosition());
+            }
+        }
+        return phased;
+    }
+
+    /**
+     * A chunk's mirror flora, seen only from the mirror: near a player in it, every second as it always was; with no
+     * one there, every half minute, in the background ({@link com.kadikular.quantimium.work.WorkQueue}), last of all.
+     */
+    private static void tickFlora(MinecraftServer server, ServerLevel level, LevelChunk chunk, ChunkKey key, ChunkFlux data, List<ChunkPos> phased) {
+        ChunkPos pos = chunk.getPos();
+        for (ChunkPos near : phased) {
+            if (Math.max(Math.abs(near.x() - pos.x()), Math.abs(near.z() - pos.z())) <= FLORA_NEAR_CHUNKS) {
+                MirrorFloraSpawner.tick(level, chunk, data);
+                return;
+            }
+        }
+        if (server.getTickCount() / 20 % FLORA_SLOW_SECONDS != Math.floorMod(key.hashCode() / 20, FLORA_SLOW_SECONDS)) return;
+        com.kadikular.quantimium.work.WorkQueue.submit(key, com.kadikular.quantimium.work.WorkQueue.BACKGROUND, () -> {
+            if (!level.hasChunk(pos.x(), pos.z())) return true;
+            LevelChunk now = level.getChunk(pos.x(), pos.z());
+            ChunkFlux field = now.getExistingData(ModAttachments.CHUNK_FLUX).orElse(new ChunkFlux());
+            MirrorFloraSpawner.tick(level, now, field);
+            return true;
+        });
     }
 
     /** Field Model 2.0: one second of release, coupling, decay and diffusion, dimension by dimension. */
