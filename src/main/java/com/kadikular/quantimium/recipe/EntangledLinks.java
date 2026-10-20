@@ -263,6 +263,13 @@ public final class EntangledLinks {
                 countTotal += crafter.advertisedCount();
                 continue;
             }
+            if (target instanceof com.kadikular.quantimium.block.entity.LogisticsMaterialiserBlockEntity materialiser) {
+                // A whole network's offers: summarised once each time they change, not slot by slot every look.
+                RemoteSummary network = materialiser.summary();
+                typeHash = typeHash * 31 + network.typeHash();
+                countTotal += network.countTotal();
+                continue;
+            }
             IItemHandler handler = resolve(level, source, stack);
             if (handler == null) {
                 typeHash = typeHash * 31 - 7;

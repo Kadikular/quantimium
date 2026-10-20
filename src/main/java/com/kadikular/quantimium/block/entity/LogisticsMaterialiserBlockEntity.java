@@ -179,6 +179,34 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     }
 
     /**
+     * Which items it shows and how many, as one hash and one count: what a Crafter drawing on it through a Tesseract
+     * checks every so often to see whether to work its preview out again. Kept while what it shows is.
+     */
+    public com.kadikular.quantimium.recipe.EntangledLinks.RemoteSummary summary() {
+        List<Entry> list = entries();
+        if (list != summarised || summary == null) {
+            java.util.Set<Integer> ids = new java.util.TreeSet<>();
+            long count = 0;
+            for (Entry entry : list) {
+                ItemStack stack = entry.item().toStack(1);
+                if (com.kadikular.quantimium.recipe.EntangledLinks.isLink(stack)) continue;
+                ids.add(net.minecraft.core.registries.BuiltInRegistries.ITEM.getId(stack.getItem()));
+                count = Math.min(Long.MAX_VALUE / 2, count + entry.amount());
+            }
+            long hash = 1;
+            for (int id : ids) hash = hash * 31 + id;
+            summary = new com.kadikular.quantimium.recipe.EntangledLinks.RemoteSummary(hash, count);
+            summarised = list;
+        }
+        return summary;
+    }
+
+    @Nullable
+    private com.kadikular.quantimium.recipe.EntangledLinks.RemoteSummary summary;
+    @Nullable
+    private List<Entry> summarised;
+
+    /**
      * The network as a handler. A move happens at once, inside the caller's transaction: the members' inventories
      * are reached through {@link com.kadikular.quantimium.util.LegacyItems#legacy}, so they join it, and an abort
      * puts everything back. What it says it moved, it moved. The controller is paid a move each when the

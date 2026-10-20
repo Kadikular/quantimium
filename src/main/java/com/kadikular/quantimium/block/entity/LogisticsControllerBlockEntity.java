@@ -130,7 +130,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     /** The fewest ticks between workings out of what the network offers, after a move a player made: none. */
     private static final int OFFERS_SOONEST = 0;
     /** The fewest ticks between workings out of what the network offers while someone's watching it change by itself. */
-    private static final int OFFERS_WATCHED = 4;
+    private static final int OFFERS_WATCHED = 10;
+    /** How long a network goes unlooked-at before a look counts as a player just opening a screen on it. */
+    private static final int WATCH_LAPSE = 40;
     private boolean workingOut;
 
     /**
@@ -165,7 +167,8 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
             }
             // What's there has moved since the offers were worked out (a hopper, a pipe, a hand in a chest).
             drifted = !stored.equals(offers.stored());
-            liveOffers = offers.withStored(stored);
+            // Nothing moved since last tick: the same table, so what's read from it (a terminal's list) is kept too.
+            if (liveOffers == null || liveFrom != offers || !stored.equals(liveOffers.stored())) liveOffers = offers.withStored(stored);
             liveTick = now;
             liveFrom = offers;
         }
@@ -194,9 +197,10 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         offersStale = false;
         drifted = false;
         building = new com.kadikular.quantimium.laser.OfferTable.Builder(this, worldPosition, members());
-        com.kadikular.quantimium.work.WorkQueue.submit(this, watched ? com.kadikular.quantimium.work.WorkQueue.URGENT
+        com.kadikular.quantimium.work.WorkQueue.submit(this, urgent ? com.kadikular.quantimium.work.WorkQueue.URGENT
                 : com.kadikular.quantimium.work.WorkQueue.NORMAL, this::buildStep);
         watched = false;
+        urgent = false;
     }
 
     /** A step of working the offers out; whether they're done. */
@@ -229,12 +233,27 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     /** The offers being worked out, a step at a time; null when they're not. */
     @org.jetbrains.annotations.Nullable
     private com.kadikular.quantimium.laser.OfferTable.Builder building;
-    /** Whether a player is looking at what it offers (a terminal open): its offers are worked out first. */
+    /** Whether a player is looking at what it offers (a terminal open): it's worked out again sooner as it changes. */
     private boolean watched;
+    /**
+     * Whether a player is waiting on the next working out (they just opened a screen on it, or moved something): that
+     * one goes first, with more of the tick. Only that one: a screen left open on a busy network doesn't keep the
+     * server working out its offers flat out.
+     */
+    private boolean urgent;
+    private long watchedTick = Long.MIN_VALUE;
 
     @Override
     public void watched() {
+        long now = level == null ? 0 : level.getGameTime();
+        if (watchedTick == Long.MIN_VALUE || now - watchedTick > WATCH_LAPSE) hurry();
+        watchedTick = now;
         watched = true;
+    }
+
+    /** The next working out, or the one under way, goes first. */
+    private void hurry() {
+        urgent = true;
         com.kadikular.quantimium.work.WorkQueue.hurry(this, com.kadikular.quantimium.work.WorkQueue.URGENT);
     }
 
@@ -243,8 +262,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         offersStale = true;
         spots = null;
         liveOffers = null;
-        // A player moved it: what can be made from what's left comes first.
         watched = true;
+        // A player moved it: what can be made from what's left comes first.
+        hurry();
     }
 
     @Override

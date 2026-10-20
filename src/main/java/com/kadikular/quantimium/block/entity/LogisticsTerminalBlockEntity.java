@@ -75,10 +75,11 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         // Only the slots last seen holding it are looked at, not every slot on the network.
         var spots = controller.spots();
         boolean stored = !Logistics.take(spots, item, count, true, true, false).isEmpty();
-        if (!stored && Logistics.take(spots, item, count, true, false, true).isEmpty()
-                || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
+        if (!stored && Logistics.take(spots, item, count, true, false, true).isEmpty()) {
+            makeReady(controller, item);
             return ItemStack.EMPTY;
         }
+        if (!controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return ItemStack.EMPTY;
         controller.stockMoved();
         ItemStack got = ItemStack.EMPTY;
         while (got.getCount() < count) {
@@ -88,6 +89,20 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
             else got.grow(more.getCount());
         }
         return got;
+    }
+
+    /**
+     * The network says {@code item} could be made, but no machine would make it now: a Crafter's own list of what it
+     * makes lags behind what the network has worked out (it's worked out in the background). Those the network names
+     * work theirs out again first, so asking again shortly gets it.
+     */
+    private void makeReady(LogisticsController controller, ItemResource item) {
+        if (level == null) return;
+        var offers = controller.offers();
+        if (offers.craftable(item) <= 0) return;
+        for (BlockPos pos : offers.makers(item)) {
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof QuantumCrafterBlockEntity crafter) crafter.refreshSoon();
+        }
     }
 
     /** Puts {@code stack} away in the network's storage, if the controller pays; what's left. */

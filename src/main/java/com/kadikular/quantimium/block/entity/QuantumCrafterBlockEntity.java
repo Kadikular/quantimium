@@ -635,9 +635,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return !rebuildQueued && !rescaleQueued;
     }
 
-    /** Works its whole preview out again soon, first in the queue: after a player took something from its screen. */
+    /** Works its whole preview out again soon, first in the queue: a player is waiting on it (they took something, or asked for something it should make). */
     public void refreshSoon() {
         queueRefresh(true);
+        com.kadikular.quantimium.work.WorkQueue.hurry(this, com.kadikular.quantimium.work.WorkQueue.URGENT);
     }
 
     /** How many players have its screen open, as its menus open and close. */

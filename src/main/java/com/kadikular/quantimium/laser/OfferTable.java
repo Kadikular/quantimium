@@ -154,6 +154,12 @@ public final class OfferTable {
     }
 
     /** What the machine at {@code maker} could make, by the table. */
+    /** Where the machines are that could make some of {@code item}. */
+    public Set<BlockPos> makers(ItemResource item) {
+        Map<BlockPos, List<Source>> makers = craftable.get(item);
+        return makers == null ? Set.of() : Collections.unmodifiableSet(makers.keySet());
+    }
+
     public Set<ItemResource> madeBy(BlockPos maker) {
         Set<ItemResource> made = new java.util.LinkedHashSet<>();
         for (Map.Entry<ItemResource, Map<BlockPos, List<Source>>> entry : craftable.entrySet()) {
@@ -171,6 +177,16 @@ public final class OfferTable {
 
     /** Every item on offer, real and craftable apart. */
     public List<Entry> entries() {
+        // A table is read every tick by whatever's looking (a terminal, a Materialiser's pipes): worked out once.
+        if (entries == null) entries = List.copyOf(listEntries());
+        return entries;
+    }
+
+    /** {@link #entries()}, as worked out when first asked. */
+    @org.jetbrains.annotations.Nullable
+    private List<Entry> entries;
+
+    private List<Entry> listEntries() {
         Set<ItemResource> items = new java.util.LinkedHashSet<>(real.keySet());
         items.addAll(craftable.keySet());
         List<Entry> list = new ArrayList<>(items.size());
