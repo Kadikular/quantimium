@@ -1265,6 +1265,59 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.offers, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_with_another_way", timeoutTicks = 200)
+    public static void aCraftThatCouldLoopIsKeptWhenThereIsAnotherWay(GameTestHelper helper) {
+        // Seventy-one iron blocks and two crafting-table Crafters. Ingots can be made of the blocks, or of nuggets made
+        // of ingots (a loop); nuggets made of ingots are still listed, as many as the blocks' ingots make, and a
+        // Crafter's own preview shows them too.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 64), new ItemStack(Items.IRON_BLOCK, 7));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            var offers = settled(controller::offers);
+            helper.assertTrue(offers.craftable(resource(Items.IRON_INGOT)) >= 639, "ingots of the blocks: " + offers.craftable(resource(Items.IRON_INGOT)));
+            helper.assertTrue(offers.craftable(resource(Items.IRON_NUGGET)) >= 639 * 9, "nuggets of those ingots: " + offers.craftable(resource(Items.IRON_NUGGET)));
+            first.rebuildPreview();
+            helper.assertTrue(CrafterTests.craftOf(first, Items.IRON_NUGGET) != null, "and in a Crafter's own preview");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.offers, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_pulveriser_loop", timeoutTicks = 200)
+    public static void dustOfIngotsOfBlocksIsListedBesideAFurnaceLoop(GameTestHelper helper) {
+        // Seventy-one iron blocks; a crafting table (ingots of the blocks), Energized Power's pulveriser (dust of
+        // anything tagged an iron ingot) and a furnace (ingots of the dust, a loop). The dust of the blocks' ingots is
+        // listed, all 639 of it.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 64), new ItemStack(Items.IRON_BLOCK, 7));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        QuantumCrafterBlockEntity pulveriser = crafterOn(helper, 7,
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:pulverizer")), true, true);
+        crafterOn(helper, 8, Items.FURNACE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var dust = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:iron_dust")));
+        helper.runAfterDelay(100, () -> {
+            var offers = settled(controller::offers);
+            helper.assertTrue(offers.craftable(resource(Items.IRON_INGOT)) >= 639, "ingots of the blocks: " + offers.craftable(resource(Items.IRON_INGOT)));
+            helper.assertTrue(offers.craftable(dust) >= 639, "dust of those ingots: " + offers.craftable(dust));
+            pulveriser.rebuildPreview();
+            helper.assertTrue(CrafterTests.craftOf(pulveriser, dust.getItem()) != null, "and in the pulveriser's own preview");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.preview, crafter.chain
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_preview_loop", timeoutTicks = 200)
     public static void aCraftersOwnPreviewLeavesOutLoops(GameTestHelper helper) {

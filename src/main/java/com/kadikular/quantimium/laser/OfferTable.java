@@ -295,8 +295,13 @@ public final class OfferTable {
      */
     public boolean loops(Item out, Set<Item> inputs) {
         for (Item input : inputs) {
-            if (real.getOrDefault(ItemResource.of(input.getDefaultInstance()), 0L) > 0) continue;
-            if (madeFrom(input, null, Set.of()).contains(out)) return true;
+            ItemResource resource = ItemResource.of(input.getDefaultInstance());
+            if (real.getOrDefault(resource, 0L) > 0) continue;
+            if (!madeFrom(input, null, Set.of()).contains(out)) continue;
+            // Some of it made without going through it (ingots from blocks, as well as from the dust it would make of
+            // ingots): that's what it would use, and no loop.
+            if (craftableExcept(resource, null, Set.of(out)) > 0) continue;
+            return true;
         }
         return false;
     }
