@@ -85,6 +85,16 @@ public final class CrafterPreview {
         @org.jetbrains.annotations.Nullable
         private List<ResolvedCraft> result;
 
+        /** Only recipes involving these, if set: what turned up since every recipe was last matched. */
+        @org.jetbrains.annotations.Nullable
+        private java.util.Set<Item> involving;
+
+        /** Matches only the recipes naming any of {@code items}, and nothing it matches on its own (a Fabricator, Matter). */
+        public Run involving(java.util.Set<Item> items) {
+            involving = items;
+            return this;
+        }
+
         public Run(Level level, BlockPos source, ItemStack catalyst, ItemStackHandler grid, int inputSlots, int availableFe,
                    double feMultiplier, int maxOutputs) {
             this.level = level;
@@ -141,7 +151,7 @@ public final class CrafterPreview {
             RecipeIndex index = RecipeIndex.shared();
             index.bind(level);
             // Hostile Neural Networks has no recipes to index; its Fabricator is matched on its own.
-            if (HnnFabricatorFamily.handles(catalyst)) {
+            if (involving == null && HnnFabricatorFamily.handles(catalyst)) {
                 for (ResolvedCraft craft : HnnFabricatorFamily.match(pool)) {
                     found.putIfAbsent(craft.recipeId(), priced(craft, pool, availableFe, feMultiplier));
                 }
@@ -151,13 +161,13 @@ public final class CrafterPreview {
             craftingCatalyst = CatalystResolver.isCraftingCatalyst(catalyst);
             foundryArms = FoundryFamily.arms(catalyst);
             java.util.Set<Item> items = pool.items();
-            for (RecipeType<?> type : types) candidates.addAll(index.candidatesFor(type, items));
+            for (RecipeType<?> type : types) candidates.addAll(involving != null ? index.candidatesInvolving(type, involving) : index.candidatesFor(type, items));
             return true;
         }
 
         private void finish() {
             // Unrealised Matter goes through a catalyst unrealised, the step recorded rather than applied.
-            for (ResolvedCraft craft : MatterSteps.match(level, source, types, pool)) {
+            for (ResolvedCraft craft : involving != null ? List.<ResolvedCraft>of() : MatterSteps.match(level, source, types, pool)) {
                 found.putIfAbsent(craft.recipeId(), priced(craft, pool, availableFe, feMultiplier));
             }
             List<ResolvedCraft> all = new ArrayList<>(found.values());
