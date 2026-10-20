@@ -167,6 +167,24 @@ public final class OfferTable {
         return stock;
     }
 
+    /**
+     * Every item something on offer here is made from, all the way down: what, if its count moves, could change what
+     * could be made. Worked out once.
+     */
+    public Set<Item> inputs() {
+        if (inputs == null) {
+            Set<Item> all = new HashSet<>();
+            for (Map<BlockPos, List<Source>> makers : craftable.values()) {
+                for (List<Source> sources : makers.values()) for (Source source : sources) all.addAll(source.from());
+            }
+            inputs = all;
+        }
+        return inputs;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private Set<Item> inputs;
+
     /** What every machine is shown on its first look, made or not: the same each time it's asked of this table. */
     private Map<ItemResource, Long> shown(boolean craftables) {
         Map<ItemResource, Long> kept = craftables ? shownWithMade : shownStored;
