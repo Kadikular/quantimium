@@ -354,6 +354,8 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     (splitter_plate() if splits else mirror_plate()).save(os.path.join(TEX, f"{name}_plate.png"))
     t = {"steel": "quantimium:block/laser_mirror_steel", "plate": f"quantimium:block/{name}_plate",
          "particle": "quantimium:block/laser_mirror_steel"}
+    if splits:
+        t["focus"] = "quantimium:block/laser_focus"
     # A half-silvered plate is silver both sides.
     back = "#plate" if splits else "#steel"
     opposite = {"up": "down", "down": "up", "north": "south", "south": "north", "east": "west", "west": "east"}
@@ -412,12 +414,40 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
         element["rotation"] = {"origin": [cx, cy, cz], "axis": "y", "angle": angle, "rescale": False}
         return element
 
+    def focus(plate_element):
+        """
+        A splitter's focus: the 2x2 of the plate's middle, where its window is, a little proud of both faces; the
+        relays' see-through focus, turned with the plate.
+        """
+        start, end = plate_element["from"], plate_element["to"]
+        lo, hi = [], []
+        for a, b in zip(start, end):
+            middle = (a + b) / 2
+            # The plate's two long sides shrink to its middle 2; its thickness grows a little, so the focus shows.
+            half = 1 if b - a > 2 else (b - a) / 2 + 0.1
+            lo.append(round(middle - half, 4))
+            hi.append(round(middle + half, 4))
+        element = {"from": lo, "to": hi, "faces": {f: {"texture": "#focus", "uv": [7, 7, 9, 9]}
+                                                   for f in ("north", "south", "east", "west", "up", "down")}}
+        if "rotation" in plate_element:
+            element["rotation"] = dict(plate_element["rotation"])
+        return element
+
     def stand(normal):
         """The base and boss on the floor, the hub behind the plate, and a post from the boss up under the hub."""
         nx, ny, nz = normal
         length = (nx * nx + ny * ny + nz * nz) ** 0.5
         # Just inside the plate's back, so no faces meet flush.
         hx, hy, hz = 8 - nx / length * 1.9, 8 - ny / length * 1.9, 8 - nz / length * 1.9
+        if splits:
+            # Light goes straight through a splitter's plate, past the hub: tilted, the hub drops a pixel out of the
+            # beam and comes a pixel in to stay against the plate; upright, it drops two.
+            if ny:
+                hy -= 1
+                hx += (1 if hx < 8 else -1) if nx else 0
+                hz += (1 if hz < 8 else -1) if nz else 0
+            else:
+                hy -= 2
         parts = [box([2, 0, 2], [14, 1, 14], "down"), box([4, 1, 4], [12, 2, 12])]
         parts.append(box([hx - 1, hy - 1, hz - 1], [hx + 1, hy + 1, hz + 1]))
         if hy - 1 > 2:
@@ -427,6 +457,9 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     def write(model, elements):
         with open(os.path.join(MODELS, f"{model}.json"), "w") as handle:
             body = {"parent": "minecraft:block/block", "textures": t, "elements": elements}
+            # A splitter's focus is see-through.
+            if splits:
+                body["render_type"] = "minecraft:translucent"
             json.dump(body, handle, indent=2)
 
     # The ways a floor mirror's plate can face: flat, to up or a side; tilted, up and a side; upright, two sides.
@@ -459,13 +492,15 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
                 if "down" in (a, b) or a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0:
                     continue
                 normal = tuple(p + q for p, q in zip(DIRS[a], DIRS[b]))
-                write(f"{name}_{a}_to_{b}", stand(normal) + [plate(normal), marker(a, b)])
+                face_plate = plate(normal)
+                write(f"{name}_{a}_to_{b}", stand(normal) + [face_plate, focus(face_plate), marker(a, b)])
     else:
         for key, normal in floor_normals.items():
             write(f"{name}_{key}", stand(normal) + [plate(normal)])
     # Facing north, the way an inventory icon looks at it.
     item_normal = tuple(p + q for p, q in zip(DIRS["north"], DIRS["up"])) if splits else DIRS["north"]
-    write(f"{name}_item", stand(item_normal) + [plate(item_normal)] + ([marker("north", "up")] if splits else []))
+    item_plate = plate(item_normal)
+    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate), marker("north", "up")] if splits else []))
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
     names = {v: k for k, v in DIRS.items()}

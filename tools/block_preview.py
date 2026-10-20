@@ -638,6 +638,15 @@ def scene_stabilizer() -> List[Placement]:
     return [((0, 0, 0), "tesseract_stabilizer", {})]
 
 
+def scene_splitters() -> List[Placement]:
+    """Laser Splitters on the floor: tilted (in from the west, turned up), upright (in from the west, turned north), and
+    a Laser Mirror beside them."""
+    return [((0, 0, 0), "laser_splitter", {"mount": "down", "input": "west", "output": "up", "powered": "false"}),
+            ((2, 0, 0), "laser_splitter", {"mount": "down", "input": "south", "output": "east", "powered": "false"}),
+            ((4, 0, 0), "laser_splitter", {"mount": "down", "input": "east", "output": "up", "powered": "false"}),
+            ((6, 0, 0), "laser_mirror", {"mount": "down", "input": "west", "output": "up", "powered": "false"})]
+
+
 def scene_mirrors() -> List[Placement]:
     """The Entangled Mirror facing south, east (lit) and up."""
     return [((0, 0, 0), "entangled_mirror", {"facing": "south", "powered": "false", "active": "false"}),
@@ -647,6 +656,7 @@ def scene_mirrors() -> List[Placement]:
 
 SCENES = {
     "mirrors": scene_mirrors,
+    "splitters": scene_splitters,
     "foundry": scene_foundry,
     "crafters": scene_crafters,
     "superposition": scene_superposition,
