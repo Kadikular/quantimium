@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.5.1-alpha: Crafting through the network
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.0 carry on.
+
+### Crafting through logistics
+
+- **Crafters chain through a logistics network**: a Tesseract bound to a Logistics Materialiser draws on the
+  network, a provider Receptacle on the Crafter offers what it can make. Chains run up to eight steps across
+  any number of Crafters (AE2 storage components from raw stuff, through an Inscriber, are six), and one
+  Crafter makes several steps itself (a furnace smelting stone for the bricks it then cracks). Every take is
+  exact: called off, it puts everything back.
+- **Terminals list what's stored and what can be made apart**, worked out once a second in a fixed order, so
+  it reads the same whatever's opened first. Counts are what a Crafter **can make**, past one stack, and a
+  loop (ingots to blocks and back) isn't counted twice.
+- **Stored first**: a take gives what's stored before anything is made. A Crafter's provider can craft from
+  anything, from stored items only, or not at all; an active requester can have things made for it or not.
+- **Logistics Materialiser modes**: stored, craftable, or both. A provider Receptacle on another network's
+  Materialiser brings that network's offers into its own.
+
+### Quantum Crafter
+
+- **A terminal-style screen**: one searchable, scrolling grid of what's in its outputs and everything it can
+  make, sorted by count or name. A cell shows what's there and, in violet, what can be made besides. Click for
+  a stack, right-click half, shift-right-click or shift-scroll one; the grid holds still while shift is held.
+- **Previews aren't slots any more**: it shows every craft it can make, not 54; its output slots hold only
+  what it has made. A Crafter reading a network or drawer counts every stack, not one.
+
+### Lasers
+
+- **Entangled Mirror**: put in a Tesseract bound to a laser block (a Relay, say) and the light reaching that
+  block comes out of the mirror, any distance away in the same dimension, less 5%. Made in pairs in the Foundry.
+- The **Laser Splitter** and **Cavity Mirror** have a see-through focus in their plate; the Splitter's column
+  stays out of the beam.
+- **Area Prism** scan orders (nearest first, top down, bottom up), and it carries on where it was after a reload.
+
+### Fixes and speed
+
+- AE2 storage buses on a Logistics Materialiser or a Reactor Materialiser Port no longer slow the server: a
+  sweep of 400 items went from ~80 ms to ~2 ms. A network's offers cost far less to keep up.
+- Solar chains at their limit no longer lose most of their power; crystals feed on fill-only machines;
+  Receptacles take light on their outer face; crying obsidian from the Foundry; the Entangled Dock no longer
+  needs the Foundry; screens beside a Logistics Materialiser work.
+
 ## 0.5.0-alpha: Quantimium Lasers
 
 **Power, work and items by light**, and a new look for every screen. Same Minecraft 26.1.2 and
