@@ -67,15 +67,30 @@ public final class ReactorPlanner {
     private ItemResource missing;
     private long missingCount;
 
-    private ReactorPlanner(ReactorRecipes recipes, Map<ItemResource, Long> stock) {
+    /** Where {@code stock}'s kinds are, if its owner keeps that (a ledger planned against directly); null to work it out. */
+    @org.jetbrains.annotations.Nullable
+    private final StockIndex index;
+
+    private ReactorPlanner(ReactorRecipes recipes, Map<ItemResource, Long> stock, @org.jetbrains.annotations.Nullable StockIndex index) {
         this.recipes = recipes;
-        this.stock = new LinkedHashMap<>(stock);
+        // Not copied: what the plan takes is noted over it, and undone by forgetting.
+        this.stock = new StockOverlay(stock);
+        this.index = index;
     }
 
     /** Plans {@code count} of {@code target} from {@code stock}. Changes nothing. */
     public static Result plan(ReactorRecipes recipes, Map<ItemResource, Long> stock, ItemResource target, long count) {
+        return plan(recipes, stock, null, target, count);
+    }
+
+    /**
+     * As {@link #plan(ReactorRecipes, Map, ItemResource, long)}, {@code index} saying where {@code stock}'s kinds are
+     * (null to work it out). {@code stock} isn't changed or copied, and mustn't change while it plans.
+     */
+    public static Result plan(ReactorRecipes recipes, Map<ItemResource, Long> stock, @org.jetbrains.annotations.Nullable StockIndex index,
+                              ItemResource target, long count) {
         if (target.isEmpty() || count <= 0) return new Result(null, Component.translatable("message.quantimium.reactor.nothing"));
-        ReactorPlanner planner = new ReactorPlanner(recipes, stock);
+        ReactorPlanner planner = new ReactorPlanner(recipes, stock, index);
         boolean ok = planner.need(target, count, 0);
         if (planner.work > MAX_WORK) {
             return new Result(null, Component.translatable("message.quantimium.reactor.too_complex"));
@@ -209,7 +224,7 @@ public final class ReactorPlanner {
      */
     private boolean needUses(Ingredient tool, long uses, int depth) {
         for (Map<ItemResource, Long> pool : List.of(made, stock)) {
-            for (ItemResource item : List.copyOf(pool.keySet())) {
+            for (ItemResource item : matching(pool, tool)) {
                 if (uses <= 0) break;
                 if (!tool.test(item.toStack(1))) continue;
                 while (uses > 0 && pool.getOrDefault(item, 0L) > 0) {
@@ -260,8 +275,8 @@ public final class ReactorPlanner {
      */
     private boolean haveTool(Ingredient tool, int depth) {
         for (Map<ItemResource, Long> pool : List.of(made, stock)) {
-            for (Map.Entry<ItemResource, Long> entry : pool.entrySet()) {
-                if (entry.getValue() > 0 && tool.test(entry.getKey().toStack(1))) return true;
+            for (ItemResource item : matching(pool, tool)) {
+                if (pool.getOrDefault(item, 0L) > 0 && tool.test(item.toStack(1))) return true;
             }
         }
         for (ItemStack option : RecipeCompat.stacks(tool)) {
@@ -305,11 +320,30 @@ public final class ReactorPlanner {
      * ingredient names (a Reactor holding thousands of kinds is asked this at every step of a plan); otherwise all.
      */
     private List<ItemResource> matching(Map<ItemResource, Long> pool, Ingredient ingredient) {
-        if (pool != stock || ingredient.isCustom()) return List.copyOf(pool.keySet());
+        if (pool != stock) return List.copyOf(pool.keySet());
+        if (ingredient.isCustom()) {
+            // It can't say which items it takes: tested against every kind, once a plan, and against what the plan
+            // added since.
+            StockOverlay overlay = (StockOverlay) stock;
+            List<ItemResource> tested = customMatches.computeIfAbsent(ingredient, k -> {
+                List<ItemResource> matches = new ArrayList<>();
+                for (ItemResource item : overlay.base().keySet()) if (ingredient.test(item.toStack(1))) matches.add(item);
+                return matches;
+            });
+            List<ItemResource> found = new ArrayList<>(tested);
+            for (ItemResource item : overlay.added()) if (ingredient.test(item.toStack(1))) found.add(item);
+            return found;
+        }
+        if (index != null) {
+            List<ItemResource> found = new ArrayList<>();
+            ingredient.items().forEach(holder -> found.addAll(index.kindsOf(holder.value())));
+            if (found.size() > 1) found.sort(java.util.Comparator.comparingLong(index::order));
+            return found;
+        }
         if (stockIndex == null) {
             stockIndex = new java.util.HashMap<>();
             stockOrder = new java.util.HashMap<>();
-            for (ItemResource item : stock.keySet()) {
+            for (ItemResource item : ((StockOverlay) stock).base().keySet()) {
                 stockOrder.put(item, stockOrder.size());
                 stockIndex.computeIfAbsent(item.getItem(), k -> new ArrayList<>(1)).add(item);
             }
@@ -322,6 +356,9 @@ public final class ReactorPlanner {
         found.sort(java.util.Comparator.comparingInt(stockOrder::get));
         return found;
     }
+
+    /** What in the stock each ingredient that can't name its items matched, tested once a plan. */
+    private final Map<Ingredient, List<ItemResource>> customMatches = new java.util.IdentityHashMap<>();
 
     /** The ledger's kinds by item, and where each stood in it: worked out when first needed. */
     private Map<net.minecraft.world.item.Item, List<ItemResource>> stockIndex;

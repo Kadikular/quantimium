@@ -7,7 +7,9 @@ import com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity;
 import com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity;
 import com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity;
 import com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity;
+import com.kadikular.quantimium.gametest.CrafterTests;
 import com.kadikular.quantimium.gametest.GameTest;
+import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
 import com.kadikular.quantimium.gametest.ReactorTests;
 import com.kadikular.quantimium.gametest.TestSupport;
 import com.kadikular.quantimium.init.ModBlocks;
@@ -51,7 +53,17 @@ public final class ReactorStress {
 
     @GameTest(template = TestSupport.FLOOR_17, batch = "stress_reactor", timeoutTicks = 20_000, padding = 16)
     public static void busyReactor(GameTestHelper helper) {
-        run(helper, "busyReactor", true);
+        run(helper, "busyReactor", true, false);
+    }
+
+    /**
+     * As {@link #busyReactor}, with Crafters on the same network too: three crafting tables drawing on it (the Reactor's
+     * stock among it) and making for it, and a requester always asking for made things. The Reactor and the Crafters
+     * can make the same things from each other's: every item still counted.
+     */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "stress_reactor_mixed", timeoutTicks = 20_000, padding = 16)
+    public static void reactorAndCrafters(GameTestHelper helper) {
+        run(helper, "reactorAndCrafters", true, true);
     }
 
     /**
@@ -60,10 +72,10 @@ public final class ReactorStress {
      */
     @GameTest(template = TestSupport.FLOOR_17, batch = "stress_reactor_big", timeoutTicks = 20_000, padding = 16)
     public static void bigReactor(GameTestHelper helper) {
-        run(helper, "bigReactor", false);
+        run(helper, "bigReactor", false, false);
     }
 
-    private static void run(GameTestHelper helper, String test, boolean counted) {
+    private static void run(GameTestHelper helper, String test, boolean counted, boolean crafters) {
         Random random = Stress.random(test);
         TestSupport.clearField(helper);
         HorizonCoreBlockEntity core = ReactorTests.buildReactor(helper, 2);
@@ -87,6 +99,28 @@ public final class ReactorStress {
         helper.setBlock(controllerAt.north(), ModBlocks.LOGISTICS_TERMINAL.get());
         LogisticsTerminalBlockEntity terminal = helper.getBlockEntity(controllerAt.north(), LogisticsTerminalBlockEntity.class);
         ReactorLogisticsPortBlockEntity logisticsPort = helper.getBlockEntity(LOGISTICS, ReactorLogisticsPortBlockEntity.class);
+        if (crafters) {
+            // South of the controller: three Crafters on provider Receptacles, a requester's chest, and the Materialiser
+            // the Crafters draw on through their Tesseracts.
+            controller.toggleOutput(Direction.SOUTH);
+            BlockPos materialiser = controllerAt.south(6);
+            for (int i = 1; i <= 3; i++) {
+                QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, controllerAt.south(i).below(), Items.CRAFTING_TABLE);
+                crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, materialiser, ModBlocks.LOGISTICS_MATERIALISER.get()));
+                receptacle(helper, controllerAt.south(i), LogisticsMember.Role.PROVIDER);
+            }
+            helper.setBlock(controllerAt.south(4).below(), Blocks.CHEST);
+            LogisticsReceptacleBlockEntity requester = receptacle(helper, controllerAt.south(4), LogisticsMember.Role.REQUESTER);
+            requester.setFilterSlot(0, new ItemStack(Items.IRON_NUGGET, 64));
+            requester.setFilterSlot(1, new ItemStack(Items.GOLD_BLOCK, 4));
+            requester.setFilterSlot(2, new ItemStack(Items.STICK, 32));
+            requester.toggleKeep();
+            requester.toggleRequestsMade();
+            requester.toggleActive();
+            receptacle(helper, controllerAt.south(5), LogisticsMember.Role.STORAGE);
+            helper.setBlock(controllerAt.south(5).below(), Blocks.CHEST);
+            helper.setBlock(materialiser, ModBlocks.LOGISTICS_MATERIALISER.get());
+        }
 
         // Thousands of kinds in the ledger, and things worth crafting with.
         List<Item> filler = new ArrayList<>();
@@ -210,7 +244,7 @@ public final class ReactorStress {
         } else if (roll < 92) {
             logisticsPort.toggleSharing();
             Stress.note("sharing toggled: " + (logisticsPort.network() != null));
-        } else if (roll < 96) {
+        } else {
             // A burst of new kinds through the Input port: recounts.
             var input = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(INPUT), null);
             if (input == null) return;
@@ -226,9 +260,14 @@ public final class ReactorStress {
                 }
                 return null;
             });
-        } else {
-            Stress.time("recount", "", core::recountNow);
         }
+    }
+
+    private static LogisticsReceptacleBlockEntity receptacle(GameTestHelper helper, BlockPos pos, LogisticsMember.Role role) {
+        helper.setBlock(pos, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(pos, LogisticsReceptacleBlockEntity.class);
+        while (receptacle.role() != role) receptacle.cycleRole();
+        return receptacle;
     }
 
     private static ItemStack fromPile(Map<Item, Long> pile, Random random) {

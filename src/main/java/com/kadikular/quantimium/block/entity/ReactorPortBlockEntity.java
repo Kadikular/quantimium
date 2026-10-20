@@ -415,7 +415,8 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             // What's held less what any open transaction has promised (this one's included), and what this
             // one's own earlier steps leave or put in.
             // With nothing pending, what's held is the stock as it stands, and the Reactor keeps its plans from that.
-            java.util.Map<ItemResource, Long> stock = clean ? null : horizon.available();
+            // Laid over what's available, not a copy of it: what this transaction's steps leave go on top.
+            java.util.Map<ItemResource, Long> stock = clean ? null : new com.kadikular.quantimium.reactor.StockOverlay(horizon.available());
             long fe = horizon.getEnergyStorage().getEnergyStored();
             for (Op op : ops) {
                 if (op.plan() == null) {
