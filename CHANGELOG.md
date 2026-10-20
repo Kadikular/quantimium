@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.3-alpha: Quick takes
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
+
+- **Taking from a Logistics Terminal is quick again**: it looks only where the item is, instead of asking every
+  Crafter on the network whether it could make each thing it shows. Lenses taking stored items skip Crafter
+  previews too.
+
 ## 0.5.2-alpha: Smooth on a busy server
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
