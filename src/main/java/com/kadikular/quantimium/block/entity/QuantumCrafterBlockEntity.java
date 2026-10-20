@@ -790,9 +790,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // working out). Something new to it, or every so often, it matches them all again: more of something can make
         // a recipe possible that wasn't.
         List<Object> shape = shapeOf(views, fromCraftable, catalyst, multiplier);
-        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown = shownItems(views);
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown = shownItems(views);
         Matched matched = matchedByShape.get(shape);
-        if (matched != null && level.getGameTime() - matched.tick() < REMATCH_TICKS && matched.seen().containsAll(shown)) {
+        if (matched != null && level.getGameTime() - matched.tick() < REMATCH_TICKS && matched.covers(shown)) {
             return new Making(asked, views, matched.crafts(), fe);
         }
         Making making = new Making(asked, views, new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
@@ -820,13 +820,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return shape;
     }
 
-    /** Every item its views show. */
-    private static java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shownItems(
+    /** Every item its views show, and how many. */
+    private static java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shownItems(
             java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views) {
-        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown = new java.util.HashSet<>();
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown = new java.util.HashMap<>();
         for (var view : views.values()) {
-            if (view instanceof com.kadikular.quantimium.laser.StockHandler stock) shown.addAll(stock.items());
-            else for (int i = 0; i < view.size(); i++) shown.add(view.getResource(i));
+            for (int i = 0; i < view.size(); i++) shown.merge(view.getResource(i), view.getAmountAsLong(i), Long::sum);
         }
         return shown;
     }
@@ -836,26 +835,61 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      * matches found: a kind gone and back (taken out, put back) is still known, its crafts still there to resize, so it
      * doesn't set off a full match each time. Every few seconds it starts afresh.
      */
-    private void remember(List<Object> shape, List<ResolvedCraft> crafts, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown) {
+    private void remember(List<Object> shape, List<ResolvedCraft> crafts, java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
         long now = level.getGameTime();
         Matched was = matchedByShape.get(shape);
         if (was == null || now - was.tick() >= REMATCH_TICKS) {
-            matchedByShape.put(shape, new Matched(crafts, now, shown));
+            matchedByShape.put(shape, new Matched(crafts, now, new java.util.HashSet<>(shown.keySet()), few(shown)));
             return;
         }
         java.util.Map<Identifier, ResolvedCraft> all = new java.util.LinkedHashMap<>();
         for (ResolvedCraft craft : crafts) all.put(craft.recipeId(), craft);
         for (ResolvedCraft craft : was.crafts()) all.putIfAbsent(craft.recipeId(), craft);
         java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen = new java.util.HashSet<>(was.seen());
-        seen.addAll(shown);
-        matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen));
+        seen.addAll(shown.keySet());
+        // Short of something then, or now: the most it's been matched with.
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few = new java.util.HashMap<>(was.few());
+        shown.forEach((item, count) -> {
+            if (count >= ENOUGH) few.remove(item);
+            else few.merge(item, count, Math::max);
+        });
+        matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen, few));
     }
 
-    /** How long crafts found for a shape are only resized before every recipe is matched again. */
-    private static final int REMATCH_TICKS = 100;
+    /** How long crafts found for a shape are only resized before every recipe is matched again, whatever's changed. */
+    private static final int REMATCH_TICKS = 1200;
 
-    /** Crafts found by matching every recipe, by the shape of what it was shown, and when. */
-    private record Matched(List<ResolvedCraft> crafts, long tick, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen) {}
+    /**
+     * Below this many of something, more of it could make a recipe possible that wasn't (one wanting nine to a run);
+     * from it on, more makes nothing new possible.
+     */
+    private static final long ENOUGH = 64;
+
+    /**
+     * Crafts found by matching every recipe, by the shape of what it was shown, and when: what it was shown, and of that
+     * what there was too little of ({@link #ENOUGH}) for more to be no news.
+     */
+    private record Matched(List<ResolvedCraft> crafts, long tick, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen,
+                           java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few) {
+        /** Whether what it's {@code shown} now could only make the crafts found, resized: nothing new, and no more of what was short. */
+        boolean covers(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
+            for (var entry : shown.entrySet()) {
+                if (!seen.contains(entry.getKey())) return false;
+                Long had = few.get(entry.getKey());
+                if (had != null && entry.getValue() > had) return false;
+            }
+            return true;
+        }
+    }
+
+    private static java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few(
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few = new java.util.HashMap<>();
+        shown.forEach((item, count) -> {
+            if (count < ENOUGH) few.put(item, count);
+        });
+        return few;
+    }
 
     private final java.util.Map<List<Object>, Matched> matchedByShape = new java.util.LinkedHashMap<>(16, 0.75f, true) {
         @Override
@@ -899,7 +933,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         @Nullable
         List<Object> shape;
         @Nullable
-        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown;
+        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown;
         @Nullable
         private List<com.kadikular.quantimium.laser.OfferMaker.Made> result;
 
