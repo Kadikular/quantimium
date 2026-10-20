@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.5-alpha: Lighter rebuilds
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
+
+- **A busy network works its offers out at about half the cost**, and so keeps its lists fresher in the same budget:
+  - stock moving in things nothing on the network is made from (a quarry's stone, with Crafters using iron)
+    no longer sets it off; something new, or after five seconds any change, still does;
+  - a Crafter matches only the recipes naming something new (or more of something it had too little of for a
+    recipe), and resizes the crafts it already knows; every recipe is matched only at first, and once a minute;
+  - what counts as "too little" comes from the catalyst's recipes (nine for a crafting table).
+- A Crafter's own preview is worked out the same way, rather than matching every recipe each time.
+- A Reactor on a network: its port's offers catch up on what changed instead of being worked out again after every
+  take (a terminal take from a Reactor holding thousands of kinds: about a third of the time).
+
 ## 0.5.4-alpha: Stress tested
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
