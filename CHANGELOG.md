@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.5.2-alpha: Smooth on a busy server
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
+
+### Background work
+
+- **A work queue**: what a logistics network offers and what Crafters could make is worked out a little each
+  tick, a millisecond at a time, within a budget (config `performance.workBudgetMicros`, 2 ms). Work a player
+  is waiting on (a terminal or Crafter screen open, something just taken or put in) goes first and gets more
+  (`performance.urgentWorkBudgetMicros`, 10 ms). A crafting table on a big network no longer stalls the server.
+- **What's stored shows at once**; what can be made from it catches up within a few ticks. Taking or crafting
+  never waits on the queue.
+- Mirror flora with no one in the mirror nearby grows every half minute, in the background.
+
+### Crafting
+
+- Chains up to eight steps deep are listed (AE2 storage components from raw stuff, through an Inscriber).
+- A Crafter shows everything it can make (previews aren't slots), as its own chain would make it, and leaves
+  loops out as the network does.
+- A Crafter's grid isn't its network's stock, and a craft takes from its own grid before any Tesseract.
+
+### Screens
+
+- JEI's R and U work over the Logistics Terminal's and Crafter's grids; a click away lets go of a search box;
+  slim scroll bars beside both grids.
+- Crafter cells show what's there (top right) and, in violet, what can be made besides; a click takes a stack.
+
+### Lasers
+
+- The Splitter's and Cavity Mirror's see-through focus sits flush in their plate.
+
+### Speed
+
+- Recipe matching and sizing look only at the offers holding what a recipe names; AE2 storage buses on
+  Logistics Materialisers and Reactor ports stay quick; a network's offers cost far less to keep up.
+
 ## 0.5.1-alpha: Crafting through the network
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.0 carry on.
