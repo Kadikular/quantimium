@@ -793,7 +793,18 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown = shownItems(views);
         Matched matched = matchedByShape.get(shape);
         if (matched != null && level.getGameTime() - matched.tick() < REMATCH_TICKS && matched.covers(shown)) {
+            if (whyMatched != null) whyMatched.accept("resized");
             return new Making(asked, views, matched.crafts(), fe);
+        }
+        if (whyMatched != null) {
+            String why;
+            if (matched == null) why = "full: first";
+            else if (level.getGameTime() - matched.tick() >= REMATCH_TICKS) why = "full: a minute on";
+            else {
+                why = "full: more of something short";
+                for (var item : shown.keySet()) if (!matched.seen().contains(item)) why = "full: something new";
+            }
+            whyMatched.accept(why);
         }
         Making making = new Making(asked, views, new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
         making.shape = shape;
@@ -856,6 +867,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         });
         matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen, few, enough));
     }
+
+    /** Told why each network's ask was answered as it was: the stress tests' counts. Null otherwise. */
+    @Nullable
+    public static java.util.function.Consumer<String> whyMatched;
 
     /** How long crafts found for a shape are only resized before every recipe is matched again, whatever's changed. */
     private static final int REMATCH_TICKS = 1200;

@@ -108,6 +108,9 @@ public final class WorkQueue {
     /** Told how long each step took, by what it was for: the stress tests' timings. Null otherwise. */
     @org.jetbrains.annotations.Nullable
     public static java.util.function.ObjLongConsumer<Object> stepTimes;
+    /** Told when a piece of work is done, by what it was for: the stress tests' counts. Null otherwise. */
+    @org.jetbrains.annotations.Nullable
+    public static java.util.function.Consumer<Object> finished;
 
     private static boolean step(Object key, Entry entry) {
         boolean done;
@@ -122,6 +125,7 @@ public final class WorkQueue {
         }
         // Queued again while it ran (it found more to do): the new job stands.
         if (done && WAITING.get(key) == entry) WAITING.remove(key);
+        if (done && finished != null) finished.accept(key);
         return done;
     }
 

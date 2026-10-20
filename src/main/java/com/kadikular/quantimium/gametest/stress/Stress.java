@@ -177,6 +177,7 @@ public final class Stress {
     }
 
     private static final Map<String, Timing> TIMINGS = new LinkedHashMap<>();
+    private static final Map<String, Long> COUNTS = new java.util.TreeMap<>();
     /** A slow tick: how long it took (less the harness's own counting), and what took the time. */
     private record SlowTick(long nanos, long tick, String breakdown) {}
 
@@ -246,6 +247,9 @@ public final class Stress {
             TIMINGS.computeIfAbsent(kind, k -> new Timing()).add(nanos, key instanceof BlockEntity entity ? entity.getBlockPos().toShortString() : "");
             spent(kind, nanos);
         };
+        COUNTS.clear();
+        WorkQueue.finished = key -> COUNTS.merge("finished " + (key instanceof BlockEntity entity ? entity.getClass().getSimpleName() : key.getClass().getSimpleName()), 1L, Long::sum);
+        QuantumCrafterBlockEntity.whyMatched = why -> COUNTS.merge("crafter answers " + why, 1L, Long::sum);
         // Every block entity's tick, and the laser networks', by kind: what "the rest of the tick" was.
         com.kadikular.quantimium.debug.TickProfiler.everything((ticking, nanos) -> spent("tick " + ticking.getClass().getSimpleName(), nanos));
     }
@@ -254,6 +258,8 @@ public final class Stress {
     public static void end(String test, List<String> findings) {
         running = false;
         WorkQueue.stepTimes = null;
+        WorkQueue.finished = null;
+        QuantumCrafterBlockEntity.whyMatched = null;
         com.kadikular.quantimium.debug.TickProfiler.everything(null);
         List<String> lines = new ArrayList<>();
         lines.add("ticks " + ticks);
@@ -265,6 +271,13 @@ public final class Stress {
         }
         TIMINGS.entrySet().stream().sorted(Comparator.comparingLong((Map.Entry<String, Timing> e) -> e.getValue().max).reversed())
                 .forEach(e -> lines.add(e.getKey() + ": " + e.getValue()));
+        COUNTS.forEach((what, n) -> lines.add("count " + what + ": " + n));
+        // Each finished rebuild of a network's offers, what it cost in all.
+        Timing builds = TIMINGS.get("queue LogisticsControllerBlockEntity");
+        Long finished = COUNTS.get("finished LogisticsControllerBlockEntity");
+        if (builds != null && finished != null && finished > 0) {
+            lines.add(String.format("network offers worked out %d times, %.2fms each", finished, builds.total / 1e6 / finished));
+        }
         if (findings.isEmpty()) lines.add("findings: none");
         else for (String finding : findings) lines.add("FINDING " + finding);
         for (String line : lines) report(test, line);
