@@ -369,7 +369,7 @@ public final class Config {
 
     public static final ModConfigSpec.IntValue URGENT_WORK_BUDGET_MICROS = BUILDER
             .comment("As workBudgetMicros, while there's work a player is waiting on (a terminal or Crafter screen open, something just taken or put in): it gets more of the tick, so what they see catches up quickly.")
-            .defineInRange("urgentWorkBudgetMicros", 10_000, 100, 50_000);
+            .defineInRange("urgentWorkBudgetMicros", 4_000, 100, 50_000);
 
     static {
         BUILDER.pop();

@@ -384,7 +384,7 @@ Light ending on it also powers the Reactor.
 and in its Crafters, is worked out in the background, a little each tick within a time budget (config
 `performance.workBudgetMicros`, 2 ms a tick by default), most urgent first. Work a player is waiting on (a
 terminal or Crafter screen open, something just taken or put in) goes first and gets more of the tick
-(`performance.urgentWorkBudgetMicros`, 10 ms), so it catches up within a tick or two. A crafting table on a
+(`performance.urgentWorkBudgetMicros`, 4 ms), so it catches up within a few ticks. A crafting table on a
 network with a lot in it can preview a thousand crafts; its list fills in over a few ticks, a millisecond's work at
 a time, rather than stalling the server. Taking or crafting something never waits on it.
 
