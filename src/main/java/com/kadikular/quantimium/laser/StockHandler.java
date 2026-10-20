@@ -46,6 +46,19 @@ public final class StockHandler implements ResourceHandler<ItemResource> {
         return hash;
     }
 
+    /** What it shows, by item, summed: worked out once, as every machine shown it asks. */
+    public java.util.Map<ItemResource, Long> amounts() {
+        if (amountsByItem == null) {
+            java.util.Map<ItemResource, Long> all = new java.util.HashMap<>(items.size() * 2);
+            for (int i = 0; i < items.size(); i++) all.merge(items.get(i), amounts.get(i), Long::sum);
+            this.amountsByItem = java.util.Collections.unmodifiableMap(all);
+        }
+        return amountsByItem;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private java.util.Map<ItemResource, Long> amountsByItem;
+
     /** The items it shows. */
     public List<ItemResource> items() {
         return java.util.Collections.unmodifiableList(items);
