@@ -34,11 +34,22 @@ public final class TickProfiler {
 
     public static void unwatch(Object blockEntity) {
         WATCHED.remove(blockEntity);
-        active = !WATCHED.isEmpty();
+        active = !WATCHED.isEmpty() || everything != null;
+    }
+
+    /** Told of every tick timed, whatever's watched: the stress tests' breakdown of a slow tick. Null otherwise. */
+    @org.jetbrains.annotations.Nullable
+    private static volatile java.util.function.ObjLongConsumer<Object> everything;
+
+    public static void everything(@org.jetbrains.annotations.Nullable java.util.function.ObjLongConsumer<Object> sink) {
+        everything = sink;
+        active = !WATCHED.isEmpty() || sink != null;
     }
 
     /** Called round each ticker call while active. */
     public static void record(Object blockEntity, long nanos) {
+        var all = everything;
+        if (all != null) all.accept(blockEntity, nanos);
         Samples samples = WATCHED.get(blockEntity);
         if (samples != null) samples.add(nanos);
     }

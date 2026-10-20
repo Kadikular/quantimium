@@ -135,8 +135,8 @@ public final class ReactorStress {
                     com.kadikular.quantimium.Quantimium.LOGGER.error("[stress] {} failed", test, failed);
                 }
             }
-            Map<Item, Long> now = Stress.census(helper, boxFrom, boxTo, List.of(), pile);
-            String wrong = counted ? Stress.compare(before[0], now) : null;
+            Map<Item, Long> now = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(), pile));
+            String wrong = counted ? Stress.harness(() -> Stress.compare(before[0], now)) : null;
             if (wrong != null) {
                 findings.add("tick " + t[0] + ": items changed: " + wrong + "\n    recent:\n    " + Stress.recent());
                 before[0] = now;

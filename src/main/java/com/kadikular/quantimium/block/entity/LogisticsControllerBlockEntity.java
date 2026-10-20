@@ -267,9 +267,18 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         // Where things are stands for the tick: each take checks the slot still holds it, and looks again if short.
         liveOffers = null;
         watched = true;
-        // A player moved it: what can be made from what's left comes first.
-        hurry();
+        // A player moved it: what can be made from what's left comes first. Not every click of one taking over and over,
+        // though: what's stored shows at once anyway, and the server isn't held at the most it'll spend for them.
+        long now = level == null ? 0 : level.getGameTime();
+        if (hurriedTick == Long.MIN_VALUE || now - hurriedTick >= HURRY_EVERY) {
+            hurriedTick = now;
+            hurry();
+        }
     }
+
+    /** The fewest ticks between a player's moves making the network's working out urgent. */
+    private static final int HURRY_EVERY = 10;
+    private long hurriedTick = Long.MIN_VALUE;
 
     @Override
     public void makerChanged() {

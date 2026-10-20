@@ -230,7 +230,7 @@ public final class LogisticsStress {
                 return;
             }
             // Hopper loops: what drained goes back to be fed in again.
-            if (t[0] % 40 == 0) {
+            if (t[0] % 40 == 0) Stress.harness(() -> {
                 for (int at : net.churn) {
                     ChestBlockEntity sink = helper.getBlockEntity(new BlockPos(at, Y - 2, Z + 1), ChestBlockEntity.class);
                     ChestBlockEntity source = helper.getBlockEntity(new BlockPos(at, Y, Z + 1), ChestBlockEntity.class);
@@ -247,7 +247,8 @@ public final class LogisticsStress {
                         if (!placed) pile.merge(moving.getItem(), (long) moving.getCount(), Long::sum);
                     }
                 }
-            }
+                return null;
+            });
             int ops = random.nextInt(20) == 0 ? 50 : 1 + random.nextInt(4);
             for (int i = 0; i < ops; i++) {
                 try {
@@ -259,13 +260,16 @@ public final class LogisticsStress {
                 }
             }
             // What fell out of a broken chest is picked up.
-            BlockPos a = helper.absolutePos(boxFrom), b = helper.absolutePos(boxTo);
-            for (ItemEntity drop : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(a.getCenter(), b.getCenter()).inflate(2))) {
-                pile.merge(drop.getItem().getItem(), (long) drop.getItem().getCount(), Long::sum);
-                drop.discard();
-            }
-            Map<Item, Long> now = Stress.census(helper, boxFrom, boxTo, List.of(player), pile);
-            String wrong = Stress.compare(before[0], now);
+            Stress.harness(() -> {
+                BlockPos a = helper.absolutePos(boxFrom), b = helper.absolutePos(boxTo);
+                for (ItemEntity drop : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(a.getCenter(), b.getCenter()).inflate(2))) {
+                    pile.merge(drop.getItem().getItem(), (long) drop.getItem().getCount(), Long::sum);
+                    drop.discard();
+                }
+                return null;
+            });
+            Map<Item, Long> now = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(player), pile));
+            String wrong = Stress.harness(() -> Stress.compare(before[0], now));
             if (wrong != null) {
                 findings.add("tick " + t[0] + ": items changed: " + wrong + "\n    recent:\n    " + Stress.recent());
                 before[0] = now;
@@ -273,6 +277,136 @@ public final class LogisticsStress {
             if (t[0] >= settle + length || findings.size() >= 10) {
                 done[0] = true;
                 if (open[0] != null) player.containerMenu.removed(player);
+                Stress.end(test, findings);
+                TestSupport.removePlayer(helper, player);
+                TestSupport.clearField(helper);
+                if (findings.isEmpty()) helper.succeed();
+                else helper.fail(findings.size() + " findings, first: " + findings.getFirst().lines().findFirst().orElse(""));
+            }
+        });
+    }
+
+    /**
+     * A firehose: a quarry pipes stacks of what it digs into the network through the Materialiser every tick, an
+     * export pipe pulls stacks out, providers push and requesters pull, Crafters draw on it (so its offers are always
+     * out of date and being worked out again), and a player has the terminal open throughout, now and then taking
+     * something. How long ticks take, and what takes it; every item counted.
+     */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "stress_logistics_firehose", timeoutTicks = 40_000, padding = 64)
+    public static void firehose(GameTestHelper helper) {
+        String test = "firehose";
+        Random random = Stress.random(test);
+        TestSupport.clearField(helper);
+        Net net = new Net(helper, random);
+        List<Item> filler = filler();
+        List<Item> dug = new ArrayList<>(List.of(Items.COBBLESTONE, Items.DIRT, Items.GRAVEL, Items.ANDESITE, Items.DIORITE, Items.GRANITE,
+                Items.DEEPSLATE, Items.TUFF, Items.COAL, Items.FLINT, Items.REDSTONE, Items.LAPIS_LAZULI, Items.DIAMOND, Items.EMERALD));
+        for (int i = 0; i < 40; i++) dug.add(filler.get(random.nextInt(filler.size())));
+        int stores = Stress.scaled(16), makers = Stress.scaled(4);
+        net.materialiser = new BlockPos(net.x + stores + 4 + makers + 2, Y, Z);
+        BlockPos controllerAt = new BlockPos(2, Y, Z);
+        helper.setBlock(controllerAt, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState().setValue(LogisticsControllerBlock.FACING, Direction.EAST)
+                .setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false).setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
+        net.controller = helper.getBlockEntity(controllerAt, LogisticsControllerBlockEntity.class);
+        net.controller.toggleOutput(Direction.NORTH);
+        helper.setBlock(controllerAt.north(), ModBlocks.LOGISTICS_TERMINAL.get());
+        net.terminal = helper.getBlockEntity(controllerAt.north(), LogisticsTerminalBlockEntity.class);
+        for (int i = 0; i < stores; i++) {
+            List<ItemStack> stock = new ArrayList<>();
+            for (int s = 0; s < 6; s++) stock.add(worth(random));
+            net.chest(LogisticsMember.Role.STORAGE, false, stock);
+        }
+        for (int i = 0; i < 2; i++) {
+            List<ItemStack> stock = new ArrayList<>();
+            for (int s = 0; s < 10; s++) stock.add(worth(random));
+            net.chest(LogisticsMember.Role.PROVIDER, true, stock);
+        }
+        for (int i = 0; i < 2; i++) {
+            LogisticsReceptacleBlockEntity requester = net.chest(LogisticsMember.Role.REQUESTER, true, List.of());
+            requester.setFilterSlot(0, new ItemStack(dug.get(random.nextInt(dug.size()))));
+            requester.setFilterSlot(1, new ItemStack(WANTED[random.nextInt(WANTED.length)], 32));
+            requester.toggleKeep();
+        }
+        for (int i = 0; i < makers; i++) net.crafter(i % 2 == 1, worth(random));
+        while (net.x < net.materialiser.getX()) net.chest(LogisticsMember.Role.STORAGE, false, List.of());
+        helper.setBlock(net.materialiser, ModBlocks.LOGISTICS_MATERIALISER.get());
+        Stress.report(test, "built: " + net.receptacles.size() + " receptacles, " + net.crafters.size() + " crafters; " + Stress.scaled(4) + " stacks dug a tick");
+
+        ServerPlayer player = TestSupport.player(helper, new BlockPos(8, Y, 4), GameType.SURVIVAL);
+        Map<Item, Long> pile = new HashMap<>();
+        BlockPos boxFrom = new BlockPos(0, 0, Z - 3), boxTo = new BlockPos(net.materialiser.getX() + 1, Y + 1, Z + 3);
+        List<String> findings = new ArrayList<>();
+        @SuppressWarnings("unchecked") Map<Item, Long>[] before = new Map[1];
+        int[] t = {0};
+        long[] flow = {0, 0};
+        boolean[] done = {false};
+        int settle = 60, length = Stress.scaled(1200);
+        Stress.begin();
+        helper.onEachTick(() -> {
+            if (done[0]) return;
+            t[0]++;
+            net.controller.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
+            if (t[0] < settle) return;
+            if (t[0] == settle) {
+                before[0] = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(player), pile));
+                return;
+            }
+            var handler = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(net.materialiser), Direction.UP);
+            // The terminal open: what it lists, every tick.
+            Stress.time("terminal open", "", net.terminal::contents);
+            if (handler != null) {
+                // The quarry: what it digs comes from nowhere, so it's counted as there from the start.
+                for (int i = 0; i < Stress.scaled(4); i++) {
+                    Item item = dug.get(random.nextInt(dug.size()));
+                    int count = 16 + random.nextInt(49);
+                    before[0].merge(item, (long) count, Long::sum);
+                    int in = Stress.time("quarry insert", item + " x" + count, () -> {
+                        try (Transaction transaction = Transaction.openRoot()) {
+                            int moved = handler.insert(handler.size() - 1, ItemResource.of(new ItemStack(item)), count, transaction);
+                            transaction.commit();
+                            return moved;
+                        }
+                    });
+                    flow[0] += in;
+                    // What didn't fit stays in the quarry's buffer.
+                    if (in < count) pile.merge(item, (long) count - in, Long::sum);
+                }
+                // The export pipe: a few stacks of what's stored, out.
+                for (int i = 0; i < Stress.scaled(3); i++) {
+                    int size = handler.size();
+                    if (size <= 1) break;
+                    int index = random.nextInt(size - 1);
+                    ItemResource resource = handler.getResource(index);
+                    if (resource.isEmpty() || Stress.WORTH.containsKey(resource.getItem())) continue;
+                    int stored = (int) Math.min(64, net.controller.offers().real(resource));
+                    if (stored <= 0) continue;
+                    int out = Stress.time("export extract", resource.getItem() + " x" + stored, () -> {
+                        try (Transaction transaction = Transaction.openRoot()) {
+                            int moved = handler.extract(index, resource, stored, transaction);
+                            transaction.commit();
+                            return moved;
+                        }
+                    });
+                    flow[1] += out;
+                    if (out > 0) pile.merge(resource.getItem(), (long) out, Long::sum);
+                }
+            }
+            // Now and then the player takes something, worth crafting or dug.
+            if (random.nextInt(4) == 0) {
+                Item item = random.nextBoolean() ? WANTED[random.nextInt(WANTED.length)] : dug.get(random.nextInt(dug.size()));
+                int count = 1 + random.nextInt(64);
+                ItemStack got = Stress.time("terminal take", item + " x" + count, () -> net.terminal.take(ItemResource.of(new ItemStack(item)), count));
+                if (!got.isEmpty()) pile.merge(got.getItem(), (long) got.getCount(), Long::sum);
+            }
+            Map<Item, Long> now = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(player), pile));
+            String wrong = Stress.harness(() -> Stress.compare(before[0], now));
+            if (wrong != null) {
+                findings.add("tick " + t[0] + ": items changed: " + wrong + "\n    recent:\n    " + Stress.recent());
+                before[0] = now;
+            }
+            if (t[0] >= settle + length || findings.size() >= 10) {
+                done[0] = true;
+                Stress.report(test, "moved: " + flow[0] + " in, " + flow[1] + " out through the Materialiser");
                 Stress.end(test, findings);
                 TestSupport.removePlayer(helper, player);
                 TestSupport.clearField(helper);

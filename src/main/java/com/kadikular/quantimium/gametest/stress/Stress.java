@@ -44,7 +44,7 @@ public final class Stress {
     private Stress() {}
 
     public static List<Class<?>> classes() {
-        return List.of(LogisticsStress.class, ReactorStress.class);
+        return List.of(LogisticsStress.class, ReactorStress.class, ChaosStress.class);
     }
 
     public static boolean enabled() {
@@ -175,8 +175,29 @@ public final class Stress {
     }
 
     private static final Map<String, Timing> TIMINGS = new LinkedHashMap<>();
-    /** The slowest whole server ticks while a stress test ran: [nanos, tick]. */
-    private static final List<long[]> SLOW_TICKS = new ArrayList<>();
+    /** A slow tick: how long it took (less the harness's own counting), and what took the time. */
+    private record SlowTick(long nanos, long tick, String breakdown) {}
+
+    /** The slowest server ticks while a stress test ran, by their time less the harness's. */
+    private static final List<SlowTick> SLOW_TICKS = new ArrayList<>();
+    /** This tick so far: time by kind of thing, [nanos, how many]. */
+    private static final Map<String, long[]> TICK = new LinkedHashMap<>();
+
+    private static void spent(String kind, long nanos) {
+        long[] had = TICK.computeIfAbsent(kind, k -> new long[2]);
+        had[0] += nanos;
+        had[1]++;
+    }
+
+    /** Runs the harness's own work (counting items): left out of a tick's time. */
+    public static <T> T harness(Supplier<T> body) {
+        long began = System.nanoTime();
+        try {
+            return body.get();
+        } finally {
+            spent("harness", System.nanoTime() - began);
+        }
+    }
     private static long tickStart;
     private static long ticks;
     private static boolean running;
@@ -191,6 +212,7 @@ public final class Stress {
         } finally {
             long took = System.nanoTime() - began;
             TIMINGS.computeIfAbsent(kind, k -> new Timing()).add(took, what);
+            spent(kind, took);
             note(kind + " " + what + " " + String.format("%.2fms", took / 1e6));
         }
     }
@@ -220,19 +242,25 @@ public final class Stress {
         WorkQueue.stepTimes = (key, nanos) -> {
             String kind = "queue " + (key instanceof BlockEntity entity ? entity.getClass().getSimpleName() : key.getClass().getSimpleName());
             TIMINGS.computeIfAbsent(kind, k -> new Timing()).add(nanos, key instanceof BlockEntity entity ? entity.getBlockPos().toShortString() : "");
+            spent(kind, nanos);
         };
+        // Every block entity's tick, and the laser networks', by kind: what "the rest of the tick" was.
+        com.kadikular.quantimium.debug.TickProfiler.everything((ticking, nanos) -> spent("tick " + ticking.getClass().getSimpleName(), nanos));
     }
 
     /** A stress test is done: its timings and findings go to the report. */
     public static void end(String test, List<String> findings) {
         running = false;
         WorkQueue.stepTimes = null;
+        com.kadikular.quantimium.debug.TickProfiler.everything(null);
         List<String> lines = new ArrayList<>();
         lines.add("ticks " + ticks);
-        SLOW_TICKS.sort(Comparator.comparingLong((long[] t) -> t[0]).reversed());
-        StringBuilder slow = new StringBuilder("slowest ticks:");
-        for (int i = 0; i < Math.min(8, SLOW_TICKS.size()); i++) slow.append(String.format(" %.1fms@%d", SLOW_TICKS.get(i)[0] / 1e6, SLOW_TICKS.get(i)[1]));
-        lines.add(slow.toString());
+        SLOW_TICKS.sort(Comparator.comparingLong(SlowTick::nanos).reversed());
+        lines.add("slowest ticks (less the harness's counting):");
+        for (int i = 0; i < Math.min(6, SLOW_TICKS.size()); i++) {
+            SlowTick slow = SLOW_TICKS.get(i);
+            lines.add(String.format("  %.1fms at tick %d: %s", slow.nanos() / 1e6, slow.tick(), slow.breakdown()));
+        }
         TIMINGS.entrySet().stream().sorted(Comparator.comparingLong((Map.Entry<String, Timing> e) -> e.getValue().max).reversed())
                 .forEach(e -> lines.add(e.getKey() + ": " + e.getValue()));
         if (findings.isEmpty()) lines.add("findings: none");
@@ -243,6 +271,7 @@ public final class Stress {
     @SubscribeEvent
     public static void tickStarts(ServerTickEvent.Pre event) {
         tickStart = System.nanoTime();
+        TICK.clear();
         serverThread = Thread.currentThread();
         tickCount++;
         if (enabled() && watchdog == null) {
@@ -300,11 +329,24 @@ public final class Stress {
         if (!running) return;
         ticks++;
         long took = System.nanoTime() - tickStart;
-        SLOW_TICKS.add(new long[] {took, ticks});
-        if (SLOW_TICKS.size() > 64) {
-            SLOW_TICKS.sort(Comparator.comparingLong((long[] t) -> t[0]).reversed());
-            SLOW_TICKS.subList(32, SLOW_TICKS.size()).clear();
+        long harness = TICK.containsKey("harness") ? TICK.get("harness")[0] : 0;
+        long net = took - harness;
+        if (SLOW_TICKS.size() >= 32 && net <= SLOW_TICKS.getLast().nanos()) return;
+        // What took the time: each kind of thing, and the rest (block entities ticking, hoppers, the server itself).
+        StringBuilder breakdown = new StringBuilder();
+        long known = 0;
+        List<Map.Entry<String, long[]>> kinds = new ArrayList<>(TICK.entrySet());
+        kinds.sort(Comparator.comparingLong((Map.Entry<String, long[]> e) -> e.getValue()[0]).reversed());
+        for (Map.Entry<String, long[]> kind : kinds) {
+            if (kind.getKey().equals("harness")) continue;
+            known += kind.getValue()[0];
+            if (kind.getValue()[0] < 500_000) continue;
+            breakdown.append(String.format("%s %.1fms x%d, ", kind.getKey(), kind.getValue()[0] / 1e6, kind.getValue()[1]));
         }
+        breakdown.append(String.format("rest of the tick %.1fms", (net - known) / 1e6));
+        SLOW_TICKS.add(new SlowTick(net, ticks, breakdown.toString()));
+        SLOW_TICKS.sort(Comparator.comparingLong(SlowTick::nanos).reversed());
+        if (SLOW_TICKS.size() > 32) SLOW_TICKS.subList(32, SLOW_TICKS.size()).clear();
     }
 
     // ---- the report ----

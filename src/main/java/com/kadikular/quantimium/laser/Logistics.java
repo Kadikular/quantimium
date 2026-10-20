@@ -131,6 +131,8 @@ public final class Logistics {
         OfferMaker maker = provider.maker();
         for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
             if (!onOffer(maker, slot)) continue;
+            // A machine's preview: whether it could make it now is asked only of what someone on the network would take.
+            if (maker != null && maker.makesOnDemand(slot) && !anyoneTakes(provider, maker.peekOnDemand(slot), highestFirst)) continue;
             ItemStack there = from.getStackInSlot(slot);
             if (there.isEmpty() || !provider.lets(there)) continue;
             for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}) {
@@ -147,6 +149,16 @@ public final class Logistics {
             }
         }
         return most - budget;
+    }
+
+    /** Whether {@code shown}, which {@code provider} could push, would go anywhere: a requester or storage taking it. */
+    private static boolean anyoneTakes(LogisticsMember provider, ItemStack shown, List<LogisticsMember> members) {
+        if (shown.isEmpty() || !provider.lets(shown)) return false;
+        for (LogisticsMember to : members) {
+            if (to == provider || !to.lets(shown)) continue;
+            if (to.role() == LogisticsMember.Role.STORAGE || to.role() == LogisticsMember.Role.REQUESTER && to.requestsCraftable() && to.wants(shown) > 0) return true;
+        }
+        return false;
     }
 
     /**
@@ -168,6 +180,13 @@ public final class Logistics {
                     OfferMaker maker = source.maker();
                     for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
                         if (!onOffer(maker, slot)) continue;
+                        // A machine's preview: nothing stored; whether it could make it now is asked only of what's wanted.
+                        if (maker != null && maker.makesOnDemand(slot)) {
+                            if (!made) continue;
+                            ItemStack shown = maker.peekOnDemand(slot);
+                            if (shown.isEmpty() || !requester.lets(shown) || requester.wants(shown) <= 0
+                                    || role == LogisticsMember.Role.PROVIDER && !source.lets(shown)) continue;
+                        }
                         ItemStack there = from.getStackInSlot(slot);
                         // Storage gives up anything it holds; a provider only what its filter lets go.
                         if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
