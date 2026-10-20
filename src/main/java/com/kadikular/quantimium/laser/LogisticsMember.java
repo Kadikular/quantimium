@@ -58,6 +58,15 @@ public interface LogisticsMember {
     }
 
     /**
+     * For a member whose stock is kept by item ({@link #listing()} not null, a Reactor's port): takes up to {@code max}
+     * of {@code item}, what's there first, as a pull from a slot showing it would. Looked up by item, not by slot:
+     * such a member may show thousands.
+     */
+    default net.minecraft.world.item.ItemStack takeListed(net.neoforged.neoforge.transfer.item.ItemResource item, int max, boolean simulate) {
+        return net.minecraft.world.item.ItemStack.EMPTY;
+    }
+
+    /**
      * How many more of {@code stack} it will take in: a requester keeping counts stocked takes only what it's short
      * of; anything else, as much as fits.
      */

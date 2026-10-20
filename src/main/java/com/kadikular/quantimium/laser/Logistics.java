@@ -177,6 +177,22 @@ public final class Logistics {
                     IItemHandler from = source.inventory();
                     if (from == null) continue;
                     Map<ItemResource, long[]> listing = source.listing();
+                    if (listing != null) {
+                        // Kept by item: what it lists that the requester wants, not every slot.
+                        for (Map.Entry<ItemResource, long[]> entry : listing.entrySet()) {
+                            if (budget <= 0) break;
+                            ItemStack shown = entry.getKey().toStack(1);
+                            if (!requester.lets(shown) || role == LogisticsMember.Role.PROVIDER && !source.lets(shown)) continue;
+                            int room = (int) Math.min(Math.min(budget, requester.wants(shown)), entry.getValue()[made ? 1 : 0]);
+                            if (room <= 0) continue;
+                            ItemResource item = entry.getKey();
+                            int moved = move(level, controller, source, (n, simulate) -> source.takeListed(item, n, simulate), from, into, room);
+                            if (moved == UNPAID) return UNPAID;
+                            budget -= moved;
+                        }
+                        if (budget <= 0) return most;
+                        continue;
+                    }
                     OfferMaker maker = source.maker();
                     for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
                         if (!onOffer(maker, slot)) continue;
@@ -226,7 +242,9 @@ public final class Logistics {
                 // A requester keeping counts takes only what it's short of.
                 int room = Math.min(left.getCount(), to.wants(left));
                 if (room <= 0) continue;
-                ItemStack rest = ItemHandlerHelper.insertItem(into, left.copyWithCount(room), simulate);
+                // Kept by item, anywhere will do: not tried slot by slot.
+                ItemStack rest = to.listing() != null ? into.insertItem(0, left.copyWithCount(room), simulate)
+                        : ItemHandlerHelper.insertItem(into, left.copyWithCount(room), simulate);
                 left = left.copyWithCount(left.getCount() - room + rest.getCount());
             }
         }
@@ -243,6 +261,13 @@ public final class Logistics {
             if (member.role() != LogisticsMember.Role.STORAGE || !member.lets(stack)) continue;
             IItemHandler into = member.inventory();
             if (into == null) continue;
+            if (member.listing() != null) {
+                // Kept by item: what it would take, asked once.
+                int ask = Math.min(max - room, stack.getMaxStackSize());
+                room += ask - into.insertItem(0, stack.copyWithCount(ask), true).getCount();
+                if (room >= max) return max;
+                continue;
+            }
             for (int slot = 0; slot < into.getSlots() && room < max; slot++) {
                 if (!into.isItemValid(slot, stack)) continue;
                 ItemStack there = into.getStackInSlot(slot);
@@ -286,6 +311,16 @@ public final class Logistics {
                 IItemHandler from = source.inventory();
                 if (from == null) continue;
                 Map<ItemResource, long[]> listing = source.listing();
+                if (listing != null) {
+                    // Kept by item: what it lists that's wanted, not every slot.
+                    for (ItemResource item : listing.keySet()) {
+                        ItemStack shown = item.toStack(1);
+                        if (!wants.test(shown) || role == LogisticsMember.Role.PROVIDER && !source.lets(shown)) continue;
+                        ItemStack taken = takeListed(source, item, max, simulate, reals, made);
+                        if (!taken.isEmpty()) return taken;
+                    }
+                    continue;
+                }
                 OfferMaker maker = source.maker();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     if (!onOffer(maker, slot)) continue;
@@ -310,8 +345,20 @@ public final class Logistics {
         return ItemStack.EMPTY;
     }
 
-    /** One slot of a member's inventory where something was seen. */
+    /** Takes from a member kept by item, what's there ({@code reals}) or would be made ({@code made}), as its listing says. */
+    private static ItemStack takeListed(LogisticsMember source, ItemResource item, int max, boolean simulate, boolean reals, boolean made) {
+        Map<ItemResource, long[]> listing = source.listing();
+        long[] both = listing == null ? null : listing.get(item);
+        if (both == null) return ItemStack.EMPTY;
+        int most = (int) Math.min(max, (reals ? both[0] : 0) + (made && source.offersCraftable() ? both[1] : 0));
+        return most <= 0 ? ItemStack.EMPTY : source.takeListed(item, most, simulate);
+    }
+
+    /** One slot of a member's inventory where something was seen; {@link #LISTED} for a member kept by item. */
     public record Spot(LogisticsMember member, int slot) {}
+
+    /** A spot in a member whose stock is kept by item (see {@link LogisticsMember#takeListed}): no slot to it. */
+    public static final int LISTED = -1;
 
     /**
      * Where each thing on a network is, in the order a take looks: providers (as their filters let go), highest
@@ -325,6 +372,16 @@ public final class Logistics {
                 if (source.role() != role) continue;
                 IItemHandler from = source.inventory();
                 if (from == null) continue;
+                Map<ItemResource, long[]> listing = source.listing();
+                if (listing != null) {
+                    // Kept by item (a Reactor's thousands of kinds): from its listing, not slot by slot.
+                    Spot spot = new Spot(source, LISTED);
+                    listing.forEach((item, both) -> {
+                        if (role == LogisticsMember.Role.PROVIDER && !source.lets(item.toStack(1))) return;
+                        spots.computeIfAbsent(item, k -> new ArrayList<>(2)).add(spot);
+                    });
+                    continue;
+                }
                 OfferMaker maker = source.maker();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     // What a machine would make, by its preview alone: whether it could is asked when it's taken.
@@ -363,6 +420,11 @@ public final class Logistics {
         Map<LogisticsMember, Map<ItemResource, long[]>> listings = new HashMap<>();
         for (Spot spot : where) {
             LogisticsMember source = spot.member();
+            if (spot.slot() == LISTED) {
+                ItemStack taken = takeListed(source, item, max, simulate, reals, made);
+                if (!taken.isEmpty()) return taken;
+                continue;
+            }
             IItemHandler from = source.inventory();
             if (from == null || spot.slot() >= from.getSlots()) continue;
             ItemStack there = from.getStackInSlot(spot.slot());
@@ -409,13 +471,23 @@ public final class Logistics {
 
     /** Moves up to {@code max} of what's in {@code slot} of {@code from} into {@code into}, as far as it fits, if the controller pays. */
     private static int move(Level level, LogisticsController controller, LogisticsMember source, IItemHandler from, int slot, IItemHandler into, int max) {
+        return move(level, controller, source, (n, simulate) -> from.extractItem(slot, n, simulate), from, into, max);
+    }
+
+    /** Takes up to {@code n} from wherever, for a move: a slot, or a member kept by item. */
+    @FunctionalInterface
+    private interface Taker {
+        ItemStack take(int n, boolean simulate);
+    }
+
+    private static int move(Level level, LogisticsController controller, LogisticsMember source, Taker taker, IItemHandler from, IItemHandler into, int max) {
         if (into == null) return 0;
-        ItemStack offered = from.extractItem(slot, max, true);
+        ItemStack offered = taker.take(max, true);
         if (offered.isEmpty()) return 0;
         int fits = offered.getCount() - ItemHandlerHelper.insertItem(into, offered.copy(), true).getCount();
         if (fits <= 0) return 0;
         if (!controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return UNPAID;
-        ItemStack taken = from.extractItem(slot, fits, false);
+        ItemStack taken = taker.take(fits, false);
         ItemStack left = ItemHandlerHelper.insertItem(into, taken, false);
         int moved = taken.getCount() - left.getCount();
         if (!left.isEmpty()) {
