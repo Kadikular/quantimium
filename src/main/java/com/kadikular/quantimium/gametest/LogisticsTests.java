@@ -1265,6 +1265,39 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: crafter.preview, laser.logistics.offers
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_ninth_nugget", timeoutTicks = 200)
+    public static void theNinthNuggetMakesAnIngotCraftable(GameTestHelper helper) {
+        // Eight iron nuggets on a network with a crafting-table Crafter: no ingot can be made. A ninth put in by hand
+        // (only more of something already there): the network lists an ingot within a second, not whenever it next
+        // matches every recipe.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_NUGGET, 8));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var ingots = resource(Items.IRON_INGOT);
+        int[] t = {0};
+        int[] addedAt = {-1};
+        helper.onEachTick(() -> {
+            t[0]++;
+            long craftable = controller.offers().craftable(ingots);
+            if (addedAt[0] < 0) {
+                if (t[0] < 80) return;
+                helper.assertValueEqual(craftable, 0L, "eight nuggets make no ingot");
+                helper.getBlockEntity(new BlockPos(4, Y - 1, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class)
+                        .setItem(1, new ItemStack(Items.IRON_NUGGET));
+                addedAt[0] = t[0];
+                return;
+            }
+            if (craftable > 0) {
+                helper.assertTrue(t[0] - addedAt[0] <= 20, "an ingot listed " + (t[0] - addedAt[0]) + " ticks after the ninth nugget");
+                TestSupport.clearField(helper);
+                helper.succeed();
+            }
+        });
+    }
+
     // covers: crafter.chain, laser.logistics.materialiser
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_iron_loop", timeoutTicks = 200)
     public static void craftsDontChaseEachOtherRoundALoop(GameTestHelper helper) {
