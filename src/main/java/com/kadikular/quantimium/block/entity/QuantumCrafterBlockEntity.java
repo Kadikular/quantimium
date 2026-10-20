@@ -838,8 +838,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private void remember(List<Object> shape, List<ResolvedCraft> crafts, java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
         long now = level.getGameTime();
         Matched was = matchedByShape.get(shape);
+        long enough = enoughFor(level, inventory.getStackInSlot(CATALYST_SLOT));
         if (was == null || now - was.tick() >= REMATCH_TICKS) {
-            matchedByShape.put(shape, new Matched(crafts, now, new java.util.HashSet<>(shown.keySet()), few(shown)));
+            matchedByShape.put(shape, new Matched(crafts, now, new java.util.HashSet<>(shown.keySet()), few(shown, enough), enough));
             return;
         }
         java.util.Map<Identifier, ResolvedCraft> all = new java.util.LinkedHashMap<>();
@@ -850,27 +851,44 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // Short of something then, or now: the most it's been matched with.
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few = new java.util.HashMap<>(was.few());
         shown.forEach((item, count) -> {
-            if (count >= ENOUGH) few.remove(item);
+            if (count >= enough) few.remove(item);
             else few.merge(item, count, Math::max);
         });
-        matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen, few));
+        matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen, few, enough));
     }
 
     /** How long crafts found for a shape are only resized before every recipe is matched again, whatever's changed. */
     private static final int REMATCH_TICKS = 1200;
 
     /**
-     * Below this many of something, more of it could make a recipe possible that wasn't (one wanting nine to a run);
-     * from it on, more makes nothing new possible.
+     * Below this many of something, more of it could make a recipe possible that wasn't; from it on, more makes nothing
+     * new possible: the most any of the catalyst's recipes takes in a run, all its inputs together (nine for a
+     * crafting table), worked out once a catalyst. More of something past it only makes more of what's already found,
+     * downstream too: each step of a chain is shown what the step before could make, in numbers that cross it.
      */
-    private static final long ENOUGH = 64;
+    private static long enoughFor(Level level, ItemStack catalyst) {
+        return ENOUGH_BY_CATALYST.computeIfAbsent(catalyst.getItem(), item -> {
+            var shapes = com.kadikular.quantimium.recipe.RecipeShapes.forCatalyst(level, catalyst);
+            // Recipes it can't describe (a family of its own): a stack, to be safe.
+            if (shapes.isEmpty()) return 64L;
+            long most = 1;
+            for (com.kadikular.quantimium.recipe.RecipeShape shape : shapes) {
+                long run = 0;
+                for (com.kadikular.quantimium.recipe.RecipeShape.Input input : shape.inputs()) run += input.count();
+                most = Math.max(most, run);
+            }
+            return most;
+        });
+    }
+
+    private static final java.util.Map<net.minecraft.world.item.Item, Long> ENOUGH_BY_CATALYST = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Crafts found by matching every recipe, by the shape of what it was shown, and when: what it was shown, and of that
      * what there was too little of ({@link #ENOUGH}) for more to be no news.
      */
     private record Matched(List<ResolvedCraft> crafts, long tick, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen,
-                           java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few) {
+                           java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few, long enough) {
         /** Whether what it's {@code shown} now could only make the crafts found, resized: nothing new, and no more of what was short. */
         boolean covers(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
             for (var entry : shown.entrySet()) {
@@ -883,10 +901,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     }
 
     private static java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few(
-            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown, long enough) {
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few = new java.util.HashMap<>();
         shown.forEach((item, count) -> {
-            if (count < ENOUGH) few.put(item, count);
+            if (count < enough) few.put(item, count);
         });
         return few;
     }
