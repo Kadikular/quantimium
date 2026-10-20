@@ -186,11 +186,17 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     private final java.util.Map<ItemResource, Long> reserved = new java.util.HashMap<>();
 
     public void reserve(java.util.Map<ItemResource, Long> items) {
-        items.forEach((item, amount) -> reserved.merge(item, amount, Long::sum));
+        items.forEach((item, amount) -> {
+            reserved.merge(item, amount, Long::sum);
+            ledger.touch(item);
+        });
     }
 
     public void release(java.util.Map<ItemResource, Long> items) {
-        items.forEach((item, amount) -> reserved.computeIfPresent(item, (k, have) -> have > amount ? have - amount : null));
+        items.forEach((item, amount) -> {
+            reserved.computeIfPresent(item, (k, have) -> have > amount ? have - amount : null);
+            ledger.touch(item);
+        });
     }
 
     public boolean hasReservations() {

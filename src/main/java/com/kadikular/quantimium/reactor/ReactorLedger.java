@@ -37,6 +37,40 @@ public final class ReactorLedger implements StockIndex {
     private final Map<ItemResource, Long> since = new java.util.HashMap<>();
     private long arrivals;
 
+    /** Changes so far, and the kinds the last of them were to (a few hundred): for what's shown of it to catch up by. */
+    private long changes;
+    private final java.util.ArrayDeque<ItemResource> recent = new java.util.ArrayDeque<>();
+    private static final int RECENT = 512;
+
+    private void changed(ItemResource item) {
+        recent.addLast(item);
+        changes++;
+        if (recent.size() > RECENT) recent.removeFirst();
+    }
+
+    /** How many changes it's had: a mark to ask {@link #changedSince} from. */
+    public long changes() {
+        return changes;
+    }
+
+    /** The kinds changed since {@code mark}, or null if that's further back than it remembers. */
+    @org.jetbrains.annotations.Nullable
+    public java.util.Set<ItemResource> changedSince(long mark) {
+        long first = changes - recent.size();
+        if (mark < first || mark > changes) return null;
+        java.util.Set<ItemResource> out = new java.util.LinkedHashSet<>();
+        long at = first;
+        for (ItemResource item : recent) {
+            if (at++ >= mark) out.add(item);
+        }
+        return out;
+    }
+
+    /** Something about {@code item} changed besides its count (what's promised of it): noted with the rest. */
+    public void touch(ItemResource item) {
+        changed(item);
+    }
+
     @Override
     public List<ItemResource> kindsOf(net.minecraft.world.item.Item item) {
         return byItem.getOrDefault(item, List.of());
@@ -66,6 +100,7 @@ public final class ReactorLedger implements StockIndex {
 
     public void add(ItemResource item, long amount) {
         if (amount <= 0 || item.isEmpty()) return;
+        changed(item);
         if (counts.merge(item, amount, Long::sum) == amount) {
             byItem.computeIfAbsent(item.getItem(), k -> new ArrayList<>(1)).add(item);
             since.put(item, arrivals++);
@@ -78,6 +113,7 @@ public final class ReactorLedger implements StockIndex {
         long have = count(item);
         long taken = Math.min(have, Math.max(0, amount));
         if (taken == 0) return 0;
+        changed(item);
         if (taken == have) {
             counts.remove(item);
             List<ItemResource> kinds = byItem.get(item.getItem());
@@ -101,6 +137,8 @@ public final class ReactorLedger implements StockIndex {
 
     public void load(List<Entry> entries) {
         counts.clear();
+        recent.clear();
+        changes += RECENT + 1;
         byItem.clear();
         since.clear();
         mass = 0;
