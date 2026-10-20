@@ -606,6 +606,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private void queueRefresh(boolean full) {
         if (full) rebuildQueued = true;
         else rescaleQueued = true;
+        // What it could make has changed here: the network it makes things for works its offers out again too.
+        if (full && feeder != null) feeder.makerChanged();
         int priority = watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
         if (com.kadikular.quantimium.work.WorkQueue.waiting(this)) com.kadikular.quantimium.work.WorkQueue.hurry(this, priority);
         else com.kadikular.quantimium.work.WorkQueue.submit(this, priority, this::refreshStep);
@@ -818,7 +820,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                     ItemStack output = outputs.get(i);
                     if (output.isEmpty()) continue;
                     made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(net.neoforged.neoforge.transfer.item.ItemResource.of(output),
-                            canMake(craft, i), java.util.Set.copyOf(from)));
+                            canMake(craft, i), java.util.Set.copyOf(from), craft));
                 }
             }
             result = List.copyOf(made);
@@ -830,6 +832,56 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         public List<com.kadikular.quantimium.laser.OfferMaker.Made> result() {
             return result == null ? List.of() : result;
         }
+    }
+
+    /** The network that last handed it what it makes (see {@link #offered}), and the crafts it handed. */
+    @Nullable
+    private com.kadikular.quantimium.laser.LogisticsController feeder;
+    /** The crafts last handed it and shown; null once anything else has been shown since. */
+    @Nullable
+    private List<Object> fed;
+
+    /**
+     * Its network has worked out what it offers, this Crafter's crafts among them: those are its preview, at once.
+     * They were worked out the same way its own preview is (its grid, and every network it draws on with what's on
+     * offer there, its own crafts too), so it doesn't work them out again; and what the network shows it makes is
+     * exactly what a pull from it can make.
+     */
+    @Override
+    public void offered(com.kadikular.quantimium.laser.LogisticsController network, List<Object> crafts) {
+        if (level == null || level.isClientSide()) return;
+        feeder = network;
+        if (fed != null && sameCrafts(crafts, fed)) return;
+        List<ResolvedCraft> shown = new ArrayList<>(crafts.size());
+        java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
+        for (Object craft : crafts) {
+            if (craft instanceof ResolvedCraft resolved && chainedNow.add(resolved.recipeId())) shown.add(resolved);
+        }
+        // A rebuild of its own already queued (its grid changed since the network asked) still runs, and is newer.
+        show(CrafterPreview.cap(shown, CrafterPreview.MAX_OUTPUTS), chainedNow);
+        fed = crafts;
+    }
+
+    /** Whether two hand-outs are the same crafts, craft for craft: an answer the network had kept comes back as it was. */
+    private static boolean sameCrafts(List<Object> a, List<Object> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) if (a.get(i) != b.get(i)) return false;
+        return true;
+    }
+
+    /** Whether a network it's a maker on keeps what it makes worked out: it needn't watch that network change itself. */
+    private boolean fedByNetwork() {
+        var network = feeder;
+        if (network == null) return false;
+        if (network instanceof BlockEntity entity && entity.isRemoved()) {
+            feeder = null;
+            return false;
+        }
+        // Drawing on another network as well, it watches its links: that one's changes don't reach this one's table.
+        for (var linked : linkedNetworks()) if (linked != network) return false;
+        for (var member : network.members()) if (member.maker() == this) return true;
+        feeder = null;
+        return false;
     }
 
     /** How many of output {@code index} a craft could make from what it has: "Can make", not one batch. */
@@ -1013,6 +1065,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** Shows {@code crafts} as its preview, those in {@code chainedNow} worked out with its own crafts on offer. */
     private void show(List<ResolvedCraft> crafts, java.util.Set<Identifier> chainedNow) {
+        // Whatever the network hands it next is shown, even the same crafts as before this.
+        fed = null;
         chained = chainedNow;
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) {
@@ -1223,10 +1277,15 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private EntangledLinks.RemoteSummary remoteSummary() {
         // A detected cycle points back at us; summarising through it would have the disabled crafters
-        // invalidating one another forever. Topology is re-checked every poll instead.
-        return linkLoopDetected
-                ? EntangledLinks.RemoteSummary.EMPTY
-                : EntangledLinks.summarize(level, worldPosition, inventory, INPUT_SLOTS);
+        // invalidating one another forever. Topology is re-checked every poll instead. A network that hands it
+        // what it makes tells it when that changes: it doesn't watch its links itself.
+        if (linkLoopDetected) return EntangledLinks.RemoteSummary.EMPTY;
+        if (fedByNetwork()) {
+            // Looked at, the network sees what's moved on it, and works its offers (and so this) out again.
+            feeder.offers();
+            return EntangledLinks.RemoteSummary.EMPTY;
+        }
+        return EntangledLinks.summarize(level, worldPosition, inventory, INPUT_SLOTS);
     }
 
     /**

@@ -13,8 +13,15 @@ import java.util.Set;
  * out from a snapshot of the rest of the network rather than by asking the network live.
  */
 public interface OfferMaker {
-    /** One craft it could make: up to {@code count} of {@code item}, out of the items {@code from}. */
-    record Made(ItemResource item, long count, Set<Item> from) {}
+    /**
+     * One craft it could make: up to {@code count} of {@code item}, out of the items {@code from}; {@code craft}, the
+     * machine's own note of the craft, handed back to it in {@link #offered} if the network keeps it.
+     */
+    record Made(ItemResource item, long count, Set<Item> from, @org.jetbrains.annotations.Nullable Object craft) {
+        public Made(ItemResource item, long count, Set<Item> from) {
+            this(item, count, from, null);
+        }
+    }
 
     /**
      * What it could make, craft by craft, if this network offered {@code stock} (the network's real items and what
@@ -47,6 +54,13 @@ public interface OfferMaker {
             }
         };
     }
+
+    /**
+     * The network has worked its offers out: of what it last asked this machine, these are the crafts ({@link Made#craft})
+     * it kept, loops left out; what a pull from it should be able to make now. A machine that shows what it makes (a
+     * Crafter's previews) shows these, so what it's asked for is what the network says it makes.
+     */
+    default void offered(LogisticsController network, List<Object> crafts) {}
 
     /** Whether a pull from {@code slot} of its automation view would make something rather than hand over what's there. */
     boolean makesOnDemand(int slot);

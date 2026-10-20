@@ -271,6 +271,8 @@ public final class OfferTable {
         @org.jetbrains.annotations.Nullable
         private OfferTable sofar;
         private final Map<BlockPos, Map<ItemResource, List<Source>>> found = new LinkedHashMap<>();
+        /** Each machine's crafts behind what it was found to make, this tier. */
+        private final Map<BlockPos, List<Object>> foundCrafts = new LinkedHashMap<>();
         /** The machine being asked, between looks. */
         @org.jetbrains.annotations.Nullable
         private Asking asking;
@@ -311,6 +313,7 @@ public final class OfferTable {
             if (next == 0) {
                 sofar = new OfferTable(real, craftable, tiers, origins);
                 found.clear();
+                foundCrafts.clear();
             }
             // One machine's offers, a look at a time: its first look, then (if some of its crafts loop) a look again.
             Maker maker = makers.get(next);
@@ -323,6 +326,7 @@ public final class OfferTable {
                     return false;
                 }
                 found.put(maker.pos(), asking.kept);
+                foundCrafts.put(maker.pos(), List.copyOf(asking.crafts));
             }
             asking = null;
             if (++next < makers.size()) return false;
@@ -348,6 +352,21 @@ public final class OfferTable {
 
         private void finish() {
             result = new OfferTable(Map.copyOf(real), craftable, tiers, Set.copyOf(origins));
+        }
+
+        /**
+         * Hands each machine the crafts the finished table counts it for (as last asked, with everything the network
+         * offers in front of it), so what it shows it makes is what the table says. For the network's controller to
+         * call once the table's in use.
+         */
+        public void handOut() {
+            if (result == null) return;
+            for (Maker maker : makers) {
+                List<Object> crafts = foundCrafts.get(maker.pos());
+                if (crafts == null) continue;
+                if (maker.maker() instanceof net.minecraft.world.level.block.entity.BlockEntity entity && entity.isRemoved()) continue;
+                maker.maker().offered(network, crafts);
+            }
         }
 
         /** What's really there, and which machines make things to order. */
@@ -415,6 +434,8 @@ public final class OfferTable {
         private final LogisticsMember member;
         private final boolean chains;
         final Map<ItemResource, List<Source>> kept = new LinkedHashMap<>();
+        /** The machine's crafts behind what it kept (and what its filter keeps off the network), in order. */
+        final Set<Object> crafts = new java.util.LinkedHashSet<>();
         @org.jetbrains.annotations.Nullable
         private Set<Item> looped;
         private final Set<Item> avoid = new HashSet<>();
@@ -444,11 +465,11 @@ public final class OfferTable {
             List<OfferMaker.Made> made = making.result();
             making = null;
             if (looped == null) {
-                looped = collect(made, pos, member, Set.of(), null, kept);
+                looped = collect(made, pos, member, Set.of(), null, kept, crafts);
                 avoid.addAll(looped);
                 return looped.isEmpty();
             }
-            Set<Item> still = collect(made, pos, member, avoid, looped, kept);
+            Set<Item> still = collect(made, pos, member, avoid, looped, kept, crafts);
             return still.isEmpty() || !avoid.addAll(still) || ++attempts >= LOOP_RETRIES;
         }
     }
@@ -458,13 +479,13 @@ public final class OfferTable {
      * the table less what's made from {@code avoid}; what the ones that loop make.
      */
     private Set<Item> collect(List<OfferMaker.Made> made, BlockPos pos, LogisticsMember member, Set<Item> avoid, @org.jetbrains.annotations.Nullable Set<Item> only,
-                              Map<ItemResource, List<Source>> kept) {
+                              Map<ItemResource, List<Source>> kept, Set<Object> crafts) {
         Map<Item, Set<Item>> below = new HashMap<>();
         Set<Item> looped = new java.util.LinkedHashSet<>();
         for (OfferMaker.Made one : made) {
             Item out = one.item().getItem();
             if (only != null && !only.contains(out)) continue;
-            if (one.count() <= 0 || !member.lets(one.item().toStack(1))) continue;
+            if (one.count() <= 0) continue;
             Set<Item> from = new HashSet<>(one.from());
             boolean loops = false;
             for (Item input : one.from()) {
@@ -476,6 +497,9 @@ public final class OfferTable {
                 looped.add(out);
                 continue;
             }
+            // The machine makes it whatever its Receptacle lets out to the network: its own screen shows it.
+            if (one.craft() != null) crafts.add(one.craft());
+            if (!member.lets(one.item().toStack(1))) continue;
             Source source = new Source(one.count(), Set.copyOf(from));
             List<Source> sources = kept.computeIfAbsent(one.item(), k -> new ArrayList<>());
             if (!sources.contains(source)) sources.add(source);

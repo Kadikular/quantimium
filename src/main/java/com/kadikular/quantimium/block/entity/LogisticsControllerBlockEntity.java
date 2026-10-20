@@ -130,7 +130,7 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     /** The fewest ticks between workings out of what the network offers, after a move a player made: none. */
     private static final int OFFERS_SOONEST = 0;
     /** The fewest ticks between workings out of what the network offers while someone's watching it change by itself. */
-    private static final int OFFERS_WATCHED = 10;
+    private static final int OFFERS_WATCHED = 4;
     /** How long a network goes unlooked-at before a look counts as a player just opening a screen on it. */
     private static final int WATCH_LAPSE = 40;
     private boolean workingOut;
@@ -227,6 +227,10 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         liveOffers = null;
         // It read another network before that one had worked its offers out: soon again, to catch them.
         if (builder.early()) offersStale = true;
+        // Its Crafters show what it now says they make.
+        builder.handOut();
+        // A Crafter changed what it could make while this was worked out: again, whether or not anything's reading.
+        if (offersStale) startBuildIfDue();
         return true;
     }
 
@@ -265,6 +269,13 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         watched = true;
         // A player moved it: what can be made from what's left comes first.
         hurry();
+    }
+
+    @Override
+    public void makerChanged() {
+        offersStale = true;
+        // Whether or not anything reads its offers soon: the Crafter shows what they say it makes.
+        startBuildIfDue();
     }
 
     @Override

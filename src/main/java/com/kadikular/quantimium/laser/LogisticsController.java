@@ -29,6 +29,9 @@ public interface LogisticsController {
     /** Something moved on its network by itself (a pipe, a lens, a receptacle): the offers catch up at their usual pace. */
     default void movedQuietly() {}
 
+    /** A machine making things for it has changed what it could make (its grid, say): its offers are worked out again. */
+    default void makerChanged() {}
+
     /** Where each thing on its network is, looked over at most once a tick and again after a move (see {@link Logistics#locate}). */
     default java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<Logistics.Spot>> spots() {
         return Logistics.locate(members());

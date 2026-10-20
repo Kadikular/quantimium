@@ -1265,6 +1265,35 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.terminal, crafter.preview, work.queue
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_first_try", timeoutTicks = 300)
+    public static void aTerminalMakesWhatItListsFirstTime(GameTestHelper helper) {
+        // A Crafter drawing on and offering to a network, its screen never opened. Iron blocks put in a chest by hand:
+        // the tick the network first lists ingots as craftable, a take as the terminal makes it (only where the
+        // network last saw them: a Crafter's previews) makes them, first time. (A terminal on the beam would end it
+        // before the Materialiser.)
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var controller = helper.getBlockEntity(new BlockPos(2, Y, 8), LogisticsControllerBlockEntity.class);
+        var ingots = resource(Items.IRON_INGOT);
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            t[0]++;
+            if (t[0] == 60) {
+                helper.getBlockEntity(new BlockPos(4, Y - 1, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class)
+                        .setItem(1, new ItemStack(Items.IRON_BLOCK, 2));
+            }
+            if (t[0] <= 60 || controller.offers().craftable(ingots) <= 0) return;
+            ItemStack got = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), ingots, 9, false, false, true);
+            helper.assertValueEqual(got.getCount(), 9, "nine ingots made the first time they're asked for");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.terminal, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_stored_first", timeoutTicks = 200)
     public static void aTerminalHandsOverWhatsStoredBeforeMakingMore(GameTestHelper helper) {

@@ -163,22 +163,27 @@ public final class CrafterPreview {
             List<ResolvedCraft> all = new ArrayList<>(found.values());
             all.sort(Comparator.comparingInt(CrafterPreview::displayPriority).reversed()
                     .thenComparing(Comparator.comparingInt(ResolvedCraft::totalConsumed).reversed()));
-            List<ResolvedCraft> capped = new ArrayList<>();
-            int usedOutputs = 0;
-            for (ResolvedCraft craft : all) {
-                int outputs = 0;
-                for (ItemStack output : craft.outputs()) {
-                    if (!output.isEmpty()) outputs++;
-                }
-                if (outputs == 0 || outputs > maxOutputs) continue;
-                // Keep multi-output recipes atomic rather than cutting their byproducts off at the cap.
-                if (usedOutputs + outputs > maxOutputs) continue;
-                capped.add(craft);
-                usedOutputs += outputs;
-                if (usedOutputs == maxOutputs) break;
-            }
-            result = capped;
+            result = cap(all, maxOutputs);
         }
+    }
+
+    /** The first of {@code crafts} (in order) whose outputs come to at most {@code maxOutputs}. */
+    public static List<ResolvedCraft> cap(List<ResolvedCraft> crafts, int maxOutputs) {
+        List<ResolvedCraft> capped = new ArrayList<>();
+        int usedOutputs = 0;
+        for (ResolvedCraft craft : crafts) {
+            int outputs = 0;
+            for (ItemStack output : craft.outputs()) {
+                if (!output.isEmpty()) outputs++;
+            }
+            if (outputs == 0 || outputs > maxOutputs) continue;
+            // Keep multi-output recipes atomic rather than cutting their byproducts off at the cap.
+            if (usedOutputs + outputs > maxOutputs) continue;
+            capped.add(craft);
+            usedOutputs += outputs;
+            if (usedOutputs == maxOutputs) break;
+        }
+        return capped;
     }
 
     /** Every craft of recipe type {@code type} the pool can make, into {@code found}. */
