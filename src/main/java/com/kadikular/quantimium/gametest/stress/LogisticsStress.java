@@ -393,9 +393,12 @@ public final class LogisticsStress {
             }
             // Now and then the player takes something, worth crafting or dug.
             if (random.nextInt(4) == 0) {
-                Item item = random.nextBoolean() ? WANTED[random.nextInt(WANTED.length)] : dug.get(random.nextInt(dug.size()));
+                boolean worth = random.nextBoolean();
+                Item item = worth ? WANTED[random.nextInt(WANTED.length)] : dug.get(random.nextInt(dug.size()));
                 int count = 1 + random.nextInt(64);
-                ItemStack got = Stress.time("terminal take", item + " x" + count, () -> net.terminal.take(ItemResource.of(new ItemStack(item)), count));
+                // What's dug only as it's stored: made of other dug things, it isn't counted by worth.
+                ItemStack got = Stress.time("terminal take", item + " x" + count, () -> worth ? net.terminal.take(ItemResource.of(new ItemStack(item)), count)
+                        : com.kadikular.quantimium.laser.Logistics.take(net.controller.spots(), ItemResource.of(new ItemStack(item)), count, false, true, false));
                 if (!got.isEmpty()) pile.merge(got.getItem(), (long) got.getCount(), Long::sum);
             }
             Map<Item, Long> now = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(player), pile));
