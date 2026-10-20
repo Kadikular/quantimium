@@ -78,6 +78,9 @@ public final class IngredientPool {
     public static IngredientPool build(@Nullable Level level, BlockPos source,
                                        ItemStackHandler grid, int inputSlots) {
         List<Offer> offers = new ArrayList<>();
+        // What's in its own grid comes first, whatever slot a Tesseract is in: a craft takes from there before
+        // reaching through a link for the same thing.
+        List<Offer> linked = new ArrayList<>();
         for (int slot = 0; slot < inputSlots; slot++) {
             ItemStack stack = grid.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
@@ -102,12 +105,13 @@ public final class IngredientPool {
                     if (takeable.getCount() >= takeable.getMaxStackSize() && remoteStack.getCount() > takeable.getCount()) {
                         takeable = takeable.copyWithCount(remoteStack.getCount());
                     }
-                    offers.add(new Offer(takeable, new Provenance.Remote(slot, r)));
+                    linked.add(new Offer(takeable, new Provenance.Remote(slot, r)));
                 }
                 continue;
             }
             offers.add(new Offer(stack, new Provenance.Local(slot)));
         }
+        offers.addAll(linked);
         return new IngredientPool(offers);
     }
 

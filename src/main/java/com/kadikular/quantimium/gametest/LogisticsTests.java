@@ -1109,6 +1109,29 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_grid_after_link", timeoutTicks = 200)
+    public static void aCrafterUsesItsOwnGridBeforeTheNetwork(GameTestHelper helper) {
+        // A crafting-table Crafter on a network: its Tesseract in the first slot, 64 iron ingots in the second. The
+        // network doesn't list the ingots in its grid as stock, and an iron block taken from it is made from them.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT));
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafter.getInventory().setStackInSlot(1, new ItemStack(Items.IRON_INGOT, 64));
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(settled(controller::offers).real(resource(Items.IRON_INGOT)), 0L, "the grid isn't the network's stock");
+            crafter.rebuildPreview();
+            int slot = CrafterTests.ghostSlot(crafter, Items.IRON_BLOCK);
+            ItemStack block = crafter.pullHandler().extractItem(slot, 1, false);
+            helper.assertValueEqual(block.getCount(), 1, "an iron block made");
+            helper.assertValueEqual(crafter.getInventory().getStackInSlot(1).getCount(), 55, "from the grid's ingots");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_many", timeoutTicks = 200)
     public static void aNetworkListsEverythingACrafterCouldMake(GameTestHelper helper) {
         // Eight kinds of planks and sticks stored, a crafting-table Crafter on the network: more than its screen's 54

@@ -368,7 +368,7 @@ public final class OfferTable {
                 OfferMaker maker = member.maker();
                 for (int slot = 0; slot < inventory.getSlots(); slot++) {
                     // What a machine would make is worked out below, not read off its slots.
-                    if (maker != null && maker.makesOnDemand(slot)) continue;
+                    if (maker != null && (maker.makesOnDemand(slot) || !maker.stocks(slot))) continue;
                     ItemStack stack = inventory.getStackInSlot(slot);
                     if (stack.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
                     real.merge(ItemResource.of(stack), (long) stack.getCount(), Long::sum);

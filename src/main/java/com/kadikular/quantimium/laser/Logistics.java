@@ -128,7 +128,9 @@ public final class Logistics {
         IItemHandler from = provider.inventory();
         if (from == null) return 0;
         int budget = most;
+        OfferMaker maker = provider.maker();
         for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
+            if (!onOffer(maker, slot)) continue;
             ItemStack there = from.getStackInSlot(slot);
             if (there.isEmpty() || !provider.lets(there)) continue;
             for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}) {
@@ -163,7 +165,9 @@ public final class Logistics {
                     IItemHandler from = source.inventory();
                     if (from == null) continue;
                     Map<ItemResource, long[]> listing = source.listing();
+                    OfferMaker maker = source.maker();
                     for (int slot = 0; slot < from.getSlots() && budget > 0; slot++) {
+                        if (!onOffer(maker, slot)) continue;
                         ItemStack there = from.getStackInSlot(slot);
                         // Storage gives up anything it holds; a provider only what its filter lets go.
                         if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
@@ -263,7 +267,9 @@ public final class Logistics {
                 IItemHandler from = source.inventory();
                 if (from == null) continue;
                 Map<ItemResource, long[]> listing = source.listing();
+                OfferMaker maker = source.maker();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
+                    if (!onOffer(maker, slot)) continue;
                     ItemStack there = from.getStackInSlot(slot);
                     if (there.isEmpty() || !wants.test(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
                     int[] parts = split(source, listing, slot, there);
@@ -296,6 +302,7 @@ public final class Logistics {
                 OfferMaker maker = source.maker();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
                     // What a machine would make, by its preview alone: whether it could is asked when it's taken.
+                    if (!onOffer(maker, slot)) continue;
                     ItemStack there = maker != null && maker.makesOnDemand(slot) ? maker.peekOnDemand(slot) : from.getStackInSlot(slot);
                     if (there.isEmpty() || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
                     spots.computeIfAbsent(ItemResource.of(there), k -> new ArrayList<>(2)).add(new Spot(source, slot));
@@ -355,6 +362,11 @@ public final class Logistics {
         if (both == null) return new int[] {there.getCount(), 0};
         int held = (int) Math.min(there.getCount(), both[0]);
         return new int[] {held, source.offersCraftable() ? there.getCount() - held : 0};
+    }
+
+    /** Whether what's in {@code slot} of a member is on offer: not what a machine makes things from (a Crafter's grid). */
+    private static boolean onOffer(@org.jetbrains.annotations.Nullable OfferMaker maker, int slot) {
+        return maker == null || maker.makesOnDemand(slot) || maker.stocks(slot);
     }
 
     /** Runs {@code pull} from {@code slot}: from a machine set to craft from stored items only, what it draws on makes nothing for it. */

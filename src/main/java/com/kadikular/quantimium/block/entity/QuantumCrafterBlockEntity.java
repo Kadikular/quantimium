@@ -787,6 +787,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return slot > OUTPUT_END ? getGhost(GHOST_BASE + slot - OUTPUT_END - 1) : ItemStack.EMPTY;
     }
 
+    /** Its outputs: its grid and links are what it makes things from. */
+    @Override
+    public boolean stocks(int slot) {
+        return slot >= OUTPUT_START && slot <= OUTPUT_END;
+    }
+
     @Override
     public boolean makesOnDemand(int slot) {
         return slot > OUTPUT_END;

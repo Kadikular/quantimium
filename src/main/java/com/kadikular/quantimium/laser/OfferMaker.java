@@ -27,6 +27,14 @@ public interface OfferMaker {
     boolean makesOnDemand(int slot);
 
     /**
+     * Whether what's in {@code slot} of its automation view is on offer as it is: what it has made, not what it
+     * makes things from (a Crafter's grid shows to pipes, but isn't the network's to take).
+     */
+    default boolean stocks(int slot) {
+        return true;
+    }
+
+    /**
      * What a pull from {@code slot} (one that makes something) would make, without working out whether it could right
      * now: for finding where things are, which then asks only the few slots it found.
      */
