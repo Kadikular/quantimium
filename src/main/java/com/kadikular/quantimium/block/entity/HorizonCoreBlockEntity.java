@@ -198,10 +198,37 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     /** What's held and not promised to an open transaction: what a plan may use. */
+    /** What's held and not promised: read only (it may be the ledger itself); copy it to change it. */
     public java.util.Map<ItemResource, Long> available() {
-        java.util.Map<ItemResource, Long> stock = ledger.snapshot();
-        reserved.forEach((item, amount) -> stock.computeIfPresent(item, (k, have) -> have > amount ? have - amount : null));
-        return stock;
+        // Nothing promised: the ledger itself, read only, not a copy of thousands of kinds.
+        if (reserved.isEmpty()) return ledger.view();
+        return new Unpromised();
+    }
+
+    /** The ledger less what's promised, read as it's asked rather than copied: what a plan made meanwhile sees. */
+    private final class Unpromised extends java.util.AbstractMap<ItemResource, Long> {
+        @Override
+        public Long get(Object key) {
+            if (!(key instanceof ItemResource item)) return null;
+            long left = availableCount(item);
+            return left > 0 ? left : null;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return get(key) != null;
+        }
+
+        /** Rarely asked (a plan works from the ledger's index): put together each time. */
+        @Override
+        public java.util.Set<java.util.Map.Entry<ItemResource, Long>> entrySet() {
+            java.util.Map<ItemResource, Long> now = new java.util.LinkedHashMap<>();
+            ledger.view().forEach((item, count) -> {
+                long left = count - reserved.getOrDefault(item, 0L);
+                if (left > 0) now.put(item, left);
+            });
+            return now.entrySet();
+        }
     }
 
     /** How many of {@code item} are held and not promised to an open transaction. */
@@ -848,7 +875,8 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     /** Plans {@code count} of {@code item} from {@code stock}, which may differ from the ledger. Changes nothing. */
     public ReactorPlanner.Result plan(java.util.Map<ItemResource, Long> stock, ItemResource item, long count) {
         if (!isActive()) return refused("message.quantimium.reactor.offline");
-        return ReactorPlanner.plan(recipes, stock, item, count);
+        // Planned against the ledger itself: it keeps where its kinds are.
+        return ReactorPlanner.plan(recipes, stock, stock == ledger.view() || stock instanceof Unpromised ? ledger : null, item, count);
     }
 
     /**

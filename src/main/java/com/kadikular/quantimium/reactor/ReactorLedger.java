@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * <p>Counts are longs, since a horizon holds millions. {@link #mass} is the total, kept as it changes.
  */
-public final class ReactorLedger {
+public final class ReactorLedger implements StockIndex {
 
     /** One entry, for saving. */
     public record Entry(ItemResource item, long count) {
@@ -30,7 +30,22 @@ public final class ReactorLedger {
     public static final Codec<List<Entry>> CODEC = Entry.CODEC.listOf();
 
     private final Map<ItemResource, Long> counts = new LinkedHashMap<>();
+    private final Map<ItemResource, Long> readOnly = Collections.unmodifiableMap(counts);
     private long mass;
+    /** Its kinds by item, and when each came in: for plans (see {@link StockIndex}). */
+    private final Map<net.minecraft.world.item.Item, List<ItemResource>> byItem = new java.util.HashMap<>();
+    private final Map<ItemResource, Long> since = new java.util.HashMap<>();
+    private long arrivals;
+
+    @Override
+    public List<ItemResource> kindsOf(net.minecraft.world.item.Item item) {
+        return byItem.getOrDefault(item, List.of());
+    }
+
+    @Override
+    public long order(ItemResource kind) {
+        return since.getOrDefault(kind, Long.MAX_VALUE);
+    }
 
     public long mass() {
         return mass;
@@ -40,8 +55,9 @@ public final class ReactorLedger {
         return counts.getOrDefault(item, 0L);
     }
 
+    /** What it holds, read only and live: the same map each time. */
     public Map<ItemResource, Long> view() {
-        return Collections.unmodifiableMap(counts);
+        return readOnly;
     }
 
     public boolean isEmpty() {
@@ -50,7 +66,10 @@ public final class ReactorLedger {
 
     public void add(ItemResource item, long amount) {
         if (amount <= 0 || item.isEmpty()) return;
-        counts.merge(item, amount, Long::sum);
+        if (counts.merge(item, amount, Long::sum) == amount) {
+            byItem.computeIfAbsent(item.getItem(), k -> new ArrayList<>(1)).add(item);
+            since.put(item, arrivals++);
+        }
         mass += amount;
     }
 
@@ -59,8 +78,17 @@ public final class ReactorLedger {
         long have = count(item);
         long taken = Math.min(have, Math.max(0, amount));
         if (taken == 0) return 0;
-        if (taken == have) counts.remove(item);
-        else counts.put(item, have - taken);
+        if (taken == have) {
+            counts.remove(item);
+            List<ItemResource> kinds = byItem.get(item.getItem());
+            if (kinds != null) {
+                kinds.remove(item);
+                if (kinds.isEmpty()) byItem.remove(item.getItem());
+            }
+            since.remove(item);
+        } else {
+            counts.put(item, have - taken);
+        }
         mass -= taken;
         return taken;
     }
@@ -73,6 +101,8 @@ public final class ReactorLedger {
 
     public void load(List<Entry> entries) {
         counts.clear();
+        byItem.clear();
+        since.clear();
         mass = 0;
         for (Entry entry : entries) add(entry.item(), entry.count());
     }

@@ -305,7 +305,8 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
                 // before; with some held (to be handed over first), from what's left.
                 Map<ItemResource, Long> stock = null;
                 if (held > 0) {
-                    stock = horizon.available();
+                    // Changed over what's available, not in it: that may be the ledger itself.
+                    stock = new com.kadikular.quantimium.reactor.StockOverlay(horizon.available());
                     stock.computeIfPresent(item, (k, have) -> have > held ? have - held : null);
                 }
                 long spare = horizon.getEnergyStorage().getEnergyStored();
