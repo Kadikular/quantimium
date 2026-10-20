@@ -165,8 +165,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
             } finally {
                 looking = false;
             }
-            // What's there has moved since the offers were worked out (a hopper, a pipe, a hand in a chest).
-            drifted = !stored.equals(offers.stored());
+            // What's there has moved since the offers were worked out (a hopper, a pipe, a hand in a chest), in a way
+            // that could change what could be made.
+            drifted = matters(stored, offers.stored(), offers);
             // Nothing moved since last tick: the same table, so what's read from it (a terminal's list) is kept too.
             if (liveOffers == null || liveFrom != offers || !stored.equals(liveOffers.stored())) liveOffers = offers.withStored(stored);
             liveTick = now;
@@ -174,6 +175,32 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         }
         return liveOffers;
     }
+
+    /**
+     * Whether what's there now ({@code now}) differs from what {@code table} was worked out from ({@code was}) in a way
+     * that could change what could be made: something new, or more or less of something that goes into what's made.
+     * A quarry filling the network with stone no machine on it uses changes only what's there, which shows at once
+     * anyway. Every few seconds any change counts: more of something could make a recipe possible.
+     */
+    private boolean matters(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> now,
+                            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> was,
+                            com.kadikular.quantimium.laser.OfferTable table) {
+        if (now.equals(was)) return false;
+        if (level == null || offersTick == Long.MIN_VALUE || level.getGameTime() - offersTick >= ANY_CHANGE_TICKS) return true;
+        java.util.Set<net.minecraft.world.item.Item> inputs = table.inputs();
+        for (var entry : now.entrySet()) {
+            Long before = was.get(entry.getKey());
+            if (before == null) return true;
+            if (!before.equals(entry.getValue()) && inputs.contains(entry.getKey().getItem())) return true;
+        }
+        for (var item : was.keySet()) {
+            if (!now.containsKey(item) && inputs.contains(item.getItem())) return true;
+        }
+        return false;
+    }
+
+    /** How long since the offers were last worked out before any change at all is worth working them out again for. */
+    private static final int ANY_CHANGE_TICKS = 100;
 
     @org.jetbrains.annotations.Nullable
     private com.kadikular.quantimium.laser.OfferTable liveOffers;

@@ -831,6 +831,26 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return shown;
     }
 
+    /**
+     * Keeps the crafts a full match found, with what it was shown. Within the same few seconds, added to what earlier
+     * matches found: a kind gone and back (taken out, put back) is still known, its crafts still there to resize, so it
+     * doesn't set off a full match each time. Every few seconds it starts afresh.
+     */
+    private void remember(List<Object> shape, List<ResolvedCraft> crafts, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> shown) {
+        long now = level.getGameTime();
+        Matched was = matchedByShape.get(shape);
+        if (was == null || now - was.tick() >= REMATCH_TICKS) {
+            matchedByShape.put(shape, new Matched(crafts, now, shown));
+            return;
+        }
+        java.util.Map<Identifier, ResolvedCraft> all = new java.util.LinkedHashMap<>();
+        for (ResolvedCraft craft : crafts) all.put(craft.recipeId(), craft);
+        for (ResolvedCraft craft : was.crafts()) all.putIfAbsent(craft.recipeId(), craft);
+        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen = new java.util.HashSet<>(was.seen());
+        seen.addAll(shown);
+        matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen));
+    }
+
     /** How long crafts found for a shape are only resized before every recipe is matched again. */
     private static final int REMATCH_TICKS = 100;
 
@@ -924,7 +944,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             } else {
                 if (!EntangledLinks.withOverrides(views, () -> run.step(nanos))) return false;
                 crafts = run.result();
-                if (shape != null && shown != null && level != null) matchedByShape.put(shape, new Matched(crafts, level.getGameTime(), shown));
+                if (shape != null && shown != null && level != null) remember(shape, crafts, shown);
             }
             if (isBasic()) crafts = limitToCoherence(crafts);
             if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
