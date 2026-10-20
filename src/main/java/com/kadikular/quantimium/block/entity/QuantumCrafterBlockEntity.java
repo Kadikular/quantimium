@@ -545,7 +545,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             remoteCountSignature = remoteCounts;
             discoveryPending = false;
             nextDiscoveryTick = gameTime + DISCOVERY_TICKS;
-            rebuildPreview();
+            queueRefresh(true);
             return;
         }
 
@@ -556,7 +556,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         remoteCountSignature = remoteCounts;
         if (!changed && !discoveryPending) {
             // Batches trimmed to fit the buffer have to grow back once it refills.
-            if (energyWouldResizeBatches()) rescaleCachedPreview();
+            if (energyWouldResizeBatches()) queueRefresh(false);
             else updateStatusFromPreview();
             return;
         }
@@ -568,7 +568,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (localGrew || (discoveryPending && gameTime >= nextDiscoveryTick)) {
             discoveryPending = false;
             nextDiscoveryTick = gameTime + DISCOVERY_TICKS;
-            rebuildPreview();
+            queueRefresh(true);
             return;
         }
 
@@ -576,7 +576,37 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             updateStatusFromPreview();
             return;
         }
-        rescaleCachedPreview();
+        queueRefresh(false);
+    }
+
+    /** Whether a full rebuild is waiting in the queue: it covers any resize asked for meanwhile. */
+    private boolean rebuildQueued;
+
+    /**
+     * Works its preview out again (all of it, or the batches of what it already shows), in the background (see
+     * {@link com.kadikular.quantimium.work.WorkQueue}): a crafting table on a big network previews a thousand crafts,
+     * and a few crafters doing that in one tick would stall the server. Sooner while someone has its screen open.
+     */
+    private void queueRefresh(boolean full) {
+        rebuildQueued |= full;
+        int priority = watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
+        com.kadikular.quantimium.work.WorkQueue.submit(this, priority, () -> {
+            if (isRemoved() || level == null) return true;
+            boolean rebuild = rebuildQueued;
+            rebuildQueued = false;
+            if (rebuild) rebuildPreview();
+            else rescaleCachedPreview();
+            return true;
+        });
+    }
+
+    /** Whether a player has its screen open. */
+    private boolean watchedByPlayer() {
+        if (!(level instanceof ServerLevel server)) return false;
+        for (var player : server.players()) {
+            if (player.containerMenu instanceof com.kadikular.quantimium.menu.QuantumCrafterMenu menu && menu.getBlockEntity() == this) return true;
+        }
+        return false;
     }
 
     private boolean updateLinkLoopState() {
@@ -721,6 +751,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
         realOutputs().forEach((item, count) -> outputs.merge(item, count, Long::sum));
         return outputs;
+    }
+
+    @Override
+    public ItemStack peekOnDemand(int slot) {
+        return slot > OUTPUT_END ? getGhost(GHOST_BASE + slot - OUTPUT_END - 1) : ItemStack.EMPTY;
     }
 
     @Override

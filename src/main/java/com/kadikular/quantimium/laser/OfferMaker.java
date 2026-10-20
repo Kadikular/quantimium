@@ -25,4 +25,10 @@ public interface OfferMaker {
 
     /** Whether a pull from {@code slot} of its automation view would make something rather than hand over what's there. */
     boolean makesOnDemand(int slot);
+
+    /**
+     * What a pull from {@code slot} (one that makes something) would make, without working out whether it could right
+     * now: for finding where things are, which then asks only the few slots it found.
+     */
+    net.minecraft.world.item.ItemStack peekOnDemand(int slot);
 }

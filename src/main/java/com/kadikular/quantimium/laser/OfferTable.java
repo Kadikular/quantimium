@@ -37,12 +37,12 @@ public final class OfferTable {
     /** How many machines a chain of crafts on the network reaches through. */
     public static final int TIERS = 8;
 
-    /** How many times a machine is asked again for one looping craft, leaving out more each time, before it's dropped. */
+    /** How many times a machine is asked again about its looping crafts, leaving out more each time, before they're dropped. */
     private static final int LOOP_RETRIES = 2;
-    /** How many looping crafts of one machine are asked about again: past that, they're dropped. */
-    private static final int MOST_LOOPS = 8;
 
     public static final OfferTable EMPTY = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of());
+    /** A network's offers before they've first been worked out: nothing yet, and another network reading it should look again soon. */
+    public static final OfferTable PENDING = new OfferTable(Map.of(), Map.of(), Map.of(), Set.of());
 
     /** One item on offer: how many are there, how many could be made, and the shortest chain that makes it. */
     public record Entry(ItemResource item, long real, long craftable, int tier) {}
@@ -175,7 +175,7 @@ public final class OfferTable {
 
     /** The same offers, only the real ones, only the craftable, or both. */
     public OfferTable only(boolean reals, boolean craftables) {
-        if (reals && craftables) return this;
+        if (reals && craftables || this == PENDING) return this;
         return new OfferTable(reals ? real : Map.of(), craftables ? craftable : Map.of(), tiers, origins);
     }
 
@@ -183,70 +183,93 @@ public final class OfferTable {
         return origins;
     }
 
-    /** Works out the table for {@code network} (its controller at {@code at}), whose members are {@code members}. */
+    /** Works out the table for {@code network} (its controller at {@code at}), whose members are {@code members}, all at once. */
     public static OfferTable build(Level level, LogisticsController network, BlockPos at, List<LogisticsMember> members) {
-        Map<ItemResource, Long> real = new LinkedHashMap<>();
-        Map<ItemResource, Map<BlockPos, List<Source>>> craftable = new LinkedHashMap<>();
-        Map<ItemResource, Integer> tiers = new HashMap<>();
-        Set<BlockPos> origins = new HashSet<>();
-        origins.add(at);
-        record Maker(BlockPos pos, OfferMaker maker, LogisticsMember member) {}
-        List<Maker> makers = new ArrayList<>();
+        Builder builder = new Builder(network, at, members);
+        while (!builder.step()) {
+            // on to the next machine
+        }
+        return builder.result();
+    }
 
-        List<LogisticsMember> sorted = new ArrayList<>(members);
-        sorted.sort(Comparator.comparing(LogisticsMember::inventoryPos));
-        for (LogisticsMember member : sorted) {
-            if (member.role() == LogisticsMember.Role.REQUESTER) continue;
-            BlockPos pos = member.inventoryPos();
-            OfferTable imported = member.imports();
-            if (imported != null) {
-                // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
-                // offered here too, real as real and craftable as craftable.
-                if (imported.origins().contains(at)) continue;
-                origins.addAll(imported.origins());
-                imported.real.forEach((item, amount) -> {
-                    if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
-                });
-                if (member.offersCraftable()) {
-                    for (Entry entry : imported.entries()) {
-                        if (entry.craftable() <= 0) continue;
-                        if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
-                        offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of()));
-                        tiers.merge(entry.item(), entry.tier(), Math::min);
-                    }
-                }
-                continue;
-            }
-            Map<ItemResource, long[]> listing = member.listing();
-            if (listing != null) {
-                // A Reactor's port: what it holds is real, what it could make is craftable, already worked out.
-                listing.forEach((item, both) -> {
-                    if (both[0] > 0) real.merge(item, both[0], Long::sum);
-                    if (both[1] > 0 && member.offersCraftable()) {
-                        offer(craftable, item, pos, new Source(both[1], Set.of()));
-                        tiers.merge(item, 1, Math::min);
-                    }
-                });
-                continue;
-            }
-            IItemHandler inventory = member.inventory();
-            if (inventory == null) continue;
-            OfferMaker maker = member.maker();
-            for (int slot = 0; slot < inventory.getSlots(); slot++) {
-                // What a machine would make is worked out below, not read off its slots.
-                if (maker != null && maker.makesOnDemand(slot)) continue;
-                ItemStack stack = inventory.getStackInSlot(slot);
-                if (stack.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
-                real.merge(ItemResource.of(stack), (long) stack.getCount(), Long::sum);
-            }
-            if (maker != null && member.role() == LogisticsMember.Role.PROVIDER && member.offersCraftable()) makers.add(new Maker(pos, maker, member));
+    /**
+     * Works the table out a step at a time, for {@link com.kadikular.quantimium.work.WorkQueue}: first what's really
+     * there (one step), then each machine's offers at each tier (a step each). A big network's offers fill in over
+     * a few ticks rather than at once.
+     */
+    public static final class Builder {
+        private record Maker(BlockPos pos, OfferMaker maker, LogisticsMember member) {}
+
+        private final LogisticsController network;
+        private final BlockPos at;
+        private final List<LogisticsMember> sorted;
+        private final Map<ItemResource, Long> real = new LinkedHashMap<>();
+        private final Map<ItemResource, Map<BlockPos, List<Source>>> craftable = new LinkedHashMap<>();
+        private final Map<ItemResource, Integer> tiers = new HashMap<>();
+        private final Set<BlockPos> origins = new HashSet<>();
+        private final List<Maker> makers = new ArrayList<>();
+        private boolean scanned;
+        private int tier = 1;
+        private int next;
+        @org.jetbrains.annotations.Nullable
+        private OfferTable sofar;
+        private final Map<BlockPos, Map<ItemResource, List<Source>>> found = new LinkedHashMap<>();
+        /** The machine being asked, between looks. */
+        @org.jetbrains.annotations.Nullable
+        private Asking asking;
+        @org.jetbrains.annotations.Nullable
+        private OfferTable result;
+        /** Whether it read another network's offers before they were first worked out: it should be worked out again soon. */
+        private boolean early;
+
+        /** Whether it read another network's offers before they were first worked out. */
+        public boolean early() {
+            return early;
         }
 
-        // Tier by tier: each machine shown what's real and what the others could make so far.
-        for (int tier = 1; tier <= TIERS && !makers.isEmpty(); tier++) {
-            OfferTable sofar = new OfferTable(real, craftable, tiers, origins);
-            Map<BlockPos, Map<ItemResource, List<Source>>> found = new LinkedHashMap<>();
-            for (Maker maker : makers) found.put(maker.pos(), sofar.offersOf(network, maker.pos(), maker.maker(), maker.member()));
+        public Builder(LogisticsController network, BlockPos at, List<LogisticsMember> members) {
+            this.network = network;
+            this.at = at;
+            this.sorted = new ArrayList<>(members);
+            this.sorted.sort(Comparator.comparing(LogisticsMember::inventoryPos));
+            origins.add(at);
+        }
+
+        /** The table, once worked out; null till then. */
+        @org.jetbrains.annotations.Nullable
+        public OfferTable result() {
+            return result;
+        }
+
+        /** Does a step; whether the table is worked out. */
+        public boolean step() {
+            if (result != null) return true;
+            if (!scanned) {
+                scan();
+                scanned = true;
+                if (makers.isEmpty()) finish();
+                return result != null;
+            }
+            // Each machine shown what's real and what the machines could make so far, a tier at a time.
+            if (next == 0) {
+                sofar = new OfferTable(real, craftable, tiers, origins);
+                found.clear();
+            }
+            // One machine's offers, a look at a time: its first look, then (if some of its crafts loop) a look again.
+            Maker maker = makers.get(next);
+            boolean gone = maker.maker() instanceof net.minecraft.world.level.block.entity.BlockEntity entity && entity.isRemoved();
+            if (!gone) {
+                if (asking == null) {
+                    asking = sofar.new Asking(network, maker.pos(), maker.maker(), maker.member());
+                    if (!asking.look()) return false;
+                } else if (!asking.look()) {
+                    return false;
+                }
+                found.put(maker.pos(), asking.kept);
+            }
+            asking = null;
+            if (++next < makers.size()) return false;
+            next = 0;
             boolean more = false;
             for (Map.Entry<BlockPos, Map<ItemResource, List<Source>>> made : found.entrySet()) {
                 BlockPos pos = made.getKey();
@@ -262,45 +285,119 @@ public final class OfferTable {
                     tiers.merge(offer.getKey(), tier, Math::min);
                 }
             }
-            if (!more) break;
+            if (!more || ++tier > TIERS) finish();
+            return result != null;
         }
-        return new OfferTable(Map.copyOf(real), craftable, tiers, Set.copyOf(origins));
-    }
 
-    /**
-     * What the machine at {@code pos} could make, shown this table. A craft out of something that was made out of
-     * what that craft makes is a loop: the machine is asked again for that thing alone, with what was made from it
-     * left out, and what still loops after that is dropped. Its other crafts keep everything they were shown.
-     */
-    private Map<ItemResource, List<Source>> offersOf(LogisticsController network, BlockPos pos, OfferMaker maker, LogisticsMember member) {
-        Map<ItemResource, List<Source>> kept = new LinkedHashMap<>();
-        boolean chains = member.craftsFromCraftable();
-        // Shown its own crafts too, so one machine can chain its own steps (ingots from blocks, then leggings); what
-        // would loop back through itself is caught as any loop is.
-        Set<Item> looped = collect(maker.makes(network, stock(null, true, chains, Set.of()), chains), pos, member, Set.of(), null, kept);
-        int asked = 0;
-        for (Item out : looped) {
-            if (asked++ >= MOST_LOOPS) break;
-            Set<Item> avoid = new HashSet<>(Set.of(out));
-            for (int attempt = 0; attempt < LOOP_RETRIES; attempt++) {
-                Set<Item> still = collect(maker.makes(network, stock(null, true, chains, avoid), chains), pos, member, avoid, out, kept);
-                if (still.isEmpty() || !avoid.addAll(still)) break;
+        private void finish() {
+            result = new OfferTable(Map.copyOf(real), craftable, tiers, Set.copyOf(origins));
+        }
+
+        /** What's really there, and which machines make things to order. */
+        private void scan() {
+            for (LogisticsMember member : sorted) {
+                if (member.role() == LogisticsMember.Role.REQUESTER) continue;
+                BlockPos pos = member.inventoryPos();
+                OfferTable imported = member.imports();
+                if (imported != null) {
+                    // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
+                    // offered here too, real as real and craftable as craftable.
+                    if (imported == PENDING) early = true;
+                    if (imported.origins().contains(at)) continue;
+                    origins.addAll(imported.origins());
+                    imported.real.forEach((item, amount) -> {
+                        if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
+                    });
+                    if (member.offersCraftable()) {
+                        for (Entry entry : imported.entries()) {
+                            if (entry.craftable() <= 0) continue;
+                            if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
+                            offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of()));
+                            tiers.merge(entry.item(), entry.tier(), Math::min);
+                        }
+                    }
+                    continue;
+                }
+                Map<ItemResource, long[]> listing = member.listing();
+                if (listing != null) {
+                    // A Reactor's port: what it holds is real, what it could make is craftable, already worked out.
+                    listing.forEach((item, both) -> {
+                        if (both[0] > 0) real.merge(item, both[0], Long::sum);
+                        if (both[1] > 0 && member.offersCraftable()) {
+                            offer(craftable, item, pos, new Source(both[1], Set.of()));
+                            tiers.merge(item, 1, Math::min);
+                        }
+                    });
+                    continue;
+                }
+                IItemHandler inventory = member.inventory();
+                if (inventory == null) continue;
+                OfferMaker maker = member.maker();
+                for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                    // What a machine would make is worked out below, not read off its slots.
+                    if (maker != null && maker.makesOnDemand(slot)) continue;
+                    ItemStack stack = inventory.getStackInSlot(slot);
+                    if (stack.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(stack)) continue;
+                    real.merge(ItemResource.of(stack), (long) stack.getCount(), Long::sum);
+                }
+                if (maker != null && member.role() == LogisticsMember.Role.PROVIDER && member.offersCraftable()) makers.add(new Maker(pos, maker, member));
             }
         }
-        return kept;
     }
 
     /**
-     * Keeps in {@code kept} the crafts in {@code made} (only those of {@code only}, if set) that don't loop, shown
+     * Asking the machine at {@code pos} what it could make, shown this table, a look at a time. A craft out of
+     * something that was made out of what that craft makes is a loop: the machine is asked again about those things,
+     * with what was made from any of them left out, and what still loops after that is dropped. Its other crafts
+     * keep everything they were shown.
+     */
+    private final class Asking {
+        private final LogisticsController network;
+        private final BlockPos pos;
+        private final OfferMaker maker;
+        private final LogisticsMember member;
+        private final boolean chains;
+        final Map<ItemResource, List<Source>> kept = new LinkedHashMap<>();
+        @org.jetbrains.annotations.Nullable
+        private Set<Item> looped;
+        private final Set<Item> avoid = new HashSet<>();
+        private int attempts;
+
+        Asking(LogisticsController network, BlockPos pos, OfferMaker maker, LogisticsMember member) {
+            this.network = network;
+            this.pos = pos;
+            this.maker = maker;
+            this.member = member;
+            this.chains = member.craftsFromCraftable();
+        }
+
+        /** Asks once; whether it's done. */
+        boolean look() {
+            if (looped == null) {
+                // Shown its own crafts too, so one machine can chain its own steps (ingots from blocks, then leggings);
+                // what would loop back through itself is caught as any loop is.
+                looped = collect(maker.makes(network, stock(null, true, chains, Set.of()), chains), pos, member, Set.of(), null, kept);
+                avoid.addAll(looped);
+                return looped.isEmpty();
+            }
+            // The crafts that loop, asked about again together, with what was made from any of them left out: one
+            // more look whatever the number of loops (a crafting table has dozens), not one each.
+            Set<Item> still = collect(maker.makes(network, stock(null, true, chains, avoid), chains), pos, member, avoid, looped, kept);
+            return still.isEmpty() || !avoid.addAll(still) || ++attempts >= LOOP_RETRIES;
+        }
+    }
+
+    /**
+     * Keeps in {@code kept} the crafts in {@code made} (only those making {@code only}, if set) that don't loop, shown
      * the table less what's made from {@code avoid}; what the ones that loop make.
      */
-    private Set<Item> collect(List<OfferMaker.Made> made, BlockPos pos, LogisticsMember member, Set<Item> avoid, Item only,
+    private Set<Item> collect(List<OfferMaker.Made> made, BlockPos pos, LogisticsMember member, Set<Item> avoid, @org.jetbrains.annotations.Nullable Set<Item> only,
                               Map<ItemResource, List<Source>> kept) {
         Map<Item, Set<Item>> below = new HashMap<>();
         Set<Item> looped = new java.util.LinkedHashSet<>();
         for (OfferMaker.Made one : made) {
             Item out = one.item().getItem();
-            if (only != null && out != only) continue;
+            if (only != null && !only.contains(out)) continue;
             if (one.count() <= 0 || !member.lets(one.item().toStack(1))) continue;
             Set<Item> from = new HashSet<>(one.from());
             boolean loops = false;

@@ -359,6 +359,23 @@ public final class Config {
         BUILDER.pop();
     }
 
+    static {
+        BUILDER.push("performance");
+    }
+
+    public static final ModConfigSpec.IntValue WORK_BUDGET_MICROS = BUILDER
+            .comment("How long Quantimium's background work (what logistics networks offer, what Crafters could make) may take each server tick, in microseconds, all together. Work past it waits for the next tick, so a big network's lists fill in over a few ticks rather than stalling the server. Taking or crafting something never waits on it.")
+            .defineInRange("workBudgetMicros", 2000, 100, 50_000);
+
+    static {
+        BUILDER.pop();
+    }
+
+    /** {@link #WORK_BUDGET_MICROS}, in nanoseconds. */
+    public static long workBudgetNanos() {
+        return 1000L * (SPEC.isLoaded() ? WORK_BUDGET_MICROS.get() : 2000);
+    }
+
     public static boolean unrealisingLens() {
         return !SPEC.isLoaded() || UNREALISING_LENS.get();
     }

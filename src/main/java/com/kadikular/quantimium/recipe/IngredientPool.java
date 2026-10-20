@@ -164,7 +164,11 @@ public final class IngredientPool {
     /** As {@link #totalAvailable(int, Item)}, counting only stacks with exactly {@code components} when set. */
     public int totalAvailable(int sourceKey, Item item, @Nullable DataComponentPatch components) {
         int sum = 0;
-        for (Offer offer : offers) {
+        // Only the offers holding that item: a network's pool is hundreds, asked once for each ingredient of each craft.
+        int[] holding = byItem().get(item);
+        if (holding == null) return 0;
+        for (int index : holding) {
+            Offer offer = offers.get(index);
             if (sourceKey(offer.provenance()) != sourceKey) continue;
             if (!offer.stack().is(item)) continue;
             if (components != null && !components.equals(offer.stack().getComponentsPatch())) continue;
@@ -180,6 +184,21 @@ public final class IngredientPool {
     /** For each ingredient asked about, the offers it could take, in order (by identity: recipes share theirs). */
     private final Map<net.minecraft.world.item.crafting.Ingredient, int[]> candidates = new java.util.IdentityHashMap<>();
 
+    /** Which offers hold each item, in order. */
+    private Map<Item, int[]> byItem() {
+        if (byItem == null) {
+            Map<Item, List<Integer>> found = new HashMap<>();
+            for (int i = 0; i < offers.size(); i++) {
+                ItemStack stack = offers.get(i).stack();
+                if (!stack.isEmpty()) found.computeIfAbsent(stack.getItem(), k -> new ArrayList<>(1)).add(i);
+            }
+            Map<Item, int[]> index = new HashMap<>();
+            found.forEach((item, list) -> index.put(item, list.stream().mapToInt(Integer::intValue).toArray()));
+            byItem = index;
+        }
+        return byItem;
+    }
+
     /**
      * The offers, in order, that {@code ingredient} could take: from the items it names, without testing every offer;
      * null for an ingredient that can't say which items it takes (a custom one), which is tested against them all.
@@ -189,18 +208,10 @@ public final class IngredientPool {
         if (ingredient.isCustom()) return null;
         int[] known = candidates.get(ingredient);
         if (known != null) return known;
-        if (byItem == null) {
-            Map<Item, List<Integer>> found = new HashMap<>();
-            for (int i = 0; i < offers.size(); i++) {
-                ItemStack stack = offers.get(i).stack();
-                if (!stack.isEmpty()) found.computeIfAbsent(stack.getItem(), k -> new ArrayList<>(1)).add(i);
-            }
-            byItem = new HashMap<>();
-            found.forEach((item, list) -> byItem.put(item, list.stream().mapToInt(Integer::intValue).toArray()));
-        }
+        Map<Item, int[]> index = byItem();
         java.util.TreeSet<Integer> picked = new java.util.TreeSet<>();
         ingredient.items().forEach(holder -> {
-            int[] at = byItem.get(holder.value());
+            int[] at = index.get(holder.value());
             if (at != null) for (int i : at) picked.add(i);
         });
         int[] result = picked.stream().mapToInt(Integer::intValue).toArray();
@@ -209,14 +220,13 @@ public final class IngredientPool {
     }
 
     public final class Allocator {
-        private final int[] taken;
+        /** What's taken from each offer touched, by its place: a match touches a few of a pool's hundreds. */
+        private final Map<Integer, Integer> taken = new java.util.TreeMap<>();
 
-        private Allocator() {
-            this.taken = new int[offers.size()];
-        }
+        private Allocator() {}
 
         public int remaining(int index) {
-            return offers.get(index).stack().getCount() - taken[index];
+            return offers.get(index).stack().getCount() - taken.getOrDefault(index, 0);
         }
 
         public ItemStack stack(int index) {
@@ -231,7 +241,7 @@ public final class IngredientPool {
         public Withdrawal take(int index, int amount) {
             if (index < 0 || index >= offers.size() || amount <= 0) return null;
             if (remaining(index) < amount) return null;
-            taken[index] += amount;
+            taken.merge(index, amount, Integer::sum);
             Offer offer = offers.get(index);
             return new Withdrawal(offer.provenance(), amount, offer.stack().getItem());
         }
@@ -259,12 +269,11 @@ public final class IngredientPool {
 
         public List<Withdrawal> snapshot() {
             List<Withdrawal> out = new ArrayList<>();
-            for (int i = 0; i < offers.size(); i++) {
-                if (taken[i] > 0) {
-                    Offer offer = offers.get(i);
-                    out.add(new Withdrawal(offer.provenance(), taken[i], offer.stack().getItem()));
-                }
-            }
+            taken.forEach((i, count) -> {
+                if (count <= 0) return;
+                Offer offer = offers.get(i);
+                out.add(new Withdrawal(offer.provenance(), count, offer.stack().getItem()));
+            });
             return out;
         }
     }

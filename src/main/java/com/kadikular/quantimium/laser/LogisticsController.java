@@ -23,6 +23,9 @@ public interface LogisticsController {
     /** Something moved on its network that a player is watching for (a terminal take): the offers are worked out again soon. */
     default void stockMoved() {}
 
+    /** A player is looking at what it offers (a terminal open): what it works out comes first. */
+    default void watched() {}
+
     /** Something moved on its network by itself (a pipe, a lens, a receptacle): the offers catch up at their usual pace. */
     default void movedQuietly() {}
 

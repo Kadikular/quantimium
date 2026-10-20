@@ -397,7 +397,7 @@ public final class LogisticsTests {
         helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
         var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
         helper.runAfterDelay(40, () -> {
-            var contents = terminal.contents();
+            var contents = settled(terminal::contents);
             helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE)))[0], 20L, "storage's cobblestone shows");
             helper.assertValueEqual(contents.get(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.IRON_INGOT)))[0], 5L, "the provider's iron shows");
             helper.assertFalse(contents.containsKey(net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.GOLD_INGOT))), "a requester's gold doesn't");
@@ -423,7 +423,7 @@ public final class LogisticsTests {
         var lectern = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
         helper.runAfterDelay(40, () -> {
             var cobblestone = net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(Items.COBBLESTONE));
-            helper.assertTrue(lectern.contents().containsKey(cobblestone), "storage's cobblestone shows");
+            helper.assertTrue(settled(lectern::contents).containsKey(cobblestone), "storage's cobblestone shows");
             helper.assertValueEqual(lectern.take(cobblestone, 5).getCount(), 5, "and can be taken");
             helper.succeed();
         });
@@ -450,7 +450,7 @@ public final class LogisticsTests {
         helper.runAfterDelay(40, () -> {
             core.recountNow();
             List<LogisticsMember> members = controller.members();
-            var entries = controller.offers().entries();
+            var entries = settled(controller::offers).entries();
             helper.assertTrue(entries.size() > 40, "plenty on offer: " + entries.size());
             long start = System.nanoTime();
             int asked = 0;
@@ -617,6 +617,7 @@ public final class LogisticsTests {
         helper.runAfterDelay(30, () -> {
             var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(at), null);
             helper.assertTrue(handler != null, "pipes see it");
+            settled(handler::size);
             var diamond = resource(Items.DIAMOND);
             int slot = -1;
             for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(diamond)) slot = i;
@@ -731,7 +732,20 @@ public final class LogisticsTests {
 
     /** The network through the Materialiser, as pipes and buses see it. */
     private static net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> network(GameTestHelper helper) {
-        return helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(MATERIALISER), Direction.UP);
+        var handler = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(MATERIALISER), Direction.UP);
+        // Looked at, the network works its offers out in the background: let that finish before reading them.
+        if (handler != null) settled(handler::size);
+        return handler;
+    }
+
+    /**
+     * {@code read}, once the background work it starts (a network working out its offers) is done: as a player
+     * would see it a moment after looking, rather than on the very tick they first looked.
+     */
+    static <T> T settled(java.util.function.Supplier<T> read) {
+        read.get();
+        com.kadikular.quantimium.work.WorkQueue.drain();
+        return read.get();
     }
 
     /** Takes {@code amount} of {@code item} from the network, committing or not; how many came. */
@@ -861,8 +875,11 @@ public final class LogisticsTests {
         while (importer.role() != LogisticsMember.Role.PROVIDER) importer.cycleRole();
         BlockPos theirs = new BlockPos(14, Y + 1, 8);
         helper.setBlock(theirs, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var bController = helper.getBlockEntity(new BlockPos(2, Y + 1, 8), com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class);
+        // B looked at before A has worked its offers out, as a player might: it looks again soon, and catches them.
+        helper.runAfterDelay(60, () -> settled(bController::offers));
         helper.runAfterDelay(100, () -> {
-            var b = helper.getBlockEntity(new BlockPos(2, Y + 1, 8), com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class).offers();
+            var b = settled(bController::offers);
             var cobble = resource(Items.COBBLESTONE);
             var stone = resource(Items.STONE);
             helper.assertValueEqual(b.real(cobble), 23L, "A's cobblestone, real: " + b.entries());
@@ -1171,7 +1188,7 @@ public final class LogisticsTests {
         var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
         var furnace = resource(Items.FURNACE);
         helper.runAfterDelay(80, () -> {
-            long[] listed = terminal.contents().get(furnace);
+            long[] listed = settled(terminal::contents).get(furnace);
             helper.assertTrue(listed != null, "furnaces are listed");
             helper.assertValueEqual(listed[0], 1L, "one stored");
             helper.assertValueEqual(listed[1], 4L, "four can be made");
@@ -1249,7 +1266,7 @@ public final class LogisticsTests {
         var module = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.PodLogisticsModuleBlockEntity.class);
         helper.runAfterDelay(30, () -> {
             helper.assertTrue(module.controller() != null, "the controller's light reaches it");
-            helper.assertValueEqual(module.contents().get(resource(Items.EMERALD))[0], 9L, "it lists the network's emeralds");
+            helper.assertValueEqual(settled(module::contents).get(resource(Items.EMERALD))[0], 9L, "it lists the network's emeralds");
             helper.succeed();
         });
     }

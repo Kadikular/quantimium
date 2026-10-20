@@ -59,6 +59,8 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         Map<ItemResource, long[]> counts = new LinkedHashMap<>();
         LogisticsController controller = controller();
         if (controller == null) return counts;
+        // Someone's looking: what the network offers is worked out first.
+        controller.watched();
         for (var entry : controller.offers().entries()) counts.put(entry.item(), new long[] {entry.real(), entry.craftable()});
         return counts;
     }

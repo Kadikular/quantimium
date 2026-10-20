@@ -293,8 +293,10 @@ public final class Logistics {
                 if (source.role() != role) continue;
                 IItemHandler from = source.inventory();
                 if (from == null) continue;
+                OfferMaker maker = source.maker();
                 for (int slot = 0; slot < from.getSlots(); slot++) {
-                    ItemStack there = from.getStackInSlot(slot);
+                    // What a machine would make, by its preview alone: whether it could is asked when it's taken.
+                    ItemStack there = maker != null && maker.makesOnDemand(slot) ? maker.peekOnDemand(slot) : from.getStackInSlot(slot);
                     if (there.isEmpty() || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
                     spots.computeIfAbsent(ItemResource.of(there), k -> new ArrayList<>(2)).add(new Spot(source, slot));
                 }

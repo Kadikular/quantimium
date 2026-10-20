@@ -124,7 +124,7 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     }
 
     /** The offers as last worked out, when, and whether something has moved since. */
-    private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.EMPTY;
+    private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.PENDING;
     private long offersTick = Long.MIN_VALUE;
     private boolean offersStale = true;
     /** The fewest ticks between workings out of what the network offers, after a move. */
@@ -132,24 +132,55 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     private boolean workingOut;
 
     /**
-     * Worked out at most once a second, sooner after a move it saw (but not more than every few ticks, however busy
-     * the network); never while it's being worked out (a network that reads another's offers which read this one
-     * back gets what this one last had).
+     * The offers as last worked out. They're worked out again at most once a second, sooner after a move it saw (but
+     * not more than every few ticks, however busy the network), a step at a time in the background (see
+     * {@link com.kadikular.quantimium.work.WorkQueue}): till that's done, what it had stands. Never read while being
+     * worked out (a network that reads another's offers which read this one back gets what this one last had).
      */
     @Override
     public com.kadikular.quantimium.laser.OfferTable offers() {
-        if (level == null || workingOut) return offers;
+        if (level == null || level.isClientSide() || workingOut || building != null) return offers;
         long now = level.getGameTime();
         if (offersTick != Long.MIN_VALUE && now - offersTick < (offersStale ? OFFERS_SOONEST : 20)) return offers;
+        offersTick = now;
+        offersStale = false;
+        building = new com.kadikular.quantimium.laser.OfferTable.Builder(this, worldPosition, members());
+        com.kadikular.quantimium.work.WorkQueue.submit(this, watched ? com.kadikular.quantimium.work.WorkQueue.URGENT
+                : com.kadikular.quantimium.work.WorkQueue.NORMAL, this::buildStep);
+        watched = false;
+        return offers;
+    }
+
+    /** A step of working the offers out; whether they're done. */
+    private boolean buildStep() {
+        var builder = building;
+        if (builder == null || isRemoved()) {
+            building = null;
+            return true;
+        }
         workingOut = true;
         try {
-            offers = com.kadikular.quantimium.laser.OfferTable.build(level, this, worldPosition, members());
+            if (!builder.step()) return false;
         } finally {
             workingOut = false;
         }
-        offersTick = now;
-        offersStale = false;
-        return offers;
+        offers = builder.result();
+        building = null;
+        // It read another network before that one had worked its offers out: soon again, to catch them.
+        if (builder.early()) offersStale = true;
+        return true;
+    }
+
+    /** The offers being worked out, a step at a time; null when they're not. */
+    @org.jetbrains.annotations.Nullable
+    private com.kadikular.quantimium.laser.OfferTable.Builder building;
+    /** Whether a player is looking at what it offers (a terminal open): its offers are worked out first. */
+    private boolean watched;
+
+    @Override
+    public void watched() {
+        watched = true;
+        com.kadikular.quantimium.work.WorkQueue.hurry(this, com.kadikular.quantimium.work.WorkQueue.URGENT);
     }
 
     @Override
