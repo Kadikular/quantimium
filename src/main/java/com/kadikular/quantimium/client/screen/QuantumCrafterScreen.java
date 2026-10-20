@@ -54,6 +54,9 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private static final int COLUMNS = 9;
     private static final int ROWS = 3;
     private static final int CELL = 18;
+    /** The scroll bar's track, in the gap right of the grid (tools/gui_panels.py crafter). */
+    private final com.kadikular.quantimium.client.screen.ui.ScrollBar bar =
+            new com.kadikular.quantimium.client.screen.ui.ScrollBar(GRID_X + COLUMNS * CELL + 1, GRID_Y, 3, ROWS * CELL - 2);
 
     /**
      * One item shown: where it's shown (an output slot, 0 to 53, or a preview, from GHOST_BASE), how many are in its
@@ -260,6 +263,16 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     }
 
     @Override
+    @Nullable
+    public Shown shownAt(double mouseX, double mouseY) {
+        Cell cell = cellAt(shown, mouseX, mouseY);
+        if (cell == null) return null;
+        int col = (int) Math.floor((mouseX - leftPos - GRID_X) / CELL);
+        int row = (int) Math.floor((mouseY - topPos - GRID_Y) / CELL);
+        return new Shown(cell.stack().copyWithCount(1), new net.minecraft.client.renderer.Rect2i(leftPos + GRID_X + col * CELL, topPos + GRID_Y + row * CELL, 16, 16));
+    }
+
+    @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         if (menu.isBasic()) {
             int capacity = Math.max(1, menu.getCoherenceCapacity());
@@ -273,6 +286,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
 
         List<Cell> cells = cells();
         scrollRow = Mth.clamp(scrollRow, 0, maxScroll(cells));
+        bar.render(graphics, leftPos, topPos, scrollRow, ROWS, Mth.positiveCeilDiv(cells.size(), COLUMNS), scrollColour());
         Cell hovered = cellAt(cells, mouseX, mouseY);
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLUMNS; col++) {
@@ -360,6 +374,10 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (activeOverlay() == null && event.button() == 0 && bar.over(event.x(), event.y(), leftPos, topPos)) {
+            scrollRow = bar.press(event.y(), topPos, maxScroll(shown));
+            return true;
+        }
         if (onGrid(event.x(), event.y()) && (event.button() == 0 || event.button() == 1)) {
             Cell cell = cellAt(shown, event.x(), event.y());
             if (cell != null) {
@@ -375,7 +393,20 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     }
 
     @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (bar.dragging()) {
+            scrollRow = bar.scrollAt(event.y(), topPos, maxScroll(shown));
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (bar.dragging()) {
+            bar.release();
+            return true;
+        }
         if (event.button() == swallowRelease) {
             swallowRelease = -1;
             return true;
