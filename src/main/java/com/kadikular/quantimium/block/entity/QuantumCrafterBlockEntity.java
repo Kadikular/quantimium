@@ -792,23 +792,28 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         List<Object> shape = shapeOf(views, fromCraftable, catalyst, multiplier);
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown = shownItems(views);
         Matched matched = matchedByShape.get(shape);
-        if (matched != null && level.getGameTime() - matched.tick() < REMATCH_TICKS && matched.covers(shown)) {
+        boolean recent = matched != null && level.getGameTime() - matched.tick() < REMATCH_TICKS;
+        if (recent && matched.covers(shown)) {
             if (whyMatched != null) whyMatched.accept("resized");
             return new Making(asked, views, matched.crafts(), fe);
         }
         if (whyMatched != null) {
             String why;
             if (matched == null) why = "full: first";
-            else if (level.getGameTime() - matched.tick() >= REMATCH_TICKS) why = "full: a minute on";
-            else {
-                why = "full: more of something short";
-                for (var item : shown.keySet()) if (!matched.seen().contains(item)) why = "full: something new";
-            }
-            whyMatched.accept(why);
+            else if (!recent) why = "full: a minute on";
+            else why = "partial: " + matched.news(shown).size() + (matched.news(shown).size() == 1 ? " item" : " items");
+            whyMatched.accept(why.startsWith("partial") ? "partial" : why);
         }
-        Making making = new Making(asked, views, new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE));
+        CrafterPreview.Run run = new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, Integer.MAX_VALUE);
+        Making making = new Making(asked, views, run);
         making.shape = shape;
         making.shown = shown;
+        if (recent) {
+            // Only what could have become possible: the recipes naming what's new, or what there's more of now that
+            // there was too little of. The rest it knows already, and resizes.
+            run.involving(matched.news(shown));
+            making.partial = true;
+        }
         return making;
     }
 
@@ -904,6 +909,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private record Matched(List<ResolvedCraft> crafts, long tick, java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> seen,
                            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> few, long enough) {
+        /** The items in {@code shown} that could make something possible that wasn't: new, or more of what was short. */
+        java.util.Set<net.minecraft.world.item.Item> news(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
+            java.util.Set<net.minecraft.world.item.Item> news = new java.util.HashSet<>();
+            for (var entry : shown.entrySet()) {
+                Long had = few.get(entry.getKey());
+                if (!seen.contains(entry.getKey()) || had != null && entry.getValue() > had) news.add(entry.getKey().getItem());
+            }
+            return news;
+        }
+
         /** Whether what it's {@code shown} now could only make the crafts found, resized: nothing new, and no more of what was short. */
         boolean covers(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown) {
             for (var entry : shown.entrySet()) {
@@ -967,6 +982,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         List<Object> shape;
         @Nullable
         java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> shown;
+        /** Matching only the recipes involving what's new: what it finds is added to what was known, and all of it resized. */
+        boolean partial;
         @Nullable
         private List<com.kadikular.quantimium.laser.OfferMaker.Made> result;
 
@@ -1012,6 +1029,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 if (!EntangledLinks.withOverrides(views, () -> run.step(nanos))) return false;
                 crafts = run.result();
                 if (shape != null && shown != null && level != null) remember(shape, crafts, shown);
+                if (partial && shape != null && matchedByShape.get(shape) != null) {
+                    List<ResolvedCraft> known = matchedByShape.get(shape).crafts();
+                    int energy = energyStorage.getEnergyStored();
+                    crafts = EntangledLinks.withOverrides(views, () -> resized(known, energy));
+                }
             }
             if (isBasic()) crafts = limitToCoherence(crafts);
             if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();

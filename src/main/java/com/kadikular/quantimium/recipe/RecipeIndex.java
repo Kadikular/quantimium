@@ -67,6 +67,23 @@ public final class RecipeIndex {
      * Recipes of {@code type} worth testing given the items on hand. A recipe is returned when any
      * of its inputs accepts one of {@code available}, so the result is a superset of the matches.
      */
+    /**
+     * The recipes of {@code type} that name any of {@code items} among their ingredients: what could have become
+     * possible when they turned up. Not the ones whose ingredients can't say which items they take.
+     */
+    public List<RecipeHolder<?>> candidatesInvolving(RecipeType<?> type, Set<Item> items) {
+        if (manager == null || type == null || items.isEmpty()) return List.of();
+        TypeIndex index = indexByType.computeIfAbsent(type, this::buildIndex);
+        LinkedHashSet<RecipeHolder<?>> candidates = new LinkedHashSet<>();
+        for (Item item : items) {
+            List<RecipeHolder<?>> bucket = index.byItem().get(item);
+            if (bucket != null) candidates.addAll(bucket);
+        }
+        List<RecipeHolder<?>> result = new ArrayList<>(candidates);
+        result.sort((a, b) -> a.id().identifier().compareTo(b.id().identifier()));
+        return result;
+    }
+
     public List<RecipeHolder<?>> candidatesFor(RecipeType<?> type, Set<Item> available) {
         if (manager == null || type == null) return List.of();
         if (available.isEmpty()) return List.of();
