@@ -778,8 +778,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         ItemStack catalyst = inventory.getStackInSlot(CATALYST_SLOT);
         if (catalyst.isEmpty() || isCatalystDenied(catalyst) || needsHotterField(catalyst)) return new Making(List.of());
         double multiplier = AnomalyEffects.feMultiplier(level, worldPosition) * Config.crafterTaxFraction(gate.band());
-        int fe = energyStorage.getEnergyStored();
-        var views = networkViews(network, stock, fromCraftable, true);
+        return ask(networkViews(network, stock, fromCraftable, true), fromCraftable, catalyst, energyStorage.getEnergyStored(), multiplier);
+    }
+
+    /**
+     * What it could make with {@code views} in front of it, a step at a time: the one way it works that out, for a
+     * network asking and for its own preview. Asked the same again, the answer it had; shown nothing new, the crafts
+     * it knows, resized; something new, only the recipes naming it matched; and every recipe only at first.
+     */
+    private Making ask(java.util.Map<GlobalPos, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource>> views,
+                       boolean fromCraftable, ItemStack catalyst, int fe, double multiplier) {
         // Its power only to a twentieth of what it holds: it charges and drains every tick, and what it could make
         // barely moves with it.
         int power = fe >= energyStorage.getMaxEnergyStored() ? 20 : fe * 20 / Math.max(1, energyStorage.getMaxEnergyStored());
@@ -980,6 +988,21 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         boolean partial;
         @Nullable
         private List<com.kadikular.quantimium.laser.OfferMaker.Made> result;
+        /** The crafts behind {@link #result}, once worked out. */
+        @Nullable
+        private List<ResolvedCraft> resolved;
+
+        /** The crafts it found, once done: for its own preview. */
+        List<ResolvedCraft> crafts() {
+            if (resolved != null) return resolved;
+            // An answer it had kept: the crafts its offers came of, each once.
+            java.util.Set<Object> seen = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+            List<ResolvedCraft> crafts = new ArrayList<>();
+            for (com.kadikular.quantimium.laser.OfferMaker.Made made : result()) {
+                if (made.craft() instanceof ResolvedCraft craft && seen.add(craft)) crafts.add(craft);
+            }
+            return resolved = crafts;
+        }
 
         /** Already known. */
         Making(List<com.kadikular.quantimium.laser.OfferMaker.Made> known) {
@@ -1031,6 +1054,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             }
             if (isBasic()) crafts = limitToCoherence(crafts);
             if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
+            resolved = crafts;
             List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
             for (ResolvedCraft craft : crafts) {
                 java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
@@ -1217,9 +1241,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         private final int fe;
         private final double multiplier;
         @Nullable
-        private CrafterPreview.Run first;
+        private Making first;
         @Nullable
-        private CrafterPreview.Run more;
+        private Making more;
         private List<ResolvedCraft> crafts = List.of();
         private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = java.util.Set.of();
 
@@ -1235,10 +1259,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             boolean priorBusy = automationBusy;
             enterChain();
             try {
-                if (first == null) first = new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, CrafterPreview.MAX_OUTPUTS);
-                if (!first.done()) {
-                    if (!onOffers(() -> first.step(nanos))) return false;
-                    crafts = first.result();
+                // Worked out as a network's ask is: what it knows resized where it can, not every recipe matched again.
+                if (first == null) first = ask(networkViews(null, null, true, false), true, catalyst, fe, multiplier);
+                if (more == null) {
+                    if (!first.step(nanos)) return false;
+                    crafts = CrafterPreview.cap(first.crafts(), CrafterPreview.MAX_OUTPUTS);
                     // On a network that says it could chain its own crafts (leggings from ingots it would make from
                     // blocks), those too: worked out again with its own crafts on offer, for what the network says.
                     chainable = madeOnItsNetworks();
@@ -1246,10 +1271,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         show(crafts, java.util.Set.of());
                         return true;
                     }
-                    more = new CrafterPreview.Run(level, worldPosition, catalyst, inventory, INPUT_SLOTS, fe, multiplier, CrafterPreview.MAX_OUTPUTS);
+                    more = ask(networkViews(null, null, true, true), true, catalyst, fe, multiplier);
                     if (nanos != Long.MAX_VALUE) return false;
                 }
-                if (!onOffers(true, () -> more.step(nanos))) return false;
+                if (!more.step(nanos)) return false;
                 // A craft it already shows from what's there is shown as the chain would make it, if that's more.
                 List<ResolvedCraft> joined = new ArrayList<>(crafts);
                 java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
@@ -1257,7 +1282,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 List<com.kadikular.quantimium.laser.OfferTable> networks = new ArrayList<>();
                 for (var controller : linkedNetworks()) networks.add(controller.offers());
                 for (int i = 0; i < joined.size(); i++) at.putIfAbsent(joined.get(i).recipeId(), i);
-                for (ResolvedCraft craft : more.result()) {
+                for (ResolvedCraft craft : more.crafts()) {
                     boolean wanted = false;
                     for (ItemStack output : craft.outputs()) {
                         if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
