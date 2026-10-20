@@ -248,7 +248,7 @@ step made by its own crafter and paid for there when they're taken. One crafter 
 furnace smelting stone for the bricks it then cracks; a lone crafting-table crafter making ingots from blocks
 for leggings), as long as they're different recipes; on its own, off a network, a crafter shows only what it
 makes straight from its inputs. The network works out what's craftable once a second, tier by tier (up to
-four steps in a chain): each crafter is shown what's really there and what every crafter could make so far,
+eight steps in a chain): each crafter is shown what's really there and what every crafter could make so far,
 itself too. A craftable counts what the crafter
 **can make** of it, not one craft's worth. Each craftable remembers what it's made from, all the way down, and a
 recipe isn't shown what was made out of what it makes: nine ingots a crafter could turn into a block don't

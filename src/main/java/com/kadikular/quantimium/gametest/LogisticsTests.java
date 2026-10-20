@@ -984,6 +984,43 @@ public final class LogisticsTests {
         });
     }
 
+    private static Item ae2(String name) {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.fromNamespaceAndPath("ae2", name));
+    }
+
+    // covers: laser.logistics.materialiser, crafter.collapse
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_ae2_chain", timeoutTicks = 200)
+    public static void aSixStepChainIsListedAndMade(GameTestHelper helper) {
+        // AE2 storage components from raw stuff: an Inscriber Crafter prints circuits and presses processors, a
+        // crafting-table Crafter makes 1k, 4k, 16k and 64k components from them: six steps, all listed. Three 1k
+        // components stored besides: the table shows the 4k components the chain could make, not just the one
+        // those three make. A 64k component taken makes the whole chain.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false,
+                new ItemStack(Items.REDSTONE, 64), new ItemStack(Items.REDSTONE, 64), new ItemStack(Items.REDSTONE, 64),
+                new ItemStack(ae2("certus_quartz_crystal"), 64), new ItemStack(ae2("certus_quartz_crystal"), 64),
+                new ItemStack(Items.GOLD_INGOT, 64), new ItemStack(ae2("silicon"), 64), new ItemStack(ae2("silicon"), 64),
+                new ItemStack(ae2("quartz_glass"), 64), new ItemStack(Items.GLOWSTONE_DUST, 64), new ItemStack(ae2("cell_component_1k"), 3));
+        QuantumCrafterBlockEntity inscriber = crafterOn(helper, 6, ae2("inscriber"), true, true);
+        inscriber.getInventory().setStackInSlot(1, new ItemStack(ae2("logic_processor_press")));
+        inscriber.getInventory().setStackInSlot(2, new ItemStack(ae2("calculation_processor_press")));
+        inscriber.getInventory().setStackInSlot(3, new ItemStack(ae2("silicon_press")));
+        QuantumCrafterBlockEntity table = crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(amount(helper, ae2("cell_component_16k")) > 0, "16k components listed");
+            helper.assertTrue(amount(helper, ae2("cell_component_64k")) > 0, "64k components listed");
+            table.rebuildPreview();
+            var four = CrafterTests.craftOf(table, ae2("cell_component_4k"));
+            helper.assertTrue(four != null && four.availableOutputCount(0) > 1, "the table shows what the chain makes: "
+                    + (four == null ? "none" : four.availableOutputCount(0)));
+            helper.assertValueEqual(take(helper, ae2("cell_component_64k"), 1, true), 1, "a 64k component taken");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_many", timeoutTicks = 200)
     public static void aNetworkListsEverythingACrafterCouldMake(GameTestHelper helper) {

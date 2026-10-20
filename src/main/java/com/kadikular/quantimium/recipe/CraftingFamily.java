@@ -77,7 +77,11 @@ public final class CraftingFamily {
             Ingredient ingredient = slot.get();
 
             ItemStack representative = ItemStack.EMPTY;
-            for (int i = 0; i < alloc.size(); i++) {
+            // Only the offers holding what it names; every offer for one that can't say.
+            int[] candidates = pool.candidates(ingredient);
+            int count = candidates == null ? alloc.size() : candidates.length;
+            for (int c = 0; c < count; c++) {
+                int i = candidates == null ? c : candidates[c];
                 if (alloc.remaining(i) <= 0) continue;
                 ItemStack offered = alloc.stack(i);
                 if (!ingredient.test(offered)) continue;

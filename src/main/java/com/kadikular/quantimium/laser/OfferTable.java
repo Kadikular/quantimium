@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public final class OfferTable {
     /** How many machines a chain of crafts on the network reaches through. */
-    public static final int TIERS = 4;
+    public static final int TIERS = 8;
 
     /** How many times a machine is asked again for one looping craft, leaving out more each time, before it's dropped. */
     private static final int LOOP_RETRIES = 2;

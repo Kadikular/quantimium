@@ -706,7 +706,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             new java.util.LinkedHashMap<>(16, 0.75f, true) {
                 @Override
                 protected boolean removeEldestEntry(java.util.Map.Entry<List<Object>, List<com.kadikular.quantimium.laser.OfferMaker.Made>> eldest) {
-                    return size() > 12;
+                    return size() > 64;
                 }
             };
 
@@ -773,20 +773,29 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         try {
             crafts = onOffers(() -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
             // On a network that says it could chain its own crafts (leggings from ingots it would make from blocks),
-            // those too: worked out again with its own crafts on offer, kept only for what the network says.
+            // those too: worked out again with its own crafts on offer, for what the network says it can make. A
+            // craft it already shows from what's there is shown as the chain would make it, if that's more.
             java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = madeOnItsNetworks();
-            for (ResolvedCraft craft : crafts) {
-                for (ItemStack output : craft.outputs()) if (!output.isEmpty()) chainable.remove(net.neoforged.neoforge.transfer.item.ItemResource.of(output));
-            }
             if (!chainable.isEmpty()) {
                 List<ResolvedCraft> more = onOffers(true, () -> previewEngine.preview(level, worldPosition, catalyst, inventory, INPUT_SLOTS, availableFe, multiplier));
                 List<ResolvedCraft> joined = new ArrayList<>(crafts);
+                java.util.Map<Identifier, Integer> at = new java.util.HashMap<>();
+                for (int i = 0; i < joined.size(); i++) at.putIfAbsent(joined.get(i).recipeId(), i);
                 for (ResolvedCraft craft : more) {
                     boolean wanted = false;
                     for (ItemStack output : craft.outputs()) {
                         if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
                     }
-                    if (wanted && chainedNow.add(craft.recipeId())) joined.add(craft);
+                    if (!wanted) continue;
+                    Integer was = at.get(craft.recipeId());
+                    if (was == null) {
+                        at.put(craft.recipeId(), joined.size());
+                        joined.add(craft);
+                        chainedNow.add(craft.recipeId());
+                    } else if (craft.availableOutputCount(0) > joined.get(was).availableOutputCount(0)) {
+                        joined.set(was, craft);
+                        chainedNow.add(craft.recipeId());
+                    }
                 }
                 crafts = joined;
             }

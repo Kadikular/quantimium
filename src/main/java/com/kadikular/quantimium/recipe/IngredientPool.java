@@ -12,8 +12,10 @@ import org.jetbrains.annotations.Nullable;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -172,6 +174,40 @@ public final class IngredientPool {
     }
 
     /** Mutable allocator used while matching a single recipe run. */
+    /** Which offers hold each item, worked out once: a recipe's ingredient looks only at those. */
+    @Nullable
+    private Map<Item, int[]> byItem;
+    /** For each ingredient asked about, the offers it could take, in order (by identity: recipes share theirs). */
+    private final Map<net.minecraft.world.item.crafting.Ingredient, int[]> candidates = new java.util.IdentityHashMap<>();
+
+    /**
+     * The offers, in order, that {@code ingredient} could take: from the items it names, without testing every offer;
+     * null for an ingredient that can't say which items it takes (a custom one), which is tested against them all.
+     */
+    @Nullable
+    public int[] candidates(net.minecraft.world.item.crafting.Ingredient ingredient) {
+        if (ingredient.isCustom()) return null;
+        int[] known = candidates.get(ingredient);
+        if (known != null) return known;
+        if (byItem == null) {
+            Map<Item, List<Integer>> found = new HashMap<>();
+            for (int i = 0; i < offers.size(); i++) {
+                ItemStack stack = offers.get(i).stack();
+                if (!stack.isEmpty()) found.computeIfAbsent(stack.getItem(), k -> new ArrayList<>(1)).add(i);
+            }
+            byItem = new HashMap<>();
+            found.forEach((item, list) -> byItem.put(item, list.stream().mapToInt(Integer::intValue).toArray()));
+        }
+        java.util.TreeSet<Integer> picked = new java.util.TreeSet<>();
+        ingredient.items().forEach(holder -> {
+            int[] at = byItem.get(holder.value());
+            if (at != null) for (int i : at) picked.add(i);
+        });
+        int[] result = picked.stream().mapToInt(Integer::intValue).toArray();
+        candidates.put(ingredient, result);
+        return result;
+    }
+
     public final class Allocator {
         private final int[] taken;
 
