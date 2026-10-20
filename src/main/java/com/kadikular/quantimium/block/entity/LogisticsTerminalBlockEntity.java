@@ -76,6 +76,15 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         var spots = controller.spots();
         boolean stored = !Logistics.take(spots, item, count, true, true, false).isEmpty();
         if (!stored && Logistics.take(spots, item, count, true, false, true).isEmpty()) {
+            // Listed but not found where things were last seen: looked over again, once, in case it moved since.
+            var offers = controller.offers();
+            var again = offers.real(item) + offers.craftable(item) > 0 ? controller.spotsAgain() : null;
+            if (again != null) {
+                spots = again;
+                stored = !Logistics.take(spots, item, count, true, true, false).isEmpty();
+            }
+        }
+        if (!stored && Logistics.take(spots, item, count, true, false, true).isEmpty()) {
             makeReady(controller, item);
             return ItemStack.EMPTY;
         }

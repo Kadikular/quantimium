@@ -46,6 +46,8 @@ public final class GameTests {
     private static List<Class<?>> classes() {
         // -PexportStructures: only the guide's structures, written out, no tests.
         if (GuideStructures.DIRECTORY != null) return List.of(GuideStructures.class);
+        // -Pstress: only the stress tests, built to break things; never part of the usual run.
+        if (Boolean.getBoolean("quantimium.stress")) return com.kadikular.quantimium.gametest.stress.Stress.classes();
         List<Class<?>> classes = new ArrayList<>(List.of(
                 AdvancementTests.class, BandRewardTests.class, ChamberTests.class, CrafterTests.class, CreativeEnergyCellTests.class,
                 DockTests.class, FoldTests.class, ReactorTests.class, ReactorCountTests.class, FieldControlTests.class, FieldModelTests.class, FluxTests.class, HallTests.class,

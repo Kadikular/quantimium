@@ -689,9 +689,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
             com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
             if (controller == null) continue;
-            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> seen = network != null && controller == network && stock != null
-                    ? stock : controller.offers().stock(withOwn ? null : worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable);
-            views.put(bound, new com.kadikular.quantimium.laser.StockHandler(seen));
+            views.put(bound, network != null && controller == network && stock != null
+                    ? new com.kadikular.quantimium.laser.StockHandler(stock)
+                    : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable));
         }
         return views;
     }
@@ -1602,14 +1602,18 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         // A link can lead back here: a craft that ran again halfway through itself would be working from inputs it
         // had already spent, so while it runs, that recipe isn't offered. Another may be, made for it.
+        if (loopsUpChain(craft)) return ItemStack.EMPTY;
         if (!running.add(craft.recipeId())) return ItemStack.EMPTY;
         boolean priorBusy = automationBusy;
         boolean priorSuppress = suppressInventoryNotify;
         enterChain();
         suppressInventoryNotify = true;
+        java.util.List<net.minecraft.world.item.Item> makes = outputItems(craft);
+        com.kadikular.quantimium.recipe.CraftChain.startMaking(makes);
         try {
             return commitWithdrawnCraft(craft, handedOutIndex);
         } finally {
+            com.kadikular.quantimium.recipe.CraftChain.stopMaking(makes);
             running.remove(craft.recipeId());
             suppressInventoryNotify = priorSuppress;
             exitChain(priorBusy);
@@ -1632,7 +1636,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (pulled.getCount() < withdrawal.count()) {
                 if (!pulled.isEmpty()) refundWithdrawal(withdrawal, pulled);
                 for (int i = 0; i < taken.size(); i++) refundWithdrawal(taken.get(i), takenStacks.get(i));
-                rescaleCachedPreview();
+                failed(craft);
                 return ItemStack.EMPTY;
             }
             taken.add(withdrawal);
@@ -1641,7 +1645,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // What it made for itself on the way spent power (and coherence) too: if too little's left, it all goes back.
         if (energyStorage.getEnergyStored() < craft.feCost() || isBasic() && coherenceReserve < craft.batchSize()) {
             for (int i = 0; i < taken.size(); i++) refundWithdrawal(taken.get(i), takenStacks.get(i));
-            rescaleCachedPreview();
+            failed(craft);
             return ItemStack.EMPTY;
         }
 
@@ -1669,9 +1673,74 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             insertIntoOutputs(outputs.get(i).copy(), false);
         }
 
-        // Continuous hopper craft must not rescan every MI recipe on each item.
-        rescaleCachedPreview();
+        // Continuous hopper craft must not rescan every MI recipe on each item. All of it from networks, nothing it
+        // could make changed as it sees them (it sees their offers, worked out before): its batches are worked out
+        // again in the background, not now, ahead of the next craft of a busy pull.
+        if (allFromNetworks(craft)) queueRefresh(false);
+        else rescaleCachedPreview();
         return handedOut;
+    }
+
+    /**
+     * A craft its preview said it could make couldn't get what it needed after all (the network had moved on since its
+     * offers were worked out). It isn't offered again this tick, or a busy pull would try it over and over, and its
+     * batches are worked out again in the background.
+     */
+    private void failed(ResolvedCraft craft) {
+        long now = level == null ? 0 : level.getGameTime();
+        if (failedTick != now) {
+            failedTick = now;
+            failedNow.clear();
+        }
+        failedNow.add(craft.recipeId());
+        queueRefresh(false);
+    }
+
+    /** Whether {@code craft} failed already this tick. */
+    private boolean failedNow(ResolvedCraft craft) {
+        return level != null && failedTick == level.getGameTime() && failedNow.contains(craft.recipeId());
+    }
+
+    private long failedTick = Long.MIN_VALUE;
+    private final java.util.Set<Identifier> failedNow = new java.util.HashSet<>();
+
+    /** Whether every ingredient of {@code craft} came through a link to a network's Materialiser (not its grid, not a chest). */
+    private boolean allFromNetworks(ResolvedCraft craft) {
+        if (level == null) return false;
+        for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
+            if (withdrawal.count() <= 0) continue;
+            if (!(withdrawal.provenance() instanceof IngredientPool.Provenance.Remote remote)) return false;
+            ItemStack link = inventory.getStackInSlot(remote.linkSlot());
+            GlobalPos bound = EntangledLinks.isLink(link) ? link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get()) : null;
+            if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())
+                    || !(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity)) return false;
+        }
+        return true;
+    }
+
+    /** {@link #canCommitCached}, with what {@code craft} makes marked as being made: what it would draw on mustn't loop back to it. */
+    private boolean canCommitMaking(ResolvedCraft craft, int craftIndex) {
+        java.util.List<net.minecraft.world.item.Item> makes = outputItems(craft);
+        com.kadikular.quantimium.recipe.CraftChain.startMaking(makes);
+        try {
+            return canCommitCached(craftIndex);
+        } finally {
+            com.kadikular.quantimium.recipe.CraftChain.stopMaking(makes);
+        }
+    }
+
+    /** Whether {@code craft} uses something a craft up the chain is making now: it would loop back through that one. */
+    private static boolean loopsUpChain(ResolvedCraft craft) {
+        for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
+            if (withdrawal.expected() != null && com.kadikular.quantimium.recipe.CraftChain.makingUpChain(withdrawal.expected())) return true;
+        }
+        return false;
+    }
+
+    private static java.util.List<net.minecraft.world.item.Item> outputItems(ResolvedCraft craft) {
+        java.util.List<net.minecraft.world.item.Item> items = new ArrayList<>();
+        for (ItemStack output : craft.outputs()) if (!output.isEmpty()) items.add(output.getItem());
+        return items;
     }
 
     /** Take from a ghost output slot: commit the craft and return the output that slot was showing. */
@@ -1747,7 +1816,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             GhostSlot ghost = ghostAt(absoluteOutputSlot);
             if (ghost != null) {
                 ResolvedCraft craft = preview.get(ghost.craftIndex());
-                if (!running.contains(craft.recipeId()) && canCommitCached(ghost.craftIndex())) {
+                if (!running.contains(craft.recipeId()) && !failedNow(craft) && !loopsUpChain(craft) && canCommitMaking(craft, ghost.craftIndex())) {
                     List<ItemStack> outputs = craft.outputs();
                     if (ghost.outputIndex() < outputs.size()) {
                         shown = outputs.get(ghost.outputIndex()).copy();

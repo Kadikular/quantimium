@@ -122,6 +122,14 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             // TickTimingTests write their measurements here; the wiki builds its tick-timing page from it.
             if (project.hasProperty('gtFilter')) systemProperty 'quantimium.gametestFilter', project.gtFilter
+            // ./gradlew runGameTestServer -Pstress runs only the stress tests (gametest/stress), and writes their report
+            // to build/stress-report.txt; -PstressSeed=123 replays a run, -PstressScale=2 makes everything bigger.
+            if (project.hasProperty('stress')) {
+                systemProperty 'quantimium.stress', 'true'
+                systemProperty 'quantimium.stressReport', project.file('build/stress-report.txt').absolutePath
+                if (project.hasProperty('stressSeed')) systemProperty 'quantimium.stressSeed', project.stressSeed
+                if (project.hasProperty('stressScale')) systemProperty 'quantimium.stressScale', project.stressScale
+            }
             // ./gradlew runGameTestServer -PexportStructures builds the guide's multiblocks and saves them in wiki/structures.
             if (project.hasProperty('exportStructures')) systemProperty 'quantimium.exportStructures',
                     project.file('wiki/structures').absolutePath

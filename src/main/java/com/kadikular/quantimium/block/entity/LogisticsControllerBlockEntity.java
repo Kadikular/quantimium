@@ -292,15 +292,26 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots() {
         long now = level == null ? 0 : level.getGameTime();
-        // What a machine making things to order shows depends on what's asking: midway through a craft, worked out
-        // for that alone and not kept.
-        if (com.kadikular.quantimium.recipe.CraftChain.depth() > 0 || com.kadikular.quantimium.recipe.CraftChain.storedOnly()) {
-            return com.kadikular.quantimium.laser.Logistics.locate(members());
-        }
+        // Where things are doesn't depend on who's asking (a Crafter's previews are what it shows, whoever asks; whether
+        // one could make it now is asked of the slot when it's taken): kept for the tick, mid-craft too.
         if (spots == null || spotsTick != now) {
             spots = com.kadikular.quantimium.laser.Logistics.locate(members());
             spotsTick = now;
         }
+        return spots;
+    }
+
+    /** The tick spots were last looked over again because a take came up short. */
+    private long relocatedTick = Long.MIN_VALUE;
+
+    @Override
+    public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spotsAgain() {
+        long now = level == null ? 0 : level.getGameTime();
+        // Once a tick at most: something put in since (by a pipe, to a slot that was empty) is found.
+        if (relocatedTick == now) return null;
+        relocatedTick = now;
+        spots = com.kadikular.quantimium.laser.Logistics.locate(members());
+        spotsTick = now;
         return spots;
     }
 

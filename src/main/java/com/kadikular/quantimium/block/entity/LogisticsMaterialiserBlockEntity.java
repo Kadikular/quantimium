@@ -262,10 +262,19 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             // otherwise look over every slot of the network for each.
             java.util.Set<LogisticsMember> members = new java.util.HashSet<>(members());
             var spots = controller.spots();
+            boolean made = offersCraftable() && !com.kadikular.quantimium.recipe.CraftChain.storedOnly();
             while (got < amount) {
-                ItemStack more = Logistics.take(spots, members, resource, amount - got, false,
-                        offersReal(), offersCraftable() && !com.kadikular.quantimium.recipe.CraftChain.storedOnly());
-                if (more.isEmpty()) break;
+                ItemStack more = Logistics.take(spots, members, resource, amount - got, false, offersReal(), made);
+                if (more.isEmpty()) {
+                    // Short of what the network says it has: looked over again, once, in case it's been moved since.
+                    var offers = controller.offers();
+                    if (offers.real(resource) + (made ? offers.craftable(resource) : 0) <= 0) break;
+                    var again = controller.spotsAgain();
+                    if (again == null) break;
+                    spots = again;
+                    more = Logistics.take(spots, members, resource, amount - got, false, offersReal(), made);
+                    if (more.isEmpty()) break;
+                }
                 got += more.getCount();
             }
             if (got > 0) moved(transaction);

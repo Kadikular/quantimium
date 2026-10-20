@@ -105,10 +105,17 @@ public final class WorkQueue {
     }
 
     /** Steps the job waiting for {@code key}; whether it's done (and gone from the queue, unless it was queued again meanwhile). */
+    /** Told how long each step took, by what it was for: the stress tests' timings. Null otherwise. */
+    @org.jetbrains.annotations.Nullable
+    public static java.util.function.ObjLongConsumer<Object> stepTimes;
+
     private static boolean step(Object key, Entry entry) {
         boolean done;
         try {
+            var timing = stepTimes;
+            long began = timing == null ? 0 : System.nanoTime();
             done = entry.job.step();
+            if (timing != null) timing.accept(key, System.nanoTime() - began);
         } catch (RuntimeException failed) {
             Quantimium.LOGGER.error("Background work for {} failed; dropped", key, failed);
             done = true;
