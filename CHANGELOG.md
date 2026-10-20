@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.5.4-alpha: Stress tested
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
+
+### Crafting on a network
+
+- **What the terminal lists, a take makes, first time**: a network hands its Crafters the crafts it worked out
+  for them, so a Crafter's list never lags behind the terminal's.
+- Crafts no longer chase each other round a loop (nuggets, ingots, blocks) across Crafters: a pull that did could
+  freeze a server for minutes.
+- A craft that comes up short isn't tried again by the next click that tick.
+
+### Performance
+
+- A screen left open no longer keeps its network working flat out; only a move a player makes, or a screen just
+  opened, is urgent, and the urgent budget is 4 ms (`performance.urgentWorkBudgetMicros`; an existing config keeps
+  its value, so change it there).
+- A busy network works its offers out at about a third of the cost: Crafters resize the crafts they found rather
+  than matching every recipe again (new things, and every five seconds, they match them all).
+- Requesters pulling and providers pushing no longer ask every Crafter preview whether it could be made.
+- Takes and Crafters drawing on a network no longer look over all of it for each ingredient.
+- A Reactor holding thousands of kinds plans without copying its ledger: pulls through its ports are several times
+  quicker.
+
+### AE2
+
+- A storage bus on a Logistics Materialiser reads the network's offers directly. As it came, AE2 checked each listed
+  thing by taking it and putting it back, which for what's made meant making it, every time it looked.
+
 ## 0.5.3-alpha: Quick takes
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
