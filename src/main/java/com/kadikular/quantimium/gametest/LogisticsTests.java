@@ -1038,6 +1038,76 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: work.queue, laser.logistics.terminal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_quick", timeoutTicks = 200)
+    public static void aTakeShowsAtOnceAndWhatItMadeSoonAfter(GameTestHelper helper) {
+        // Iron blocks stored, a crafting-table Crafter offering ingots from them, someone watching the network as an
+        // open terminal does. All the blocks taken as a terminal takes them: they show gone that tick, and the ingots
+        // they'd have made gone a few ticks later, not seconds.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 16));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var blocks = resource(Items.IRON_BLOCK);
+        var ingots = resource(Items.IRON_INGOT);
+        int[] tookAt = {-1};
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            t[0]++;
+            if (t[0] < 80) return;
+            controller.watched();
+            var offers = controller.offers();
+            if (tookAt[0] < 0) {
+                if (offers.craftable(ingots) <= 0) return;
+                ItemStack got = com.kadikular.quantimium.laser.Logistics.take(controller.members(), stack -> stack.is(Items.IRON_BLOCK), 16, false);
+                controller.stockMoved();
+                helper.assertValueEqual(got.getCount(), 16, "all the blocks taken");
+                tookAt[0] = t[0];
+                helper.assertValueEqual(controller.offers().real(blocks), 0L, "the blocks show gone at once");
+                return;
+            }
+            if (offers.craftable(ingots) == 0) {
+                helper.assertTrue(t[0] - tookAt[0] <= 5, "the ingots they'd make gone " + (t[0] - tookAt[0]) + " ticks later");
+                TestSupport.clearField(helper);
+                helper.succeed();
+            }
+        });
+    }
+
+    // covers: work.queue, crafter.preview
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_quick_crafter", timeoutTicks = 200)
+    public static void aCrafterWithItsScreenOpenKeepsUp(GameTestHelper helper) {
+        // A crafting-table Crafter drawing on a network of iron blocks, its screen open: the blocks taken out of the
+        // chest, its preview of ingots goes within a few ticks.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 16));
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var player = TestSupport.player(helper, new BlockPos(6, Y, 6));
+        int[] tookAt = {-1};
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            t[0]++;
+            if (t[0] == 60) player.containerMenu = crafter.createMenu(1, player.getInventory(), player);
+            if (t[0] < 80) return;
+            boolean shows = CrafterTests.craftOf(crafter, Items.IRON_INGOT) != null;
+            if (tookAt[0] < 0) {
+                if (!shows) return;
+                helper.getBlockEntity(new BlockPos(4, Y - 1, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class).clearContent();
+                tookAt[0] = t[0];
+                return;
+            }
+            if (!shows) {
+                helper.assertTrue(t[0] - tookAt[0] <= 5, "its ingots gone " + (t[0] - tookAt[0]) + " ticks later");
+                TestSupport.removePlayer(helper, player);
+                TestSupport.clearField(helper);
+                helper.succeed();
+            }
+        });
+    }
+
     // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_many", timeoutTicks = 200)
     public static void aNetworkListsEverythingACrafterCouldMake(GameTestHelper helper) {

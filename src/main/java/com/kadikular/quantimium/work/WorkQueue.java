@@ -11,7 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Quantimium's background work, done a little each tick within a time budget ({@link Config#workBudgetNanos()}):
+ * Quantimium's background work, done a little each tick within a time budget ({@link Config#workBudgetNanos()},
+ * more for work a player is waiting on: {@link Config#urgentWorkBudgetNanos()}):
  * what a logistics network offers, what a Crafter could make. Each piece of work is a {@link Job} done in steps;
  * each tick the most urgent are stepped until the budget is spent, and the rest wait. Waiting work grows more
  * urgent, so nothing waits for ever; at least one step is taken every tick, so everything gets there.
@@ -79,11 +80,14 @@ public final class WorkQueue {
     public static void onServerTick(ServerTickEvent.Post event) {
         tick++;
         if (WAITING.isEmpty()) return;
-        long budget = Config.workBudgetNanos();
         long start = System.nanoTime();
         boolean first = true;
-        while (!WAITING.isEmpty() && (first || System.nanoTime() - start < budget)) {
+        while (!WAITING.isEmpty()) {
             Map.Entry<Object, Entry> next = mostUrgent();
+            // Work a player is waiting on gets more of the tick than the rest.
+            long budget = next.getValue().priority >= URGENT ? Math.max(Config.workBudgetNanos(), Config.urgentWorkBudgetNanos())
+                    : Config.workBudgetNanos();
+            if (!first && System.nanoTime() - start >= budget) break;
             first = false;
             boolean done;
             try {

@@ -392,11 +392,13 @@ an ME network. Open it to set it.
 
 Light ending on it also powers the Reactor.
 
-**Big networks.** What a network offers, and what its Crafters could make, is worked out
-in the background, a little each tick within a time budget (config `performance.workBudgetMicros`, 2 ms a tick
-by default), most urgent first: a terminal or Crafter screen someone has open goes first. A crafting table on a
-network with a lot in it can preview a thousand crafts, so its list fills in over a few ticks rather than at
-once, and the server carries on meanwhile. Taking or crafting something never waits on it.
+**Big networks.** What's stored shows at once. What could be made from it, on a network
+and in its Crafters, is worked out in the background, a little each tick within a time budget (config
+`performance.workBudgetMicros`, 2 ms a tick by default), most urgent first. Work a player is waiting on (a
+terminal or Crafter screen open, something just taken or put in) goes first and gets more of the tick
+(`performance.urgentWorkBudgetMicros`, 10 ms), so it catches up within a tick or two. A crafting table on a
+network with a lot in it can preview a thousand crafts; its list fills in over a few ticks rather than stalling
+the server. Taking or crafting something never waits on it.
 
 ## Into the mirror
 

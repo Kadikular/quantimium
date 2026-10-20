@@ -127,8 +127,10 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.PENDING;
     private long offersTick = Long.MIN_VALUE;
     private boolean offersStale = true;
-    /** The fewest ticks between workings out of what the network offers, after a move. */
-    private static final int OFFERS_SOONEST = 5;
+    /** The fewest ticks between workings out of what the network offers, after a move a player made: none. */
+    private static final int OFFERS_SOONEST = 0;
+    /** The fewest ticks between workings out of what the network offers while someone's watching it change by itself. */
+    private static final int OFFERS_WATCHED = 4;
     private boolean workingOut;
 
     /**
@@ -139,16 +141,62 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
      */
     @Override
     public com.kadikular.quantimium.laser.OfferTable offers() {
-        if (level == null || level.isClientSide() || workingOut || building != null) return offers;
+        if (level == null || level.isClientSide()) return offers;
+        startBuildIfDue();
+        if (workingOut) return offers;
+        return live();
+    }
+
+    /**
+     * The offers with what's really there looked at now, at most once a tick: a deposit or a take shows at once,
+     * though what could be made from it waits for the offers to be worked out again.
+     */
+    private com.kadikular.quantimium.laser.OfferTable live() {
+        long now = level == null ? 0 : level.getGameTime();
+        // Read again while it's being looked at (a network reading another that reads this one back): what it had.
+        if (looking) return liveOffers != null ? liveOffers : offers;
+        if (liveOffers == null || liveTick != now || liveFrom != offers) {
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stored;
+            looking = true;
+            try {
+                stored = com.kadikular.quantimium.laser.OfferTable.storedNow(this, worldPosition, members());
+            } finally {
+                looking = false;
+            }
+            // What's there has moved since the offers were worked out (a hopper, a pipe, a hand in a chest).
+            drifted = !stored.equals(offers.stored());
+            liveOffers = offers.withStored(stored);
+            liveTick = now;
+            liveFrom = offers;
+        }
+        return liveOffers;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private com.kadikular.quantimium.laser.OfferTable liveOffers;
+    @org.jetbrains.annotations.Nullable
+    private com.kadikular.quantimium.laser.OfferTable liveFrom;
+    private long liveTick = Long.MIN_VALUE;
+    /** Whether what's really there differs from what the offers were worked out from. */
+    private boolean drifted;
+    /** Whether what's really there is being looked at now. */
+    private boolean looking;
+
+    /** Starts working the offers out again, in the background, if it's time. */
+    private void startBuildIfDue() {
+        if (level == null || workingOut || building != null) return;
         long now = level.getGameTime();
-        if (offersTick != Long.MIN_VALUE && now - offersTick < (offersStale ? OFFERS_SOONEST : 20)) return offers;
+        // At once after a move a player made; soon after one anything made (a pipe, a hopper) while someone's watching,
+        // though not every tick on a busy network; else once a second.
+        int wait = offersStale ? OFFERS_SOONEST : drifted && watched ? OFFERS_WATCHED : 20;
+        if (offersTick != Long.MIN_VALUE && now - offersTick < wait) return;
         offersTick = now;
         offersStale = false;
+        drifted = false;
         building = new com.kadikular.quantimium.laser.OfferTable.Builder(this, worldPosition, members());
         com.kadikular.quantimium.work.WorkQueue.submit(this, watched ? com.kadikular.quantimium.work.WorkQueue.URGENT
                 : com.kadikular.quantimium.work.WorkQueue.NORMAL, this::buildStep);
         watched = false;
-        return offers;
     }
 
     /** A step of working the offers out; whether they're done. */
@@ -191,11 +239,15 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     public void stockMoved() {
         offersStale = true;
         spots = null;
+        liveOffers = null;
+        // A player moved it: what can be made from what's left comes first.
+        watched = true;
     }
 
     @Override
     public void movedQuietly() {
         spots = null;
+        liveOffers = null;
     }
 
     /** Where each thing on the network is, and the tick it was looked over. */

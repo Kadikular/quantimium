@@ -183,6 +183,39 @@ public final class OfferTable {
         return origins;
     }
 
+    /** What's really there, as these offers were worked out from. */
+    public Map<ItemResource, Long> stored() {
+        return real;
+    }
+
+    /**
+     * Whether a craft making {@code out} from {@code inputs} would loop: one of its inputs is only on offer as made
+     * from {@code out} (nuggets made from the ingots it would make).
+     */
+    public boolean loops(Item out, Set<Item> inputs) {
+        for (Item input : inputs) {
+            if (real.getOrDefault(ItemResource.of(input.getDefaultInstance()), 0L) > 0) continue;
+            if (madeFrom(input, null, Set.of()).contains(out)) return true;
+        }
+        return false;
+    }
+
+    /** These offers, with what's really there as {@code stored} instead (looked at now, the rest worked out before). */
+    public OfferTable withStored(Map<ItemResource, Long> stored) {
+        if (this == PENDING && stored.isEmpty()) return this;
+        return new OfferTable(stored, craftable, tiers, origins);
+    }
+
+    /**
+     * What's really on {@code network} (its controller at {@code at}) now: the first step of working its offers out,
+     * alone. A look over its members' slots, without asking any machine what it could make.
+     */
+    public static Map<ItemResource, Long> storedNow(LogisticsController network, BlockPos at, List<LogisticsMember> members) {
+        Builder builder = new Builder(network, at, members);
+        builder.scan();
+        return Map.copyOf(builder.real);
+    }
+
     /** Works out the table for {@code network} (its controller at {@code at}), whose members are {@code members}, all at once. */
     public static OfferTable build(Level level, LogisticsController network, BlockPos at, List<LogisticsMember> members) {
         Builder builder = new Builder(network, at, members);

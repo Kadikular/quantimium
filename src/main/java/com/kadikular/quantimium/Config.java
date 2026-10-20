@@ -367,6 +367,10 @@ public final class Config {
             .comment("How long Quantimium's background work (what logistics networks offer, what Crafters could make) may take each server tick, in microseconds, all together. Work past it waits for the next tick, so a big network's lists fill in over a few ticks rather than stalling the server. Taking or crafting something never waits on it.")
             .defineInRange("workBudgetMicros", 2000, 100, 50_000);
 
+    public static final ModConfigSpec.IntValue URGENT_WORK_BUDGET_MICROS = BUILDER
+            .comment("As workBudgetMicros, while there's work a player is waiting on (a terminal or Crafter screen open, something just taken or put in): it gets more of the tick, so what they see catches up quickly.")
+            .defineInRange("urgentWorkBudgetMicros", 10_000, 100, 50_000);
+
     static {
         BUILDER.pop();
     }
@@ -374,6 +378,11 @@ public final class Config {
     /** {@link #WORK_BUDGET_MICROS}, in nanoseconds. */
     public static long workBudgetNanos() {
         return 1000L * (SPEC.isLoaded() ? WORK_BUDGET_MICROS.get() : 2000);
+    }
+
+    /** {@link #URGENT_WORK_BUDGET_MICROS}, in nanoseconds. */
+    public static long urgentWorkBudgetNanos() {
+        return 1000L * (SPEC.isLoaded() ? URGENT_WORK_BUDGET_MICROS.get() : 10_000);
     }
 
     public static boolean unrealisingLens() {

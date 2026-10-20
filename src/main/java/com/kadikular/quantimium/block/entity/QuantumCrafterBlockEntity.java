@@ -476,14 +476,18 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         replenishBasicCrafter();
         if (refreshAnomalyReadout()) localDirty = true;
         if (gameTime % 20L == 0L && refreshBand(level)) localDirty = true;
-        if (localDirty || gameTime >= nextRemotePollTick) {
+        // Someone has its screen open: it looks at its links, and tells their screen, every tick.
+        watchedNow = watchedByPlayer();
+        // Its screen open, the networks it draws on are watched too: they keep what they offer up to date for it.
+        if (watchedNow) for (var network : linkedNetworks()) network.watched();
+        if (localDirty || watchedNow || gameTime >= nextRemotePollTick) {
             nextRemotePollTick = gameTime + REMOTE_POLL_TICKS;
             refreshPreviewIfNeeded();
         } else {
             updateStatusFromPreview();
         }
 
-        if (clientSyncDirty && gameTime % REMOTE_POLL_TICKS == 0L) {
+        if (clientSyncDirty && (watchedNow || gameTime % REMOTE_POLL_TICKS == 0L)) {
             flushClientSync();
         }
 
@@ -565,7 +569,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // block). Our own grid rescans at once so the GUI keeps up; a link into something busy like a
         // hopper would otherwise rescan every tick, so remote growth waits for the throttle.
         if (remoteGrew) discoveryPending = true;
-        if (localGrew || (discoveryPending && gameTime >= nextDiscoveryTick)) {
+        if (localGrew || (discoveryPending && (watchedNow || gameTime >= nextDiscoveryTick))) {
             discoveryPending = false;
             nextDiscoveryTick = gameTime + DISCOVERY_TICKS;
             queueRefresh(true);
@@ -579,6 +583,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         queueRefresh(false);
     }
 
+    /** Whether a player had its screen open this tick. */
+    private boolean watchedNow;
+
     /** Whether a full rebuild is waiting in the queue: it covers any resize asked for meanwhile. */
     private boolean rebuildQueued;
 
@@ -589,7 +596,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private void queueRefresh(boolean full) {
         rebuildQueued |= full;
-        int priority = watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
+        int priority = watchedNow || watchedByPlayer() ? com.kadikular.quantimium.work.WorkQueue.URGENT : com.kadikular.quantimium.work.WorkQueue.NORMAL;
         com.kadikular.quantimium.work.WorkQueue.submit(this, priority, () -> {
             if (isRemoved() || level == null) return true;
             boolean rebuild = rebuildQueued;
@@ -665,19 +672,36 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return views.isEmpty() ? body.get() : EntangledLinks.withOverrides(views, body);
     }
 
-    /** What the networks it draws on say it could make, chaining its own crafts as well as other machines'. */
-    private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> madeOnItsNetworks() {
-        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> made = new java.util.HashSet<>();
-        if (level == null) return made;
+    /** Whether a craft, by what it takes, would loop on a network it draws on. */
+    private boolean loopsOnItsNetworks(ResolvedCraft craft) {
+        if (level == null) return false;
+        java.util.Set<net.minecraft.world.item.Item> inputs = new java.util.HashSet<>();
+        for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) inputs.add(withdrawal.expected());
+        net.minecraft.world.item.Item out = craft.primaryOutput().getItem();
+        for (var controller : linkedNetworks()) if (controller.offers().loops(out, inputs)) return true;
+        return false;
+    }
+
+    /** The logistics networks it draws on, through Tesseracts bound to their Materialisers. */
+    private List<com.kadikular.quantimium.laser.LogisticsController> linkedNetworks() {
+        List<com.kadikular.quantimium.laser.LogisticsController> networks = new ArrayList<>();
+        if (level == null) return networks;
         for (int slot = 0; slot < INPUT_SLOTS; slot++) {
             ItemStack link = inventory.getStackInSlot(slot);
             if (!EntangledLinks.isLink(link)) continue;
             GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
             if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
-            com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
-            if (controller != null) made.addAll(controller.offers().madeBy(worldPosition));
+            var controller = materialiser.controller();
+            if (controller != null && !networks.contains(controller)) networks.add(controller);
         }
+        return networks;
+    }
+
+    /** What the networks it draws on say it could make, chaining its own crafts as well as other machines'. */
+    private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> madeOnItsNetworks() {
+        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> made = new java.util.HashSet<>();
+        for (var controller : linkedNetworks()) made.addAll(controller.offers().madeBy(worldPosition));
         return made;
     }
 
@@ -826,7 +850,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                     for (ItemStack output : craft.outputs()) {
                         if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
                     }
-                    if (!wanted) continue;
+                    // Not a craft out of what it would make from this craft's own output (ingots from the nuggets it'd
+                    // make from those ingots): the network leaves such loops out, and so does it.
+                    if (!wanted || loopsOnItsNetworks(craft)) continue;
                     Integer was = at.get(craft.recipeId());
                     if (was == null) {
                         at.put(craft.recipeId(), joined.size());
