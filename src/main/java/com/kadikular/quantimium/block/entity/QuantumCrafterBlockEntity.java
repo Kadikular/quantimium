@@ -1263,7 +1263,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 if (first == null) first = ask(networkViews(null, null, true, false), true, catalyst, fe, multiplier);
                 if (more == null) {
                     if (!first.step(nanos)) return false;
-                    crafts = CrafterPreview.cap(first.crafts(), CrafterPreview.MAX_OUTPUTS);
+                    // Not a craft out of what's made from its own output on its networks (ingots from the dust a
+                    // pulveriser makes of ingots): the network leaves such loops out, and so does it, from the first.
+                    List<com.kadikular.quantimium.laser.OfferTable> tables = new ArrayList<>();
+                    for (var controller : linkedNetworks()) tables.add(controller.offers());
+                    List<ResolvedCraft> direct = new ArrayList<>();
+                    for (ResolvedCraft craft : first.crafts()) if (tables.isEmpty() || !loopsOn(tables, craft)) direct.add(craft);
+                    crafts = CrafterPreview.cap(direct, CrafterPreview.MAX_OUTPUTS);
                     // On a network that says it could chain its own crafts (leggings from ingots it would make from
                     // blocks), those too: worked out again with its own crafts on offer, for what the network says.
                     chainable = madeOnItsNetworks();
@@ -1526,8 +1532,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // what it makes tells it when that changes: it doesn't watch its links itself.
         if (linkLoopDetected) return EntangledLinks.RemoteSummary.EMPTY;
         if (fedByNetwork()) {
-            // Looked at, the network sees what's moved on it, and works its offers (and so this) out again.
-            feeder.offers();
+            // Looked in on, the network sees what's moved on it, and works its offers (and so this) out again.
+            feeder.poke();
             return EntangledLinks.RemoteSummary.EMPTY;
         }
         return EntangledLinks.summarize(level, worldPosition, inventory, INPUT_SLOTS);

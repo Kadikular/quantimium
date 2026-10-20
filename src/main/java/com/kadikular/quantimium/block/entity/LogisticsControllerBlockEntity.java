@@ -307,6 +307,16 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     private static final int HURRY_EVERY = 10;
     private long hurriedTick = Long.MIN_VALUE;
 
+    private long pokedTick = Long.MIN_VALUE;
+
+    @Override
+    public void poke() {
+        long now = level == null ? 0 : level.getGameTime();
+        if (pokedTick != Long.MIN_VALUE && now - pokedTick < 20) return;
+        pokedTick = now;
+        offers();
+    }
+
     @Override
     public void makerChanged() {
         offersStale = true;

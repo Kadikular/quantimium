@@ -38,6 +38,14 @@ public interface LogisticsController {
         return null;
     }
 
+    /**
+     * A machine it feeds looking in, now and then, so what's moved on it by itself (a hand in a chest) is noticed:
+     * at most once a second however many look.
+     */
+    default void poke() {
+        offers();
+    }
+
     /** A machine making things for it has changed what it could make (its grid, say): its offers are worked out again. */
     default void makerChanged() {}
 
