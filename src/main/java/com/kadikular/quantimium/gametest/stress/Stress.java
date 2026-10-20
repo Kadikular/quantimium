@@ -44,7 +44,9 @@ public final class Stress {
     private Stress() {}
 
     public static List<Class<?>> classes() {
-        return List.of(LogisticsStress.class, ReactorStress.class, ChaosStress.class);
+        List<Class<?>> classes = new ArrayList<>(List.of(LogisticsStress.class, ReactorStress.class, ChaosStress.class));
+        if (net.neoforged.fml.ModList.get().isLoaded("ae2")) classes.add(Ae2Stress.class);
+        return classes;
     }
 
     public static boolean enabled() {

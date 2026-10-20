@@ -47,14 +47,14 @@ import java.util.Random;
 public final class LogisticsStress {
     private LogisticsStress() {}
 
-    private static final int Y = 2;
-    private static final int Z = 8;
+    static final int Y = 2;
+    static final int Z = 8;
 
     /** The items worth counting by worth, which the player asks for. */
-    private static final Item[] WANTED = Stress.WORTH.keySet().toArray(Item[]::new);
+    static final Item[] WANTED = Stress.WORTH.keySet().toArray(Item[]::new);
 
     /** The network as built: where things are. */
-    private static final class Net {
+    static final class Net {
         final GameTestHelper helper;
         final Random random;
         LogisticsControllerBlockEntity controller;
@@ -122,7 +122,7 @@ public final class LogisticsStress {
 
 
     /** Items that crafting among {@link Stress#WORTH} never touches: stock that only moves. */
-    private static List<Item> filler() {
+    static List<Item> filler() {
         List<Item> items = new ArrayList<>();
         for (Item item : BuiltInRegistries.ITEM) {
             String id = BuiltInRegistries.ITEM.getKey(item).getPath();
@@ -134,7 +134,7 @@ public final class LogisticsStress {
         return items;
     }
 
-    private static ItemStack worth(Random random) {
+    static ItemStack worth(Random random) {
         Item item = WANTED[random.nextInt(WANTED.length)];
         return new ItemStack(item, 1 + random.nextInt(64));
     }
@@ -554,7 +554,7 @@ public final class LogisticsStress {
     }
 
     /** Some of what the player's holding, taken off the pile. */
-    private static ItemStack fromPile(Map<Item, Long> pile, Random random) {
+    static ItemStack fromPile(Map<Item, Long> pile, Random random) {
         List<Item> held = pile.entrySet().stream().filter(e -> e.getValue() > 0).map(Map.Entry::getKey).toList();
         if (held.isEmpty()) return ItemStack.EMPTY;
         Item item = held.get(random.nextInt(held.size()));

@@ -92,11 +92,18 @@ public final class Ae2Content {
         modBus.addListener(Ae2Content::addToCreativeTab);
     }
 
+    /** Each Materialiser's AE2 storage, one each, for as long as it's there. */
+    private static final java.util.Map<com.kadikular.quantimium.block.entity.LogisticsMaterialiserBlockEntity, MaterialiserMeStorage> MATERIALISER_STORAGE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, SUPERPOSITION_CRAFTER_BE.get(),
                 (be, context) -> be);
         event.registerBlockEntity(AECapabilities.IN_WORLD_GRID_NODE_HOST, REACTOR_ME_PORT_BE.get(),
                 (be, context) -> be);
+        // A storage bus on a Logistics Materialiser reads the network's offers, and says when it's only asking.
+        event.registerBlockEntity(AECapabilities.ME_STORAGE, com.kadikular.quantimium.init.ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
+                (be, side) -> MATERIALISER_STORAGE.computeIfAbsent(be, MaterialiserMeStorage::new));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SUPERPOSITION_CRAFTER_BE.get(),
                 (be, context) -> be.getEnergyStorage());
         event.registerBlockEntity(Capabilities.Item.BLOCK, SUPERPOSITION_CRAFTER_BE.get(),

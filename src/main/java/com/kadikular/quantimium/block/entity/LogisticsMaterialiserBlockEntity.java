@@ -178,6 +178,27 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         return entries = list;
     }
 
+    /** Everything it shows pipes and buses, and how many of each. */
+    public void forEachListed(java.util.function.ObjLongConsumer<ItemResource> each) {
+        for (Entry entry : entries()) each.accept(entry.item(), entry.amount());
+    }
+
+    /** How many of {@code item} it shows pipes and buses: what's there and what would be made, as its mode says. */
+    public long listed(ItemResource item) {
+        List<Entry> list = entries();
+        if (list != byItemFrom || byItem == null) {
+            byItem = new java.util.HashMap<>();
+            for (Entry entry : list) byItem.merge(entry.item(), entry.amount(), Long::sum);
+            byItemFrom = list;
+        }
+        return byItem.getOrDefault(item, 0L);
+    }
+
+    @Nullable
+    private java.util.Map<ItemResource, Long> byItem;
+    @Nullable
+    private List<Entry> byItemFrom;
+
     /**
      * Which items it shows and how many, as one hash and one count: what a Crafter drawing on it through a Tesseract
      * checks every so often to see whether to work its preview out again. Kept while what it shows is.
