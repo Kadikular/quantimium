@@ -221,7 +221,8 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         } else {
             setCarried(carried.isEmpty() ? got : carried.copyWithCount(carried.getCount() + got.getCount()));
         }
-        blockEntity.rebuildPreview();
+        // The take already resized what it shows; anything newly possible (or not) is worked out in the background.
+        blockEntity.refreshSoon();
         broadcastChanges();
         return true;
     }

@@ -600,6 +600,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         });
     }
 
+    /** Works its whole preview out again soon, first in the queue: after a player took something from its screen. */
+    public void refreshSoon() {
+        queueRefresh(true);
+    }
+
     /** Whether a player has its screen open. */
     private boolean watchedByPlayer() {
         if (!(level instanceof ServerLevel server)) return false;

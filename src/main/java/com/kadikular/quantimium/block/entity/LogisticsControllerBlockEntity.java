@@ -161,6 +161,10 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         workingOut = true;
         try {
             if (!builder.step()) return false;
+        } catch (RuntimeException failed) {
+            // Let go, so it's worked out afresh next time rather than waiting on a build that's been dropped.
+            building = null;
+            throw failed;
         } finally {
             workingOut = false;
         }

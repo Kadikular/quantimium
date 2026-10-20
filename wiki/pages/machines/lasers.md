@@ -380,6 +380,12 @@ an ME network. Open it to set it.
 
 Light ending on it also powers the Reactor.
 
+[[mechanic:work.queue]] **Big networks.** What a network offers, and what its Crafters could make, is worked out
+in the background, a little each tick within a time budget (config `performance.workBudgetMicros`, 2 ms a tick
+by default), most urgent first: a terminal or Crafter screen someone has open goes first. A crafting table on a
+network with a lot in it can preview a thousand crafts, so its list fills in over a few ticks rather than at
+once, and the server carries on meanwhile. Taking or crafting something never waits on it.
+
 ## Into the mirror
 
 [[mechanic:laser.rift]] Laser light along a [[block:rift_lens]]'s axis goes through the tear in its middle

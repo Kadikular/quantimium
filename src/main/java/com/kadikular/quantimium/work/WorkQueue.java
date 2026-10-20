@@ -7,9 +7,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -126,13 +124,6 @@ public final class WorkQueue {
             }
             if (done && WAITING.get(next.getKey()) == next.getValue()) WAITING.remove(next.getKey());
         }
-    }
-
-    /** What's waiting, for a look at it (a debug command). */
-    public static List<String> describe() {
-        List<String> lines = new ArrayList<>();
-        WAITING.forEach((key, entry) -> lines.add(key + " priority " + entry.priority + " waiting " + (tick - entry.queuedTick) + " ticks"));
-        return lines;
     }
 
     @SubscribeEvent
