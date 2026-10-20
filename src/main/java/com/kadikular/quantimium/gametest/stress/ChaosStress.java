@@ -214,6 +214,125 @@ public final class ChaosStress {
         });
     }
 
+    /**
+     * Networks tangled together: A runs east along y = Y and ends on its Materialiser; B runs west above it, one of its
+     * Receptacles on A's Materialiser, and ends on its own, which one of A's Receptacles sits under. So each draws on
+     * the other, and A on itself too (a Receptacle on its own Materialiser). The cross Receptacles flip between
+     * providing (reading the other side) and storage (putting into it); Crafters on both. Players take and put back at
+     * both terminals, pipes pull through both Materialisers. Every item counted.
+     */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "stress_tangled", timeoutTicks = 40_000, padding = 32)
+    public static void tangled(GameTestHelper helper) {
+        String test = "tangled";
+        Random random = Stress.random(test);
+        TestSupport.clearField(helper);
+        int top = Y + 1, length = 14, xb = 6, xa = 4 + length;
+        // A: controller (2, Y, 8) east, terminal north; chests under; at xb a Receptacle up into B's Materialiser; a
+        // Receptacle on its own Materialiser just before it; the Materialiser at xa.
+        BlockPos controllerA = new BlockPos(2, Y, 8);
+        placeController(helper, controllerA, Direction.EAST, true);
+        LogisticsControllerBlockEntity a = helper.getBlockEntity(controllerA, LogisticsControllerBlockEntity.class);
+        helper.setBlock(controllerA.north(), ModBlocks.LOGISTICS_TERMINAL.get());
+        LogisticsTerminalBlockEntity terminalA = helper.getBlockEntity(controllerA.north(), LogisticsTerminalBlockEntity.class);
+        BlockPos materialiserA = new BlockPos(xa, Y, 8), materialiserB = new BlockPos(xb, top, 8);
+        List<LogisticsReceptacleBlockEntity> cross = new ArrayList<>();
+        for (int x = 4; x < xa; x++) {
+            BlockPos at = new BlockPos(x, Y, 8);
+            if (x == xb) {
+                placeReceptacle(helper, at, Direction.UP, LogisticsMember.Role.PROVIDER);
+                cross.add(helper.getBlockEntity(at, LogisticsReceptacleBlockEntity.class));
+            } else if (x == xa - 1) {
+                placeReceptacle(helper, at, Direction.EAST, LogisticsMember.Role.PROVIDER);
+                cross.add(helper.getBlockEntity(at, LogisticsReceptacleBlockEntity.class));
+            } else if (x == 10) {
+                QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, at.below(), Items.CRAFTING_TABLE);
+                crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, materialiserA, ModBlocks.LOGISTICS_MATERIALISER.get()));
+                placeReceptacle(helper, at, Direction.DOWN, LogisticsMember.Role.PROVIDER);
+            } else {
+                chestUnder(helper, at, random, LogisticsMember.Role.STORAGE);
+            }
+        }
+        helper.setBlock(materialiserA, ModBlocks.LOGISTICS_MATERIALISER.get());
+        // B: controller east of A's end, a row up, shining west; chests above its Receptacles; over A's Materialiser a
+        // Receptacle down into it; its own Materialiser at xb.
+        BlockPos controllerB = new BlockPos(xa + 2, top, 8);
+        placeController(helper, controllerB, Direction.WEST, true);
+        LogisticsControllerBlockEntity b = helper.getBlockEntity(controllerB, LogisticsControllerBlockEntity.class);
+        helper.setBlock(controllerB.north(), ModBlocks.LOGISTICS_TERMINAL.get());
+        LogisticsTerminalBlockEntity terminalB = helper.getBlockEntity(controllerB.north(), LogisticsTerminalBlockEntity.class);
+        for (int x = xa + 1; x > xb; x--) {
+            BlockPos at = new BlockPos(x, top, 8);
+            if (x == xa) {
+                placeReceptacle(helper, at, Direction.DOWN, LogisticsMember.Role.PROVIDER);
+                cross.add(helper.getBlockEntity(at, LogisticsReceptacleBlockEntity.class));
+            } else if (x == 12) {
+                QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, at.above(), Items.CRAFTING_TABLE);
+                crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, materialiserB, ModBlocks.LOGISTICS_MATERIALISER.get()));
+                placeReceptacle(helper, at, Direction.UP, LogisticsMember.Role.PROVIDER);
+            } else {
+                helper.setBlock(at.above(), Blocks.CHEST);
+                fill(helper.getBlockEntity(at.above(), ChestBlockEntity.class), random);
+                placeReceptacle(helper, at, Direction.UP, LogisticsMember.Role.STORAGE);
+            }
+        }
+        helper.setBlock(materialiserB, ModBlocks.LOGISTICS_MATERIALISER.get());
+
+        Map<Item, Long> pile = new HashMap<>();
+        BlockPos boxFrom = new BlockPos(0, 0, 5), boxTo = new BlockPos(xa + 3, top + 2, 10);
+        List<String> findings = new ArrayList<>();
+        @SuppressWarnings("unchecked") Map<Item, Long>[] before = new Map[1];
+        int[] t = {0};
+        boolean[] done = {false};
+        int settle = 80, runFor = Stress.scaled(1200);
+        Stress.begin();
+        helper.onEachTick(() -> {
+            if (done[0]) return;
+            t[0]++;
+            a.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
+            b.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
+            if (t[0] < settle) return;
+            if (t[0] == settle) {
+                before[0] = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(), pile));
+                // Tangled for real: each lists more than its own chests hold, the other's too.
+                long aLists = a.offers().stored().values().stream().mapToLong(Long::longValue).sum();
+                long bLists = b.offers().stored().values().stream().mapToLong(Long::longValue).sum();
+                Stress.report(test, "A lists " + aLists + " stored, B " + bLists + "; A " + a.members().size() + " members, B " + b.members().size());
+                return;
+            }
+            // The tangle's Receptacles flip between reading the other side and putting into it.
+            if (random.nextInt(40) == 0) {
+                LogisticsReceptacleBlockEntity flip = cross.get(random.nextInt(cross.size()));
+                LogisticsMember.Role to = flip.role() == LogisticsMember.Role.PROVIDER ? LogisticsMember.Role.STORAGE : LogisticsMember.Role.PROVIDER;
+                while (flip.role() != to) flip.cycleRole();
+                Stress.note("the Receptacle at " + flip.getBlockPos().toShortString() + " now " + to);
+            }
+            int ops = 1 + random.nextInt(4);
+            for (int i = 0; i < ops; i++) {
+                boolean onA = random.nextBoolean();
+                try {
+                    act(helper, random, onA ? terminalA : terminalB, onA ? materialiserA : materialiserB, pile);
+                } catch (RuntimeException | StackOverflowError failed) {
+                    findings.add("tick " + t[0] + ": " + failed + " at " + (failed.getStackTrace().length > 0 ? failed.getStackTrace()[0] : "?")
+                            + "\n    recent:\n    " + Stress.recent());
+                    com.kadikular.quantimium.Quantimium.LOGGER.error("[stress] {} failed", test, failed);
+                }
+            }
+            Map<Item, Long> now = Stress.harness(() -> Stress.census(helper, boxFrom, boxTo, List.of(), pile));
+            String wrong = Stress.harness(() -> Stress.compare(before[0], now));
+            if (wrong != null) {
+                findings.add("tick " + t[0] + ": items changed: " + wrong + "\n    recent:\n    " + Stress.recent());
+                before[0] = now;
+            }
+            if (t[0] >= settle + runFor || findings.size() >= 10) {
+                done[0] = true;
+                Stress.end(test, findings);
+                TestSupport.clearField(helper);
+                if (findings.isEmpty()) helper.succeed();
+                else helper.fail(findings.size() + " findings, first: " + findings.getFirst().lines().findFirst().orElse(""));
+            }
+        });
+    }
+
     private static void act(GameTestHelper helper, Random random, LogisticsTerminalBlockEntity terminal, BlockPos materialiser, Map<Item, Long> pile) {
         int roll = random.nextInt(100);
         if (roll < 45) {
