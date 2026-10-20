@@ -27,10 +27,6 @@ Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
   slim scroll bars beside both grids.
 - Crafter cells show what's there (top right) and, in violet, what can be made besides; a click takes a stack.
 
-### Lasers
-
-- The Splitter's and Cavity Mirror's see-through focus sits flush in their plate.
-
 ### Speed
 
 - Recipe matching and sizing look only at the offers holding what a recipe names; AE2 storage buses on
