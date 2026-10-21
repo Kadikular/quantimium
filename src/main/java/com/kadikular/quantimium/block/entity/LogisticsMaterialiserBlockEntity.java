@@ -286,7 +286,8 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             // otherwise look over every slot of the network for each.
             java.util.Set<LogisticsMember> members = new java.util.HashSet<>(members());
             var spots = controller.spots();
-            boolean made = offersCraftable() && !com.kadikular.quantimium.recipe.CraftChain.storedOnly();
+            // A Crafter making something draws on what's stored only: a craft of a craft is a Reactor's to plan.
+            boolean made = offersCraftable() && com.kadikular.quantimium.recipe.CraftChain.depth() == 0;
             while (got < amount) {
                 ItemStack more = Logistics.take(spots, members, resource, amount - got, false, offersReal(), made);
                 if (more.isEmpty()) {
