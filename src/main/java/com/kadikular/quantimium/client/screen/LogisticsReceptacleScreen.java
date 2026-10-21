@@ -88,7 +88,13 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
                                 () -> List.of(Component.translatable(receptacle().keeps() ? "gui.quantimium.logistics_receptacle.keep.on" : "gui.quantimium.logistics_receptacle.keep.off"),
                                         hint("gui.quantimium.tab.switch")))
                         .on(() -> receptacle().keeps())
-                        .visible(() -> receptacle().role() == LogisticsMember.Role.REQUESTER));
+                        .visible(() -> receptacle().role() == LogisticsMember.Role.REQUESTER),
+                // On a machine that takes power: whether the light reaching it powers that machine too.
+                Tab.glyph(() -> GuiIcon.ENERGY, () -> press(LogisticsReceptacleMenu.BUTTON_POWERS),
+                                () -> List.of(Component.translatable(receptacle().powers() ? "gui.quantimium.logistics_receptacle.powers.on" : "gui.quantimium.logistics_receptacle.powers.off"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .on(() -> receptacle().powers())
+                        .visible(() -> receptacle().canPower() || receptacle().powers()));
     }
 
     private void press(int button) {

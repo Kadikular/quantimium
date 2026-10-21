@@ -128,7 +128,11 @@ public class LogisticsReceptacleBlock extends BaseEntityBlock implements BeamAnc
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player.isSecondaryUseActive()) return point(state, level, pos, hit.getDirection());
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsReceptacleBlockEntity receptacle) player.openMenu(receptacle, pos);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsReceptacleBlockEntity receptacle) {
+            // Whether what it's on takes power, for the screen to offer powering it.
+            receptacle.checkPower();
+            player.openMenu(receptacle, pos);
+        }
         return InteractionResult.SUCCESS;
     }
 

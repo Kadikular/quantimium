@@ -204,6 +204,46 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.receptacle
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aReceptacleIsDarkWhileItsNetworkHasNoPower(GameTestHelper helper) {
+        // Joined to a controller with no power, a Receptacle isn't lit; given power, it is.
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, false);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false);
+        helper.runAfterDelay(40, () -> {
+            helper.assertBlockProperty(new BlockPos(4, Y, 8), LogisticsReceptacleBlock.LIT, false);
+            controller.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockProperty(new BlockPos(4, Y, 8), LogisticsReceptacleBlock.LIT, true);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.receptacle
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 200)
+    public static void aReceptacleCanPowerTheMachineItsOn(GameTestHelper helper) {
+        // An emitter lighting a controller, its light running on through a Receptacle on a Fold Core. Off, the core
+        // gets nothing; set to power what it's on, the core charges from the light.
+        emitter(helper, 1);
+        controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
+        helper.setBlock(new BlockPos(5, Y - 1, 8), ModBlocks.FOLD_CORE.get());
+        var core = helper.getBlockEntity(new BlockPos(5, Y - 1, 8), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(new BlockPos(5, Y, 8), LogisticsReceptacleBlockEntity.class);
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(core.getEnergyStorage().getEnergyStored(), 0, "not powering it, the core gets nothing");
+            receptacle.checkPower();
+            helper.assertTrue(receptacle.canPower(), "the core takes power: the screen offers it");
+            receptacle.togglePowers();
+        });
+        helper.runAfterDelay(140, () -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "powering it, the core charges from the light");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.controller
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void anUnpoweredControllerMovesNothing(GameTestHelper helper) {
@@ -1262,6 +1302,59 @@ public final class LogisticsTests {
             helper.assertValueEqual(countIn(furnace, Items.COBBLESTONE), 16, "no cobblestone spent");
             requester.toggleRequestsMade();
             helper.succeedWhen(() -> helper.assertTrue(count(helper, 8, Items.STONE) > 0, "allowed, stone is made for it"));
+        });
+    }
+
+    // covers: laser.logistics.offers, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_with_another_way", timeoutTicks = 200)
+    public static void aCraftThatCouldLoopIsKeptWhenThereIsAnotherWay(GameTestHelper helper) {
+        // Seventy-one iron blocks and two crafting-table Crafters. Ingots can be made of the blocks, or of nuggets made
+        // of ingots (a loop); nuggets made of ingots are still listed, as many as the blocks' ingots make, and a
+        // Crafter's own preview shows them too.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 64), new ItemStack(Items.IRON_BLOCK, 7));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            var offers = settled(controller::offers);
+            helper.assertTrue(offers.craftable(resource(Items.IRON_INGOT)) >= 639, "ingots of the blocks: " + offers.craftable(resource(Items.IRON_INGOT)));
+            helper.assertTrue(offers.craftable(resource(Items.IRON_NUGGET)) >= 639 * 9, "nuggets of those ingots: " + offers.craftable(resource(Items.IRON_NUGGET)));
+            first.rebuildPreview();
+            helper.assertTrue(CrafterTests.craftOf(first, Items.IRON_NUGGET) != null, "and in a Crafter's own preview");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.offers, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_pulveriser_loop", timeoutTicks = 200)
+    public static void dustOfIngotsOfBlocksIsListedBesideAFurnaceLoop(GameTestHelper helper) {
+        // Seventy-one iron blocks; a crafting table (ingots of the blocks), Energized Power's pulveriser (dust of
+        // anything tagged an iron ingot) and a furnace (ingots of the dust, a loop). The dust of the blocks' ingots is
+        // listed, all 639 of it.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 64), new ItemStack(Items.IRON_BLOCK, 7));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        QuantumCrafterBlockEntity pulveriser = crafterOn(helper, 7,
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:pulverizer")), true, true);
+        crafterOn(helper, 8, Items.FURNACE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var dust = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:iron_dust")));
+        helper.runAfterDelay(100, () -> {
+            var offers = settled(controller::offers);
+            helper.assertTrue(offers.craftable(resource(Items.IRON_INGOT)) >= 639, "ingots of the blocks: " + offers.craftable(resource(Items.IRON_INGOT)));
+            helper.assertTrue(offers.craftable(dust) >= 639, "dust of those ingots: " + offers.craftable(dust));
+            pulveriser.rebuildPreview();
+            helper.assertTrue(CrafterTests.craftOf(pulveriser, dust.getItem()) != null, "and in the pulveriser's own preview");
+            TestSupport.clearField(helper);
+            helper.succeed();
         });
     }
 

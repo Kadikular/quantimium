@@ -1213,6 +1213,11 @@ public final class LaserNetworks {
                     if (next != null && next.chargedByLight() && next != source) {
                         route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
                     }
+                    // One that hands light on to a machine beside it (a Receptacle powering what it's on): that machine.
+                    net.minecraft.core.Direction feeds = next == null || next == source ? null : next.feeds();
+                    if (feeds != null) {
+                        route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
+                    }
                     if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {
                         queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
                     }

@@ -81,6 +81,7 @@ public final class Logistics {
             BlockPos owner = owners.get(member);
             boolean joined = owner != null && !clashing.contains(owner);
             member.connected(joined);
+            member.networkPowered(joined && controllers.get(owner) != null && controllers.get(owner).powered());
             if (joined) networks.computeIfAbsent(owner, key -> new ArrayList<>()).add(member);
         }
         for (Map.Entry<BlockPos, LogisticsController> entry : controllers.entrySet()) {
