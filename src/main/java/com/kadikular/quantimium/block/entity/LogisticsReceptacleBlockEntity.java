@@ -92,9 +92,9 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
      * A provider on a machine that makes things to order: what that machine may make for the network from anything
      * on it (other machines' crafts too), only from what's stored, or nothing, offering only what's there.
      */
-    public enum Crafts { ANYTHING, STORED, NOTHING }
+    public enum Crafts { STORED, NOTHING }
 
-    private Crafts crafts = Crafts.ANYTHING;
+    private Crafts crafts = Crafts.STORED;
 
     public Crafts crafts() {
         return crafts;
@@ -105,9 +105,10 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         return crafts != Crafts.NOTHING;
     }
 
+    /** Crafts are made from what's really stored: chains of crafts are a Reactor's to plan. */
     @Override
     public boolean craftsFromCraftable() {
-        return crafts == Crafts.ANYTHING;
+        return false;
     }
 
     /** An active requester: whether it has machines make what isn't stored, or takes only what's stored. */
@@ -124,7 +125,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
     }
 
     public void cycleCrafts() {
-        crafts = Crafts.values()[(crafts.ordinal() + 1) % Crafts.values().length];
+        crafts = crafts == Crafts.NOTHING ? Crafts.STORED : Crafts.NOTHING;
         changed();
     }
 
@@ -487,7 +488,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         super.loadAdditional(in);
         role = Role.values()[Math.floorMod(in.getIntOr("Role", 0), Role.values().length)];
         active = in.getBooleanOr("Active", false);
-        crafts = Crafts.values()[Math.floorMod(in.getIntOr("Crafts", in.getBooleanOr("OffersMade", true) ? 0 : 2), Crafts.values().length)];
+        // Crafting from anything (chains) is gone: those crafts are made from what's stored.
+        crafts = in.getIntOr("Crafts", in.getBooleanOr("OffersMade", true) ? 0 : 2) == 2 ? Crafts.NOTHING : Crafts.STORED;
         requestsMade = in.getBooleanOr("RequestsMade", true);
         priority = in.getIntOr("Priority", 0);
         allow = in.getBooleanOr("Allow", true);

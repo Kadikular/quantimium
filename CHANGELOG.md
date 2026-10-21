@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Logistics
+
+- **Crafters on a network make things from what's really stored, one step.** Chains of crafts through the network
+  (planks from logs for the sticks for a pickaxe) are gone: in big packs they listed things that couldn't be made,
+  were refused until clicked again, and chose odd ways round. Chains are a Reactor's to plan. The provider tab on a
+  Crafter's Receptacle now just turns offering its crafts on or off.
+- **Craftable counts are real**: Crafters making the same thing from the network's items count once, not once each
+  (a row of crafting tables showed each other's planks many times over).
+- A simulated take from a Crafter (another mod checking what it could get) no longer makes the craft, and no longer
+  stops the real take that follows.
+- The terminal takes what's left over from a craft before crafting more.
+- `/quantimium trace <item> [count]` (operators): a take at the nearest Logistics Terminal, written down step by step
+  to `logs/`, for working out why something isn't made.
+
 ## 0.5.6-alpha: Crafts that come first time
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.

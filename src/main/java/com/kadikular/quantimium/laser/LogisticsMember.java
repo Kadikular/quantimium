@@ -96,7 +96,7 @@ public interface LogisticsMember {
      * from what's really stored.
      */
     default boolean craftsFromCraftable() {
-        return true;
+        return false;
     }
 
     /** An active requester: whether it may have machines make what it pulls, or takes only what's stored. */

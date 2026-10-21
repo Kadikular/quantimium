@@ -23,9 +23,9 @@ import java.util.Set;
  * read first, and stays put while the stock does.
  *
  * <p>Tier 0 is what's really there. Then each machine that makes things to order behind a provider Receptacle
- * ({@link OfferMaker}) is shown the real items and what the machines (itself too) could make so far, and what it
- * could make from that is its craftable offer; that's done again, so a chain of machines is found, up to
- * {@link #TIERS} deep. Two machines offering the same thing both count, as two providers would.
+ * ({@link OfferMaker}) is shown the real items, and what it could make from them is its craftable offer. Machines
+ * making the same thing from the network's stored items count once (the most of them), as those items are only made
+ * into it once; a Reactor or another network, making from its own stock, counts beside them.
  *
  * <p>Each craftable remembers every item it's made from, all the way down. A machine isn't shown what was made out of
  * what it makes: a pulveriser crushing ingots doesn't let the furnace beside it count those ingots again. Where it
@@ -34,8 +34,11 @@ import java.util.Set;
  * <p>Taking is never decided here: a pull goes to the machines in a transaction and gets what they really give.
  */
 public final class OfferTable {
-    /** How many machines a chain of crafts on the network reaches through. */
-    public static final int TIERS = 8;
+    /**
+     * How many machines a chain of crafts on the network reaches through: one. Machines make things from what's
+     * really stored; a chain of crafts is a Reactor's to plan.
+     */
+    public static final int TIERS = 1;
 
     /** How many times a machine is asked again about its looping crafts, leaving out more each time, before they're dropped. */
     private static final int LOOP_RETRIES = 2;
@@ -47,8 +50,12 @@ public final class OfferTable {
     /** One item on offer: how many are there, how many could be made, and the shortest chain that makes it. */
     public record Entry(ItemResource item, long real, long craftable, int tier) {}
 
-    /** Some of an item one machine could make, and the items its craft takes (none known: nothing). */
-    private record Source(long count, Set<Item> from) {}
+    /**
+     * Some of an item one machine could make, and the items its craft takes (none known: nothing). {@code pooled}: made
+     * from what the network stores, which every machine here draws on alike; otherwise from a stock of its own (a
+     * Reactor's, another network's).
+     */
+    private record Source(long count, Set<Item> from, boolean pooled) {}
 
     private final Map<ItemResource, Long> real;
     /** What could be made, by item, then by the place of the machine that would make it, craft by craft. */
@@ -99,15 +106,21 @@ public final class OfferTable {
     private long craftableClear(ItemResource item, BlockPos maker, Set<Item> tainted) {
         Map<BlockPos, List<Source>> makers = craftable.get(item);
         if (makers == null) return 0;
-        long total = 0;
+        long total = 0, pooled = 0;
         for (Map.Entry<BlockPos, List<Source>> entry : makers.entrySet()) {
             if (entry.getKey().equals(maker)) continue;
-            // One machine's crafts of the same thing are alternatives, not more: the most of them.
-            long most = 0;
-            for (Source source : entry.getValue()) if (clean(source, tainted)) most = Math.max(most, source.count());
+            // One machine's crafts of the same thing are alternatives, not more: the most of them. So are machines
+            // making it from the same stored items (a row of crafting tables): those items are only made into it once.
+            long most = 0, mostPooled = 0;
+            for (Source source : entry.getValue()) {
+                if (!clean(source, tainted)) continue;
+                if (source.pooled()) mostPooled = Math.max(mostPooled, source.count());
+                else most = Math.max(most, source.count());
+            }
             total += most;
+            pooled = Math.max(pooled, mostPooled);
         }
-        return total;
+        return total + pooled;
     }
 
     /** Every source of {@code item} (any machine, any components): gathered once for this table. */
@@ -689,7 +702,7 @@ public final class OfferTable {
                         for (Entry entry : imported.entries()) {
                             if (entry.craftable() <= 0) continue;
                             if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
-                            offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of()));
+                            offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of(), false));
                             tiers.merge(entry.item(), entry.tier(), Math::min);
                         }
                     }
@@ -701,7 +714,7 @@ public final class OfferTable {
                     listing.forEach((item, both) -> {
                         if (both[0] > 0) real.merge(item, both[0], Long::sum);
                         if (both[1] > 0 && member.offersCraftable()) {
-                            offer(craftable, item, pos, new Source(both[1], Set.of()));
+                            offer(craftable, item, pos, new Source(both[1], Set.of(), false));
                             tiers.merge(item, 1, Math::min);
                         }
                     });
@@ -802,7 +815,7 @@ public final class OfferTable {
             // The machine makes it whatever its Receptacle lets out to the network: its own screen shows it.
             if (one.craft() != null) crafts.add(one.craft());
             if (!member.lets(one.item().toStack(1))) continue;
-            Source source = new Source(one.count(), Set.copyOf(one.from()));
+            Source source = new Source(one.count(), Set.copyOf(one.from()), true);
             List<Source> sources = kept.computeIfAbsent(one.item(), k -> new ArrayList<>());
             if (!sources.contains(source)) sources.add(source);
         }

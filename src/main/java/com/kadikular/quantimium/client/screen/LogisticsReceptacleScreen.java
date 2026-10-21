@@ -65,9 +65,8 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
                                 () -> List.of(Component.translatable("gui.quantimium.logistics_receptacle." + (receptacle().active() ? "active" : "passive") + "." + role()),
                                         hint("gui.quantimium.tab.switch")))
                         .visible(() -> receptacle().role() != LogisticsMember.Role.STORAGE),
-                // A provider on a machine that makes things to order: what it may make from, or only what's there.
+                // A provider on a machine that makes things to order: whether it offers its crafts, or only what's there.
                 Tab.glyph(() -> switch (receptacle().crafts()) {
-                                    case ANYTHING -> GuiIcon.VIEW_BOTH;
                                     case STORED -> GuiIcon.VIEW_CRAFT;
                                     case NOTHING -> GuiIcon.VIEW_REAL;
                                 },

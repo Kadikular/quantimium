@@ -813,32 +813,6 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_chain", timeoutTicks = 200)
-    public static void aChainThroughTheNetworkPaysEachStep(GameTestHelper helper) {
-        // Network -> Crafter A (a furnace, drawing on the network) -> Crafter B (a stonecutter, linked to A) -> back
-        // to the network. Stone bricks taken from the network cost one cobblestone; a take called off costs nothing.
-        TestSupport.clearField(helper);
-        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 23));
-        QuantumCrafterBlockEntity furnace = crafterOn(helper, 6, Items.FURNACE, true, false);
-        QuantumCrafterBlockEntity cutter = crafterOn(helper, 9, Items.STONECUTTER, false, true);
-        cutter.getInventory().setStackInSlot(0, CrafterTests.link(helper, new BlockPos(6, Y - 1, 8), ModBlocks.QUANTUM_CRAFTER.get()));
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        helper.runAfterDelay(80, () -> {
-            int energy = furnace.getEnergyStorage().getEnergyStored();
-            helper.assertValueEqual(take(helper, Items.STONE_BRICKS, 1, false), 1, "the network offers stone bricks, two steps away");
-            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 23, "a take called off moves nothing");
-            helper.assertValueEqual(furnace.getEnergyStorage().getEnergyStored(), energy, "and costs no power");
-            helper.assertValueEqual(countIn(furnace, Items.STONE) + countIn(cutter, Items.STONE), 0, "and leaves nothing made");
-            helper.assertValueEqual(take(helper, Items.STONE_BRICKS, 1, true), 1, "a stone brick taken");
-            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 22, "for one cobblestone");
-            helper.assertTrue(furnace.getEnergyStorage().getEnergyStored() < energy, "the furnace step paid");
-            TestSupport.clearField(helper);
-            helper.succeed();
-        });
-    }
-
-    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_three", timeoutTicks = 200)
     public static void threeCraftersOnOneNetworkStayQuick(GameTestHelper helper) {
         // Two furnace Crafters and a crafting-table one, all drawing on the network and offering to it, 64 cobblestone
@@ -871,7 +845,8 @@ public final class LogisticsTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_steady", timeoutTicks = 200)
     public static void whatANetworkOffersHoldsSteady(GameTestHelper helper) {
         // Two furnace Crafters and a crafting-table one, all drawing on the network and offering to it: once settled,
-        // the network offers the same every tick, whatever else reads it, and it offers stone and smooth stone.
+        // the network offers the same every tick, whatever else reads it. It offers stone (of the cobblestone), not
+        // smooth stone (of stone that isn't stored).
         TestSupport.clearField(helper);
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 64));
@@ -893,7 +868,7 @@ public final class LogisticsTests {
         helper.runAfterDelay(100, () -> {
             helper.assertValueEqual(seen.size(), 1, "one answer every tick: " + seen);
             String offered = seen.iterator().next();
-            helper.assertTrue(offered.contains("minecraft:stonex") && offered.contains("minecraft:smooth_stonex"), "stone and smooth stone: " + offered);
+            helper.assertTrue(offered.contains("minecraft:stonex") && !offered.contains("minecraft:smooth_stonex"), "stone, not smooth stone: " + offered);
             TestSupport.clearField(helper);
             helper.succeed();
         });
@@ -1045,39 +1020,6 @@ public final class LogisticsTests {
         return net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.fromNamespaceAndPath("ae2", name));
     }
 
-    // covers: laser.logistics.materialiser, crafter.collapse
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_ae2_chain", timeoutTicks = 200)
-    public static void aSixStepChainIsListedAndMade(GameTestHelper helper) {
-        // AE2 storage components from raw stuff: an Inscriber Crafter prints circuits and presses processors, a
-        // crafting-table Crafter makes 1k, 4k, 16k and 64k components from them: six steps, all listed. Three 1k
-        // components stored besides: the table shows the 4k components the chain could make, not just the one
-        // those three make. A 64k component taken makes the whole chain.
-        TestSupport.clearField(helper);
-        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false,
-                new ItemStack(Items.REDSTONE, 64), new ItemStack(Items.REDSTONE, 64), new ItemStack(Items.REDSTONE, 64),
-                new ItemStack(ae2("certus_quartz_crystal"), 64), new ItemStack(ae2("certus_quartz_crystal"), 64),
-                new ItemStack(Items.GOLD_INGOT, 64), new ItemStack(ae2("silicon"), 64), new ItemStack(ae2("silicon"), 64),
-                new ItemStack(ae2("quartz_glass"), 64), new ItemStack(Items.GLOWSTONE_DUST, 64), new ItemStack(ae2("cell_component_1k"), 3));
-        QuantumCrafterBlockEntity inscriber = crafterOn(helper, 6, ae2("inscriber"), true, true);
-        inscriber.getInventory().setStackInSlot(1, new ItemStack(ae2("logic_processor_press")));
-        inscriber.getInventory().setStackInSlot(2, new ItemStack(ae2("calculation_processor_press")));
-        inscriber.getInventory().setStackInSlot(3, new ItemStack(ae2("silicon_press")));
-        QuantumCrafterBlockEntity table = crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        helper.runAfterDelay(100, () -> {
-            helper.assertTrue(amount(helper, ae2("cell_component_16k")) > 0, "16k components listed");
-            helper.assertTrue(amount(helper, ae2("cell_component_64k")) > 0, "64k components listed");
-            table.rebuildPreview();
-            var four = CrafterTests.craftOf(table, ae2("cell_component_4k"));
-            helper.assertTrue(four != null && four.availableOutputCount(0) > 1, "the table shows what the chain makes: "
-                    + (four == null ? "none" : four.availableOutputCount(0)));
-            helper.assertValueEqual(take(helper, ae2("cell_component_64k"), 1, true), 1, "a 64k component taken");
-            TestSupport.clearField(helper);
-            helper.succeed();
-        });
-    }
-
     // covers: work.queue, laser.logistics.terminal
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_quick", timeoutTicks = 200)
     public static void aTakeShowsAtOnceAndWhatItMadeSoonAfter(GameTestHelper helper) {
@@ -1194,76 +1136,6 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.materialiser, crafter.collapse
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_own_chain", timeoutTicks = 200)
-    public static void aLoneCrafterChainsItsOwnCrafts(GameTestHelper helper) {
-        // One crafting-table Crafter on the network, 35 iron blocks and 4 ingots stored: it offers leggings (ingots it
-        // would make from blocks first), shows them itself, and one taken costs seven ingots' worth of iron. No more
-        // blocks are offered than are stored.
-        TestSupport.clearField(helper);
-        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 35), new ItemStack(Items.IRON_INGOT, 4));
-        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        helper.runAfterDelay(80, () -> {
-            helper.assertTrue(amount(helper, Items.IRON_LEGGINGS) > 0, "leggings offered");
-            helper.assertValueEqual(amount(helper, Items.IRON_BLOCK), 35L, "only the stored blocks");
-            crafter.rebuildPreview();
-            helper.assertTrue(CrafterTests.craftOf(crafter, Items.IRON_LEGGINGS) != null, "the Crafter shows leggings too");
-            helper.assertValueEqual(take(helper, Items.IRON_LEGGINGS, 1, true), 1, "a pair taken");
-            int iron = 9 * (count(helper, 4, Items.IRON_BLOCK) + countIn(crafter, Items.IRON_BLOCK))
-                    + count(helper, 4, Items.IRON_INGOT) + countIn(crafter, Items.IRON_INGOT);
-            helper.assertValueEqual(iron, 35 * 9 + 4 - 7, "for seven ingots' worth");
-            TestSupport.clearField(helper);
-            helper.succeed();
-        });
-    }
-
-    // covers: laser.logistics.materialiser, crafter.collapse
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_twice", timeoutTicks = 200)
-    public static void aCrafterMakesTwoStepsOfOneChain(GameTestHelper helper) {
-        // Cobblestone stored; a furnace Crafter and a crafting-table one, both drawing on the network and offering to
-        // it. Cracked stone bricks need the furnace twice: stone for the bricks, then the bricks cracked. One taken
-        // costs four cobblestone; what's left over stays as stone bricks.
-        TestSupport.clearField(helper);
-        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 16));
-        QuantumCrafterBlockEntity furnace = crafterOn(helper, 6, Items.FURNACE, true, true);
-        QuantumCrafterBlockEntity table = crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        helper.runAfterDelay(80, () -> {
-            helper.assertTrue(listed(helper, Items.CRACKED_STONE_BRICKS), "cracked stone bricks are offered");
-            helper.assertValueEqual(take(helper, Items.CRACKED_STONE_BRICKS, 1, true), 1, "one taken");
-            int bricks = countIn(furnace, Items.STONE_BRICKS) + countIn(table, Items.STONE_BRICKS) + count(helper, 4, Items.STONE_BRICKS);
-            int stone = countIn(furnace, Items.STONE) + countIn(table, Items.STONE);
-            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 12, "for four cobblestone");
-            helper.assertValueEqual(bricks + stone, 3, "the rest kept: " + bricks + " bricks, " + stone + " stone");
-            TestSupport.clearField(helper);
-            helper.succeed();
-        });
-    }
-
-    // covers: laser.logistics.materialiser, crafter.collapse
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_one_craft", timeoutTicks = 200)
-    public static void aLoopingCraftLeavesTheOthersBe(GameTestHelper helper) {
-        // 35 iron blocks and 4 ingots stored, two crafting-table Crafters on the network. Blocks made from ingots
-        // made from blocks loop, so no more blocks are offered; but leggings and nuggets from ingots made from blocks
-        // are.
-        TestSupport.clearField(helper);
-        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 35), new ItemStack(Items.IRON_INGOT, 4));
-        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
-        crafterOn(helper, 9, Items.CRAFTING_TABLE, true, true);
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        helper.runAfterDelay(80, () -> {
-            helper.assertValueEqual(amount(helper, Items.IRON_BLOCK), 35L, "only the stored blocks");
-            helper.assertTrue(amount(helper, Items.IRON_LEGGINGS) >= 45, "leggings from ingots made from blocks: " + amount(helper, Items.IRON_LEGGINGS));
-            helper.assertTrue(amount(helper, Items.IRON_NUGGET) > 36, "nuggets past the four stored ingots: " + amount(helper, Items.IRON_NUGGET));
-            TestSupport.clearField(helper);
-            helper.succeed();
-        });
-    }
-
-    // covers: laser.logistics.materialiser, crafter.collapse
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_whole_stock", timeoutTicks = 200)
     public static void aCrafterOnTheNetworkCountsEveryStack(GameTestHelper helper) {
         // Two stacks of iron in storage, a crafting-table Crafter drawing on the network and offering to it: it can
@@ -1302,59 +1174,6 @@ public final class LogisticsTests {
             helper.assertValueEqual(countIn(furnace, Items.COBBLESTONE), 16, "no cobblestone spent");
             requester.toggleRequestsMade();
             helper.succeedWhen(() -> helper.assertTrue(count(helper, 8, Items.STONE) > 0, "allowed, stone is made for it"));
-        });
-    }
-
-    // covers: laser.logistics.offers, crafter.chain
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_loop_with_another_way", timeoutTicks = 200)
-    public static void aCraftThatCouldLoopIsKeptWhenThereIsAnotherWay(GameTestHelper helper) {
-        // Seventy-one iron blocks and two crafting-table Crafters. Ingots can be made of the blocks, or of nuggets made
-        // of ingots (a loop); nuggets made of ingots are still listed, as many as the blocks' ingots make, and a
-        // Crafter's own preview shows them too.
-        TestSupport.clearField(helper);
-        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 64), new ItemStack(Items.IRON_BLOCK, 7));
-        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
-        crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        helper.runAfterDelay(100, () -> {
-            var offers = settled(controller::offers);
-            helper.assertTrue(offers.craftable(resource(Items.IRON_INGOT)) >= 639, "ingots of the blocks: " + offers.craftable(resource(Items.IRON_INGOT)));
-            helper.assertTrue(offers.craftable(resource(Items.IRON_NUGGET)) >= 639 * 9, "nuggets of those ingots: " + offers.craftable(resource(Items.IRON_NUGGET)));
-            first.rebuildPreview();
-            helper.assertTrue(CrafterTests.craftOf(first, Items.IRON_NUGGET) != null, "and in a Crafter's own preview");
-            TestSupport.clearField(helper);
-            helper.succeed();
-        });
-    }
-
-    // covers: laser.logistics.offers, crafter.chain
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_pulveriser_loop", timeoutTicks = 200)
-    public static void dustOfIngotsOfBlocksIsListedBesideAFurnaceLoop(GameTestHelper helper) {
-        // Seventy-one iron blocks; a crafting table (ingots of the blocks), Energized Power's pulveriser (dust of
-        // anything tagged an iron ingot) and a furnace (ingots of the dust, a loop). The dust of the blocks' ingots is
-        // listed, all 639 of it.
-        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
-            helper.succeed();
-            return;
-        }
-        TestSupport.clearField(helper);
-        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 64), new ItemStack(Items.IRON_BLOCK, 7));
-        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
-        QuantumCrafterBlockEntity pulveriser = crafterOn(helper, 7,
-                net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:pulverizer")), true, true);
-        crafterOn(helper, 8, Items.FURNACE, true, true);
-        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
-        var dust = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:iron_dust")));
-        helper.runAfterDelay(100, () -> {
-            var offers = settled(controller::offers);
-            helper.assertTrue(offers.craftable(resource(Items.IRON_INGOT)) >= 639, "ingots of the blocks: " + offers.craftable(resource(Items.IRON_INGOT)));
-            helper.assertTrue(offers.craftable(dust) >= 639, "dust of those ingots: " + offers.craftable(dust));
-            pulveriser.rebuildPreview();
-            helper.assertTrue(CrafterTests.craftOf(pulveriser, dust.getItem()) != null, "and in the pulveriser's own preview");
-            TestSupport.clearField(helper);
-            helper.succeed();
         });
     }
 
@@ -1466,8 +1285,9 @@ public final class LogisticsTests {
     // covers: laser.logistics.terminal, crafter.chain
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_stack_upgrade", timeoutTicks = 300)
     public static void aStackUpgradeIsMadeOfLogsAndIron(GameTestHelper helper) {
-        // Sophisticated Storage, if it's there: iron ingots and dark oak logs on a network, two crafting-table Crafters.
-        // An upgrade base (planks and iron) and a stack upgrade (logs round a base) are listed, and made when taken.
+        // Sophisticated Storage, if it's there: iron ingots, dark oak planks and logs on a network, two crafting-table
+        // Crafters. An upgrade base (planks and iron) is listed, as many as one Crafter could make (both draw on the
+        // same planks), and made when taken; a stack upgrade (logs round a base, none stored) isn't, until a base is.
         if (!net.neoforged.fml.ModList.get().isLoaded("sophisticatedstorage")) {
             helper.succeed();
             return;
@@ -1475,20 +1295,22 @@ public final class LogisticsTests {
         TestSupport.clearField(helper);
         LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_INGOT, 64),
-                new ItemStack(Items.DARK_OAK_LOG, 64), new ItemStack(Items.DARK_OAK_LOG, 64), new ItemStack(Items.DARK_OAK_LOG, 64), new ItemStack(Items.DARK_OAK_LOG, 8));
-        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+                new ItemStack(Items.DARK_OAK_PLANKS, 64), new ItemStack(Items.DARK_OAK_LOG, 64));
+        QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
         crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         var base = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("sophisticatedstorage:upgrade_base")));
         var tier1 = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("sophisticatedstorage:stack_upgrade_tier_1")));
         helper.runAfterDelay(120, () -> {
             var offers = settled(controller::offers);
-            helper.assertTrue(offers.craftable(base) >= 16, "upgrade bases listed: " + offers.craftable(base));
-            helper.assertTrue(offers.craftable(tier1) >= 10, "stack upgrades listed: " + offers.craftable(tier1));
+            first.rebuildPreview();
+            var shown = CrafterTests.craftOf(first, base.getItem());
+            helper.assertTrue(shown != null, "an upgrade base in a Crafter's preview");
+            helper.assertTrue(offers.craftable(base) > 0, "upgrade bases listed");
+            helper.assertValueEqual(offers.craftable(base), shown.availableOutputCount(0), "as many as one Crafter makes, not two's worth");
+            helper.assertValueEqual(offers.craftable(tier1), 0L, "no stack upgrades: no base is stored");
             ItemStack gotBase = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), base, 1, false, false, true);
             helper.assertValueEqual(gotBase.getCount(), 1, "an upgrade base made the first time");
-            ItemStack gotTier1 = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), tier1, 1, false, false, true);
-            helper.assertValueEqual(gotTier1.getCount(), 1, "a stack upgrade made the first time");
             TestSupport.clearField(helper);
             helper.succeed();
         });
@@ -1496,9 +1318,10 @@ public final class LogisticsTests {
 
     // covers: laser.logistics.terminal, crafter.chain
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_first_try_chain", timeoutTicks = 200)
-    public static void aChainedCraftIsMadeFirstTime(GameTestHelper helper) {
-        // Only oak logs on the network, and two crafting-table Crafters drawing on it and making for it. A wooden pickaxe
-        // wants planks (of a log, with some over) and sticks (of planks, with some over): asked for once, it's made.
+    public static void aCraftOfACraftIsntListed(GameTestHelper helper) {
+        // Only oak logs on the network, and two crafting-table Crafters drawing on it and making for it. Planks (of the
+        // logs) are listed, once over (both Crafters would use the same logs); a wooden pickaxe (planks and sticks, none
+        // stored) isn't, and asking for one makes nothing.
         TestSupport.clearField(helper);
         LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.OAK_LOG, 8));
@@ -1507,9 +1330,12 @@ public final class LogisticsTests {
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         var pickaxe = resource(Items.WOODEN_PICKAXE);
         helper.runAfterDelay(100, () -> {
-            helper.assertTrue(settled(controller::offers).craftable(pickaxe) > 0, "a pickaxe listed");
+            var offers = settled(controller::offers);
+            helper.assertValueEqual(offers.craftable(resource(Items.OAK_PLANKS)), 32L, "planks of eight logs");
+            helper.assertValueEqual(offers.craftable(pickaxe), 0L, "no pickaxe listed");
             ItemStack got = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), pickaxe, 1, false, false, true);
-            helper.assertValueEqual(got.getCount(), 1, "made the first time it's asked for");
+            helper.assertTrue(got.isEmpty(), "nor made");
+            helper.assertValueEqual(count(helper, 4, Items.OAK_LOG), 8, "the logs are all still there");
             TestSupport.clearField(helper);
             helper.succeed();
         });
@@ -1518,9 +1344,9 @@ public final class LogisticsTests {
     // covers: crafter.chain, laser.logistics.materialiser
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_iron_loop", timeoutTicks = 200)
     public static void craftsDontChaseEachOtherRoundALoop(GameTestHelper helper) {
-        // Three crafting-table Crafters on a network of iron blocks, each able to turn nuggets, ingots and
-        // blocks into one another. A pipe pulling nuggets through the Materialiser once set crafts chasing each other
-        // round that loop, a dozen deep, for minutes. It's quick, and no iron is made or lost.
+        // Three crafting-table Crafters on a network of iron blocks, each able to turn ingots and blocks into one
+        // another. A pipe pulling ingots through the Materialiser once set crafts chasing each other round that loop,
+        // a dozen deep, for minutes. It's quick, no iron is made or lost, and nuggets (a craft of a craft) aren't listed.
         TestSupport.clearField(helper);
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 9));
@@ -1529,10 +1355,13 @@ public final class LogisticsTests {
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         helper.runAfterDelay(80, () -> {
             var handler = network(helper);
-            var nuggets = resource(Items.IRON_NUGGET);
+            var nuggets = resource(Items.IRON_INGOT);
             int index = -1;
-            for (int i = 0; i < handler.size(); i++) if (handler.getResource(i).equals(nuggets)) index = i;
-            helper.assertTrue(index >= 0, "nuggets listed");
+            for (int i = 0; i < handler.size(); i++) {
+                helper.assertTrue(!handler.getResource(i).is(Items.IRON_NUGGET), "nuggets aren't listed: they're of ingots that aren't stored");
+                if (handler.getResource(i).equals(nuggets)) index = i;
+            }
+            helper.assertTrue(index >= 0, "ingots listed");
             long began = System.nanoTime();
             int got;
             try (var transaction = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
@@ -1541,12 +1370,12 @@ public final class LogisticsTests {
             }
             long took = (System.nanoTime() - began) / 1_000_000;
             helper.assertTrue(took < 500, "the pull took " + took + "ms");
-            helper.assertTrue(got > 0, "some nuggets made");
-            long iron = got + 9L * count(helper, 4, Items.IRON_INGOT) + 81L * count(helper, 4, Items.IRON_BLOCK) + count(helper, 4, Items.IRON_NUGGET);
+            helper.assertTrue(got > 0, "some ingots made");
+            long iron = 9L * got + 9L * count(helper, 4, Items.IRON_INGOT) + 81L * count(helper, 4, Items.IRON_BLOCK) + count(helper, 4, Items.IRON_NUGGET);
             for (QuantumCrafterBlockEntity crafter : crafters) {
                 iron += countIn(crafter, Items.IRON_NUGGET) + 9L * countIn(crafter, Items.IRON_INGOT) + 81L * countIn(crafter, Items.IRON_BLOCK);
             }
-            helper.assertValueEqual(iron, 9L * 81, "as much iron as there was, in nuggets");
+            helper.assertValueEqual(iron, 9L * 81, "as much iron as there was, in nuggets' worth");
             TestSupport.clearField(helper);
             helper.succeed();
         });

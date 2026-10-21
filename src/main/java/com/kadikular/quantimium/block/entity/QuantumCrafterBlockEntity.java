@@ -1321,7 +1321,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                     crafts = CrafterPreview.cap(direct, CrafterPreview.MAX_OUTPUTS);
                     // On a network that says it could chain its own crafts (leggings from ingots it would make from
                     // blocks), those too: worked out again with its own crafts on offer, for what the network says.
-                    chainable = madeOnItsNetworks();
+                    chainable = fromMade ? madeOnItsNetworks() : java.util.Set.of();
                     if (chainable.isEmpty()) {
                         show(crafts, java.util.Set.of());
                         return true;
