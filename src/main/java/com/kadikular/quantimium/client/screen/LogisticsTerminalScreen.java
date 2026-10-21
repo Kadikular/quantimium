@@ -276,7 +276,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                             remember();
                             scrollRow = 0;
                         }),
-                Tab.of(Component::empty, () -> {
+                Tab.glyph(() -> GuiIcon.CRAFTING, () -> {
                                     // Hidden, the grid keeps what's in it (in the terminal) for when it's shown again.
                                     LogisticsTerminalMenu.showCrafting(!LogisticsTerminalMenu.craftingShown());
                                     scrollRow = 0;
@@ -284,7 +284,6 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                                 () -> List.of(Component.translatable(LogisticsTerminalMenu.craftingShown()
                                                 ? "gui.quantimium.logistics_terminal.crafting.on" : "gui.quantimium.logistics_terminal.crafting.off"),
                                         hint("gui.quantimium.tab.switch")))
-                        .icon(new ItemStack(net.minecraft.world.item.Items.CRAFTING_TABLE))
                         .on(LogisticsTerminalMenu::craftingShown));
     }
 

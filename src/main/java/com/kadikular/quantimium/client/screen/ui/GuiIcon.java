@@ -19,7 +19,7 @@ public enum GuiIcon {
     LOCKED(0, 4), UNLOCKED(1, 4), VOID(2, 4), SLOTS(3, 4), ACCELERATE(4, 4), HOLD(5, 4), AREA_PICKED(6, 4),
     AREA_CUBE(7, 4), AREA_SPHERE(8, 4), FLOOR(9, 4), CEILING(10, 4), WATCH(11, 4), TREES(12, 4), STEPS(13, 4),
     TREES_AND_STEPS(14, 4), AUTO(15, 4),
-    LOGISTICS(0, 5), ACTIONS(1, 5), MODIFIERS(2, 5), KEEP(3, 5), NEAREST(4, 5);
+    LOGISTICS(0, 5), ACTIONS(1, 5), MODIFIERS(2, 5), KEEP(3, 5), NEAREST(4, 5), CRAFTING(5, 5);
 
     public static final Identifier SHEET = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/icons.png");
     public static final int SIZE = 16;
