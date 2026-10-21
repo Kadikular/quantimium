@@ -371,8 +371,9 @@ has; what's in it stays in the terminal, for anyone who opens it next. Craft in 
 each craft, what it used is topped up from what the network stores, so shift-clicking the result crafts again and
 again into your inventory until something runs out. With JEI, the **+** on a crafting recipe fills the grid from
 what's stored, then your inventory; what neither has but a machine on the network can make (one step) goes in as
-**Craft**: nothing is made until you take the result, and then just what that craft needs. Shift-+ fills as many
-crafts' worth as there are, up to a stack. Drag something the network can only make from the item grid onto the
+**Craft**: nothing is made until you take the result, and then just what that craft needs. One craft's worth goes
+in (shift-+ too), the grid being refilled after each; a slot whose item runs out becomes a Craft, if the network can
+make it. In JEI, what will be made shows blue. Drag something the network can only make from the item grid onto the
 crafting grid to put it in as Craft too; click a Craft with nothing in hand to clear it. A Craft the network can no
 longer make or supply goes, and a craft that can't make its Crafts isn't given. Items that are nowhere show red in
 JEI, and the rest still go in. The × beside the grid puts it all back into the network.

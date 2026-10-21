@@ -41,8 +41,8 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_terminal.png");
     private static final Identifier CRAFTING_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_terminal_crafting.png");
-    /** The clear button, left of the crafting grid (tools/gui_panels.py logistics_terminal_crafting). */
-    private static final int CLEAR_X = 30;
+    /** The clear button, right of the crafting grid (tools/gui_panels.py logistics_terminal_crafting). */
+    private static final int CLEAR_X = 100;
     private static final int CLEAR_Y = 96;
     private static final int CLEAR_SIZE = 9;
     private static final int SEARCH_X = 9;
@@ -126,6 +126,15 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         super(menu, playerInventory, title, 176, 240);
         entries = List.of();
         connected = false;
+    }
+
+    /** Whether the open terminal's network has {@code stack} stored (for recipe viewers). */
+    public static boolean stored(ItemStack stack) {
+        var item = net.neoforged.neoforge.transfer.item.ItemResource.of(stack);
+        for (LogisticsTerminalViewPayload.Entry entry : entries) {
+            if (entry.item().equals(item) && entry.count() > 0) return true;
+        }
+        return false;
     }
 
     /** Whether the open terminal's network lists {@code stack}, there or craftable (for recipe viewers' missing items). */

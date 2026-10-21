@@ -492,7 +492,7 @@ def logistics_terminal() -> Panel:
 
 def logistics_terminal_crafting() -> Panel:
     """The Logistics Terminal with its crafting grid shown: the item grid three rows deep, then a 3x3 grid, an
-    arrow and the result (LogisticsTerminalMenu.CRAFT_*), with a clear button left of the grid
+    arrow and the result (LogisticsTerminalMenu.CRAFT_*), with a clear button right of the grid
     (LogisticsTerminalScreen.CLEAR_*), above the player's inventory."""
     panel = Panel(HIGH, height=240)
     panel.well(7, 18, 162, 12)
@@ -504,7 +504,7 @@ def logistics_terminal_crafting() -> Panel:
     panel.grid((44, 96), 3, 3, "grid")
     panel.arrow(102, 122, 14)
     panel.socket(126, 114, "result")
-    panel.region("clear", (30, 96, 9, 9))
+    panel.region("clear", (100, 96, 9, 9))
     panel.player(158)
     return panel
 

@@ -479,14 +479,14 @@ public final class LogisticsTests {
             helper.assertValueEqual(player.getInventory().countItem(Items.STICK), 128, "sticks of every plank");
             helper.assertValueEqual(count(helper, 4, Items.OAK_PLANKS), 0, "the planks used");
 
-            // With max: as many as there are, shared between the two slots. Kept in the terminal when it's closed, and
-            // there when it's opened again; the clear button puts it back.
+            // With max too, one craft's worth (the grid's refilled after each anyway). Kept in the terminal when it's
+            // closed, and there when it's opened again; the clear button puts it back.
             terminal.insert(new ItemStack(Items.OAK_PLANKS, 40));
             menu.fill(player, options, true);
-            helper.assertValueEqual(menu.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.GRID_FIRST).getItem().getCount(), 20, "half the planks in each slot");
+            helper.assertValueEqual(menu.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.GRID_FIRST).getItem().getCount(), 1, "a plank in each slot");
             menu.removed(player);
             var again = new com.kadikular.quantimium.menu.LogisticsTerminalMenu(2, player.getInventory(), terminal, true);
-            helper.assertValueEqual(again.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.GRID_FIRST).getItem().getCount(), 20, "still there opened again");
+            helper.assertValueEqual(again.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.GRID_FIRST).getItem().getCount(), 1, "still there opened again");
             again.clickMenuButton(player, com.kadikular.quantimium.menu.LogisticsTerminalMenu.BUTTON_CLEAR);
             helper.assertValueEqual(count(helper, 4, Items.OAK_PLANKS), 40, "back in storage when cleared");
             TestSupport.clearField(helper);
@@ -497,13 +497,15 @@ public final class LogisticsTests {
     // covers: laser.logistics.terminal
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafting_terminal_ghosts", timeoutTicks = 200)
     public static void aTerminalsGridMakesWhatsOnlyCraftableWhenTheCraftIsTaken(GameTestHelper helper) {
-        // Iron blocks stored, and a crafting-table Crafter offering to the network ingots of the block in its own grid.
-        // An anvil put in the grid: the three blocks go in, the four ingots are shown as "craft" and nothing is made.
+        // Iron blocks and three ingots stored, and a crafting-table Crafter offering to the network ingots of the block
+        // in its own grid. An anvil put in the grid: the three blocks and three ingots go in, the fourth ingot is shown
+        // as "craft" and nothing is made. Taking the anvil makes it then, and the stored ingots having run out, every
+        // ingot slot is "craft" for the next.
         // Taking the anvil makes them then; the grid's ready for the next. With the Crafter gone, the ingots can't be
         // made: taking gives nothing and they're let go, the blocks staying.
         TestSupport.clearField(helper);
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 10));
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_BLOCK, 10), new ItemStack(Items.IRON_INGOT, 3));
         QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, false, true);
         crafter.getInventory().setStackInSlot(1, new ItemStack(Items.IRON_BLOCK, 1));
         BlockPos at = new BlockPos(10, Y, 8);
@@ -521,12 +523,15 @@ public final class LogisticsTests {
             }
             menu.fill(player, options, false);
             helper.assertValueEqual(menu.getSlot(first).getItem().getCount(), 1, "a block in the first slot");
-            helper.assertTrue(menu.getSlot(first + 4).getItem().isEmpty() && menu.ghost(4).is(Items.IRON_INGOT), "an ingot to be made in the middle");
+            helper.assertValueEqual(menu.getSlot(first + 4).getItem().getCount(), 1, "a stored ingot in the middle");
+            helper.assertTrue(menu.getSlot(first + 8).getItem().isEmpty() && menu.ghost(8).is(Items.IRON_INGOT), "the fourth to be made");
             helper.assertValueEqual(countIn(crafter, Items.IRON_BLOCK), 1, "nothing made yet");
             helper.assertTrue(menu.getSlot(result).getItem().is(Items.ANVIL), "an anvil shown");
             menu.clicked(result, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
             helper.assertTrue(menu.getCarried().is(Items.ANVIL), "an anvil taken");
-            helper.assertTrue(menu.ghost(4).is(Items.IRON_INGOT) && menu.getSlot(first + 4).getItem().isEmpty(), "the ingot to be made again");
+            for (int i : new int[] {4, 6, 7, 8}) {
+                helper.assertTrue(menu.ghost(i).is(Items.IRON_INGOT) && menu.getSlot(first + i).getItem().isEmpty(), "ingots to be made in slot " + i);
+            }
             helper.assertValueEqual(menu.getSlot(first).getItem().getCount(), 1, "a block put back from storage");
             menu.setCarried(ItemStack.EMPTY);
             helper.setBlock(new BlockPos(6, Y - 1, 8), net.minecraft.world.level.block.Blocks.AIR);

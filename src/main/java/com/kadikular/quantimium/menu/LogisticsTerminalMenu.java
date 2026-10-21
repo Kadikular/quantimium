@@ -193,6 +193,12 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         return all;
     }
 
+    /** Whether the network can make {@code item}. */
+    private boolean craftable(ItemStack item) {
+        var controller = terminal == null ? null : terminal.controller();
+        return controller != null && controller.offers().craftable(ItemResource.of(item)) > 0;
+    }
+
     /** Lets go of what the grid's empty slots were to have made for them that the network neither has nor can make. */
     private void checkGhosts() {
         if (terminal == null) return;
@@ -213,7 +219,8 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     /**
      * After a craft: each grid slot that had something used up is topped up to what it held, from what's stored on
      * the network (one craft's worth of the same thing, as the grid had it); what's left in it is kept. A slot that
-     * has something made for it each craft is left empty again, for the next.
+     * has something made for it each craft is left empty again, for the next; one whose item has run out has it made
+     * for it from now on, if the network can.
      */
     private void refill(ItemStack[] before) {
         if (terminal == null) return;
@@ -226,7 +233,10 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
             int want = had.getCount() - now.getCount();
             if (want <= 0) continue;
             ItemStack got = terminal.takeStored(ItemResource.of(had), want);
-            if (got.isEmpty()) continue;
+            if (got.isEmpty()) {
+                if (now.isEmpty() && craftable(had)) setGhost(i, had.copyWithCount(1));
+                continue;
+            }
             if (now.isEmpty()) craftGrid.setItem(i, got);
             else {
                 now.grow(got.getCount());
@@ -334,8 +344,8 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
      * Fills the crafting grid for a recipe a recipe viewer chose: {@code options} per grid slot (none for an empty
      * one), the first of each that can be had. What's in the grid goes back first. A slot is filled from what's
      * stored on the network, then the player's inventory; what's only to be made is made when the craft is taken
-     * (shown as "craft"). With {@code max}, as many crafts' worth as the scarcest item allows, shared among the
-     * slots it fills, up to a stack.
+     * (shown as "craft"). One craft's worth, max or not, as an ME terminal fills it: the grid is refilled from the
+     * network after each craft anyway.
      */
     public void fill(Player player, List<List<ItemStack>> options, boolean max) {
         if (terminal == null) return;
@@ -352,18 +362,6 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
             }
         }
         int target = 1;
-        if (max) {
-            target = 64;
-            Map<ItemResource, Integer> slotsFor = new java.util.HashMap<>();
-            for (int i = 0; i < 9; i++) if (chosen[i] != null && !made[i]) slotsFor.merge(ItemResource.of(chosen[i]), 1, Integer::sum);
-            for (int i = 0; i < 9; i++) {
-                if (chosen[i] == null || made[i]) continue;
-                ItemResource item = ItemResource.of(chosen[i]);
-                long have = (offers == null ? 0 : offers.real(item)) + inventoryCount(player, chosen[i]);
-                target = (int) Math.min(target, Math.min(chosen[i].getMaxStackSize(), have / slotsFor.get(item)));
-            }
-            target = Math.max(1, target);
-        }
         int crafts = target;
         for (int i = 0; i < 9; i++) {
             if (chosen[i] == null) continue;
