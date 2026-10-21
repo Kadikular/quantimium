@@ -14,6 +14,14 @@ Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
   loops from the start: opening a Crafter no longer flashes, for a moment, a craft out of what another machine
   would make of its own output (iron from the dust a pulveriser makes of iron).
 - Crafters a network feeds look in on it at most once a second between them, not every few ticks each.
+- A craft is left out as a loop only if everything it would use is made of what it makes: iron dust from ingots is
+  offered when the ingots come from blocks as well as from smelted dust.
+
+### Logistics Receptacles
+
+- **Power the machine it's on**: a tab on a Receptacle's screen, shown when the machine takes power. The light reaching
+  the Receptacle (an emitter's, through the controller) charges that machine too.
+- A Receptacle is lit only while its network's controller has the power to move things.
 - A Reactor on a network: its port's offers catch up on what changed instead of being worked out again after every
   take (a terminal take from a Reactor holding thousands of kinds: about a third of the time).
 
