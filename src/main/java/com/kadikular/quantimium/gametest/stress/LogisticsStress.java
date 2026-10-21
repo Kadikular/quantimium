@@ -419,6 +419,59 @@ public final class LogisticsStress {
         });
     }
 
+    /**
+     * How long a network takes to work its offers out, all at once, measured: a fixed network of 60 chests of filler
+     * and worth (scaled) and 18 crafting-table Crafters drawing on it and making for it; a nugget added between each of
+     * twelve rebuilds, so every one has something to catch up on. Reports each rebuild's time.
+     */
+    @GameTest(template = TestSupport.FLOOR_17, batch = "stress_rebuild_bench", timeoutTicks = 4000, padding = 112)
+    public static void rebuildBench(GameTestHelper helper) {
+        String test = "rebuildBench";
+        Random random = new Random(Long.getLong("quantimium.stressSeed", 42L));
+        TestSupport.clearField(helper);
+        Net net = new Net(helper, random);
+        List<Item> filler = filler();
+        int stores = Stress.scaled(60), makers = Stress.scaled(18);
+        net.materialiser = new BlockPos(net.x + stores + makers + 1, Y, Z);
+        BlockPos controllerAt = new BlockPos(2, Y, Z);
+        helper.setBlock(controllerAt, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState().setValue(LogisticsControllerBlock.FACING, Direction.EAST)
+                .setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false).setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
+        net.controller = helper.getBlockEntity(controllerAt, LogisticsControllerBlockEntity.class);
+        for (int i = 0; i < stores; i++) {
+            List<ItemStack> stock = new ArrayList<>();
+            for (int s = 0; s < 24; s++) stock.add(new ItemStack(filler.get(random.nextInt(filler.size())), 1 + random.nextInt(64)));
+            for (int s = 0; s < 3; s++) stock.add(worth(random));
+            net.chest(LogisticsMember.Role.STORAGE, false, stock);
+        }
+        for (int i = 0; i < makers; i++) net.crafter(false);
+        while (net.x < net.materialiser.getX()) net.chest(LogisticsMember.Role.STORAGE, false, List.of());
+        helper.setBlock(net.materialiser, ModBlocks.LOGISTICS_MATERIALISER.get());
+        int[] t = {0};
+        List<Long> times = new ArrayList<>();
+        helper.onEachTick(() -> {
+            t[0]++;
+            net.controller.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
+            if (t[0] < 100 || t[0] % 5 != 0 || times.size() >= 12) return;
+            // Something changed: a nugget more in the first chest.
+            ChestBlockEntity first = helper.getBlockEntity(net.storage.getFirst(), ChestBlockEntity.class);
+            first.setItem(26, new ItemStack(Items.IRON_NUGGET, 1 + times.size()));
+            long began = System.nanoTime();
+            var table = com.kadikular.quantimium.laser.OfferTable.build(helper.getLevel(), net.controller, net.controller.getBlockPos(), net.controller.members());
+            long took = System.nanoTime() - began;
+            times.add(took);
+            if (times.size() == 1) Stress.report(test, "network: " + net.receptacles.size() + " receptacles, " + net.crafters.size() + " crafters, "
+                    + table.stored().size() + " kinds stored, " + table.entries().size() + " listed");
+            if (times.size() == 12) {
+                List<Long> sorted = new ArrayList<>(times);
+                java.util.Collections.sort(sorted);
+                Stress.report(test, String.format("first rebuild %.1fms; then median %.1fms, min %.1fms, max %.1fms", times.getFirst() / 1e6,
+                        sorted.get(sorted.size() / 2) / 1e6, sorted.get(1) / 1e6, sorted.getLast() / 1e6));
+                TestSupport.clearField(helper);
+                helper.succeed();
+            }
+        });
+    }
+
     /** One random thing a player, a pipe or a hand does to the network. */
     private static void act(Net net, Random random, ServerPlayer player, Map<Item, Long> pile, QuantumCrafterBlockEntity[] open, int tick) {
         int roll = random.nextInt(100);

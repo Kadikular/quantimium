@@ -1546,8 +1546,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // what it makes tells it when that changes: it doesn't watch its links itself.
         if (linkLoopDetected) return EntangledLinks.RemoteSummary.EMPTY;
         if (fedByNetwork()) {
-            // Looked in on, the network sees what's moved on it, and works its offers (and so this) out again.
-            feeder.poke();
+            // Looked in on, the network sees what's moved on it, and works its offers (and so this) out again: every
+            // tick while someone has its screen open, else now and then.
+            if (watchedNow) feeder.offers();
+            else feeder.poke();
             return EntangledLinks.RemoteSummary.EMPTY;
         }
         return EntangledLinks.summarize(level, worldPosition, inventory, INPUT_SLOTS);

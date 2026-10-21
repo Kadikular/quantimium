@@ -47,7 +47,7 @@ public final class OfferTable {
     /** One item on offer: how many are there, how many could be made, and the shortest chain that makes it. */
     public record Entry(ItemResource item, long real, long craftable, int tier) {}
 
-    /** Some of an item one machine could make, and every item that goes into it (none known: nothing). */
+    /** Some of an item one machine could make, and the items its craft takes (none known: nothing). */
     private record Source(long count, Set<Item> from) {}
 
     private final Map<ItemResource, Long> real;
@@ -99,38 +99,201 @@ public final class OfferTable {
             if (entry.getKey().equals(maker)) continue;
             // One machine's crafts of the same thing are alternatives, not more: the most of them.
             long most = 0;
-            for (Source source : entry.getValue()) if (Collections.disjoint(source.from(), avoid)) most = Math.max(most, source.count());
+            for (Source source : entry.getValue()) if (clean(source, avoid)) most = Math.max(most, source.count());
             total += most;
         }
         return total;
     }
 
-    /** Everything the craftable {@code item} that {@code maker} would be shown is made from, all the way down. */
-    private Set<Item> madeFrom(Item item, BlockPos maker, Set<Item> avoid) {
-        if (maker == null) {
-            // Every machine's: from the sources of that item alone, gathered once for this table.
-            if (sourcesByItem == null) {
-                sourcesByItem = new HashMap<>();
-                craftable.forEach((resource, makers) -> makers.values()
-                        .forEach(list -> sourcesByItem.computeIfAbsent(resource.getItem(), k -> new ArrayList<>()).addAll(list)));
-            }
-            Set<Item> from = new HashSet<>();
-            for (Source source : sourcesByItem.getOrDefault(item, List.of())) {
-                if (source.count() > 0 && Collections.disjoint(source.from(), avoid)) from.addAll(source.from());
-            }
-            return from;
+    /** Every source of {@code item} (any machine, any components): gathered once for this table. */
+    private List<Source> sourcesOf(Item item) {
+        if (sourcesByItem == null) {
+            sourcesByItem = new HashMap<>();
+            craftable.forEach((resource, makers) -> makers.values()
+                    .forEach(list -> sourcesByItem.computeIfAbsent(resource.getItem(), k -> new ArrayList<>()).addAll(list)));
         }
-        Set<Item> from = new HashSet<>();
-        for (Map.Entry<ItemResource, Map<BlockPos, List<Source>>> entry : craftable.entrySet()) {
-            if (entry.getKey().getItem() != item) continue;
-            for (Map.Entry<BlockPos, List<Source>> by : entry.getValue().entrySet()) {
-                if (by.getKey().equals(maker)) continue;
-                for (Source source : by.getValue()) {
-                    if (source.count() > 0 && Collections.disjoint(source.from(), avoid)) from.addAll(source.from());
+        return sourcesByItem.getOrDefault(item, List.of());
+    }
+
+    /**
+     * Whether {@code input}, as it could be made here (by the ways not made of anything in {@code avoid}), is made of
+     * {@code out}, all the way down: a craft of {@code out} from it would loop.
+     */
+    private boolean madeOf(Item input, Item out, Set<Item> avoid) {
+        Reach reach = reach();
+        for (Source source : sourcesOf(input)) {
+            if (source.count() <= 0 || !clean(source, avoid)) continue;
+            for (Item from : source.from()) if (from == out || reach.reaches(from, out)) return true;
+        }
+        return false;
+    }
+
+    /** Whether {@code source} is made of nothing in {@code avoid}, all the way down. */
+    private boolean clean(Source source, Set<Item> avoid) {
+        if (avoid.isEmpty() || source.from().isEmpty()) return true;
+        Set<Item> tainted = leadingTo(avoid);
+        for (Item from : source.from()) if (tainted.contains(from)) return false;
+        return true;
+    }
+
+    /** {@code targets}, and every item that could be made of any of them, all the way down: worked out once each. */
+    private Set<Item> leadingTo(Set<Item> targets) {
+        return leading.computeIfAbsent(Set.copyOf(targets), key -> {
+            Set<Item> all = new HashSet<>(key);
+            all.addAll(reach().leadingTo(key));
+            return all;
+        });
+    }
+
+    private final Map<Set<Item>, Set<Item>> leading = new HashMap<>();
+
+    /**
+     * What each item could be made of, all the way down, through every way of making it here: worked out once for
+     * the table, over the items and the ways each is made (a cycle of things made of each other taken as one).
+     * Each craftable keeps only what its own craft takes; this answers the rest.
+     */
+    private Reach reach() {
+        if (reach == null) reach = new Reach();
+        return reach;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private Reach reach;
+
+    private final class Reach {
+        private final Map<Item, Integer> ids = new HashMap<>();
+        private final List<Item> items = new ArrayList<>();
+        private final int[] group;
+        /** By group: every item reachable in one step or more. */
+        private final long[][] reaches;
+
+        Reach() {
+            List<List<Integer>> edges = new ArrayList<>();
+            craftable.forEach((resource, makers) -> {
+                int at = id(resource.getItem(), edges);
+                for (List<Source> sources : makers.values()) {
+                    for (Source source : sources) {
+                        if (source.count() <= 0) continue;
+                        for (Item from : source.from()) {
+                            int to = id(from, edges);
+                            edges.get(at).add(to);
+                        }
+                    }
+                }
+            });
+            int n = items.size();
+            group = new int[n];
+            // Groups of items made of each other (Tarjan's, without recursion), found leaves first.
+            int[] index = new int[n], low = new int[n];
+            boolean[] onStack = new boolean[n];
+            java.util.Arrays.fill(index, -1);
+            int[] stack = new int[n];
+            int top = 0, counter = 0, groups = 0;
+            List<int[]> members = new ArrayList<>();
+            int[] callNode = new int[n], callEdge = new int[n];
+            for (int start = 0; start < n; start++) {
+                if (index[start] != -1) continue;
+                int depth = 0;
+                callNode[0] = start;
+                callEdge[0] = 0;
+                index[start] = low[start] = counter++;
+                stack[top++] = start;
+                onStack[start] = true;
+                while (depth >= 0) {
+                    int v = callNode[depth];
+                    List<Integer> out = edges.get(v);
+                    if (callEdge[depth] < out.size()) {
+                        int w = out.get(callEdge[depth]++);
+                        if (index[w] == -1) {
+                            index[w] = low[w] = counter++;
+                            stack[top++] = w;
+                            onStack[w] = true;
+                            depth++;
+                            callNode[depth] = w;
+                            callEdge[depth] = 0;
+                        } else if (onStack[w]) {
+                            low[v] = Math.min(low[v], index[w]);
+                        }
+                        continue;
+                    }
+                    if (low[v] == index[v]) {
+                        int size = 0;
+                        int[] found = new int[top];
+                        int w;
+                        do {
+                            w = stack[--top];
+                            onStack[w] = false;
+                            group[w] = groups;
+                            found[size++] = w;
+                        } while (w != v);
+                        members.add(java.util.Arrays.copyOf(found, size));
+                        groups++;
+                    }
+                    depth--;
+                    if (depth >= 0) {
+                        int parent = callNode[depth];
+                        low[parent] = Math.min(low[parent], low[v]);
+                    }
                 }
             }
+            // Groups come leaves first: each one's reach is its steps' groups and theirs.
+            int words = (n + 63) >>> 6;
+            reaches = new long[groups][];
+            for (int g = 0; g < groups; g++) {
+                long[] bits = new long[words];
+                for (int v : members.get(g)) {
+                    for (int w : edges.get(v)) {
+                        int h = group[w];
+                        if (h == g) {
+                            for (int m : members.get(g)) bits[m >>> 6] |= 1L << m;
+                        } else {
+                            long[] theirs = reaches[h];
+                            for (int i = 0; i < words; i++) bits[i] |= theirs[i];
+                            for (int m : members.get(h)) bits[m >>> 6] |= 1L << m;
+                        }
+                    }
+                }
+                reaches[g] = bits;
+            }
         }
-        return from;
+
+        private int id(Item item, List<List<Integer>> edges) {
+            Integer known = ids.get(item);
+            if (known != null) return known;
+            int id = items.size();
+            ids.put(item, id);
+            items.add(item);
+            edges.add(new ArrayList<>(2));
+            return id;
+        }
+
+        /** Whether {@code from} could be made of {@code to}, all the way down (a step or more). */
+        boolean reaches(Item from, Item to) {
+            Integer a = ids.get(from), b = ids.get(to);
+            if (a == null || b == null) return false;
+            return (reaches[group[a]][b >>> 6] & (1L << b)) != 0;
+        }
+
+        /** Every item that could be made of any of {@code targets}, all the way down. */
+        Set<Item> leadingTo(Set<Item> targets) {
+            List<Integer> wanted = new ArrayList<>();
+            for (Item target : targets) {
+                Integer id = ids.get(target);
+                if (id != null) wanted.add(id);
+            }
+            Set<Item> out = new HashSet<>();
+            if (wanted.isEmpty()) return out;
+            for (int v = 0; v < items.size(); v++) {
+                long[] bits = reaches[group[v]];
+                for (int w : wanted) {
+                    if ((bits[w >>> 6] & (1L << w)) != 0) {
+                        out.add(items.get(v));
+                        break;
+                    }
+                }
+            }
+            return out;
+        }
     }
 
     /**
@@ -197,14 +360,10 @@ public final class OfferTable {
         Set<Item> key = Set.copyOf(avoid);
         Map<ItemResource, Long> known = avoiding.get(key);
         if (known != null) return known;
-        if (usedIn == null) {
-            usedIn = new HashMap<>();
-            craftable.forEach((item, makers) -> makers.values().forEach(sources -> sources.forEach(source -> {
-                for (Item from : source.from()) usedIn.computeIfAbsent(from, k -> new HashSet<>()).add(item);
-            })));
-        }
+        // Only what's made of those, all the way down, can be any different.
+        Set<Item> tainted = leadingTo(avoid);
         Set<ItemResource> affected = new HashSet<>();
-        for (Item item : avoid) affected.addAll(usedIn.getOrDefault(item, Set.of()));
+        for (ItemResource item : craftable.keySet()) if (tainted.contains(item.getItem())) affected.add(item);
         if (affected.isEmpty()) return base;
         Map<ItemResource, Long> stock = new LinkedHashMap<>(base);
         for (ItemResource item : affected) {
@@ -220,9 +379,6 @@ public final class OfferTable {
     /** Stocks shown less what's made of some things, by those things: machines alike ask alike. */
     private final Map<Set<Item>, Map<ItemResource, Long>> avoiding = new HashMap<>();
 
-    /** What each item goes into, among what's craftable here: worked out when first needed. */
-    @org.jetbrains.annotations.Nullable
-    private Map<Item, Set<ItemResource>> usedIn;
 
     /** What every machine is shown on its first look, made or not: the same each time it's asked of this table. */
     private Map<ItemResource, Long> shown(boolean craftables) {
@@ -344,7 +500,7 @@ public final class OfferTable {
         for (Item input : inputs) {
             ItemResource resource = ItemResource.of(input.getDefaultInstance());
             if (real.getOrDefault(resource, 0L) > 0) continue;
-            if (!madeFrom(input, null, Set.of()).contains(out)) continue;
+            if (!madeOf(input, out, Set.of())) continue;
             // Some of it made without going through it (ingots from blocks, as well as from the dust it would make of
             // ingots): that's what it would use, and no loop.
             if (craftableExcept(resource, null, Set.of(out)) > 0) continue;
@@ -609,18 +765,17 @@ public final class OfferTable {
      */
     private Set<Item> collect(List<OfferMaker.Made> made, BlockPos pos, LogisticsMember member, Set<Item> avoid, @org.jetbrains.annotations.Nullable Set<Item> only,
                               Map<ItemResource, List<Source>> kept, Set<Object> crafts) {
-        Map<Item, Set<Item>> below = new HashMap<>();
         Set<Item> looped = new java.util.LinkedHashSet<>();
         for (OfferMaker.Made one : made) {
             Item out = one.item().getItem();
             if (only != null && !only.contains(out)) continue;
             if (one.count() <= 0) continue;
-            Set<Item> from = new HashSet<>(one.from());
             boolean loops = false;
             for (Item input : one.from()) {
-                Set<Item> under = below.computeIfAbsent(input, i -> madeFrom(i, null, avoid));
-                if (under.contains(out)) loops = true;
-                from.addAll(under);
+                if (madeOf(input, out, avoid)) {
+                    loops = true;
+                    break;
+                }
             }
             if (loops) {
                 looped.add(out);
@@ -629,7 +784,7 @@ public final class OfferTable {
             // The machine makes it whatever its Receptacle lets out to the network: its own screen shows it.
             if (one.craft() != null) crafts.add(one.craft());
             if (!member.lets(one.item().toStack(1))) continue;
-            Source source = new Source(one.count(), Set.copyOf(from));
+            Source source = new Source(one.count(), Set.copyOf(one.from()));
             List<Source> sources = kept.computeIfAbsent(one.item(), k -> new ArrayList<>());
             if (!sources.contains(source)) sources.add(source);
         }
