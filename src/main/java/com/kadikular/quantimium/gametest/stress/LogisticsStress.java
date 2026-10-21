@@ -459,8 +459,12 @@ public final class LogisticsStress {
             ChestBlockEntity first = helper.getBlockEntity(net.storage.getFirst(), ChestBlockEntity.class);
             first.setItem(26, new ItemStack(Items.IRON_NUGGET, 1 + times.size()));
             long began = System.nanoTime();
-            var table = com.kadikular.quantimium.laser.OfferTable.build(helper.getLevel(), net.controller, net.controller.getBlockPos(), net.controller.members());
+            var builder = new com.kadikular.quantimium.laser.OfferTable.Builder(net.controller, net.controller.getBlockPos(), net.controller.members());
+            int steps = 0;
+            while (!builder.step()) steps++;
+            var table = builder.result();
             long took = System.nanoTime() - began;
+            if (times.isEmpty() || times.size() == 11) Stress.report(test, "tiers " + builder.tiers() + ", what's made last changed at tier " + builder.shapeChanged() + ", steps " + steps);
             times.add(took);
             if (times.size() == 1) Stress.report(test, "network: " + net.receptacles.size() + " receptacles, " + net.crafters.size() + " crafters, "
                     + table.stored().size() + " kinds stored, " + table.entries().size() + " listed, "

@@ -92,6 +92,11 @@ public final class OfferTable {
 
     /** As {@link #craftableExcept(ItemResource, BlockPos)}, leaving out what's made from any of {@code avoid}. */
     private long craftableExcept(ItemResource item, BlockPos maker, Set<Item> avoid) {
+        return craftableClear(item, maker, tainted(avoid));
+    }
+
+    /** As {@link #craftableExcept(ItemResource, BlockPos)}, leaving out the ways that take anything in {@code tainted}. */
+    private long craftableClear(ItemResource item, BlockPos maker, Set<Item> tainted) {
         Map<BlockPos, List<Source>> makers = craftable.get(item);
         if (makers == null) return 0;
         long total = 0;
@@ -99,7 +104,7 @@ public final class OfferTable {
             if (entry.getKey().equals(maker)) continue;
             // One machine's crafts of the same thing are alternatives, not more: the most of them.
             long most = 0;
-            for (Source source : entry.getValue()) if (clean(source, avoid)) most = Math.max(most, source.count());
+            for (Source source : entry.getValue()) if (clean(source, tainted)) most = Math.max(most, source.count());
             total += most;
         }
         return total;
@@ -119,21 +124,27 @@ public final class OfferTable {
      * Whether {@code input}, as it could be made here (by the ways not made of anything in {@code avoid}), is made of
      * {@code out}, all the way down: a craft of {@code out} from it would loop.
      */
-    private boolean madeOf(Item input, Item out, Set<Item> avoid) {
+    private boolean madeOf(Item input, Item out, Set<Item> tainted) {
         Reach reach = reach();
+        // Nothing left out: every way of making it counts, and what it's made of is what it reaches.
+        if (tainted.isEmpty()) return reach.reaches(input, out);
         for (Source source : sourcesOf(input)) {
-            if (source.count() <= 0 || !clean(source, avoid)) continue;
+            if (source.count() <= 0 || !clean(source, tainted)) continue;
             for (Item from : source.from()) if (from == out || reach.reaches(from, out)) return true;
         }
         return false;
     }
 
-    /** Whether {@code source} is made of nothing in {@code avoid}, all the way down. */
-    private boolean clean(Source source, Set<Item> avoid) {
-        if (avoid.isEmpty() || source.from().isEmpty()) return true;
-        Set<Item> tainted = leadingTo(avoid);
+    /** Whether {@code source} takes nothing in {@code tainted} (see {@link #tainted}). */
+    private static boolean clean(Source source, Set<Item> tainted) {
+        if (tainted.isEmpty() || source.from().isEmpty()) return true;
         for (Item from : source.from()) if (tainted.contains(from)) return false;
         return true;
+    }
+
+    /** {@code avoid} and everything made of any of it, all the way down; nothing for nothing: worked out once a caller. */
+    private Set<Item> tainted(Set<Item> avoid) {
+        return avoid.isEmpty() ? Set.of() : leadingTo(avoid);
     }
 
     /** {@code targets}, and every item that could be made of any of them, all the way down: worked out once each. */
@@ -322,8 +333,9 @@ public final class OfferTable {
         Map<ItemResource, Long> stock = new LinkedHashMap<>();
         if (reals) stock.putAll(real);
         if (craftables) {
+            Set<Item> tainted = tainted(avoid);
             for (ItemResource item : craftable.keySet()) {
-                long more = craftableExcept(item, maker, avoid);
+                long more = craftableClear(item, maker, tainted);
                 if (more > 0) stock.merge(item, more, Long::sum);
             }
         }
@@ -367,7 +379,7 @@ public final class OfferTable {
         if (affected.isEmpty()) return base;
         Map<ItemResource, Long> stock = new LinkedHashMap<>(base);
         for (ItemResource item : affected) {
-            long now = real(item) + craftableExcept(item, null, avoid);
+            long now = real(item) + craftableClear(item, null, tainted);
             if (now > 0) stock.put(item, now);
             else stock.remove(item);
         }
@@ -578,6 +590,18 @@ public final class OfferTable {
             origins.add(at);
         }
 
+        /** How many tiers it went through. */
+        public int tiers() {
+            return tier;
+        }
+
+        /** The last tier what could be made, and by whom, changed (not how many). */
+        public int shapeChanged() {
+            return shapeChanged;
+        }
+
+        private int shapeChanged;
+
         /** The table, once worked out; null till then. */
         @org.jetbrains.annotations.Nullable
         public OfferTable result() {
@@ -625,6 +649,7 @@ public final class OfferTable {
                 }
                 craftable.values().removeIf(Map::isEmpty);
                 if (!had.equals(made.getValue())) more = true;
+                if (!had.keySet().equals(made.getValue().keySet())) shapeChanged = tier;
                 for (Map.Entry<ItemResource, List<Source>> offer : made.getValue().entrySet()) {
                     craftable.computeIfAbsent(offer.getKey(), k -> new LinkedHashMap<>()).put(pos, offer.getValue());
                     tiers.merge(offer.getKey(), tier, Math::min);
@@ -766,13 +791,14 @@ public final class OfferTable {
     private Set<Item> collect(List<OfferMaker.Made> made, BlockPos pos, LogisticsMember member, Set<Item> avoid, @org.jetbrains.annotations.Nullable Set<Item> only,
                               Map<ItemResource, List<Source>> kept, Set<Object> crafts) {
         Set<Item> looped = new java.util.LinkedHashSet<>();
+        Set<Item> tainted = tainted(avoid);
         for (OfferMaker.Made one : made) {
             Item out = one.item().getItem();
             if (only != null && !only.contains(out)) continue;
             if (one.count() <= 0) continue;
             boolean loops = false;
             for (Item input : one.from()) {
-                if (madeOf(input, out, avoid)) {
+                if (madeOf(input, out, tainted)) {
                     loops = true;
                     break;
                 }
