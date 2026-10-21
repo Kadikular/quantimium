@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.5.7-alpha: Crafting at the terminal
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on; a Crafter's Receptacle set to craft
+"from anything" now crafts from stored items.
 
 ### Logistics
 
@@ -16,11 +19,19 @@
 - **The Logistics Terminal has a crafting grid**, shown by a tab: under a shorter item grid, kept in the terminal, and
   refilled from the network after each craft. JEI's + fills it from the network or your inventory; what only a
   machine can make goes in as "Craft" and is made when you take the result (or drag it there from the item grid).
-  Missing items show red.
+  Missing items show red, what will be made blue. An item that runs out becomes a "Craft" if it can be made.
+- **Crafters linked by hand still chain**: a furnace Crafter linked straight to a pulveriser Crafter smelts its
+  dust, behind a provider too.
+- The terminal remembers its crafting grid, sort and view between games (config/quantimium-client.toml).
 - **Searching the terminal works as JEI's search does**: `@mod`, `#tooltip`, `$tag`, `-` to leave out, `|` for either.
 - The terminal is a row taller (six rows of items).
 - `/quantimium trace <item> [count]` (operators): a take at the nearest Logistics Terminal, written down step by step
   to `logs/`, for working out why something isn't made.
+
+### Performance
+
+- Working out what a network offers is many times cheaper without chains: about 30 ms instead of a second for
+  18 Crafters over 1,200 kinds of item.
 
 ## 0.5.6-alpha: Crafts that come first time
 
