@@ -1341,6 +1341,37 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: crafter.chain, laser.logistics.provider
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_wired_chain", timeoutTicks = 200)
+    public static void aChainWiredByHandFeedsTheNetwork(GameTestHelper helper) {
+        // Energized Power, if it's there: raw iron on a network; a pulveriser Crafter drawing on it through the
+        // Materialiser, and a furnace Crafter linked straight to the pulveriser, behind a provider letting out iron
+        // ingots only. The network lists ingots (smelted from the dust of the raw iron), and makes one when taken.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.RAW_IRON, 16));
+        crafterOn(helper, 6, net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
+                net.minecraft.resources.Identifier.parse("energizedpower:pulverizer")), true, false);
+        QuantumCrafterBlockEntity furnace = crafterOn(helper, 8, Items.FURNACE, false, true);
+        furnace.getInventory().setStackInSlot(0, CrafterTests.link(helper, new BlockPos(6, Y - 1, 8), ModBlocks.QUANTUM_CRAFTER.get()));
+        var provider = helper.getBlockEntity(new BlockPos(8, Y, 8), LogisticsReceptacleBlockEntity.class);
+        provider.setFilterSlot(0, new ItemStack(Items.IRON_INGOT));
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var ingots = resource(Items.IRON_INGOT);
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(settled(controller::offers).craftable(ingots) > 0, "ingots listed");
+            ItemStack got = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), ingots, 1, false, false, true);
+            helper.assertValueEqual(got.getCount(), 1, "an ingot made the first time");
+            helper.assertTrue(count(helper, 4, Items.RAW_IRON) < 16, "of the raw iron");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.chain, laser.logistics.materialiser
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_iron_loop", timeoutTicks = 200)
     public static void craftsDontChaseEachOtherRoundALoop(GameTestHelper helper) {

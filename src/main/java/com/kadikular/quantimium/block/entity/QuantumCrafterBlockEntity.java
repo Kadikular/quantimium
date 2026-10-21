@@ -682,8 +682,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
             if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
             if (level.getBlockEntity(bound.pos()) instanceof QuantumCrafterBlockEntity crafter && crafter != this) {
-                // Another Crafter, linked straight to it: what that one's preview offers, as stock, not asked live.
-                views.put(bound, new com.kadikular.quantimium.laser.StockHandler(fromCraftable ? crafter.previewOutputs() : crafter.realOutputs()));
+                // Another Crafter, linked straight to it: what that one's preview offers, as stock, not asked live. A
+                // chain the player wired, so always (a network's own crafts are another matter: see below).
+                views.put(bound, new com.kadikular.quantimium.laser.StockHandler(crafter.previewOutputs()));
                 continue;
             }
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;

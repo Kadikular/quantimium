@@ -210,7 +210,7 @@ public final class Logistics {
                         int room = Math.min(Math.min(budget, requester.wants(there)), split(source, listing, slot, there)[made ? 1 : 0]);
                         if (room <= 0) continue;
                         int at = slot;
-                        int moved = pulling(source, slot, () -> move(level, controller, source, from, at, into, room));
+                        int moved = move(level, controller, source, from, at, into, room);
                         if (moved == UNPAID) return UNPAID;
                         budget -= moved;
                     }
@@ -338,7 +338,7 @@ public final class Logistics {
                     int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
                     if (most <= 0) continue;
                     int at = slot;
-                    ItemStack taken = pulling(source, slot, () -> extract(source, from, at, most, simulate));
+                    ItemStack taken = extract(source, from, at, most, simulate);
                     if (!taken.isEmpty()) return taken;
                 }
             }
@@ -435,7 +435,7 @@ public final class Logistics {
             int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
             if (most <= 0) continue;
             int at = spot.slot();
-            ItemStack taken = pulling(source, at, () -> extract(source, from, at, most, simulate));
+            ItemStack taken = extract(source, from, at, most, simulate);
             if (!taken.isEmpty()) return taken;
         }
         return ItemStack.EMPTY;
@@ -456,11 +456,6 @@ public final class Logistics {
     /** Whether what's in {@code slot} of a member is on offer: not what a machine makes things from (a Crafter's grid). */
     private static boolean onOffer(@org.jetbrains.annotations.Nullable OfferMaker maker, int slot) {
         return maker == null || maker.makesOnDemand(slot) || maker.stocks(slot);
-    }
-
-    /** Runs {@code pull} from {@code slot}: from a machine set to craft from stored items only, what it draws on makes nothing for it. */
-    private static <T> T pulling(LogisticsMember source, int slot, java.util.function.Supplier<T> pull) {
-        return source.onDemand(slot) && !source.craftsFromCraftable() ? com.kadikular.quantimium.recipe.CraftChain.storedOnly(pull) : pull.get();
     }
 
     private static List<LogisticsMember> byPriority(List<LogisticsMember> members, boolean highestFirst) {
