@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.6-alpha: Crafts that come first time
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
+
+### Fixes
+
+- **Big networks no longer lag the server working out their offers**: 0.5.5 shipped an experiment by mistake that,
+  on a network of thousands of kinds, compared every item against every other.
+- **Crafts refused for no reason, then given on the third click**: a craft short of something now makes what it
+  can and tries again at once when its sub-crafts made progress; what's left over from a craft is found where it was
+  put; whether a craft can be made is asked of one run, not the whole batch.
+- A Crafter set to make from stored items only shows only what it can make from them.
+- A take refused though listed (the list was behind) makes the network work its offers out again at once.
+
+### Performance
+
+- Working out what a big network offers takes about half the work: each craftable keeps only what its own craft
+  takes, and what's made of what is looked up once per working out.
+
+### Logistics Receptacles
+
+- The power tab reads "Share network power: on/off".
+
 ## 0.5.5-alpha: Lighter rebuilds
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on.
