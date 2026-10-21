@@ -193,6 +193,10 @@ public final class OfferTable {
     private Map<ItemResource, Long> shownAvoiding(boolean craftables, Set<Item> avoid) {
         Map<ItemResource, Long> base = shown(craftables);
         if (!craftables || avoid.isEmpty()) return base;
+        // Machines alike (crafting tables on one network) loop on the same things: worked out once for them all.
+        Set<Item> key = Set.copyOf(avoid);
+        Map<ItemResource, Long> known = avoiding.get(key);
+        if (known != null) return known;
         if (usedIn == null) {
             usedIn = new HashMap<>();
             craftable.forEach((item, makers) -> makers.values().forEach(sources -> sources.forEach(source -> {
@@ -208,8 +212,13 @@ public final class OfferTable {
             if (now > 0) stock.put(item, now);
             else stock.remove(item);
         }
-        return stock;
+        Shown shown = new Shown(stock);
+        avoiding.put(key, shown);
+        return shown;
     }
+
+    /** Stocks shown less what's made of some things, by those things: machines alike ask alike. */
+    private final Map<Set<Item>, Map<ItemResource, Long>> avoiding = new HashMap<>();
 
     /** What each item goes into, among what's craftable here: worked out when first needed. */
     @org.jetbrains.annotations.Nullable
