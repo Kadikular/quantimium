@@ -2,6 +2,7 @@ package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
+import com.kadikular.quantimium.client.screen.ui.ItemSearch;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
@@ -30,24 +31,43 @@ import java.util.Locale;
 
 /**
  * A Logistics Terminal: a grid, like an ME terminal's, of everything its network's storage holds and its providers
- * offer, sorted by count or name and filtered by the search box. Click an item for a stack on the cursor, right-click
- * for one, shift-click for a stack into the inventory. Click the grid holding something to put it away (right-click:
- * one); shift-click in the inventory does too. Layout: tools/gui_panels.py logistics_terminal.
+ * offer, sorted by count or name and filtered by the search box (read as JEI reads its own: {@link ItemSearch}).
+ * Click an item for a stack on the cursor, right-click for one, shift-click for a stack into the inventory. Click the
+ * grid holding something to put it away (right-click: one); shift-click in the inventory does too. A tab shows a
+ * crafting grid under a shorter item grid, as an ME crafting terminal has. Layout: tools/gui_panels.py
+ * logistics_terminal and logistics_terminal_crafting.
  */
 public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTerminalMenu> {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_terminal.png");
+    private static final Identifier CRAFTING_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_terminal_crafting.png");
+    /** The clear button, left of the crafting grid (tools/gui_panels.py logistics_terminal_crafting). */
+    private static final int CLEAR_X = 30;
+    private static final int CLEAR_Y = 96;
+    private static final int CLEAR_SIZE = 9;
     private static final int SEARCH_X = 9;
     private static final int SEARCH_Y = 20;
     private static final int SEARCH_W = 158;
     private static final int GRID_X = 8;
     private static final int GRID_Y = 34;
     private static final int COLUMNS = 9;
-    private static final int ROWS = 5;
+    /** Rows of items: fewer while the crafting grid is shown under them. */
+    private static final int ROWS = 6;
+    private static final int CRAFTING_ROWS = 3;
     private static final int CELL = 18;
-    /** The scroll bar's track, in the gap right of the grid (tools/gui_panels.py logistics_terminal). */
-    private final com.kadikular.quantimium.client.screen.ui.ScrollBar bar =
+    /** The scroll bar's track, in the gap right of the grid (tools/gui_panels.py logistics_terminal), for each height. */
+    private final com.kadikular.quantimium.client.screen.ui.ScrollBar tallBar =
             new com.kadikular.quantimium.client.screen.ui.ScrollBar(GRID_X + COLUMNS * CELL + 1, GRID_Y, 3, ROWS * CELL - 2);
+    private final com.kadikular.quantimium.client.screen.ui.ScrollBar shortBar =
+            new com.kadikular.quantimium.client.screen.ui.ScrollBar(GRID_X + COLUMNS * CELL + 1, GRID_Y, 3, CRAFTING_ROWS * CELL - 2);
+
+    private static int rows() {
+        return LogisticsTerminalMenu.craftingShown() ? CRAFTING_ROWS : ROWS;
+    }
+
+    private com.kadikular.quantimium.client.screen.ui.ScrollBar bar() {
+        return LogisticsTerminalMenu.craftingShown() ? shortBar : tallBar;
+    }
 
     /** The last view the server sent. */
     private static List<LogisticsTerminalViewPayload.Entry> entries = List.of();
@@ -103,9 +123,18 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     private int scrollRow;
 
     public LogisticsTerminalScreen(LogisticsTerminalMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title, 176, 222);
+        super(menu, playerInventory, title, 176, 240);
         entries = List.of();
         connected = false;
+    }
+
+    /** Whether the open terminal's network lists {@code stack}, there or craftable (for recipe viewers' missing items). */
+    public static boolean listed(ItemStack stack) {
+        var item = net.neoforged.neoforge.transfer.item.ItemResource.of(stack);
+        for (LogisticsTerminalViewPayload.Entry entry : entries) {
+            if (entry.item().equals(item) && entry.count() + entry.craftable() > 0) return true;
+        }
+        return false;
     }
 
     public static void setView(LogisticsTerminalViewPayload payload) {
@@ -155,9 +184,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             return kept;
         }
         List<LogisticsTerminalViewPayload.Entry> cells = new ArrayList<>();
+        java.util.function.Predicate<ItemStack> matches = ItemSearch.compile(query);
         for (LogisticsTerminalViewPayload.Entry entry : entries) {
             if (!view.shows(entry)) continue;
-            if (query.isEmpty() || entry.item().toStack(1).getHoverName().getString().toLowerCase(Locale.ROOT).contains(query)) cells.add(entry);
+            if (query.isEmpty() || matches.test(entry.item().toStack(1))) cells.add(entry);
         }
         Comparator<LogisticsTerminalViewPayload.Entry> name = Comparator.comparing(e -> e.item().toStack(1).getHoverName().getString());
         // By count: what the view counts first, then (there and craftable apart) what can be made.
@@ -174,18 +204,18 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     }
 
     private int maxScroll(List<LogisticsTerminalViewPayload.Entry> shown) {
-        return Math.max(0, Mth.positiveCeilDiv(shown.size(), COLUMNS) - ROWS);
+        return Math.max(0, Mth.positiveCeilDiv(shown.size(), COLUMNS) - rows());
     }
 
     private boolean onGrid(double mouseX, double mouseY) {
-        return QuantumWidgets.hit(mouseX, mouseY, leftPos + GRID_X, topPos + GRID_Y, COLUMNS * CELL, ROWS * CELL);
+        return QuantumWidgets.hit(mouseX, mouseY, leftPos + GRID_X, topPos + GRID_Y, COLUMNS * CELL, rows() * CELL);
     }
 
     @Nullable
     private LogisticsTerminalViewPayload.Entry cellAt(List<LogisticsTerminalViewPayload.Entry> shown, double mouseX, double mouseY) {
         int col = (int) Math.floor((mouseX - leftPos - GRID_X) / CELL);
         int row = (int) Math.floor((mouseY - topPos - GRID_Y) / CELL);
-        if (col < 0 || col >= COLUMNS || row < 0 || row >= ROWS) return null;
+        if (col < 0 || col >= COLUMNS || row < 0 || row >= rows()) return null;
         int index = (row + scrollRow) * COLUMNS + col;
         return index < shown.size() ? shown.get(index) : null;
     }
@@ -219,16 +249,36 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                         .onRightClick(() -> {
                             view = view.previous();
                             scrollRow = 0;
-                        }));
+                        }),
+                Tab.of(Component::empty, () -> {
+                                    // Hidden, what's in the grid goes back to the network rather than out of sight.
+                                    if (LogisticsTerminalMenu.craftingShown() && minecraft != null && minecraft.gameMode != null) {
+                                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, LogisticsTerminalMenu.BUTTON_CLEAR);
+                                    }
+                                    LogisticsTerminalMenu.showCrafting(!LogisticsTerminalMenu.craftingShown());
+                                    scrollRow = 0;
+                                },
+                                () -> List.of(Component.translatable(LogisticsTerminalMenu.craftingShown()
+                                                ? "gui.quantimium.logistics_terminal.crafting.on" : "gui.quantimium.logistics_terminal.crafting.off"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .icon(new ItemStack(net.minecraft.world.item.Items.CRAFTING_TABLE))
+                        .on(LogisticsTerminalMenu::craftingShown));
     }
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         List<LogisticsTerminalViewPayload.Entry> shown = shown();
         scrollRow = Mth.clamp(scrollRow, 0, maxScroll(shown));
-        bar.render(graphics, leftPos, topPos, scrollRow, ROWS, Mth.positiveCeilDiv(shown.size(), COLUMNS), scrollColour());
+        bar().render(graphics, leftPos, topPos, scrollRow, rows(), Mth.positiveCeilDiv(shown.size(), COLUMNS), scrollColour());
         LogisticsTerminalViewPayload.Entry hovered = cellAt(shown, mouseX, mouseY);
-        for (int row = 0; row < ROWS; row++) {
+        if (LogisticsTerminalMenu.craftingShown()) {
+            int x = leftPos + CLEAR_X;
+            int y = topPos + CLEAR_Y;
+            boolean over = QuantumWidgets.hit(mouseX, mouseY, x, y, CLEAR_SIZE, CLEAR_SIZE);
+            graphics.fill(x, y, x + CLEAR_SIZE, y + CLEAR_SIZE, over ? QuantumUiColours.ROW_HOVER : 0x00000000);
+            graphics.text(font, "\u00d7", x + 2, y + 1, over ? 0xFFFFFFFF : dimColour(), false);
+        }
+        for (int row = 0; row < rows(); row++) {
             for (int col = 0; col < COLUMNS; col++) {
                 int index = (row + scrollRow) * COLUMNS + col;
                 if (index >= shown.size()) break;
@@ -255,9 +305,17 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         }
     }
 
+    private boolean onClear(double mouseX, double mouseY) {
+        return LogisticsTerminalMenu.craftingShown() && QuantumWidgets.hit(mouseX, mouseY, leftPos + CLEAR_X, topPos + CLEAR_Y, CLEAR_SIZE, CLEAR_SIZE);
+    }
+
     @Override
     protected void renderMachineTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!menu.getCarried().isEmpty()) return;
+        if (activeOverlay() == null && onClear(mouseX, mouseY)) {
+            graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.logistics_terminal.crafting.clear")), mouseX, mouseY);
+            return;
+        }
         LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
         if (cell == null) return;
         List<Component> lines = new ArrayList<>();
@@ -275,8 +333,12 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         double mouseX = event.x();
         double mouseY = event.y();
-        if (activeOverlay() == null && event.button() == 0 && bar.over(mouseX, mouseY, leftPos, topPos)) {
-            scrollRow = bar.press(mouseY, topPos, maxScroll(shown()));
+        if (activeOverlay() == null && event.button() == 0 && bar().over(mouseX, mouseY, leftPos, topPos)) {
+            scrollRow = bar().press(mouseY, topPos, maxScroll(shown()));
+            return true;
+        }
+        if (activeOverlay() == null && event.button() == 0 && onClear(mouseX, mouseY) && minecraft != null && minecraft.gameMode != null) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, LogisticsTerminalMenu.BUTTON_CLEAR);
             return true;
         }
         if (activeOverlay() == null && onGrid(mouseX, mouseY) && (event.button() == 0 || event.button() == 1)) {
@@ -310,8 +372,8 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (bar.dragging()) {
-            scrollRow = bar.scrollAt(event.y(), topPos, maxScroll(shown()));
+        if (bar().dragging()) {
+            scrollRow = bar().scrollAt(event.y(), topPos, maxScroll(shown()));
             return true;
         }
         return super.mouseDragged(event, dragX, dragY);
@@ -319,8 +381,8 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (bar.dragging()) {
-            bar.release();
+        if (bar().dragging()) {
+            bar().release();
             return true;
         }
         return super.mouseReleased(event);
@@ -356,7 +418,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
 
     @Override
     protected Identifier panelTexture() {
-        return TEXTURE;
+        return LogisticsTerminalMenu.craftingShown() ? CRAFTING_TEXTURE : TEXTURE;
     }
 
     @Override

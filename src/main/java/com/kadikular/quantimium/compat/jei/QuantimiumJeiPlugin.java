@@ -129,6 +129,11 @@ public class QuantimiumJeiPlugin implements IModPlugin {
     }
 
     @Override
+    public void registerRecipeTransferHandlers(mezz.jei.api.registration.IRecipeTransferRegistration registration) {
+        registration.addRecipeTransferHandler(new TerminalCraftingTransfer(registration.getTransferHelper()), mezz.jei.api.constants.RecipeTypes.CRAFTING);
+    }
+
+    @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
         // The collapse table sync and JEI's own startup race each other. If the data arrives after
         // this plugin loaded, feed it in rather than leaving the category empty until the next join.

@@ -452,6 +452,45 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.terminal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafting_terminal", timeoutTicks = 100)
+    public static void aTerminalCraftsFromItsGridAndRefillsIt(GameTestHelper helper) {
+        // Sixty-four planks stored. A recipe viewer puts sticks' recipe in the terminal's crafting grid: a plank in
+        // each of two slots, from storage. Shift-clicking the result crafts sticks into the inventory, the grid
+        // refilled from storage after each, till the planks run out: 128 sticks, nothing lost.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.OAK_PLANKS, 64));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        helper.runAfterDelay(40, () -> {
+            settled(terminal::contents);
+            var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+            var menu = new com.kadikular.quantimium.menu.LogisticsTerminalMenu(1, player.getInventory(), terminal, true);
+            List<List<ItemStack>> options = new java.util.ArrayList<>();
+            for (int i = 0; i < 9; i++) options.add(i == 0 || i == 3 ? List.of(new ItemStack(Items.OAK_PLANKS)) : List.of());
+            menu.fill(player, options, false);
+            helper.assertValueEqual(menu.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.GRID_FIRST).getItem().getCount(), 1, "a plank in the first slot");
+            helper.assertValueEqual(count(helper, 4, Items.OAK_PLANKS), 62, "two planks out of storage");
+            helper.assertTrue(menu.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.RESULT_SLOT).getItem().is(Items.STICK), "sticks shown as the result");
+            for (int i = 0; i < 100 && !menu.quickMoveStack(player, com.kadikular.quantimium.menu.LogisticsTerminalMenu.RESULT_SLOT).isEmpty(); i++) {
+                // as a shift-click does: again while it moves something
+            }
+            helper.assertValueEqual(player.getInventory().countItem(Items.STICK), 128, "sticks of every plank");
+            helper.assertValueEqual(count(helper, 4, Items.OAK_PLANKS), 0, "the planks used");
+
+            // With max: as many as there are, shared between the two slots, the rest back in storage when it's closed.
+            terminal.insert(new ItemStack(Items.OAK_PLANKS, 40));
+            menu.fill(player, options, true);
+            helper.assertValueEqual(menu.getSlot(com.kadikular.quantimium.menu.LogisticsTerminalMenu.GRID_FIRST).getItem().getCount(), 20, "half the planks in each slot");
+            menu.removed(player);
+            helper.assertValueEqual(count(helper, 4, Items.OAK_PLANKS), 40, "back in storage when it's closed");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.terminal
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void aLecternIsATerminal(GameTestHelper helper) {
         // On a stand, the light coming in to its focus: it shows and takes as the block does.

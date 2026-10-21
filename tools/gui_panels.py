@@ -69,14 +69,15 @@ def rgba(colour) -> tuple:
 
 
 class Panel:
-    def __init__(self, palette: Palette, height: int = PANEL_H):
+    def __init__(self, palette: Palette, height: int = PANEL_H, width: int = PANEL_W):
         self.p = palette
         self.h = height
+        self.w = width
         self.image = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
         self.draw = ImageDraw.Draw(self.image)
         self.regions: List[Region] = []
-        self.box(0, 0, PANEL_W, height, palette.panel)
-        self.draw.rectangle([0, 0, PANEL_W - 1, height - 1], outline=rgba(palette.edge))
+        self.box(0, 0, width, height, palette.panel)
+        self.draw.rectangle([0, 0, width - 1, height - 1], outline=rgba(palette.edge))
         self.rule(TITLE_RULE_Y)
 
     # ---- primitives ----
@@ -87,8 +88,8 @@ class Panel:
     def line(self, points, colour) -> None:
         self.draw.line(points, fill=rgba(colour))
 
-    def rule(self, y: int, x0: int = 3, x1: int = PANEL_W - 4) -> None:
-        self.line([x0, y, x1, y], self.p.edge)
+    def rule(self, y: int, x0: int = 3, x1: int = None) -> None:
+        self.line([x0, y, (self.w - 4) if x1 is None else x1, y], self.p.edge)
 
     def well(self, x, y, w, h, rim=None) -> None:
         """A recess: dark fill, lit along the bottom and right as the Foundry's are."""
@@ -475,17 +476,36 @@ def horizon_core() -> Panel:
 
 
 def logistics_terminal() -> Panel:
-    """The Logistics Terminal: a search box across the top, a scrolling 9x5 grid of what the network can give
-    (LogisticsTerminalScreen.GRID_*), then the player's inventory (LogisticsTerminalMenu.PLAYER_Y). Sort and
-    view are on the left rail."""
-    panel = Panel(HIGH, height=222)
+    """The Logistics Terminal: a search box across the top, a scrolling 9x6 grid of what the network can give
+    (LogisticsTerminalScreen.GRID_*), then the player's inventory (LogisticsTerminalMenu.PLAYER_Y). Sort, view and
+    the crafting grid's switch are on the left rail."""
+    panel = Panel(HIGH, height=240)
     panel.well(7, 18, 162, 12)
     panel.region("search", (9, 20, 158, 9))
-    panel.grid((8, 34), 9, 5, "items")
+    panel.grid((8, 34), 9, 6, "items")
     # The scroll bar's track, in the gap right of the grid (ScrollBar: three pixels from x 171).
-    panel.well(171, 33, 4, 90)
-    panel.region("scroll", (171, 34, 3, 88))
-    panel.player(140)
+    panel.well(171, 33, 4, 108)
+    panel.region("scroll", (171, 34, 3, 106))
+    panel.player(158)
+    return panel
+
+
+def logistics_terminal_crafting() -> Panel:
+    """The Logistics Terminal with its crafting grid shown: the item grid three rows deep, then a 3x3 grid, an
+    arrow and the result (LogisticsTerminalMenu.CRAFT_*), with a clear button left of the grid
+    (LogisticsTerminalScreen.CLEAR_*), above the player's inventory."""
+    panel = Panel(HIGH, height=240)
+    panel.well(7, 18, 162, 12)
+    panel.region("search", (9, 20, 158, 9))
+    panel.grid((8, 34), 9, 3, "items")
+    panel.well(171, 33, 4, 54)
+    panel.region("scroll", (171, 34, 3, 52))
+    panel.rule(91)
+    panel.grid((44, 96), 3, 3, "grid")
+    panel.arrow(102, 122, 14)
+    panel.socket(126, 114, "result")
+    panel.region("clear", (30, 96, 9, 9))
+    panel.player(158)
     return panel
 
 
@@ -519,6 +539,7 @@ PANELS = {
     # The same note and nine ghost entries as the Laser Port's filter view.
     "logistics_receptacle": laser_port_filter,
     "logistics_terminal": logistics_terminal,
+    "logistics_terminal_crafting": logistics_terminal_crafting,
     "reactor_me_port_filter": superposition_crafter_filter,
     "unfolding_array": unfolding_array,
     "relay_module": relay_module,
@@ -559,8 +580,8 @@ def main() -> None:
         if args.guides:
             os.makedirs(guide_dir, exist_ok=True)
             guide = os.path.join(guide_dir, f"{name}_guides.png")
-            guide_overlay(panel).crop((0, 0, PANEL_W, panel.h)).resize(
-                (PANEL_W * 3, panel.h * 3), Image.NEAREST).save(guide)
+            guide_overlay(panel).crop((0, 0, panel.w, panel.h)).resize(
+                (panel.w * 3, panel.h * 3), Image.NEAREST).save(guide)
 
 
 if __name__ == "__main__":

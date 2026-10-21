@@ -603,6 +603,16 @@ public class Quantimium {
                     }
                 })
         );
+        registrar.playToServer(
+                com.kadikular.quantimium.network.LogisticsTerminalFillPayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalFillPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
+                            && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.fill(context.player(), payload.options(), payload.max());
+                    }
+                })
+        );
         registrar.playToClient(
                 HorizonViewPayload.TYPE,
                 HorizonViewPayload.STREAM_CODEC,

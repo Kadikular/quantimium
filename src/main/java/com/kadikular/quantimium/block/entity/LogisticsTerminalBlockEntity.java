@@ -127,6 +127,23 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         }
     }
 
+    /** Takes up to {@code count} of {@code item} from what the network stores, making nothing; what it got. */
+    public ItemStack takeStored(ItemResource item, int count) {
+        LogisticsController controller = controller();
+        if (controller == null || count <= 0) return ItemStack.EMPTY;
+        var spots = controller.spots();
+        if (Logistics.take(spots, item, count, true, true, false).isEmpty() || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return ItemStack.EMPTY;
+        ItemStack got = ItemStack.EMPTY;
+        for (int round = 0; round < 64 && got.getCount() < count; round++) {
+            ItemStack more = Logistics.take(spots, item, count - got.getCount(), false, true, false);
+            if (more.isEmpty()) break;
+            if (got.isEmpty()) got = more;
+            else got.grow(more.getCount());
+        }
+        if (!got.isEmpty()) controller.stockShifted();
+        return got;
+    }
+
     /** Puts {@code stack} away in the network's storage, if the controller pays; what's left. */
     public ItemStack insert(ItemStack stack) {
         LogisticsController controller = controller();

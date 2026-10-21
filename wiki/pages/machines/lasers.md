@@ -360,7 +360,21 @@ right-click for half, shift-right-click for one, shift-click for a stack into yo
 shift is held the grid holds still, and shift with the wheel takes one more onto the cursor (down) or
 puts one back (up). Click the grid holding something to put it away into storage (right-click: one), or
 shift-click it in your inventory. What's stored comes out first: if any is, that's all you get, and only when
-none is left does a machine make more. Each take or put costs the controller as a move does. A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
+none is left does a machine make more. Each take or put costs the controller as a move does.
+
+The search reads as JEI's does: words must all match, in any order; `a|b` matches either; `-word` leaves out
+what matches. `@mod` matches a mod's id or name, `#text` its tooltip, `$tag` its tags: `@mekanism ingot`,
+`-@minecraft`, `$c:ingots|$c:gems`.
+
+**Crafting grid.** The crafting table tab shows a 3×3 grid under a shorter item grid, as an ME crafting terminal
+has. Craft in it as at a crafting table: after each craft, what it used is topped up from what the network stores,
+so shift-clicking the result crafts again and again into your inventory until something runs out. With JEI, the
+**+** on a crafting recipe fills the grid: each slot from what's stored, then your inventory, then what a machine on
+the network can make (one step); shift-+ fills as many crafts' worth as there are, up to a stack. Items that are
+nowhere show red, and the rest still go in. The × beside the grid, hiding it, or closing the screen puts the grid
+back into the network.
+
+A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 
 [[mechanic:laser.logistics.materialiser]] A [[block:logistics_materialiser]] where a controller's light ends
 offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus

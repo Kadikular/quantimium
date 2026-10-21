@@ -277,6 +277,9 @@ public final class WikiScreenshots {
         shoot("logistics_receptacle_priority", RECEPTACLE, Overlay.PRIORITY);
         shoot("reactor_logistics_port", LOGISTICS_PORT, null);
         shoot("logistics_terminal", TERMINAL, null);
+        then(1, () -> com.kadikular.quantimium.menu.LogisticsTerminalMenu.showCrafting(true));
+        shoot("logistics_terminal_crafting", TERMINAL, null);
+        then(1, () -> com.kadikular.quantimium.menu.LogisticsTerminalMenu.showCrafting(false));
         shoot("laser_port", LASER_PORT, null);
         shoot("laser_port_filter", LASER_PORT, Overlay.FILTER_VIEW);
         shoot("laser_emitter", EMITTER, null);
