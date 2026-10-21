@@ -106,6 +106,7 @@ public class Quantimium {
         if (ModList.get().isLoaded("ae2")) Ae2Content.init(modEventBus);
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
 
         modEventBus.addListener(this::registerCapabilities);
         modEventBus.addListener(this::registerPackets);

@@ -72,8 +72,8 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     /** The last view the server sent. */
     private static List<LogisticsTerminalViewPayload.Entry> entries = List.of();
     private static boolean connected;
-    /** Remembered while the game runs, like a terminal's sort. */
-    private static boolean byName;
+    /** Kept between games (config/quantimium-client.toml), with the view and whether the crafting grid is shown. */
+    private static boolean byName = com.kadikular.quantimium.ClientConfig.get(com.kadikular.quantimium.ClientConfig.TERMINAL_BY_NAME, false);
 
     /** What the grid counts: everything as one number, there and craftable apart, only what's there, or only what can be made. */
     private enum View {
@@ -118,7 +118,21 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         }
     }
 
-    private static View view = View.SPLIT;
+    private static View view = readView();
+
+    private static View readView() {
+        try {
+            return View.valueOf(com.kadikular.quantimium.ClientConfig.get(com.kadikular.quantimium.ClientConfig.TERMINAL_VIEW, "SPLIT"));
+        } catch (IllegalArgumentException unknown) {
+            return View.SPLIT;
+        }
+    }
+
+    /** Sort and view are kept between games. */
+    private static void remember() {
+        com.kadikular.quantimium.ClientConfig.set(com.kadikular.quantimium.ClientConfig.TERMINAL_BY_NAME, byName);
+        com.kadikular.quantimium.ClientConfig.set(com.kadikular.quantimium.ClientConfig.TERMINAL_VIEW, view.name());
+    }
     private EditBox search;
     private int scrollRow;
 
@@ -246,17 +260,20 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         return List.of(
                 Tab.glyph(() -> byName ? GuiIcon.SORT_NAME : GuiIcon.SORT_COUNT, () -> {
                                     byName = !byName;
+                                    remember();
                                     scrollRow = 0;
                                 },
                                 () -> List.of(Component.translatable(byName ? "gui.quantimium.logistics_terminal.sort.name" : "gui.quantimium.logistics_terminal.sort.count"),
                                         hint("gui.quantimium.tab.switch"))),
                 Tab.glyph(() -> view.icon(), () -> {
                                     view = view.next();
+                                    remember();
                                     scrollRow = 0;
                                 },
                                 () -> List.of(Component.translatable(view.key() + ".tip"), hint("gui.quantimium.tab.cycle")))
                         .onRightClick(() -> {
                             view = view.previous();
+                            remember();
                             scrollRow = 0;
                         }),
                 Tab.of(Component::empty, () -> {

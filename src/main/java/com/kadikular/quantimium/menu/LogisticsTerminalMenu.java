@@ -42,15 +42,22 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     /** Most kinds one ingredient slot may be filled from: a tag's worth, as a recipe viewer lists them. */
     public static final int MAX_OPTIONS = 64;
 
-    /** Whether the crafting panel is shown (on the client; the server keeps the slots either way). */
-    private static boolean craftingShown;
+    /** Whether the crafting grid is shown (on the client, remembered between games; the server keeps the slots either way). */
+    private static boolean craftingShown = com.kadikular.quantimium.ClientConfig.get(com.kadikular.quantimium.ClientConfig.TERMINAL_CRAFTING, false);
+    private static boolean craftingRead;
 
     public static boolean craftingShown() {
+        if (!craftingRead && com.kadikular.quantimium.ClientConfig.SPEC.isLoaded()) {
+            craftingRead = true;
+            craftingShown = com.kadikular.quantimium.ClientConfig.TERMINAL_CRAFTING.get();
+        }
         return craftingShown;
     }
 
     public static void showCrafting(boolean shown) {
         craftingShown = shown;
+        craftingRead = true;
+        com.kadikular.quantimium.ClientConfig.set(com.kadikular.quantimium.ClientConfig.TERMINAL_CRAFTING, shown);
     }
 
     private final TerminalCraftGrid craftGrid;
@@ -109,7 +116,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
                 addSlot(new Slot(craftGrid, col + row * 3, CRAFT_GRID_X + col * 18, CRAFT_GRID_Y + row * 18) {
                     @Override
                     public boolean isActive() {
-                        return craftingShown || !player.level().isClientSide();
+                        return !player.level().isClientSide() || craftingShown();
                     }
                 });
             }
@@ -117,7 +124,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         addSlot(new net.minecraft.world.inventory.ResultSlot(playerInv.player, craftGrid, craftResult, 0, CRAFT_RESULT_X, CRAFT_RESULT_Y) {
             @Override
             public boolean isActive() {
-                return craftingShown || !player.level().isClientSide();
+                return !player.level().isClientSide() || craftingShown();
             }
 
             /** On the server, what's to be made for the craft is made first: if it can't be, the craft isn't given. */
@@ -126,8 +133,13 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
                 return (taker.level().isClientSide() || makeGhosts()) && super.mayPickup(taker);
             }
 
+            /**
+             * On the client nothing is used up: the server uses the grid and refills it from the network in the same
+             * step, so the grid never shows emptied before it's refilled (as an ME terminal's doesn't).
+             */
             @Override
             public void onTake(Player taker, ItemStack stack) {
+                if (taker.level().isClientSide()) return;
                 ItemStack[] before = new ItemStack[9];
                 for (int i = 0; i < 9; i++) before[i] = craftGrid.getItem(i).copy();
                 super.onTake(taker, stack);

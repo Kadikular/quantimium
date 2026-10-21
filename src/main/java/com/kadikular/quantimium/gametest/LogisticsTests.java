@@ -534,6 +534,13 @@ public final class LogisticsTests {
             }
             helper.assertValueEqual(menu.getSlot(first).getItem().getCount(), 1, "a block put back from storage");
             menu.setCarried(ItemStack.EMPTY);
+            // Another player at the same terminal sees the one grid: its items, what's to be made, and the anvil.
+            var other = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+            var theirs = new com.kadikular.quantimium.menu.LogisticsTerminalMenu(3, other.getInventory(), terminal, true);
+            helper.assertValueEqual(theirs.getSlot(first).getItem().getCount(), 1, "the other player sees the block");
+            helper.assertTrue(theirs.ghost(8).is(Items.IRON_INGOT), "and the ingot to be made");
+            helper.assertTrue(theirs.getSlot(result).getItem().is(Items.ANVIL), "and the anvil");
+            theirs.removed(other);
             helper.setBlock(new BlockPos(6, Y - 1, 8), net.minecraft.world.level.block.Blocks.AIR);
             helper.runAfterDelay(40, () -> {
                 settled(terminal::contents);
