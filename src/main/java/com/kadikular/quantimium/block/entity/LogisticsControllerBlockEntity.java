@@ -291,6 +291,7 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     public void stockMoved() {
         offersStale = true;
+        shifted = true;
         // Where things are stands for the tick: each take checks the slot still holds it, and looks again if short.
         liveOffers = null;
         watched = true;
@@ -346,15 +347,22 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         return spots;
     }
 
-    /** The tick spots were last looked over again because a take came up short. */
+    /** The tick spots were last looked over again because a take came up short, and whether things have moved since. */
     private long relocatedTick = Long.MIN_VALUE;
+    private boolean shifted;
+
+    @Override
+    public void stockShifted() {
+        shifted = true;
+    }
 
     @Override
     public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spotsAgain() {
         long now = level == null ? 0 : level.getGameTime();
-        // Once a tick at most: something put in since (by a pipe, to a slot that was empty) is found.
-        if (relocatedTick == now) return null;
+        // Once a tick at most, unless something's been put somewhere new since: what's been put in is found.
+        if (relocatedTick == now && !shifted) return null;
         relocatedTick = now;
+        shifted = false;
         spots = com.kadikular.quantimium.laser.Logistics.locate(members());
         spotsTick = now;
         return spots;

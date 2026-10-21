@@ -86,6 +86,8 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         }
         if (!stored && Logistics.take(spots, item, count, true, false, true).isEmpty()) {
             makeReady(controller, item);
+            // Listed and not to be had: what the network lists is behind; it looks again at once.
+            controller.stockMoved();
             return ItemStack.EMPTY;
         }
         if (!controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return ItemStack.EMPTY;
