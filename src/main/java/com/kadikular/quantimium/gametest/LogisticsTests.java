@@ -958,7 +958,8 @@ public final class LogisticsTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_basic_pair", timeoutTicks = 200)
     public static void twoBasicCraftersOnOneNetworkSettle(GameTestHelper helper) {
         // A chest of cobblestone as a provider; two Basic Crafters with furnaces, both drawing on the network, the
-        // first also offering to it. They settle without breaking, and smooth stone taken costs a cobblestone.
+        // first also offering to it. They settle without breaking; the second makes stone from the cobblestone, but
+        // not smooth stone from the first's stone (a craft of a craft), and stone taken from it costs a cobblestone.
         TestSupport.clearField(helper);
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.PROVIDER, false, new ItemStack(Items.COBBLESTONE, 16));
@@ -973,12 +974,11 @@ public final class LogisticsTests {
         while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         helper.runAfterDelay(100, () -> {
-            helper.assertTrue(CrafterTests.craftOf(second, Items.SMOOTH_STONE) != null, "the second makes smooth stone from the first's stone");
-            int slot = CrafterTests.ghostSlot(second, Items.SMOOTH_STONE);
+            helper.assertTrue(CrafterTests.craftOf(second, Items.SMOOTH_STONE) == null, "no smooth stone from the first's stone");
+            int slot = CrafterTests.ghostSlot(second, Items.STONE);
             ItemStack taken = second.pullHandler().extractItem(slot, 1, false);
-            helper.assertValueEqual(taken.getCount(), 1, "a smooth stone");
-            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE) + countIn(first, Items.STONE) + countIn(second, Items.STONE)
-                    + countIn(second, Items.SMOOTH_STONE), 15, "for one cobblestone");
+            helper.assertValueEqual(taken.getCount(), 1, "a stone");
+            helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE) + countIn(first, Items.STONE) + countIn(second, Items.STONE), 15, "for one cobblestone");
             TestSupport.clearField(helper);
             helper.succeed();
         });

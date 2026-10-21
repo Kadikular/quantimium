@@ -691,7 +691,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (controller == null) continue;
             views.put(bound, network != null && controller == network && stock != null
                     ? handlerFor(stock)
-                    : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), materialiser.offersCraftable() && fromCraftable));
+                    // What's stored only: a Crafter draws nothing made through a Materialiser (a chain is a Reactor's).
+                    : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), false));
         }
         return views;
     }
