@@ -77,6 +77,9 @@ public interface LogisticsMember {
     /** The network has found it, joined to a controller's light, or not: it shows it. */
     default void connected(boolean connected) {}
 
+    /** Whether its network's controller has the power to move anything: it shows that too. */
+    default void networkPowered(boolean powered) {}
+
     /** The machine behind it that makes things to order (a Quantum Crafter), whose made things are craftable, not stock. */
     @Nullable
     default OfferMaker maker() {

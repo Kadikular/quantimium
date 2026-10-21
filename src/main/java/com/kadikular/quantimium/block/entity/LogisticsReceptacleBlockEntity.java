@@ -216,7 +216,7 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         if (level == null || level.isClientSide()) return;
         BlockState state = getBlockState();
         if (!state.hasProperty(LogisticsReceptacleBlock.ROLE)) return;
-        BlockState shown = state.setValue(LogisticsReceptacleBlock.ROLE, role).setValue(LogisticsReceptacleBlock.LIT, connected);
+        BlockState shown = state.setValue(LogisticsReceptacleBlock.ROLE, role).setValue(LogisticsReceptacleBlock.LIT, connected && networkPowered);
         if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
     }
 
@@ -304,6 +304,54 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         this.connected = connected;
         showState();
         sync();
+    }
+
+    /** Whether its network's controller can pay for moves: it's lit only then. */
+    private boolean networkPowered;
+
+    @Override
+    public void networkPowered(boolean powered) {
+        if (networkPowered == powered) return;
+        networkPowered = powered;
+        showState();
+    }
+
+    // ---- powering the machine it's on ----
+
+    /** Whether light reaching it powers the machine it's on, too. */
+    private boolean powers;
+    /** Whether the machine it's on takes power (worked out on the server, for the screen's tab). */
+    private boolean canPower;
+
+    public boolean powers() {
+        return powers;
+    }
+
+    public boolean canPower() {
+        return canPower;
+    }
+
+    public void togglePowers() {
+        powers = !powers;
+        changed();
+        if (level != null && !level.isClientSide()) com.kadikular.quantimium.laser.LaserNetworks.changed(level);
+    }
+
+    /** Looks again whether the machine it's on takes power: when its screen opens, and when what's beside it changes. */
+    public void checkPower() {
+        if (level == null || level.isClientSide()) return;
+        Direction face = facing();
+        boolean can = level.getCapability(Capabilities.Energy.BLOCK, worldPosition.relative(face), face.getOpposite()) != null;
+        if (can == canPower) return;
+        canPower = can;
+        setChanged();
+        sync();
+    }
+
+    @Override
+    @Nullable
+    public Direction feeds() {
+        return powers ? facing() : null;
     }
 
     // ---- the network ----
@@ -427,6 +475,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         out.putBoolean("Keep", keep);
         out.putIntArray("KeepCounts", keepCounts);
         out.putBoolean("Connected", connected);
+        out.putBoolean("Powers", powers);
+        out.putBoolean("CanPower", canPower);
         List<ItemStack> entries = new ArrayList<>();
         for (int i = 0; i < FILTER_SLOTS; i++) entries.add(filter.getItem(i));
         out.store("Filter", ItemStack.OPTIONAL_CODEC.listOf(), entries);
@@ -445,6 +495,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         int[] counts = in.getIntArray("KeepCounts").orElse(new int[0]);
         for (int i = 0; i < FILTER_SLOTS; i++) keepCounts[i] = i < counts.length ? counts[i] : 1;
         connected = in.getBooleanOr("Connected", false);
+        powers = in.getBooleanOr("Powers", false);
+        canPower = in.getBooleanOr("CanPower", false);
         List<ItemStack> entries = in.read("Filter", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         for (int i = 0; i < FILTER_SLOTS; i++) filter.getItems().set(i, i < entries.size() ? entries.get(i) : ItemStack.EMPTY);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));

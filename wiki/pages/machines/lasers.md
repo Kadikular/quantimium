@@ -343,6 +343,10 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
   entry's count (the stack you set it with; scroll over it to change, shift for 16) is how many it keeps
   there: it takes only what it's short of.
 
+[[mechanic:laser.logistics.receptacle]] A receptacle is lit while it's joined to a controller with the power to
+move things. On a machine that takes power, a tab on its screen sets it to power that machine too: the light
+reaching the receptacle (an emitter's, through the controller) charges what it's on, as light ending on it would.
+
 [[mechanic:laser.logistics.port]] A [[block:laser_port]] on the network, collecting, is a passive provider of
 what it's caught. A receptacle on a Laser Port works with its nine slots whatever its faces are set to, in
 any role.

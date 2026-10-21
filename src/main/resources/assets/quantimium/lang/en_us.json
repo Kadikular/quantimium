@@ -1275,6 +1275,8 @@
   "gui.quantimium.logistics_receptacle.requests.stored": "Requests stored items only: nothing is crafted for it",
   "gui.quantimium.logistics_receptacle.crafts.nothing": "Doesn't craft: offers only what's in its outputs",
   "gui.quantimium.logistics_receptacle.keep.on": "Keep stocked: on",
+  "gui.quantimium.logistics_receptacle.powers.on": "Powers the machine: on (light reaching it charges what it's on)",
+  "gui.quantimium.logistics_receptacle.powers.off": "Powers the machine: off",
   "gui.quantimium.logistics_receptacle.keep.off": "Keep stocked: off",
   "gui.quantimium.logistics_receptacle.keep.count": "Keeps %s",
   "gui.quantimium.logistics_receptacle.keep.hint": "Scroll to change, shift for 16",

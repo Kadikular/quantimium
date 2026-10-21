@@ -237,4 +237,13 @@ public interface LaserNode {
     default boolean chargedByLight() {
         return false;
     }
+
+    /**
+     * The face of a block beside it that light reaching it powers, as light ending on that block would (a Logistics
+     * Receptacle set to power the machine it's on); null for none.
+     */
+    @org.jetbrains.annotations.Nullable
+    default net.minecraft.core.Direction feeds() {
+        return null;
+    }
 }

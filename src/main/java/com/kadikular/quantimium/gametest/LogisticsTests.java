@@ -204,6 +204,46 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.receptacle
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aReceptacleIsDarkWhileItsNetworkHasNoPower(GameTestHelper helper) {
+        // Joined to a controller with no power, a Receptacle isn't lit; given power, it is.
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, false);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false);
+        helper.runAfterDelay(40, () -> {
+            helper.assertBlockProperty(new BlockPos(4, Y, 8), LogisticsReceptacleBlock.LIT, false);
+            controller.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockProperty(new BlockPos(4, Y, 8), LogisticsReceptacleBlock.LIT, true);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.receptacle
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 200)
+    public static void aReceptacleCanPowerTheMachineItsOn(GameTestHelper helper) {
+        // An emitter lighting a controller, its light running on through a Receptacle on a Fold Core. Off, the core
+        // gets nothing; set to power what it's on, the core charges from the light.
+        emitter(helper, 1);
+        controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
+        helper.setBlock(new BlockPos(5, Y - 1, 8), ModBlocks.FOLD_CORE.get());
+        var core = helper.getBlockEntity(new BlockPos(5, Y - 1, 8), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(new BlockPos(5, Y, 8), LogisticsReceptacleBlockEntity.class);
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(core.getEnergyStorage().getEnergyStored(), 0, "not powering it, the core gets nothing");
+            receptacle.checkPower();
+            helper.assertTrue(receptacle.canPower(), "the core takes power: the screen offers it");
+            receptacle.togglePowers();
+        });
+        helper.runAfterDelay(140, () -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "powering it, the core charges from the light");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.controller
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void anUnpoweredControllerMovesNothing(GameTestHelper helper) {
