@@ -185,6 +185,36 @@ public final class OfferTable {
     @org.jetbrains.annotations.Nullable
     private Set<Item> inputs;
 
+    /**
+     * What a machine asked again about its looping crafts is shown: the first look's stock, less what's made of
+     * anything in {@code avoid}. Only the things made of those are worked out again (by an index of what each item
+     * goes into), not the whole of a network's thousands.
+     */
+    private Map<ItemResource, Long> shownAvoiding(boolean craftables, Set<Item> avoid) {
+        Map<ItemResource, Long> base = shown(craftables);
+        if (!craftables || avoid.isEmpty()) return base;
+        if (usedIn == null) {
+            usedIn = new HashMap<>();
+            craftable.forEach((item, makers) -> makers.values().forEach(sources -> sources.forEach(source -> {
+                for (Item from : source.from()) usedIn.computeIfAbsent(from, k -> new HashSet<>()).add(item);
+            })));
+        }
+        Set<ItemResource> affected = new HashSet<>();
+        for (Item item : avoid) affected.addAll(usedIn.getOrDefault(item, Set.of()));
+        if (affected.isEmpty()) return base;
+        Map<ItemResource, Long> stock = new LinkedHashMap<>(base);
+        for (ItemResource item : affected) {
+            long now = real(item) + craftableExcept(item, null, avoid);
+            if (now > 0) stock.put(item, now);
+            else stock.remove(item);
+        }
+        return stock;
+    }
+
+    /** What each item goes into, among what's craftable here: worked out when first needed. */
+    @org.jetbrains.annotations.Nullable
+    private Map<Item, Set<ItemResource>> usedIn;
+
     /** What every machine is shown on its first look, made or not: the same each time it's asked of this table. */
     private Map<ItemResource, Long> shown(boolean craftables) {
         Map<ItemResource, Long> kept = craftables ? shownWithMade : shownStored;
@@ -549,7 +579,7 @@ public final class OfferTable {
                 // what would loop back through itself is caught as any loop is. Looping crafts are asked about again
                 // together, with what was made from any of them left out: one more look whatever their number.
                 // First looks see the same stock, machine after machine, this tier: worked out once.
-                making = maker.making(network, looped == null ? shown(chains) : stock(null, true, chains, avoid), chains);
+                making = maker.making(network, looped == null ? shown(chains) : shownAvoiding(chains, avoid), chains);
             }
             if (!making.step()) return false;
             List<OfferMaker.Made> made = making.result();
