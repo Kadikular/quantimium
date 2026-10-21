@@ -889,6 +889,15 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         matchedByShape.put(shape, new Matched(List.copyOf(all.values()), was.tick(), seen, few, enough));
     }
 
+    /** Told why a pull got nothing of it, with how deep on the chain: the stress tests' counts. Null otherwise. */
+    @Nullable
+    public static java.util.function.Consumer<String> whyNot;
+
+    private ItemStack refused(String why) {
+        if (whyNot != null) whyNot.accept((com.kadikular.quantimium.recipe.CraftChain.depth() <= 1 ? "top: " : "deeper: ") + why);
+        return ItemStack.EMPTY;
+    }
+
     /** Told why each network's ask was answered as it was: the stress tests' counts. Null otherwise. */
     @Nullable
     public static java.util.function.Consumer<String> whyMatched;
@@ -1127,6 +1136,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return true;
     }
 
+    /**
+     * Whether it may make from what other machines would make: as the Receptacle it makes things for a network through
+     * is set (anything, or stored items only); yes if it makes for none.
+     */
+    private boolean craftsFromMade() {
+        var network = feeder;
+        if (network == null) return true;
+        for (var member : network.members()) if (member.maker() == this) return member.craftsFromCraftable();
+        return true;
+    }
+
     /** Whether a network it's a maker on keeps what it makes worked out: it needn't watch that network change itself. */
     private boolean fedByNetwork() {
         var network = feeder;
@@ -1258,6 +1278,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         private Making first;
         @Nullable
         private Making more;
+        /** Whether it may make from what other machines would make, as its Receptacle on the network says. */
+        private boolean fromMade = true;
         private List<ResolvedCraft> crafts = List.of();
         private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = java.util.Set.of();
 
@@ -1274,7 +1296,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             enterChain();
             try {
                 // Worked out as a network's ask is: what it knows resized where it can, not every recipe matched again.
-                if (first == null) first = ask(networkViews(null, null, true, false), true, catalyst, fe, multiplier);
+                // As its Receptacle says: from what's stored only, if it's set so, as the network asks it.
+                if (first == null) {
+                    fromMade = craftsFromMade();
+                    first = ask(networkViews(null, null, fromMade, false), fromMade, catalyst, fe, multiplier);
+                }
                 if (more == null) {
                     if (!first.step(nanos)) return false;
                     // Not a craft out of what's made from its own output on its networks (ingots from the dust a
@@ -1291,7 +1317,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         show(crafts, java.util.Set.of());
                         return true;
                     }
-                    more = ask(networkViews(null, null, true, true), true, catalyst, fe, multiplier);
+                    more = ask(networkViews(null, null, fromMade, true), fromMade, catalyst, fe, multiplier);
                     if (nanos != Long.MAX_VALUE) return false;
                 }
                 if (!more.step(nanos)) return false;
@@ -1674,7 +1700,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private boolean canCommitCached(int craftIndex) {
         if (craftIndex < 0 || craftIndex >= preview.size()) return false;
-        if (!com.kadikular.quantimium.recipe.CraftChain.cacheable()) return canCommit(preview.get(craftIndex));
+        // Whether it could make a run of it: a pull takes as many as it can, not the whole batch the preview shows.
+        if (!com.kadikular.quantimium.recipe.CraftChain.cacheable()) return canCommit(preview.get(craftIndex).withRuns(1));
         // Kept while its own contents stand, a tick at most, and not past a settled transaction; and per chain, since
         // what it can draw on depends on which machines are busy.
         long now = level == null ? 0 : level.getGameTime();
@@ -1686,10 +1713,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             commitCheckEpoch = epoch;
         }
         byte[] cache = commitCheckCache.computeIfAbsent(com.kadikular.quantimium.recipe.CraftChain.context(), key -> new byte[preview.size()]);
-        if (cache.length != preview.size()) return canCommit(preview.get(craftIndex));
+        if (cache.length != preview.size()) return canCommit(preview.get(craftIndex).withRuns(1));
         byte cached = cache[craftIndex];
         if (cached != 0) return cached == 1;
-        boolean allowed = canCommit(preview.get(craftIndex));
+        boolean allowed = canCommit(preview.get(craftIndex).withRuns(1));
         cache[craftIndex] = (byte) (allowed ? 1 : 2);
         return allowed;
     }
@@ -1864,13 +1891,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** Caller already proved the craft is payable; used by automation after advertising the ghost. */
     private ItemStack commitCraftTrusted(ResolvedCraft craft, int handedOutIndex) {
         if (craft == null || level == null || level.isClientSide() || linkLoopDetected) return ItemStack.EMPTY;
-        if (energyStorage.getEnergyStored() < craft.feCost()) return ItemStack.EMPTY;
-        if (isBasic() && coherenceReserve < craft.batchSize()) return ItemStack.EMPTY;
+        if (energyStorage.getEnergyStored() < craft.feCost()) return refused("commit: no power");
+        if (isBasic() && coherenceReserve < craft.batchSize()) return refused("commit: no coherence");
 
         // A link can lead back here: a craft that ran again halfway through itself would be working from inputs it
         // had already spent, so while it runs, that recipe isn't offered. Another may be, made for it.
-        if (loopsUpChain(craft)) return ItemStack.EMPTY;
-        if (!running.add(craft.recipeId())) return ItemStack.EMPTY;
+        if (loopsUpChain(craft)) return refused("commit: loops up the chain");
+        if (!running.add(craft.recipeId())) return refused("commit: already running");
         boolean priorBusy = automationBusy;
         boolean priorSuppress = suppressInventoryNotify;
         enterChain();
@@ -1893,6 +1920,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     }
 
     private ItemStack commitWithdrawnCraft(ResolvedCraft craft, int handedOutIndex) {
+        return commitWithdrawnCraft(craft, handedOutIndex, 3);
+    }
+
+    /** As {@link #commitWithdrawnCraft(ResolvedCraft, int)}; coming up short, it tries fewer runs up to {@code tries} more times. */
+    private ItemStack commitWithdrawnCraft(ResolvedCraft craft, int handedOutIndex, int tries) {
         // Ingredients first, and all or nothing: a remote source can refuse mid-craft (another
         // machine emptied it, or its own craft failed), and a partial pull would mint items.
         List<IngredientPool.Withdrawal> taken = new ArrayList<>();
@@ -1903,8 +1935,25 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (pulled.getCount() < withdrawal.count()) {
                 if (!pulled.isEmpty()) refundWithdrawal(withdrawal, pulled);
                 for (int i = 0; i < taken.size(); i++) refundWithdrawal(taken.get(i), takenStacks.get(i));
+                // Short of one thing: as many runs as that allows, rather than none (a preview's batch is sized from what
+                // the network said it could make, and other machines may want the same things).
+                int perRun = Math.max(1, withdrawal.count() / craft.batchSize());
+                int could = pulled.getCount() / perRun;
+                if (tries > 0 && could >= 1 && could < craft.batchSize()) {
+                    ItemStack made = commitWithdrawnCraft(craft.withRuns(could), handedOutIndex, tries - 1);
+                    if (!made.isEmpty()) return made;
+                }
+                // Some of it came (made on the way, and now put away): what's needed is nearer to hand, so it tries again,
+                // as a player clicking again would, rather than making them.
+                long came = pulled.getCount();
+                for (ItemStack stack : takenStacks) came += stack.getCount();
+                if (tries > 0 && came > 0) {
+                    ItemStack made = commitWithdrawnCraft(craft, handedOutIndex, tries - 1);
+                    if (!made.isEmpty()) return made;
+                }
                 failed(craft);
-                return ItemStack.EMPTY;
+                return refused("commit: an ingredient short (" + (withdrawal.expected() == null ? "?" : withdrawal.expected()) + " " + pulled.getCount() + "/" + withdrawal.count()
+                        + (withdrawal.provenance() instanceof IngredientPool.Provenance.Remote ? ", through a link" : ", grid") + ")");
             }
             taken.add(withdrawal);
             takenStacks.add(pulled);
@@ -1913,7 +1962,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (energyStorage.getEnergyStored() < craft.feCost() || isBasic() && coherenceReserve < craft.batchSize()) {
             for (int i = 0; i < taken.size(); i++) refundWithdrawal(taken.get(i), takenStacks.get(i));
             failed(craft);
-            return ItemStack.EMPTY;
+            return refused("commit: power spent on the way");
         }
 
         if (isBasic()) {
@@ -2049,12 +2098,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private ItemStack automationView(int absoluteOutputSlot) {
         // Busy working out what it could make, it offers nothing; busy making something, it may make something else.
-        if (level == null || level.isClientSide() || automationBusy && running.isEmpty() || com.kadikular.quantimium.recipe.CraftChain.full()
-                || com.kadikular.quantimium.recipe.CraftChain.storedOnly()) return ItemStack.EMPTY;
+        if (level == null || level.isClientSide()) return ItemStack.EMPTY;
+        if (automationBusy && running.isEmpty()) return refused("view: busy working out");
+        if (com.kadikular.quantimium.recipe.CraftChain.full()) return refused("view: chain full");
+        if (com.kadikular.quantimium.recipe.CraftChain.storedOnly()) return refused("view: stored only");
         if (statusCode == STATUS_NO_POWER || statusCode == STATUS_ENTANGLED_LOOP
                 || statusCode == STATUS_IDLE || statusCode == STATUS_NO_RECIPE
                 || statusCode == STATUS_DENIED) {
-            return ItemStack.EMPTY;
+            return refused("view: status " + statusCode);
         }
 
         int local = absoluteOutputSlot - GHOST_BASE;
@@ -2083,7 +2134,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             GhostSlot ghost = ghostAt(absoluteOutputSlot);
             if (ghost != null) {
                 ResolvedCraft craft = preview.get(ghost.craftIndex());
-                if (!running.contains(craft.recipeId()) && !failedNow(craft) && !loopsUpChain(craft) && canCommitMaking(craft, ghost.craftIndex())) {
+                if (running.contains(craft.recipeId())) refused("view: running");
+                else if (failedNow(craft)) refused("view: failed this tick");
+                else if (loopsUpChain(craft)) refused("view: loops up the chain");
+                else if (!canCommitMaking(craft, ghost.craftIndex())) refused("view: can't commit");
+                else {
                     List<ItemStack> outputs = craft.outputs();
                     if (ghost.outputIndex() < outputs.size()) {
                         shown = outputs.get(ghost.outputIndex()).copy();
@@ -2116,7 +2171,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // Run the recipe only as many times as this pull actually needs; a hopper taking one item
         // should not burn a stack of ingredients and the energy for it.
         ResolvedCraft craft = runsFor(preview.get(ghost.craftIndex()), ghost.outputIndex(), handOver);
-        if (!hasRoomForRemainder(craft, ghost.outputIndex(), handOver)) return ItemStack.EMPTY;
+        if (!hasRoomForRemainder(craft, ghost.outputIndex(), handOver)) return refused("extract: no room for what's over");
 
         // automationView already verified the parent batch is committable; the trimmed craft only
         // spends less. Skip a second canCommit walk (especially costly across linked crafters).
@@ -2176,7 +2231,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 pretend[local] = inventory.getStackInSlot(OUTPUT_START + local).copy();
             }
         }
-        return insertIntoOutputs(stack, simulate, pretend);
+        int put = insertIntoOutputs(stack, simulate, pretend);
+        // What's over from a craft is somewhere new on its network: a take looking for it there looks again.
+        if (!simulate && put > 0 && feeder != null) feeder.stockShifted();
+        return put;
     }
 
     /** {@code pretend} accumulates simulated occupancy so several outputs can be tested together. */

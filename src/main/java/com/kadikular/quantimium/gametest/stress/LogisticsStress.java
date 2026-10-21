@@ -65,6 +65,9 @@ public final class LogisticsStress {
         final List<QuantumCrafterBlockEntity> crafters = new ArrayList<>();
         /** The Crafters' own receptacles: never set pushing (they'd make whatever they can, worth counted or not). */
         final List<LogisticsReceptacleBlockEntity> makers = new ArrayList<>();
+        /** A take refused though listed, to try again next tick. */
+        @org.jetbrains.annotations.Nullable
+        ItemResource retry;
         /** Hopper loops: [storage chest's x]; source chest at (x, Y, Z+1), sink at (x, Y-2, Z+1). */
         final List<Integer> churn = new ArrayList<>();
         int x = 4;
@@ -250,6 +253,17 @@ public final class LogisticsStress {
                 }
                 return null;
             });
+            if (net.retry != null) {
+                ItemResource again = net.retry;
+                net.retry = null;
+                ItemStack got = net.terminal.take(again, 1);
+                if (!got.isEmpty()) {
+                    pile.merge(got.getItem(), (long) got.getCount(), Long::sum);
+                    Stress.count("refused, then given next tick");
+                } else {
+                    Stress.count("refused, and again next tick");
+                }
+            }
             int ops = random.nextInt(20) == 0 ? 50 : 1 + random.nextInt(4);
             for (int i = 0; i < ops; i++) {
                 try {
@@ -464,7 +478,7 @@ public final class LogisticsStress {
             while (!builder.step()) steps++;
             var table = builder.result();
             long took = System.nanoTime() - began;
-            if (times.isEmpty() || times.size() == 11) Stress.report(test, "tiers " + builder.tiers() + ", what's made last changed at tier " + builder.shapeChanged() + ", steps " + steps);
+            if (times.isEmpty() || times.size() == 11) Stress.report(test, "tiers " + builder.tiers() + ", steps " + steps);
             times.add(took);
             if (times.size() == 1) Stress.report(test, "network: " + net.receptacles.size() + " receptacles, " + net.crafters.size() + " crafters, "
                     + table.stored().size() + " kinds stored, " + table.entries().size() + " listed, "
@@ -487,6 +501,35 @@ public final class LogisticsStress {
         });
     }
 
+    private static int refusalsReported, affordableTraced;
+
+    private static boolean affordable(Net net, Item item) {
+        long stored = 0;
+        for (var entry : net.controller.offers().stored().entrySet()) {
+            Long each = Stress.WORTH.get(entry.getKey().getItem());
+            if (each != null && Stress.family(entry.getKey().getItem()).equals(Stress.family(item))) stored += each * entry.getValue();
+        }
+        return stored >= Stress.WORTH.get(item);
+    }
+
+    /** Where the network sees this family's items stored: member kind and role, by item. */
+    private static String whereStored(Net net, Item item) {
+        List<String> found = new ArrayList<>();
+        for (var member : net.controller.members()) {
+            var inventory = member.inventory();
+            if (inventory == null) continue;
+            for (int slot = 0; slot < inventory.getSlots(); slot++) {
+                if (member.onDemand(slot)) continue;
+                ItemStack there = inventory.getStackInSlot(slot);
+                if (there.isEmpty() || !Stress.WORTH.containsKey(there.getItem()) || !Stress.family(there.getItem()).equals(Stress.family(item))) continue;
+                found.add(there.getCount() + " " + there.getItem() + " in " + member.getClass().getSimpleName() + "/" + member.role()
+                        + (member.maker() != null ? " (a maker, slot " + slot + (member.maker().stocks(slot) ? ", stock" : ", not stock") + ")" : "")
+                        + (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(there) ? " NOT LET" : ""));
+            }
+        }
+        return String.join("; ", found);
+    }
+
     /** One random thing a player, a pipe or a hand does to the network. */
     private static void act(Net net, Random random, ServerPlayer player, Map<Item, Long> pile, QuantumCrafterBlockEntity[] open, int tick) {
         int roll = random.nextInt(100);
@@ -494,8 +537,37 @@ public final class LogisticsStress {
             // Taken at the terminal.
             Item item = WANTED[random.nextInt(WANTED.length)];
             int count = 1 + random.nextInt(random.nextBoolean() ? 64 : 192);
-            ItemStack got = Stress.time("terminal take", item + " x" + count, () -> net.terminal.take(ItemResource.of(new ItemStack(item)), count));
+            ItemResource resource = ItemResource.of(new ItemStack(item));
+            var offers = net.controller.offers();
+            long listed = offers.real(resource) + offers.craftable(resource);
+            Stress.TRACE = new ArrayList<>();
+            ItemStack got = Stress.time("terminal take", item + " x" + count, () -> net.terminal.take(resource, count));
+            List<String> trace = Stress.TRACE;
+            Stress.TRACE = null;
             if (!got.isEmpty()) pile.merge(got.getItem(), (long) got.getCount(), Long::sum);
+            else if (listed > 0) {
+                if (affordableTraced < 6 && affordable(net, item)) {
+                    affordableTraced++;
+                    Stress.report("refusals", "AFFORDABLE " + item + " x" + count + " trace: " + String.join(" | ", trace)
+                            + " || stored by member: " + whereStored(net, item));
+                }
+                // Listed, and refused: tried again next tick, as a player clicking again would. Whether the network
+                // really had the worth of it stored says whether the list was only behind.
+                long stored = 0;
+                for (var entry : net.controller.offers().stored().entrySet()) {
+                    Long each = Stress.WORTH.get(entry.getKey().getItem());
+                    if (each != null && Stress.family(entry.getKey().getItem()).equals(Stress.family(item))) stored += each * entry.getValue();
+                }
+                long wanted = Stress.WORTH.get(item);
+                boolean affordable = stored >= wanted;
+                Stress.count(affordable ? "take refused though listed, with a run's worth stored" : "take refused though listed, nothing like enough stored");
+                Stress.count("take refused though listed");
+                String why = "REFUSED " + item + " x" + count + " at tick " + tick + " (listed " + offers.real(resource) + " stored, " + offers.craftable(resource)
+                        + " craftable; makers " + offers.makers(resource).size() + "; " + Stress.family(item) + " worth stored " + stored + ", one is " + wanted + ")";
+                Stress.note(why);
+                if (refusalsReported++ < 25) Stress.report("refusals", why);
+                net.retry = resource;
+            }
         } else if (roll < 45) {
             // Put back at the terminal.
             ItemStack stack = fromPile(pile, random);
@@ -595,7 +667,9 @@ public final class LogisticsStress {
                 case 0 -> {
                     if (!net.makers.contains(receptacle)) receptacle.toggleActive();
                 }
-                case 1 -> receptacle.cycleCrafts();
+                case 1 -> {
+                    if (!Boolean.getBoolean("quantimium.stressNoModeFlips")) receptacle.cycleCrafts();
+                }
                 case 2 -> receptacle.toggleRequestsMade();
                 // Not a requester: set to everything but its list, asking for what's made, it'd have anything crafted.
                 default -> {

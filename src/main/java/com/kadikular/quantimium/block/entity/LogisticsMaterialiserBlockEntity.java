@@ -270,7 +270,10 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
             if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
             ItemStack left = Logistics.insert(members(), resource.toStack(amount), false, false);
             int put = amount - left.getCount();
-            if (put > 0) moved(transaction);
+            if (put > 0) {
+                moved(transaction);
+                controller.stockShifted();
+            }
             return put;
         }
 

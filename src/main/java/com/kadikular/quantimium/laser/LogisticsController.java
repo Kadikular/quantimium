@@ -46,6 +46,12 @@ public interface LogisticsController {
         offers();
     }
 
+    /**
+     * Something was put somewhere new on it (a Crafter's leftovers in its outputs, a pipe's delivery): where things
+     * are may be out of date, so a take that comes up short looks again, however many times it's looked this tick.
+     */
+    default void stockShifted() {}
+
     /** A machine making things for it has changed what it could make (its grid, say): its offers are worked out again. */
     default void makerChanged() {}
 

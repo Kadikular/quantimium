@@ -129,6 +129,7 @@ neoForge {
                 systemProperty 'quantimium.stressReport', project.file('build/stress-report.txt').absolutePath
                 if (project.hasProperty('stressSeed')) systemProperty 'quantimium.stressSeed', project.stressSeed
                 if (project.hasProperty('stressScale')) systemProperty 'quantimium.stressScale', project.stressScale
+                if (project.hasProperty('stressNoModeFlips')) systemProperty 'quantimium.stressNoModeFlips', 'true'
             }
             // ./gradlew runGameTestServer -PexportStructures builds the guide's multiblocks and saves them in wiki/structures.
             if (project.hasProperty('exportStructures')) systemProperty 'quantimium.exportStructures',

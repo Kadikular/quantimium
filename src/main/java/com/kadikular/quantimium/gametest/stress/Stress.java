@@ -125,7 +125,7 @@ public final class Stress {
             Items.OAK_PLANKS, 2L, Items.STICK, 1L);
 
     /** Which family an item's worth is counted in: iron, gold, wood. */
-    private static String family(Item item) {
+    public static String family(Item item) {
         if (item == Items.IRON_NUGGET || item == Items.IRON_INGOT || item == Items.IRON_BLOCK) return "iron";
         if (item == Items.GOLD_NUGGET || item == Items.GOLD_INGOT || item == Items.GOLD_BLOCK) return "gold";
         return "wood";
@@ -230,6 +230,15 @@ public final class Stress {
         }
     }
 
+    /** What Crafters refused while one take was under way, if it's being traced. */
+    @org.jetbrains.annotations.Nullable
+    public static List<String> TRACE;
+
+    /** Counts {@code what} happening, for the report. */
+    public static void count(String what) {
+        COUNTS.merge(what, 1L, Long::sum);
+    }
+
     /** Remembers what was just done (the last few, for a failure's report). */
     public static void note(String what) {
         RECENT.addLast(what);
@@ -260,6 +269,11 @@ public final class Stress {
         COUNTS.clear();
         WorkQueue.finished = key -> COUNTS.merge("finished " + (key instanceof BlockEntity entity ? entity.getClass().getSimpleName() : key.getClass().getSimpleName()), 1L, Long::sum);
         QuantumCrafterBlockEntity.whyMatched = why -> COUNTS.merge("crafter answers " + why, 1L, Long::sum);
+        QuantumCrafterBlockEntity.whyNot = why -> {
+            if (TRACE != null && TRACE.size() < 40) TRACE.add(why);
+            COUNTS.merge("crafter refused " + why.replaceAll("\\(.*\\)", ""), 1L, Long::sum);
+            if (why.startsWith("top: commit") && COUNTS.merge("shown shortages", 1L, Long::sum) <= 12) report("shortages", why);
+        };
         // Every block entity's tick, and the laser networks', by kind: what "the rest of the tick" was.
         com.kadikular.quantimium.debug.TickProfiler.everything((ticking, nanos) -> spent("tick " + ticking.getClass().getSimpleName(), nanos));
     }
@@ -270,6 +284,7 @@ public final class Stress {
         WorkQueue.stepTimes = null;
         WorkQueue.finished = null;
         QuantumCrafterBlockEntity.whyMatched = null;
+        QuantumCrafterBlockEntity.whyNot = null;
         com.kadikular.quantimium.debug.TickProfiler.everything(null);
         List<String> lines = new ArrayList<>();
         lines.add("ticks " + ticks);

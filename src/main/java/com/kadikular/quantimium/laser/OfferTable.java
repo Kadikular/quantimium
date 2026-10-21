@@ -595,13 +595,6 @@ public final class OfferTable {
             return tier;
         }
 
-        /** The last tier what could be made, and by whom, changed (not how many). */
-        public int shapeChanged() {
-            return shapeChanged;
-        }
-
-        private int shapeChanged;
-
         /** The table, once worked out; null till then. */
         @org.jetbrains.annotations.Nullable
         public OfferTable result() {
@@ -649,7 +642,6 @@ public final class OfferTable {
                 }
                 craftable.values().removeIf(Map::isEmpty);
                 if (!had.equals(made.getValue())) more = true;
-                if (!had.keySet().equals(made.getValue().keySet())) shapeChanged = tier;
                 for (Map.Entry<ItemResource, List<Source>> offer : made.getValue().entrySet()) {
                     craftable.computeIfAbsent(offer.getKey(), k -> new LinkedHashMap<>()).put(pos, offer.getValue());
                     tiers.merge(offer.getKey(), tier, Math::min);
