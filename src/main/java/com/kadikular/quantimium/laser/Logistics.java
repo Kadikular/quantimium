@@ -338,7 +338,7 @@ public final class Logistics {
                     int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
                     if (most <= 0) continue;
                     int at = slot;
-                    ItemStack taken = pulling(source, slot, () -> from.extractItem(at, most, simulate));
+                    ItemStack taken = pulling(source, slot, () -> extract(source, from, at, most, simulate));
                     if (!taken.isEmpty()) return taken;
                 }
             }
@@ -435,7 +435,7 @@ public final class Logistics {
             int most = Math.min(max, (reals ? parts[0] : 0) + (made ? parts[1] : 0));
             if (most <= 0) continue;
             int at = spot.slot();
-            ItemStack taken = pulling(source, at, () -> from.extractItem(at, most, simulate));
+            ItemStack taken = pulling(source, at, () -> extract(source, from, at, most, simulate));
             if (!taken.isEmpty()) return taken;
         }
         return ItemStack.EMPTY;
@@ -472,7 +472,20 @@ public final class Logistics {
 
     /** Moves up to {@code max} of what's in {@code slot} of {@code from} into {@code into}, as far as it fits, if the controller pays. */
     private static int move(Level level, LogisticsController controller, LogisticsMember source, IItemHandler from, int slot, IItemHandler into, int max) {
-        return move(level, controller, source, (n, simulate) -> from.extractItem(slot, n, simulate), from, into, max);
+        return move(level, controller, source, (n, simulate) -> extract(source, from, slot, n, simulate), from, into, max);
+    }
+
+    /**
+     * Takes up to {@code n} from {@code slot}. Only asked (simulated), a machine's preview answers with what it shows,
+     * which it has already checked it could make: a simulated pull through a handler opens a transaction it then drops,
+     * and a machine would make the whole craft, chain and all, to drop it again (and mark it failed if it came up short).
+     */
+    private static ItemStack extract(LogisticsMember source, IItemHandler from, int slot, int n, boolean simulate) {
+        if (simulate && source.onDemand(slot)) {
+            ItemStack shown = from.getStackInSlot(slot);
+            return shown.isEmpty() || n <= 0 ? ItemStack.EMPTY : shown.copyWithCount(Math.min(n, shown.getCount()));
+        }
+        return from.extractItem(slot, n, simulate);
     }
 
     /** Takes up to {@code n} from wherever, for a move: a slot, or a member kept by item. */

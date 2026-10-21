@@ -93,8 +93,19 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         if (!controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return ItemStack.EMPTY;
         controller.stockMoved();
         ItemStack got = ItemStack.EMPTY;
-        while (got.getCount() < count) {
-            ItemStack more = Logistics.take(spots, item, count - got.getCount(), false, stored, !stored);
+        for (int round = 0; round < 64 && got.getCount() < count; round++) {
+            int want = count - got.getCount();
+            // What's stored first, every time: a craft's leftovers (put somewhere new, so looked over again) come out
+            // before anything more is made.
+            ItemStack more = Logistics.take(spots, item, want, false, true, false);
+            if (more.isEmpty()) {
+                var again = controller.spotsAgain();
+                if (again != null) {
+                    spots = again;
+                    more = Logistics.take(spots, item, want, false, true, false);
+                }
+            }
+            if (more.isEmpty() && !stored) more = Logistics.take(spots, item, want, false, false, true);
             if (more.isEmpty()) break;
             if (got.isEmpty()) got = more;
             else got.grow(more.getCount());

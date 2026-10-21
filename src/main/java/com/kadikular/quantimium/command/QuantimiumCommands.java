@@ -77,6 +77,15 @@ public final class QuantimiumCommands {
                         .then(Commands.literal("info").executes(QuantimiumCommands::veiledInfo)))
                 .then(Commands.literal("field")
                         .then(Commands.literal("clear").executes(QuantimiumCommands::clearField)))
+                // A take at the nearest Logistics Terminal, written down step by step to logs/quantimium-trace-*.txt.
+                .then(Commands.literal("trace")
+                        .then(Commands.argument("item", net.minecraft.commands.arguments.item.ItemArgument.item(event.getBuildContext()))
+                                .executes(context -> LogisticsTrace.run(context.getSource().getPlayerOrException(),
+                                        net.minecraft.commands.arguments.item.ItemArgument.getItem(context, "item").item().value(), 1))
+                                .then(Commands.argument("count", IntegerArgumentType.integer(1, 4096))
+                                        .executes(context -> LogisticsTrace.run(context.getSource().getPlayerOrException(),
+                                                net.minecraft.commands.arguments.item.ItemArgument.getItem(context, "item").item().value(),
+                                                IntegerArgumentType.getInteger(context, "count"))))))
                 .then(Commands.literal("sophons")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.literal("list").executes(QuantimiumCommands::listSophons))

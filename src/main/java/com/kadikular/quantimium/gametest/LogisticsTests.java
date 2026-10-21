@@ -1412,6 +1412,88 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.terminal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_trace", timeoutTicks = 200)
+    public static void aTraceTakesAndWritesItDown(GameTestHelper helper) {
+        // /quantimium trace, next to a terminal: four planks made of a log by a Crafter, given to the player, the take
+        // written down.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, false, true).getInventory().setStackInSlot(0, new ItemStack(Items.OAK_LOG, 2));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var player = TestSupport.player(helper, new BlockPos(10, Y, 6));
+        helper.runAfterDelay(80, () -> {
+            int got = com.kadikular.quantimium.command.LogisticsTrace.run(player, Items.OAK_PLANKS, 4);
+            helper.assertValueEqual(got, 4, "four planks taken");
+            helper.assertTrue(player.getInventory().countItem(Items.OAK_PLANKS) >= 4, "and given to the player");
+            TestSupport.removePlayer(helper, player);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.tools, laser.logistics.terminal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_hammer", timeoutTicks = 300)
+    public static void aHammerIsWornNotMadeAgain(GameTestHelper helper) {
+        // Energized Power, if it's there: four iron ingots and one iron hammer on a network, a crafting-table Crafter.
+        // Four iron plates taken use the one hammer, worn; no hammer is made, no iron goes on hammers.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        Item hammer = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:iron_hammer"));
+        Item plate = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("energizedpower:iron_plate"));
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_INGOT, 4), new ItemStack(hammer), new ItemStack(Items.STICK, 8));
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(100, () -> {
+            settled(controller::offers);
+            int got = 0;
+            for (int i = 0; i < 4; i++) got += com.kadikular.quantimium.laser.Logistics.take(controller.spots(), resource(plate), 1, false, false, true).getCount();
+            int hammers = count(helper, 4, hammer) + countIn(crafter, hammer);
+            helper.assertValueEqual(got, 4, "four plates");
+            helper.assertValueEqual(hammers, 1, "the one hammer, worn, and no other");
+            helper.assertValueEqual(count(helper, 4, Items.IRON_INGOT) + countIn(crafter, Items.IRON_INGOT), 0, "the four ingots went on plates");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.terminal, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_stack_upgrade", timeoutTicks = 300)
+    public static void aStackUpgradeIsMadeOfLogsAndIron(GameTestHelper helper) {
+        // Sophisticated Storage, if it's there: iron ingots and dark oak logs on a network, two crafting-table Crafters.
+        // An upgrade base (planks and iron) and a stack upgrade (logs round a base) are listed, and made when taken.
+        if (!net.neoforged.fml.ModList.get().isLoaded("sophisticatedstorage")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.IRON_INGOT, 64),
+                new ItemStack(Items.DARK_OAK_LOG, 64), new ItemStack(Items.DARK_OAK_LOG, 64), new ItemStack(Items.DARK_OAK_LOG, 64), new ItemStack(Items.DARK_OAK_LOG, 8));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var base = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("sophisticatedstorage:upgrade_base")));
+        var tier1 = resource(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse("sophisticatedstorage:stack_upgrade_tier_1")));
+        helper.runAfterDelay(120, () -> {
+            var offers = settled(controller::offers);
+            helper.assertTrue(offers.craftable(base) >= 16, "upgrade bases listed: " + offers.craftable(base));
+            helper.assertTrue(offers.craftable(tier1) >= 10, "stack upgrades listed: " + offers.craftable(tier1));
+            ItemStack gotBase = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), base, 1, false, false, true);
+            helper.assertValueEqual(gotBase.getCount(), 1, "an upgrade base made the first time");
+            ItemStack gotTier1 = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), tier1, 1, false, false, true);
+            helper.assertValueEqual(gotTier1.getCount(), 1, "a stack upgrade made the first time");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.terminal, crafter.chain
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_first_try_chain", timeoutTicks = 200)
     public static void aChainedCraftIsMadeFirstTime(GameTestHelper helper) {

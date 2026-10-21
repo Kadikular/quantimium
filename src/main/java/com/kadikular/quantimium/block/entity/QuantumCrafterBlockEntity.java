@@ -895,7 +895,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private ItemStack refused(String why) {
         if (whyNot != null) whyNot.accept((com.kadikular.quantimium.recipe.CraftChain.depth() <= 1 ? "top: " : "deeper: ") + why);
+        if (tracing != null) tracing.accept(indent() + "refused at " + worldPosition.toShortString() + ": " + why);
         return ItemStack.EMPTY;
+    }
+
+    /** Told each step of a craft, for /quantimium trace: what was tried, made or refused, where. Null otherwise. */
+    @Nullable
+    public static java.util.function.Consumer<String> tracing;
+
+    private static String indent() {
+        return "  ".repeat(Math.max(0, com.kadikular.quantimium.recipe.CraftChain.depth() - 1));
     }
 
     /** Told why each network's ask was answered as it was: the stress tests' counts. Null otherwise. */
@@ -1896,6 +1905,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         // A link can lead back here: a craft that ran again halfway through itself would be working from inputs it
         // had already spent, so while it runs, that recipe isn't offered. Another may be, made for it.
+        if (tracing != null) tracing.accept(indent() + "try " + craft.recipeId() + " x" + craft.batchSize() + " at " + worldPosition.toShortString()
+                + " (wants " + describe(craft) + ")");
         if (loopsUpChain(craft)) return refused("commit: loops up the chain");
         if (!running.add(craft.recipeId())) return refused("commit: already running");
         boolean priorBusy = automationBusy;
@@ -1989,6 +2000,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             insertIntoOutputs(outputs.get(i).copy(), false);
         }
 
+        if (tracing != null) tracing.accept(indent() + "made " + craft.recipeId() + " x" + craft.batchSize() + " at " + worldPosition.toShortString());
         // Continuous hopper craft must not rescan every MI recipe on each item. All of it from networks, nothing it
         // could make changed as it sees them (it sees their offers, worked out before): its batches are worked out
         // again in the background, not now, ahead of the next craft of a busy pull.
@@ -2043,6 +2055,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         } finally {
             com.kadikular.quantimium.recipe.CraftChain.stopMaking(makes);
         }
+    }
+
+    /** What a craft takes, for a trace. */
+    private static String describe(ResolvedCraft craft) {
+        List<String> parts = new ArrayList<>();
+        for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
+            if (withdrawal.count() <= 0) continue;
+            parts.add(withdrawal.count() + " " + (withdrawal.expected() == null ? "?" : BuiltInRegistries.ITEM.getKey(withdrawal.expected()))
+                    + (withdrawal.provenance() instanceof IngredientPool.Provenance.Remote ? " (network)" : " (grid)"));
+        }
+        return String.join(", ", parts);
     }
 
     /** Whether {@code craft} uses something a craft up the chain is making now: it would loop back through that one. */
@@ -2175,6 +2198,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         // automationView already verified the parent batch is committable; the trimmed craft only
         // spends less. Skip a second canCommit walk (especially costly across linked crafters).
+        if (tracing != null) tracing.accept(indent() + "asked for " + amount + " at " + worldPosition.toShortString() + " slot " + slot + ": shows " + shown.getCount()
+                + ", hands over up to " + handOver + ", runs " + craft.batchSize() + " making " + craft.outputs().get(ghost.outputIndex()).getCount());
         ItemStack produced = commitCraftTrusted(craft, ghost.outputIndex());
         if (produced.isEmpty()) return ItemStack.EMPTY;
 
