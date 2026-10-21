@@ -37,9 +37,6 @@ public final class OfferTable {
     /** How many machines a chain of crafts on the network reaches through. */
     public static final int TIERS = 8;
 
-    /** Below this many of something, more of it could make a recipe possible that wasn't. */
-    private static final long SHORT = 64;
-
     /** How many times a machine is asked again about its looping crafts, leaving out more each time, before they're dropped. */
     private static final int LOOP_RETRIES = 2;
 
@@ -223,6 +220,17 @@ public final class OfferTable {
             return stock.get(key);
         }
 
+        /** Looked up, not looked through: a network's stock is thousands of kinds. */
+        @Override
+        public boolean containsKey(Object key) {
+            return stock.containsKey(key);
+        }
+
+        @Override
+        public int size() {
+            return stock.size();
+        }
+
         @Override
         public Set<Map.Entry<ItemResource, Long>> entrySet() {
             return java.util.Collections.unmodifiableMap(stock).entrySet();
@@ -357,13 +365,6 @@ public final class OfferTable {
         /** The machine being asked, between looks. */
         @org.jetbrains.annotations.Nullable
         private Asking asking;
-        /** Last tier's table, and what each machine was found to make then, and from what. */
-        @org.jetbrains.annotations.Nullable
-        private OfferTable before;
-        private final Map<BlockPos, Map<ItemResource, List<Source>>> lastFound = new HashMap<>();
-        private final Map<BlockPos, List<Object>> lastCrafts = new HashMap<>();
-        /** What's changed between last tier's stock and this one's, as shown with what's made or not. */
-        private final Map<Boolean, Set<ItemResource>> changed = new HashMap<>();
         @org.jetbrains.annotations.Nullable
         private OfferTable result;
         /** Whether it read another network's offers before they were first worked out: it should be worked out again soon. */
@@ -399,12 +400,6 @@ public final class OfferTable {
             }
             // Each machine shown what's real and what the machines could make so far, a tier at a time.
             if (next == 0) {
-                before = sofar;
-                lastFound.clear();
-                lastFound.putAll(found);
-                lastCrafts.clear();
-                lastCrafts.putAll(foundCrafts);
-                changed.clear();
                 sofar = new OfferTable(real, craftable, tiers, origins);
                 found.clear();
                 foundCrafts.clear();
@@ -412,11 +407,7 @@ public final class OfferTable {
             // One machine's offers, a look at a time: its first look, then (if some of its crafts loop) a look again.
             Maker maker = makers.get(next);
             boolean gone = maker.maker() instanceof net.minecraft.world.level.block.entity.BlockEntity entity && entity.isRemoved();
-            if (!gone && asking == null && unchanged(maker)) {
-                // Nothing it uses, nothing new, no more of what was short: what it made last tier, it makes still.
-                found.put(maker.pos(), lastFound.get(maker.pos()));
-                foundCrafts.put(maker.pos(), lastCrafts.get(maker.pos()));
-            } else if (!gone) {
+            if (!gone) {
                 if (asking == null) {
                     asking = sofar.new Asking(network, maker.pos(), maker.maker(), maker.member());
                     if (!asking.look()) return false;
@@ -450,39 +441,6 @@ public final class OfferTable {
 
         private void finish() {
             result = new OfferTable(Map.copyOf(real), craftable, tiers, Set.copyOf(origins));
-        }
-
-        /**
-         * Whether what {@code maker} would be shown this tier is, as far as it could matter to it, what it was shown
-         * last tier: nothing it hadn't been shown, no change in anything what it made is made from, and no more of
-         * anything there was too little of for some recipe. Then its answer stands, and it isn't asked again.
-         */
-        private boolean unchanged(Maker maker) {
-            if (before == null || tier <= 1) return false;
-            Map<ItemResource, List<Source>> was = lastFound.get(maker.pos());
-            if (was == null || !lastCrafts.containsKey(maker.pos())) return false;
-            boolean chains = maker.member().craftsFromCraftable();
-            Map<ItemResource, Long> then = before.shown(chains), now = sofar.shown(chains);
-            Set<ItemResource> moved = changed.computeIfAbsent(chains, k -> {
-                Set<ItemResource> diff = new HashSet<>();
-                now.forEach((item, count) -> {
-                    if (!count.equals(then.get(item))) diff.add(item);
-                });
-                then.keySet().forEach(item -> {
-                    if (!now.containsKey(item)) diff.add(item);
-                });
-                return diff;
-            });
-            if (moved.isEmpty()) return true;
-            Set<Item> uses = new HashSet<>();
-            for (List<Source> sources : was.values()) for (Source source : sources) uses.addAll(source.from());
-            for (ItemResource item : moved) {
-                Long had = then.get(item), has = now.get(item);
-                if (had == null && has != null) return false;
-                if (uses.contains(item.getItem())) return false;
-                if (has != null && had < SHORT && has > had) return false;
-            }
-            return true;
         }
 
         /**
