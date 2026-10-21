@@ -1412,6 +1412,27 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.terminal, crafter.chain
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_first_try_chain", timeoutTicks = 200)
+    public static void aChainedCraftIsMadeFirstTime(GameTestHelper helper) {
+        // Only oak logs on the network, and two crafting-table Crafters drawing on it and making for it. A wooden pickaxe
+        // wants planks (of a log, with some over) and sticks (of planks, with some over): asked for once, it's made.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.OAK_LOG, 8));
+        crafterOn(helper, 6, Items.CRAFTING_TABLE, true, true);
+        crafterOn(helper, 7, Items.CRAFTING_TABLE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var pickaxe = resource(Items.WOODEN_PICKAXE);
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(settled(controller::offers).craftable(pickaxe) > 0, "a pickaxe listed");
+            ItemStack got = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), pickaxe, 1, false, false, true);
+            helper.assertValueEqual(got.getCount(), 1, "made the first time it's asked for");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.chain, laser.logistics.materialiser
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_iron_loop", timeoutTicks = 200)
     public static void craftsDontChaseEachOtherRoundALoop(GameTestHelper helper) {
