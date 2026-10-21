@@ -149,6 +149,7 @@ public final class LogisticsStress {
         int stores = Stress.scaled(20), providers = Stress.scaled(3), requesters = Stress.scaled(3), churns = Stress.scaled(3), makers = Stress.scaled(6);
         // The Materialiser ends the row; Crafters' Tesseracts are bound to it before it's placed.
         net.materialiser = new BlockPos(net.x + stores + providers + requesters + churns + makers + 2, Y, Z);
+        Stress.forceLoad(helper, new BlockPos(0, 0, Z - 3), net.materialiser.offset(2, 0, 3));
         BlockPos MATERIALISER_PLACEHOLDER = net.materialiser;
 
         // The controller, shining east along the row, and north to the terminal.
@@ -304,6 +305,7 @@ public final class LogisticsStress {
         for (int i = 0; i < 40; i++) dug.add(filler.get(random.nextInt(filler.size())));
         int stores = Stress.scaled(16), makers = Stress.scaled(4);
         net.materialiser = new BlockPos(net.x + stores + 4 + makers + 2, Y, Z);
+        Stress.forceLoad(helper, new BlockPos(0, 0, Z - 3), net.materialiser.offset(2, 0, 3));
         BlockPos controllerAt = new BlockPos(2, Y, Z);
         helper.setBlock(controllerAt, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState().setValue(LogisticsControllerBlock.FACING, Direction.EAST)
                 .setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false).setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
@@ -433,6 +435,7 @@ public final class LogisticsStress {
         List<Item> filler = filler();
         int stores = Stress.scaled(60), makers = Stress.scaled(18);
         net.materialiser = new BlockPos(net.x + stores + makers + 1, Y, Z);
+        Stress.forceLoad(helper, new BlockPos(0, 0, Z - 3), net.materialiser.offset(2, 0, 3));
         BlockPos controllerAt = new BlockPos(2, Y, Z);
         helper.setBlock(controllerAt, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState().setValue(LogisticsControllerBlock.FACING, Direction.EAST)
                 .setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false).setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
@@ -460,7 +463,15 @@ public final class LogisticsStress {
             long took = System.nanoTime() - began;
             times.add(took);
             if (times.size() == 1) Stress.report(test, "network: " + net.receptacles.size() + " receptacles, " + net.crafters.size() + " crafters, "
-                    + table.stored().size() + " kinds stored, " + table.entries().size() + " listed");
+                    + table.stored().size() + " kinds stored, " + table.entries().size() + " listed, "
+                    + table.entries().stream().filter(e -> e.craftable() > 0).count() + " craftable, e.g. "
+                    + table.entries().stream().filter(e -> e.craftable() > 0).limit(5).map(e -> e.item().getItem() + " " + e.craftable()).toList()
+                    + "; a crafter's preview: " + net.crafters.getFirst().getPreview().size()
+                    + "; asked directly: " + net.crafters.getFirst().makes(net.controller, table.stock(null, true, true), true).size()
+                    + "; energy " + net.crafters.getFirst().getEnergyStorage().getEnergyStored()
+                    + ", catalyst " + net.crafters.getFirst().getInventory().getStackInSlot(QuantumCrafterBlockEntity.CATALYST_SLOT)
+                    + ", grid0 " + net.crafters.getFirst().getInventory().getStackInSlot(0)
+                    + "; members " + net.controller.members().size() + ", makers " + net.controller.members().stream().filter(m -> m.maker() != null).count());
             if (times.size() == 12) {
                 List<Long> sorted = new ArrayList<>(times);
                 java.util.Collections.sort(sorted);

@@ -70,6 +70,16 @@ public final class Stress {
         return new Random(seed);
     }
 
+    /** Keeps the chunks from {@code from} to {@code to} (relative to the test) loaded: a long row reaches past what a test loads. */
+    public static void forceLoad(GameTestHelper helper, BlockPos from, BlockPos to) {
+        BlockPos a = helper.absolutePos(from), b = helper.absolutePos(to);
+        for (int cx = Math.min(a.getX(), b.getX()) >> 4; cx <= Math.max(a.getX(), b.getX()) >> 4; cx++) {
+            for (int cz = Math.min(a.getZ(), b.getZ()) >> 4; cz <= Math.max(a.getZ(), b.getZ()) >> 4; cz++) {
+                helper.getLevel().setChunkForced(cx, cz, true);
+            }
+        }
+    }
+
     // ---- what's where ----
 
     /** Every item in {@code box} (relative to the test): in containers, in Crafters (all their slots), on the ground, and held by {@code players}. */

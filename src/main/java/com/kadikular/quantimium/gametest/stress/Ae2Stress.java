@@ -55,6 +55,7 @@ public final class Ae2Stress {
         List<Item> filler = LogisticsStress.filler();
         int stores = Stress.scaled(12), makers = Stress.scaled(4);
         net.materialiser = new BlockPos(net.x + stores + 4 + makers + 1, Y, Z);
+        Stress.forceLoad(helper, new BlockPos(0, 0, Z - 3), net.materialiser.offset(5, 0, 3));
         BlockPos controllerAt = new BlockPos(2, Y, Z);
         helper.setBlock(controllerAt, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState().setValue(LogisticsControllerBlock.FACING, Direction.EAST)
                 .setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false).setValue(LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
