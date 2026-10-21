@@ -251,10 +251,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                             scrollRow = 0;
                         }),
                 Tab.of(Component::empty, () -> {
-                                    // Hidden, what's in the grid goes back to the network rather than out of sight.
-                                    if (LogisticsTerminalMenu.craftingShown() && minecraft != null && minecraft.gameMode != null) {
-                                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, LogisticsTerminalMenu.BUTTON_CLEAR);
-                                    }
+                                    // Hidden, the grid keeps what's in it (in the terminal) for when it's shown again.
                                     LogisticsTerminalMenu.showCrafting(!LogisticsTerminalMenu.craftingShown());
                                     scrollRow = 0;
                                 },
@@ -277,6 +274,26 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             boolean over = QuantumWidgets.hit(mouseX, mouseY, x, y, CLEAR_SIZE, CLEAR_SIZE);
             graphics.fill(x, y, x + CLEAR_SIZE, y + CLEAR_SIZE, over ? QuantumUiColours.ROW_HOVER : 0x00000000);
             graphics.text(font, "\u00d7", x + 2, y + 1, over ? 0xFFFFFFFF : dimColour(), false);
+        }
+        if (LogisticsTerminalMenu.craftingShown()) {
+            // What a slot will have made for it when a craft is taken: the item, faded, marked "Craft".
+            List<net.minecraft.world.inventory.Slot> grid = menu.gridSlots();
+            for (int i = 0; i < grid.size(); i++) {
+                ItemStack ghost = menu.ghost(i);
+                var slot = grid.get(i);
+                if (ghost.isEmpty() || slot.hasItem()) continue;
+                int x = leftPos + slot.x;
+                int y = topPos + slot.y;
+                graphics.item(ghost, x, y);
+                graphics.nextStratum();
+                graphics.fill(x, y, x + 16, y + 16, 0x88101224);
+                String craft = Component.translatable("gui.quantimium.logistics_terminal.craft").getString();
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(x + 16, y + 11);
+                graphics.pose().scale(0.5f, 0.5f);
+                graphics.text(font, craft, -font.width(craft), 0, 0xFFB49CFF, true);
+                graphics.pose().popMatrix();
+            }
         }
         for (int row = 0; row < rows(); row++) {
             for (int col = 0; col < COLUMNS; col++) {
@@ -312,6 +329,18 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     @Override
     protected void renderMachineTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!menu.getCarried().isEmpty()) return;
+        if (dragging != null) {
+            graphics.nextStratum();
+            graphics.item(dragging.item().toStack(1), mouseX - 8, mouseY - 8);
+            return;
+        }
+        int ghostSlot = activeOverlay() == null ? gridSlotAt(mouseX, mouseY) : -1;
+        if (ghostSlot >= 0 && !menu.ghost(ghostSlot).isEmpty() && !menu.gridSlots().get(ghostSlot).hasItem()) {
+            graphics.setComponentTooltipForNextFrame(font, List.of(menu.ghost(ghostSlot).getHoverName(),
+                    Component.translatable("gui.quantimium.logistics_terminal.crafting.ghost").withStyle(ChatFormatting.LIGHT_PURPLE),
+                    Component.translatable("gui.quantimium.logistics_terminal.crafting.ghost.clear").withStyle(ChatFormatting.DARK_GRAY)), mouseX, mouseY);
+            return;
+        }
         if (activeOverlay() == null && onClear(mouseX, mouseY)) {
             graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.logistics_terminal.crafting.clear")), mouseX, mouseY);
             return;
@@ -355,6 +384,13 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 ClientPacketDistributor.sendToServer(new LogisticsTerminalInsertPayload(pos, event.button() == 1));
                 return true;
             }
+            // Something only the network can make, with the crafting grid shown: held till let go, so it can be
+            // dragged onto the grid to be made there when a craft is taken; let go where it was, it's taken as ever.
+            if (cell != null && event.button() == 0 && !event.hasShiftDown() && LogisticsTerminalMenu.craftingShown()
+                    && cell.count() == 0 && cell.craftable() > 0) {
+                dragging = cell;
+                return true;
+            }
             if (cell != null) {
                 int stack = cell.item().toStack(1).getMaxStackSize();
                 int count = event.button() == 1 ? rightClickCount(cell, event.hasShiftDown()) : stack;
@@ -379,10 +415,36 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         return super.mouseDragged(event, dragX, dragY);
     }
 
+    /** Something only the network can make, held from the item grid to be let go on the crafting grid; null for none. */
+    @Nullable
+    private LogisticsTerminalViewPayload.Entry dragging;
+
+    /** The crafting grid slot (0-8) under the mouse, while the grid is shown; -1 for none. */
+    private int gridSlotAt(double mouseX, double mouseY) {
+        if (!LogisticsTerminalMenu.craftingShown()) return -1;
+        List<net.minecraft.world.inventory.Slot> grid = menu.gridSlots();
+        for (int i = 0; i < grid.size(); i++) {
+            var slot = grid.get(i);
+            if (QuantumWidgets.hit(mouseX, mouseY, leftPos + slot.x - 1, topPos + slot.y - 1, 18, 18)) return i;
+        }
+        return -1;
+    }
+
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (bar().dragging()) {
             bar().release();
+            return true;
+        }
+        if (dragging != null) {
+            LogisticsTerminalViewPayload.Entry held = dragging;
+            dragging = null;
+            int slot = gridSlotAt(event.x(), event.y());
+            if (slot >= 0) {
+                ClientPacketDistributor.sendToServer(new com.kadikular.quantimium.network.LogisticsTerminalGhostPayload(menu.pos(), slot, held.item().toStack(1)));
+            } else if (cellAt(shown(), event.x(), event.y()) == held) {
+                ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(menu.pos(), held.item(), held.item().toStack(1).getMaxStackSize(), false));
+            }
             return true;
         }
         return super.mouseReleased(event);

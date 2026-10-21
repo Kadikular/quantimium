@@ -613,6 +613,26 @@ public class Quantimium {
                     }
                 })
         );
+        registrar.playToServer(
+                com.kadikular.quantimium.network.LogisticsTerminalGhostPayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalGhostPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
+                            && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.placeGhost(payload.slot(), payload.item());
+                    }
+                })
+        );
+        registrar.playToClient(
+                com.kadikular.quantimium.network.LogisticsTerminalGhostsPayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalGhostsPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    var player = context.player();
+                    if (player.containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu && menu.containerId == payload.containerId()) {
+                        menu.setGhosts(payload.ghosts());
+                    }
+                })
+        );
         registrar.playToClient(
                 HorizonViewPayload.TYPE,
                 HorizonViewPayload.STREAM_CODEC,

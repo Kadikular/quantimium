@@ -367,12 +367,15 @@ what matches. `@mod` matches a mod's id or name, `#text` its tooltip, `$tag` its
 `-@minecraft`, `$c:ingots|$c:gems`.
 
 **Crafting grid.** The crafting table tab shows a 3×3 grid under a shorter item grid, as an ME crafting terminal
-has. Craft in it as at a crafting table: after each craft, what it used is topped up from what the network stores,
-so shift-clicking the result crafts again and again into your inventory until something runs out. With JEI, the
-**+** on a crafting recipe fills the grid: each slot from what's stored, then your inventory, then what a machine on
-the network can make (one step); shift-+ fills as many crafts' worth as there are, up to a stack. Items that are
-nowhere show red, and the rest still go in. The × beside the grid, hiding it, or closing the screen puts the grid
-back into the network.
+has; what's in it stays in the terminal, for anyone who opens it next. Craft in it as at a crafting table: after
+each craft, what it used is topped up from what the network stores, so shift-clicking the result crafts again and
+again into your inventory until something runs out. With JEI, the **+** on a crafting recipe fills the grid from
+what's stored, then your inventory; what neither has but a machine on the network can make (one step) goes in as
+**Craft**: nothing is made until you take the result, and then just what that craft needs. Shift-+ fills as many
+crafts' worth as there are, up to a stack. Drag something the network can only make from the item grid onto the
+crafting grid to put it in as Craft too; click a Craft with nothing in hand to clear it. A Craft the network can no
+longer make or supply goes, and a craft that can't make its Crafts isn't given. Items that are nowhere show red in
+JEI, and the rest still go in. The × beside the grid puts it all back into the network.
 
 A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 

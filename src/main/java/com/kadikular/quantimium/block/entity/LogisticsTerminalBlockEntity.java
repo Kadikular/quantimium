@@ -43,6 +43,62 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         super(type, pos, state);
     }
 
+    // ---- its crafting grid: kept here, so it's there next time, and one grid for everyone at it ----
+
+    /** What's really in the crafting grid. */
+    private final net.minecraft.core.NonNullList<ItemStack> craftItems = net.minecraft.core.NonNullList.withSize(9, ItemStack.EMPTY);
+    /**
+     * What each grid slot is to have made for it when a craft is taken (one of, none: EMPTY): a "craft" in the slot,
+     * shown while the slot is empty and the network can make it or has it.
+     */
+    private final ItemStack[] craftGhosts = new ItemStack[] {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY,
+            ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
+    /** The menus open on it, told when the grid changes. */
+    private final Set<com.kadikular.quantimium.menu.LogisticsTerminalMenu> viewers = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+
+    public net.minecraft.core.NonNullList<ItemStack> craftItems() {
+        return craftItems;
+    }
+
+    public ItemStack[] craftGhosts() {
+        return craftGhosts;
+    }
+
+    public void watch(com.kadikular.quantimium.menu.LogisticsTerminalMenu menu, boolean watching) {
+        if (watching) viewers.add(menu);
+        else viewers.remove(menu);
+    }
+
+    /** The grid changed (by {@code by}, or by none): kept, and every other menu on it works its result out again. */
+    public void craftGridChanged(@Nullable com.kadikular.quantimium.menu.LogisticsTerminalMenu by) {
+        setChanged();
+        for (var menu : List.copyOf(viewers)) if (menu != by) menu.gridChangedElsewhere();
+    }
+
+    @Override
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
+        super.saveAdditional(out);
+        out.store("CraftGrid", ItemStack.OPTIONAL_CODEC.listOf(), List.copyOf(craftItems));
+        out.store("CraftGhosts", ItemStack.OPTIONAL_CODEC.listOf(), List.of(craftGhosts));
+    }
+
+    @Override
+    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
+        super.loadAdditional(in);
+        List<ItemStack> grid = in.read("CraftGrid", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        List<ItemStack> ghosts = in.read("CraftGhosts", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        for (int i = 0; i < 9; i++) {
+            craftItems.set(i, i < grid.size() ? grid.get(i) : ItemStack.EMPTY);
+            craftGhosts[i] = i < ghosts.size() ? ghosts.get(i) : ItemStack.EMPTY;
+        }
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level != null) net.minecraft.world.Containers.dropContents(level, pos, craftItems);
+    }
+
     /** The controller whose light reaches it, or null. Server side. */
     @Nullable
     public LogisticsController controller() {

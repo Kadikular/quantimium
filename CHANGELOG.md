@@ -13,8 +13,10 @@
 - A simulated take from a Crafter (another mod checking what it could get) no longer makes the craft, and no longer
   stops the real take that follows.
 - The terminal takes what's left over from a craft before crafting more.
-- **The Logistics Terminal has a crafting grid**, shown by a tab: under a shorter item grid, refilled from the network
-  after each craft. JEI's + fills it from the network, your inventory, or what a machine makes (missing items in red).
+- **The Logistics Terminal has a crafting grid**, shown by a tab: under a shorter item grid, kept in the terminal, and
+  refilled from the network after each craft. JEI's + fills it from the network or your inventory; what only a
+  machine can make goes in as "Craft" and is made when you take the result (or drag it there from the item grid).
+  Missing items show red.
 - **Searching the terminal works as JEI's search does**: `@mod`, `#tooltip`, `$tag`, `-` to leave out, `|` for either.
 - The terminal is a row taller (six rows of items).
 - `/quantimium trace <item> [count]` (operators): a take at the nearest Logistics Terminal, written down step by step

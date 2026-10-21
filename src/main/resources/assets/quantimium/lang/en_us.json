@@ -1315,6 +1315,8 @@
   "gui.quantimium.logistics_terminal.crafting.on": "Crafting grid: shown",
   "gui.quantimium.logistics_terminal.crafting.off": "Crafting grid: hidden",
   "gui.quantimium.logistics_terminal.crafting.clear": "Put the grid back into the network",
+  "gui.quantimium.logistics_terminal.crafting.ghost": "Made by the network when you take the craft",
+  "gui.quantimium.logistics_terminal.crafting.ghost.clear": "Click to clear",
   "gui.quantimium.logistics_terminal.crafting.missing": "Not on the network or in your inventory",
   "block.quantimium.pod_logistics_module": "Pod Logistics Module",
   "block.quantimium.pod_module.logistics.tip": "Opens its logistics network's terminal from anywhere (V).",
