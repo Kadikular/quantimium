@@ -169,7 +169,7 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
     public ItemStack collect(ItemStack stack, boolean simulate) {
         // What it turns away goes on up the beam, to the next.
         if (!collects() || !acceptsItem(stack)) return stack;
-        return insert(stack, simulate);
+        return insert(passOn(stack, simulate), simulate);
     }
 
     @Override
@@ -219,27 +219,64 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
 
     // ---- automation ----
 
+    /** The quickest it moves things in and out of what's beside it while busy, in ticks. */
+    private static final int BUSIEST_INTERVAL = 2;
+    /** Ticks till it next moves things in and out, and how long it waits now: shorter while it's moving things. */
+    private int transferIn = -1;
+    private int transferInterval = AUTO_TRANSFER_INTERVAL;
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, LaserPortBlockEntity relay) {
-        if (level.getGameTime() % AUTO_TRANSFER_INTERVAL != Math.floorMod(pos.hashCode(), AUTO_TRANSFER_INTERVAL)) return;
+        // Staggered so ports don't all move on one tick, then paced: quicker each time something moved, slower each
+        // time nothing did, between {@link #BUSIEST_INTERVAL} and once a second.
+        if (relay.transferIn < 0) relay.transferIn = Math.floorMod(pos.hashCode(), AUTO_TRANSFER_INTERVAL);
+        if (relay.transferIn-- > 0) return;
+        boolean moved = false;
         for (Direction side : Direction.values()) {
             SideConfig config = relay.sideConfigs.get(side.get3DDataValue());
             if (!config.autoItemInput() && !config.autoItemOutput()) continue;
             IItemHandler neighbour = LegacyItems.legacy(level.getCapability(Capabilities.Item.BLOCK, pos.relative(side), side.getOpposite()));
             if (neighbour == null) continue;
-            if (config.autoItemInput() && config.itemMode().allowsInput() && relay.takesFromOutside()) relay.pull(neighbour);
-            if (config.autoItemOutput() && config.itemMode().allowsOutput()) relay.push(neighbour);
+            if (config.autoItemInput() && config.itemMode().allowsInput() && relay.takesFromOutside()) moved |= relay.pull(neighbour);
+            if (config.autoItemOutput() && config.itemMode().allowsOutput()) moved |= relay.push(neighbour);
         }
+        relay.transferInterval = moved ? Math.max(BUSIEST_INTERVAL, relay.transferInterval / 2) : Math.min(AUTO_TRANSFER_INTERVAL, relay.transferInterval * 2);
+        relay.transferIn = relay.transferInterval - 1;
     }
 
-    private void pull(IItemHandler from) {
+    /**
+     * Puts {@code stack} straight into what it exports to (its faces set to push out), so what comes back up the beam
+     * needn't wait in its slots for the next push; what's left.
+     */
+    private ItemStack passOn(ItemStack stack, boolean simulate) {
+        if (level == null || stack.isEmpty()) return stack;
+        ItemStack left = stack;
+        for (Direction side : Direction.values()) {
+            SideConfig config = sideConfigs.get(side.get3DDataValue());
+            if (!config.autoItemOutput() || !config.itemMode().allowsOutput()) continue;
+            IItemHandler neighbour = LegacyItems.legacy(level.getCapability(Capabilities.Item.BLOCK, worldPosition.relative(side), side.getOpposite()));
+            if (neighbour == null) continue;
+            left = ItemHandlerHelper.insertItem(neighbour, left, simulate);
+            if (left.isEmpty()) break;
+        }
+        // Moving things on: it pushes out sooner next time too.
+        if (!simulate && left.getCount() < stack.getCount()) {
+            transferInterval = BUSIEST_INTERVAL;
+            transferIn = Math.min(transferIn, BUSIEST_INTERVAL);
+        }
+        return left;
+    }
+
+    /** Takes a stack from {@code from}, as far as its slots take it; whether it took anything. */
+    private boolean pull(IItemHandler from) {
         for (int source = 0; source < from.getSlots(); source++) {
             ItemStack offered = from.extractItem(source, 64, true);
             if (offered.isEmpty()) continue;
             int accepted = offered.getCount() - insert(offered, true).getCount();
             if (accepted <= 0) continue;
             insert(from.extractItem(source, accepted, false), false);
-            return;
+            return true;
         }
+        return false;
     }
 
     /** Puts {@code stack} into its slots, as far as they take it; what's left. */
@@ -249,16 +286,19 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         return left;
     }
 
-    private void push(IItemHandler into) {
+    /** Pushes what its slots hold into {@code into}, every slot, as far as it takes them; whether anything moved. */
+    private boolean push(IItemHandler into) {
+        boolean moved = false;
         for (int slot = 0; slot < SLOTS; slot++) {
             ItemStack stack = items.getStackInSlot(slot);
-            if (stack.isEmpty()) continue;
-            int moved = stack.getCount() - ItemHandlerHelper.insertItem(into, stack.copy(), false).getCount();
-            if (moved > 0) {
-                items.extractItem(slot, moved, false);
-                return;
+            if (stack.isEmpty() || com.kadikular.quantimium.recipe.EntangledLinks.isLink(stack)) continue;
+            int count = stack.getCount() - ItemHandlerHelper.insertItem(into, stack.copy(), false).getCount();
+            if (count > 0) {
+                items.extractItem(slot, count, false);
+                moved = true;
             }
         }
+        return moved;
     }
 
     /** What a pipe or hopper on {@code side} sees, or null for a face that's off. */

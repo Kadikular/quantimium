@@ -115,6 +115,31 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aCollectorExportingToAChestPassesItStraightOn(GameTestHelper helper) {
+        // A collecting Laser Port with a chest above it, its top face set to push out: what Pickup brings back goes
+        // straight into the chest, not into its own slots first.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(3, Y + 1, 8), Blocks.CHEST);
+        var configs = new java.util.ArrayList<>(collector.getSideConfigs());
+        var up = configs.get(Direction.UP.get3DDataValue());
+        configs.set(Direction.UP.get3DDataValue(), new com.kadikular.quantimium.block.entity.simulation.SideConfig(up.side(), up.itemMode(),
+                up.itemInputMask(), up.itemOutputMask(), false, true, up.fluidMode(), up.fluidInputMask(), up.fluidOutputMask(), false, false));
+        collector.applySideConfigs(configs);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            var chest = helper.getBlockEntity(new BlockPos(3, Y + 1, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+            int inChest = 0;
+            for (int i = 0; i < chest.getContainerSize(); i++) if (chest.getItem(i).is(Items.COBBLESTONE)) inChest += chest.getItem(i).getCount();
+            helper.assertValueEqual(inChest, 1, "the cobblestone went into the chest");
+            helper.assertValueEqual(count(collector, Items.COBBLESTONE), 0, "not into the port");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.lens.mount, laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void mountsInARowAddTheirLensesUp(GameTestHelper helper) {
