@@ -195,14 +195,16 @@ public final class LensAction {
         now = level.getGameTime();
         keepCursor(level);
         boolean pickup = stream.has(Lens.PICKUP) && !collectors.isEmpty();
+        // With Void, what's freed is never left lying: carried where there's room, destroyed where there isn't.
+        boolean voids = stream.has(Lens.VOID);
         int phase = Math.floorMod(key.hashCode() + (int) level.getGameTime(), LaserTuning.DAMAGE_INTERVAL);
         switch (key.action()) {
             case HARVEST -> harvest(level, networks, pickup);
-            case DAMAGE -> damage(level, networks, phase == 0, pickup);
+            case DAMAGE -> damage(level, networks, phase == 0, pickup || voids);
             case PICKUP -> {
                 // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
                 if (mirrored()) drawThread(level, networks);
-                if (phase != 0 || collectors.isEmpty()) return;
+                if (phase != 0 || collectors.isEmpty() && !voids) return;
                 // Items are small: anything within nearly a block of the beam's line counts. Each light takes
                 // only what lies on its own side.
                 for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box(), item -> item.isAlive() && onBeam(item.getBoundingBox(), 0.45)
@@ -901,6 +903,8 @@ public final class LensAction {
      * and filters that let it in. With Pickup, nothing is cut that would be left lying.
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
+        // With Void there's always room: what won't fit is destroyed.
+        if (stream.has(Lens.VOID)) return true;
         for (ItemStack drop : drops(level, pos)) {
             for (ItemStack carried : processed(level, drop)) {
                 if (!networks.roomForAll(collectors, carried)) return false;
@@ -932,12 +936,15 @@ public final class LensAction {
                 smelt = 0;
             }
             List<ItemStack> left = out;
-            if (pickup && out.stream().allMatch(stack -> networks.roomFor(collectors, stack))
+            boolean voids = stream.has(Lens.VOID);
+            if (pickup && (voids || out.stream().allMatch(stack -> networks.roomFor(collectors, stack)))
                     && networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + smelt)) {
                 left = out.stream().map(stack -> networks.collect(collectors, stack)).toList();
             } else if (smelt > 0) {
                 networks.pay(this, smelt);
             }
+            // With Void, what no port took is gone.
+            if (voids) continue;
             for (ItemStack stack : left) {
                 if (stack.isEmpty()) continue;
                 // Cut on the mirror's side, it falls there: only the mirror sees it, or can take it.
@@ -1045,8 +1052,14 @@ public final class LensAction {
         ItemStack stack = item.getItem();
         if (filtered && stream.filter() != null && !stream.filter().lets(stack)) return;
         ServerLevel level = (ServerLevel) item.level();
+        boolean voids = stream.has(Lens.VOID);
+        // Void with nowhere to carry it: destroyed where it lies, for nothing.
+        if (voids && collectors.isEmpty()) {
+            item.discard();
+            return;
+        }
         List<ItemStack> carried = processed(level, stack);
-        if (!carried.stream().allMatch(each -> networks.roomFor(collectors, each))
+        if (!voids && !carried.stream().allMatch(each -> networks.roomFor(collectors, each))
                 || !networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processCost(level, stack))) return;
         List<ItemStack> left = new ArrayList<>();
         for (ItemStack each : carried) {
@@ -1054,7 +1067,8 @@ public final class LensAction {
             if (!rest.isEmpty()) left.add(rest);
         }
         networks.workDone(this);
-        replaceWith(level, item, left);
+        // With Void, what no port had room for goes too.
+        replaceWith(level, item, voids ? List.of() : left);
     }
 
     /** {@code item} becomes {@code stacks}, where it lies: gone with none, more items with more. */

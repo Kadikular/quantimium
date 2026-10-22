@@ -51,3 +51,4 @@ navigation:
 - <ItemLink id="quantimium:unrealising_lens" />
 - <ItemLink id="quantimium:uv_lens" />
 - <ItemLink id="quantimium:veil_thread" />
+- <ItemLink id="quantimium:void_lens" />

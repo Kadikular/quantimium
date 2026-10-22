@@ -152,6 +152,7 @@ phantom_lens: "A lens: the light passes through blocks, for a little power each.
 insert_lens: "A lens: puts what Laser Ports send into the inventory the beam ends on."
 interact_lens: "A lens: uses what a Laser Port sends, or an empty hand, on what the beam ends on."
 precision_lens: "A lens: Harvest cuts with Silk Touch."
+void_lens: "A lens: what the actions free and no Laser Port takes is destroyed."
 harmonic_lens: "A lens: Harvest cuts with Fortune, Damage hits with Looting, a level each."
 smelting_lens: "A lens: what the actions before it free or move is smelted; alone, it smelts what the beam ends on."
 crushing_lens: "A lens: what the actions before it free or move is crushed; alone, it crushes what the beam ends on."

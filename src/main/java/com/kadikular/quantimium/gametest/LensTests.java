@@ -140,8 +140,40 @@ public final class LensTests {
         });
     }
 
-    // covers: laser.lens.mount, laser.lens.pickup
+    // covers: laser.lens.void
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void voidWithPickupCutsEvenWhenThePortIsFull(GameTestHelper helper) {
+        // Harvest, Pickup and Void, with the only Laser Port full: the stone is cut all the same, and its cobblestone,
+        // with nowhere to go, is destroyed rather than left lying.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.VOID_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 8));
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(9, Y, 8))).inflate(3)).isEmpty(),
+                    "nothing left lying");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.void
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void voidWithoutPickupDestroysWhatHarvestCuts(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.VOID_LENS.get());
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 8));
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(9, Y, 8))).inflate(3)).isEmpty(),
+                    "its cobblestone is gone");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.mount, laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
     public static void mountsInARowAddTheirLensesUp(GameTestHelper helper) {
         // Pickup in the first mount, Harvest in the second: Pickup before any action gathers whatever lies in the
         // beam, what Harvest cuts included.

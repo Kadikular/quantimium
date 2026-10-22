@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:quantum_attuned_glass",
+    "quantimium:anomalite_shard",
+    "minecraft:ender_pearl"
+  ],
+  "result": {
+    "id": "quantimium:void_lens",
+    "count": 1
+  }
+}

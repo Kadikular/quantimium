@@ -998,6 +998,8 @@
   "item.quantimium.uv_lens.tip": "Hides the light from anyone without a wrench or Linker.",
   "item.quantimium.amplify_lens": "Amplify Lens",
   "item.quantimium.amplify_lens.tip": "Harvest cuts harder blocks; Damage hits harder.",
+  "item.quantimium.void_lens": "Void Lens",
+  "item.quantimium.void_lens.tip": "What's freed and nothing takes is destroyed.",
   "item.quantimium.precision_lens": "Precision Lens",
   "item.quantimium.precision_lens.tip": "Harvest cuts with Silk Touch.",
   "item.quantimium.harmonic_lens": "Harmonic Lens",

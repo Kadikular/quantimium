@@ -101,6 +101,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.INSERT_LENS.get());
                         output.accept(ModItems.INTERACT_LENS.get());
                         output.accept(ModItems.PRECISION_LENS.get());
+                        output.accept(ModItems.VOID_LENS.get());
                         output.accept(ModItems.HARMONIC_LENS.get());
                         output.accept(ModItems.UNREALISING_LENS.get());
                         output.accept(ModItems.SMELTING_LENS.get());

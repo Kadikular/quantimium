@@ -298,7 +298,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     marks = withSpeeds(marks, ((marks & SPEEDS) >> SPEEDS_SHIFT) + 1);
                 }
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
-                case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
+                case PRECISION, UNREALISE, VOID -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case SMELT, CRUSH -> {
                     // Smelting and Crushing are actions of their own too: where they change no action before them, they
