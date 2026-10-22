@@ -66,7 +66,10 @@ stops it there and leaves a [[item:quantimium_trace]].
 ## Choosing what it becomes
 
 [[mechanic:unrealised.materialise]] The [[block:materialiser]] makes Matter into the ore and the form
-you choose: every form of every ore the Matter could become is on its screen, with a search box.
+you choose: every form of every ore the Matter could become is on its screen, with a search box. Use it as
+a [[block:logistics_terminal]]: click a form for a stack of it made on the spot, right-click for half,
+shift-right-click for one, shift-click for a stack into your inventory. Ctrl-click a form to have it keep
+making that into its output slots, for automation to collect (ctrl-click again to stop).
 
 - **The same count every time.** An ore's drops vary (copper ore drops two to five raw copper), so
   the Materialiser gives what one ore gives **on average, rounded down**, and that's the number on
@@ -83,7 +86,7 @@ you choose: every form of every ore the Matter could become is on its screen, wi
   4,000 FE for each Matter.
 
 [[mechanic:unrealised.on_demand]] **On demand.** With no output chosen, a Materialiser holding Matter
-offers every form it could make now (every one the band can choose) to automation: an item pipe, a
+offers every form it could make now (every one the band can choose) to automation, as its screen does: an item pipe, a
 hopper, an AE2 import bus or storage bus pulling iron plates gets iron plates, made there and then and
 paid for as usual. Each form shows as many as it could make now, as far as its Matter, Trace, FE and
 the field go. A pull for less than one Matter makes (two raw copper, when a Matter makes three) gets

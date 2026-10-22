@@ -515,8 +515,26 @@ public class MaterialiserBlockEntity extends BlockEntity
      */
     private ItemStack extractOnDemand(int index, int amount, boolean simulate) {
         List<Materialising.Option> offered = catalog();
-        if (amount <= 0 || index < 0 || index >= offered.size() || !(level instanceof ServerLevel server)) return ItemStack.EMPTY;
-        Materialising.Option option = offered.get(index);
+        if (index < 0 || index >= offered.size()) return ItemStack.EMPTY;
+        return make(offered.get(index), amount, simulate);
+    }
+
+    /**
+     * Makes {@code amount} of {@code want} for a player at its screen, chosen output or not: as many Matter as it
+     * takes, what's over going to the output slots. Nothing if the form isn't one it may make now or it can't pay.
+     */
+    public ItemStack makeFor(Materialising.Target want, int amount) {
+        if (!(level instanceof ServerLevel server)) return ItemStack.EMPTY;
+        refreshSources();
+        for (Materialising.Option option : options(server)) {
+            if (option.allowed() && want.is(option.ore(), option.display())) return make(option, amount, false);
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** As many Matter made into {@code option} as it takes to cover {@code amount}, what's over to the outputs. */
+    private ItemStack make(Materialising.Option option, int amount, boolean simulate) {
+        if (amount <= 0 || !(level instanceof ServerLevel server)) return ItemStack.EMPTY;
         PackOres.Ore ore = PackOres.byTag(option.ore());
         if (ore == null) return ItemStack.EMPTY;
         int per = option.display().getCount();

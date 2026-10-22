@@ -101,6 +101,35 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         }
     }
 
+    /**
+     * Makes {@code count} of {@code form} for {@code player}: onto the cursor (as much as it holds beside what's there,
+     * which must be the same), or into the inventory, any that won't fit going to the Materialiser's outputs.
+     */
+    public void take(Player player, com.kadikular.quantimium.unrealised.Materialising.Target form, int count, boolean toInventory) {
+        ItemStack carried = getCarried();
+        int room = count;
+        if (!toInventory) {
+            if (!carried.isEmpty() && !net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(carried.getItem()).equals(form.form())) return;
+            int max = carried.isEmpty() ? 64 : carried.getMaxStackSize();
+            room = Math.min(count, max - carried.getCount());
+        }
+        if (room <= 0) return;
+        ItemStack made = getBlockEntity().makeFor(form, room);
+        if (made.isEmpty()) return;
+        if (toInventory) {
+            player.getInventory().add(made);
+            if (!made.isEmpty()) player.drop(made, false);
+        } else if (carried.isEmpty()) {
+            setCarried(made);
+        } else if (ItemStack.isSameItemSameComponents(carried, made)) {
+            carried.grow(made.getCount());
+            setCarried(carried);
+        } else {
+            player.getInventory().add(made);
+            if (!made.isEmpty()) player.drop(made, false);
+        }
+    }
+
     public MaterialiserBlockEntity getBlockEntity() {
         return blockEntity;
     }

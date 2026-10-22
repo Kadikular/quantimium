@@ -657,6 +657,16 @@ public class Quantimium {
                 (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleMaterialiserOptions(payload))
         );
         registrar.playToServer(
+                com.kadikular.quantimium.network.MaterialiserTakePayload.TYPE,
+                com.kadikular.quantimium.network.MaterialiserTakePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.MaterialiserMenu menu
+                            && menu.getBlockEntity().getBlockPos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.take(context.player(), payload.form(), payload.count(), payload.toInventory());
+                    }
+                })
+        );
+        registrar.playToServer(
                 SetMaterialiserTargetPayload.TYPE,
                 SetMaterialiserTargetPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {

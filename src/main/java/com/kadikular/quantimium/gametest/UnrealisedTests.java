@@ -271,6 +271,15 @@ public final class UnrealisedTests {
             materialiser.setTarget(new Materialising.Target(Identifier.parse("c:ores/iron"), Identifier.parse("minecraft:raw_iron")));
             helper.assertValueEqual(materialiser.getAutomationItemHandler(Direction.DOWN).getSlots(), MaterialiserBlockEntity.TOTAL_SLOTS,
                     "no catalogue with an output chosen");
+            // A player at its screen still takes any form on the spot: one raw copper makes a whole Matter's three,
+            // one handed over and two more into the outputs beside the one waiting there.
+            ItemStack forPlayer = materialiser.makeFor(new Materialising.Target(Identifier.parse("c:ores/copper"),
+                    Identifier.parse("minecraft:raw_copper")), 1);
+            helper.assertTrue(forPlayer.is(Items.RAW_COPPER) && forPlayer.getCount() == 1, "a player's one: " + forPlayer);
+            helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.MATTER_SLOT).getCount(), 2,
+                    "another Matter used");
+            helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.OUTPUT_START).getCount(), 3,
+                    "the rest waits in the outputs");
             TestSupport.clearField(helper);
             helper.succeed();
         });

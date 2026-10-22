@@ -39,8 +39,9 @@ import java.util.Optional;
 /**
  * The Materialiser: Matter and Trace on the left; in the middle, every form of every ore the Matter
  * could become (as its history would make them), scrolled with the wheel and filtered by the search
- * box over them; results on the right. Click one to choose it, again to clear; those the band can't
- * choose yet are dimmed.
+ * box over them; results on the right. Click one for a stack of it made on the spot, right-click for half,
+ * shift-right-click for one, shift-click for a stack into the inventory, as at a Logistics Terminal; ctrl-click to
+ * keep making it into the outputs (again to stop). Those the band can't make yet are dimmed.
  */
 public class MaterialiserScreen extends QuantumMachineScreen<MaterialiserMenu> {
 
@@ -240,13 +241,22 @@ public class MaterialiserScreen extends QuantumMachineScreen<MaterialiserMenu> {
         double mouseX = event.x();
         double mouseY = event.y();
         int button = event.button();
-        if (activeOverlay() == null && button == 0) {
+        if (activeOverlay() == null && (button == 0 || button == 1)) {
             Materialising.Option picked = optionAt(shown(), mouseX, mouseY);
             if (picked != null) {
-                Optional<Materialising.Target> next = chosen(picked) ? Optional.empty()
-                        : Optional.of(new Materialising.Target(picked.ore(), BuiltInRegistries.ITEM.getKey(picked.display().getItem())));
-                target = next.orElse(null);
-                ClientPacketDistributor.sendToServer(new SetMaterialiserTargetPayload(menu.getBlockEntity().getBlockPos(), next));
+                Materialising.Target form = new Materialising.Target(picked.ore(), BuiltInRegistries.ITEM.getKey(picked.display().getItem()));
+                if (button == 0 && event.hasControlDown()) {
+                    // Ctrl-click: keep making this into the outputs, or stop.
+                    Optional<Materialising.Target> next = chosen(picked) ? Optional.empty() : Optional.of(form);
+                    target = next.orElse(null);
+                    ClientPacketDistributor.sendToServer(new SetMaterialiserTargetPayload(menu.getBlockEntity().getBlockPos(), next));
+                } else if (picked.allowed()) {
+                    // As a terminal: a stack, half (right-click), one (shift-right-click); shift-click into the inventory.
+                    int stack = picked.display().getMaxStackSize();
+                    int count = button == 1 ? (event.hasShiftDown() ? 1 : Math.max(1, stack / 2)) : stack;
+                    ClientPacketDistributor.sendToServer(new com.kadikular.quantimium.network.MaterialiserTakePayload(
+                            menu.getBlockEntity().getBlockPos(), form, count, button == 0 && event.hasShiftDown()));
+                }
                 minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
                 return true;
             }
