@@ -94,11 +94,11 @@ making that into its output slots, for automation to collect (ctrl-click again t
 
 - **The band caps the choice.** Nothing at Low, commons at Medium, uncommons at High, rares from
   Critical. Very rare ores are never choosable: only a roll turns them up.
-- **Choosing costs <ItemLink id="quantimium:anomalite_dust" />**, 4 × 1.2 × the ore's value over the average value of a roll
+- **Choosing costs <ItemLink id="quantimium:anomalite_dust" />**, 1.2 × the ore's value over the average value of a roll
   in that band (common 1, uncommon 3, rare 10), whatever the form: so choosing always costs a little more
-  than rolling would on average, and a hotter field makes it cheaper. A common at Medium is 3 dust, at
-  Critical about 0.9. Dust goes in whole; what a Matter doesn't use is kept as credit for the next. Dust
-  is renewable: crush Anomalite with a <ItemLink id="quantimium:crushing_lens" />, or break a crystal before it's grown.
+  than rolling would on average, and a hotter field makes it cheaper. A common at Medium is 0.75 dust, at
+  Critical 0.22. Dust goes in whole; what a Matter doesn't use is kept as credit for the next. Dust comes
+  from a crystal farm: a crystal broken before it's grown, or a shard crushed by a <ItemLink id="quantimium:crushing_lens" />.
 - **And flux from its own chunk**, 25 × the ore's value (25 for a common, 250 for a rare), with
   4,000 FE for each Matter.
 

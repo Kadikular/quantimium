@@ -14,7 +14,7 @@
 ### Unrealised Matter
 
 - **The Materialiser is paid in Anomalite Dust**, not Trace: renewable from a crystal farm (crush Anomalite with a
-  Crushing Lens). A common ore at Medium costs 3 dust a Matter.
+  Crushing Lens: a shard crushes into one dust). A common ore at Medium costs 0.75 dust a Matter, as Trace did.
 - **Its screen works like a terminal**: click a form for a stack made on the spot, right-click for half,
   shift-right-click for one, shift-click into the inventory; ctrl-click to keep making it into the outputs.
 

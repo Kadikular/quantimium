@@ -73,8 +73,8 @@ public final class Materialising {
         return value > 0.0 ? value : 1.0;
     }
 
-    /** Anomalite Dust it costs for each unit of an ore's value over a roll's average: dust is renewable, Trace wasn't. */
-    public static final double DUST_PER_VALUE = 4.0;
+    /** Anomalite Dust it costs for each unit of an ore's value over a roll's average (what Trace cost before). */
+    public static final double DUST_PER_VALUE = 1.0;
 
     /**
      * Anomalite Dust for choosing an ore of {@code rarity} in {@code band}, per Matter: its value over a roll's average,

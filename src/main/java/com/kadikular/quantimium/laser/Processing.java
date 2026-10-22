@@ -125,6 +125,8 @@ public final class Processing {
             }
             return null;
         }
+        // A shard crushed is one dust: the Foundry makes one dust back into one shard, so nothing's gained either way.
+        if (form.is(ModItems.ANOMALITE_SHARD.get())) return List.of(new ItemStack(ModItems.ANOMALITE_DUST.get()));
         Item plain = CRUSHED.get(form.getItem());
         if (plain != null) return List.of(new ItemStack(plain));
         for (RecipeType<?> type : crushers()) {
