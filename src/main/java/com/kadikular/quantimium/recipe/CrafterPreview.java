@@ -89,7 +89,7 @@ public final class CrafterPreview {
         @org.jetbrains.annotations.Nullable
         private java.util.Set<Item> involving;
 
-        /** Matches only the recipes naming any of {@code items}, and nothing it matches on its own (a Fabricator, Matter). */
+        /** Matches only the recipes naming any of {@code items}, and Matter if it's among them; nothing else it matches on its own (a Fabricator). */
         public Run involving(java.util.Set<Item> items) {
             involving = items;
             return this;
@@ -166,8 +166,11 @@ public final class CrafterPreview {
         }
 
         private void finish() {
-            // Unrealised Matter goes through a catalyst unrealised, the step recorded rather than applied.
-            for (ResolvedCraft craft : involving != null ? List.<ResolvedCraft>of() : MatterSteps.match(level, source, types, pool)) {
+            // Unrealised Matter goes through a catalyst unrealised, the step recorded rather than applied. No recipe names
+            // it, so a run looking only at what's new looks at Matter whenever Matter is new: Matter pulverised on the
+            // network, say, which a furnace can then smelt.
+            boolean matter = involving == null || involving.contains(com.kadikular.quantimium.init.ModItems.UNREALISED_MATTER.get());
+            for (ResolvedCraft craft : !matter ? List.<ResolvedCraft>of() : MatterSteps.match(level, source, types, pool)) {
                 found.putIfAbsent(craft.recipeId(), priced(craft, pool, availableFe, feMultiplier));
             }
             List<ResolvedCraft> all = new ArrayList<>(found.values());

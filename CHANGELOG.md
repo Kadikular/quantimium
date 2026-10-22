@@ -54,6 +54,8 @@ Anomalite Dust instead (the Trace stays in its slot until taken out).
   frees. Actions after a Pickup no longer get it.
 - The terminal shows an item's full tooltip.
 - The stash and logistics keys say nothing to a player with no doubles.
+- Unrealised Matter processed on a logistics network (pulverised, say) is offered to the network's other Crafters
+  (smelted by a furnace Crafter), as it is when it's in a Crafter's own grid.
 - Side configuration names a neighbour as picking it would: Sophisticated Storage's chests no longer show as
   `%s%sGold Chest`.
 - Drops other mods hand out in the mirror (Ultimine, Apotheosis) can be picked up there.

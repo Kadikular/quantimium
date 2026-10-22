@@ -1475,6 +1475,37 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: unrealised.history, laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_pulverised_matter", timeoutTicks = 300)
+    public static void matterPulverisedOnTheNetworkIsSmeltable(GameTestHelper helper) {
+        // A furnace Crafter drawing on and offering to a network, its crafts already matched. Pulverised Matter put in
+        // storage afterwards is new to it: it's offered smelted, as it is when the Matter is in the Crafter's grid.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 8));
+        crafterOn(helper, 6, Items.FURNACE, true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        var pulverised = new com.kadikular.quantimium.unrealised.MatterHistory(List.of(net.minecraft.resources.Identifier.parse("energizedpower:pulverizer")));
+        helper.runAfterDelay(80, () -> {
+            settled(controller::offers);
+            var chest = helper.getBlockEntity(new BlockPos(4, Y - 1, 8), net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+            chest.setItem(5, pulverised.applyTo(new ItemStack(ModItems.UNREALISED_MATTER.get(), 4)));
+        });
+        helper.runAfterDelay(240, () -> {
+            var offers = settled(controller::offers);
+            boolean smelted = offers.entries().stream().anyMatch(entry -> entry.item().getItem() == ModItems.UNREALISED_MATTER.get()
+                    && entry.craftable() > 0);
+            helper.assertTrue(smelted, "pulverised Matter offered smelted: " + offers.entries().stream()
+                    .filter(entry -> entry.item().getItem() == ModItems.UNREALISED_MATTER.get()).toList());
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.provider, unrealised.on_demand
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_materialiser_provider", timeoutTicks = 200)
     public static void aMaterialiserBehindAProviderOffersWhatItMakes(GameTestHelper helper) {
