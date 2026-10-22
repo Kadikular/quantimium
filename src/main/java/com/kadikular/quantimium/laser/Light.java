@@ -111,6 +111,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             this(action, modifiers, payers, amps, filter, speed, hits ? 1 : 0, fortune, List.of(), false);
         }
 
+        /** Changed by a Void lens set to void everything it frees, not only what nothing has room for. */
+        public boolean voidsAll() {
+            return has(Lens.VOID) && (interact & LensUse.VOID_ALL) != 0;
+        }
+
         /** An Interact lens set to hit (a left click), not use. */
         public boolean hits() {
             return (interact & LensUse.HITS) != 0;
@@ -312,7 +317,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     marks = withSpeeds(marks, ((marks & SPEEDS) >> SPEEDS_SHIFT) + 1);
                 }
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
-                case PRECISION, UNREALISE, VOID -> streams.replaceAll((action, stream) ->
+                // A Void lens set to void all marks the streams it changes so.
+                case VOID -> streams.replaceAll((action, stream) -> new Stream(stream.action(), stream.modifiers() | 1 << Lens.VOID.ordinal(),
+                        stream.payers(), stream.amps(), stream.filter(), stream.speed(), stream.interact() | use.interact() & LensUse.VOID_ALL,
+                        stream.fortune(), stream.steps(), stream.inWorld()));
+                case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case SMELT, CRUSH -> {
                     // Smelting and Crushing are actions of their own too: where they change no action before them, they

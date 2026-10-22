@@ -29,11 +29,11 @@ Anomalite Dust instead (the Trace stays in its slot until taken out).
   each Speed lens up to 16x, 500 FE for each extra tick. Each machine's extra ticks keep to 100 µs a tick and all of them
   to 5,000 µs; Jade says how fast a machine is going and when the budget held it back. All configurable, with a
   `quantimium:not_accelerated` block tag.
-- **Void Lens**: what the actions before it free and nothing takes is destroyed (with Pickup, only what the Laser
-  Ports have no room for).
+- **Void Lens**: destroys what the actions before it free. Void excess (with Pickup, only what the Laser Ports or
+  network have no room for) or void all (everything freed or picked up), set on its settings screen.
 - **Interact Lens**: set to hit, it mines the block the beam ends on with its tool (wearing it) when nothing living is
-  there. A second setting (sneak and use it in the air) picks blocks, living things or both. A tool bound to an
-  Entangled Dock is charged from it as the lens uses it.
+  there. A second setting picks blocks, living things or both; both are set on a settings screen (use it in the air,
+  or its button in a mount). A tool bound to an Entangled Dock is charged from it as the lens uses it.
 - **Laser Ports export faster while busy**, and pass what they collect straight into the inventories they export to.
 
 ### Partner mods

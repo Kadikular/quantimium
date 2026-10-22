@@ -160,6 +160,27 @@ public final class LensTests {
 
     // covers: laser.lens.void
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void voidAllDestroysEvenWhatAPortHasRoomFor(GameTestHelper helper) {
+        // Harvest, Pickup and a Void lens set to void all, an empty Laser Port up the beam: the stone is cut, and its
+        // cobblestone goes nowhere, not even into the port.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        ItemStack lens = new ItemStack(ModItems.VOID_LENS.get());
+        com.kadikular.quantimium.item.VoidLensItem.toggle(lens);
+        mount.getLensSlots().setStackInSlot(2, lens);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 8));
+            helper.assertValueEqual(count(collector, Items.COBBLESTONE), 0, "nothing in the port");
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(9, Y, 8))).inflate(3)).isEmpty(),
+                    "nothing left lying");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.void
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void voidWithoutPickupDestroysWhatHarvestCuts(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.VOID_LENS.get());

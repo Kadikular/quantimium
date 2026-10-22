@@ -42,6 +42,11 @@ public final class ModDataComponents {
             COMPONENTS.registerComponentType("interact_hits",
                     builder -> builder.persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
 
+    /** A Void lens set to void everything its light frees, not only what nothing has room for. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> VOID_ALL =
+            COMPONENTS.registerComponentType("void_all",
+                    builder -> builder.persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
+
     /** What an Interact lens works on: 0 blocks and living things, 1 blocks only, 2 living things only. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> INTERACT_TARGETS =
             COMPONENTS.registerComponentType("interact_targets",

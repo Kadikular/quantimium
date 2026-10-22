@@ -1016,6 +1016,8 @@ public final class LensAction {
             }
             List<ItemStack> left = out;
             boolean voids = stream.has(Lens.VOID);
+            // Voiding all, nothing is carried: it's all gone.
+            if (stream.voidsAll()) continue;
             if (pickup && (voids || out.stream().allMatch(stack -> networks.roomFor(collectors, stack)))
                     && networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + smelt)) {
                 left = out.stream().map(stack -> networks.collect(collectors, stack)).toList();
@@ -1132,8 +1134,8 @@ public final class LensAction {
         if (filtered && stream.filter() != null && !stream.filter().lets(stack)) return;
         ServerLevel level = (ServerLevel) item.level();
         boolean voids = stream.has(Lens.VOID);
-        // Void with nowhere to carry it: destroyed where it lies, for nothing.
-        if (voids && collectors.isEmpty()) {
+        // Voiding all, or Void with nowhere to carry it: destroyed where it lies, for nothing.
+        if (stream.voidsAll() || voids && collectors.isEmpty()) {
             item.discard();
             return;
         }

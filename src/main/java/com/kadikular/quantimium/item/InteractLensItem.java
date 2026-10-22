@@ -16,9 +16,9 @@ import java.util.function.Consumer;
 
 /**
  * An Interact lens: set to use (a right click) or to hit, and to work on blocks, living things or both. Use it in the
- * air (or its button in a mount) to switch use and hit; sneak and use it to switch what it works on.
+ * air, or its button in a mount, to set it.
  */
-public class InteractLensItem extends LensItem {
+public class InteractLensItem extends LensItem implements LensWithSettings {
 
     public InteractLensItem(Properties properties) {
         super(properties, Lens.INTERACT);
@@ -58,18 +58,20 @@ public class InteractLensItem extends LensItem {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        if (!level.isClientSide()) {
-            ItemStack stack = player.getItemInHand(hand);
-            if (player.isShiftKeyDown()) {
-                cycleTargets(stack);
-                player.sendOverlayMessage(targetsLine(stack));
-            } else {
-                boolean hits = toggle(stack);
-                player.sendOverlayMessage(Component.translatable(hits ? "item.quantimium.interact_lens.hits" : "item.quantimium.interact_lens.uses")
-                        .withStyle(ChatFormatting.AQUA));
-            }
-        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) com.kadikular.quantimium.menu.LensHolder.openInHand(server, hand);
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu menu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+                                                                    com.kadikular.quantimium.menu.LensHolder holder) {
+        return new com.kadikular.quantimium.menu.LensSettingsMenu(containerId, inventory, holder);
+    }
+
+    /** What its settings say, a line each: use or hit, and on what. */
+    public static java.util.List<Component> describe(ItemStack stack) {
+        return java.util.List.of(Component.translatable(hits(stack) ? "item.quantimium.interact_lens.hits" : "item.quantimium.interact_lens.uses")
+                .withStyle(ChatFormatting.AQUA), targetsLine(stack));
     }
 
     @Override

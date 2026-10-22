@@ -509,7 +509,17 @@ def logistics_terminal_crafting() -> Panel:
     return panel
 
 
+def lens_settings() -> Panel:
+    """A lens's few switches (LensSettingsScreen): the switches on the left rail, what they're set to written on the
+    panel in a well under the title."""
+    panel = Panel(HIGH, height=64)
+    panel.well(7, 18, 162, 38)
+    panel.region("text", (10, 21, 156, 32))
+    return panel
+
+
 PANELS = {
+    "lens_settings": lens_settings,
     "relay_emitter": relay_emitter,
     "quantum_crafter": lambda: crafter(MID, basic=False),
     "basic_quantum_crafter": lambda: crafter(LOW, basic=True),

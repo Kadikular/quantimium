@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 public record LensUse(Lens lens, @Nullable LensFilter filter, int interact, @Nullable IsolatorSettings isolator) {
     /** An Interact lens set to hit (a left click). */
     public static final int HITS = 1;
+    /** A Void lens set to void everything, not only what nothing has room for: carried on the streams it changes. */
+    public static final int VOID_ALL = 1 << 3;
     /** What an Interact lens works on: both blocks and what's living, blocks only, or living things only. */
     public static final int BOTH = 0, BLOCKS = 1, ENTITIES = 2;
 
@@ -39,9 +41,11 @@ public record LensUse(Lens lens, @Nullable LensFilter filter, int interact, @Nul
 
     /** What the lens in {@code stack} does, with its settings. */
     public static LensUse of(net.minecraft.world.item.ItemStack stack, Lens lens) {
-        return new LensUse(lens, stack.get(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get()),
-                pack(Boolean.TRUE.equals(stack.get(com.kadikular.quantimium.init.ModDataComponents.INTERACT_HITS.get())),
-                        com.kadikular.quantimium.item.InteractLensItem.targets(stack)),
+        int settings = lens == Lens.VOID
+                ? (com.kadikular.quantimium.item.VoidLensItem.voidsAll(stack) ? VOID_ALL : 0)
+                : pack(Boolean.TRUE.equals(stack.get(com.kadikular.quantimium.init.ModDataComponents.INTERACT_HITS.get())),
+                        com.kadikular.quantimium.item.InteractLensItem.targets(stack));
+        return new LensUse(lens, stack.get(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get()), settings,
                 stack.get(com.kadikular.quantimium.init.ModDataComponents.ISOLATOR.get()));
     }
 }
