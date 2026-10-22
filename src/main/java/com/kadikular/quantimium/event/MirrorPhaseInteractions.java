@@ -261,10 +261,45 @@ public final class MirrorPhaseInteractions {
         if (fromPhased || mirrorMite) event.setCanceled(true);
     }
 
+    /**
+     * The tick each phased player last broke a block or killed something in the mirror. Another mod handing out
+     * drops its own way (Ultimine gathering them, Apotheosis's gems) spawns them that tick: those near the player
+     * are theirs to pick up, as the mirror's own drops are. Server thread only.
+     */
+    private static final java.util.Map<java.util.UUID, Long> MIRROR_ACTED = new java.util.HashMap<>();
+    /** How near a phased player another mod's drops must appear to be theirs (Ultimine reaches a long way). */
+    private static final double ACTED_REACH = 24.0;
+
+    @SubscribeEvent
+    public static void onMirrorBreak(net.neoforged.neoforge.event.level.block.BreakBlockEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer player && MirrorPhase.isPhased(player)) {
+            MIRROR_ACTED.put(player.getUUID(), player.level().getGameTime());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMirrorKill(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getSource().getEntity() instanceof ServerPlayer player && MirrorPhase.isPhased(player)) {
+            MIRROR_ACTED.put(player.getUUID(), player.level().getGameTime());
+        }
+    }
+
     /** Fired arrows, tridents, and similar keep a mirror tag even if the owner is cleared later. */
     @SubscribeEvent
     public static void onProjectileJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide()) return;
+        if (event.getEntity() instanceof ItemEntity item && !MIRROR_ACTED.isEmpty() && !mirrorOnly(item)
+                && !item.getPersistentData().getBooleanOr(MIRROR_DROP, false)) {
+            long now = event.getLevel().getGameTime();
+            MIRROR_ACTED.values().removeIf(tick -> now - tick > 1);
+            for (Player player : event.getLevel().players()) {
+                Long acted = MIRROR_ACTED.get(player.getUUID());
+                if (acted != null && player instanceof ServerPlayer server && player.distanceToSqr(item) <= ACTED_REACH * ACTED_REACH) {
+                    markMirrorDrop(item, server);
+                    break;
+                }
+            }
+        }
         if (event.getEntity() instanceof Projectile projectile && isPhasedPlayer(projectile.getOwner())) {
             projectile.getPersistentData().putBoolean(MIRROR_SHOT, true);
         }
