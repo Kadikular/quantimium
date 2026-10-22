@@ -21,7 +21,7 @@ import java.util.Optional;
  */
 final class GuaranteedOutputs {
 
-    private static final List<String> INNER = List.of("output", "stack", "item", "result", "ingredient", "value");
+    private static final List<String> INNER = List.of("output", "stack", "item", "result", "ingredient", "value", "template");
 
     private GuaranteedOutputs() {}
 

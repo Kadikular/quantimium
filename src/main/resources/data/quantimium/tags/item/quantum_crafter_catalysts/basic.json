@@ -42,6 +42,10 @@
     {
       "id": "ironfurnaces:netherite_furnace",
       "required": false
+    },
+    {
+      "id": "ftbic:iron_furnace",
+      "required": false
     }
   ]
 }

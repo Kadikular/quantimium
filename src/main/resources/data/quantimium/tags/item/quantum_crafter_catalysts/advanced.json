@@ -291,6 +291,42 @@
     {
       "id": "powah:energizing_orb",
       "required": false
+    },
+    {
+      "id": "ftbic:macerator",
+      "required": false
+    },
+    {
+      "id": "ftbic:compressor",
+      "required": false
+    },
+    {
+      "id": "ftbic:extruder",
+      "required": false
+    },
+    {
+      "id": "ftbic:roller",
+      "required": false
+    },
+    {
+      "id": "ftbic:canning_machine",
+      "required": false
+    },
+    {
+      "id": "ftbic:centrifuge",
+      "required": false
+    },
+    {
+      "id": "ftbic:alloy_smelter",
+      "required": false
+    },
+    {
+      "id": "ftbic:powered_furnace",
+      "required": false
+    },
+    {
+      "id": "ftbic:reprocessor",
+      "required": false
     }
   ]
 }

@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "ftbic:canning"
+  ],
+  "catalysts": [
+    "ftbic:canning_machine",
+    "ftbic:advanced_canning_machine"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "outputs"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

@@ -112,7 +112,7 @@ development setup.
 
 ## More machines
 
-The machines of the mods All the Mods 11 plays with are
+The machines of the mods All the Mods 11 and FTB Evolution 2 play with are
 catalysts for the Quantum Crafter, the ME Superposition Crafter and the Reactor, read through recipe
 adapters. Only what a recipe always gives is made; chances are left out, and a recipe that only might
 give anything isn't offered.
@@ -129,6 +129,9 @@ give anything isn't offered.
 | Mystical Agriculture | Infusion Altar, Awakening Altar | industrial |
 | Iron Furnaces | the furnaces, copper to netherite | basic |
 | Iron Furnaces | Allthemodium, Vibranium and Unobtainium furnaces | advanced |
+| FTB Industrial Contraptions | Iron Furnace | basic |
+| FTB Industrial Contraptions | Macerator, Compressor, Extruder, Roller, Canning Machine, Centrifuge, Alloy Smelter, Reprocessor, Powered Furnace | advanced |
+| FTB Industrial Contraptions | their Advanced versions | industrial |
 
 **Productive Bees hives in the Simulator.** An advanced beehive,
 expansion box and all, can be simulated, but only with a **Simulator Upgrade** (or Productivity III
@@ -142,7 +145,9 @@ Left out on purpose:
 - the **Soul Binder** and **Soul Extractor**, which work with mobs' souls rather than items;
 - the **Painting Machine**, the **Plant Growth Chamber** and the **Bottler**, which need a paint
   source, soil and water, or fluids;
-- the **Energizer**, until its recipes are checked.
+- the **Energizer**, until its recipes are checked;
+- FTB Industrial Contraptions' **Ore Washer** (it needs water), the **Hydroponic Accelerator** and the
+  **Antimatter Constructor**.
 
 ## Jade
 

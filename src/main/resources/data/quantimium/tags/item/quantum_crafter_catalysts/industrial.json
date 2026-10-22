@@ -67,6 +67,34 @@
     {
       "id": "mysticalagriculture:awakening_altar",
       "required": false
+    },
+    {
+      "id": "ftbic:advanced_macerator",
+      "required": false
+    },
+    {
+      "id": "ftbic:advanced_compressor",
+      "required": false
+    },
+    {
+      "id": "ftbic:advanced_extruder",
+      "required": false
+    },
+    {
+      "id": "ftbic:advanced_roller",
+      "required": false
+    },
+    {
+      "id": "ftbic:advanced_canning_machine",
+      "required": false
+    },
+    {
+      "id": "ftbic:advanced_centrifuge",
+      "required": false
+    },
+    {
+      "id": "ftbic:advanced_powered_furnace",
+      "required": false
     }
   ]
 }

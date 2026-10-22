@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "ftbic:extruding"
+  ],
+  "catalysts": [
+    "ftbic:extruder",
+    "ftbic:advanced_extruder"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "outputs"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

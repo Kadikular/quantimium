@@ -148,9 +148,9 @@ public final class CatalystResolver {
 
         addMekanismTypes(itemId, blockId, blockPath, itemPath, types);
 
-        // MI electric furnace also does vanilla smelting.
+        // MI's electric furnace, and FTB Industrial Contraptions' powered and iron furnaces, do vanilla smelting.
         if (blockPath.contains("furnace") && !blockPath.contains("blast")
-                && itemId.getNamespace().equals("modern_industrialization")) {
+                && (itemId.getNamespace().equals("modern_industrialization") || itemId.getNamespace().equals("ftbic"))) {
             types.add(RecipeType.SMELTING);
         }
 

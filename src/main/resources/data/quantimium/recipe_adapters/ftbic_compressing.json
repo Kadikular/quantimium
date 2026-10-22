@@ -1,0 +1,20 @@
+{
+  "recipe_types": [
+    "ftbic:compressing"
+  ],
+  "catalysts": [
+    "ftbic:compressor",
+    "ftbic:advanced_compressor"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "outputs"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

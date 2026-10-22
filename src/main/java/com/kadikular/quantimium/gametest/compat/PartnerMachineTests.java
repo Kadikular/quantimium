@@ -64,6 +64,26 @@ public final class PartnerMachineTests {
     }
 
     // covers: compat.partner_machines
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_ftbic", timeoutTicks = 40)
+    public static void ftbIndustrialContraptionsMachines(GameTestHelper helper) {
+        if (skip(helper, "ftbic")) return;
+        makes(helper, "ftbic:macerator", "ftbic:mixed_metal_blend");
+        makes(helper, "ftbic:advanced_macerator", "ftbic:mixed_metal_blend");
+        makes(helper, "ftbic:compressor", "minecraft:blaze_rod");
+        makes(helper, "ftbic:centrifuge", "minecraft:magenta_dye");
+        makes(helper, "ftbic:alloy_smelter", "ftbic:advanced_alloy");
+        makes(helper, "ftbic:powered_furnace", "minecraft:glass");
+        makes(helper, "ftbic:iron_furnace", "minecraft:glass");
+        // Only what a macerator surely gives counts: resin that only might come off a log isn't offered.
+        helper.assertTrue(shapes(helper, "ftbic:macerator").stream().noneMatch(s -> s.id().getPath().endsWith("sticky_resin_from_log")),
+                "resin only might come off a log");
+        // Each machine its own recipes: a macerator doesn't compress.
+        helper.assertTrue(shapes(helper, "ftbic:macerator").stream().noneMatch(s -> s.id().getPath().startsWith("compressing/")),
+                "a macerator doesn't compress");
+        helper.succeed();
+    }
+
+    // covers: compat.partner_machines
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_others", timeoutTicks = 40)
     public static void powahBeesAndMysticalAgriculture(GameTestHelper helper) {
         if (ModList.get().isLoaded("powah")) makes(helper, "powah:energizing_orb", "powah:crystal_blazing");

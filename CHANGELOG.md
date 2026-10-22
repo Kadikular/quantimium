@@ -11,6 +11,12 @@
 - **Machines no longer leak FE in anomaly.** The passive drain is gone (and its `passiveDrain…` config): what feeds on
   a hot base's machines is the Anomalite crystals that grow on them.
 
+### Partner mods
+
+- **FTB Industrial Contraptions**: its Macerator, Compressor, Extruder, Roller, Canning Machine, Centrifuge, Alloy
+  Smelter, Reprocessor and furnaces (and their Advanced versions) are catalysts for the Quantum Crafter, the ME
+  Superposition Crafter and the Reactor.
+
 ### Fixes
 
 - Craft placeholders in the terminal's grid no longer vanish from the screen while still being used.

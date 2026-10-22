@@ -1,0 +1,19 @@
+{
+  "recipe_types": [
+    "ftbic:reprocessing"
+  ],
+  "catalysts": [
+    "ftbic:reprocessor"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "inputs"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "outputs"
+  ],
+  "energy": {
+    "flat": 2000
+  }
+}

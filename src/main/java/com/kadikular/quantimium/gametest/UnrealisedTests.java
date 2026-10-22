@@ -117,13 +117,16 @@ public final class UnrealisedTests {
                     new MatterHistory(List.of(smelting)), iron);
             helper.assertTrue(forms.stream().anyMatch(form -> form.item().is(Items.RAW_IRON))
                     && forms.stream().anyMatch(form -> form.item().is(Items.IRON_INGOT)), "smelted iron Matter is raw iron or an ingot: " + forms);
-            helper.assertTrue(!MatterSteps.lastStepAdds(helper.getLevel(), helper.absolutePos(BlockPos.ZERO),
-                    new MatterHistory(List.of(smelting, smelting))), "smelting twice gives no ore a new form");
+            // A second smelting is offered only where some ore has a form for it: in plain Minecraft none does; with
+            // FTB Industrial Contraptions an iron ingot smelts again into Industrial Grade Metal.
+            boolean secondSmelt = MatterSteps.lastStepAdds(helper.getLevel(), helper.absolutePos(BlockPos.ZERO),
+                    new MatterHistory(List.of(smelting, smelting)));
+            helper.assertValueEqual(secondSmelt, net.neoforged.fml.ModList.get().isLoaded("ftbic"), "a second smelting gives an ore a new form");
 
-            // Put back, smelted Matter isn't offered another smelting.
+            // Put back, smelted Matter is offered another smelting just when that step gives something.
             crafter.getInventory().setStackInSlot(0, taken);
             helper.runAfterDelay(5, () -> {
-                helper.assertTrue(matterCraft(crafter) == null, "a step no ore can take is not offered");
+                helper.assertValueEqual(matterCraft(crafter) != null, secondSmelt, "a step no ore can take is not offered");
                 helper.succeed();
             });
         });
