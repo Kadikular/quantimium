@@ -75,4 +75,16 @@ public record IsolatorSettings(boolean logistics, boolean actions, boolean modif
     public IsolatorSettings withAllow(boolean on) {
         return new IsolatorSettings(logistics, actions, modifiers, lenses, on);
     }
+
+    /** By value: an {@link ItemStack} only equals itself (see {@link LensFilter#equals}). */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof IsolatorSettings that && logistics == that.logistics && actions == that.actions
+                && modifiers == that.modifiers && allow == that.allow && ItemStack.listMatches(lenses, that.lenses);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(logistics, actions, modifiers, allow, ItemStack.hashStackList(lenses));
+    }
 }

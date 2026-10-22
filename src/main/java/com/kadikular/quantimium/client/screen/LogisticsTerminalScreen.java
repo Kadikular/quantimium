@@ -372,8 +372,8 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         }
         LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
         if (cell == null) return;
-        List<Component> lines = new ArrayList<>();
-        lines.add(cell.item().toStack(1).getHoverName());
+        // The item's own tooltip, as in a chest (enchantments, a filter's settings, a mod's lines), then the counts.
+        List<Component> lines = new ArrayList<>(getTooltipFromItem(minecraft, cell.item().toStack(1)));
         lines.add(Component.translatable("gui.quantimium.logistics_terminal.count", String.format(Locale.ROOT, "%,d", cell.count())).withStyle(ChatFormatting.GRAY));
         if (cell.craftable() > 0) {
             lines.add(Component.translatable("gui.quantimium.logistics_terminal.craftable", String.format(Locale.ROOT, "%,d", cell.craftable()))

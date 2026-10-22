@@ -543,14 +543,15 @@ public class Quantimium {
                 com.kadikular.quantimium.network.OpenLogisticsPayload.TYPE,
                 com.kadikular.quantimium.network.OpenLogisticsPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
-                    if (context.player() instanceof ServerPlayer player) Superposition.openLogistics(player);
+                    // The key does nothing for a player with no doubles: it may be bound for another mod too.
+                    if (context.player() instanceof ServerPlayer player && Superposition.hasDoubles(player)) Superposition.openLogistics(player);
                 })
         );
         registrar.playToServer(
                 OpenStashPayload.TYPE,
                 OpenStashPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
-                    if (context.player() instanceof ServerPlayer player) Superposition.openStash(player);
+                    if (context.player() instanceof ServerPlayer player && Superposition.hasDoubles(player)) Superposition.openStash(player);
                 })
         );
         registrar.playToClient(

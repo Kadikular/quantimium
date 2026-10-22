@@ -380,6 +380,11 @@ public final class Superposition {
         PacketDistributor.sendToPlayer(player, view(player, pod));
     }
 
+    /** Whether {@code player} has any doubles: until then the stash and logistics keys say nothing. */
+    public static boolean hasDoubles(ServerPlayer player) {
+        return SophonRegistry.get(player.level().getServer()).count(player.getUUID()) > 0;
+    }
+
     // ---- the stash ----
 
     /**

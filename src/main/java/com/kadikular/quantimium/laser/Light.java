@@ -247,7 +247,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
      * The light after a mount's lenses. An action lens gives the light that action, paid for by every
      * source feeding it here (a stream it had for that action is replaced, keeping its modifiers). A
      * modifier changes every stream there, the mount's own actions included: Filter sets what they act on, Amplify strengthens
-     * them. Pickup goes on every stream there and every one added after, and gathers of its own; Range
+     * them. Pickup after an action picks up what it frees; before any, it gathers what lies in the beam; Range
      * doubles the reach; UV hides the light from here on.
      */
     public Light through(List<LensUse> lenses) {
@@ -261,16 +261,20 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             Lens lens = use.lens();
             if (lens.action) {
                 Stream had = streams.get(lens);
-                // Pickup is the exception to order: an action added after it gets it too.
-                int pickup = streams.containsKey(Lens.PICKUP) ? 1 << Lens.PICKUP.ordinal() : 0;
-                streams.put(lens, new Stream(lens, (had == null ? 0 : had.modifiers()) | pickup, feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
+                streams.put(lens, new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
                         had == null ? 0 : had.speed(), use.hits(), had == null ? 0 : had.fortune(), had == null ? List.of() : had.steps(), false));
             } else switch (lens) {
                 case PICKUP -> {
-                    streams.replaceAll((action, stream) -> stream.with(stream.modifiers() | 1 << Lens.PICKUP.ordinal(), stream.amps(), stream.filter()));
-                    // Pickup is an action of its own too: gathering what lies in the beam.
-                    Stream had = streams.get(Lens.PICKUP);
-                    streams.put(Lens.PICKUP, new Stream(Lens.PICKUP, 1 << Lens.PICKUP.ordinal(), feeders, 0, had == null ? null : had.filter()));
+                    // After an action (Harvest, Damage...): it picks up what that action frees, and the action waits
+                    // while there's nowhere to put it. Otherwise it's an action of its own: gathering whatever lies in
+                    // the beam, beside any action that comes after (which doesn't get it).
+                    if (streams.keySet().stream().anyMatch(action -> action != Lens.PICKUP)) {
+                        streams.replaceAll((action, stream) -> action == Lens.PICKUP ? stream
+                                : stream.with(stream.modifiers() | 1 << Lens.PICKUP.ordinal(), stream.amps(), stream.filter()));
+                    } else {
+                        Stream had = streams.get(Lens.PICKUP);
+                        streams.put(Lens.PICKUP, new Stream(Lens.PICKUP, 1 << Lens.PICKUP.ordinal(), feeders, 0, had == null ? null : had.filter()));
+                    }
                 }
                 case RANGE -> boosts = Math.min(LaserTuning.RANGE_LENSES, boosts + 1);
                 case UV -> marks |= UV;

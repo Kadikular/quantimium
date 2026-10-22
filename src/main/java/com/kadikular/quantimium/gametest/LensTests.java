@@ -118,8 +118,8 @@ public final class LensTests {
     // covers: laser.lens.mount, laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void mountsInARowAddTheirLensesUp(GameTestHelper helper) {
-        // Pickup in the first mount, Harvest in the second: the light leaving the second does both. Pickup,
-        // unlike other modifiers, goes on actions added after it too.
+        // Pickup in the first mount, Harvest in the second: Pickup before any action gathers whatever lies in the
+        // beam, what Harvest cuts included.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
@@ -499,7 +499,7 @@ public final class LensTests {
     // covers: laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void pickupBeforeDamageStillGathersItsDrops(GameTestHelper helper) {
-        // Pickup stays on the light: Damage added after it gets it too.
+        // Pickup before Damage gathers whatever lies in the beam: the drops too.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.DAMAGE_LENS.get());
@@ -833,6 +833,58 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
+    }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void pickupBeforeHarvestGathersWhatElseLiesInTheBeam(GameTestHelper helper) {
+        // Pickup, then Harvest, in one mount: a tree farm's leaves decaying in the beam. The Pickup before Harvest
+        // gathers what lies there (the flower) as well as what Harvest cuts.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.HARVEST_LENS.get());
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.STONE);
+        var flower = helper.spawnItem(Items.POPPY, new net.minecraft.world.phys.Vec3(8.5, Y + 0.2, 8.5));
+        flower.setNoPickUpDelay();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(count(collector, Items.COBBLESTONE) > 0, "the cut stone came back");
+            helper.assertValueEqual(count(collector, Items.POPPY), 1, "and the flower");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.isolator, laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anIsolatorLensStopsALaserPortBeyondIt(GameTestHelper helper) {
+        // A Laser Port, then a mount with an unset Isolator Lens, then Harvest with Pickup: what's cut can't go back
+        // past the Isolator to the port (with no port to carry it to, Harvest drops it where it was cut).
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.ISOLATOR_LENS.get());
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(count(collector, Items.COBBLESTONE), 0, "nothing came back past it");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 20)
+    public static void filterLensesSetAlikeAreTheSameItem(GameTestHelper helper) {
+        // Two Filter Lenses set to the same items, each made apart (as one sent to a client and back is): the same
+        // item, so they stack and a network finds one when asked for the other.
+        java.util.function.Supplier<ItemStack> make = () -> {
+            ItemStack lens = new ItemStack(ModItems.FILTER_LENS.get());
+            lens.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(),
+                    com.kadikular.quantimium.laser.LensFilter.items(java.util.List.of(new ItemStack(Items.DIAMOND), new ItemStack(Items.STONE)), true));
+            return lens;
+        };
+        helper.assertTrue(ItemStack.isSameItemSameComponents(make.get(), make.get()), "they stack");
+        helper.assertTrue(net.neoforged.neoforge.transfer.item.ItemResource.of(make.get()).equals(net.neoforged.neoforge.transfer.item.ItemResource.of(make.get())),
+                "one is found for the other");
+        helper.succeed();
     }
 
     // covers: laser.lens.place, laser.lens.filter

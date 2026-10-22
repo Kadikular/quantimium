@@ -92,7 +92,7 @@ some other way. An emitter switched off by redstone gives out none.
 
 [[mechanic:laser.isolator]] An [[block:isolator]] passes light on as a relay does, but lets only power
 through: light leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through
-it, so Pickup's items stop short of it. It's a plain block: sneak-click or wrench a face to add an output
+it, so Pickup's items stop short of it (an [[item:isolator_lens]] not set to pass actions stops them too). It's a plain block: sneak-click or wrench a face to add an output
 there or take one away (one always stays), and use an empty hand to step through how it listens to
 redstone.
 
@@ -198,15 +198,21 @@ any. Each lensed beam is tinted by what it does.
 both work. An action stays on the light until the beam ends. [[mechanic:laser.lens.order]] **Modifiers**
 change the actions the light already carries when it meets them: those in slots to their left, and those
 from mounts before. Never one that comes after: Harvest then Filter cuts only what the filter lets, Filter
-then Harvest cuts anything. Pickup is the exception: it stays on the light, and actions added after it get
-it too, so Pickup then Harvest brings back what it cuts as Harvest then Pickup does (and waits when there's
-no room).
+then Harvest cuts anything. Pickup works by the same rule, two ways:
+
+| Where Pickup is | What it does |
+|---|---|
+| After an action (Harvest then Pickup, in one mount or a later one) | Brings back what that action frees, and the action waits while there's nowhere to put it |
+| Before any action (Pickup then Harvest), or alone | Gathers whatever lies in the beam: what Harvest cuts, leaves decaying, anything dropped there |
+
+Both on one beam (Pickup, Harvest, Pickup) do both: a tree farm's logs come back as they're cut, and its leaves
+as they fall.
 
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
 | [[item:harvest_lens]] | Action | [[mechanic:laser.lens.harvest]] Cuts the block the beam ends on, or one light passes through just before it (a crop on farmland, grass), as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every {{c:LaserTuning.HARVEST_COOLDOWN|s}} at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | {{c:LaserTuning.HARVEST_FE_PER_HARDNESS}} FE for each point of hardness, as it cuts |
 | [[item:damage_lens]] | Action | [[mechanic:laser.lens.damage]] Hurts anything living that stands in the beam, players included, every {{c:LaserTuning.DAMAGE_INTERVAL|s}}. It charges up for its hits while there's something to hit, over as many ticks as it takes, and keeps what it's charged. With Pickup, what it kills drops straight back up the beam. | {{c:LaserTuning.DAMAGE_FE_PER_HIT}} FE a hit, charged as it goes |
-| [[item:pickup_lens]] | Modifier, and an action of its own | [[mechanic:laser.lens.pickup]] What the light's actions free goes back up it; alone, so do items lying within about a block of the beam. It all goes to the nearest collecting Laser Port; what that one can't take goes to the next. Back past a cavity, it reaches the ports up the light that filled it. With none, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the ports up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack, when it's carried |
+| [[item:pickup_lens]] | Modifier, and an action of its own | [[mechanic:laser.lens.pickup]] After an action, what that action frees goes back up the light; before any, or alone, so do items lying within about a block of the beam. It all goes to the nearest collecting Laser Port; what that one can't take goes to the next. Back past a cavity, it reaches the ports up the light that filled it. With none, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the ports up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack, when it's carried |
 | [[item:range_lens]] | Modifier | Each run of the light reaches twice as far, up to 64 blocks (a pack can change that, `maxRange` in the `lasers` config): light with an action goes 8, 16, 32, 64. | none |
 | [[item:interact_lens]] | Action | [[mechanic:laser.lens.interact]] Uses one thing a Laser Port up the beam sends, or an empty hand with none, as a player would, each {{c:LaserTuning.PLACE_COOLDOWN|s}}. Set to **use**: with something in hand, a right click on the first thing living in the beam that takes it (feeding, shearing, milking; a Filter after it says which: only grown ones, say; never a villager); else a right click on the block the beam ends on, or on something light passes just before it (a lever, a button), so it opens doors, flips levers, works items on blocks; an empty bucket fills from the fluid the beam ends on. Set to **hit**: a swing at the first thing living in the beam, as hard as what it holds. It works with what the port holds where it lies, trying each kind of thing there in turn (carrots, then wheat, then shears) till one is used: nothing moves unless using it changes it. Then what it became goes back where it belongs: still the same thing (a worn sword) to the sending port, anything new (a filled bucket) up the beam to a collecting one. Through an Area Prism it works on the area: with something in hand, on what's living there first; else on its blocks in turn, each from the side facing the prism (bone meal over a field, say). It does it over and over: behind a pulse mirror, once a signal. Use it in the air, or its button in a mount, to switch. | {{c:LaserTuning.PLACE_FE}} FE a use |
 | [[item:insert_lens]] | Action | [[mechanic:laser.lens.insert]] Puts what Laser Ports up the beam send into the inventory the beam ends on (it ramps up and down: each move halves its wait, from 4 s down to its own pace; each look that finds nothing doubles it, back up to 2 s), up to {{c:LaserTuning.MOVE_ITEMS}} items each {{c:LaserTuning.PLACE_COOLDOWN|s}} (each Speed lens doubles that, to 64, and halves the wait); with an Area Prism, each inventory in its area in turn. A Filter lens says what. | {{c:LaserTuning.PICKUP_FE_PER_STACK}} FE a stack |

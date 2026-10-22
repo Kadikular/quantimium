@@ -716,7 +716,6 @@ public final class LaserNetworks {
                                 sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
-                        action.sweeps(sweeps(streamsOf(light)));
                         actions.put(key, action);
                     }
                 }
@@ -731,7 +730,6 @@ public final class LaserNetworks {
                                 sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 node.area(), core.reach(), core.marks(), 0);
                         action.within(node::inArea);
-                        action.sweeps(sweeps(core.acting()));
                         actions.put(key, action);
                     }
                 }
@@ -757,12 +755,6 @@ public final class LaserNetworks {
     }
 
     /** What Smelting and Crushing do to the world on {@code light}'s beam first: a Harvest waits for them. */
-    /** Whether Pickup on this light takes up all that lies in it: not when Harvest or Damage free what it takes. */
-    private static boolean sweeps(Iterable<Light.Stream> streams) {
-        for (Light.Stream stream : streams) if (stream.action() == Lens.HARVEST || stream.action() == Lens.DAMAGE) return false;
-        return true;
-    }
-
     private static List<Lens> worldSteps(Light light) {
         return light.acting().stream().filter(Light.Stream::inWorld).findFirst().map(Light.Stream::steps).orElse(List.of());
     }
@@ -794,7 +786,7 @@ public final class LaserNetworks {
                 if (filled != null) ours.addAll(filled.feeders());
             }
             // Nothing passes back up through an Isolator, or past a source; a cavity, it does.
-            if (((!node.relays() && !node.buffers()) || node.isolates()) && !at.equals(pos)) continue;
+            if (((!node.relays() && !node.buffers()) || stopsItems(node)) && !at.equals(pos)) continue;
             for (BlockPos up : into.getOrDefault(at, List.of())) {
                 if (letsIn(up, node) && seen.add(up)) queue.add(up);
             }
@@ -869,6 +861,18 @@ public final class LaserNetworks {
         return left;
     }
 
+    /**
+     * Whether items can't pass {@code node} between Laser Ports: an Isolator, or an Isolator lens in it not set to
+     * pass actions (what the ports carry the yield of).
+     */
+    private static boolean stopsItems(LaserNode node) {
+        if (node.isolates()) return true;
+        for (LensUse use : node.lenses()) {
+            if (use.lens() == Lens.ISOLATE && (use.isolator() == null || !use.isolator().actions())) return true;
+        }
+        return false;
+    }
+
     /** Every Laser Port down the light leaving {@code pos}, through switched-on relays, nearest first; not past an Isolator. */
     private List<BlockPos> downFor(BlockPos pos) {
         List<BlockPos> found = new ArrayList<>();
@@ -881,7 +885,7 @@ public final class LaserNetworks {
             for (LaserBeam beam : beams.getOrDefault(at, List.of())) {
                 if (beam.end() != LaserBeam.End.NODE || !seen.add(beam.hit())) continue;
                 LaserNode next = nodes.get(beam.hit());
-                if (next == null || !next.relays() || next.isolates() || !passes(next)) continue;
+                if (next == null || !next.relays() || stopsItems(next) || !passes(next)) continue;
                 if (next.collects()) found.add(beam.hit());
                 queue.add(beam.hit());
             }
@@ -1635,7 +1639,10 @@ public final class LaserNetworks {
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         for (LaserNode node : nodes.values()) {
             // A Logistics Controller gives no power, but its light shows while its store can pay for moves.
-            boolean shines = node.available() > 0 || node instanceof LogisticsController controller && controller.powered();
+            // One whose power all went out this tick (a cavity filling took the lot) shines too: its other beams
+            // still glow dimly, rather than going dark beside the one carrying it all.
+            boolean shines = node.available() > 0 || node instanceof LogisticsController controller && controller.powered()
+                    || sending(node.nodePos());
             if (node.generates() && node.enabled() && shines && live.add(node.nodePos())) queue.add(node.nodePos());
         }
         while (!queue.isEmpty()) {
@@ -1646,6 +1653,12 @@ public final class LaserNetworks {
             }
         }
         return live;
+    }
+
+    /** Whether any beam leaving {@code pos} carried power when last worked out. */
+    private boolean sending(BlockPos pos) {
+        for (LaserBeam beam : beams.getOrDefault(pos, List.of())) if (beam.flow() > 0) return true;
+        return false;
     }
 
     /** A beam's brightness, in steps that change only when its flow changes by a lot: 0 for dark. */

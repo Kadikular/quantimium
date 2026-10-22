@@ -288,6 +288,13 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
 
     @Override
     public void clicked(int slotId, int button, net.minecraft.world.inventory.ContainerInput input, Player clicker) {
+        // What's to be made is the server's to keep or let go; the client only shows what it's told. (A client that
+        // let go of its own copy, seeing a slot briefly hold what was made for a craft not taken, showed nothing there
+        // while the server still made it.)
+        if (terminal == null) {
+            super.clicked(slotId, button, input, clicker);
+            return;
+        }
         int i = slotId - GRID_FIRST;
         // A click with nothing in hand on an empty slot that's to have something made for it lets that go.
         if (i >= 0 && i < 9 && input == net.minecraft.world.inventory.ContainerInput.PICKUP && getCarried().isEmpty()

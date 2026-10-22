@@ -248,4 +248,22 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
     public LensFilter withKeep(int keep) {
         return new LensFilter(parts | ENTITIES, items, itemsAllow, blocks, blocksAllow, ripe, mobs, mobsAllow, kinds, spareYoung, Math.clamp(keep, 0, MAX_KEEP));
     }
+
+    /**
+     * By value: an {@link ItemStack} only equals itself, so a record's own equality would make every copy of a
+     * filter (sent to a client, taken through a network) a different item, never stacking or found again.
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof LensFilter that && parts == that.parts && itemsAllow == that.itemsAllow
+                && blocksAllow == that.blocksAllow && ripe == that.ripe && mobsAllow == that.mobsAllow && kinds == that.kinds
+                && spareYoung == that.spareYoung && keep == that.keep && ItemStack.listMatches(items, that.items)
+                && ItemStack.listMatches(blocks, that.blocks) && ItemStack.listMatches(mobs, that.mobs);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(parts, itemsAllow, blocksAllow, ripe, mobsAllow, kinds, spareYoung, keep,
+                ItemStack.hashStackList(items), ItemStack.hashStackList(blocks), ItemStack.hashStackList(mobs));
+    }
 }
