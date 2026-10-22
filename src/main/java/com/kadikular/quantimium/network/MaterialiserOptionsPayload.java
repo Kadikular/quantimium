@@ -13,11 +13,12 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * What the open Materialiser could make of its Matter, which it's set to, and the Matter it's reading
- * (through a Tesseract, the first found and how many of that history): for its screen.
+ * What the open Materialiser could make of its Matter, which form it exports, and the Matter it's reading
+ * (through a Tesseract, the first found and how many of that history): for its screen. For each option, as many as
+ * its buffer holds ({@code buffered}) and as many more as it could make now ({@code makeable}).
  */
 public record MaterialiserOptionsPayload(List<Materialising.Option> options, Optional<Materialising.Target> target,
-                                         ItemStack reading) implements CustomPacketPayload {
+                                         ItemStack reading, List<Long> buffered, List<Long> makeable) implements CustomPacketPayload {
 
     public static final Type<MaterialiserOptionsPayload> TYPE =
             new Type<>(Identifier.fromNamespaceAndPath(Quantimium.MODID, "materialiser_options"));
@@ -26,6 +27,8 @@ public record MaterialiserOptionsPayload(List<Materialising.Option> options, Opt
             Materialising.Option.LIST_STREAM_CODEC, MaterialiserOptionsPayload::options,
             ByteBufCodecs.optional(Materialising.Target.STREAM_CODEC), MaterialiserOptionsPayload::target,
             ItemStack.OPTIONAL_STREAM_CODEC, MaterialiserOptionsPayload::reading,
+            ByteBufCodecs.VAR_LONG.apply(ByteBufCodecs.list()), MaterialiserOptionsPayload::buffered,
+            ByteBufCodecs.VAR_LONG.apply(ByteBufCodecs.list()), MaterialiserOptionsPayload::makeable,
             MaterialiserOptionsPayload::new);
 
     @Override

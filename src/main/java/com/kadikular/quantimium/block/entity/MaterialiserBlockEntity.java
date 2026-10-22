@@ -118,7 +118,8 @@ public class MaterialiserBlockEntity extends BlockEntity
             // A bound Tesseract reads its linked inventory instead (see refreshSources).
             if (slot == MATTER_SLOT) return com.kadikular.quantimium.unrealised.Matter.is(stack) || EntangledLinks.isBound(stack);
             if (slot == TRACE_SLOT) return Materialising.pays(stack) || EntangledLinks.isBound(stack);
-            return slot >= OUTPUT_START && slot <= OUTPUT_END;
+            // The old output slots only hold what a world saved before the buffer; nothing goes in.
+            return false;
         }
     };
 
@@ -135,9 +136,14 @@ public class MaterialiserBlockEntity extends BlockEntity
     private final IItemHandler viewerHandler = new com.kadikular.quantimium.util.OnDemandSlots.RealOnly(unsidedHandler);
     private List<SideConfig> sideConfigs = defaultSideConfigs();
     private final BandGate gate = new BandGate();
-    /** The ore and form chosen; null for none. */
+    /** The form chosen for export (what pipes and hoppers see, and its faces push out); null for none. */
     @Nullable
     private Materialising.Target target;
+    /**
+     * What it made that wasn't taken: one Matter makes a whole roll's worth (three raw copper), and a take of one leaves
+     * two here. Taken from first. Kept by item; no limit.
+     */
+    private final List<ItemStack> buffer = new java.util.ArrayList<>();
     /** Anomalite Dust paid for but not yet spent: a Matter rarely costs a whole one. */
     private double traceCredit;
     private int statusCode = STATUS_EMPTY;
@@ -230,8 +236,69 @@ public class MaterialiserBlockEntity extends BlockEntity
         this.target = target;
         progress = 0;
         setChanged();
-        // Choosing an output hides the catalogue from automation, and clearing it shows it again.
+        // What pipes see is the export form: a new slot, or none.
         invalidateCapabilities();
+    }
+
+    // ---- the buffer ----
+
+    /** How many like {@code like} wait in the buffer. */
+    public int buffered(ItemStack like) {
+        int count = 0;
+        for (ItemStack stack : buffer) if (ItemStack.isSameItemSameComponents(stack, like)) count += stack.getCount();
+        return count;
+    }
+
+    /** Takes up to {@code count} like {@code like} out of the buffer. */
+    private ItemStack takeBuffered(ItemStack like, int count) {
+        int got = 0;
+        for (var it = buffer.iterator(); it.hasNext() && got < count; ) {
+            ItemStack stack = it.next();
+            if (!ItemStack.isSameItemSameComponents(stack, like)) continue;
+            int take = Math.min(stack.getCount(), count - got);
+            stack.shrink(take);
+            got += take;
+            if (stack.isEmpty()) it.remove();
+        }
+        if (got > 0) setChanged();
+        return got == 0 ? ItemStack.EMPTY : like.copyWithCount(got);
+    }
+
+    /** Puts {@code stack} into the buffer. */
+    public void addBuffered(ItemStack stack) {
+        if (stack.isEmpty()) return;
+        for (ItemStack there : buffer) {
+            if (ItemStack.isSameItemSameComponents(there, stack)) {
+                there.grow(stack.getCount());
+                setChanged();
+                return;
+            }
+        }
+        buffer.add(stack.copy());
+        setChanged();
+    }
+
+    /** Whether {@code stack} is something it makes, and so may go back into its buffer: a form of an ore it could choose. */
+    public boolean takesBack(ItemStack stack) {
+        if (!(level instanceof ServerLevel server) || stack.isEmpty()) return false;
+        for (Materialising.Option option : options(server)) if (ItemStack.isSameItemSameComponents(option.display(), stack)) return true;
+        return buffered(stack) > 0;
+    }
+
+    /** The export form's option, if one is chosen and it may make it now. */
+    @Nullable
+    private Materialising.Option exportOption() {
+        if (target == null) return null;
+        for (Materialising.Option option : catalog()) if (target.is(option.ore(), option.display())) return option;
+        return null;
+    }
+
+    /** How many of {@code option} it has or could make now: its buffer, then what its Matter, dust, FE and field pay for. */
+    public long available(Materialising.Option option) {
+        if (!(level instanceof ServerLevel server)) return 0;
+        PackOres.Ore ore = PackOres.byTag(option.ore());
+        long made = ore == null ? 0 : (long) affordable(server, ore, Integer.MAX_VALUE) * option.display().getCount();
+        return buffered(option.display()) + made;
     }
 
     public double traceCredit() {
@@ -369,19 +436,11 @@ public class MaterialiserBlockEntity extends BlockEntity
         }
     }
 
-    /** A cycle's progress, then one Matter made into the chosen ore, if everything it needs is there. */
+    /** What stops it, said on its screen: it makes only on demand, so this is whether the export form could be made. */
     private void work(ServerLevel level) {
         int status = readiness(level);
         statusCode = status;
-        if (status != STATUS_WORKING) {
-            progress = 0;
-            light(level, false);
-            return;
-        }
-        light(level, true);
-        if (++progress < CYCLE_TICKS) return;
-        progress = 0;
-        materialise(level);
+        light(level, status == STATUS_WORKING || status == STATUS_ON_DEMAND && !matterSeen().isEmpty());
     }
 
     /** What stops it working now, or {@link #STATUS_WORKING}. Checks everything but the roll itself. */
@@ -405,30 +464,6 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     private int energyCost(ServerLevel level) {
         return AnomalyEffects.scaleFe(FE_PER_MATTER, level, worldPosition);
-    }
-
-    /**
-     * One Matter becomes the chosen ore in the chosen form: the same count every time, its average
-     * rounded down, which is what the screen shows.
-     */
-    private void materialise(ServerLevel level) {
-        PackOres.Ore ore = target == null ? null : PackOres.byTag(target.ore());
-        if (ore == null || matterSeen().isEmpty()) return;
-        ItemStack form = Materialising.make(level, worldPosition, history(), target);
-        if (form.isEmpty()) {
-            statusCode = STATUS_CANT_BECOME;
-            return;
-        }
-        if (!fitsOutputs(List.of(form))) {
-            statusCode = STATUS_OUTPUT_FULL;
-            return;
-        }
-        if (!pay(level, ore, 1)) {
-            statusCode = STATUS_THIN_FIELD;
-            return;
-        }
-        insertIntoOutputs(form);
-        setChanged();
     }
 
     /**
@@ -482,9 +517,9 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     // ---- on demand ----
 
-    /** The forms offered on demand: none with an output chosen, since it's making that. */
+    /** The forms it may make now, offered on demand to a logistics network (pipes see only the export form). */
     private List<Materialising.Option> catalog() {
-        if (target != null || !(level instanceof ServerLevel server)) return List.of();
+        if (!(level instanceof ServerLevel server)) return List.of();
         refreshSources();
         if (catalogDirty) {
             catalogDirty = false;
@@ -497,26 +532,12 @@ public class MaterialiserBlockEntity extends BlockEntity
         return catalog;
     }
 
-    /** What automation sees in on-demand slot {@code index}: the form, as many as it could make now. */
-    private ItemStack onDemandView(int index) {
-        List<Materialising.Option> offered = catalog();
-        if (index < 0 || index >= offered.size() || !(level instanceof ServerLevel server)) return ItemStack.EMPTY;
+    /** What automation sees in on-demand slot {@code index} of {@code offered}: the form, as many as it has or could make now. */
+    private ItemStack view(List<Materialising.Option> offered, int index) {
+        if (index < 0 || index >= offered.size() || !(level instanceof ServerLevel)) return ItemStack.EMPTY;
         Materialising.Option option = offered.get(index);
-        PackOres.Ore ore = PackOres.byTag(option.ore());
-        if (ore == null) return ItemStack.EMPTY;
-        int per = option.display().getCount();
-        int runs = affordable(server, ore, Math.max(1, option.display().getMaxStackSize() / per));
-        return runs <= 0 ? ItemStack.EMPTY : option.display().copyWithCount(Math.min(option.display().getMaxStackSize(), runs * per));
-    }
-
-    /**
-     * A pull from on-demand slot {@code index}: as many Matter made into that form as it takes to cover
-     * {@code amount}, what's over going to the output slots. Nothing if it can't pay for one.
-     */
-    private ItemStack extractOnDemand(int index, int amount, boolean simulate) {
-        List<Materialising.Option> offered = catalog();
-        if (index < 0 || index >= offered.size()) return ItemStack.EMPTY;
-        return make(offered.get(index), amount, simulate);
+        long count = Math.min(option.display().getMaxStackSize(), available(option));
+        return count <= 0 ? ItemStack.EMPTY : option.display().copyWithCount((int) count);
     }
 
     /**
@@ -532,26 +553,24 @@ public class MaterialiserBlockEntity extends BlockEntity
         return ItemStack.EMPTY;
     }
 
-    /** As many Matter made into {@code option} as it takes to cover {@code amount}, what's over to the outputs. */
+    /**
+     * Up to {@code amount} of {@code option}: from the buffer first, then as many Matter made into it as it takes to
+     * cover the rest (at most {@value #MAX_RUNS_PER_PULL} at once), what a run makes over going into the buffer.
+     */
     private ItemStack make(Materialising.Option option, int amount, boolean simulate) {
         if (amount <= 0 || !(level instanceof ServerLevel server)) return ItemStack.EMPTY;
         PackOres.Ore ore = PackOres.byTag(option.ore());
         if (ore == null) return ItemStack.EMPTY;
         int per = option.display().getCount();
-        int runs = affordable(server, ore, Math.min(MAX_RUNS_PER_PULL, Math.ceilDiv(amount, per)));
-        if (runs <= 0) return ItemStack.EMPTY;
-        int give = Math.min(amount, runs * per);
-        int over = runs * per - give;
-        // What a pull doesn't take must fit the outputs, or it makes one run fewer and gives what that makes.
-        if (over > 0 && !fitsOutputs(List.of(option.display().copyWithCount(over)))) {
-            runs = give / per;
-            if (runs <= 0) return ItemStack.EMPTY;
-            give = runs * per;
-            over = 0;
-        }
+        int had = Math.min(amount, buffered(option.display()));
+        int runs = had >= amount ? 0 : affordable(server, ore, Math.min(MAX_RUNS_PER_PULL, Math.ceilDiv(amount - had, per)));
+        int give = Math.min(amount, had + runs * per);
+        if (give <= 0) return ItemStack.EMPTY;
         if (simulate) return option.display().copyWithCount(give);
-        if (!pay(server, ore, runs)) return ItemStack.EMPTY;
-        if (over > 0) insertIntoOutputs(option.display().copyWithCount(over));
+        if (runs > 0 && !pay(server, ore, runs)) return ItemStack.EMPTY;
+        ItemStack got = takeBuffered(option.display(), had);
+        int over = had + runs * per - give;
+        if (over > 0) addBuffered(option.display().copyWithCount(over));
         setChanged();
         return option.display().copyWithCount(give);
     }
@@ -559,24 +578,20 @@ public class MaterialiserBlockEntity extends BlockEntity
     // ---- making for a logistics network ----
 
     /**
-     * Behind a provider Receptacle, what it could make now with no output chosen: each form it may choose, as many as
-     * its Matter, Anomalite Dust, FE and the field pay for. It makes from its own slots (or what their Tesseracts
-     * read), never from the network's stock.
+     * Behind a provider Receptacle: each form it may make now, as many as its buffer holds and its Matter, Anomalite
+     * Dust, FE and the field pay for. It makes from its own slots (or what their Tesseracts read), never from the
+     * network's stock.
      */
     @Override
     public List<com.kadikular.quantimium.laser.OfferMaker.Made> makes(com.kadikular.quantimium.laser.LogisticsController network,
                                                                        java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock,
                                                                        boolean fromCraftable) {
-        if (!(level instanceof ServerLevel server)) return List.of();
         List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new java.util.ArrayList<>();
         java.util.Set<net.minecraft.world.item.Item> from = java.util.Set.of(ModItems.UNREALISED_MATTER.get(), ModItems.ANOMALITE_DUST.get());
         for (Materialising.Option option : catalog()) {
-            PackOres.Ore ore = PackOres.byTag(option.ore());
-            if (ore == null) continue;
-            int runs = affordable(server, ore, Integer.MAX_VALUE);
-            if (runs <= 0) continue;
-            made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(net.neoforged.neoforge.transfer.item.ItemResource.of(option.display()),
-                    (long) runs * option.display().getCount(), from));
+            long count = available(option);
+            if (count > 0) made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(
+                    net.neoforged.neoforge.transfer.item.ItemResource.of(option.display()), count, from));
         }
         return made;
     }
@@ -587,10 +602,10 @@ public class MaterialiserBlockEntity extends BlockEntity
         return slot >= TOTAL_SLOTS;
     }
 
-    /** Only what's in its outputs is on offer as it is: its Matter and dust are what it makes from. */
+    /** Nothing in its own slots is on offer as it is: its Matter and dust are what it makes from. */
     @Override
     public boolean stocks(int slot) {
-        return slot >= OUTPUT_START && slot <= OUTPUT_END;
+        return false;
     }
 
     @Override
@@ -600,25 +615,14 @@ public class MaterialiserBlockEntity extends BlockEntity
         return index < 0 || index >= offered.size() ? ItemStack.EMPTY : offered.get(index).display().copy();
     }
 
-    private boolean fitsOutputs(List<ItemStack> products) {
-        ItemStackHandler trial = new ItemStackHandler(inventory.getSlots());
-        for (int slot = 0; slot < inventory.getSlots(); slot++) trial.setStackInSlot(slot, inventory.getStackInSlot(slot).copy());
-        for (ItemStack product : products) {
-            ItemStack remaining = product.copy();
-            for (int slot = OUTPUT_START; slot <= OUTPUT_END && !remaining.isEmpty(); slot++) {
-                remaining = trial.insertItem(slot, remaining, false);
-            }
-            if (!remaining.isEmpty()) return false;
-        }
-        return true;
+    /** What a provider Receptacle on {@code side} sees: every form it may make, not only the export form pipes see. */
+    public IItemHandler networkHandler(Direction side) {
+        return networkHandlers[side.get3DDataValue()];
     }
 
-    private void insertIntoOutputs(ItemStack stack) {
-        ItemStack remaining = stack.copy();
-        for (int slot = OUTPUT_START; slot <= OUTPUT_END && !remaining.isEmpty(); slot++) {
-            remaining = inventory.insertItem(slot, remaining, false);
-        }
-    }
+    private final IItemHandler[] networkHandlers = {new SidedHandler(Direction.DOWN, true), new SidedHandler(Direction.UP, true),
+            new SidedHandler(Direction.NORTH, true), new SidedHandler(Direction.SOUTH, true), new SidedHandler(Direction.WEST, true),
+            new SidedHandler(Direction.EAST, true)};
 
     private void light(ServerLevel level, boolean lit) {
         BlockState state = getBlockState();
@@ -663,17 +667,16 @@ public class MaterialiserBlockEntity extends BlockEntity
         }
     }
 
+    /** Pushes a stack of the export form into {@code into}: from the buffer, then made, as much as it takes. */
     private void push(IItemHandler into, SideConfig config) {
-        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
-            if (!config.allowsOutputSlot(slot)) continue;
-            ItemStack stack = inventory.getStackInSlot(slot);
-            if (stack.isEmpty()) continue;
-            int moved = stack.getCount() - ItemHandlerHelper.insertItem(into, stack.copy(), false).getCount();
-            if (moved > 0) {
-                inventory.extractItem(slot, moved, false);
-                return;
-            }
-        }
+        Materialising.Option option = exportOption();
+        if (option == null) return;
+        ItemStack trial = option.display().copyWithCount(option.display().getMaxStackSize());
+        int fits = trial.getCount() - ItemHandlerHelper.insertItem(into, trial, true).getCount();
+        if (fits <= 0) return;
+        ItemStack made = make(option, fits, false);
+        ItemStack left = ItemHandlerHelper.insertItem(into, made, false);
+        addBuffered(left);
     }
 
     /** What a pipe or hopper on {@code side} sees: Matter and Anomalite Dust in, results out, where the face allows. */
@@ -688,12 +691,13 @@ public class MaterialiserBlockEntity extends BlockEntity
     private final List<Double> spentFlux = new java.util.ArrayList<>();
 
     /** What a pull changes besides the inventory, for an aborted transaction to put back. */
-    private record PullState(int energy, double traceCredit, long unemittedFe, int feThisSecond, int flux) {}
+    private record PullState(int energy, double traceCredit, long unemittedFe, int feThisSecond, int flux, List<ItemStack> buffer) {}
 
     private final class SidedHandler implements IItemHandler, OnDemandSlots {
         @Override
         public Object saveState() {
-            return new PullState(energyStorage.getEnergyStored(), traceCredit, unemittedFe, feThisSecond, spentFlux.size());
+            return new PullState(energyStorage.getEnergyStored(), traceCredit, unemittedFe, feThisSecond, spentFlux.size(),
+                    buffer.stream().map(ItemStack::copy).toList());
         }
 
         @Override
@@ -703,6 +707,8 @@ public class MaterialiserBlockEntity extends BlockEntity
             traceCredit = saved.traceCredit();
             unemittedFe = saved.unemittedFe();
             feThisSecond = saved.feThisSecond();
+            buffer.clear();
+            for (ItemStack stack : saved.buffer()) buffer.add(stack.copy());
             while (spentFlux.size() > saved.flux()) {
                 double flux = spentFlux.removeLast();
                 if (level instanceof ServerLevel server) QuantumFlux.refundChunkFlux(server, worldPosition, flux);
@@ -718,9 +724,23 @@ public class MaterialiserBlockEntity extends BlockEntity
 
         @Nullable
         private final Direction side;
+        /** A logistics network's view: every form it may make. A pipe's: only the export form. */
+        private final boolean network;
 
         private SidedHandler(@Nullable Direction side) {
+            this(side, false);
+        }
+
+        private SidedHandler(@Nullable Direction side, boolean network) {
             this.side = side;
+            this.network = network;
+        }
+
+        /** The forms this view offers on demand, in slot order. */
+        private List<Materialising.Option> offered() {
+            if (network) return catalog();
+            Materialising.Option export = exportOption();
+            return export == null ? List.of() : List.of(export);
         }
 
         private SideConfig config() {
@@ -730,12 +750,12 @@ public class MaterialiserBlockEntity extends BlockEntity
         /** Its own slots, then on demand one slot per form it offers, if this face hands things out. */
         @Override
         public int getSlots() {
-            return TOTAL_SLOTS + (config().itemMode().allowsOutput() ? catalog().size() : 0);
+            return TOTAL_SLOTS + (config().itemMode().allowsOutput() ? offered().size() : 0);
         }
 
         @Override
         public ItemStack getStackInSlot(int slot) {
-            if (slot >= TOTAL_SLOTS) return config().itemMode().allowsOutput() ? onDemandView(slot - TOTAL_SLOTS) : ItemStack.EMPTY;
+            if (slot >= TOTAL_SLOTS) return config().itemMode().allowsOutput() ? view(offered(), slot - TOTAL_SLOTS) : ItemStack.EMPTY;
             return inventory.getStackInSlot(slot);
         }
 
@@ -748,7 +768,9 @@ public class MaterialiserBlockEntity extends BlockEntity
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
             if (slot >= TOTAL_SLOTS) {
-                return config().itemMode().allowsOutput() ? extractOnDemand(slot - TOTAL_SLOTS, amount, simulate) : ItemStack.EMPTY;
+                List<Materialising.Option> offered = offered();
+                int index = slot - TOTAL_SLOTS;
+                return config().itemMode().allowsOutput() && index < offered.size() ? make(offered.get(index), amount, simulate) : ItemStack.EMPTY;
             }
             if (slot < OUTPUT_START || !config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
             return inventory.extractItem(slot, amount, simulate);
@@ -838,6 +860,8 @@ public class MaterialiserBlockEntity extends BlockEntity
         }
         tag.putInt("Band", gate.band().ordinal());
         tag.put("SideConfigs", SideConfig.saveAll(sideConfigs));
+        ItemStack.CODEC.listOf().encodeStart(registries.createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE), List.copyOf(buffer))
+                .result().ifPresent(list -> tag.put("Buffer", list));
     }
 
     @Override
@@ -858,6 +882,18 @@ public class MaterialiserBlockEntity extends BlockEntity
         gate.set(band, band);
         if (tag.contains("SideConfigs")) {
             sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(SideConfig.loadAll(tag.getListOrEmpty("SideConfigs")));
+        }
+        buffer.clear();
+        if (tag.get("Buffer") != null) {
+            ItemStack.CODEC.listOf().parse(registries.createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE), tag.get("Buffer"))
+                    .result().ifPresent(list -> list.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> buffer.add(stack.copy())));
+        }
+        // A world saved with output slots: what was in them waits in the buffer now.
+        for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
+            ItemStack old = inventory.getStackInSlot(slot);
+            if (old.isEmpty()) continue;
+            addBuffered(old.copy());
+            inventory.setStackInSlot(slot, ItemStack.EMPTY);
         }
     }
 
@@ -881,6 +917,15 @@ public class MaterialiserBlockEntity extends BlockEntity
         if (level == null) return;
         for (int slot = 0; slot < getInventory().getSlots(); slot++) {
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), getInventory().getStackInSlot(slot));
+        }
+        for (ItemStack stack : buffer) {
+            // Dropped a stack at a time.
+            int left = stack.getCount();
+            while (left > 0) {
+                int n = Math.min(left, stack.getMaxStackSize());
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack.copyWithCount(n));
+                left -= n;
+            }
         }
     }
 }

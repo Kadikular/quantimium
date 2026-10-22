@@ -18,10 +18,12 @@ Anomalite Dust instead (the Trace stays in its slot until taken out).
 
 - **The Materialiser is paid in Anomalite Dust**, not Trace: renewable from a crystal farm (crush Anomalite with a
   Crushing Lens: a shard crushes into one dust). A common ore at Medium costs 0.75 dust a Matter, as Trace did.
-- **A Materialiser behind a provider Logistics Receptacle** offers what it could make (with no output chosen) to the
-  network as craftable, made when taken.
-- **Its screen works like a terminal**: click a form for a stack made on the spot, right-click for half,
-  shift-right-click for one, shift-click into the inventory; ctrl-click to keep making it into the outputs.
+- **Its screen works like a Logistics Terminal**: a grid of every form, each showing what waits in its buffer and
+  how many more it could make; click for a stack, right-click for half, shift-right-click for one, shift and the
+  wheel for one at a time, shift-click into the inventory. Its output slots are gone: what a Matter makes over a
+  take waits in a buffer, taken first. Middle-click a form to export it (gold): what pipes and hoppers take.
+- **A Materialiser behind a provider Logistics Receptacle** offers every form to the network as craftable, made
+  when taken.
 
 ### Lasers
 

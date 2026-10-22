@@ -286,6 +286,8 @@ public class LogisticsReceptacleBlockEntity extends BlockEntity implements Laser
         Direction face = facing();
         // A Laser Port's slots, whole: its faces are set for pipes, which may only put in while it sends.
         if (level.getBlockEntity(worldPosition.relative(face)) instanceof LaserPortBlockEntity port) return port.slots();
+        // A Materialiser: every form it may make, where pipes see only the one chosen for export.
+        if (level.getBlockEntity(worldPosition.relative(face)) instanceof MaterialiserBlockEntity materialiser) return materialiser.networkHandler(face.getOpposite());
         return LegacyItems.legacy(level.getCapability(Capabilities.Item.BLOCK, worldPosition.relative(face), face.getOpposite()));
     }
 

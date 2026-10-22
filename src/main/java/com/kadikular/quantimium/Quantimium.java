@@ -667,6 +667,16 @@ public class Quantimium {
                 })
         );
         registrar.playToServer(
+                com.kadikular.quantimium.network.MaterialiserPutPayload.TYPE,
+                com.kadikular.quantimium.network.MaterialiserPutPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.MaterialiserMenu menu
+                            && menu.getBlockEntity().getBlockPos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.putBack(payload.one());
+                    }
+                })
+        );
+        registrar.playToServer(
                 SetMaterialiserTargetPayload.TYPE,
                 SetMaterialiserTargetPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {

@@ -234,19 +234,19 @@ def quantum_observation_chamber() -> Panel:
 
 
 def materialiser() -> Panel:
-    """Mid tier: Matter and the Trace socket on the left; a search box over a well of choosable
-    targets in the middle (drawn by the screen, 5×2 of 18px buttons); three outputs on the right."""
-    panel = Panel(MID)
+    """Mid tier: Matter and the Anomalite Dust socket on the left; a search box over a scrolling 6x4 grid of the forms
+    it could make, taken from as at a Logistics Terminal (MaterialiserScreen.GRID_*); the player's inventory below."""
+    panel = Panel(MID, height=192)
     panel.energy()
     panel.slot(26, 17)
     panel.region("matter", (26, 17, ITEM, ITEM))
     panel.socket(26, 53, "trace")
-    panel.well(47, 16, 92, 13)
-    panel.region("search", (48, 17, 90, 11))
-    panel.well(47, 31, 92, 38)
-    panel.region("choices", (48, 32, 90, 36))
-    panel.grid((145, 17), 1, 3, "outputs")
-    panel.player()
+    panel.well(47, 16, 110, 13)
+    panel.region("search", (48, 18, 108, 9))
+    panel.grid((48, 32), 6, 4, "choices")
+    panel.well(157, 31, 4, 72)
+    panel.region("scroll", (157, 32, 3, 70))
+    panel.player(110)
     return panel
 
 

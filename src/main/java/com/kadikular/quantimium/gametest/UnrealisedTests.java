@@ -190,14 +190,13 @@ public final class UnrealisedTests {
             helper.assertValueEqual(materialiser.getStatusCode(), MaterialiserBlockEntity.STATUS_NEEDS_FLUX, "a rare ore at Medium");
             materialiser.setTarget(new Materialising.Target(Identifier.parse("c:ores/iron"), Identifier.parse("minecraft:raw_iron")));
         });
-        helper.succeedWhen(() -> {
+        helper.runAfterDelay(8, () -> {
+            // Exported, raw iron is what a pipe below sees, made as it's taken.
+            IItemHandler below = materialiser.getAutomationItemHandler(Direction.DOWN);
+            helper.assertValueEqual(below.getSlots(), MaterialiserBlockEntity.TOTAL_SLOTS + 1, "one export slot");
+            ItemStack iron = below.extractItem(MaterialiserBlockEntity.TOTAL_SLOTS, 4, false);
+            helper.assertTrue(iron.is(Items.RAW_IRON) && iron.getCount() == 4, "raw iron made: " + iron);
             helper.assertTrue(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.MATTER_SLOT).isEmpty(), "all four made");
-            int iron = 0;
-            for (int slot = MaterialiserBlockEntity.OUTPUT_START; slot <= MaterialiserBlockEntity.OUTPUT_END; slot++) {
-                ItemStack out = materialiser.getInventory().getStackInSlot(slot);
-                if (out.is(Items.RAW_IRON)) iron += out.getCount();
-            }
-            helper.assertValueEqual(iron, 4, "raw iron made");
             // A common at Medium is 1.2 / 1.6 = 0.75 Anomalite Dust: three for four Matter, nothing over.
             helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.TRACE_SLOT).getCount(), 1,
                     "dust left");
@@ -224,12 +223,15 @@ public final class UnrealisedTests {
                         .getCount(), 3, "raw copper made");
             }
             TestSupport.clearField(helper);
+            helper.succeed();
         });
     }
 
     // covers: unrealised.on_demand
     @GameTest(template = TestSupport.FLOOR_17, batch = "unrealised_on_demand", timeoutTicks = 40)
     public static void withNoOutputChosenAutomationPullsAnyForm(GameTestHelper helper) {
+        // Pipes see only the form chosen for export; a logistics network's provider sees every form. Either takes from
+        // what waits in the buffer first, then makes more, the rest of a Matter's roll waiting there.
         TestSupport.clearField(helper);
         BlockPos at = new BlockPos(8, 2, 8);
         TestSupport.track(helper);
@@ -247,11 +249,12 @@ public final class UnrealisedTests {
         // The band is read once a second; the catalogue follows it.
         helper.runAfterDelay(24, () -> {
             helper.assertValueEqual(materialiser.getStatusCode(), MaterialiserBlockEntity.STATUS_ON_DEMAND, "status");
-            int copper = -1;
-            for (int slot = MaterialiserBlockEntity.TOTAL_SLOTS; slot < below.getSlots(); slot++) {
-                if (below.getStackInSlot(slot).is(Items.RAW_COPPER)) copper = slot;
-            }
-            helper.assertTrue(copper >= 0, "raw copper is offered on demand");
+            helper.assertValueEqual(below.getSlots(), MaterialiserBlockEntity.TOTAL_SLOTS, "nothing exported: pipes see nothing to take");
+            helper.assertTrue(materialiser.networkHandler(Direction.UP).getSlots() > MaterialiserBlockEntity.TOTAL_SLOTS + 1,
+                    "a network's provider sees every form");
+            materialiser.setTarget(new Materialising.Target(Identifier.parse("c:ores/copper"), Identifier.parse("minecraft:raw_copper")));
+            int copper = MaterialiserBlockEntity.TOTAL_SLOTS;
+            helper.assertTrue(below.getStackInSlot(copper).is(Items.RAW_COPPER), "exported, raw copper is what pipes see");
             // A pipe asking how much it could take (a simulated pull, through the capability) spends nothing.
             IItemHandler piped = LegacyItems.legacy(helper.getLevel().getCapability(Capabilities.Item.BLOCK,
                     helper.absolutePos(at), Direction.DOWN));
@@ -260,26 +263,23 @@ public final class UnrealisedTests {
             helper.assertValueEqual(materialiser.getEnergyStorage().getEnergyStored(), energy, "FE after a pipe only asked");
             helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.MATTER_SLOT).getCount(), 4,
                     "Matter after a pipe only asked");
-            // One Matter makes three: a pull for two gets two, and the third waits in the outputs.
+            // One Matter makes three: a pull for two gets two, and the third waits in the buffer.
             ItemStack pulled = below.extractItem(copper, 2, false);
             helper.assertTrue(pulled.is(Items.RAW_COPPER) && pulled.getCount() == 2, "pulled: " + pulled);
             helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.MATTER_SLOT).getCount(), 3,
                     "one Matter used");
-            helper.assertTrue(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.OUTPUT_START).is(Items.RAW_COPPER),
-                    "the third raw copper waits in the outputs");
-            // With an output chosen, automation sees only its own slots.
-            materialiser.setTarget(new Materialising.Target(Identifier.parse("c:ores/iron"), Identifier.parse("minecraft:raw_iron")));
-            helper.assertValueEqual(materialiser.getAutomationItemHandler(Direction.DOWN).getSlots(), MaterialiserBlockEntity.TOTAL_SLOTS,
-                    "no catalogue with an output chosen");
-            // A player at its screen still takes any form on the spot: one raw copper makes a whole Matter's three,
-            // one handed over and two more into the outputs beside the one waiting there.
+            helper.assertValueEqual(materialiser.buffered(new ItemStack(Items.RAW_COPPER)), 1, "the third raw copper waits");
+            // A player at its screen takes that one before anything more is made.
             ItemStack forPlayer = materialiser.makeFor(new Materialising.Target(Identifier.parse("c:ores/copper"),
                     Identifier.parse("minecraft:raw_copper")), 1);
             helper.assertTrue(forPlayer.is(Items.RAW_COPPER) && forPlayer.getCount() == 1, "a player's one: " + forPlayer);
-            helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.MATTER_SLOT).getCount(), 2,
-                    "another Matter used");
-            helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.OUTPUT_START).getCount(), 3,
-                    "the rest waits in the outputs");
+            helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.MATTER_SLOT).getCount(), 3,
+                    "no more Matter used");
+            helper.assertValueEqual(materialiser.buffered(new ItemStack(Items.RAW_COPPER)), 0, "the buffer emptied");
+            // A whole stack for a player: as many as it can make, the last roll's spare in the buffer.
+            ItemStack stack = materialiser.makeFor(new Materialising.Target(Identifier.parse("c:ores/copper"),
+                    Identifier.parse("minecraft:raw_copper")), 64);
+            helper.assertValueEqual(stack.getCount(), 9, "all three Matter left make nine");
             TestSupport.clearField(helper);
             helper.succeed();
         });
@@ -312,18 +312,15 @@ public final class UnrealisedTests {
         materialiser.bandGate().update(helper.getLevel(), helper.absolutePos(at));
         materialiser.setTarget(new Materialising.Target(Identifier.parse("c:ores/iron"), Identifier.parse("minecraft:raw_iron")));
         helper.assertValueEqual(materialiser.matterSeen().getCount(), 3, "raw Matter it can reach through the Tesseract");
-        helper.succeedWhen(() -> {
-            int iron = 0;
-            for (int slot = MaterialiserBlockEntity.OUTPUT_START; slot <= MaterialiserBlockEntity.OUTPUT_END; slot++) {
-                ItemStack out = materialiser.getInventory().getStackInSlot(slot);
-                if (out.is(Items.RAW_IRON)) iron += out.getCount();
-            }
-            helper.assertValueEqual(iron, 3, "raw iron made");
+        helper.runAfterDelay(4, () -> {
+            ItemStack iron = materialiser.makeFor(new Materialising.Target(Identifier.parse("c:ores/iron"), Identifier.parse("minecraft:raw_iron")), 64);
+            helper.assertValueEqual(iron.getCount(), 3, "raw iron made");
             helper.assertTrue(matter.getStackInSlot(0).isEmpty(), "the raw Matter is used up");
             helper.assertValueEqual(matter.getStackInSlot(1).getCount(), 2, "the smelted Matter is left alone");
             // Three commons at Medium are 2.25 Anomalite Dust: three taken from the other chest, 0.75 kept as credit.
             helper.assertValueEqual(trace.getStackInSlot(0).getCount(), 1, "dust left in its chest");
             TestSupport.clearField(helper);
+            helper.succeed();
         });
     }
 

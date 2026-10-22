@@ -21,12 +21,14 @@ import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Layout matches {@code tools/gui_panels.py} materialiser: Matter at (26, 17), Anomalite Dust in its socket at
- * (26, 53), the search box at (48, 17) over the choices at (48, 32), results in a column at (145, 17). On the server it sends the player
- * what the Materialiser could make of its Matter once a second while open.
+ * (26, 53), the search box over a grid of the forms it could make, taken from as at a Logistics Terminal. On the
+ * server it sends the player what the Materialiser could make of its Matter, and how many, twice a second while open
+ * and at once after a take.
  */
 public class MaterialiserMenu extends AbstractContainerMenu {
 
@@ -34,11 +36,10 @@ public class MaterialiserMenu extends AbstractContainerMenu {
     public static final int MATTER_Y = 17;
     public static final int TRACE_X = 26;
     public static final int TRACE_Y = 53;
-    public static final int OUTPUT_X = 145;
-    public static final int OUTPUT_Y = 17;
+    public static final int PLAYER_Y = 110;
 
-    /** Machine slots in the menu: Matter, Anomalite Dust, three results. */
-    private static final int MACHINE_SLOTS = 5;
+    /** Machine slots in the menu: Matter, Anomalite Dust. */
+    private static final int MACHINE_SLOTS = 2;
 
     private final MaterialiserBlockEntity blockEntity;
     private final ContainerData data;
@@ -70,22 +71,13 @@ public class MaterialiserMenu extends AbstractContainerMenu {
                 return com.kadikular.quantimium.unrealised.Materialising.pays(stack) || EntangledLinks.isBound(stack);
             }
         });
-        for (int i = 0; i < 3; i++) {
-            addSlot(new SlotItemHandler(blockEntity.getInventory(), MaterialiserBlockEntity.OUTPUT_START + i,
-                    OUTPUT_X, OUTPUT_Y + i * 18) {
-                @Override
-                public boolean mayPlace(ItemStack stack) {
-                    return false;
-                }
-            });
-        }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, PLAYER_Y + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
         }
         addDataSlots(data);
     }
@@ -95,15 +87,23 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         super.broadcastChanges();
         // What it could make, once a second, and at once when opened.
         if (player instanceof ServerPlayer server && sinceOptions-- <= 0 && blockEntity.getLevel() instanceof ServerLevel level) {
-            sinceOptions = 20;
-            PacketDistributor.sendToPlayer(server, new MaterialiserOptionsPayload(blockEntity.options(level),
-                    Optional.ofNullable(blockEntity.getTarget()), blockEntity.matterSeen().copy()));
+            sinceOptions = 10;
+            var options = blockEntity.options(level);
+            List<Long> buffered = new java.util.ArrayList<>(options.size());
+            List<Long> makeable = new java.util.ArrayList<>(options.size());
+            for (var option : options) {
+                long held = blockEntity.buffered(option.display());
+                buffered.add(held);
+                makeable.add(option.allowed() ? Math.max(0, blockEntity.available(option) - held) : 0L);
+            }
+            PacketDistributor.sendToPlayer(server, new MaterialiserOptionsPayload(options,
+                    Optional.ofNullable(blockEntity.getTarget()), blockEntity.matterSeen().copy(), buffered, makeable));
         }
     }
 
     /**
-     * Makes {@code count} of {@code form} for {@code player}: onto the cursor (as much as it holds beside what's there,
-     * which must be the same), or into the inventory, any that won't fit going to the Materialiser's outputs.
+     * Gives {@code count} of {@code form} to {@code player}, from the buffer first, then made: onto the cursor (as much as
+     * fits beside what's there, which must be the same), or into the inventory. What it made over stays in its buffer.
      */
     public void take(Player player, com.kadikular.quantimium.unrealised.Materialising.Target form, int count, boolean toInventory) {
         ItemStack carried = getCarried();
@@ -118,16 +118,23 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         if (made.isEmpty()) return;
         if (toInventory) {
             player.getInventory().add(made);
-            if (!made.isEmpty()) player.drop(made, false);
+            if (!made.isEmpty()) getBlockEntity().addBuffered(made);
         } else if (carried.isEmpty()) {
             setCarried(made);
-        } else if (ItemStack.isSameItemSameComponents(carried, made)) {
+        } else {
             carried.grow(made.getCount());
             setCarried(carried);
-        } else {
-            player.getInventory().add(made);
-            if (!made.isEmpty()) player.drop(made, false);
         }
+        sinceOptions = 0;
+    }
+
+    /** Puts what's on the cursor (or one of it) back into its buffer, if it's something it makes. */
+    public void putBack(boolean one) {
+        ItemStack carried = getCarried();
+        if (carried.isEmpty() || !getBlockEntity().takesBack(carried)) return;
+        getBlockEntity().addBuffered(carried.split(one ? 1 : carried.getCount()));
+        setCarried(carried);
+        sinceOptions = 0;
     }
 
     public MaterialiserBlockEntity getBlockEntity() {
