@@ -2,7 +2,7 @@
 navigation:
   title: Insert Lens
   parent: items/index.md
-  position: 18
+  position: 19
   icon: quantimium:insert_lens
 item_ids:
 - quantimium:insert_lens

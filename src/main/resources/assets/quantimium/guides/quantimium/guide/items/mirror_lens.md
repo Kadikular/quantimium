@@ -2,7 +2,7 @@
 navigation:
   title: Mirror Lens
   parent: items/index.md
-  position: 22
+  position: 23
   icon: quantimium:mirror_lens
 item_ids:
 - quantimium:mirror_lens

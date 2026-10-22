@@ -329,6 +329,23 @@ public final class Config {
             .comment("Whether the Unrealising lens turns ore a Harvest beam cuts into Unrealised Matter. Off, ore comes away as it would anyway: for packs where Matter would duplicate ores.")
             .define("unrealisingLens", true);
 
+    public static final ModConfigSpec.BooleanValue ACCELERATION = BUILDER
+            .comment("Whether the Acceleration Lens speeds up the machines its light ends on.")
+            .define("acceleration", true);
+    public static final ModConfigSpec.IntValue ACCELERATION_FE_PER_TICK = BUILDER
+            .comment("FE an Acceleration Lens costs for each extra tick it gives a machine: at 2x, this a tick.")
+            .defineInRange("accelerationFePerExtraTick", 500, 0, 1_000_000);
+    public static final ModConfigSpec.IntValue ACCELERATION_MAX = BUILDER
+            .comment("The most an Acceleration Lens speeds a machine up (2x alone, doubled by each Speed lens).")
+            .defineInRange("accelerationMaxMultiplier", 16, 2, 64);
+    public static final ModConfigSpec.IntValue ACCELERATION_BLOCK_MICROS = BUILDER
+            .comment("The most time one machine's extra ticks may take each tick, in microseconds: one that takes longer",
+                    "is given fewer, and says so.")
+            .defineInRange("accelerationBlockBudgetMicros", 100, 1, 1_000_000);
+    public static final ModConfigSpec.IntValue ACCELERATION_TOTAL_MICROS = BUILDER
+            .comment("The most time all accelerated machines' extra ticks may take together each tick, in microseconds.")
+            .defineInRange("accelerationTotalBudgetMicros", 5000, 1, 1_000_000);
+
     public static final ModConfigSpec.IntValue PHANTOM_FE_PER_BLOCK = BUILDER
             .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on. On top of this, the actions it carries cost twice as much.")
             .defineInRange("phantomFePerBlock", 20, 0, 100_000);
@@ -392,6 +409,26 @@ public final class Config {
 
     public static double warmthFallSeconds() {
         return 60.0 * (SPEC.isLoaded() ? WARMTH_FALL_MINUTES.get() : 40.0);
+    }
+
+    public static boolean acceleration() {
+        return !SPEC.isLoaded() || ACCELERATION.get();
+    }
+
+    public static int accelerationFePerExtraTick() {
+        return SPEC.isLoaded() ? ACCELERATION_FE_PER_TICK.get() : 500;
+    }
+
+    public static int accelerationMax() {
+        return SPEC.isLoaded() ? ACCELERATION_MAX.get() : 16;
+    }
+
+    public static long accelerationBlockBudgetNanos() {
+        return 1000L * (SPEC.isLoaded() ? ACCELERATION_BLOCK_MICROS.get() : 100);
+    }
+
+    public static long accelerationTotalBudgetNanos() {
+        return 1000L * (SPEC.isLoaded() ? ACCELERATION_TOTAL_MICROS.get() : 5000);
     }
 
     public static int phantomFePerBlock() {

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SCS",
+    "GAG",
+    "SCS"
+  ],
+  "key": {
+    "S": "quantimium:anomalite_shard",
+    "C": "minecraft:clock",
+    "G": "quantimium:quantum_attuned_glass",
+    "A": "quantimium:speed_lens"
+  },
+  "result": {
+    "id": "quantimium:acceleration_lens",
+    "count": 1
+  }
+}

@@ -20,10 +20,12 @@ public final class QuantimiumJadePlugin implements IWailaPlugin {
     @Override
     public void register(IWailaCommonRegistration registration) {
         registration.registerBlockDataProvider(FieldData.INSTANCE, BlockEntity.class);
+        registration.registerBlockDataProvider(AccelerationProvider.Data.INSTANCE, BlockEntity.class);
     }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
         registration.registerBlockComponent(FieldProvider.INSTANCE, Block.class);
+        registration.registerBlockComponent(AccelerationProvider.Client.INSTANCE, Block.class);
     }
 }

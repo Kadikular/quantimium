@@ -2,7 +2,7 @@
 navigation:
   title: Block Filter Lens
   parent: items/index.md
-  position: 7
+  position: 8
   icon: quantimium:block_filter_lens
 item_ids:
 - quantimium:block_filter_lens

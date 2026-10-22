@@ -2,7 +2,7 @@
 navigation:
   title: Damage Lens
   parent: items/index.md
-  position: 9
+  position: 10
   icon: quantimium:damage_lens
 item_ids:
 - quantimium:damage_lens

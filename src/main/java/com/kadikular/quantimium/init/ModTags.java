@@ -60,6 +60,10 @@ public final class ModTags {
     public static final TagKey<Block> LASER_CLEAR = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_clear"));
 
+    /** Blocks an Acceleration Lens never speeds up (a pack's generators, say, or anything that breaks when ticked faster). */
+    public static final TagKey<Block> NOT_ACCELERATED = TagKey.create(
+            Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "not_accelerated"));
+
     /** Blocks a Harvest lens never breaks: Anomalite (for the rift lens), and what withers can't break. */
     public static final TagKey<Block> LASER_UNBREAKABLE = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_unbreakable"));

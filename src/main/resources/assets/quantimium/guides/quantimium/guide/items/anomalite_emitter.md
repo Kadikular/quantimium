@@ -2,7 +2,7 @@
 navigation:
   title: Anomalite Emitter
   parent: items/index.md
-  position: 3
+  position: 4
   icon: quantimium:anomalite_emitter
 item_ids:
 - quantimium:anomalite_emitter

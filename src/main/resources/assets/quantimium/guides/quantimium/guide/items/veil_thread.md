@@ -2,7 +2,7 @@
 navigation:
   title: Veil Thread
   parent: items/index.md
-  position: 42
+  position: 43
   icon: quantimium:veil_thread
 item_ids:
 - quantimium:veil_thread

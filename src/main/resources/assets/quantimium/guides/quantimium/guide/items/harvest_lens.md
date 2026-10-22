@@ -2,7 +2,7 @@
 navigation:
   title: Harvest Lens
   parent: items/index.md
-  position: 17
+  position: 18
   icon: quantimium:harvest_lens
 item_ids:
 - quantimium:harvest_lens

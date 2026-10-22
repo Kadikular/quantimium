@@ -45,7 +45,9 @@ public enum Lens {
     /** Lets only power through, or what it's set to pass: a network, actions, modifiers, listed lenses. */
     ISOLATE(false, 0xFFFF5050),
     /** What the actions before it free and nothing takes is destroyed: with Pickup, what no Laser Port has room for. */
-    VOID(false, 0xFF3A3448);
+    VOID(false, 0xFF3A3448),
+    /** Speeds up the machine the beam ends on (each machine in an Area Prism's area): 2x, doubled by each Speed lens. */
+    ACCELERATE(true, 0xFF60FFD0);
 
     /** The lens item's translation key: its name, but for the two named for what they do to things. */
     public String itemKey() {
@@ -54,6 +56,7 @@ public enum Lens {
             case SMELT -> "smelting";
             case CRUSH -> "crushing";
             case ISOLATE -> "isolator";
+            case ACCELERATE -> "acceleration";
             default -> name().toLowerCase(java.util.Locale.ROOT);
         };
         return "item.quantimium." + name + "_lens";

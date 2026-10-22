@@ -223,6 +223,9 @@ public final class LensAction {
             case INTERACT -> {
                 if (!mirrored()) interact(level, networks);
             }
+            case ACCELERATE -> {
+                if (!mirrored()) accelerate(level, networks);
+            }
             case SMELT, CRUSH -> {
                 if (!mirrored()) processAt(level, networks);
             }
@@ -464,6 +467,55 @@ public final class LensAction {
         if (!hand.gameMode.destroyBlock(pos)) return false;
         networks.pay(this, cost);
         return true;
+    }
+
+    // ---- acceleration ----
+
+    /** In an area, the machines there it can speed up, looked for again every so often; when it last looked. */
+    private List<BlockPos> accelerated = List.of();
+    private long acceleratedFound = Long.MIN_VALUE;
+
+    /**
+     * Speeds up the machine the beam ends on (in an area, each machine there): 2x, doubled for each Speed lens, up to
+     * the configured most, as far as the light pays for each extra tick and {@link Acceleration}'s time budgets allow.
+     */
+    private void accelerate(ServerLevel level, LaserNetworks networks) {
+        int multiplier = Math.min(com.kadikular.quantimium.Config.accelerationMax(), 2 << Math.max(0, stream.speed()));
+        int wanted = multiplier - 1;
+        long fe = com.kadikular.quantimium.Config.accelerationFePerExtraTick();
+        for (BlockPos pos : accelerationTargets(level)) {
+            // As many extra ticks as it can pay for, then as many as the budgets give.
+            int afford = wanted;
+            while (afford > 0 && fe > 0 && !networks.canPay(this, fe * afford)) afford--;
+            if (afford <= 0) return;
+            int done = Acceleration.tick(level, pos, afford, multiplier);
+            if (done <= 0) continue;
+            networks.pay(this, fe * done);
+            networks.workDone(this);
+            lastWorked = now;
+        }
+    }
+
+    private List<BlockPos> accelerationTargets(ServerLevel level) {
+        if (area == null) {
+            if (beam == null || beam.hit() == null) return List.of();
+            return List.of(beam.hit());
+        }
+        if (now - acceleratedFound >= 40) {
+            acceleratedFound = now;
+            List<BlockPos> found = new ArrayList<>();
+            for (int cx = area.minX() >> 4; cx <= area.maxX() >> 4; cx++) {
+                for (int cz = area.minZ() >> 4; cz <= area.maxZ() >> 4; cz++) {
+                    var chunk = level.getChunkSource().getChunkNow(cx, cz);
+                    if (chunk == null) continue;
+                    for (BlockPos pos : chunk.getBlockEntitiesPos()) {
+                        if (area.isInside(pos) && within.test(pos) && Acceleration.accelerable(level.getBlockEntity(pos))) found.add(pos.immutable());
+                    }
+                }
+            }
+            accelerated = found;
+        }
+        return accelerated;
     }
 
     /** A stand-in player at the beam, facing the way it goes. */

@@ -22,6 +22,10 @@
 
 ### Lasers
 
+- **Acceleration Lens**: speeds up the machine the beam ends on (every machine in an Area Prism's area): 2x, doubled by
+  each Speed lens up to 16x, 500 FE for each extra tick. Each machine's extra ticks keep to 100 µs a tick and all of them
+  to 5,000 µs; Jade says how fast a machine is going and when the budget held it back. All configurable, with a
+  `quantimium:not_accelerated` block tag.
 - **Void Lens**: what the actions before it free and nothing takes is destroyed (with Pickup, only what the Laser
   Ports have no room for).
 - **Interact Lens**: set to hit, it mines the block the beam ends on with its tool (wearing it) when nothing living is

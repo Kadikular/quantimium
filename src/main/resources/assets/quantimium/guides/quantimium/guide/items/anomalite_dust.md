@@ -2,7 +2,7 @@
 navigation:
   title: Anomalite Dust
   parent: items/index.md
-  position: 2
+  position: 3
   icon: quantimium:anomalite_dust
 item_ids:
 - quantimium:anomalite_dust

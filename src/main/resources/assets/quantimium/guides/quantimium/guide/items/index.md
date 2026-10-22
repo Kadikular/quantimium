@@ -8,6 +8,7 @@ navigation:
 
 # Items
 
+- <ItemLink id="quantimium:acceleration_lens" />
 - <ItemLink id="quantimium:amplify_lens" />
 - <ItemLink id="quantimium:anomalite_cell" />
 - <ItemLink id="quantimium:anomalite_dust" />

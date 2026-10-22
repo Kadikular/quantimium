@@ -2,7 +2,7 @@
 navigation:
   title: Amplify Lens
   parent: items/index.md
-  position: 0
+  position: 1
   icon: quantimium:amplify_lens
 item_ids:
 - quantimium:amplify_lens

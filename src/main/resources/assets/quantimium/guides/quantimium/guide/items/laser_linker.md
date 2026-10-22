@@ -2,7 +2,7 @@
 navigation:
   title: Laser Linker
   parent: items/index.md
-  position: 21
+  position: 22
   icon: quantimium:laser_linker
 item_ids:
 - quantimium:laser_linker

@@ -2,7 +2,7 @@
 navigation:
   title: Basic Decoherence Matrix
   parent: items/index.md
-  position: 6
+  position: 7
   icon: quantimium:basic_decoherence_matrix
 item_ids:
 - quantimium:basic_decoherence_matrix

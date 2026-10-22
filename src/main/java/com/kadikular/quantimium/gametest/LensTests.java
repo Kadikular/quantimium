@@ -1713,6 +1713,55 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.accelerate
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses_accelerate", timeoutTicks = 170)
+    public static void anAccelerationBeamSmeltsFaster(GameTestHelper helper) {
+        // A furnace takes 200 ticks to smelt raw iron. At the end of an Acceleration beam (2x) it's done well before.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.ACCELERATION_LENS.get());
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, Blocks.FURNACE);
+        var furnace = helper.getBlockEntity(at, net.minecraft.world.level.block.entity.FurnaceBlockEntity.class);
+        furnace.setItem(0, new ItemStack(Items.RAW_IRON));
+        furnace.setItem(1, new ItemStack(Items.COAL));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(furnace.getItem(2).is(Items.IRON_INGOT), "smelted already");
+            var shown = com.kadikular.quantimium.laser.Acceleration.shown(helper.getLevel(), helper.absolutePos(at));
+            helper.assertTrue(shown != null && shown.multiplier() == 2, "it says it's going 2x: " + shown);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.accelerate
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses_accelerate_budget", timeoutTicks = 100)
+    public static void anAccelerationBeamKeepsToTheTickBudget(GameTestHelper helper) {
+        // With a tick budget smaller than one of the furnace's ticks, it's given none after the first, and says the
+        // budget held it back. Chests (no ticker) and Quantimium's own machines are never sped up.
+        var budget = com.kadikular.quantimium.Config.ACCELERATION_BLOCK_MICROS;
+        int was = budget.get();
+        budget.set(1);
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.ACCELERATION_LENS.get());
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, Blocks.FURNACE);
+        var furnace = helper.getBlockEntity(at, net.minecraft.world.level.block.entity.FurnaceBlockEntity.class);
+        furnace.setItem(0, new ItemStack(Items.RAW_IRON));
+        furnace.setItem(1, new ItemStack(Items.COAL));
+        helper.setBlock(new BlockPos(8, Y + 2, 8), Blocks.CHEST);
+        helper.assertTrue(!com.kadikular.quantimium.laser.Acceleration.accelerable(helper.getBlockEntity(new BlockPos(8, Y + 2, 8),
+                net.minecraft.world.level.block.entity.ChestBlockEntity.class)), "a chest doesn't tick");
+        helper.assertTrue(!com.kadikular.quantimium.laser.Acceleration.accelerable(helper.getBlockEntity(new BlockPos(1, Y, 8),
+                LaserEmitterBlockEntity.class)), "nor is a Quantimium machine sped up");
+        helper.runAfterDelay(60, () -> {
+            budget.set(was);
+            var shown = com.kadikular.quantimium.laser.Acceleration.shown(helper.getLevel(), helper.absolutePos(at));
+            helper.assertTrue(shown != null && shown.budgeted() && shown.multiplier() == 1 && shown.asked() == 2,
+                    "held to 1x of 2x by the budget: " + shown);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.interact
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
     public static void anInteractBeamSetToHitMinesWithItsTool(GameTestHelper helper) {

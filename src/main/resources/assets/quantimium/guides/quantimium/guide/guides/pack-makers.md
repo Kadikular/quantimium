@@ -105,6 +105,19 @@ to be sure every value is picked up.
 | `materialiserPremiumPercent` | 120 | What choosing costs over rolling, in percent. |
 | `materialiserFluxPerValue` | 25 | Flux the Materialiser takes per Matter, per point of the ore's value. |
 
+### `[lasers]`: the Acceleration Lens
+
+| Key | Default | What it does |
+| --- | --- | --- |
+| `acceleration` | `true` | Whether the Acceleration Lens speeds machines up at all. |
+| `accelerationFePerExtraTick` | 500 | FE for each extra tick it gives a machine: at 2x, this a tick. |
+| `accelerationMaxMultiplier` | 16 | The most it speeds a machine up. |
+| `accelerationBlockBudgetMicros` | 100 | The most time one machine's extra ticks may take each tick; one that takes longer is given fewer. |
+| `accelerationTotalBudgetMicros` | 5000 | The most all accelerated machines' extra ticks may take together each tick. |
+
+Tag blocks `quantimium:not_accelerated` to keep the lens off them (a generator that would make more than its
+extra ticks cost, say).
+
 ### `[fieldVision]`: each player's own
 
 These only matter on a player's own install: a server's values don't reach them.
