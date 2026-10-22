@@ -329,7 +329,10 @@ public final class SidesPage extends Page {
         if (level == null) return "";
         BlockState neighbour = level.getBlockState(pos.relative(side));
         if (neighbour.isAir()) return Component.translatable("gui.quantimium.sides.nothing").getString();
-        return neighbour.getBlock().getName().getString();
+        // As picking it would name it, its data and all: a block's own name can want its block entity's details
+        // (Sophisticated Storage's chests name their wood), and shows %s without them.
+        net.minecraft.world.item.ItemStack picked = neighbour.getCloneItemStack(level, pos.relative(side), true);
+        return picked.isEmpty() ? neighbour.getBlock().getName().getString() : picked.getHoverName().getString();
     }
 
     private static Component modeLabel(SideMode mode) {

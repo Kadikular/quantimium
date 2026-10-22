@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.6.0-alpha: Warm fields and new lenses
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on. A Materialiser holding Trace needs
+Anomalite Dust instead (the Trace stays in its slot until taken out).
 
 ### The field
 
@@ -49,6 +52,8 @@
   frees. Actions after a Pickup no longer get it.
 - The terminal shows an item's full tooltip.
 - The stash and logistics keys say nothing to a player with no doubles.
+- Side configuration names a neighbour as picking it would: Sophisticated Storage's chests no longer show as
+  `%s%sGold Chest`.
 - Drops other mods hand out in the mirror (Ultimine, Apotheosis) can be picked up there.
 
 ## 0.5.7-alpha: Crafting at the terminal
