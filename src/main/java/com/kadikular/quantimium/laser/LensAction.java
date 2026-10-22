@@ -314,8 +314,13 @@ public final class LensAction {
                     && tried.stream().noneMatch(seen -> ItemStack.isSameItemSameComponents(seen, stack)), 1, true);
             if (!sent.isEmpty()) tried.add(sent);
             ItemStack held = sent.copy();
+            // A tool bound to an Entangled Dock is charged from it as it's used, wherever the dock is.
+            if (!held.isEmpty()) com.kadikular.quantimium.block.entity.EntangledDockBlockEntity.topUp(level, held);
             hand.hold(held);
-            done = stream.hits() ? swing(level, hand) : use(level, hand, held);
+            int targets = stream.targets();
+            done = stream.hits()
+                    ? targets != LensUse.BLOCKS && swing(level, hand) || targets != LensUse.ENTITIES && mine(level, networks, hand)
+                    : use(level, hand, held, targets);
             // Whatever it holds now: a filled bucket, what's left of a stack, a worn sword.
             after = hand.letGo();
             extras = List.copyOf(hand.getInventory().getNonEquipmentItems());
@@ -358,9 +363,13 @@ public final class LensAction {
         return beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from();
     }
 
-    /** A right click: with something in hand, on the first thing living in the beam that takes it; else on the block the beam ends on. */
-    private boolean use(ServerLevel level, LaserHand hand, ItemStack held) {
-        if (!held.isEmpty() && useOnLiving(level, hand)) return true;
+    /**
+     * A right click: with something in hand, on the first thing living in the beam that takes it; else on the block the
+     * beam ends on. As far as {@code targets} lets it: blocks, living things, or both.
+     */
+    private boolean use(ServerLevel level, LaserHand hand, ItemStack held, int targets) {
+        if (targets != LensUse.BLOCKS && !held.isEmpty() && useOnLiving(level, hand)) return true;
+        if (targets == LensUse.ENTITIES) return false;
         if (area != null) return useInArea(level, hand, held);
         if (beam.hit() == null) return false;
         // Something light passes, just before the end (a lever, a button, a crop), is what it uses; else what it ends on.
@@ -436,6 +445,24 @@ public final class LensAction {
         if (found.isEmpty()) return false;
         hand.attack(found.getFirst());
         touching(found.getFirst());
+        return true;
+    }
+
+    /**
+     * A left click on a block: mines what the beam ends on (or passes just before its end) as a player holding what the
+     * hand holds would, its drops falling there, the tool wearing as a player's does. Paid as a Harvest lens's cut is,
+     * by the block's hardness. Not in an area, nor in the mirror.
+     */
+    private boolean mine(ServerLevel level, LaserNetworks networks, LaserHand hand) {
+        if (area != null || mirrored() || beam == null || beam.hit() == null) return false;
+        BlockPos before = beam.hit().relative(beam.face().getOpposite());
+        BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir() || state.hasBlockEntity() || state.getDestroySpeed(level, pos) < 0 || state.is(ModTags.LASER_UNBREAKABLE)) return false;
+        long cost = harvestCost(level, pos);
+        if (!networks.canPay(this, cost + LaserTuning.PLACE_FE)) return false;
+        if (!hand.gameMode.destroyBlock(pos)) return false;
+        networks.pay(this, cost);
         return true;
     }
 

@@ -1714,6 +1714,47 @@ public final class LensTests {
     }
 
     // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void anInteractBeamSetToHitMinesWithItsTool(GameTestHelper helper) {
+        // An Interact lens set to hit, on blocks, with an iron pickaxe sent down the beam: it mines the stone as a
+        // player would, the cobblestone dropping there, and the pickaxe comes back worn.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        var sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.IRON_PICKAXE));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        ItemStack lens = new ItemStack(ModItems.INTERACT_LENS.get());
+        com.kadikular.quantimium.item.InteractLensItem.toggle(lens);
+        com.kadikular.quantimium.item.InteractLensItem.cycleTargets(lens);
+        mount.getLensSlots().setStackInSlot(0, lens);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(9, Y, 8));
+            ItemStack pick = sender.getItems().getStackInSlot(0);
+            helper.assertTrue(pick.is(Items.IRON_PICKAXE) && pick.getDamageValue() > 0, "the pickaxe is back, worn: " + pick);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.interact
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void anInteractBeamOnLivingThingsOnlyLeavesALeverBe(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        ItemStack lens = new ItemStack(ModItems.INTERACT_LENS.get());
+        com.kadikular.quantimium.item.InteractLensItem.cycleTargets(lens);
+        com.kadikular.quantimium.item.InteractLensItem.cycleTargets(lens);
+        mount.getLensSlots().setStackInSlot(0, lens);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.STONE);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACING, Direction.WEST)
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.WALL));
+        helper.runAfterDelay(60, () -> {
+            helper.assertBlockProperty(new BlockPos(8, Y, 8), net.minecraft.world.level.block.LeverBlock.POWERED, false);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.interact
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void anInteractBeamFlipsALever(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);

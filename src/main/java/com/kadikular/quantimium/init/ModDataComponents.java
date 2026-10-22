@@ -42,6 +42,11 @@ public final class ModDataComponents {
             COMPONENTS.registerComponentType("interact_hits",
                     builder -> builder.persistent(com.mojang.serialization.Codec.BOOL).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
 
+    /** What an Interact lens works on: 0 blocks and living things, 1 blocks only, 2 living things only. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> INTERACT_TARGETS =
+            COMPONENTS.registerComponentType("interact_targets",
+                    builder -> builder.persistent(com.mojang.serialization.Codec.intRange(0, 2)).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+
     /** The Laser Linker's area mode and the corners picked. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.kadikular.quantimium.laser.LinkerArea>> LINKER_AREA =
             COMPONENTS.registerComponentType("linker_area",

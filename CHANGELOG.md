@@ -22,6 +22,9 @@
 
 - **Void Lens**: what the actions before it free and nothing takes is destroyed (with Pickup, only what the Laser
   Ports have no room for).
+- **Interact Lens**: set to hit, it mines the block the beam ends on with its tool (wearing it) when nothing living is
+  there. A second setting (sneak and use it in the air) picks blocks, living things or both. A tool bound to an
+  Entangled Dock is charged from it as the lens uses it.
 - **Laser Ports export faster while busy**, and pass what they collect straight into the inventories they export to.
 
 ### Partner mods

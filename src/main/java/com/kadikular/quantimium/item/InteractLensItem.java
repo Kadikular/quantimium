@@ -14,7 +14,10 @@ import net.minecraft.world.level.Level;
 
 import java.util.function.Consumer;
 
-/** An Interact lens: set to use (a right click) or to hit. Use it in the air, or its button in a mount, to switch. */
+/**
+ * An Interact lens: set to use (a right click) or to hit, and to work on blocks, living things or both. Use it in the
+ * air (or its button in a mount) to switch use and hit; sneak and use it to switch what it works on.
+ */
 public class InteractLensItem extends LensItem {
 
     public InteractLensItem(Properties properties) {
@@ -32,12 +35,39 @@ public class InteractLensItem extends LensItem {
         return hits;
     }
 
+    /** What it works on: {@link com.kadikular.quantimium.laser.LensUse#BOTH}, BLOCKS or ENTITIES. */
+    public static int targets(ItemStack stack) {
+        Integer targets = stack.get(ModDataComponents.INTERACT_TARGETS.get());
+        return targets == null ? com.kadikular.quantimium.laser.LensUse.BOTH : targets;
+    }
+
+    /** Steps to what it works on next; what that is. */
+    public static int cycleTargets(ItemStack stack) {
+        int next = (targets(stack) + 1) % 3;
+        stack.set(ModDataComponents.INTERACT_TARGETS.get(), next);
+        return next;
+    }
+
+    private static Component targetsLine(ItemStack stack) {
+        return Component.translatable("item.quantimium.interact_lens.targets." + switch (targets(stack)) {
+            case com.kadikular.quantimium.laser.LensUse.BLOCKS -> "blocks";
+            case com.kadikular.quantimium.laser.LensUse.ENTITIES -> "entities";
+            default -> "both";
+        }).withStyle(ChatFormatting.AQUA);
+    }
+
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (!level.isClientSide()) {
-            boolean hits = toggle(player.getItemInHand(hand));
-            player.sendOverlayMessage(Component.translatable(hits ? "item.quantimium.interact_lens.hits" : "item.quantimium.interact_lens.uses")
-                    .withStyle(ChatFormatting.AQUA));
+            ItemStack stack = player.getItemInHand(hand);
+            if (player.isShiftKeyDown()) {
+                cycleTargets(stack);
+                player.sendOverlayMessage(targetsLine(stack));
+            } else {
+                boolean hits = toggle(stack);
+                player.sendOverlayMessage(Component.translatable(hits ? "item.quantimium.interact_lens.hits" : "item.quantimium.interact_lens.uses")
+                        .withStyle(ChatFormatting.AQUA));
+            }
         }
         return InteractionResult.SUCCESS;
     }
@@ -47,5 +77,6 @@ public class InteractLensItem extends LensItem {
         super.appendHoverText(stack, context, display, tooltip, flag);
         tooltip.accept(Component.translatable(hits(stack) ? "item.quantimium.interact_lens.hits" : "item.quantimium.interact_lens.uses")
                 .withStyle(ChatFormatting.AQUA));
+        tooltip.accept(targetsLine(stack));
     }
 }

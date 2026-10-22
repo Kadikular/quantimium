@@ -163,6 +163,27 @@ public class EntangledDockBlockEntity extends BlockEntity implements QuantumEner
         if (status != previous) sync();
     }
 
+    /**
+     * Tops up {@code stack} from its Entangled Dock, if it's bound to one that's loaded and still holds that binding,
+     * wherever the stack is: a laser lens using it, say, rather than its owner. FE moves as the dock's own charging does.
+     */
+    public static void topUp(ServerLevel level, ItemStack stack) {
+        DockBinding binding = stack.get(ModDataComponents.DOCK_BINDING.get());
+        if (binding == null) return;
+        ServerLevel there = level.getServer().getLevel(binding.dock().dimension());
+        if (there == null || !there.isLoaded(binding.dock().pos())
+                || !(there.getBlockEntity(binding.dock().pos()) instanceof EntangledDockBlockEntity dock)
+                || !binding.id().equals(dock.bindingId)) return;
+        IEnergyStorage energy = LegacyEnergy.item(stack);
+        if (energy == null || dock.energyStorage.getEnergyStored() <= 0) return;
+        int want = energy.receiveEnergy(CHARGE_PER_TICK * INTERVAL, true);
+        if (want <= 0) return;
+        int moved = energy.receiveEnergy(Math.min(want, dock.energyStorage.getEnergyStored()), false);
+        dock.energyStorage.consume(moved);
+        QuantumFlux.emitFromEnergy(there, dock.worldPosition, moved);
+        dock.setChanged();
+    }
+
     /** The bound item in its owner's inventory, if they are about and still carry it. */
     @Nullable
     private ItemStack find(ServerLevel level) {
