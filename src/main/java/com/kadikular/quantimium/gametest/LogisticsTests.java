@@ -1475,6 +1475,39 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.logistics.provider, unrealised.on_demand
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_materialiser_provider", timeoutTicks = 200)
+    public static void aMaterialiserBehindAProviderOffersWhatItMakes(GameTestHelper helper) {
+        // A Materialiser holding Matter and Anomalite Dust in a Medium field, no output chosen, a provider Receptacle on
+        // it: the network lists raw copper as craftable, and a take makes some.
+        TestSupport.clearField(helper);
+        LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        BlockPos at = new BlockPos(6, Y - 1, 8);
+        helper.setBlock(at, ModBlocks.MATERIALISER.get());
+        var materialiser = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.MaterialiserBlockEntity.class);
+        TestSupport.fill(materialiser.getEnergyStorage());
+        materialiser.getInventory().setStackInSlot(com.kadikular.quantimium.block.entity.MaterialiserBlockEntity.MATTER_SLOT,
+                new ItemStack(ModItems.UNREALISED_MATTER.get(), 4));
+        materialiser.getInventory().setStackInSlot(com.kadikular.quantimium.block.entity.MaterialiserBlockEntity.TRACE_SLOT,
+                new ItemStack(ModItems.ANOMALITE_DUST.get(), 4));
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) TestSupport.setField(helper, at.offset(dx * 16, 0, dz * 16), 500.0, 0.0);
+        materialiser.bandGate().update(helper.getLevel(), helper.absolutePos(at));
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
+        var provider = helper.getBlockEntity(new BlockPos(6, Y, 8), LogisticsReceptacleBlockEntity.class);
+        while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
+        var copper = resource(Items.RAW_COPPER);
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(settled(controller::offers).craftable(copper) >= 3, "raw copper listed craftable: " + controller.offers().craftable(copper));
+            helper.assertValueEqual(controller.offers().real(resource(ModItems.UNREALISED_MATTER.get())), 0L, "its Matter isn't offered as stock");
+            ItemStack got = com.kadikular.quantimium.laser.Logistics.take(controller.spots(), copper, 3, false, false, true);
+            helper.assertValueEqual(got.getCount(), 3, "three raw copper made the first time");
+            helper.assertValueEqual(materialiser.getInventory().getStackInSlot(com.kadikular.quantimium.block.entity.MaterialiserBlockEntity.MATTER_SLOT).getCount(),
+                    3, "of one Matter");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.chain, laser.logistics.materialiser
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_iron_loop", timeoutTicks = 200)
     public static void craftsDontChaseEachOtherRoundALoop(GameTestHelper helper) {

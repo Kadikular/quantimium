@@ -108,7 +108,8 @@ hopper, an AE2 import bus or storage bus pulling iron plates gets iron plates, m
 paid for as usual. Each form shows as many as it could make now, as far as its Matter, dust, FE and
 the field go. A pull for less than one Matter makes (two raw copper, when a Matter makes three) gets
 what it asked for, and the rest waits in the output slots. Choose an output and automation sees only
-the output slots again, so a hopper under it collects rather than making things.
+the output slots again, so a hopper under it collects rather than making things. A provider
+<ItemLink id="quantimium:logistics_receptacle" /> on it offers those forms to its logistics network as craftable, made when taken.
 
 **Through a Tesseract.** A bound <ItemLink id="quantimium:tesseract" /> in
 the Materialiser's Matter slot reads the inventory it links to: the first Matter there, and every

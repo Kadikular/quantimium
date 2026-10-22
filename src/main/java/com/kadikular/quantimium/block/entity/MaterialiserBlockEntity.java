@@ -71,7 +71,7 @@ import java.util.function.Predicate;
  * <p>Slots follow the side configuration's layout: Matter in 0, Anomalite Dust in 1, results in 9 to 11.
  */
 public class MaterialiserBlockEntity extends BlockEntity
-        implements MenuProvider, SideConfigurable, QuantumEnergyHost, FluxMeterReadout {
+        implements MenuProvider, SideConfigurable, QuantumEnergyHost, FluxMeterReadout, com.kadikular.quantimium.laser.OfferMaker {
 
     public static final int MATTER_SLOT = 0;
     public static final int TRACE_SLOT = 1;
@@ -554,6 +554,50 @@ public class MaterialiserBlockEntity extends BlockEntity
         if (over > 0) insertIntoOutputs(option.display().copyWithCount(over));
         setChanged();
         return option.display().copyWithCount(give);
+    }
+
+    // ---- making for a logistics network ----
+
+    /**
+     * Behind a provider Receptacle, what it could make now with no output chosen: each form it may choose, as many as
+     * its Matter, Anomalite Dust, FE and the field pay for. It makes from its own slots (or what their Tesseracts
+     * read), never from the network's stock.
+     */
+    @Override
+    public List<com.kadikular.quantimium.laser.OfferMaker.Made> makes(com.kadikular.quantimium.laser.LogisticsController network,
+                                                                       java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stock,
+                                                                       boolean fromCraftable) {
+        if (!(level instanceof ServerLevel server)) return List.of();
+        List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new java.util.ArrayList<>();
+        java.util.Set<net.minecraft.world.item.Item> from = java.util.Set.of(ModItems.UNREALISED_MATTER.get(), ModItems.ANOMALITE_DUST.get());
+        for (Materialising.Option option : catalog()) {
+            PackOres.Ore ore = PackOres.byTag(option.ore());
+            if (ore == null) continue;
+            int runs = affordable(server, ore, Integer.MAX_VALUE);
+            if (runs <= 0) continue;
+            made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(net.neoforged.neoforge.transfer.item.ItemResource.of(option.display()),
+                    (long) runs * option.display().getCount(), from));
+        }
+        return made;
+    }
+
+    /** The slots past its own are what it makes on demand. */
+    @Override
+    public boolean makesOnDemand(int slot) {
+        return slot >= TOTAL_SLOTS;
+    }
+
+    /** Only what's in its outputs is on offer as it is: its Matter and dust are what it makes from. */
+    @Override
+    public boolean stocks(int slot) {
+        return slot >= OUTPUT_START && slot <= OUTPUT_END;
+    }
+
+    @Override
+    public ItemStack peekOnDemand(int slot) {
+        List<Materialising.Option> offered = catalog();
+        int index = slot - TOTAL_SLOTS;
+        return index < 0 || index >= offered.size() ? ItemStack.EMPTY : offered.get(index).display().copy();
     }
 
     private boolean fitsOutputs(List<ItemStack> products) {

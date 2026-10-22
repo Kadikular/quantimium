@@ -339,7 +339,8 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
 - [[mechanic:laser.logistics.provider]] **Provider**: passive, the network may take what its filter lets go
   (a furnace's output, say); active, it pushes it out itself, to requesters listing it first, then into
   storage.
-  On a machine that makes things to order (a Quantum Crafter), what it would make is offered as craftable.
+  On a machine that makes things to order (a Quantum Crafter, or a [[block:materialiser]] with no output
+  chosen), what it would make is offered as craftable.
   It makes them from what's really stored, one step at a time. A tab on its screen turns that off, offering
   only what's really in the machine's outputs.
 - [[mechanic:laser.logistics.requester]] **Requester**: passive, it takes what active providers push, as its
