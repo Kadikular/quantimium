@@ -85,6 +85,7 @@ public final class FieldModelTests {
                 field.step();
             }
             double peak = field.data(0, 0).flux();
+            double fieldPeak = field.data(0, 0).fieldFlux();
             double previous = peak;
             for (int second = 0; second < 600; second++) {
                 field.step();
@@ -92,7 +93,41 @@ public final class FieldModelTests {
                 helper.assertTrue(now <= previous + 1.0E-9, "a field should only fall once its source stops: second " + second);
                 previous = now;
             }
-            helper.assertTrue(previous < peak * 0.1, "ten minutes should take it down by 90%: " + peak + " → " + previous);
+            double fieldNow = field.data(0, 0).fieldFlux();
+            helper.assertTrue(fieldNow < fieldPeak * 0.1, "ten minutes should take the field itself down by 90%: " + fieldPeak + " → " + fieldNow);
+            // Ten minutes of work warmed the chunk: it reads well above its field ten minutes after, still falling.
+            helper.assertTrue(previous > peak * 0.2 && previous > fieldNow * 2, "its warmth should linger: " + peak + " → " + previous);
+        });
+    }
+
+    // covers: field2.warmth
+    @GameTest(template = TestSupport.FLOOR_17, batch = "field2_warmth", timeoutTicks = 40)
+    public static void warmthHoldsASteadyBaseAndBarelyNoticesOneBurst(GameTestHelper helper) {
+        // A day of steady work warms the chunk most of the way to its field, and it's still over half that an hour
+        // of game time (a quarter of a day) after stopping. One burst as big as that whole day's work, in a minute,
+        // spikes the field but leaves the warmth far lower.
+        withField(helper, field -> {
+            for (int second = 0; second < 1200; second++) {
+                QuantumFlux.emit(field.level, field.source, 20.0);
+                field.step();
+            }
+            double steady = field.data(0, 0).fieldFlux();
+            double warmed = field.data(0, 0).warmth();
+            helper.assertTrue(warmed > steady * 0.55, "a day's work warms it most of the way: " + warmed + " of " + steady);
+            for (int second = 0; second < 300; second++) field.step();
+            helper.assertTrue(field.data(0, 0).flux() > warmed * 0.8, "and it lingers: " + field.data(0, 0).flux() + " of " + warmed);
+            field.clear();
+            for (int second = 0; second < 60; second++) {
+                QuantumFlux.emit(field.level, field.source, 20.0 * 1200 / 60);
+                field.step();
+            }
+            double spike = 0;
+            for (int second = 0; second < 600; second++) {
+                spike = Math.max(spike, field.data(0, 0).fieldFlux());
+                field.step();
+            }
+            double warmth = field.data(0, 0).warmth();
+            helper.assertTrue(warmth < spike * 0.1, "one burst leaves little warmth: " + warmth + " after a spike of " + spike);
         });
     }
 

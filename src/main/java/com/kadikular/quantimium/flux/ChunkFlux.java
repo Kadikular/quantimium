@@ -17,7 +17,8 @@ public final class ChunkFlux {
             Codec.DOUBLE.optionalFieldOf("anomaly", 0.0).forGetter(ChunkFlux::anomaly),
             Codec.LONG.optionalFieldOf("last_drain_tick", 0L).forGetter(ChunkFlux::lastDrainTick),
             Codec.DOUBLE.optionalFieldOf("pending_flux", 0.0).forGetter(ChunkFlux::pendingFlux),
-            Codec.DOUBLE.optionalFieldOf("pending_anomaly", 0.0).forGetter(ChunkFlux::pendingAnomaly)
+            Codec.DOUBLE.optionalFieldOf("pending_anomaly", 0.0).forGetter(ChunkFlux::pendingAnomaly),
+            Codec.DOUBLE.optionalFieldOf("warmth", 0.0).forGetter(ChunkFlux::warmth)
     ).apply(instance, ChunkFlux::new));
 
     /** Below this a field has finished clearing: decay never takes less than it a second. */
@@ -29,7 +30,14 @@ public final class ChunkFlux {
      */
     public static final double ANOMALY_COUPLING = 0.04;
 
+    /** The field itself: what's emitted eases into it, it decays in minutes and spreads to the chunks round it. */
     private double flux;
+    /**
+     * A slow memory of the field: it follows the field's average, warming over about a day of work and cooling over
+     * a couple once the work stops. The chunk reads as the higher of the two ({@link #flux()}), so a base's field
+     * lingers between bursts of work, and a single burst leaves only a little behind. See {@link FieldModel#warm}.
+     */
+    private double warmth;
     private double anomaly;
     private long lastDrainTick;
     /**
@@ -72,6 +80,11 @@ public final class ChunkFlux {
     }
 
     public ChunkFlux(double flux, double anomaly, long lastDrainTick, double pendingFlux, double pendingAnomaly) {
+        this(flux, anomaly, lastDrainTick, pendingFlux, pendingAnomaly, 0.0);
+    }
+
+    public ChunkFlux(double flux, double anomaly, long lastDrainTick, double pendingFlux, double pendingAnomaly, double warmth) {
+        this.warmth = Math.max(0.0, warmth);
         this.flux = Math.max(0.0, flux);
         this.anomaly = Math.max(0.0, anomaly);
         this.lastDrainTick = lastDrainTick;
@@ -79,8 +92,31 @@ public final class ChunkFlux {
         this.pendingAnomaly = Math.max(0.0, pendingAnomaly);
     }
 
+    /** The chunk's flux: the field, or its warmth where that's higher. What everything that reads flux reads. */
     public double flux() {
+        return Math.max(flux, warmth);
+    }
+
+    /** The field alone, without its warmth: what decays and spreads. */
+    public double fieldFlux() {
         return flux;
+    }
+
+    public double warmth() {
+        return warmth;
+    }
+
+    /** One second of warmth following the field: {@code up} of the gap closed while the field is above it, {@code down} while below. */
+    void warm(double up, double down) {
+        warmth += (flux - warmth) * (flux > warmth ? up : down);
+        if (warmth < FieldModel.WARMTH_FLOOR && flux < warmth) warmth = 0.0;
+    }
+
+    /** {@code seconds} of warmth cooling towards a field it's above (a chunk catching up after being unloaded). */
+    void cool(int seconds, double down) {
+        if (warmth <= flux) return;
+        warmth = flux + (warmth - flux) * Math.pow(1.0 - down, seconds);
+        if (warmth < FieldModel.WARMTH_FLOOR) warmth = 0.0;
     }
 
     public double anomaly() {
@@ -125,6 +161,7 @@ public final class ChunkFlux {
     /** Empties the field and its pending pool. */
     public void clear() {
         flux = 0.0;
+        warmth = 0.0;
         anomaly = 0.0;
         pendingFlux = 0.0;
         pendingAnomaly = 0.0;
@@ -142,8 +179,14 @@ public final class ChunkFlux {
         leakLast = 0.0;
     }
 
-    /** Sets the field outright. */
+    /** Sets the chunk's flux and anomaly outright: its warmth no higher than that flux. */
     public void setField(double flux, double anomaly) {
+        setFieldOnly(flux, anomaly);
+        warmth = Math.min(warmth, this.flux);
+    }
+
+    /** Sets the field and anomaly, leaving the warmth be: the field's own step. */
+    void setFieldOnly(double flux, double anomaly) {
         this.flux = Math.max(0.0, flux);
         this.anomaly = Math.max(0.0, anomaly);
     }
@@ -156,11 +199,16 @@ public final class ChunkFlux {
         if (amount > 0.0) anomaly += amount;
     }
 
-    /** Returns how much was actually removed (clamped to what was there). */
+    /**
+     * Takes {@code amount} off the chunk's flux, warmth and all, so what draws it down (a Suppressor, a Siphon) lowers
+     * what the chunk reads. Returns how much was actually removed (clamped to what was there).
+     */
     public double removeFlux(double amount) {
-        if (amount <= 0.0 || flux <= 0.0) return 0.0;
-        double taken = Math.min(flux, amount);
-        flux -= taken;
+        double was = flux();
+        if (amount <= 0.0 || was <= 0.0) return 0.0;
+        double taken = Math.min(was, amount);
+        flux = Math.min(flux, was - taken);
+        warmth = Math.min(warmth, was - taken);
         return taken;
     }
 
@@ -241,7 +289,7 @@ public final class ChunkFlux {
         if (pullReceipts == null) pullReceipts = new Long2ObjectOpenHashMap<>();
         for (var entry : pullRequests.long2ObjectEntrySet()) {
             double[] asked = entry.getValue();
-            double fluxTaken = removeFlux(Math.min(asked[0], Math.max(0.0, flux - asked[2])));
+            double fluxTaken = removeFlux(Math.min(asked[0], Math.max(0.0, flux() - asked[2])));
             double taken = removeAnomaly(Math.min(asked[1], Math.max(0.0, anomaly - asked[3])));
             double[] receipt = pullReceipts.computeIfAbsent(entry.getLongKey(), k -> new double[] {0.0, second, 0.0});
             receipt[0] += taken;
@@ -277,14 +325,14 @@ public final class ChunkFlux {
      */
     public boolean isContained(long gameTime) {
         double capacity = capacity(gameTime);
-        return capacity > 0.0 && flux <= capacity;
+        return capacity > 0.0 && flux() <= capacity;
     }
 
     /** Flux over capacity: 0.5 is half loaded, above 1 overloaded. Infinite with no containment. */
     public double load(long gameTime) {
         double capacity = capacity(gameTime);
-        if (capacity <= 0.0) return flux > 0.0 ? Double.POSITIVE_INFINITY : 0.0;
-        return flux / capacity;
+        if (capacity <= 0.0) return flux() > 0.0 ? Double.POSITIVE_INFINITY : 0.0;
+        return flux() / capacity;
     }
 
     /** Records a second's gain before decay; see {@link #settling}. */
@@ -299,10 +347,10 @@ public final class ChunkFlux {
      */
     public double settling() {
         if (Double.isNaN(inflow)) return Double.NaN;
-        return FieldModel.levelFor(Math.max(0.0, inflow));
+        return Math.max(FieldModel.levelFor(Math.max(0.0, inflow)), warmth);
     }
 
     public boolean isEmpty() {
-        return flux <= 0.0 && anomaly <= 0.0 && pendingFlux <= 0.0 && pendingAnomaly <= 0.0;
+        return flux <= 0.0 && warmth <= 0.0 && anomaly <= 0.0 && pendingFlux <= 0.0 && pendingAnomaly <= 0.0;
     }
 }

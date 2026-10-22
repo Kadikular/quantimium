@@ -17,6 +17,7 @@ to be sure every value is picked up.
 | `surchargePercentMedium` / `High` / `Critical` / `Singularity` | 10 / 25 / 50 / 100 | The extra, in percent, by band. |
 | `passiveDrain` | `true` | Quantimium machine buffers leak FE in uncontained anomaly above Low. |
 | `passiveDrainFePerTickMedium` / `High` / `Critical` / `Singularity` | 16 / 40 / 80 / 160 | The leak, in FE/t per machine, by band. |
+| `warmthRiseMinutes` / `warmthFallMinutes` | 20 / 40 | How long a chunk's warmth takes to follow its field up and back down (time constants, real minutes; an in-game day is 20). |
 
 ### `[anomalite]`: crystals
 

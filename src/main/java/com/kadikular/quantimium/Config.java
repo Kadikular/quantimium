@@ -52,6 +52,15 @@ public final class Config {
             .comment("FE/t leaked per machine at Singularity anomaly.")
             .defineInRange("passiveDrainFePerTickSingularity", 160, 0, 1_000_000);
 
+    public static final ModConfigSpec.DoubleValue WARMTH_RISE_MINUTES = BUILDER
+            .comment("A chunk's flux has a slow warmth that follows its field, and reads as the higher of the two:",
+                    "a base's field lingers between bursts of work. How many minutes it takes to warm (a time constant;",
+                    "an in-game day is 20 minutes). Steady work brings it most of the way to the field in this time.")
+            .defineInRange("warmthRiseMinutes", 20.0, 0.1, 100_000.0);
+    public static final ModConfigSpec.DoubleValue WARMTH_FALL_MINUTES = BUILDER
+            .comment("How many minutes a chunk's warmth takes to cool once the work stops (a time constant).")
+            .defineInRange("warmthFallMinutes", 40.0, 0.1, 100_000.0);
+
     static {
         BUILDER.pop();
         BUILDER.push("anomalite");
@@ -392,6 +401,14 @@ public final class Config {
     /** {@link #LASER_IDLE_SECONDS}, in ticks. */
     public static int laserIdleTicks() {
         return 20 * (SPEC.isLoaded() ? LASER_IDLE_SECONDS.get() : 4);
+    }
+
+    public static double warmthRiseSeconds() {
+        return 60.0 * (SPEC.isLoaded() ? WARMTH_RISE_MINUTES.get() : 20.0);
+    }
+
+    public static double warmthFallSeconds() {
+        return 60.0 * (SPEC.isLoaded() ? WARMTH_FALL_MINUTES.get() : 40.0);
     }
 
     public static int phantomFePerBlock() {

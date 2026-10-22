@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### The field
+
+- **Flux keeps a warmth.** Each chunk has a slow memory of its field that warms over about an in-game day of work and
+  cools over about two once it stops; the chunk reads as the higher of the two, and anomaly follows. A base crafting
+  here and there warms up and stays warm; switched off, it holds its level for a day before fading; one huge batch
+  barely warms it. Configurable (`warmthRiseMinutes`, `warmthFallMinutes`).
+
+### Fixes
+
+- Craft placeholders in the terminal's grid no longer vanish from the screen while still being used.
+- Set Filter and Isolator lenses stack, and the terminal can take them.
+- An Isolator Lens not set to pass actions stops Laser Ports linking past it.
+- A source sending all its power down one beam still shows its other beams dimly.
+- Pickup before an action (or alone) gathers everything lying in the beam; after one, it carries what that action
+  frees. Actions after a Pickup no longer get it.
+- The terminal shows an item's full tooltip.
+- The stash and logistics keys say nothing to a player with no doubles.
+- Drops other mods hand out in the mirror (Ultimine, Apotheosis) can be picked up there.
+
 ## 0.5.7-alpha: Crafting at the terminal
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on; a Crafter's Receptacle set to craft

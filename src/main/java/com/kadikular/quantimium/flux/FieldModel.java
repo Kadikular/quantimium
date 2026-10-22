@@ -63,6 +63,28 @@ public final class FieldModel {
     public static final double LEAK = 0.03;
     /** How quickly a chunk's record of its inflow follows the latest second: a few seconds' memory. */
     static final double INFLOW_SMOOTHING = 0.2;
+    /**
+     * Warmth: how long a chunk's slow memory of its field takes to follow it up (about an in-game day of work) and
+     * back down (about two once the work stops), as time constants in seconds. Tuned in the Flux Field Sandbox:
+     * steady work warms a factory over a day, switching off leaves it at its level for a day or so, and one huge
+     * batch only nudges it. Configurable.
+     */
+    public static double warmthRiseSeconds() {
+        return com.kadikular.quantimium.Config.warmthRiseSeconds();
+    }
+
+    public static double warmthFallSeconds() {
+        return com.kadikular.quantimium.Config.warmthFallSeconds();
+    }
+
+    /** Warmth below this, with the field under it, is let go: a cold chunk stops being stepped. */
+    static final double WARMTH_FLOOR = 0.5;
+
+    /** One second of warmth following the field of {@code data}. */
+    static void warm(ChunkFlux data) {
+        data.warm(1.0 - Math.exp(-1.0 / warmthRiseSeconds()), 1.0 - Math.exp(-1.0 / warmthFallSeconds()));
+    }
+
     /** A chunk holding less than this does not spread any further. */
     public static final double SPREAD_FLOOR = 1.0;
     /** Floor and ceiling of the smooth decay rate, per second. */
@@ -132,7 +154,8 @@ public final class FieldModel {
     static boolean catchUp(ChunkFlux data, int seconds) {
         if (seconds <= 0 || data.isEmpty()) return false;
         data.releasePending(1.0);
-        data.setField(decayed(data.flux(), seconds), anomalyDecayed(data.anomaly(), seconds));
+        data.setFieldOnly(decayed(data.fieldFlux(), seconds), anomalyDecayed(data.anomaly(), seconds));
+        data.cool(seconds, 1.0 - Math.exp(-1.0 / warmthFallSeconds()));
         return true;
     }
 
@@ -158,20 +181,21 @@ public final class FieldModel {
         Map<Long, double[]> ledger = new HashMap<>();
         for (Map.Entry<Long, ChunkFlux> entry : fields.entrySet()) {
             ChunkFlux data = entry.getValue();
-            double atStart = data.flux();
+            double atStart = data.fieldFlux();
             data.releasePending(RELEASE_PER_SECOND);
-            double flux = data.flux();
             double anomaly = data.anomaly();
-            double target = anomalyTarget(flux, data.capacity(now), data.leak(now));
+            // Anomaly follows what the chunk reads: its field, or its warmth where that's higher.
+            double target = anomalyTarget(data.flux(), data.capacity(now), data.leak(now));
             if (target > anomaly) anomaly += (target - anomaly) * ChunkFlux.ANOMALY_COUPLING;
             // Pulls asked this second land in the same step as the coupling they answer.
-            data.setField(flux, anomaly);
+            data.setFieldOnly(data.fieldFlux(), anomaly);
             data.applyPulls(now);
-            flux = data.flux();
+            double flux = data.fieldFlux();
             anomaly = data.anomaly();
             double afterDecay = decayed(flux, 1);
             ledger.put(entry.getKey(), new double[] {atStart, flux - afterDecay});
-            data.setField(afterDecay, anomalyDecayed(anomaly, 1));
+            data.setFieldOnly(afterDecay, anomalyDecayed(anomaly, 1));
+            warm(data);
             data.setLastDrainTick(now);
         }
 
@@ -180,7 +204,8 @@ public final class FieldModel {
         Map<Long, double[]> deltas = new HashMap<>();
         for (Map.Entry<Long, ChunkFlux> entry : fields.entrySet()) {
             ChunkPos pos = ChunkPos.unpack(entry.getKey());
-            double flux = entry.getValue().flux();
+            // The field spreads; its warmth stays where it was earned.
+            double flux = entry.getValue().fieldFlux();
             double anomaly = entry.getValue().anomaly();
             if (flux < SPREAD_FLOOR && anomaly < SPREAD_FLOOR) continue;
             for (int side = 0; side < 4; side++) {
@@ -194,7 +219,7 @@ public final class FieldModel {
                     if (loaded == null) continue;
                     neighbour = loaded.getExistingData(ModAttachments.CHUNK_FLUX).orElse(null);
                 }
-                double theirFlux = neighbour == null ? 0.0 : neighbour.flux();
+                double theirFlux = neighbour == null ? 0.0 : neighbour.fieldFlux();
                 double theirAnomaly = neighbour == null ? 0.0 : neighbour.anomaly();
                 double fluxFlow = flux >= SPREAD_FLOOR && flux > theirFlux ? DIFFUSION * (flux - theirFlux) : 0.0;
                 double anomalyFlow = anomaly >= SPREAD_FLOOR && anomaly > theirAnomaly ? DIFFUSION * (anomaly - theirAnomaly) : 0.0;
@@ -214,7 +239,7 @@ public final class FieldModel {
             ChunkFlux data = chunk.getData(ModAttachments.CHUNK_FLUX);
             if (data.lastDrainTick() <= 0L) data.setLastDrainTick(now);
             double[] delta = entry.getValue();
-            data.setField(data.flux() + delta[0], data.anomaly() + delta[1]);
+            data.setFieldOnly(data.fieldFlux() + delta[0], data.anomaly() + delta[1]);
             chunk.markUnsaved();
             if (!data.isEmpty()) FluxEvents.markActive(level, chunk.getPos());
         }
@@ -222,7 +247,7 @@ public final class FieldModel {
         for (Map.Entry<Long, double[]> entry : ledger.entrySet()) {
             ChunkFlux data = fields.get(entry.getKey());
             double[] line = entry.getValue();
-            data.recordInflow(data.flux() - line[0] + line[1]);
+            data.recordInflow(data.fieldFlux() - line[0] + line[1]);
         }
     }
 }

@@ -76,13 +76,22 @@ The field updates once a second, for every chunk holding one.
   over a minute or two, on an S-curve, and never overshoots: it crosses a band once and stays.
 - [[mechanic:field2.fall]] **It falls the same way.** When the source stops, the field only ever
   falls; it doesn't rebound.
+- [[mechanic:field2.warmth]] **It keeps a warmth.** Each chunk remembers its field: a slow warmth that
+  follows the field's average, warming over about an in-game day of work and cooling over about two once
+  the work stops. The chunk reads as the higher of its field and its warmth, and anomaly follows that. So
+  a base that crafts a little here and there warms up over a day or so and stays warm between crafts, and
+  switching everything off leaves it at its level for a day before it fades. One huge batch spikes the
+  field for a few minutes but barely warms the chunk. Warmth doesn't spread: it stays where it was earned.
+  A Suppressor or Siphon drawing the chunk down takes its warmth down too. Both times are configurable
+  (`warmthRiseMinutes`, `warmthFallMinutes`).
 
 ## Anomaly
 
 [[mechanic:anomaly.coupling]] Anomaly climbs towards a target each second, closing 4% of the gap. With
 nothing containing it, the target is all the flux. Under containment, the target is the flux its
 capacity can't hold, plus a small leak (3%) of what it does hold. Anomaly decays
-on the same curve as flux at half the rate, so it settles nearer the flux and lingers after work stops.
+on the same curve as flux at half the rate, so it settles nearer the flux, and with the chunk's warmth
+holding the flux up, it lingers after work stops.
 
 What anomaly does in a chunk that isn't contained, by band:
 

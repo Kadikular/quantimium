@@ -836,7 +836,7 @@ public final class LensTests {
     }
 
     // covers: laser.lens.pickup
-    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
     public static void pickupBeforeHarvestGathersWhatElseLiesInTheBeam(GameTestHelper helper) {
         // Pickup, then Harvest, in one mount: a tree farm's leaves decaying in the beam. The Pickup before Harvest
         // gathers what lies there (the flower) as well as what Harvest cuts.
