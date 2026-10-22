@@ -78,25 +78,26 @@ making that into its output slots, for automation to collect (ctrl-click again t
 
 - **The band caps the choice.** Nothing at Low, commons at Medium, uncommons at High, rares from
   Critical. Very rare ores are never choosable: only a roll turns them up.
-- **Choosing costs Trace**, 1.2 × the ore's value over the average value of a roll in that band
-  (common 1, uncommon 3, rare 10), whatever the form: so choosing always costs a little more than
-  rolling would on average, and a hotter field makes it cheaper. A common at Medium is 0.75 Trace, at
-  Critical 0.22. Trace goes in whole; what a Matter doesn't use is kept as credit for the next.
+- **Choosing costs [[item:anomalite_dust]]**, 4 × 1.2 × the ore's value over the average value of a roll
+  in that band (common 1, uncommon 3, rare 10), whatever the form: so choosing always costs a little more
+  than rolling would on average, and a hotter field makes it cheaper. A common at Medium is 3 dust, at
+  Critical about 0.9. Dust goes in whole; what a Matter doesn't use is kept as credit for the next. Dust
+  is renewable: crush Anomalite with a [[item:crushing_lens]], or break a crystal before it's grown.
 - **And flux from its own chunk**, 25 × the ore's value (25 for a common, 250 for a rare), with
   4,000 FE for each Matter.
 
 [[mechanic:unrealised.on_demand]] **On demand.** With no output chosen, a Materialiser holding Matter
 offers every form it could make now (every one the band can choose) to automation, as its screen does: an item pipe, a
 hopper, an AE2 import bus or storage bus pulling iron plates gets iron plates, made there and then and
-paid for as usual. Each form shows as many as it could make now, as far as its Matter, Trace, FE and
+paid for as usual. Each form shows as many as it could make now, as far as its Matter, dust, FE and
 the field go. A pull for less than one Matter makes (two raw copper, when a Matter makes three) gets
 what it asked for, and the rest waits in the output slots. Choose an output and automation sees only
 the output slots again, so a hopper under it collects rather than making things.
 
 [[mechanic:unrealised.materialiser_tesseract]] **Through a Tesseract.** A bound [[item:tesseract]] in
 the Materialiser's Matter slot reads the inventory it links to: the first Matter there, and every
-Matter of the same history (hover the slot to see what it's reading). One in its Trace slot draws
-Trace the same way. Feed it from a chest, a drawer or your storage network.
+Matter of the same history (hover the slot to see what it's reading). One in its dust slot draws
+dust the same way. Feed it from a chest, a drawer or your storage network.
 
 A Chamber's better odds are paid for too: above Low, each collapse takes 5 flux per band step from
 its chunk (5 at Medium, 20 at Singularity), and with too little it rolls at Low's odds.

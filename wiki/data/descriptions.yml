@@ -53,7 +53,7 @@ quantum_attuned_glass: "Glass tuned to the field. It walls in the Containment Ha
 anomalite_crystal: "Grows on machines in an uncontained anomalous field, draining their power. Only the mirror can see it."
 budding_anomalite: "Grows Anomalite Crystals in the mirror while powered, whatever the field."
 anomalite_shard: "What a full-grown Anomalite Crystal breaks into."
-anomalite_dust: "What a crystal broken too early leaves. The Foundry turns it back into shards."
+anomalite_dust: "What a crystal broken too early leaves, or Anomalite crushed. The Foundry turns it back into shards; a Materialiser is paid in it."
 anomalite_lattice: "Four Anomalite Shards packed together, for sturdier parts."
 anomalite_cell: "A prism of Anomalite in glass. The fuel a Decoherence Projector burns."
 anomalite_emitter: "A shard set in a mount: the light of the Decoherence Lance."

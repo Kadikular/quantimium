@@ -55,8 +55,8 @@ import java.util.function.Predicate;
  * The Materialiser (game plan E4): chooses what Unrealised Matter becomes. The player picks one of the
  * pack's ores in one of the forms the Matter's history could make of it (raw, dust, ingot, plate…);
  * each cycle one Matter becomes that, as many as it makes on average, rounded down. What it can choose is capped by the flux band
- * where it stands, and each Matter costs Trace (see {@link Materialising}), flux from its own chunk,
- * and {@value #FE_PER_MATTER} FE. Trace is paid in whole items; what a Matter didn't use is kept as
+ * where it stands, and each Matter costs Anomalite Dust (see {@link Materialising}), flux from its own chunk,
+ * and {@value #FE_PER_MATTER} FE. Anomalite Dust is paid in whole items; what a Matter didn't use is kept as
  * credit towards the next, so nothing is wasted.
  *
  * <p>With no output chosen it works <b>on demand</b>: every form it could make now (all the band can
@@ -65,10 +65,10 @@ import java.util.function.Predicate;
  * what it asked for, and the rest goes to the output slots. With an output chosen, automation sees
  * only the real slots, so a hopper under it collects the results rather than making things.
  *
- * <p>A bound Tesseract in the Matter or Trace slot reads the inventory it links to instead: the first
- * Matter there, and all of that history; all the Trace.
+ * <p>A bound Tesseract in the Matter or Anomalite Dust slot reads the inventory it links to instead: the first
+ * Matter there, and all of that history; all the Anomalite Dust.
  *
- * <p>Slots follow the side configuration's layout: Matter in 0, Trace in 1, results in 9 to 11.
+ * <p>Slots follow the side configuration's layout: Matter in 0, Anomalite Dust in 1, results in 9 to 11.
  */
 public class MaterialiserBlockEntity extends BlockEntity
         implements MenuProvider, SideConfigurable, QuantumEnergyHost, FluxMeterReadout {
@@ -117,7 +117,7 @@ public class MaterialiserBlockEntity extends BlockEntity
         public boolean isItemValid(int slot, ItemStack stack) {
             // A bound Tesseract reads its linked inventory instead (see refreshSources).
             if (slot == MATTER_SLOT) return com.kadikular.quantimium.unrealised.Matter.is(stack) || EntangledLinks.isBound(stack);
-            if (slot == TRACE_SLOT) return stack.is(ModItems.QUANTIMIUM_TRACE.get()) || EntangledLinks.isBound(stack);
+            if (slot == TRACE_SLOT) return Materialising.pays(stack) || EntangledLinks.isBound(stack);
             return slot >= OUTPUT_START && slot <= OUTPUT_END;
         }
     };
@@ -138,14 +138,14 @@ public class MaterialiserBlockEntity extends BlockEntity
     /** The ore and form chosen; null for none. */
     @Nullable
     private Materialising.Target target;
-    /** Trace paid for but not yet spent: a Matter rarely costs a whole one. */
+    /** Anomalite Dust paid for but not yet spent: a Matter rarely costs a whole one. */
     private double traceCredit;
     private int statusCode = STATUS_EMPTY;
     /** What it offers automation on demand: every form the band can choose for the Matter in it. */
     private List<Materialising.Option> catalog = List.of();
     private boolean catalogDirty = true;
     /**
-     * The Matter it would work next, as many of that history as it can reach, and the Trace it can reach:
+     * The Matter it would work next, as many of that history as it can reach, and the Anomalite Dust it can reach:
      * in its slots, or in the inventories a bound Tesseract in them links to. Read once a tick at most.
      */
     private ItemStack matterSeen = ItemStack.EMPTY;
@@ -192,7 +192,7 @@ public class MaterialiserBlockEntity extends BlockEntity
         for (Direction side : Direction.values()) sidedHandlers[side.get3DDataValue()] = new SidedHandler(side);
     }
 
-    /** Every face takes Matter and Trace in and hands results out; nothing moves by itself until told to. */
+    /** Every face takes Matter and Anomalite Dust in and hands results out; nothing moves by itself until told to. */
     private static List<SideConfig> defaultSideConfigs() {
         return SIDE_AUTOMATION_PROFILE.sanitize(SideConfig.defaults().stream()
                 .map(config -> new SideConfig(config.side(), SideMode.BOTH, SideConfig.ALL_ITEM_INPUTS,
@@ -263,7 +263,7 @@ public class MaterialiserBlockEntity extends BlockEntity
     /**
      * Reads what its two input slots hold, or what the inventories a bound Tesseract in them links to
      * hold: the first Matter found, and every Matter of the same history counted with it; all the
-     * Trace. At most once a tick, unless a slot changed or it just spent some.
+     * Anomalite Dust. At most once a tick, unless a slot changed or it just spent some.
      */
     private void refreshSources() {
         if (level == null) return;
@@ -296,7 +296,7 @@ public class MaterialiserBlockEntity extends BlockEntity
             if (linked != null) {
                 for (int slot = 0; slot < linked.getSlots(); slot++) {
                     ItemStack stack = linked.getStackInSlot(slot);
-                    if (stack.is(ModItems.QUANTIMIUM_TRACE.get())) count += stack.getCount();
+                    if (Materialising.pays(stack)) count += stack.getCount();
                 }
             }
             traceSeen = count;
@@ -319,13 +319,13 @@ public class MaterialiserBlockEntity extends BlockEntity
         return done;
     }
 
-    /** Takes {@code count} Trace, from its slot or through the Tesseract; all or nothing. */
+    /** Takes {@code count} Anomalite Dust, from its slot or through the Tesseract; all or nothing. */
     private boolean takeTrace(int count) {
         if (count <= 0) return true;
         if (traceSeen() < count) return false;
         ItemStack traceSlot = inventory.getStackInSlot(TRACE_SLOT);
         boolean done = EntangledLinks.isLink(traceSlot)
-                ? takeLinked(traceSlot, stack -> stack.is(ModItems.QUANTIMIUM_TRACE.get()), count)
+                ? takeLinked(traceSlot, stack -> Materialising.pays(stack), count)
                 : inventory.extractItem(TRACE_SLOT, count, false).getCount() == count;
         sourcesDirty = true;
         return done;
@@ -432,7 +432,7 @@ public class MaterialiserBlockEntity extends BlockEntity
     }
 
     /**
-     * How many Matter it could make into {@code ore} now, as far as Matter, Trace, FE and the chunk's
+     * How many Matter it could make into {@code ore} now, as far as Matter, Anomalite Dust, FE and the chunk's
      * flux go; at most {@code limit}.
      */
     private int affordable(ServerLevel level, PackOres.Ore ore, int limit) {
@@ -450,7 +450,7 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     /**
      * Pays for {@code runs} Matter made into {@code ore}: the flux first, taken from the chunk at once or
-     * not at all, then the Trace (whole items, the rest kept as credit), FE and the Matter itself.
+     * not at all, then the Anomalite Dust (whole items, the rest kept as credit), FE and the Matter itself.
      */
     private boolean pay(ServerLevel level, PackOres.Ore ore, int runs) {
         double cost = traceCost(ore) * runs;
@@ -592,7 +592,7 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     // ---- automation ----
 
-    /** Once a second, each face told to pulls Matter or Trace in, or pushes a stack of results out. */
+    /** Once a second, each face told to pulls Matter or Anomalite Dust in, or pushes a stack of results out. */
     private void runAutoTransfers(ServerLevel level) {
         for (Direction side : Direction.values()) {
             SideConfig config = sideConfigs.get(side.get3DDataValue());
@@ -632,7 +632,7 @@ public class MaterialiserBlockEntity extends BlockEntity
         }
     }
 
-    /** What a pipe or hopper on {@code side} sees: Matter and Trace in, results out, where the face allows. */
+    /** What a pipe or hopper on {@code side} sees: Matter and Anomalite Dust in, results out, where the face allows. */
     @Nullable
     public IItemHandler getAutomationItemHandler(@Nullable Direction side) {
         if (side == null) return viewerHandler;
@@ -710,7 +710,7 @@ public class MaterialiserBlockEntity extends BlockEntity
             return inventory.extractItem(slot, amount, simulate);
         }
 
-        /** The catalogue's slots: pulling one makes Matter into that form, paying Matter, Trace and FE. */
+        /** The catalogue's slots: pulling one makes Matter into that form, paying Matter, Anomalite Dust and FE. */
         @Override
         public boolean producesOnDemand(int slot) {
             return slot >= TOTAL_SLOTS;

@@ -24,7 +24,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.Optional;
 
 /**
- * Layout matches {@code tools/gui_panels.py} materialiser: Matter at (26, 17), Trace in its socket at
+ * Layout matches {@code tools/gui_panels.py} materialiser: Matter at (26, 17), Anomalite Dust in its socket at
  * (26, 53), the search box at (48, 17) over the choices at (48, 32), results in a column at (145, 17). On the server it sends the player
  * what the Materialiser could make of its Matter once a second while open.
  */
@@ -37,7 +37,7 @@ public class MaterialiserMenu extends AbstractContainerMenu {
     public static final int OUTPUT_X = 145;
     public static final int OUTPUT_Y = 17;
 
-    /** Machine slots in the menu: Matter, Trace, three results. */
+    /** Machine slots in the menu: Matter, Anomalite Dust, three results. */
     private static final int MACHINE_SLOTS = 5;
 
     private final MaterialiserBlockEntity blockEntity;
@@ -67,7 +67,7 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(blockEntity.getInventory(), MaterialiserBlockEntity.TRACE_SLOT, TRACE_X, TRACE_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.QUANTIMIUM_TRACE.get()) || EntangledLinks.isBound(stack);
+                return com.kadikular.quantimium.unrealised.Materialising.pays(stack) || EntangledLinks.isBound(stack);
             }
         });
         for (int i = 0; i < 3; i++) {
@@ -166,7 +166,7 @@ public class MaterialiserMenu extends AbstractContainerMenu {
         return FluxBand.values()[Math.clamp(data.get(9), 0, FluxBand.values().length - 1)];
     }
 
-    /** Trace paid for but not yet spent. */
+    /** Anomalite Dust paid for but not yet spent. */
     public double getTraceCredit() {
         return data.get(10) / 1000.0;
     }
@@ -186,10 +186,10 @@ public class MaterialiserMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
         } else if (com.kadikular.quantimium.unrealised.Matter.is(stack)) {
             if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
-        } else if (stack.is(ModItems.QUANTIMIUM_TRACE.get())) {
+        } else if (com.kadikular.quantimium.unrealised.Materialising.pays(stack)) {
             if (!moveItemStackTo(stack, 1, 2, false)) return ItemStack.EMPTY;
         } else if (EntangledLinks.isBound(stack)) {
-            // A bound Tesseract feeds Matter first, then Trace.
+            // A bound Tesseract feeds Matter first, then Anomalite Dust.
             if (!moveItemStackTo(stack, 0, 2, false)) return ItemStack.EMPTY;
         } else {
             return ItemStack.EMPTY;

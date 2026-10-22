@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * The Materialiser: Matter and Trace on the left; in the middle, every form of every ore the Matter
+ * The Materialiser: Matter and Anomalite Dust on the left; in the middle, every form of every ore the Matter
  * could become (as its history would make them), scrolled with the wheel and filtered by the search
  * box over them; results on the right. Click one for a stack of it made on the spot, right-click for half,
  * shift-right-click for one, shift-click for a stack into the inventory, as at a Logistics Terminal; ctrl-click to

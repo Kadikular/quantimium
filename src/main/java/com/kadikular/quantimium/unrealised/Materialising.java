@@ -73,9 +73,20 @@ public final class Materialising {
         return value > 0.0 ? value : 1.0;
     }
 
-    /** Trace for choosing an ore of {@code rarity} in {@code band}, per Matter. */
+    /** Anomalite Dust it costs for each unit of an ore's value over a roll's average: dust is renewable, Trace wasn't. */
+    public static final double DUST_PER_VALUE = 4.0;
+
+    /**
+     * Anomalite Dust for choosing an ore of {@code rarity} in {@code band}, per Matter: its value over a roll's average,
+     * with the premium (so choosing costs a little more than rolling would), in dust.
+     */
     public static double traceCost(Rarity rarity, FluxBand band) {
-        return Config.materialiserPremium() * value(rarity) / expectedValue(band);
+        return DUST_PER_VALUE * Config.materialiserPremium() * value(rarity) / expectedValue(band);
+    }
+
+    /** Whether {@code stack} is what a Materialiser is paid in. */
+    public static boolean pays(net.minecraft.world.item.ItemStack stack) {
+        return stack.is(com.kadikular.quantimium.init.ModItems.ANOMALITE_DUST.get());
     }
 
     /** Flux debited from the chunk for choosing an ore of {@code rarity}, per Matter. */

@@ -174,7 +174,7 @@ public final class UnrealisedTests {
         MaterialiserBlockEntity materialiser = helper.getBlockEntity(at, MaterialiserBlockEntity.class);
         TestSupport.fill(materialiser.getEnergyStorage());
         materialiser.getInventory().setStackInSlot(MaterialiserBlockEntity.MATTER_SLOT, new ItemStack(ModItems.UNREALISED_MATTER.get(), 4));
-        materialiser.getInventory().setStackInSlot(MaterialiserBlockEntity.TRACE_SLOT, new ItemStack(ModItems.QUANTIMIUM_TRACE.get(), 4));
+        materialiser.getInventory().setStackInSlot(MaterialiserBlockEntity.TRACE_SLOT, new ItemStack(ModItems.ANOMALITE_DUST.get(), 13));
         materialiser.setTarget(new Materialising.Target(Identifier.parse("c:ores/iron"), Identifier.parse("minecraft:raw_iron")));
         // Cold, it can't choose at all.
         materialiser.bandGate().update(helper.getLevel(), helper.absolutePos(at));
@@ -198,9 +198,9 @@ public final class UnrealisedTests {
                 if (out.is(Items.RAW_IRON)) iron += out.getCount();
             }
             helper.assertValueEqual(iron, 4, "raw iron made");
-            // A common at Medium is 1.2 / 1.6 = 0.75 Trace: three for four Matter, nothing over.
+            // A common at Medium is 4 × 1.2 / 1.6 = 3 Anomalite Dust: twelve for four Matter, nothing over.
             helper.assertValueEqual(materialiser.getInventory().getStackInSlot(MaterialiserBlockEntity.TRACE_SLOT).getCount(), 1,
-                    "Trace left");
+                    "dust left");
             helper.assertTrue(materialiser.traceCredit() < 1e-6, "no credit left over: " + materialiser.traceCredit());
             // Smelted Matter can be chosen as any form its history made: raw iron or ingots.
             MatterHistory smelted = new MatterHistory(List.of(MatterSteps.idOf(RecipeType.SMELTING)));
@@ -237,7 +237,7 @@ public final class UnrealisedTests {
         MaterialiserBlockEntity materialiser = helper.getBlockEntity(at, MaterialiserBlockEntity.class);
         TestSupport.fill(materialiser.getEnergyStorage());
         materialiser.getInventory().setStackInSlot(MaterialiserBlockEntity.MATTER_SLOT, new ItemStack(ModItems.UNREALISED_MATTER.get(), 4));
-        materialiser.getInventory().setStackInSlot(MaterialiserBlockEntity.TRACE_SLOT, new ItemStack(ModItems.QUANTIMIUM_TRACE.get(), 4));
+        materialiser.getInventory().setStackInSlot(MaterialiserBlockEntity.TRACE_SLOT, new ItemStack(ModItems.ANOMALITE_DUST.get(), 16));
         IItemHandler below = materialiser.getAutomationItemHandler(Direction.DOWN);
         materialiser.bandGate().update(helper.getLevel(), helper.absolutePos(at));
         helper.runAfterDelay(2, () -> {
@@ -300,7 +300,7 @@ public final class UnrealisedTests {
         MatterHistory smelted = new MatterHistory(List.of(MatterSteps.idOf(RecipeType.SMELTING)));
         matter.insertItem(0, new ItemStack(ModItems.UNREALISED_MATTER.get(), 3), false);
         matter.insertItem(1, smelted.applyTo(new ItemStack(ModItems.UNREALISED_MATTER.get(), 2)), false);
-        trace.insertItem(0, new ItemStack(ModItems.QUANTIMIUM_TRACE.get(), 4), false);
+        trace.insertItem(0, new ItemStack(ModItems.ANOMALITE_DUST.get(), 10), false);
 
         TestSupport.track(helper);
         helper.setBlock(at, ModBlocks.MATERIALISER.get());
@@ -321,8 +321,8 @@ public final class UnrealisedTests {
             helper.assertValueEqual(iron, 3, "raw iron made");
             helper.assertTrue(matter.getStackInSlot(0).isEmpty(), "the raw Matter is used up");
             helper.assertValueEqual(matter.getStackInSlot(1).getCount(), 2, "the smelted Matter is left alone");
-            // Three commons at Medium are 2.25 Trace: three taken from the other chest, 0.75 kept as credit.
-            helper.assertValueEqual(trace.getStackInSlot(0).getCount(), 1, "Trace left in its chest");
+            // Three commons at Medium are 9 Anomalite Dust, taken from the other chest.
+            helper.assertValueEqual(trace.getStackInSlot(0).getCount(), 1, "dust left in its chest");
             TestSupport.clearField(helper);
         });
     }

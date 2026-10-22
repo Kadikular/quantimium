@@ -11,6 +11,19 @@
 - **Machines no longer leak FE in anomaly.** The passive drain is gone (and its `passiveDrain…` config): what feeds on
   a hot base's machines is the Anomalite crystals that grow on them.
 
+### Unrealised Matter
+
+- **The Materialiser is paid in Anomalite Dust**, not Trace: renewable from a crystal farm (crush Anomalite with a
+  Crushing Lens). A common ore at Medium costs 3 dust a Matter.
+- **Its screen works like a terminal**: click a form for a stack made on the spot, right-click for half,
+  shift-right-click for one, shift-click into the inventory; ctrl-click to keep making it into the outputs.
+
+### Lasers
+
+- **Void Lens**: what the actions before it free and nothing takes is destroyed (with Pickup, only what the Laser
+  Ports have no room for).
+- **Laser Ports export faster while busy**, and pass what they collect straight into the inventories they export to.
+
 ### Partner mods
 
 - **FTB Industrial Contraptions**: its Macerator, Compressor, Extruder, Roller, Canning Machine, Centrifuge, Alloy
