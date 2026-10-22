@@ -498,12 +498,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             runAutoTransfers(level);
         }
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(level, worldPosition);
-        if (leak > 0) {
-            leak = energyStorage.consume(leak);
-            if (leak > 0) setChanged();
-        }
-        syncedPassiveDrain = leak;
 
         // Same 20-sample window as the simulator so continuous crafts show a real FE/t average.
         recordPowerUse(feSpentThisTick);

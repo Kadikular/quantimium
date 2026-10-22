@@ -50,9 +50,8 @@ enum FieldProvider implements IBlockComponentProvider {
         }
         tooltip.add(anomalyLine.withStyle(ChatFormatting.LIGHT_PURPLE));
         int surcharge = field.getIntOr("surcharge", 0);
-        int leak = field.getIntOr("leak", 0);
-        if (surcharge > 0 || leak > 0) {
-            tooltip.add(Component.translatable("jade.quantimium.tax", surcharge, leak).withStyle(ChatFormatting.GOLD));
+        if (surcharge > 0) {
+            tooltip.add(Component.translatable("jade.quantimium.tax", surcharge).withStyle(ChatFormatting.GOLD));
         }
         if (field.contains("readout")) {
             Component line = NbtCompat.componentFromJson(field.getStringOr("readout", ""), accessor.getLevel().registryAccess());

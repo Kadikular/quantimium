@@ -44,7 +44,6 @@ enum FieldData implements IServerDataProvider<BlockAccessor> {
         field.putDouble("settling", QuantumFlux.chunkSettling(level, pos));
         field.putDouble("load", QuantumFlux.chunkShielded(level, pos) ? QuantumFlux.chunkLoad(level, pos) : -1.0);
         field.putInt("surcharge", AnomalyEffects.surchargePercent(level, pos));
-        field.putInt("leak", AnomalyEffects.passiveDrainFePerTick(level, pos));
         MutableComponent line = readout(be);
         if (line != null) field.putString("readout", NbtCompat.componentToJson(line, level.registryAccess()));
         data.put(FieldProvider.KEY, field);

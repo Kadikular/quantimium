@@ -257,9 +257,6 @@ public class ZenoFieldControllerBlockEntity extends BlockEntity implements MenuP
         if (server.getGameTime() % 20L == 0L) be.gate.update(server, pos);
         int spent = be.mode == MODE_PAUSE ? be.hold(server, pos) : be.accelerate(server, pos);
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(server, pos);
-        if (leak > 0) leak = be.energyStorage.consume(leak);
-        be.syncedPassiveDrain = leak;
         be.recordPowerUse(spent);
 
         // Inside a simulator the simulator emits flux for everything it is charged.

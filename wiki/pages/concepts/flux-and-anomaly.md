@@ -8,13 +8,13 @@ unlocks recipes, and anomaly is what they cost you, unless you contain it.
 Both meters are read as bands, spaced tenfold apart. The bands are labels on a smooth value: nothing
 jumps when a field crosses from one to the next.
 
-| Band | From | Anomaly surcharge on crafts | Buffer leak |
-| --- | --- | --- | --- |
-| Low | 0 | none | none |
-| Medium | 100 | +10% | 16 FE/t |
-| High | 1,000 | +25% | 40 FE/t |
-| Critical | 10,000 | +50% | 80 FE/t |
-| Singularity | 100,000 | +100% | 160 FE/t |
+| Band | From | Anomaly surcharge on crafts |
+| --- | --- | --- |
+| Low | 0 | none |
+| Medium | 100 | +10% |
+| High | 1,000 | +25% |
+| Critical | 10,000 | +50% |
+| Singularity | 100,000 | +100% |
 
 [[mechanic:flux.bands]] Machines and meters read the field **where they stand**, blended between the
 chunks round them, so it changes smoothly as you walk and never jumps at a chunk line. Anything that
@@ -96,7 +96,6 @@ holding the flux up, it lingers after work stops.
 What anomaly does in a chunk that isn't contained, by band:
 
 - [[mechanic:anomaly.surcharge]] **Surcharge.** Crafter and Simulator work costs extra FE (the table above).
-- [[mechanic:anomaly.leak]] **Leak.** Quantimium machine buffers bleed a flat amount of FE every tick; the Exciter and the field-control blocks, which manage the field, don't.
 - **Crystals.** From Medium, Anomalite Crystals seed on powered machines and eat their buffers: slowly
   and only two to a chunk at Medium, faster and up to 8 at High, 16 at Critical, without limit at Singularity. A machine that
   holds a charge but gives none up (many mods' are fill-only) feeds them without losing any.

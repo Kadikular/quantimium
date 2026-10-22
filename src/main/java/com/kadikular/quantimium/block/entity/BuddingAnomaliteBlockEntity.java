@@ -86,12 +86,6 @@ public class BuddingAnomaliteBlockEntity extends BlockEntity implements QuantumE
             be.growProgress = 0;
         }
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(serverLevel, pos);
-        if (leak > 0) {
-            leak = be.energyStorage.consume(leak);
-            if (leak > 0) be.setChanged();
-        }
-
         be.recordPowerUse(spent);
 
         boolean active = spent > 0;

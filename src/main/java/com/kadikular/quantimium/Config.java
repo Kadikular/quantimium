@@ -35,23 +35,6 @@ public final class Config {
             .comment("Extra percent at Singularity anomaly.")
             .defineInRange("surchargePercentSingularity", 100, 0, 1000);
 
-    public static final ModConfigSpec.BooleanValue PASSIVE_DRAIN = BUILDER
-            .comment("Leak a flat FE/t from each Quantimium machine buffer while anomaly is above Low. Does not emit flux.")
-            .define("passiveDrain", true);
-
-    public static final ModConfigSpec.IntValue DRAIN_MEDIUM = BUILDER
-            .comment("FE/t leaked per machine at Medium anomaly. A small existence tax, not a cable sink.")
-            .defineInRange("passiveDrainFePerTickMedium", 16, 0, 1_000_000);
-    public static final ModConfigSpec.IntValue DRAIN_HIGH = BUILDER
-            .comment("FE/t leaked per machine at High anomaly.")
-            .defineInRange("passiveDrainFePerTickHigh", 40, 0, 1_000_000);
-    public static final ModConfigSpec.IntValue DRAIN_CRITICAL = BUILDER
-            .comment("FE/t leaked per machine at Critical anomaly.")
-            .defineInRange("passiveDrainFePerTickCritical", 80, 0, 1_000_000);
-    public static final ModConfigSpec.IntValue DRAIN_SINGULARITY = BUILDER
-            .comment("FE/t leaked per machine at Singularity anomaly.")
-            .defineInRange("passiveDrainFePerTickSingularity", 160, 0, 1_000_000);
-
     public static final ModConfigSpec.DoubleValue WARMTH_RISE_MINUTES = BUILDER
             .comment("A chunk's flux has a slow warmth that follows its field, and reads as the higher of the two:",
                     "a base's field lingers between bursts of work. How many minutes it takes to warm (a time constant;",
@@ -448,26 +431,6 @@ public final class Config {
             case HIGH -> SURCHARGE_HIGH.get();
             case CRITICAL -> SURCHARGE_CRITICAL.get();
             case SINGULARITY -> SURCHARGE_SINGULARITY.get();
-        };
-    }
-
-    public static int passiveDrainFePerTick(FluxBand band) {
-        if (!SPEC.isLoaded()) {
-            return switch (band) {
-                case LOW -> 0;
-                case MEDIUM -> 16;
-                case HIGH -> 40;
-                case CRITICAL -> 80;
-                case SINGULARITY -> 160;
-            };
-        }
-        if (!PASSIVE_DRAIN.get()) return 0;
-        return switch (band) {
-            case LOW -> 0;
-            case MEDIUM -> DRAIN_MEDIUM.get();
-            case HIGH -> DRAIN_HIGH.get();
-            case CRITICAL -> DRAIN_CRITICAL.get();
-            case SINGULARITY -> DRAIN_SINGULARITY.get();
         };
     }
 

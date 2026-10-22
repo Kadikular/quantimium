@@ -579,9 +579,8 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
     public int getSurchargePercent() { return syncedSurchargePercent; }
 
     private static final int ANOMALY_READ_INTERVAL = 20;
-    /** When the anomaly readout and drain rate were last read; see {@link #refreshAnomalyReadout()}. */
+    /** When the anomaly readout was last read; see {@link #refreshAnomalyReadout()}. */
     private long anomalyReadTick = Long.MIN_VALUE;
-    private int drainRate;
 
     /** The game tick this last marked itself changed; see {@link #setChanged()}. */
     private long lastMarkedTick = Long.MIN_VALUE;
@@ -625,7 +624,6 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
 
         be.refreshAnomalyReadout();
         be.refreshBand(level, pos);
-        be.applyPassiveDrain();
         be.runSimulation(level);
         be.refreshActiveState(level, pos, state);
         be.flushClientSync(level);
@@ -967,16 +965,6 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
         FluxBand band = QuantumFlux.chunkAnomalyBand(level, worldPosition);
         syncedAnomalyOrdinal = band.ordinal();
         syncedSurchargePercent = AnomalyEffects.surchargePercent(level, worldPosition);
-        drainRate = AnomalyEffects.passiveDrainFePerTick(level, worldPosition);
-    }
-
-    private void applyPassiveDrain() {
-        int leak = drainRate;
-        if (leak > 0) {
-            leak = energyStorage.consume(leak);
-            if (leak > 0) setChanged();
-        }
-        syncedPassiveDrain = leak;
     }
 
     public void onCycleApplied(int crafts, int cycleTicks) {

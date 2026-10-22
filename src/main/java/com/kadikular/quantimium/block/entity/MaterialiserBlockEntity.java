@@ -357,8 +357,6 @@ public class MaterialiserBlockEntity extends BlockEntity
             be.gate.update(server, pos);
             if (be.gate.band() != be.catalogBand) be.catalogDirty = true;
         }
-        int leak = AnomalyEffects.passiveDrainFePerTick(server, pos);
-        if (leak > 0) be.energyStorage.consume(leak);
         // Out of every transaction now: nothing left to give back.
         if (net.neoforged.neoforge.transfer.transaction.Transaction.getLifecycle() == net.neoforged.neoforge.transfer.transaction.Transaction.Lifecycle.NONE) be.spentFlux.clear();
         if (now % AUTO_TRANSFER_INTERVAL == 0) be.runAutoTransfers(server);

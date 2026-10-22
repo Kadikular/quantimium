@@ -193,9 +193,8 @@ Medium, 80% of it at High, 65% at Critical and 55% at Singularity: at the defaul
   multiplier and 32,000 FE after it.
 - **Anomaly surcharge.** Above Low anomaly, every craft costs more:
   +10% at Medium, +25% at High, +50% at Critical, +100% at Singularity. A 4,000 FE smelt costs
-  5,000 FE at High. The GUI's energy bar shows the surcharge in force.
-- **Passive drain.** Above Low anomaly the buffer also leaks a flat 16–160 FE/t. See
-  [Flux and anomaly](../concepts/flux-and-anomaly.md).
+  5,000 FE at High. The GUI's energy bar shows the surcharge in force. Anomalite crystals that seed on a
+  machine feed on its buffer: see [Flux and anomaly](../concepts/flux-and-anomaly.md).
 
 The costs of the AE2 and Mekanism recipes come from data files in `data/quantimium/recipe_adapters`,
 which packs can add to (see *Recipe adapters* below).
@@ -240,21 +239,15 @@ second, so a chest filled from elsewhere updates the preview within a moment.
 A Tesseract can be bound to **another crafter**. Its output ghosts then count as ingredients, so one
 crafter can plan its craft from another's preview: plank → stick → torch in one take.
 
-**Chains through the logistics network.** A Tesseract bound to a <ItemLink id="quantimium:logistics_materialiser" /> puts the
+**Crafting for the logistics network.** A Tesseract bound to a <ItemLink id="quantimium:logistics_materialiser" /> puts the
 network in the pool, and a provider Receptacle on a crafter offers what it can make to the network, as
-**craftable**, not as stock. So crafters with different catalysts chain through it: a furnace crafter offering
-stone, a stonecutter crafter drawing on the network, and stone bricks show in the terminal as craftable, each
-step made by its own crafter and paid for there when they're taken. One crafter can make several steps of a chain itself (a
-furnace smelting stone for the bricks it then cracks; a lone crafting-table crafter making ingots from blocks
-for leggings), as long as they're different recipes; on its own, off a network, a crafter shows only what it
-makes straight from its inputs. The network works out what's craftable once a second, tier by tier (up to
-eight steps in a chain): each crafter is shown what's really there and what every crafter could make so far,
-itself too. A craftable counts what the crafter
-**can make** of it, not one craft's worth. Each craftable remembers what it's made from, all the way down, and a
-recipe isn't shown what was made out of what it makes: nine ingots a crafter could turn into a block don't
-show as nine more ingots from the crafter that would turn that block back. Where it can't tell, it counts less
-rather than more. Two crafters offering the same thing both count, as two providers would. Taking something makes it for real; one only asked about, or called off,
-undoes everything it made.
+**craftable**, not as stock: cobblestone in storage and a furnace crafter, and stone shows in the terminal,
+made by that crafter and paid for there when it's taken. A crafter on the network makes things from what's
+**really stored**, one step: stone bricks from stored stone, not from stone a furnace would make first. Chains of
+crafts are a [Reactor's](../multiblocks/reactor.md) to plan. A craftable counts what the crafter **can make** of
+it, not one craft's worth. Crafters making the same thing from the network's items count once (the most any of
+them could make), since they'd all draw on the same items. Taking something makes it for real; one only asked
+about, or called off, undoes everything it made.
 
 Crafters linked in a ring (A reads B, B reads A, or a longer
 chain back to itself, up to 16 links deep) would try to

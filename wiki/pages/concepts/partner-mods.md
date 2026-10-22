@@ -144,7 +144,7 @@ the field where it stands:
 
 - **Flux**, with where it's heading: *Flux 2,870 · High · steady*;
 - **anomaly**, and the load of any containment over the chunk;
-- what anomaly is costing machines there, if anything: the surcharge on crafts and the FE/t leak;
+- what anomaly is costing machines there, if anything: the surcharge on crafts;
 - the block's own readout, the same line the [[item:flux_meter]] gives: a crafter's draw, a
   Siphon's setpoints, a pod's owner and the double it holds.
 

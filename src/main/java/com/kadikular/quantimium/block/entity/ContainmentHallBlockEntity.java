@@ -237,12 +237,6 @@ public class ContainmentHallBlockEntity extends BlockEntity implements Multibloc
             }
         }
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(serverLevel, pos);
-        if (leak > 0) {
-            leak = be.energyStorage.consume(leak);
-            if (leak > 0) be.setChanged();
-        }
-        be.syncedPassiveDrain = leak;
         be.syncedLoadPercent = (int) Math.min(9_999L, Math.round(QuantumFlux.chunkLoad(serverLevel, pos) * 100.0));
         // Container data rides across as a signed short, so clamp before it wraps.
         be.syncedPullScaled = (int) Math.min(Short.MAX_VALUE, Math.round(pulled));

@@ -77,7 +77,7 @@ Superposition Crafter:
    into the 3×3 of chunks round it, a fifth to its own. A 64× smelt run (256,000 FE) adds about 154
    flux to its own chunk, easing in over the next few seconds.
 
-The energy bar's tooltip shows the anomaly surcharge in force and any passive drain.
+The energy bar's tooltip shows the anomaly surcharge in force.
 
 Results go into the network on the crafter's next tick, once AE2 is waiting for them. If the network
 has no room, the crafter keeps them, shows **Output blocked** and takes no more work until it can

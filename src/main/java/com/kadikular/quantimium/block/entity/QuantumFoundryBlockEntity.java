@@ -162,9 +162,6 @@ public class QuantumFoundryBlockEntity extends BlockEntity
         be.syncedAnomalyBand = anomalyBand.ordinal();
         if (fieldBandChanged) be.setChangedAndSync();
 
-        int passive = AnomalyEffects.passiveDrainFePerTick(level, pos);
-        be.syncedPassiveDrain = be.energyStorage.consume(passive);
-
         if (!be.isFormed()) {
             be.stop(STATUS_UNFORMED);
             be.recordPowerUse(be.syncedPassiveDrain);

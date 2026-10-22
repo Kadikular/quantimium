@@ -185,8 +185,6 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
     public static void tick(Level level, BlockPos pos, BlockState state, QuantumObservationChamberBlockEntity be) {
         if (!(level instanceof ServerLevel server)) return;
         long now = server.getGameTime();
-        int leak = AnomalyEffects.passiveDrainFePerTick(server, pos);
-        if (leak > 0) be.energyStorage.consume(leak);
         if (now % AUTO_TRANSFER_INTERVAL == 0) be.runAutoTransfers(server);
         be.work(server);
         if (now % FLUX_INTERVAL == 0) {

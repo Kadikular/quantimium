@@ -8,6 +8,8 @@
   cools over about two once it stops; the chunk reads as the higher of the two, and anomaly follows. A base crafting
   here and there warms up and stays warm; switched off, it holds its level for a day before fading; one huge batch
   barely warms it. Configurable (`warmthRiseMinutes`, `warmthFallMinutes`).
+- **Machines no longer leak FE in anomaly.** The passive drain is gone (and its `passiveDrain…` config): what feeds on
+  a hot base's machines is the Anomalite crystals that grow on them.
 
 ### Fixes
 

@@ -128,21 +128,18 @@ public final class FluxTests {
         });
     }
 
-    // covers: anomaly.surcharge, anomaly.leak
+    // covers: anomaly.surcharge
     @GameTest(template = TestSupport.FLOOR_17, batch = "flux_effects", timeoutTicks = 40)
-    public static void anomalySurchargesAndLeaksByBand(GameTestHelper helper) {
+    public static void anomalySurchargesByBand(GameTestHelper helper) {
         // setField leaves containment alone, and a neighbouring hall's can still be up: it zeroes the surcharge.
         TestSupport.clearField(helper);
         double[] anomaly = {0.0, 500.0, 5_000.0, 50_000.0, 500_000.0};
         int[] surcharge = {0, 25, 50, 100, 200};
-        int[] leak = {0, 16, 40, 80, 160};
         BlockPos at = helper.absolutePos(MIDDLE);
         for (int i = 0; i < anomaly.length; i++) {
             TestSupport.setField(helper, MIDDLE, 0.0, anomaly[i]);
             helper.assertValueEqual(AnomalyEffects.surchargePercent(helper.getLevel(), at), surcharge[i],
                     "craft surcharge at " + anomaly[i] + " anomaly");
-            helper.assertValueEqual(AnomalyEffects.passiveDrainFePerTick(helper.getLevel(), at), leak[i],
-                    "buffer leak at " + anomaly[i] + " anomaly");
         }
         TestSupport.setField(helper, MIDDLE, 0.0, 0.0);
         helper.succeed();
@@ -233,7 +230,6 @@ public final class FluxTests {
         BlockPos at = helper.absolutePos(MIDDLE);
         helper.runAfterDelay(25, () -> {
             helper.assertValueEqual(AnomalyEffects.surchargePercent(helper.getLevel(), at), 0, "no surcharge while contained");
-            helper.assertValueEqual(AnomalyEffects.passiveDrainFePerTick(helper.getLevel(), at), 0, "no buffer leak while contained");
             // Contained flux still couples a little: at a 3% leak, anomaly heads for 150 of 5,000.
             helper.assertTrue(Math.abs(FieldModel.anomalyTarget(5_000.0, 10_000.0, 0.03) - 150.0) < 1.0E-6, "the leak's target");
             helper.assertTrue(Math.abs(FieldModel.anomalyTarget(15_000.0, 10_000.0, 0.03) - 5_300.0) < 1.0E-6,

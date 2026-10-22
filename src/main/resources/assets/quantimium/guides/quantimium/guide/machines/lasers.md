@@ -98,7 +98,7 @@ some other way. An emitter switched off by redstone gives out none.
 
 An <ItemLink id="quantimium:isolator" /> passes light on as a relay does, but lets only power
 through: light leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through
-it, so Pickup's items stop short of it. It's a plain block: sneak-click or wrench a face to add an output
+it, so Pickup's items stop short of it (an <ItemLink id="quantimium:isolator_lens" /> not set to pass actions stops them too). It's a plain block: sneak-click or wrench a face to add an output
 there or take one away (one always stays), and use an empty hand to step through how it listens to
 redstone.
 
@@ -204,15 +204,21 @@ any. Each lensed beam is tinted by what it does.
 both work. An action stays on the light until the beam ends. **Modifiers**
 change the actions the light already carries when it meets them: those in slots to their left, and those
 from mounts before. Never one that comes after: Harvest then Filter cuts only what the filter lets, Filter
-then Harvest cuts anything. Pickup is the exception: it stays on the light, and actions added after it get
-it too, so Pickup then Harvest brings back what it cuts as Harvest then Pickup does (and waits when there's
-no room).
+then Harvest cuts anything. Pickup works by the same rule, two ways:
+
+| Where Pickup is | What it does |
+|---|---|
+| After an action (Harvest then Pickup, in one mount or a later one) | Brings back what that action frees, and the action waits while there's nowhere to put it |
+| Before any action (Pickup then Harvest), or alone | Gathers whatever lies in the beam: what Harvest cuts, leaves decaying, anything dropped there |
+
+Both on one beam (Pickup, Harvest, Pickup) do both: a tree farm's logs come back as they're cut, and its leaves
+as they fall.
 
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
 | <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, or one light passes through just before it (a crop on farmland, grass), as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
 | <ItemLink id="quantimium:damage_lens" /> | Action | Hurts anything living that stands in the beam, players included, every 0.5 s. It charges up for its hits while there's something to hit, over as many ticks as it takes, and keeps what it's charged. With Pickup, what it kills drops straight back up the beam. | 1,000 FE a hit, charged as it goes |
-| <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | What the light's actions free goes back up it; alone, so do items lying within about a block of the beam. It all goes to the nearest collecting Laser Port; what that one can't take goes to the next. Back past a cavity, it reaches the ports up the light that filled it. With none, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the ports up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | 200 FE a stack, when it's carried |
+| <ItemLink id="quantimium:pickup_lens" /> | Modifier, and an action of its own | After an action, what that action frees goes back up the light; before any, or alone, so do items lying within about a block of the beam. It all goes to the nearest collecting Laser Port; what that one can't take goes to the next. Back past a cavity, it reaches the ports up the light that filled it. With none, drops fall where they are. A Harvest beam with Pickup only cuts a block whose drops the ports up the beam would take, all of them: room, and filters that let them in. Otherwise it waits, and leaves nothing lying. | 200 FE a stack, when it's carried |
 | <ItemLink id="quantimium:range_lens" /> | Modifier | Each run of the light reaches twice as far, up to 64 blocks (a pack can change that, `maxRange` in the `lasers` config): light with an action goes 8, 16, 32, 64. | none |
 | <ItemLink id="quantimium:interact_lens" /> | Action | Uses one thing a Laser Port up the beam sends, or an empty hand with none, as a player would, each 0.5 s. Set to **use**: with something in hand, a right click on the first thing living in the beam that takes it (feeding, shearing, milking; a Filter after it says which: only grown ones, say; never a villager); else a right click on the block the beam ends on, or on something light passes just before it (a lever, a button), so it opens doors, flips levers, works items on blocks; an empty bucket fills from the fluid the beam ends on. Set to **hit**: a swing at the first thing living in the beam, as hard as what it holds. It works with what the port holds where it lies, trying each kind of thing there in turn (carrots, then wheat, then shears) till one is used: nothing moves unless using it changes it. Then what it became goes back where it belongs: still the same thing (a worn sword) to the sending port, anything new (a filled bucket) up the beam to a collecting one. Through an Area Prism it works on the area: with something in hand, on what's living there first; else on its blocks in turn, each from the side facing the prism (bone meal over a field, say). It does it over and over: behind a pulse mirror, once a signal. Use it in the air, or its button in a mount, to switch. | 200 FE a use |
 | <ItemLink id="quantimium:insert_lens" /> | Action | Puts what Laser Ports up the beam send into the inventory the beam ends on (it ramps up and down: each move halves its wait, from 4 s down to its own pace; each look that finds nothing doubles it, back up to 2 s), up to 8 items each 0.5 s (each Speed lens doubles that, to 64, and halves the wait); with an Area Prism, each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
@@ -345,8 +351,8 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
   (a furnace's output, say); active, it pushes it out itself, to requesters listing it first, then into
   storage.
   On a machine that makes things to order (a Quantum Crafter), what it would make is offered as craftable.
-  A tab on its screen says what it may make from: anything (stored items and what other machines would make,
-  a chain), stored items only, or nothing, offering only what's really in the machine's outputs.
+  It makes them from what's really stored, one step at a time. A tab on its screen turns that off, offering
+  only what's really in the machine's outputs.
 - **Requester**: passive, it takes what active providers push, as its
   filter lets in; active, it pulls what its filter lists from providers first, then storage, what's stored
   before anything is made. A tab on an active requester says whether machines may make what isn't stored for
@@ -354,6 +360,10 @@ light reaches it. Each active part moves as an Insert or Extract lens does: up t
   Only what its filter lists comes, as far as the inventory takes it. With **Keep stocked** on, each
   entry's count (the stack you set it with; scroll over it to change, shift for 16) is how many it keeps
   there: it takes only what it's short of.
+
+A receptacle is lit while it's joined to a controller with the power to
+move things. On a machine that takes power, a tab on its screen sets it to power that machine too: the light
+reaching the receptacle (an emitter's, through the controller) charges what it's on, as light ending on it would.
 
 A <ItemLink id="quantimium:laser_port" /> on the network, collecting, is a passive provider of
 what it's caught. A receptacle on a Laser Port works with its nine slots whatever its faces are set to, in
@@ -368,7 +378,25 @@ right-click for half, shift-right-click for one, shift-click for a stack into yo
 shift is held the grid holds still, and shift with the wheel takes one more onto the cursor (down) or
 puts one back (up). Click the grid holding something to put it away into storage (right-click: one), or
 shift-click it in your inventory. What's stored comes out first: if any is, that's all you get, and only when
-none is left does a machine make more. Each take or put costs the controller as a move does. A <ItemLink id="quantimium:logistics_lectern" /> is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
+none is left does a machine make more. Each take or put costs the controller as a move does.
+
+The search reads as JEI's does: words must all match, in any order; `a|b` matches either; `-word` leaves out
+what matches. `@mod` matches a mod's id or name, `#text` its tooltip, `$tag` its tags: `@mekanism ingot`,
+`-@minecraft`, `$c:ingots|$c:gems`.
+
+**Crafting grid.** The crafting table tab shows a 3×3 grid under a shorter item grid, as an ME crafting terminal
+has; what's in it stays in the terminal, for anyone who opens it next. Craft in it as at a crafting table: after
+each craft, what it used is topped up from what the network stores, so shift-clicking the result crafts again and
+again into your inventory until something runs out. With JEI, the **+** on a crafting recipe fills the grid from
+what's stored, then your inventory; what neither has but a machine on the network can make (one step) goes in as
+**Craft**: nothing is made until you take the result, and then just what that craft needs. One craft's worth goes
+in (shift-+ too), the grid being refilled after each; a slot whose item runs out becomes a Craft, if the network can
+make it. In JEI, what will be made shows blue. Drag something the network can only make from the item grid onto the
+crafting grid to put it in as Craft too; click a Craft with nothing in hand to clear it. A Craft the network can no
+longer make or supply goes, and a craft that can't make its Crafts isn't given. Items that are nowhere show red in
+JEI, and the rest still go in. The × beside the grid puts it all back into the network.
+
+A <ItemLink id="quantimium:logistics_lectern" /> is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 
 A <ItemLink id="quantimium:logistics_materialiser" /> where a controller's light ends
 offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus
@@ -396,7 +424,7 @@ Light ending on it also powers the Reactor.
 and in its Crafters, is worked out in the background, a little each tick within a time budget (config
 `performance.workBudgetMicros`, 2 ms a tick by default), most urgent first. Work a player is waiting on (a
 terminal or Crafter screen open, something just taken or put in) goes first and gets more of the tick
-(`performance.urgentWorkBudgetMicros`, 10 ms), so it catches up within a tick or two. A crafting table on a
+(`performance.urgentWorkBudgetMicros`, 4 ms), so it catches up within a few ticks. A crafting table on a
 network with a lot in it can preview a thousand crafts; its list fills in over a few ticks, a millisecond's work at
 a time, rather than stalling the server. Taking or crafting something never waits on it.
 

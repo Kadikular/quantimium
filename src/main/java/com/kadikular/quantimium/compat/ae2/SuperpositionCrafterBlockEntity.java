@@ -472,9 +472,6 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
         be.rebuildIfDirty();
         be.flush();
 
-        int leak = AnomalyEffects.passiveDrainFePerTick(server, pos);
-        if (leak > 0) leak = be.energyStorage.consume(leak);
-        be.syncedPassiveDrain = leak;
         be.syncedSurchargePercent = AnomalyEffects.surchargePercent(server, pos);
         be.syncedAnomalyOrdinal = QuantumFlux.chunk(server, pos).anomalyBand().ordinal();
 

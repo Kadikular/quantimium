@@ -72,13 +72,4 @@ public final class AnomalyEffects {
                 craft.batchSize(), craft.energyCapped(), craft.availableRuns());
     }
 
-    /**
-     * FE to pull from a machine buffer this tick. Does not emit flux — idle leak is a tax, not more
-     * field. Zero at Low anomaly or when the config toggle is off.
-     */
-    public static int passiveDrainFePerTick(Level level, BlockPos pos) {
-        if (level == null || pos == null) return 0;
-        if (QuantumFlux.chunkContained(level, pos)) return 0;
-        return Config.passiveDrainFePerTick(anomalyBand(level, pos));
-    }
 }

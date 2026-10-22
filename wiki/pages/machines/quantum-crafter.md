@@ -192,9 +192,8 @@ Medium, 80% of it at High, 65% at Critical and 55% at Singularity: at the defaul
   multiplier and 32,000 FE after it.
 - **Anomaly surcharge.** [[mechanic:anomaly.surcharge]] Above Low anomaly, every craft costs more:
   +10% at Medium, +25% at High, +50% at Critical, +100% at Singularity. A 4,000 FE smelt costs
-  5,000 FE at High. The GUI's energy bar shows the surcharge in force.
-- **Passive drain.** Above Low anomaly the buffer also leaks a flat 16–160 FE/t. See
-  [Flux and anomaly](../concepts/flux-and-anomaly.md).
+  5,000 FE at High. The GUI's energy bar shows the surcharge in force. Anomalite crystals that seed on a
+  machine feed on its buffer: see [Flux and anomaly](../concepts/flux-and-anomaly.md).
 
 The costs of the AE2 and Mekanism recipes come from data files in `data/quantimium/recipe_adapters`,
 which packs can add to (see *Recipe adapters* below).
