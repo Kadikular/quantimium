@@ -2,7 +2,7 @@
 navigation:
   title: Interact Lens
   parent: items/index.md
-  position: 21
+  position: 22
   icon: quantimium:interact_lens
 item_ids:
 - quantimium:interact_lens

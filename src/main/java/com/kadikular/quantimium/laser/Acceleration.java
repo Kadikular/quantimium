@@ -64,7 +64,7 @@ public final class Acceleration {
     @SuppressWarnings("unchecked")
     public static int tick(ServerLevel level, BlockPos pos, int wanted, int multiplier) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (wanted <= 0 || !accelerable(be)) return 0;
+        if (wanted <= 0 || !accelerable(be) || Freezing.frozen(be)) return 0;
         long now = level.getGameTime();
         if (spentTick != now) {
             spentTick = now;

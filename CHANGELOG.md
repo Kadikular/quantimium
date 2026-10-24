@@ -7,6 +7,12 @@
 - **Healing Lens**: heals anything living in the beam by a heart every half second, and hurts the undead instead, as
   Instant Health does. Amplify doubles both, and the cost (500 FE for each one healed or hurt). What's at full health
   costs nothing; an Entity Filter picks who it works on.
+- **Freezing Lens**: freezes what the beam ends on. Machines stop ticking while the light holds them (tag blocks
+  `quantimium:not_freezable` to keep it off them); water turns to ice and snow now and then settles on top. Mobs stop
+  thinking for 10 seconds, frozen again while the light stays on them; each point of damage thaws them half a second
+  sooner. Freezing one costs 25 FE for each point of its most health (a zombie 500, a Warden 12,500), charged up as
+  Damage's hits are. The Ender Dragon is never frozen (entity tag `quantimium:not_freezable`); the Wither and the
+  Warden can be. Players are chilled as in powder snow: slowed, never hurt. Through an Area Prism, the whole area.
 - **Lighter lens scanning.** An Area Prism remembers for a second which blocks it couldn't see, instead of tracing to
   them again each pass (a tree farm's hidden logs, a quarry's far side); Harvest with Pickup rolls a block's drops
   once to check for room, not each tick it cuts. An idle area scan costs about an eighth of what it did.

@@ -269,6 +269,57 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.freeze
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aFreezingLensTurnsWaterToIce(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.FREEZING_LENS.get());
+        BlockPos water = new BlockPos(9, Y, 8);
+        // Fenced in glass, which light goes through, so it can't spread before the light gets there.
+        for (Direction side : Direction.Plane.HORIZONTAL) helper.setBlock(water.relative(side), Blocks.GLASS);
+        helper.setBlock(water, Blocks.WATER);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.ICE, water);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.freeze
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aFreezingLensStopsTheMachineItEndsOn(GameTestHelper helper) {
+        // A hopper over a chest, holding cobblestone: frozen, it passes nothing down.
+        emitter(helper, new BlockPos(2, Y + 1, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(5, Y + 1, 8), Direction.EAST, ModItems.FREEZING_LENS.get());
+        BlockPos hopper = new BlockPos(9, Y + 1, 8);
+        helper.setBlock(hopper.below(), Blocks.CHEST);
+        helper.setBlock(hopper, Blocks.HOPPER);
+        var held = helper.getBlockEntity(hopper, net.minecraft.world.level.block.entity.HopperBlockEntity.class);
+        // Filled once the light holds it: a hopper moves its first item within a tick of getting it.
+        helper.runAfterDelay(20, () -> held.setItem(0, new ItemStack(Items.COBBLESTONE, 16)));
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(held.getItem(0).getCount(), 16, "nothing went down while it was frozen");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.freeze
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aFreezingLensHoldsAMobStillAndItThaws(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.FREEZING_LENS.get());
+        Pig pig = helper.spawn(EntityType.PIG, new BlockPos(9, Y, 8));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(pig.isNoAi(), "the pig was frozen in place");
+            long left = com.kadikular.quantimium.laser.Freezing.left(pig);
+            helper.assertTrue(left > 0, "for a while");
+            TestSupport.finishLasers(helper);
+            // Each point of damage thaws it half a second sooner.
+            pig.hurtServer(helper.getLevel(), helper.getLevel().damageSources().magic(), 8.0f);
+            helper.assertTrue(com.kadikular.quantimium.laser.Freezing.left(pig) <= left - 80, "damage thawed it sooner");
+        });
+    }
+
     // covers: laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void pickupFillsTheNextCollectorWhenOneIsFull(GameTestHelper helper) {

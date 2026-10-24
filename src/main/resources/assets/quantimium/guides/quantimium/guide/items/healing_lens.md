@@ -2,7 +2,7 @@
 navigation:
   title: Healing Lens
   parent: items/index.md
-  position: 19
+  position: 20
   icon: quantimium:healing_lens
 item_ids:
 - quantimium:healing_lens

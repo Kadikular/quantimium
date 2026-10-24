@@ -156,7 +156,7 @@ public final class LensAction {
         long took = Math.min(fe, want * factor);
         long into = took / factor;
         if (into > 0 && key.action() == Lens.HARVEST) lastWorked = now;
-        if (key.action() == Lens.DAMAGE || key.action() == Lens.HEAL) charged += into;
+        if (key.action() == Lens.DAMAGE || key.action() == Lens.HEAL || key.action() == Lens.FREEZE) charged += into;
         else if (key.action() == Lens.HARVEST) cut += into;
         else if (key.action() == Lens.PICKUP) threadCut += into;
         want -= into;
@@ -204,6 +204,9 @@ public final class LensAction {
             case HARVEST -> harvest(level, networks, pickup);
             case DAMAGE -> damage(level, networks, phase == 0, pickup || voids);
             case HEAL -> heal(level, networks, phase == 0, pickup || voids);
+            case FREEZE -> {
+                if (!mirrored()) freeze(level, networks, phase == 0);
+            }
             case PICKUP -> {
                 // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
                 if (mirrored()) drawThread(level, networks);
@@ -310,6 +313,119 @@ public final class LensAction {
         }
         targets.removeIf(entity -> !entity.isAlive() || !entity.isInvertedHealAndHarm() && entity.getHealth() >= entity.getMaxHealth());
         want = Math.max(0, cost * targets.size() - charged);
+    }
+
+    // ---- freezing ----
+
+    /**
+     * Each tick, holds the machines it's on still. Each sweep: freezes mobs in the beam in place (again once half their
+     * time is gone), chills players with powder snow's freeze, kept short of hurting; turns water it ends on to ice, and
+     * now and then lays snow on top of what it ends on. Through an Area Prism, the area's machines and things living
+     * there, and a few of its blocks at random each sweep.
+     */
+    private void freeze(ServerLevel level, LaserNetworks networks, boolean sweep) {
+        for (BlockPos pos : freezeTargets(level)) {
+            if (!networks.canPay(this, LaserTuning.FREEZE_MACHINE_FE)) break;
+            Freezing.hold(level, pos);
+            networks.pay(this, LaserTuning.FREEZE_MACHINE_FE);
+            lastWorked = now;
+        }
+        if (!sweep) {
+            want = Math.max(0, freezeWanted() - charged);
+            return;
+        }
+        targets = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive()
+                && !(entity instanceof net.minecraft.world.entity.decoration.ArmorStand)
+                && onBeam(entity.getBoundingBox(), 0.25) && inMirror(entity) == mirrored()
+                && (stream.filter() == null || stream.filter().letsHit(entity))));
+        for (LivingEntity entity : targets) {
+            if (Freezing.freezable(entity)) {
+                // A mob's freeze can cost more than a tick's light: charged up as Damage's hits are, and kept.
+                net.minecraft.world.entity.Mob mob = (net.minecraft.world.entity.Mob) entity;
+                if (Freezing.left(mob) > LaserTuning.FREEZE_MOB_TICKS / 2) continue;
+                long cost = freezeCost(mob);
+                if (charged < cost) continue;
+                charged -= cost;
+                Freezing.freeze(mob, LaserTuning.FREEZE_MOB_TICKS);
+            } else if (entity.canFreeze()) {
+                if (!networks.canPay(this, LaserTuning.FREEZE_CHILL_FE)) continue;
+                networks.pay(this, LaserTuning.FREEZE_CHILL_FE);
+                // Slowed by it, as in powder snow, but never so frozen it hurts.
+                entity.setTicksFrozen(Math.min(entity.getTicksRequiredToFreeze() - 1, entity.getTicksFrozen() + LaserTuning.FREEZE_CHILL_TICKS));
+            } else {
+                continue;
+            }
+            networks.workDone(this);
+            lastWorked = now;
+        }
+        want = Math.max(0, freezeWanted() - charged);
+        if (area == null) {
+            if (beam != null && beam.hit() != null) freezeBlock(level, networks, beam.hit());
+            return;
+        }
+        for (int i = 0; i < LaserTuning.FREEZE_AREA_BLOCKS * stream.pace(); i++) {
+            BlockPos pos = new BlockPos(area.minX() + level.getRandom().nextInt(area.getXSpan()),
+                    area.minY() + level.getRandom().nextInt(area.getYSpan()), area.minZ() + level.getRandom().nextInt(area.getZSpan()));
+            if (within.test(pos) && level.isLoaded(pos) && !level.getBlockState(pos).isAir() && inSight(level, pos)) freezeBlock(level, networks, pos);
+        }
+    }
+
+    /** FE to freeze {@code mob} in place. */
+    private static long freezeCost(net.minecraft.world.entity.Mob mob) {
+        return (long) Math.ceil(mob.getMaxHealth()) * LaserTuning.FREEZE_FE_PER_HEALTH;
+    }
+
+    /** What freezing the mobs it last saw that are due again would cost: what it charges up towards. */
+    private long freezeWanted() {
+        long wanted = 0;
+        for (LivingEntity entity : targets) {
+            if (entity.isAlive() && entity instanceof net.minecraft.world.entity.Mob mob && Freezing.freezable(mob)
+                    && Freezing.left(mob) <= LaserTuning.FREEZE_MOB_TICKS / 2) wanted += freezeCost(mob);
+        }
+        return wanted;
+    }
+
+    /** Water to ice; on anything else, now and then, a layer of snow on top where it would lie. */
+    private void freezeBlock(ServerLevel level, LaserNetworks networks, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        BlockState into;
+        BlockPos at = pos;
+        if (state.is(net.minecraft.world.level.block.Blocks.WATER) && state.getFluidState().isSource()) {
+            into = net.minecraft.world.level.block.Blocks.ICE.defaultBlockState();
+        } else {
+            at = pos.above();
+            into = net.minecraft.world.level.block.Blocks.SNOW.defaultBlockState();
+            if (level.getRandom().nextFloat() >= LaserTuning.FREEZE_SNOW_CHANCE || !level.getBlockState(at).isAir()
+                    || !into.canSurvive(level, at)) return;
+        }
+        if (!networks.canPay(this, LaserTuning.FREEZE_BLOCK_FE)) return;
+        networks.pay(this, LaserTuning.FREEZE_BLOCK_FE);
+        level.setBlockAndUpdate(at, into);
+        networks.workDone(this);
+        lastWorked = now;
+    }
+
+    /** The machines it holds still: the one the beam ends on, or each in the area (looked for again every two seconds). */
+    private List<BlockPos> freezeTargets(ServerLevel level) {
+        if (area == null) {
+            if (beam == null || beam.hit() == null || !Freezing.freezable(level.getBlockEntity(beam.hit()))) return List.of();
+            return List.of(beam.hit());
+        }
+        if (now - machinesFound >= 40) {
+            machinesFound = now;
+            List<BlockPos> found = new ArrayList<>();
+            for (int cx = area.minX() >> 4; cx <= area.maxX() >> 4; cx++) {
+                for (int cz = area.minZ() >> 4; cz <= area.maxZ() >> 4; cz++) {
+                    var chunk = level.getChunkSource().getChunkNow(cx, cz);
+                    if (chunk == null) continue;
+                    for (BlockPos pos : chunk.getBlockEntitiesPos()) {
+                        if (area.isInside(pos) && within.test(pos) && Freezing.freezable(level.getBlockEntity(pos))) found.add(pos.immutable());
+                    }
+                }
+            }
+            machines = found;
+        }
+        return machines;
     }
 
     /** The laser's hand, at the beam's source, holding a blade with Looting for each Harmonic lens. */
@@ -507,9 +623,9 @@ public final class LensAction {
 
     // ---- acceleration ----
 
-    /** In an area, the machines there it can speed up, looked for again every so often; when it last looked. */
-    private List<BlockPos> accelerated = List.of();
-    private long acceleratedFound = Long.MIN_VALUE;
+    /** In an area, the machines there it can speed up (or freeze), looked for again every so often; when it last looked. */
+    private List<BlockPos> machines = List.of();
+    private long machinesFound = Long.MIN_VALUE;
 
     /**
      * Speeds up the machine the beam ends on (in an area, each machine there): 2x, doubled for each Speed lens, up to
@@ -537,8 +653,8 @@ public final class LensAction {
             if (beam == null || beam.hit() == null) return List.of();
             return List.of(beam.hit());
         }
-        if (now - acceleratedFound >= 40) {
-            acceleratedFound = now;
+        if (now - machinesFound >= 40) {
+            machinesFound = now;
             List<BlockPos> found = new ArrayList<>();
             for (int cx = area.minX() >> 4; cx <= area.maxX() >> 4; cx++) {
                 for (int cz = area.minZ() >> 4; cz <= area.maxZ() >> 4; cz++) {
@@ -549,9 +665,9 @@ public final class LensAction {
                     }
                 }
             }
-            accelerated = found;
+            machines = found;
         }
-        return accelerated;
+        return machines;
     }
 
     /** A stand-in player at the beam, facing the way it goes. */
@@ -1364,7 +1480,7 @@ public final class LensAction {
     net.minecraft.world.phys.Vec3 workingPoint(ServerLevel level) {
         BlockPos block = working(level);
         if (block == null) return null;
-        if ((key.action() == Lens.DAMAGE || key.action() == Lens.HEAL) && !targets.isEmpty()) return targets.getFirst().getBoundingBox().getCenter();
+        if ((key.action() == Lens.DAMAGE || key.action() == Lens.HEAL || key.action() == Lens.FREEZE) && !targets.isEmpty()) return targets.getFirst().getBoundingBox().getCenter();
         if (key.action() == Lens.INTERACT && touched != null && touched.isAlive()) return touched.getBoundingBox().getCenter();
         return block.getCenter();
     }

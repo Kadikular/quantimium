@@ -64,6 +64,14 @@ public final class ModTags {
     public static final TagKey<Block> NOT_ACCELERATED = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "not_accelerated"));
 
+    /** Machines a Freezing Lens never stops: a pack's to fill. */
+    public static final TagKey<Block> NOT_FREEZABLE = TagKey.create(
+            Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "not_freezable"));
+
+    /** Mobs a Freezing Lens never freezes in place: the Ender Dragon. The Wither and the Warden it can. */
+    public static final TagKey<net.minecraft.world.entity.EntityType<?>> NOT_FREEZABLE_ENTITIES = TagKey.create(
+            Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Quantimium.MODID, "not_freezable"));
+
     /** Blocks a Harvest lens never breaks: Anomalite (for the rift lens), and what withers can't break. */
     public static final TagKey<Block> LASER_UNBREAKABLE = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_unbreakable"));

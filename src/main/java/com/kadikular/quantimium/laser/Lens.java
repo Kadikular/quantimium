@@ -49,7 +49,9 @@ public enum Lens {
     /** Speeds up the machine the beam ends on (each machine in an Area Prism's area): 2x, doubled by each Speed lens. */
     ACCELERATE(true, 0xFF60FFD0),
     /** Heals what's living in the beam; hurts the undead, as Instant Health does. */
-    HEAL(true, 0xFFFF7FB0);
+    HEAL(true, 0xFFFF7FB0),
+    /** Freezes what the beam ends on: water to ice, snow on blocks, machines stopped; mobs held still, players chilled. */
+    FREEZE(true, 0xFF9FE8FF);
 
     /** The lens item's translation key: its name, but for the two named for what they do to things. */
     public String itemKey() {
@@ -60,6 +62,7 @@ public enum Lens {
             case ISOLATE -> "isolator";
             case ACCELERATE -> "acceleration";
             case HEAL -> "healing";
+            case FREEZE -> "freezing";
             default -> name().toLowerCase(java.util.Locale.ROOT);
         };
         return "item.quantimium." + name + "_lens";

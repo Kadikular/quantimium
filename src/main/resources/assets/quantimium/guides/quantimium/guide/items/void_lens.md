@@ -2,7 +2,7 @@
 navigation:
   title: Void Lens
   parent: items/index.md
-  position: 45
+  position: 46
   icon: quantimium:void_lens
 item_ids:
 - quantimium:void_lens

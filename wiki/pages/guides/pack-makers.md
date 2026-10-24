@@ -111,6 +111,10 @@ to be sure every value is picked up.
 Tag blocks `quantimium:not_accelerated` to keep the lens off them (a generator that would make more than its
 extra ticks cost, say).
 
+The Freezing Lens has two tags of its own: blocks tagged `quantimium:not_freezable` are never stopped, and entity
+types tagged `quantimium:not_freezable` are never frozen in place (by default the Ender Dragon; the Wither and the
+Warden are left freezable).
+
 ### `[fieldVision]`: each player's own
 
 These only matter on a player's own install: a server's values don't reach them.

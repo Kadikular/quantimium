@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 /**
- * Wraps the level's call into each ticking block entity, for {@link TickProfiler}. Does nothing but
- * read one flag unless the profiler is watching something.
+ * Wraps the level's call into each ticking block entity: for {@link TickProfiler}, and to skip machines a Freezing
+ * Lens holds still. Does nothing but read two counts unless the profiler is watching or something is frozen.
  */
 @Mixin(targets = "net.minecraft.world.level.chunk.LevelChunk$BoundTickingBlockEntity")
 public abstract class BlockEntityTickTimingMixin {
@@ -21,6 +21,7 @@ public abstract class BlockEntityTickTimingMixin {
 
     @WrapMethod(method = "tick")
     private void quantimium$timeTick(Operation<Void> original) {
+        if (com.kadikular.quantimium.laser.Freezing.frozen(blockEntity)) return;
         if (!TickProfiler.active()) {
             original.call();
             return;

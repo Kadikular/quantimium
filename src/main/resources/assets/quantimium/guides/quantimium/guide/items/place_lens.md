@@ -2,7 +2,7 @@
 navigation:
   title: Placement Lens
   parent: items/index.md
-  position: 27
+  position: 28
   icon: quantimium:place_lens
 item_ids:
 - quantimium:place_lens

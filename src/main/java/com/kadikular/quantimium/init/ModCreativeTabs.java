@@ -88,6 +88,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.HARVEST_LENS.get());
                         output.accept(ModItems.DAMAGE_LENS.get());
                         output.accept(ModItems.HEALING_LENS.get());
+                        output.accept(ModItems.FREEZING_LENS.get());
                         output.accept(ModItems.PICKUP_LENS.get());
                         output.accept(ModItems.RANGE_LENS.get());
                         output.accept(ModItems.FILTER_LENS.get());

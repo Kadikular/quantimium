@@ -112,6 +112,22 @@ public final class LaserTuning {
     public static final float HEAL_HARM_PER_SWEEP = 3.0f;
     /** FE for each sweep's heal (or harm) of one, doubled by each Amplify lens. */
     public static final long HEAL_FE_PER_SWEEP = 500;
+    /** FE a tick for each machine a Freezing beam holds still. */
+    public static final long FREEZE_MACHINE_FE = 20;
+    /** Ticks a mob stays frozen once frozen; the beam freezes it again once half of that is gone. */
+    public static final int FREEZE_MOB_TICKS = 200;
+    /** FE to freeze a mob, for each point of its most health: a zombie 500, a Warden 12,500. */
+    public static final long FREEZE_FE_PER_HEALTH = 25;
+    /** Powder-snow freeze each sweep gives a player (or anything it doesn't stop): it thaws 2 a tick on its own. */
+    public static final int FREEZE_CHILL_TICKS = 40;
+    /** FE for each sweep's chill of one. */
+    public static final long FREEZE_CHILL_FE = 50;
+    /** FE to freeze a block of water to ice, or lay snow. */
+    public static final long FREEZE_BLOCK_FE = 200;
+    /** The chance each sweep that snow settles on the block it's on (each it looks at, in an area). */
+    public static final float FREEZE_SNOW_CHANCE = 0.1f;
+    /** Blocks an Area Prism's Freezing light looks at each sweep, at random, times its pace. */
+    public static final int FREEZE_AREA_BLOCKS = 4;
     /** Smelting and Crushing lenses that count as steps on one light. */
     public static final int PROCESS_STEPS = 8;
     /** FE a Crushing lens takes for each item it crushes. */

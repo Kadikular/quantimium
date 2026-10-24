@@ -25,6 +25,7 @@ navigation:
 - <ItemLink id="quantimium:filter_lens" />
 - <ItemLink id="quantimium:flux_meter" />
 - <ItemLink id="quantimium:folded_tesseract" />
+- <ItemLink id="quantimium:freezing_lens" />
 - <ItemLink id="quantimium:harmonic_lens" />
 - <ItemLink id="quantimium:harvest_lens" />
 - <ItemLink id="quantimium:healing_lens" />

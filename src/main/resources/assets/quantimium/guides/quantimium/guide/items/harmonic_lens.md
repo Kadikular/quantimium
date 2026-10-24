@@ -2,7 +2,7 @@
 navigation:
   title: Harmonic Lens
   parent: items/index.md
-  position: 17
+  position: 18
   icon: quantimium:harmonic_lens
 item_ids:
 - quantimium:harmonic_lens

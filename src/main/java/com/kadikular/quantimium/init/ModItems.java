@@ -288,6 +288,8 @@ public class ModItems {
             "acceleration_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.ACCELERATE));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HEALING_LENS = ITEMS.registerItem(
             "healing_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.HEAL));
+    public static final DeferredItem<com.kadikular.quantimium.item.LensItem> FREEZING_LENS = ITEMS.registerItem(
+            "freezing_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.FREEZE));
     public static final DeferredItem<com.kadikular.quantimium.item.VoidLensItem> VOID_LENS = ITEMS.registerItem(
             "void_lens", props -> new com.kadikular.quantimium.item.VoidLensItem(props.stacksTo(16)));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> PRECISION_LENS = ITEMS.registerItem(
