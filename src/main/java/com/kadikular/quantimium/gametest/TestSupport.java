@@ -192,6 +192,7 @@ public final class TestSupport {
         helper.forEveryBlockInStructure(pos -> {
             var state = helper.getBlockState(pos);
             if (state.getBlock() instanceof com.kadikular.quantimium.block.LaserEmitterBlock
+                    || state.getBlock() instanceof com.kadikular.quantimium.block.SolarEmitterBlock
                     || state.getBlock() instanceof com.kadikular.quantimium.block.CavityMirrorBlock
                     || state.is(com.kadikular.quantimium.init.ModBlocks.CREATIVE_ENERGY_CELL.get())) {
                 helper.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR);

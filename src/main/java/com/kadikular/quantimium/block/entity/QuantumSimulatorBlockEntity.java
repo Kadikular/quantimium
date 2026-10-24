@@ -119,7 +119,6 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
     private int averagePowerUse;
     private int syncedAnomalyOrdinal;
     private int syncedSurchargePercent;
-    private int syncedPassiveDrain;
     private final int[] powerSamples = new int[20];
     private int powerSampleIndex;
 
@@ -286,10 +285,9 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
                 case 15: return (averagePowerUse >>> 16) & 0xFFFF;
                 case 16: return syncedSurchargePercent;
                 case 17: return syncedAnomalyOrdinal;
-                case 18: return syncedPassiveDrain;
-                case 19: return getBatchSize();
-                case 20: return gate.band().ordinal();
-                case 21: return gate.heading().ordinal();
+                case 18: return getBatchSize();
+                case 19: return gate.band().ordinal();
+                case 20: return gate.heading().ordinal();
                 default: return 0;
             }
         }
@@ -308,7 +306,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
         }
 
         @Override
-        public int getCount() { return 22; }
+        public int getCount() { return 21; }
     };
 
     public QuantumSimulatorBlockEntity(BlockPos pos, BlockState state) {

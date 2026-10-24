@@ -15,20 +15,12 @@ public final class EnergyBarTooltip {
 
     public static List<Component> lines(int stored, int capacity, int currentPerTick,
                                         int averagePerTick, boolean includesOverhead) {
-        return lines(stored, capacity, currentPerTick, averagePerTick, includesOverhead, 0, null, 0);
+        return lines(stored, capacity, currentPerTick, averagePerTick, includesOverhead, 0, null);
     }
 
     public static List<Component> lines(int stored, int capacity, int currentPerTick,
                                         int averagePerTick, boolean includesOverhead,
                                         int surchargePercent, @Nullable FluxBand anomalyBand) {
-        return lines(stored, capacity, currentPerTick, averagePerTick, includesOverhead,
-                surchargePercent, anomalyBand, 0);
-    }
-
-    public static List<Component> lines(int stored, int capacity, int currentPerTick,
-                                        int averagePerTick, boolean includesOverhead,
-                                        int surchargePercent, @Nullable FluxBand anomalyBand,
-                                        int passiveDrainFePerTick) {
         List<Component> lines = new ArrayList<>();
         lines.add(Component.translatable("gui.quantimium.energy.stored", String.format("%,d", stored), String.format("%,d", capacity)));
         if (currentPerTick >= 0) {
@@ -44,12 +36,6 @@ public final class EnergyBarTooltip {
             lines.add(Component.translatable("gui.quantimium.energy.anomaly_surcharge",
                             Component.translatable("flux.quantimium.band." + anomalyBand.getSerializedName()),
                             surchargePercent)
-                    .withStyle(ChatFormatting.GOLD));
-        }
-        if (passiveDrainFePerTick > 0 && anomalyBand != null) {
-            lines.add(Component.translatable("gui.quantimium.energy.anomaly_drain",
-                            Component.translatable("flux.quantimium.band." + anomalyBand.getSerializedName()),
-                            String.format("%,d", passiveDrainFePerTick))
                     .withStyle(ChatFormatting.GOLD));
         }
         return List.copyOf(lines);

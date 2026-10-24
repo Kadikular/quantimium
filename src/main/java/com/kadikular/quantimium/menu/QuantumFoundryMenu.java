@@ -15,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
 public class QuantumFoundryMenu extends AbstractContainerMenu {
-    public static final int DATA_COUNT = 15;
+    public static final int DATA_COUNT = 14;
     /** A diamond around the well, laid out the way the arms are: forward, right, back, left. */
     public static final int[][] INPUT_POSITIONS = {
             {80, 18}, {102, 38}, {80, 58}, {58, 38}
@@ -122,10 +122,6 @@ public class QuantumFoundryMenu extends AbstractContainerMenu {
 
     public int getFluxCost() {
         return data.get(13);
-    }
-
-    public int getPassiveDrain() {
-        return data.get(14);
     }
 
     @Override

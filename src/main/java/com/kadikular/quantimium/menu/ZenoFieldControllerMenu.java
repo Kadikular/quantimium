@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 /** No machine slots: the controller's settings are its tabs, sent as menu buttons. */
 public class ZenoFieldControllerMenu extends AbstractContainerMenu {
 
-    public static final int DATA_COUNT = 16;
+    public static final int DATA_COUNT = 15;
 
     private final ZenoFieldControllerBlockEntity blockEntity;
     private final ContainerData data;
@@ -81,10 +81,6 @@ public class ZenoFieldControllerMenu extends AbstractContainerMenu {
         return (data.get(11) << 16) | (data.get(10) & 0xFFFF);
     }
 
-    public int getPassiveDrainFePerTick() {
-        return data.get(12);
-    }
-
     @Override
     public boolean clickMenuButton(Player player, int id) {
         blockEntity.pressButton(id);
@@ -104,14 +100,14 @@ public class ZenoFieldControllerMenu extends AbstractContainerMenu {
 
     /** The rate it runs at: the one chosen, capped by the flux band here. */
     public int getRunningFactor() {
-        return data.get(13);
+        return data.get(12);
     }
 
     public FluxBand getBand() {
-        return FluxBand.values()[Math.clamp(data.get(14), 0, FluxBand.values().length - 1)];
+        return FluxBand.values()[Math.clamp(data.get(13), 0, FluxBand.values().length - 1)];
     }
 
     public FluxBand getHeading() {
-        return FluxBand.values()[Math.clamp(data.get(15), 0, FluxBand.values().length - 1)];
+        return FluxBand.values()[Math.clamp(data.get(14), 0, FluxBand.values().length - 1)];
     }
 }

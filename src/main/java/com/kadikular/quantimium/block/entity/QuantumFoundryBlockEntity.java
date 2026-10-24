@@ -102,7 +102,6 @@ public class QuantumFoundryBlockEntity extends BlockEntity
     private int syncedFluxCost;
     private int currentPowerUse;
     private int averagePowerUse;
-    private int syncedPassiveDrain;
     private final int[] powerSamples = new int[20];
     private int powerSampleIndex;
     @Nullable
@@ -128,7 +127,6 @@ public class QuantumFoundryBlockEntity extends BlockEntity
                 case 11 -> currentPowerUse;
                 case 12 -> averagePowerUse;
                 case 13 -> syncedFluxCost;
-                case 14 -> syncedPassiveDrain;
                 default -> 0;
             };
         }
@@ -138,7 +136,7 @@ public class QuantumFoundryBlockEntity extends BlockEntity
 
         @Override
         public int getCount() {
-            return 15;
+            return 14;
         }
     };
 
@@ -164,14 +162,14 @@ public class QuantumFoundryBlockEntity extends BlockEntity
 
         if (!be.isFormed()) {
             be.stop(STATUS_UNFORMED);
-            be.recordPowerUse(be.syncedPassiveDrain);
+            be.recordPowerUse(0);
             return;
         }
 
         RecipeHolder<QuantumFoundryRecipe> holder = be.findIngredientRecipe(field.flux());
         if (holder == null) {
             be.stop(be.inputsEmpty() ? STATUS_IDLE : STATUS_NO_RECIPE);
-            be.recordPowerUse(be.syncedPassiveDrain);
+            be.recordPowerUse(0);
             return;
         }
 
@@ -184,19 +182,19 @@ public class QuantumFoundryBlockEntity extends BlockEntity
         if (be.gateBand.ordinal() < recipe.minimumFluxBand().ordinal()
                 || field.flux() + 1.0E-9 < recipe.fluxCost()) {
             be.statusCode = STATUS_LOW_FLUX;
-            be.recordPowerUse(be.syncedPassiveDrain);
+            be.recordPowerUse(0);
             return;
         }
         if (!be.outputFits(recipe.result())) {
             be.statusCode = STATUS_OUTPUT_FULL;
-            be.recordPowerUse(be.syncedPassiveDrain);
+            be.recordPowerUse(0);
             return;
         }
 
         int perTick = (int) Math.ceil(recipe.fePerTick() * AnomalyEffects.feMultiplier(level, pos));
         if (be.energyStorage.getEnergyStored() < perTick) {
             be.statusCode = STATUS_NO_POWER;
-            be.recordPowerUse(be.syncedPassiveDrain);
+            be.recordPowerUse(0);
             return;
         }
 
@@ -216,7 +214,7 @@ public class QuantumFoundryBlockEntity extends BlockEntity
         } else {
             be.setChanged();
         }
-        be.recordPowerUse(spent + be.syncedPassiveDrain);
+        be.recordPowerUse(spent);
     }
 
     private void complete(ServerLevel level, QuantumFoundryRecipe recipe, double flux) {

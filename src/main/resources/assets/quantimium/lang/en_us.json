@@ -395,7 +395,6 @@
   "gui.quantimium.quantum_observation_chamber.status.power": "No power",
   "gui.quantimium.quantum_observation_chamber.status.power.tip": "Not enough FE for a collapse",
   "gui.quantimium.energy.anomaly_surcharge": "Higher energy usage due to %s anomaly (+%s%%)",
-  "gui.quantimium.energy.anomaly_drain": "Passive drain due to %s anomaly (%s FE/t)",
   "advancements.quantimium.simulation_within_simulation.title": "Simulation Within a Simulation",
   "advancements.quantimium.simulation_within_simulation.description": "Use a Quantum Simulator to simulate an engaged Quantum Simulator",
   "advancements.quantimium.not_what_you_expected.title": "Not What You Expected...",

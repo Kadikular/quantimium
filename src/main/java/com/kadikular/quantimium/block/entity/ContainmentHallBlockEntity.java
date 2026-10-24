@@ -146,7 +146,6 @@ public class ContainmentHallBlockEntity extends BlockEntity implements Multibloc
     private final int[] powerSamples = new int[20];
     private int syncedAnomalyOrdinal;
     private int syncedSurchargePercent;
-    private int syncedPassiveDrain;
     private int syncedLoadPercent;
     /** Anomaly pulled in the last second, for the screen between pulls. */
     private double lastPulled;
@@ -168,15 +167,14 @@ public class ContainmentHallBlockEntity extends BlockEntity implements Multibloc
                 case 8 -> (averagePowerUse >>> 16) & 0xFFFF;
                 case 9 -> syncedSurchargePercent;
                 case 10 -> syncedAnomalyOrdinal;
-                case 11 -> syncedPassiveDrain;
-                case 12 -> armMask;
-                case 13 -> syncedPullScaled;
-                case 14 -> residueSecondsLeft();
-                case 15 -> starvingTicks;
-                case 16 -> Math.min(Short.MAX_VALUE, storedResidue());
-                case 17 -> isLinked() ? 1 : 0;
-                case 18 -> syncedLoadPercent;
-                case 19 -> cell().ordinal();
+                case 11 -> armMask;
+                case 12 -> syncedPullScaled;
+                case 13 -> residueSecondsLeft();
+                case 14 -> starvingTicks;
+                case 15 -> Math.min(Short.MAX_VALUE, storedResidue());
+                case 16 -> isLinked() ? 1 : 0;
+                case 17 -> syncedLoadPercent;
+                case 18 -> cell().ordinal();
                 default -> 0;
             };
         }
@@ -188,7 +186,7 @@ public class ContainmentHallBlockEntity extends BlockEntity implements Multibloc
 
         @Override
         public int getCount() {
-            return 20;
+            return 19;
         }
     };
 

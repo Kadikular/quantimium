@@ -296,6 +296,7 @@ public final class LogisticsTests {
             helper.assertTrue(controller.getEnergyStorage().getEnergyStored() > 0, "charged by light on its side");
             helper.assertValueEqual(sink.getEnergyStorage().getEnergyStored(), 0, "none of that light went on through");
             helper.assertFalse(controller.toggleOutput(Direction.WEST), "its back is never an output");
+            TestSupport.finishLasers(helper);
             helper.succeed();
         });
     }

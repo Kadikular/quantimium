@@ -113,7 +113,6 @@ public class ZenoFieldControllerBlockEntity extends BlockEntity implements MenuP
     private int averagePowerUse;
     private int powerSampleIndex;
     private final int[] powerSamples = new int[20];
-    private int syncedPassiveDrain;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -131,10 +130,9 @@ public class ZenoFieldControllerBlockEntity extends BlockEntity implements MenuP
                 case 9 -> (currentPowerUse >>> 16) & 0xFFFF;
                 case 10 -> averagePowerUse & 0xFFFF;
                 case 11 -> (averagePowerUse >>> 16) & 0xFFFF;
-                case 12 -> syncedPassiveDrain;
-                case 13 -> runningFactor();
-                case 14 -> gate.band().ordinal();
-                case 15 -> gate.heading().ordinal();
+                case 12 -> runningFactor();
+                case 13 -> gate.band().ordinal();
+                case 14 -> gate.heading().ordinal();
                 default -> 0;
             };
         }

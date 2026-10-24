@@ -22,7 +22,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  */
 public class SuperpositionCrafterMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
-    public static final int DATA_COUNT = 18;
+    public static final int DATA_COUNT = 17;
     public static final int BUTTON_MODE = 0;
     public static final int BUTTON_BATCH = 1;
     public static final int BUTTON_INPUT_MODE = 2;
@@ -161,10 +161,6 @@ public class SuperpositionCrafterMenu extends AbstractContainerMenu implements G
         return bands[Math.clamp(data.get(13), 0, bands.length - 1)];
     }
 
-    public int getPassiveDrain() {
-        return data.get(14);
-    }
-
     public int getBatch() {
         return data.get(10);
     }
@@ -237,15 +233,15 @@ public class SuperpositionCrafterMenu extends AbstractContainerMenu implements G
 
     /** The flux band here, where it's heading, and the band the catalyst in the slot needs. */
     public FluxBand getBand() {
-        return band(15);
+        return band(14);
     }
 
     public FluxBand getHeading() {
-        return band(16);
+        return band(15);
     }
 
     public FluxBand getRequiredBand() {
-        return band(17);
+        return band(16);
     }
 
     private FluxBand band(int index) {

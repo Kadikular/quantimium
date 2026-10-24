@@ -135,7 +135,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private int pricedAtSurchargePercent;
     private int syncedAnomalyOrdinal;
     private int syncedSurchargePercent;
-    private int syncedPassiveDrain;
     /** A remote source grew, so a rescan is owed once the discovery throttle allows one. */
     private boolean discoveryPending;
     private boolean localDirty = true;
@@ -150,8 +149,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private boolean suppressInventoryNotify;
     /** Guards against two crafters linked to each other committing through one another forever. */
     private boolean automationBusy;
-    /** The previewed recipes that chain its own crafts (worked out with them on offer), to be sized the same way. */
-    private java.util.Set<Identifier> chained = java.util.Set.of();
     /**
      * The recipes it's making right now. While one runs it may run another, which the first needs made from what
      * it would draw on (a furnace smelting stone for bricks it will smelt again), but never one already running.
@@ -231,12 +228,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 case 10 -> (averagePowerUse >>> 16) & 0xFFFF;
                 case 11 -> syncedSurchargePercent;
                 case 12 -> syncedAnomalyOrdinal;
-                case 13 -> syncedPassiveDrain;
-                case 14 -> getCoherenceReserve();
-                case 15 -> getCoherenceCapacity();
-                case 16 -> gate.band().ordinal();
-                case 17 -> gate.heading().ordinal();
-                case 18 -> requiredBand().ordinal();
+                case 13 -> getCoherenceReserve();
+                case 14 -> getCoherenceCapacity();
+                case 15 -> gate.band().ordinal();
+                case 16 -> gate.heading().ordinal();
+                case 17 -> requiredBand().ordinal();
                 default -> 0;
             };
         }
@@ -249,7 +245,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         @Override
         public int getCount() {
-            return 19;
+            return 18;
         }
     };
 
@@ -744,13 +740,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return networks;
     }
 
-    /** What the networks it draws on say it could make, chaining its own crafts as well as other machines'. */
-    private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> madeOnItsNetworks() {
-        java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> made = new java.util.HashSet<>();
-        for (var controller : linkedNetworks()) made.addAll(controller.offers().madeBy(worldPosition));
-        return made;
-    }
-
     @Override
     public List<com.kadikular.quantimium.laser.OfferMaker.Made> makes(
             com.kadikular.quantimium.laser.LogisticsController network,
@@ -1125,12 +1114,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         feeder = network;
         if (fed != null && sameCrafts(crafts, fed)) return;
         List<ResolvedCraft> shown = new ArrayList<>(crafts.size());
-        java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
+        java.util.Set<Identifier> seen = new java.util.HashSet<>();
         for (Object craft : crafts) {
-            if (craft instanceof ResolvedCraft resolved && chainedNow.add(resolved.recipeId())) shown.add(resolved);
+            if (craft instanceof ResolvedCraft resolved && seen.add(resolved.recipeId())) shown.add(resolved);
         }
         // A rebuild of its own already queued (its grid changed since the network asked) still runs, and is newer.
-        show(CrafterPreview.cap(shown, CrafterPreview.MAX_OUTPUTS), chainedNow);
+        show(CrafterPreview.cap(shown, CrafterPreview.MAX_OUTPUTS));
         fed = crafts;
     }
 
@@ -1271,22 +1260,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         sync();
     }
 
-    /**
-     * Its preview worked out a step at a time: what it makes from what it has, then (on a network that says it could
-     * chain its own crafts) what it makes with its own crafts on offer too, then shown.
-     */
+    /** Its preview worked out a step at a time: what it makes from what it has, then shown. */
     private final class PreviewBuild {
         private final ItemStack catalyst;
         private final int fe;
         private final double multiplier;
         @Nullable
         private Making first;
-        @Nullable
-        private Making more;
-        /** Whether it may make from what other machines would make, as its Receptacle on the network says. */
-        private boolean fromMade = true;
-        private List<ResolvedCraft> crafts = List.of();
-        private java.util.Set<net.neoforged.neoforge.transfer.item.ItemResource> chainable = java.util.Set.of();
 
         PreviewBuild(ItemStack catalyst, int fe, double multiplier) {
             this.catalyst = catalyst.copy();
@@ -1303,55 +1283,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 // Worked out as a network's ask is: what it knows resized where it can, not every recipe matched again.
                 // As its Receptacle says: from what's stored only, if it's set so, as the network asks it.
                 if (first == null) {
-                    fromMade = craftsFromMade();
+                    boolean fromMade = craftsFromMade();
                     first = ask(networkViews(null, null, fromMade, false), fromMade, catalyst, fe, multiplier);
                 }
-                if (more == null) {
-                    if (!first.step(nanos)) return false;
-                    // Not a craft out of what's made from its own output on its networks (ingots from the dust a
-                    // pulveriser makes of ingots): the network leaves such loops out, and so does it, from the first.
-                    List<com.kadikular.quantimium.laser.OfferTable> tables = new ArrayList<>();
-                    for (var controller : linkedNetworks()) tables.add(controller.offers());
-                    List<ResolvedCraft> direct = new ArrayList<>();
-                    for (ResolvedCraft craft : first.crafts()) if (tables.isEmpty() || !loopsOn(tables, craft)) direct.add(craft);
-                    crafts = CrafterPreview.cap(direct, CrafterPreview.MAX_OUTPUTS);
-                    // On a network that says it could chain its own crafts (leggings from ingots it would make from
-                    // blocks), those too: worked out again with its own crafts on offer, for what the network says.
-                    chainable = fromMade ? madeOnItsNetworks() : java.util.Set.of();
-                    if (chainable.isEmpty()) {
-                        show(crafts, java.util.Set.of());
-                        return true;
-                    }
-                    more = ask(networkViews(null, null, fromMade, true), fromMade, catalyst, fe, multiplier);
-                    if (nanos != Long.MAX_VALUE) return false;
-                }
-                if (!more.step(nanos)) return false;
-                // A craft it already shows from what's there is shown as the chain would make it, if that's more.
-                List<ResolvedCraft> joined = new ArrayList<>(crafts);
-                java.util.Set<Identifier> chainedNow = new java.util.HashSet<>();
-                java.util.Map<Identifier, Integer> at = new java.util.HashMap<>();
-                List<com.kadikular.quantimium.laser.OfferTable> networks = new ArrayList<>();
-                for (var controller : linkedNetworks()) networks.add(controller.offers());
-                for (int i = 0; i < joined.size(); i++) at.putIfAbsent(joined.get(i).recipeId(), i);
-                for (ResolvedCraft craft : more.crafts()) {
-                    boolean wanted = false;
-                    for (ItemStack output : craft.outputs()) {
-                        if (!output.isEmpty() && chainable.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) wanted = true;
-                    }
-                    // Not a craft out of what it would make from this craft's own output (ingots from the nuggets it'd
-                    // make from those ingots): the network leaves such loops out, and so does it.
-                    if (!wanted || loopsOn(networks, craft)) continue;
-                    Integer was = at.get(craft.recipeId());
-                    if (was == null) {
-                        at.put(craft.recipeId(), joined.size());
-                        joined.add(craft);
-                        chainedNow.add(craft.recipeId());
-                    } else if (craft.availableOutputCount(0) > joined.get(was).availableOutputCount(0)) {
-                        joined.set(was, craft);
-                        chainedNow.add(craft.recipeId());
-                    }
-                }
-                show(joined, chainedNow);
+                if (!first.step(nanos)) return false;
+                // Not a craft out of what's made from its own output on its networks (ingots from the dust a
+                // pulveriser makes of ingots): the network leaves such loops out, and so does it.
+                List<com.kadikular.quantimium.laser.OfferTable> tables = new ArrayList<>();
+                for (var controller : linkedNetworks()) tables.add(controller.offers());
+                List<ResolvedCraft> direct = new ArrayList<>();
+                for (ResolvedCraft craft : first.crafts()) if (tables.isEmpty() || !loopsOn(tables, craft)) direct.add(craft);
+                show(CrafterPreview.cap(direct, CrafterPreview.MAX_OUTPUTS));
                 return true;
             } finally {
                 exitChain(priorBusy);
@@ -1359,11 +1301,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
     }
 
-    /** Shows {@code crafts} as its preview, those in {@code chainedNow} worked out with its own crafts on offer. */
-    private void show(List<ResolvedCraft> crafts, java.util.Set<Identifier> chainedNow) {
+    /** Shows {@code crafts} as its preview. */
+    private void show(List<ResolvedCraft> crafts) {
         // Whatever the network hands it next is shown, even the same crafts as before this.
         fed = null;
-        chained = chainedNow;
         if (isBasic()) crafts = limitToCoherence(crafts);
         if (recipeLocked && preferredRecipeId != null) {
             List<ResolvedCraft> locked = new ArrayList<>();
@@ -1404,12 +1345,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (level == null || level.isClientSide() || linkLoopDetected || preview.isEmpty()) return;
 
         IngredientPool own;
-        IngredientPool withOwn = null;
         boolean priorBusy = automationBusy;
         enterChain();
         try {
             own = onOffers(() -> IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS));
-            if (!chained.isEmpty()) withOwn = onOffers(true, () -> IngredientPool.build(level, worldPosition, inventory, INPUT_SLOTS));
         } finally {
             exitChain(priorBusy);
         }
@@ -1417,12 +1356,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         List<ResolvedCraft> next = new ArrayList<>(preview.size());
         boolean stale = false;
         for (ResolvedCraft craft : preview) {
-            IngredientPool pool = withOwn != null && chained.contains(craft.recipeId()) ? withOwn : own;
-            if (!craft.runSatisfiedBy(pool)) {
+            if (!craft.runSatisfiedBy(own)) {
                 stale = true;
                 continue;
             }
-            ResolvedCraft resized = craft.withRuns(1).largestBatch(pool, availableFe);
+            ResolvedCraft resized = craft.withRuns(1).largestBatch(own, availableFe);
             next.add(isBasic() ? limitToCoherence(resized) : resized);
         }
 

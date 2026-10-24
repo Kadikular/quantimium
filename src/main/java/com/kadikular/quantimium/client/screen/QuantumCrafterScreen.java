@@ -163,8 +163,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     protected List<Component> energyTooltip() {
         return EnergyBarTooltip.lines(menu.getEnergyStored(), menu.getMaxEnergyStored(),
                 menu.getCurrentPowerUse(), menu.getAveragePowerUse(), false,
-                menu.getAnomalySurchargePercent(), menu.getAnomalyBand(),
-                menu.getPassiveDrainFePerTick());
+                menu.getAnomalySurchargePercent(), menu.getAnomalyBand());
     }
 
     @Override

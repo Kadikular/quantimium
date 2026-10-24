@@ -92,8 +92,7 @@ public class ZenoFieldControllerScreen extends QuantumMachineScreen<ZenoFieldCon
     @Override
     protected List<Component> energyTooltip() {
         return EnergyBarTooltip.lines(menu.getEnergyStored(), menu.getMaxEnergyStored(),
-                menu.getCurrentPowerUse(), menu.getAveragePowerUse(), false, 0, null,
-                menu.getPassiveDrainFePerTick());
+                menu.getCurrentPowerUse(), menu.getAveragePowerUse(), false, 0, null);
     }
 
     @Override

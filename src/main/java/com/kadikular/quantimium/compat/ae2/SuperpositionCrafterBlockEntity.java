@@ -164,7 +164,6 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
     private int inputMode = MODE_DENY;
     private int syncedSurchargePercent;
     private int syncedAnomalyOrdinal;
-    private int syncedPassiveDrain;
     private int batchIndex = 0;
     private List<SuperpositionPattern> patterns = List.of();
     private boolean patternsDirty = true;
@@ -202,10 +201,9 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
                 case 11 -> inputMode;
                 case 12 -> syncedSurchargePercent;
                 case 13 -> syncedAnomalyOrdinal;
-                case 14 -> syncedPassiveDrain;
-                case 15 -> gate.band().ordinal();
-                case 16 -> gate.heading().ordinal();
-                case 17 -> requiredBand().ordinal();
+                case 14 -> gate.band().ordinal();
+                case 15 -> gate.heading().ordinal();
+                case 16 -> requiredBand().ordinal();
                 default -> 0;
             };
         }

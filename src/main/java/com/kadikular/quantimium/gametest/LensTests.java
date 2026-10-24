@@ -2223,18 +2223,18 @@ public final class LensTests {
     // covers: laser.lens.harmonic
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
     public static void harmonicCutsWithFortune(GameTestHelper helper) {
-        // Fortune III on eight lapis ore: more than plain cutting could ever give (9 a block at most).
-        // Fortune is chance: this fails by bad luck about once in a few hundred runs.
+        // Fortune III on eight diamond ore: plain cutting gives exactly one a block, so any more is Fortune's.
+        // Fortune is chance: each ore gives no bonus 2 times in 5, so all eight do about once in 1,500 runs.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get(), ModItems.HARMONIC_LENS.get(),
                 ModItems.SPEED_LENS.get());
         mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARMONIC_LENS.get(), ModItems.HARMONIC_LENS.get(), ModItems.RANGE_LENS.get());
-        for (int x = 8; x <= 15; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.LAPIS_ORE);
+        for (int x = 8; x <= 15; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.DIAMOND_ORE);
         helper.succeedWhen(() -> {
             for (int x = 8; x <= 15; x++) helper.assertBlockPresent(Blocks.AIR, new BlockPos(x, Y, 8));
-            int lapis = count(collector, Items.LAPIS_LAZULI);
-            helper.assertTrue(lapis > 72, "more than plain cutting gives: " + lapis);
+            int diamonds = count(collector, Items.DIAMOND);
+            helper.assertTrue(diamonds > 8, "more than plain cutting gives: " + diamonds);
             TestSupport.finishLasers(helper);
         });
     }

@@ -16,7 +16,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
 
 public class QuantumCrafterMenu extends AbstractContainerMenu {
 
-    private static final int DATA_COUNT = 19;
+    private static final int DATA_COUNT = 18;
     private static final int MENU_CATALYST_SLOT = 9;
     private static final int MACHINE_MENU_SLOTS = 10;
     /** Where the player's inventory starts on the panel (tools/gui_panels.py quantum_crafter). */
@@ -109,16 +109,12 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         return bands[ordinal];
     }
 
-    public int getPassiveDrainFePerTick() {
+    public int getCoherenceReserve() {
         return data.get(13);
     }
 
-    public int getCoherenceReserve() {
-        return data.get(14);
-    }
-
     public int getCoherenceCapacity() {
-        return data.get(15);
+        return data.get(14);
     }
 
     @Override
@@ -244,15 +240,15 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
 
     /** The flux band here, where it's heading, and the band the catalyst in the slot needs. */
     public FluxBand getBand() {
-        return band(16);
+        return band(15);
     }
 
     public FluxBand getHeading() {
-        return band(17);
+        return band(16);
     }
 
     public FluxBand getRequiredBand() {
-        return band(18);
+        return band(17);
     }
 
     private FluxBand band(int index) {

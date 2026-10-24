@@ -63,7 +63,7 @@ public class QuantumFoundryScreen extends QuantumMachineScreen<QuantumFoundryMen
     protected List<Component> energyTooltip() {
         return EnergyBarTooltip.lines(menu.getEnergyStored(), menu.getMaxEnergyStored(),
                 menu.getCurrentPowerUse(), menu.getAveragePowerUse(), false,
-                0, anomalyBand(), menu.getPassiveDrain());
+                0, anomalyBand());
     }
 
     @Override

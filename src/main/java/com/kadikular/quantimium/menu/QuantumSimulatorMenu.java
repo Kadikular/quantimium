@@ -22,7 +22,7 @@ public class QuantumSimulatorMenu extends AbstractContainerMenu {
     public static final int PLAYER_Y = 104;
 
 
-    private static final int DATA_COUNT = 22;
+    private static final int DATA_COUNT = 21;
 
     private final QuantumSimulatorBlockEntity blockEntity;
     private final ContainerData data;
@@ -89,9 +89,9 @@ public class QuantumSimulatorMenu extends AbstractContainerMenu {
     /** The batch chosen in the GUI. */
     public int getBatchSize() { return data.get(11); }
     /** The batch that runs: the one chosen, capped by the flux band here. */
-    public int getRunningBatch() { return data.get(19); }
-    public FluxBand getBand() { return FluxBand.values()[Math.clamp(data.get(20), 0, FluxBand.values().length - 1)]; }
-    public FluxBand getHeading() { return FluxBand.values()[Math.clamp(data.get(21), 0, FluxBand.values().length - 1)]; }
+    public int getRunningBatch() { return data.get(18); }
+    public FluxBand getBand() { return FluxBand.values()[Math.clamp(data.get(19), 0, FluxBand.values().length - 1)]; }
+    public FluxBand getHeading() { return FluxBand.values()[Math.clamp(data.get(20), 0, FluxBand.values().length - 1)]; }
     public int getCurrentPowerUse() { return (data.get(13) << 16) | (data.get(12) & 0xFFFF); }
     public int getAveragePowerUse() { return (data.get(15) << 16) | (data.get(14) & 0xFFFF); }
 
@@ -103,8 +103,6 @@ public class QuantumSimulatorMenu extends AbstractContainerMenu {
         if (ordinal < 0 || ordinal >= bands.length) return FluxBand.LOW;
         return bands[ordinal];
     }
-
-    public int getPassiveDrainFePerTick() { return data.get(18); }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {

@@ -147,8 +147,7 @@ public class ContainmentHallScreen extends QuantumMachineScreen<ContainmentHallM
         List<Component> lines = new ArrayList<>(EnergyBarTooltip.lines(
                 menu.getEnergyStored(), menu.getMaxEnergyStored(),
                 menu.getCurrentPowerUse(), menu.getAveragePowerUse(), false,
-                menu.getAnomalySurchargePercent(), menu.getAnomalyBand(),
-                menu.getPassiveDrainFePerTick()));
+                menu.getAnomalySurchargePercent(), menu.getAnomalyBand()));
         if (menu.getStatusCode() == ContainmentHallBlockEntity.STATUS_CONTAINING) {
             lines.add(Component.translatable("gui.quantimium.energy.contained")
                     .withStyle(ChatFormatting.AQUA));

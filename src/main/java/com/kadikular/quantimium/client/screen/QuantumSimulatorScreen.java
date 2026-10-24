@@ -140,8 +140,7 @@ public class QuantumSimulatorScreen extends QuantumMachineScreen<QuantumSimulato
     protected List<Component> energyTooltip() {
         return EnergyBarTooltip.lines(menu.getEnergyStored(), menu.getMaxEnergyStored(),
                 menu.getCurrentPowerUse(), menu.getAveragePowerUse(), true,
-                menu.getAnomalySurchargePercent(), menu.getAnomalyBand(),
-                menu.getPassiveDrainFePerTick());
+                menu.getAnomalySurchargePercent(), menu.getAnomalyBand());
     }
 
     @Override

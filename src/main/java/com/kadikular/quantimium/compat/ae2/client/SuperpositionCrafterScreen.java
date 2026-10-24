@@ -137,7 +137,7 @@ public class SuperpositionCrafterScreen extends QuantumMachineScreen<Superpositi
     protected List<Component> energyTooltip() {
         return EnergyBarTooltip.lines(menu.getEnergyStored(), menu.getMaxEnergyStored(),
                 menu.getAverageFe(), menu.getAverageFe(), false,
-                menu.getSurchargePercent(), menu.getAnomalyBand(), menu.getPassiveDrain());
+                menu.getSurchargePercent(), menu.getAnomalyBand());
     }
 
     @Override

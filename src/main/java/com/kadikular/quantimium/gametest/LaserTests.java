@@ -128,8 +128,11 @@ public final class LaserTests {
     public static void anEmitterPowersAMachineAcrossAGap(GameTestHelper helper) {
         emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 8));
-        helper.succeedWhen(() -> helper.assertTrue(core.getEnergyStorage().getEnergyStored() >= LaserTuning.Tier.ONE.rate * 10,
-                "the core is charged by light: " + core.getEnergyStorage().getEnergyStored()));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() >= LaserTuning.Tier.ONE.rate * 10,
+                    "the core is charged by light: " + core.getEnergyStorage().getEnergyStored());
+            TestSupport.finishLasers(helper);
+        });
     }
 
     private static void solar(GameTestHelper helper, BlockPos pos, Direction output) {

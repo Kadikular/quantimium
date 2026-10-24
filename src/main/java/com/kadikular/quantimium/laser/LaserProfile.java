@@ -82,7 +82,7 @@ public final class LaserProfile {
         for (Map.Entry<LensAction.Key, Long> entry : slowest.subList(0, Math.min(10, slowest.size()))) {
             LensAction.Key key = entry.getKey();
             source.sendSuccess(() -> Component.translatable("message.quantimium.lasers.profile.action",
-                    Component.translatable("item.quantimium." + key.action().itemKey() + "_lens"),
+                    Component.translatable(key.action().itemKey()),
                     key.node().getX(), key.node().getY(), key.node().getZ(), format(perTick(entry.getValue()))), false);
         }
     }

@@ -19,7 +19,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
 
 public class ContainmentHallMenu extends AbstractContainerMenu {
 
-    private static final int DATA_COUNT = 20;
+    private static final int DATA_COUNT = 19;
     /** Top right of the machine band, clear of the status plate and the readout lines. */
     public static final int RESIDUE_X = 152;
     public static final int RESIDUE_Y = 20;
@@ -88,12 +88,8 @@ public class ContainmentHallMenu extends AbstractContainerMenu {
         return band(data.get(10));
     }
 
-    public int getPassiveDrainFePerTick() {
-        return data.get(11);
-    }
-
     public int getArmCount() {
-        return Integer.bitCount(data.get(12));
+        return Integer.bitCount(data.get(11));
     }
 
     public FluxBand getShieldCap() {
@@ -102,37 +98,37 @@ public class ContainmentHallMenu extends AbstractContainerMenu {
 
     /** Anomaly removed from the whole field in the last second. */
     public double getSuppressionPerSecond() {
-        return data.get(13);
+        return data.get(12);
     }
 
     /** Load in the hall's chunk as a percentage; above 100 the overflow is becoming anomaly. */
     /** Its cell's state, for a Veiled. */
     public ContainmentHallBlockEntity.Cell getCell() {
         ContainmentHallBlockEntity.Cell[] cells = ContainmentHallBlockEntity.Cell.values();
-        return cells[Math.clamp(data.get(19), 0, cells.length - 1)];
+        return cells[Math.clamp(data.get(18), 0, cells.length - 1)];
     }
 
     public int getLoadPercent() {
-        return data.get(18);
+        return data.get(17);
     }
 
     /** Residue on hand: in the slot, or in the inventory a Tesseract there links to. */
     public int getResidueCount() {
-        return data.get(16);
+        return data.get(15);
     }
 
     public boolean isLinked() {
-        return data.get(17) != 0;
+        return data.get(16) != 0;
     }
 
     /** Holding time left on what is burnt and stored. */
     public int getResidueSecondsLeft() {
-        return data.get(14);
+        return data.get(13);
     }
 
     /** Ticks the hall has held on with nothing to burn; zero while fed. */
     public int getStarvingTicks() {
-        return data.get(15);
+        return data.get(14);
     }
 
     public int getRatedFePerTick() {
