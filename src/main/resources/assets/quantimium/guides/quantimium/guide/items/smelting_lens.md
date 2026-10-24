@@ -2,7 +2,7 @@
 navigation:
   title: Smelting Lens
   parent: items/index.md
-  position: 34
+  position: 35
   icon: quantimium:smelting_lens
 item_ids:
 - quantimium:smelting_lens

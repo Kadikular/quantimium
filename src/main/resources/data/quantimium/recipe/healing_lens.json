@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "quantimium:quantum_attuned_glass",
+    "quantimium:anomalite_shard",
+    "minecraft:glistering_melon_slice"
+  ],
+  "result": {
+    "id": "quantimium:healing_lens",
+    "count": 1
+  }
+}

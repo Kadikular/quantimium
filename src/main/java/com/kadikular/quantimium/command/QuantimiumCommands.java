@@ -75,6 +75,12 @@ public final class QuantimiumCommands {
                 .then(Commands.literal("veiled")
                         .then(Commands.literal("sighting").executes(QuantimiumCommands::forceSighting))
                         .then(Commands.literal("info").executes(QuantimiumCommands::veiledInfo)))
+                // How long this level's lasers take each tick, by phase and by lens action, over a few seconds.
+                .then(Commands.literal("lasers")
+                        .then(Commands.literal("profile")
+                                .executes(context -> profileLasers(context, 10))
+                                .then(Commands.argument("seconds", IntegerArgumentType.integer(1, 120))
+                                        .executes(context -> profileLasers(context, IntegerArgumentType.getInteger(context, "seconds"))))))
                 .then(Commands.literal("field")
                         .then(Commands.literal("clear").executes(QuantimiumCommands::clearField)))
                 // A take at the nearest Logistics Terminal, written down step by step to logs/quantimium-trace-*.txt.
@@ -90,6 +96,16 @@ public final class QuantimiumCommands {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.literal("list").executes(QuantimiumCommands::listSophons))
                                 .then(Commands.literal("forget").executes(QuantimiumCommands::forgetSophons)))));
+    }
+
+    private static int profileLasers(CommandContext<CommandSourceStack> context, int seconds) {
+        CommandSourceStack source = context.getSource();
+        ServerLevel level = source.getLevel();
+        // Made now if it wasn't, so it ticks and reports even with no lasers built.
+        com.kadikular.quantimium.laser.LaserNetworks.of(level);
+        com.kadikular.quantimium.laser.LaserProfile.start(level, source, seconds);
+        source.sendSuccess(() -> Component.translatable("message.quantimium.lasers.profile.started", seconds), false);
+        return 1;
     }
 
     private static int spawnRift(CommandContext<CommandSourceStack> context, int stage, BlockPos explicit) {

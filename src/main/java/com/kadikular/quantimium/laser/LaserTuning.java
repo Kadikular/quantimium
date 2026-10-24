@@ -68,6 +68,8 @@ public final class LaserTuning {
     public static final int FULL_REST = 10;
     /** Ticks an area action takes a clear line to a block as still clear, before tracing it again. */
     public static final int SIGHT_KEPT = 10;
+    /** Ticks a block an area prism couldn't see stays unseen before it looks again. */
+    public static final int UNSEEN_KEPT = 20;
     /** Kinds of thing an Interact beam tries from its sending Laser Ports in one go, before it gives up till next time. */
     public static final int INTERACT_TRIES = 9;
     /** How long light carrying power blinds what looks into it: fifteen seconds. */
@@ -104,6 +106,12 @@ public final class LaserTuning {
     public static final long DAMAGE_FE_PER_HIT = 1_000;
     /** Ticks between hits. */
     public static final int DAMAGE_INTERVAL = 10;
+    /** Health a Healing beam gives each sweep (a heart), doubled by each Amplify lens. */
+    public static final float HEAL_PER_SWEEP = 2.0f;
+    /** What it does to the undead each sweep instead, doubled by each Amplify lens. */
+    public static final float HEAL_HARM_PER_SWEEP = 3.0f;
+    /** FE for each sweep's heal (or harm) of one, doubled by each Amplify lens. */
+    public static final long HEAL_FE_PER_SWEEP = 500;
     /** Smelting and Crushing lenses that count as steps on one light. */
     public static final int PROCESS_STEPS = 8;
     /** FE a Crushing lens takes for each item it crushes. */

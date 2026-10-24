@@ -27,6 +27,7 @@ navigation:
 - <ItemLink id="quantimium:folded_tesseract" />
 - <ItemLink id="quantimium:harmonic_lens" />
 - <ItemLink id="quantimium:harvest_lens" />
+- <ItemLink id="quantimium:healing_lens" />
 - <ItemLink id="quantimium:insert_lens" />
 - <ItemLink id="quantimium:interact_lens" />
 - <ItemLink id="quantimium:isolator_lens" />

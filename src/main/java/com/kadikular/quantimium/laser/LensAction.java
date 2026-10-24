@@ -71,6 +71,8 @@ public final class LensAction {
     @Nullable
     private BlockPos seen;
     private long seenUntil;
+    /** Blocks it looked for and couldn't see, until when it won't look again. */
+    private final it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap unseen = new it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap();
     private long cutCost;
     private long cut;
     private int cooldown;
@@ -154,7 +156,7 @@ public final class LensAction {
         long took = Math.min(fe, want * factor);
         long into = took / factor;
         if (into > 0 && key.action() == Lens.HARVEST) lastWorked = now;
-        if (key.action() == Lens.DAMAGE) charged += into;
+        if (key.action() == Lens.DAMAGE || key.action() == Lens.HEAL) charged += into;
         else if (key.action() == Lens.HARVEST) cut += into;
         else if (key.action() == Lens.PICKUP) threadCut += into;
         want -= into;
@@ -201,6 +203,7 @@ public final class LensAction {
         switch (key.action()) {
             case HARVEST -> harvest(level, networks, pickup);
             case DAMAGE -> damage(level, networks, phase == 0, pickup || voids);
+            case HEAL -> heal(level, networks, phase == 0, pickup || voids);
             case PICKUP -> {
                 // In the mirror, Pickup draws Veil Thread out of a held Veiled its light reaches.
                 if (mirrored()) drawThread(level, networks);
@@ -274,6 +277,39 @@ public final class LensAction {
         }
         targets.removeIf(entity -> !entity.isAlive());
         want = Math.max(0, hit * targets.size() - charged);
+    }
+
+    /**
+     * Heals what's living in the beam each sweep, charged up as Damage's hits are; the undead it hurts instead,
+     * as Instant Health does. What's whole is left alone and costs nothing.
+     */
+    private void heal(ServerLevel level, LaserNetworks networks, boolean sweep, boolean pickup) {
+        int scale = 1 << stream.amps();
+        long cost = LaserTuning.HEAL_FE_PER_SWEEP * scale;
+        if (sweep) {
+            targets = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class, box(), entity -> entity.isAlive()
+                    && !(entity instanceof net.minecraft.world.entity.decoration.ArmorStand)
+                    && (entity.isInvertedHealAndHarm() || entity.getHealth() < entity.getMaxHealth())
+                    && onBeam(entity.getBoundingBox(), 0.25) && inMirror(entity) == mirrored()
+                    && (stream.filter() == null || stream.filter().letsHit(entity))));
+            for (LivingEntity entity : targets) {
+                if (charged < cost) break;
+                if (entity.isInvertedHealAndHarm()) {
+                    if (!entity.hurtServer(level, level.damageSources().magic(), LaserTuning.HEAL_HARM_PER_SWEEP * scale)) continue;
+                    if (pickup && !entity.isAlive()) gatherDrops(level, networks, entity);
+                    else if (!entity.isAlive() && processes()) processDrops(level, networks, entity);
+                } else {
+                    entity.heal(LaserTuning.HEAL_PER_SWEEP * scale);
+                    level.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART, entity.getX(), entity.getY() + entity.getBbHeight() + 0.3,
+                            entity.getZ(), 1, 0.2, 0.1, 0.2, 0.0);
+                }
+                charged -= cost;
+                networks.workDone(this);
+                lastWorked = now;
+            }
+        }
+        targets.removeIf(entity -> !entity.isAlive() || !entity.isInvertedHealAndHarm() && entity.getHealth() >= entity.getMaxHealth());
+        want = Math.max(0, cost * targets.size() - charged);
     }
 
     /** The laser's hand, at the beam's source, holding a blade with Looting for each Harmonic lens. */
@@ -984,7 +1020,7 @@ public final class LensAction {
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
         // With Void there's always room: what won't fit is destroyed.
         if (stream.has(Lens.VOID)) return true;
-        for (ItemStack drop : drops(level, pos)) {
+        for (ItemStack drop : likelyDrops(level, pos)) {
             for (ItemStack carried : processed(level, drop)) {
                 if (!networks.roomForAll(collectors, carried)) return false;
             }
@@ -1050,6 +1086,26 @@ public final class LensAction {
         }
         return Block.getDrops(level.getBlockState(pos), level, pos, null, null, tool(level));
     }
+
+    /**
+     * What breaking the block at {@code pos} would likely drop, for asking whether there's room for it: rolled
+     * once for the block as it stands, not again each tick it's looked at. The break itself rolls afresh.
+     */
+    private List<ItemStack> likelyDrops(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (!pos.equals(rolledAt) || state != rolledState) {
+            rolledAt = pos.immutable();
+            rolledState = state;
+            rolled = drops(level, pos);
+        }
+        return rolled;
+    }
+
+    @Nullable
+    private BlockPos rolledAt;
+    @Nullable
+    private BlockState rolledState;
+    private List<ItemStack> rolled = List.of();
 
     private boolean mirrored() {
         return (marks & Light.MIRRORED) != 0;
@@ -1277,11 +1333,17 @@ public final class LensAction {
     private boolean inSight(ServerLevel level, BlockPos pos) {
         // A block it has just seen stays seen a little while: the block it's cutting is looked at every tick.
         if (pos.equals(seen) && now < seenUntil) return true;
-        LaserBeam line = LaserBeam.traceTo(level, key.node(), pos, reach, marks);
+        // One it couldn't see stays unseen a while too: an area's scan comes round to the same hidden blocks again and again.
+        long key = pos.asLong();
+        if (unseen.get(key) > now) return false;
+        LaserBeam line = LaserBeam.traceTo(level, this.key.node(), pos, reach, marks);
         boolean sees = pos.equals(line.hit());
         if (sees) {
             seen = pos.immutable();
             seenUntil = now + LaserTuning.SIGHT_KEPT;
+        } else {
+            if (unseen.size() >= 4096) unseen.clear();
+            unseen.put(key, now + LaserTuning.UNSEEN_KEPT);
         }
         return sees;
     }
@@ -1302,7 +1364,7 @@ public final class LensAction {
     net.minecraft.world.phys.Vec3 workingPoint(ServerLevel level) {
         BlockPos block = working(level);
         if (block == null) return null;
-        if (key.action() == Lens.DAMAGE && !targets.isEmpty()) return targets.getFirst().getBoundingBox().getCenter();
+        if ((key.action() == Lens.DAMAGE || key.action() == Lens.HEAL) && !targets.isEmpty()) return targets.getFirst().getBoundingBox().getCenter();
         if (key.action() == Lens.INTERACT && touched != null && touched.isAlive()) return touched.getBoundingBox().getCenter();
         return block.getCenter();
     }
@@ -1317,7 +1379,7 @@ public final class LensAction {
             case PLACE, INSERT, EXTRACT -> placed;
             case INTERACT -> touched != null && touched.isAlive() ? touched.blockPosition() : placed;
             // Where what it's hitting is now, so the beam follows it.
-            case DAMAGE -> targets.isEmpty() ? null : BlockPos.containing(targets.getFirst().getBoundingBox().getCenter());
+            case DAMAGE, HEAL -> targets.isEmpty() ? null : BlockPos.containing(targets.getFirst().getBoundingBox().getCenter());
             default -> null;
         };
     }

@@ -240,6 +240,35 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.heal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aHealingLensHealsTheLivingAndHurtsTheUndead(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HEALING_LENS.get());
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(9, Y, 8));
+        pig.setHealth(2.0f);
+        net.minecraft.world.entity.monster.zombie.Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(11, Y, 8));
+        float whole = zombie.getHealth();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(pig.getHealth() > 2.0f, "the pig was healed");
+            helper.assertTrue(!zombie.isAlive() || zombie.getHealth() < whole, "the zombie was hurt");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.heal
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void aHealingLensLeavesTheWholeAlone(GameTestHelper helper) {
+        emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HEALING_LENS.get());
+        Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(9, Y, 8));
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(pig.getHealth(), pig.getMaxHealth(), "still whole");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.pickup
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void pickupFillsTheNextCollectorWhenOneIsFull(GameTestHelper helper) {

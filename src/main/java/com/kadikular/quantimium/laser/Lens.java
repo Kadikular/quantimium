@@ -47,7 +47,9 @@ public enum Lens {
     /** What the actions before it free and nothing takes is destroyed: with Pickup, what no Laser Port has room for. */
     VOID(false, 0xFF3A3448),
     /** Speeds up the machine the beam ends on (each machine in an Area Prism's area): 2x, doubled by each Speed lens. */
-    ACCELERATE(true, 0xFF60FFD0);
+    ACCELERATE(true, 0xFF60FFD0),
+    /** Heals what's living in the beam; hurts the undead, as Instant Health does. */
+    HEAL(true, 0xFFFF7FB0);
 
     /** The lens item's translation key: its name, but for the two named for what they do to things. */
     public String itemKey() {
@@ -57,6 +59,7 @@ public enum Lens {
             case CRUSH -> "crushing";
             case ISOLATE -> "isolator";
             case ACCELERATE -> "acceleration";
+            case HEAL -> "healing";
             default -> name().toLowerCase(java.util.Locale.ROOT);
         };
         return "item.quantimium." + name + "_lens";

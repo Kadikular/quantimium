@@ -102,6 +102,7 @@ public final class LaserNetworks {
     @SubscribeEvent
     public static void onLevelUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload event) {
         if (event.getLevel() instanceof Level level) LEVELS.remove(level);
+        if (event.getLevel() instanceof ServerLevel server) LaserProfile.forget(server);
     }
 
     // ---- nodes come and go ----
@@ -1059,7 +1060,8 @@ public final class LaserNetworks {
     }
 
     private int rangeOf(LaserNode node) {
-        return ranges.getOrDefault(node.nodePos(), node.range());
+        Integer range = ranges.get(node.nodePos());
+        return range != null ? range : node.range();
     }
 
     /** A node's core light is now {@code light}: what its faces' own lenses made of the old one is forgotten. */
@@ -1247,7 +1249,12 @@ public final class LaserNetworks {
     }
 
     private void tick() {
-        if (nodes.isEmpty()) return;
+        LaserProfile profile = LaserProfile.of(level);
+        if (nodes.isEmpty()) {
+            if (profile != null) profile.tickDone(level);
+            return;
+        }
+        long mark = profile == null ? 0 : System.nanoTime();
         long time = level.getGameTime();
         // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
         // Something redstone switches has been switched: what light carries changes.
@@ -1273,17 +1280,33 @@ public final class LaserNetworks {
         }
         if (dirty) rebuild();
         else if (!dirtyAt.isEmpty()) rebuildAround(new HashSet<>(dirtyAt), 0, new HashMap<>());
+        if (profile != null) mark = profile.phase(LaserProfile.Phase.BEAMS, mark);
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
         for (Network network : networks) refill(network);
-        for (LensAction action : actions.values()) action.act(level, this);
+        if (profile == null) {
+            for (LensAction action : actions.values()) action.act(level, this);
+        } else {
+            for (LensAction action : actions.values()) {
+                action.act(level, this);
+                long at = System.nanoTime();
+                profile.action(action.key(), at - mark);
+                mark = profile.phase(LaserProfile.Phase.LENSES, mark);
+            }
+        }
         if (time % SETTLE_TICKS == 10) ship();
         // Each logistics network moves once a second, in its own slice of it, not all in one tick.
         Logistics.run(level, nodes.values(), lights, (int) Math.floorMod(time, SETTLE_TICKS));
         if (time % 2 == 0) showAreaWork();
+        if (profile != null) mark = profile.phase(LaserProfile.Phase.LOGISTICS, mark);
         passing.clear();
         for (Network network : networks) move(network);
+        if (profile != null) mark = profile.phase(LaserProfile.Phase.POWER, mark);
         if (time % SETTLE_TICKS == 0) settle();
+        if (profile != null) {
+            profile.phase(LaserProfile.Phase.SETTLE, mark);
+            profile.tickDone(level);
+        }
     }
 
     /** What each of the network's sources has to give this tick. */

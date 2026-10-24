@@ -2,7 +2,7 @@
 navigation:
   title: Pickup Lens
   parent: items/index.md
-  position: 25
+  position: 26
   icon: quantimium:pickup_lens
 item_ids:
 - quantimium:pickup_lens

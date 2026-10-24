@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Lasers
+
+- **Healing Lens**: heals anything living in the beam by a heart every half second, and hurts the undead instead, as
+  Instant Health does. Amplify doubles both, and the cost (500 FE for each one healed or hurt). What's at full health
+  costs nothing; an Entity Filter picks who it works on.
+- **Lighter lens scanning.** An Area Prism remembers for a second which blocks it couldn't see, instead of tracing to
+  them again each pass (a tree farm's hidden logs, a quarry's far side); Harvest with Pickup rolls a block's drops
+  once to check for room, not each tick it cuts. An idle area scan costs about an eighth of what it did.
+- **`/quantimium lasers profile [seconds]`** (operators): times this dimension's lasers for a few seconds, then lists
+  what they spent each tick on (checking beams, lens actions, logistics, moving power) and the ten costliest lens
+  actions with where they are, to find the one slowing a base.
+
 ## 0.6.0-alpha: Warm fields and new lenses
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.5.x carry on. A Materialiser holding Trace needs

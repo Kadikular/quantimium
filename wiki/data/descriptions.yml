@@ -153,6 +153,7 @@ insert_lens: "A lens: puts what Laser Ports send into the inventory the beam end
 interact_lens: "A lens: uses what a Laser Port sends, or an empty hand, on what the beam ends on."
 precision_lens: "A lens: Harvest cuts with Silk Touch."
 void_lens: "A lens: what the actions free and no Laser Port takes is destroyed."
+healing_lens: "A lens: heals what's living in the beam, and hurts the undead."
 acceleration_lens: "A lens: speeds up the machine the beam ends on, 2x and doubled by each Speed lens, within a tick-time budget."
 harmonic_lens: "A lens: Harvest cuts with Fortune, Damage hits with Looting, a level each."
 smelting_lens: "A lens: what the actions before it free or move is smelted; alone, it smelts what the beam ends on."

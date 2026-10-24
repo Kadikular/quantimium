@@ -162,6 +162,68 @@ public final class LaserTimingTests {
                 });
     }
 
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_tree_farm", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void areaTreeFarm(GameTestHelper helper) {
+        // Nine oak trunks wrapped in leaves that never decay, under an Area Prism with Harvest, Pickup and a filter
+        // for oak logs: the logs are all it may cut, and the leaves hide them, so it looks and keeps looking.
+        for (int x = 4; x <= 12; x++) {
+            for (int z = 4; z <= 12; z++) {
+                boolean trunk = x % 3 == 2 && z % 3 == 2;
+                for (int y = Y; y <= Y + 4; y++) {
+                    if (trunk && y <= Y + 3) helper.setBlock(new BlockPos(x, y, z), net.minecraft.world.level.block.Blocks.OAK_LOG);
+                    else if (y > Y) helper.setBlock(new BlockPos(x, y, z), net.minecraft.world.level.block.Blocks.OAK_LEAVES.defaultBlockState()
+                            .setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true));
+                }
+            }
+        }
+        int top = Y + 6;
+        emitter(helper, new BlockPos(1, top, 8), ModBlocks.LASER_EMITTER_2.get(), Direction.EAST);
+        helper.setBlock(new BlockPos(3, top, 8), ModBlocks.LASER_PORT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(5, top, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        var mount = helper.getBlockEntity(new BlockPos(5, top, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
+        mount.getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        var logs = new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.BLOCK_FILTER_LENS.get());
+        logs.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.blocks(
+                java.util.List.of(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG)), true, false));
+        mount.getLensSlots().setStackInSlot(1, logs);
+        mount.getLensSlots().setStackInSlot(2, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.PICKUP_LENS.get()));
+        helper.setBlock(new BlockPos(8, top, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(8, top, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        prism.setArea(helper.absolutePos(new BlockPos(4, Y, 4)), helper.absolutePos(new BlockPos(12, Y + 4, 12)));
+        TickTiming.measure(helper, new Scenario("laser.area_tree_farm", "Laser networks",
+                        "An Area Prism with Harvest, Pickup and an oak log filter over nine trunks hidden in leaves: looking for logs it can't see", 40),
+                LaserNetworks.of(helper.getLevel()), () -> "36 hidden logs", () -> TestSupport.finishLasers(helper));
+    }
+
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_harvest_pickup", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void harvestPickup(GameTestHelper helper) {
+        // One beam through a collecting Laser Port and a mount (Harvest, Pickup) onto a block of stone, put back as
+        // fast as it's cut; the Port emptied each tick.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_2.get(), Direction.EAST);
+        helper.setBlock(new BlockPos(3, Y, 8), ModBlocks.LASER_PORT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
+        var collector = helper.getBlockEntity(new BlockPos(3, Y, 8), com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        var mount = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class);
+        mount.getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        mount.getLensSlots().setStackInSlot(1, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.PICKUP_LENS.get()));
+        BlockPos stone = new BlockPos(10, Y, 8);
+        int[] cut = {0};
+        helper.onEachTick(() -> {
+            if (helper.getBlockState(stone).isAir()) {
+                helper.setBlock(stone, net.minecraft.world.level.block.Blocks.STONE);
+                cut[0]++;
+            }
+            for (int slot = 0; slot < 9; slot++) collector.getItems().setStackInSlot(slot, net.minecraft.world.item.ItemStack.EMPTY);
+        });
+        TickTiming.measure(helper, new Scenario("laser.harvest_pickup", "Laser networks",
+                        "One beam cutting stone with Harvest and Pickup, put back as fast as it's cut", 30),
+                LaserNetworks.of(helper.getLevel()), () -> cut[0] + " blocks cut", () -> TestSupport.finishLasers(helper));
+    }
+
     /** Crops mustn't grow while it's timed: random ticks off, put back after. */
     private static Runnable noRandomTicks(GameTestHelper helper) {
         var rules = helper.getLevel().getGameRules();
