@@ -1154,7 +1154,10 @@ public final class LaserNetworks {
                 node.forget(target);
                 continue;
             }
-            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, range, marks));
+            // Straight to the middle of the face it was linked by, at whatever angle, and in by that face; to a laser block's
+            // focus, its middle.
+            Direction inBy = level.isLoaded(target) && level.getBlockEntity(target) instanceof LaserNode ? null : node.linkFace(target);
+            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, inBy, range, marks));
         }
         // And to each Entangled Mirror drawing on it, at once.
         for (BlockPos mirror : drawing(node.nodePos())) traced.add(LaserBeam.jump(level, node.nodePos(), mirror));
@@ -1166,7 +1169,8 @@ public final class LaserNetworks {
      * light down a line as the node accepts it.
      */
     private static boolean admits(LaserNode node, LaserBeam beam) {
-        return beam.jumps() ? node.entangledFace() != null : node.accepts(beam.face());
+        if (beam.jumps()) return node.entangledFace() != null;
+        return beam.ray() != null ? node.accepts(beam.ray()) : node.accepts(beam.face());
     }
 
     /**

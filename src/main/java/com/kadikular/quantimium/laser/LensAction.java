@@ -541,7 +541,7 @@ public final class LensAction {
     /** Where the stand-in player stands: before what the beam ends on, or in an area, by what it's working on. */
     private BlockPos handSpot() {
         if (area != null) return placed != null && area.isInside(placed) ? placed.above() : key.node();
-        return beam.hit() != null ? beam.hit().relative(beam.face().getOpposite()) : beam.from();
+        return beam.hit() != null ? beam.before() : beam.from();
     }
 
     /**
@@ -568,7 +568,7 @@ public final class LensAction {
         }
         if (beam.hit() == null) return false;
         // Something light passes, just before the end (a lever, a button, a crop), is what it uses; else what it ends on.
-        BlockPos before = beam.hit().relative(beam.face().getOpposite());
+        BlockPos before = beam.before();
         BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
         BlockState state = level.getBlockState(pos);
         var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(beam.face().getOpposite(), 0.5),
@@ -643,7 +643,7 @@ public final class LensAction {
      */
     private boolean mine(ServerLevel level, LaserNetworks networks, LaserHand hand) {
         if (area != null || mirrored() || beam == null || beam.hit() == null) return false;
-        BlockPos before = beam.hit().relative(beam.face().getOpposite());
+        BlockPos before = beam.before();
         BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.hasBlockEntity() || state.getDestroySpeed(level, pos) < 0 || state.is(ModTags.LASER_UNBREAKABLE)) return false;
@@ -752,7 +752,7 @@ public final class LensAction {
         if (handler == null) return;
         // What crushing and smelting on the way cost, or -1 for nothing moved.
         // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
-        BlockPos spill = area == null ? beam.hit().relative(beam.face().getOpposite()) : at.above();
+        BlockPos spill = area == null ? beam.before() : at.above();
         long processing = in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
         // Nothing to move (nothing it may take, or no room): it looks again in a while, longer the longer it's idle.
         if (processing < 0) {
@@ -929,7 +929,7 @@ public final class LensAction {
     @Nullable
     private net.minecraft.world.phys.BlockHitResult placeHit(ServerLevel level) {
         if (beam == null || beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return null;
-        BlockPos spot = beam.hit().relative(beam.face().getOpposite());
+        BlockPos spot = beam.before();
         if (!level.getBlockState(spot).canBeReplaced()) return null;
         return new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(beam.hit()), beam.face().getOpposite(), beam.hit(), false);
     }
@@ -1148,7 +1148,7 @@ public final class LensAction {
         }
         if (beam.hit() == null) return null;
         if (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK) return null;
-        BlockPos before = beam.hit().relative(beam.face().getOpposite());
+        BlockPos before = beam.before();
         if (beam.length() > 0 && !level.getBlockState(before).isAir() && cuttable(level, before)) return before;
         return cuttable(level, beam.hit()) ? beam.hit() : null;
     }
@@ -1588,7 +1588,7 @@ public final class LensAction {
         if (pos == null) {
             if (beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return false;
             // As Harvest picks: something light passes just before the end (a glass block, a crop), else the end.
-            BlockPos before = beam.hit().relative(beam.face().getOpposite());
+            BlockPos before = beam.before();
             pos = beam.length() > 0 && !level.getBlockState(before).isAir() && processable(level, before) ? before : beam.hit();
             if (!processable(level, pos)) return false;
         }

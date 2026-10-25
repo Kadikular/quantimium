@@ -624,6 +624,60 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinkedByAFaceSendsLightInByIt(GameTestHelper helper) {
+        // Linked by a machine's top, from beside and below: the light runs at its own angle to that face's middle and goes
+        // in from above. Linked to a relay, it goes to its middle (its focus), whatever face was clicked.
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.LASER_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(7, Y, 8), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
+        BlockPos core = new BlockPos(12, Y + 2, 11);
+        FoldCoreBlockEntity charged = sink(helper, core);
+        prism.toggleLink(helper.absolutePos(core), Direction.UP);
+        BlockPos relay = new BlockPos(7, Y + 4, 4);
+        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.UP));
+        prism.toggleLink(helper.absolutePos(relay), Direction.EAST);
+        helper.succeedWhen(() -> {
+            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(7, Y, 8)));
+            var toCore = beams.stream().filter(beam -> helper.absolutePos(core).equals(beam.hit())).findFirst().orElse(null);
+            helper.assertTrue(toCore != null && toCore.face() == Direction.DOWN && toCore.toFace() && toCore.ray() == null,
+                    "in by the top, at its own angle: " + toCore);
+            var toRelay = beams.stream().filter(beam -> helper.absolutePos(relay).equals(beam.hit())).findFirst().orElse(null);
+            helper.assertTrue(toRelay != null && !toRelay.toFace(), "to the relay's middle: " + toRelay);
+            helper.assertTrue(charged.getEnergyStorage().getEnergyStored() > 0, "and the machine charged");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.ray
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers_corners", timeoutTicks = 20)
+    public static void diagonalLightSlipsBetweenCornersUnlessSetNotTo(GameTestHelper helper) {
+        // A flat diagonal from (2,Y,2): stone at (6,Y,6) four steps on stops it; it's reach counts each step as √2.
+        // Two blocks meeting at a corner across its way let it by, unless the config says they don't.
+        BlockPos from = helper.absolutePos(new BlockPos(2, Y, 2));
+        var level = helper.getLevel();
+        helper.setBlock(new BlockPos(6, Y, 6), Blocks.STONE);
+        var ray = com.kadikular.quantimium.laser.Ray.SOUTH_EAST;
+        var beam = com.kadikular.quantimium.laser.LaserBeam.trace(level, from, ray, 16, 0, null);
+        helper.assertTrue(helper.absolutePos(new BlockPos(6, Y, 6)).equals(beam.hit()) && beam.length() == 3, "stopped by the stone: " + beam);
+        var short_ = com.kadikular.quantimium.laser.LaserBeam.trace(level, from, ray, 4, 0, null);
+        helper.assertTrue(short_.hit() == null && short_.length() == 2, "four blocks of reach is two diagonal steps: " + short_);
+        helper.setBlock(new BlockPos(4, Y, 3), Blocks.STONE);
+        helper.setBlock(new BlockPos(3, Y, 4), Blocks.STONE);
+        var past = com.kadikular.quantimium.laser.LaserBeam.trace(level, from, ray, 16, 0, null);
+        helper.assertTrue(helper.absolutePos(new BlockPos(6, Y, 6)).equals(past.hit()), "slips past the corner: " + past);
+        var corners = com.kadikular.quantimium.Config.DIAGONALS_PASS_CORNERS;
+        corners.set(false);
+        try {
+            var stopped = com.kadikular.quantimium.laser.LaserBeam.trace(level, from, ray, 16, 0, null);
+            helper.assertTrue(stopped.hit() == null && stopped.length() == 1, "stopped at the corner: " + stopped);
+        } finally {
+            corners.set(true);
+        }
+        helper.succeed();
+    }
+
     // covers: laser.prism.join
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismJoinsTwoEmittersIntoOneBeam(GameTestHelper helper) {

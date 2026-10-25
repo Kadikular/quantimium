@@ -99,6 +99,12 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
         return entries;
     }
 
+    /** A mirror is straight still: diagonal light stops on it. */
+    @Override
+    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
+        return ray.straight() && accepts(ray.face());
+    }
+
     /** Only light coming in by one of its entries; the rest hits the back or edge of the plate. */
     @Override
     public boolean accepts(Direction travel) {

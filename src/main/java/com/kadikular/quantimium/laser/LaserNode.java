@@ -141,6 +141,23 @@ public interface LaserNode {
     }
 
     /**
+     * Whether light travelling {@code ray} gets in. Light reaching a block always passes its middle (its focus): it gets
+     * in if any face it crosses into the block by is one it takes light by. A mirror, still straight, takes only straight
+     * light.
+     */
+    default boolean accepts(Ray ray) {
+        if (ray.straight()) return accepts(ray.face());
+        for (Direction travel : ray.faces()) if (accepts(travel)) return true;
+        return false;
+    }
+
+    /** For a prism: the face of the linked block {@code target} its light goes in by; null for its middle. */
+    @org.jetbrains.annotations.Nullable
+    default Direction linkFace(BlockPos target) {
+        return null;
+    }
+
+    /**
      * Whether it gives out light, and power, of its own: every source. A Solar Emitter both does and passes on
      * the light that reaches it, as a relay.
      */

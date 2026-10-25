@@ -67,6 +67,12 @@ public class RiftLensBlockEntity extends BlockEntity implements LaserNode, Laser
         return out;
     }
 
+    /** Only straight light goes through a rift. */
+    @Override
+    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
+        return ray.straight() && accepts(ray.face());
+    }
+
     /** Only light along its axis goes through the tear. */
     @Override
     public boolean accepts(Direction travel) {

@@ -51,7 +51,7 @@ public class LaserLinkerItem extends Item {
             say(player, Component.translatable("message.quantimium.laser_linker.none"));
             return InteractionResult.FAIL;
         }
-        LaserPrismBlockEntity.Link link = prism.toggleLink(pos);
+        LaserPrismBlockEntity.Link link = prism.toggleLink(pos, context.getClickedFace());
         say(player, Component.translatable("message.quantimium.laser_linker." + link.name().toLowerCase(Locale.ROOT),
                 pos.getX(), pos.getY(), pos.getZ()));
         if (link == LaserPrismBlockEntity.Link.ADDED || link == LaserPrismBlockEntity.Link.REMOVED) {

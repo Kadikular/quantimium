@@ -96,6 +96,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return outputFaces;
     }
 
+    /** A cavity holds straight light only. */
+    @Override
+    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
+        return ray.straight() && accepts(ray.face());
+    }
+
     /** No light comes in by its base. */
     @Override
     public boolean accepts(Direction travel) {

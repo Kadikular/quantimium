@@ -329,6 +329,10 @@ public final class Config {
             .comment("Whether the Unrealising lens turns ore a Harvest beam cuts into Unrealised Matter. Off, ore comes away as it would anyway: for packs where Matter would duplicate ores.")
             .define("unrealisingLens", true);
 
+    public static final ModConfigSpec.BooleanValue DIAGONALS_PASS_CORNERS = BUILDER
+            .comment("Whether diagonal light slips between two blocks that meet only at a corner. Off, two blocks touching corner",
+                    "to corner across its way stop it.")
+            .define("diagonalsPassCorners", true);
     public static final ModConfigSpec.BooleanValue ACCELERATION = BUILDER
             .comment("Whether the Acceleration Lens speeds up the machines its light ends on.")
             .define("acceleration", true);
@@ -409,6 +413,10 @@ public final class Config {
 
     public static double warmthFallSeconds() {
         return 60.0 * (SPEC.isLoaded() ? WARMTH_FALL_MINUTES.get() : 40.0);
+    }
+
+    public static boolean diagonalsPassCorners() {
+        return !SPEC.isLoaded() || DIAGONALS_PASS_CORNERS.get();
     }
 
     public static boolean acceleration() {

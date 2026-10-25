@@ -105,7 +105,9 @@ makes one. Use it in the air to set it.
 ## Prisms
 
 [[mechanic:laser.prism.split]] A [[block:laser_prism]] sends the light that reaches it to each block
-it's linked to, along a straight line at any angle, sharing it by what each asks for.
+it's linked to, along a straight line at any angle, sharing it by what each asks for. Its light runs to the middle of
+the face you linked the block by and goes in by that face (which side of a machine it charges); a laser block, which
+takes light at its focus, is lit at its middle whatever face you clicked.
 
 [[mechanic:laser.prism.join]] Light can reach it from any side, from any number of beams, so a prism
 also joins several emitters into one network: a block it's linked to can take more than any one of
@@ -461,7 +463,7 @@ Light passes a Containment Hall's attuned glass, as it does any glass.
 ## What stops light
 
 [[mechanic:laser.blocked]] Anything solid in the way stops a beam: it ends on that block, and charges
-it only if it takes power. Light passes air, glass, glass panes, and blocks with nothing to bump into.
+it only if it takes power. Light passes air, glass, glass panes, water, and blocks with nothing to bump into.
 A beam is checked again every {{c:LaserNetworks.RECHECK_TICKS|s}} or so, so building across it cuts it
 off within a moment, and clearing it lets the light through again.
 

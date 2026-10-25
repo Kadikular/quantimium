@@ -71,7 +71,9 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             if (bright == 0) {
                 // Live but carrying nothing: a dim line, checking. Dark, it shows only while aiming.
                 if (beam.live()) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.04f, tint[0], tint[1], tint[2], 0.10f);
-                else if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
+                // A mirror's way out is no preview: only light it's given shows.
+                else if (aiming && !(view instanceof com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity))
+                    BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
                 continue;
             }
             Vec3[] line = line(view, beam, camera);
@@ -138,7 +140,8 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         if (beam.hit() != null && level != null) {
             var state = level.getBlockState(beam.hit());
             // Light it won't take (into a base, onto a plate's back) stops at its side.
-            boolean refused = level.getBlockEntity(beam.hit()) instanceof com.kadikular.quantimium.laser.LaserNode node && !node.accepts(beam.face());
+            boolean refused = level.getBlockEntity(beam.hit()) instanceof com.kadikular.quantimium.laser.LaserNode node
+                    && !(beam.ray() != null ? node.accepts(beam.ray()) : node.accepts(beam.face()));
             if (!refused && state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
         }
         return new Vec3[] {ends[0].subtract(camera), end.subtract(camera)};

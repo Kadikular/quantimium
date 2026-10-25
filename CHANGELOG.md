@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Lasers
+
+- **A Prism links to the face you click**: its light runs at any angle to the middle of that face and goes in by it,
+  so you choose which side of a machine it charges. A laser block is still lit at its middle (its focus). Links made
+  before take the face facing the prism.
+- **Mirrors no longer show where light would go** while holding a wrench or the Linker: only the light they're given.
+
 ## 0.6.1-alpha: Healing, freezing, and a lens pass
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.6.0 carry on.

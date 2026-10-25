@@ -10,6 +10,7 @@ import com.kadikular.quantimium.laser.LaserTuning;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -36,6 +37,8 @@ import java.util.Set;
 public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
 
     private final List<BlockPos> targets = new ArrayList<>();
+    /** The face of each linked block it was linked by: its light leaves the way nearest that face's middle. */
+    private final java.util.Map<BlockPos, Direction> faces = new java.util.HashMap<>();
     /** Whether it keeps its aim on a linked spot after the block there is gone: for a Harvest lens's light, which breaks it again when something comes back. */
     private boolean keepsLinks;
     private List<LaserBeam> shownBeams = List.of();
@@ -46,16 +49,26 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
 
     public enum Link { ADDED, REMOVED, FULL, TOO_FAR, SELF }
 
-    /** Links {@code target}, or unlinks it if it was linked. */
+    /** Links {@code target}, or unlinks it if it was linked: by the face facing the prism. */
     public Link toggleLink(BlockPos target) {
+        return toggleLink(target, facing(target));
+    }
+
+    /**
+     * Links {@code target} by {@code face}, or unlinks it if it was linked. Its light goes straight to the middle of that
+     * face, at whatever angle, and in by it.
+     */
+    public Link toggleLink(BlockPos target, Direction face) {
         if (target.equals(worldPosition)) return Link.SELF;
         if (targets.remove(target)) {
+            faces.remove(target);
             changed();
             return Link.REMOVED;
         }
         if (targets.size() >= LaserTuning.PRISM_LINKS) return Link.FULL;
         if (target.getCenter().distanceTo(worldPosition.getCenter()) > LaserTuning.PRISM_RANGE) return Link.TOO_FAR;
         targets.add(target.immutable());
+        faces.put(target.immutable(), face);
         changed();
         return Link.ADDED;
     }
@@ -87,7 +100,20 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
 
     @Override
     public void forget(BlockPos target) {
+        faces.remove(target);
         if (targets.remove(target)) changed();
+    }
+
+    @Override
+    public Direction linkFace(BlockPos target) {
+        Direction face = faces.get(target);
+        return face != null ? face : facing(target);
+    }
+
+    /** The face of {@code target} that faces the prism most: what a link made before faces were picked stands for. */
+    private Direction facing(BlockPos target) {
+        Vec3 back = worldPosition.getCenter().subtract(target.getCenter());
+        return Direction.getApproximateNearest(back.x, back.y, back.z);
     }
 
     private void changed() {
@@ -159,6 +185,9 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         out.store("Targets", BlockPos.CODEC.listOf(), List.copyOf(targets));
+        List<Integer> linkedBy = new ArrayList<>();
+        for (BlockPos target : targets) linkedBy.add(faces.getOrDefault(target, facing(target)).get3DDataValue());
+        out.store("TargetFaces", com.mojang.serialization.Codec.INT.listOf(), linkedBy);
         out.putBoolean("KeepsLinks", keepsLinks);
     }
 
@@ -167,6 +196,11 @@ public class LaserPrismBlockEntity extends BlockEntity implements LaserNode, Flu
         super.loadAdditional(in);
         targets.clear();
         in.read("Targets", BlockPos.CODEC.listOf()).ifPresent(targets::addAll);
+        faces.clear();
+        List<Integer> linkedBy = in.read("TargetFaces", com.mojang.serialization.Codec.INT.listOf()).orElse(List.of());
+        for (int i = 0; i < targets.size(); i++) {
+            if (i < linkedBy.size()) faces.put(targets.get(i), Direction.from3DDataValue(linkedBy.get(i)));
+        }
         keepsLinks = in.getBooleanOr("KeepsLinks", false);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
