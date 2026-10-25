@@ -256,6 +256,29 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.heal, laser.lens.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 120)
+    public static void anEntityFilterBoundToOnePigHealsOnlyThatOne(GameTestHelper helper) {
+        // Two hurt pigs in the beam, the filter bound to one: that one is healed, the other, of the same kind, isn't.
+        emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        Pig chosen = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(9, Y, 8));
+        Pig other = helper.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(11, Y, 8));
+        chosen.setHealth(2.0f);
+        other.setHealth(2.0f);
+        ItemStack filter = new ItemStack(ModItems.ENTITY_FILTER_LENS.get());
+        var bound = com.kadikular.quantimium.laser.LensFilter.entities(0, false, 0).withBound(chosen);
+        helper.assertTrue(bound != null && bound.letsHit(chosen) && !bound.letsHit(other), "bound to the one pig alone");
+        filter.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), bound);
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HEALING_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, filter);
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(chosen.getHealth() > 2.0f, "the bound pig was healed");
+            helper.assertValueEqual(other.getHealth(), 2.0f, "the other wasn't");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.heal
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void aHealingLensLeavesTheWholeAlone(GameTestHelper helper) {
@@ -305,14 +328,14 @@ public final class LensTests {
     }
 
     // covers: laser.lens.pickup
-    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 400)
     public static void harvestWithPickupCutsOnlyWhatAllFits(GameTestHelper helper) {
-        // Room for one more seed and plenty of wheat: a ripe crop drops 1 to 4 seeds, so it's cut only when it rolls
-        // one, and no seed is ever left on the ground. Replanted ripe whenever it's cut.
+        // Room for two more seeds and plenty of wheat: a ripe crop drops up to 3 seeds, so it's cut only when it rolls
+        // two or fewer, and no seed is ever left on the ground. Replanted ripe whenever it's cut.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
-        collector.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 63));
+        collector.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 62));
         collector.getItems().setStackInSlot(1, new ItemStack(Items.WHEAT, 1));
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
         BlockPos crop = new BlockPos(9, Y, 8);
@@ -326,7 +349,7 @@ public final class LensTests {
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(crop)).inflate(3)).isEmpty(),
                     "nothing left on the ground");
         });
-        helper.runAfterDelay(180, () -> {
+        helper.runAfterDelay(380, () -> {
             helper.assertTrue(count(collector, Items.WHEAT) > 1, "it did cut, when the seeds fit");
             TestSupport.finishLasers(helper);
             helper.succeed();

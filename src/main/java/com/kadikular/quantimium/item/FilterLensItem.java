@@ -42,8 +42,38 @@ public class FilterLensItem extends LensItem implements LensWithSettings {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        // An Entity lens, sneaking: bound to yourself.
+        if (part == LensFilter.ENTITIES && player.isShiftKeyDown()) {
+            if (!level.isClientSide()) bind(player.getItemInHand(hand), player, player);
+            return InteractionResult.SUCCESS;
+        }
         if (player instanceof ServerPlayer server) com.kadikular.quantimium.menu.LensHolder.openInHand(server, hand);
         return InteractionResult.SUCCESS;
+    }
+
+    /** An Entity lens, sneaking, used on something living: bound to that one. */
+    @Override
+    public InteractionResult interactLivingEntity(ItemStack stack, Player player, net.minecraft.world.entity.LivingEntity target, InteractionHand hand) {
+        if (part != LensFilter.ENTITIES || !player.isShiftKeyDown()) return InteractionResult.PASS;
+        // The stack handed in may be a copy (creative): the one in hand is the lens.
+        if (!player.level().isClientSide()) bind(player.getItemInHand(hand), player, target);
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Adds {@code entity} to the lens's list, and says so. */
+    private static void bind(ItemStack lens, Player player, net.minecraft.world.entity.Entity entity) {
+        LensFilter filter = filterOf(lens);
+        LensFilter bound = filter.withBound(entity);
+        if (bound == null) {
+            player.sendOverlayMessage(Component.translatable("message.quantimium.filter_lens.bound.full"));
+            return;
+        }
+        if (bound == filter) {
+            player.sendOverlayMessage(Component.translatable("message.quantimium.filter_lens.bound.already", entity.getName()));
+            return;
+        }
+        lens.set(ModDataComponents.LENS_FILTER.get(), bound);
+        player.sendOverlayMessage(Component.translatable("message.quantimium.filter_lens.bound", entity.getName()));
     }
 
     @Override

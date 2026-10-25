@@ -21,6 +21,9 @@
   rest: it now drops exactly what it found room for.
 - **Fixed:** the Void Lens's setting showed its old mode till the screen was closed; it now just says "Void all" or
   "Void excess".
+- **The Entity Filter Lens can list one creature, or you**: sneak-use it on a creature or player to list just that one
+  (their head or spawn egg, with their name), or in the air to list yourself. With Healing through an Area Prism,
+  it heals only you; set to deny, it spares only you. Clicked out of its slot, it's off the list.
 - **Fixed:** Harvest with Pickup could cut a crop whose wheat and seeds each fit a Laser Port's last empty slot but
   not both, and lose the seeds. A drop's things are now checked together.
 - **Harvest with Pickup rests when full**: half a second, then twice as long each time it's still full, up to 4

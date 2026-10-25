@@ -178,7 +178,10 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
     public boolean letsHit(Entity entity) {
         if (spareYoung && entity instanceof AgeableMob mob && mob.isBaby()) return false;
         if (any(mobs)) {
-            boolean listed = mobs.stream().anyMatch(egg -> !egg.isEmpty() && net.minecraft.world.item.SpawnEggItem.spawnsEntity(egg, entity.getType()));
+            // A bound entry is that one entity; an egg, every one of its kind.
+            boolean listed = mobs.stream().anyMatch(egg -> !egg.isEmpty() && BoundEntity.of(egg)
+                    .map(id -> id.equals(entity.getUUID()))
+                    .orElseGet(() -> net.minecraft.world.item.SpawnEggItem.spawnsEntity(egg, entity.getType())));
             if (listed != mobsAllow) return false;
         }
         if (kinds == 0) return true;
@@ -209,9 +212,27 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return withList(part, list);
     }
 
+    /**
+     * With {@code entity} bound in the Entity list's first free slot; as it was if it's listed already or the list is
+     * full (then null).
+     */
+    @org.jetbrains.annotations.Nullable
+    public LensFilter withBound(Entity entity) {
+        List<ItemStack> list = new ArrayList<>(mobs);
+        while (list.size() < SLOTS) list.add(ItemStack.EMPTY);
+        for (ItemStack entry : list) {
+            if (BoundEntity.of(entry).filter(entity.getUUID()::equals).isPresent()) return this;
+        }
+        int free = -1;
+        for (int i = 0; i < list.size() && free < 0; i++) if (list.get(i).isEmpty()) free = i;
+        if (free < 0) return null;
+        list.set(free, BoundEntity.entry(entity));
+        return withList(ENTITIES, list);
+    }
+
     public LensFilter cycledTag(int part, int slot) {
         List<ItemStack> list = entries(part);
-        if (slot >= list.size() || list.get(slot).isEmpty()) return this;
+        if (slot >= list.size() || list.get(slot).isEmpty() || BoundEntity.of(list.get(slot)).isPresent()) return this;
         List<ItemStack> changed = new ArrayList<>(list);
         changed.set(slot, FilterEntry.cycle(changed.get(slot)));
         return withList(part, changed);
