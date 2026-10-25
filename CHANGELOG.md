@@ -1,13 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.6.1-alpha: Healing, freezing, and a lens pass
+
+Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.6.0 carry on.
 
 ### Lasers
 
 - **Healing Lens**: heals anything living in the beam by a heart every half second, and hurts the undead instead, as
-  Instant Health does. Amplify doubles both, and the cost (500 FE for each one healed or hurt); a Speed lens heals twice as often, two
-  four times. What's at full health
-  costs nothing; an Entity Filter picks who it works on.
+  Instant Health does. Amplify doubles both, and the cost (500 FE for each one healed or hurt); a Speed lens heals
+  twice as often, two four times. What's at full health costs nothing; an Entity Filter picks who it works on.
 - **Freezing Lens**: freezes what the beam ends on. Machines stop ticking while the light holds them (tag blocks
   `quantimium:not_freezable` to keep it off them); water turns to ice and snow now and then settles on top. Mobs stop
   thinking for 10 seconds, frozen again while the light stays on them; each point of damage thaws them half a second
