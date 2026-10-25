@@ -224,6 +224,14 @@ public final class LaserNetworks {
         return found == null ? new long[] {-1, -1} : new long[] {found.cutCost(), found.demand()};
     }
 
+    /** For tests: as a world loaded again, the level's networks worked out afresh from the same blocks, nothing kept. */
+    public static void reloadForTests(ServerLevel level) {
+        LaserNetworks old = LEVELS.remove(level);
+        if (old == null) return;
+        LaserNetworks fresh = of(level);
+        for (LaserNode node : old.nodes.values()) fresh.put(node);
+    }
+
     /** For tests: every Veil Thread being drawn by mirrored Pickup is {@code ticksLeft} ticks from done. */
     public void nearlyDrawn(int ticksLeft) {
         for (LensAction action : actions.values()) action.nearlyDrawn(ticksLeft);

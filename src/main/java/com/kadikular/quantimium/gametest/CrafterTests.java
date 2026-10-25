@@ -452,6 +452,33 @@ public final class CrafterTests {
         });
     }
 
+    // covers: crafter.tesseract
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_tesseract", timeoutTicks = 200)
+    public static void aLinkedChestEmptiedOrBrokenLeavesNothingShown(GameTestHelper helper) {
+        // Coal ore in a linked chest, then all of it taken out: nothing to make is shown. Put back, then the chest broken:
+        // nothing again.
+        BlockPos chestPos = new BlockPos(1, 2, 1);
+        ChestBlockEntity chest = chest(helper, chestPos, new ItemStack(Items.COAL_ORE, 64));
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
+        grid(crafter, link(helper, chestPos, Blocks.CHEST));
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(craftOf(crafter, Items.COAL) != null, "coal to start");
+            chest.setItem(0, ItemStack.EMPTY);
+        });
+        helper.runAfterDelay(90, () -> {
+            helper.assertTrue(craftOf(crafter, Items.COAL) == null, "nothing left to smelt: " + crafter.getPreview().size());
+            chest.setItem(0, new ItemStack(Items.COAL_ORE, 64));
+        });
+        helper.runAfterDelay(130, () -> {
+            helper.assertTrue(craftOf(crafter, Items.COAL) != null, "coal again");
+            helper.setBlock(chestPos, Blocks.AIR);
+        });
+        helper.runAfterDelay(190, () -> {
+            helper.assertTrue(craftOf(crafter, Items.COAL) == null, "the chest gone, nothing: " + crafter.getPreview().size());
+            helper.succeed();
+        });
+    }
+
     // covers: crafter.entangled_loop
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_loop", timeoutTicks = 80)
     public static void crafterLinkedInARingStop(GameTestHelper helper) {

@@ -25,7 +25,13 @@
 - **Light goes through water** (and waterlogged blocks it would go through dry); lava still stops it. A Freezing beam
   freezes the first water on its way; an Interact beam's bucket fills from the first source on its way.
 - **Fixed:** a Quantum Crafter reading a chest through a Tesseract kept showing what it could make before the chest
-  was emptied (or refilled) by hand, till its Tesseract was replaced.
+  was emptied, refilled or broken, till its Tesseract or catalyst was replaced: it remembered its answer for its own
+  grid without counting what the Tesseract reaches.
+- **Fixed:** Harvest with Pickup that found no room once never asked again (after a world load, a farm full at the
+  time stayed idle till the network was rebuilt). Acceleration and Freezing through an Area Prism never found the
+  machines in their area; both work now.
+- **The Void Lens stays on the light**, as Pickup does: actions added after it (in a later mount, or later in its own)
+  get it too.
 - **The Spectroscope says what a Harvest beam is doing**: cutting (and how far), nothing to cut, or no room for what
   it would cut (and what).
 - **The Entity Filter Lens can list one creature, or you**: sneak-use it on a creature or player to list just that one

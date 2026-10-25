@@ -776,8 +776,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // Its power only to a twentieth of what it holds: it charges and drains every tick, and what it could make
         // barely moves with it.
         int power = fe >= energyStorage.getMaxEnergyStored() ? 20 : fe * 20 / Math.max(1, energyStorage.getMaxEnergyStored());
+        // What its Tesseracts reach (a plain chest, another Crafter) counts too: its own grid's revision doesn't move when
+        // a hand empties a linked chest.
+        EntangledLinks.RemoteSummary linked = EntangledLinks.summarize(level, worldPosition, inventory, INPUT_SLOTS);
         List<Object> asked = List.of(views, fromCraftable, contentRevision, power, Math.round(multiplier * 1000), catalyst.getItem(),
-                recipeLocked, String.valueOf(preferredRecipeId), coherenceReserve);
+                recipeLocked, String.valueOf(preferredRecipeId), coherenceReserve, linked.typeHash(), linked.countTotal());
         List<com.kadikular.quantimium.laser.OfferMaker.Made> known = makesAnswers.get(asked);
         if (known != null) return new Making(known);
         // Shown nothing it wasn't shown a little while ago, only in other numbers, or less of it: the crafts it found

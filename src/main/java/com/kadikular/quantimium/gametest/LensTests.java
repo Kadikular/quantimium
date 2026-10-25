@@ -495,6 +495,82 @@ public final class LensTests {
     }
 
     // covers: laser.lens.pickup, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses_reload", timeoutTicks = 500)
+    public static void anAreaFarmFullWhenTheWorldLoadsStartsWhenThereIsRoom(GameTestHelper helper) {
+        // The playtest farm, its wheat Port full; the world loaded again; then the wheat taken out: it cuts again.
+        int top = Y + 3;
+        emitter(helper, new BlockPos(1, top, 8), Direction.EAST, true);
+        LaserPortBlockEntity wheat = collector(helper, new BlockPos(3, top, 8), Direction.EAST);
+        wheat.getFilter().setItem(0, new ItemStack(Items.WHEAT));
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) wheat.getItems().setStackInSlot(slot, new ItemStack(Items.WHEAT, 64));
+        emitter(helper, new BlockPos(6, top, 1), Direction.SOUTH, true);
+        LaserPortBlockEntity seeds = collector(helper, new BlockPos(6, top, 4), Direction.SOUTH);
+        seeds.getFilter().setItem(0, new ItemStack(Items.WHEAT_SEEDS));
+        helper.setBlock(new BlockPos(6, top, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        LensMountBlockEntity first = mount(helper, new BlockPos(8, top, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.BLOCK_FILTER_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        ItemStack grown = new ItemStack(ModItems.BLOCK_FILTER_LENS.get());
+        grown.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true));
+        first.getLensSlots().setStackInSlot(1, grown);
+        mount(helper, new BlockPos(9, top, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.RANGE_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        helper.setBlock(new BlockPos(12, top, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(12, top, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        for (int x = 11; x <= 13; x++) {
+            for (int z = 7; z <= 9; z++) {
+                helper.setBlock(new BlockPos(x, Y - 1, z), Blocks.FARMLAND);
+                helper.setBlock(new BlockPos(x, Y, z), ripe);
+            }
+        }
+        prism.setArea(helper.absolutePos(new BlockPos(11, Y, 7)), helper.absolutePos(new BlockPos(13, Y, 9)));
+        helper.runAfterDelay(200, () -> {
+            com.kadikular.quantimium.laser.LaserNetworks.reloadForTests(helper.getLevel());
+        });
+        helper.runAfterDelay(240, () -> {
+            for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) wheat.getItems().setStackInSlot(slot, ItemStack.EMPTY);
+        });
+        helper.runAfterDelay(241, () -> helper.succeedWhen(() -> {
+            helper.assertTrue(count(wheat, Items.WHEAT) > 0, "cutting again, with room: " + com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
+                    .describe(helper.absolutePos(new BlockPos(12, top, 8))).stream().map(net.minecraft.network.chat.Component::getString).toList());
+            TestSupport.finishLasers(helper);
+        }));
+    }
+
+    // covers: laser.lens.void
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
+    public static void aVoidLensBeforeTheHarvestStillVoids(GameTestHelper helper) {
+        // The Void lens (excess, listing seeds) in a mount before Harvest's: it stays on the light, so Harvest gets it.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        collector.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT, 1));
+        ItemStack voids = new ItemStack(ModItems.VOID_LENS.get());
+        voids.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(),
+                com.kadikular.quantimium.laser.LensFilter.items(java.util.List.of(new ItemStack(Items.WHEAT_SEEDS)), true));
+        LensMountBlockEntity before = mount(helper, new BlockPos(5, Y, 8), Direction.EAST);
+        before.getLensSlots().setStackInSlot(0, voids);
+        mount(helper, new BlockPos(6, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        BlockPos crop = new BlockPos(9, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop.east(), Blocks.STONE);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        helper.setBlock(crop, ripe);
+        int[] planted = {0};
+        helper.onEachTick(() -> {
+            if (helper.getBlockState(crop).isAir() && planted[0] < 2) {
+                helper.setBlock(crop, ripe);
+                planted[0]++;
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.WHEAT), 4, "three crops' wheat carried, the seeds destroyed");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.pickup, laser.area_prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
     public static void anAreaHarvestWithPickupGathersAWheatField(GameTestHelper helper) {
         // An Area Prism over a 3x3 field of ripe wheat, Harvest and Pickup, into an empty Laser Port: all of it comes back.
@@ -2081,6 +2157,26 @@ public final class LensTests {
             helper.assertTrue(furnace.getItem(2).is(Items.IRON_INGOT), "smelted already");
             var shown = com.kadikular.quantimium.laser.Acceleration.shown(helper.getLevel(), helper.absolutePos(at));
             helper.assertTrue(shown != null && shown.multiplier() == 2, "it says it's going 2x: " + shown);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.accelerate, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses_accelerate_area", timeoutTicks = 170)
+    public static void anAccelerationAreaSpeedsUpTheMachinesInIt(GameTestHelper helper) {
+        // Through an Area Prism over a furnace: it smelts at 2x, as at the end of a beam.
+        emitter(helper, new BlockPos(1, Y + 3, 8), Direction.EAST, true);
+        mount(helper, new BlockPos(3, Y + 3, 8), Direction.EAST, ModItems.ACCELERATION_LENS.get());
+        helper.setBlock(new BlockPos(8, Y + 3, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(8, Y + 3, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, Blocks.FURNACE);
+        var furnace = helper.getBlockEntity(at, net.minecraft.world.level.block.entity.FurnaceBlockEntity.class);
+        furnace.setItem(0, new ItemStack(Items.RAW_IRON));
+        furnace.setItem(1, new ItemStack(Items.COAL));
+        prism.setArea(helper.absolutePos(new BlockPos(7, Y, 7)), helper.absolutePos(new BlockPos(9, Y, 9)));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(furnace.getItem(2).is(Items.IRON_INGOT), "smelted already");
             TestSupport.finishLasers(helper);
         });
     }

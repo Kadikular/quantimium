@@ -25,8 +25,8 @@ import java.util.Set;
  * reached the lens that gave it. Joined light keeps both sides' streams; the same action from two sides
  * becomes one, paid by both. A modifier changes the actions the light already carries when it meets it:
  * those in slots before it in its mount, and those from mounts before; never one added after it, so a
- * Filter must come after the Harvest it filters. Pickup is the exception: it stays on the light, and
- * actions added after it get it too. One before a join stays on its own side.
+ * Filter must come after the Harvest it filters. Pickup and Void are the exceptions: each stays on the light, and
+ * actions added after it get it too. A Pickup before a join stays on its own side; a Void carries on past it.
  * Pickup is also a stream of its own, paid for like an action: it gathers items lying in the beam. So is
  * Smelting, which acts only where the light carries nothing else (see {@link #acting()}).
  *
@@ -38,8 +38,15 @@ import java.util.Set;
  * @param marks   what stays on the light once it's met it ({@link #UV}, {@link #PHANTOM}, {@link #MIRRORED})
  * @param logistics the Logistics Controllers whose light this is: it joins what it reaches to their networks.
  *                  An Isolator lets power through but not this.
+ * @param voiding  a Void lens the light has met: like Pickup, it stays on the light, and actions added after it get it
+ *                  too (its mode and list); null for none
  */
-public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks, Set<BlockPos> logistics) {
+public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks, Set<BlockPos> logistics,
+                    @Nullable LensUse voiding) {
+
+    public Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks, Set<BlockPos> logistics) {
+        this(range, boosts, streams, feeders, left, marks, logistics, null);
+    }
 
     public Light(int range, int boosts, List<Stream> streams, Set<BlockPos> feeders, int left, int marks) {
         this(range, boosts, streams, feeders, left, marks, Set.of());
@@ -47,7 +54,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** This light, from a Logistics Controller at {@code controller}. */
     public Light controlledBy(BlockPos controller) {
-        return new Light(range, boosts, streams, feeders, left, marks, Set.of(controller));
+        return new Light(range, boosts, streams, feeders, left, marks, Set.of(controller), voiding);
     }
 
     /** Seen only with a wrench or the Linker in hand. */
@@ -86,7 +93,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** The light through a rift: into the mirror, or back out of it. */
     public Light throughRift() {
-        return new Light(range, boosts, streams, feeders, left, marks ^ MIRRORED, logistics);
+        return new Light(range, boosts, streams, feeders, left, marks ^ MIRRORED, logistics, voiding);
     }
 
     /**
@@ -240,12 +247,12 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** The light refocused, by a mirror: a fresh run at its own reach. */
     public Light refocused() {
-        return left < 0 ? this : new Light(range, boosts, streams, feeders, -1, marks, logistics);
+        return left < 0 ? this : new Light(range, boosts, streams, feeders, -1, marks, logistics, voiding);
     }
 
     /** This light gone {@code length} blocks into a run and on through something that doesn't refocus it. */
     public Light passedOn(int length) {
-        return new Light(range, boosts, streams, feeders, Math.max(0, reach() - length - 1), marks, logistics);
+        return new Light(range, boosts, streams, feeders, Math.max(0, reach() - length - 1), marks, logistics, voiding);
     }
 
     /** Light from two sides, joined: the longer reach, every stream, the same action paid for by both. */
@@ -276,7 +283,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         int left = a.left < 0 && b.left < 0 ? -1 : Math.max(a.reach(), b.reach());
         return new Light(Math.max(a.range, b.range), Math.max(a.boosts, b.boosts),
                 List.copyOf(streams.values()), Set.copyOf(feeders), left,
-                withSpeeds(a.marks | b.marks, Math.max(a.speeds(), b.speeds())), Set.copyOf(logistics));
+                withSpeeds(a.marks | b.marks, Math.max(a.speeds(), b.speeds())), Set.copyOf(logistics), a.voiding != null ? a.voiding : b.voiding);
     }
 
     /**
@@ -293,13 +300,16 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         int marks = this.marks;
         int boosts = this.boosts;
         Set<BlockPos> logistics = this.logistics;
+        LensUse voiding = this.voiding;
         for (LensUse use : lenses) {
             Lens lens = use.lens();
             if (lens.action) {
                 Stream had = streams.get(lens);
-                streams.put(lens, new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
+                Stream made = new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
                         had == null ? 0 : had.speed(), use.interact(), had == null ? 0 : had.fortune(), had == null ? List.of() : had.steps(), false,
-                        had == null ? null : had.voids()));
+                        had == null ? null : had.voids());
+                // A Void lens met before stays on the light: this action gets it too.
+                streams.put(lens, voiding == null || made.has(Lens.VOID) ? made : voided(made, voiding));
             } else switch (lens) {
                 case PICKUP -> {
                     // After an action (Harvest, Damage...): it picks up what that action frees, and the action waits
@@ -310,7 +320,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                                 : stream.with(stream.modifiers() | 1 << Lens.PICKUP.ordinal(), stream.amps(), stream.filter()));
                     } else {
                         Stream had = streams.get(Lens.PICKUP);
-                        streams.put(Lens.PICKUP, new Stream(Lens.PICKUP, 1 << Lens.PICKUP.ordinal(), feeders, 0, had == null ? null : had.filter()));
+                        Stream gathering = new Stream(Lens.PICKUP, 1 << Lens.PICKUP.ordinal(), feeders, 0, had == null ? null : had.filter());
+                        streams.put(Lens.PICKUP, voiding == null ? gathering : voided(gathering, voiding));
                     }
                 }
                 case RANGE -> boosts = Math.min(LaserTuning.RANGE_LENSES, boosts + 1);
@@ -329,6 +340,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     if (!passing.passes(Lens.PHANTOM)) marks &= ~PHANTOM;
                     if (!passing.passes(Lens.SPEED)) marks = withSpeeds(marks, 0);
                     if (!passing.logistics()) logistics = Set.of();
+                    if (!passing.passes(Lens.VOID)) voiding = null;
                 }
                 case SPEED -> {
                     streams.replaceAll((action, stream) -> stream.faster());
@@ -336,9 +348,10 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 }
                 case HARMONIC -> streams.replaceAll((action, stream) -> stream.luckier());
                 // A Void lens set to void all marks the streams it changes so.
-                case VOID -> streams.replaceAll((action, stream) -> new Stream(stream.action(), stream.modifiers() | 1 << Lens.VOID.ordinal(),
-                        stream.payers(), stream.amps(), stream.filter(), stream.speed(), stream.interact() | use.interact() & LensUse.VOID_ALL,
-                        stream.fortune(), stream.steps(), stream.inWorld(), voidList(use.filter())));
+                case VOID -> {
+                    streams.replaceAll((action, stream) -> voided(stream, use));
+                    voiding = use;
+                }
                 case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case SMELT, CRUSH -> {
@@ -354,7 +367,14 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 default -> {}
             }
         }
-        return new Light(range, boosts, List.copyOf(streams.values()), feeders, left, marks, logistics);
+        return new Light(range, boosts, List.copyOf(streams.values()), feeders, left, marks, logistics, voiding);
+    }
+
+    /** {@code stream} changed by the Void lens {@code use}: its mode, and its list. */
+    private static Stream voided(Stream stream, LensUse use) {
+        return new Stream(stream.action(), stream.modifiers() | 1 << Lens.VOID.ordinal(), stream.payers(), stream.amps(), stream.filter(),
+                stream.speed(), stream.interact() | use.interact() & LensUse.VOID_ALL, stream.fortune(), stream.steps(), stream.inWorld(),
+                voidList(use.filter()));
     }
 
     /**
@@ -453,7 +473,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
     public Light reEmitted(BlockPos source) {
         List<Stream> mine = new ArrayList<>();
         for (Stream stream : streams) mine.add(stream.paidBy(Set.of(source)));
-        return new Light(range, boosts, List.copyOf(mine), Set.of(source), -1, marks);
+        return new Light(range, boosts, List.copyOf(mine), Set.of(source), -1, marks, Set.of(), voiding);
     }
 
     /** Whether this has everything {@code other} has, payers aside: what a cavity checks before it remembers more. */

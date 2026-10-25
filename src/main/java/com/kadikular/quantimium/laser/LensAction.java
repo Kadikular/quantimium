@@ -55,7 +55,7 @@ public final class LensAction {
     @Nullable
     private BlockPos placed;
     /** When it last did any work (a cut, a block placed, a hit): an area prism shows its beam only while it's working. */
-    private long lastWorked = Long.MIN_VALUE;
+    private long lastWorked = -1_000_000L;
     /** How far the light carrying it reaches: an area prism works only that far. */
     private int reach = LaserTuning.ACTION_REACH;
     /** The marks of the light carrying it ({@link Light#PHANTOM}, {@link Light#MIRRORED}). */
@@ -657,7 +657,7 @@ public final class LensAction {
 
     /** In an area, the machines there it can speed up (or freeze), looked for again every so often; when it last looked. */
     private List<BlockPos> machines = List.of();
-    private long machinesFound = Long.MIN_VALUE;
+    private long machinesFound = -1_000_000L;
 
     /**
      * Speeds up the machine the beam ends on (in an area, each machine there): 2x, doubled for each Speed lens, up to
@@ -1270,7 +1270,8 @@ public final class LensAction {
     private record RoomKey(net.minecraft.world.item.Item item, net.minecraft.core.component.DataComponentPatch components, int count) {}
 
     private final java.util.Map<RoomKey, Boolean> room = new java.util.HashMap<>();
-    private long roomAsked = Long.MIN_VALUE;
+    /** When the room answers were last forgotten; far enough back that the first ask starts afresh (never MIN_VALUE: now minus it overflows). */
+    private long roomAsked = -1_000_000L;
 
     /** Breaks it as its pickaxe would, the drops going back up the beam with Pickup. */
     private void breakBlock(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean pickup) {
