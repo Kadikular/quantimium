@@ -59,7 +59,9 @@ public class LensSettingsScreen extends QuantumMachineScreen<LensSettingsMenu> {
     }
 
     private void press(int button) {
-        if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
+        if (minecraft == null || minecraft.gameMode == null || minecraft.player == null) return;
+        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
+        menu.clickMenuButton(minecraft.player, button);
     }
 
     /** What it's set to, a line each, with what that means. */
@@ -69,9 +71,7 @@ public class LensSettingsScreen extends QuantumMachineScreen<LensSettingsMenu> {
         if (lens.getItem() instanceof InteractLensItem) {
             lines.addAll(InteractLensItem.describe(lens));
         } else if (lens.getItem() instanceof VoidLensItem) {
-            boolean all = VoidLensItem.voidsAll(lens);
-            lines.add(Component.translatable(all ? "item.quantimium.void_lens.all" : "item.quantimium.void_lens.excess"));
-            lines.add(Component.translatable(all ? "gui.quantimium.void_lens.all.tip" : "gui.quantimium.void_lens.excess.tip"));
+            lines.add(Component.translatable(VoidLensItem.voidsAll(lens) ? "item.quantimium.void_lens.all" : "item.quantimium.void_lens.excess"));
         }
         return lines;
     }

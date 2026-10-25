@@ -330,12 +330,14 @@ public class MaterialiserBlockEntity extends BlockEntity
     /**
      * Reads what its two input slots hold, or what the inventories a bound Tesseract in them links to
      * hold: the first Matter found, and every Matter of the same history counted with it; all the
-     * Anomalite Dust. At most once a tick, unless a slot changed or it just spent some.
+     * Anomalite Dust. At most once a tick, unless a slot changed or it just spent some; through a Tesseract, at most
+     * once a second (a linked network is a whole network's worth of looking).
      */
     private void refreshSources() {
         if (level == null) return;
         long now = level.getGameTime();
-        if (!sourcesDirty && sourcesReadAt == now) return;
+        boolean throughLink = EntangledLinks.isLink(inventory.getStackInSlot(MATTER_SLOT)) || EntangledLinks.isLink(inventory.getStackInSlot(TRACE_SLOT));
+        if (!sourcesDirty && (sourcesReadAt == now || throughLink && now - sourcesReadAt < 20)) return;
         sourcesDirty = false;
         sourcesReadAt = now;
         ItemStack before = matterSeen;

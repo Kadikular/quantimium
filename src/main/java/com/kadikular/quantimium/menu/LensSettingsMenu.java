@@ -51,7 +51,8 @@ public class LensSettingsMenu extends AbstractContainerMenu {
             case BUTTON_VOID_ALL -> stack.getItem() instanceof VoidLensItem && VoidLensItem.toggle(stack) == VoidLensItem.voidsAll(stack);
             default -> false;
         };
-        if (done) changed.run();
+        // On the client it only shows the change at once: a lens in hand isn't sent back while this is open.
+        if (done && !who.level().isClientSide()) changed.run();
         return done;
     }
 

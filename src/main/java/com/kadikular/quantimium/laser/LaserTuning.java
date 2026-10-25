@@ -118,14 +118,17 @@ public final class LaserTuning {
     public static final int FREEZE_MOB_TICKS = 200;
     /** FE to freeze a mob, for each point of its most health: a zombie 500, a Warden 12,500. */
     public static final long FREEZE_FE_PER_HEALTH = 25;
-    /** Powder-snow freeze each sweep gives a player (or anything it doesn't stop): it thaws 2 a tick on its own. */
-    public static final int FREEZE_CHILL_TICKS = 40;
-    /** FE for each sweep's chill of one. */
-    public static final long FREEZE_CHILL_FE = 50;
+    /**
+     * Powder-snow freeze each tick gives a player (or anything it doesn't stop), against the 2 a tick it thaws on its
+     * own: it gets colder as in powder snow, a tick at a time.
+     */
+    public static final int FREEZE_CHILL_PER_TICK = 3;
+    /** FE a tick to chill one. */
+    public static final long FREEZE_CHILL_FE = 5;
     /** FE to freeze a block of water to ice, or lay snow. */
     public static final long FREEZE_BLOCK_FE = 200;
     /** The chance each sweep that snow settles on the block it's on (each it looks at, in an area). */
-    public static final float FREEZE_SNOW_CHANCE = 0.1f;
+    public static final float FREEZE_SNOW_CHANCE = 0.0125f;
     /** Blocks an Area Prism's Freezing light looks at each sweep, at random, times its pace. */
     public static final int FREEZE_AREA_BLOCKS = 4;
     /** Smelting and Crushing lenses that count as steps on one light. */

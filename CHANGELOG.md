@@ -12,10 +12,21 @@
   thinking for 10 seconds, frozen again while the light stays on them; each point of damage thaws them half a second
   sooner. Freezing one costs 25 FE for each point of its most health (a zombie 500, a Warden 12,500), charged up as
   Damage's hits are. The Ender Dragon is never frozen (entity tag `quantimium:not_freezable`); the Wither and the
-  Warden can be. Players are chilled as in powder snow: slowed, never hurt. Through an Area Prism, the whole area.
+  Warden can be. Players get colder a tick at a time, as in powder snow: slower the colder, never hurt. Snow
+  settles slowly. Through an Area Prism, the whole area.
+- **Fixed:** an emitter set to run with a redstone signal lit its beam when given one, but the lenses down it
+  (Acceleration, Freezing and the rest) didn't start working.
+- **Fixed:** Harvest with Pickup could cut a crop when there was room for some of its seeds but not all, dropping the
+  rest: it now drops exactly what it found room for.
+- **Fixed:** the Void Lens's setting showed its old mode till the screen was closed; it now just says "Void all" or
+  "Void excess".
+- **Harvest sets what it cuts down where the block was**, still, rather than throwing it about: a Pickup sweeping the
+  beam always reaches it.
 - **Lighter lens scanning.** An Area Prism remembers for a second which blocks it couldn't see, instead of tracing to
   them again each pass (a tree farm's hidden logs, a quarry's far side); Harvest with Pickup rolls a block's drops
-  once to check for room, not each tick it cuts. An idle area scan costs about an eighth of what it did.
+  once to check for room, and remembers each answer for half a second, asking afresh only the tick it breaks a
+  block. An idle area scan costs about an eighth of what it did. A Materialiser reading through a Tesseract looks
+  once a second, not every tick (a linked network is a whole network to look through).
 - **`/quantimium lasers profile [seconds]`** (operators): times this dimension's lasers for a few seconds, then lists
   what they spent each tick on (checking beams, lens actions, logistics, moving power) and the ten costliest lens
   actions with where they are, to find the one slowing a base.

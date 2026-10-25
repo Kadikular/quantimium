@@ -284,6 +284,55 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 140)
+    public static void anEmitterSwitchedOnBySignalLightsItsLenses(GameTestHelper helper) {
+        // Set to run with a signal, it stays dark till given one; given one later, its lenses work.
+        LaserEmitterBlockEntity emitter = emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        emitter.cycleRedstone();
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.FREEZING_LENS.get());
+        BlockPos water = new BlockPos(9, Y, 8);
+        for (Direction side : Direction.Plane.HORIZONTAL) helper.setBlock(water.relative(side), Blocks.GLASS);
+        helper.setBlock(water, Blocks.WATER);
+        helper.runAfterDelay(40, () -> {
+            helper.assertBlockPresent(Blocks.WATER, water);
+            helper.setBlock(new BlockPos(2, Y, 7), Blocks.REDSTONE_BLOCK);
+        });
+        helper.runAfterDelay(41, () -> helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.ICE, water);
+            TestSupport.finishLasers(helper);
+        }));
+    }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void harvestWithPickupCutsOnlyWhatAllFits(GameTestHelper helper) {
+        // Room for one more seed and plenty of wheat: a ripe crop drops 1 to 4 seeds, so it's cut only when it rolls
+        // one, and no seed is ever left on the ground. Replanted ripe whenever it's cut.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        collector.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 63));
+        collector.getItems().setStackInSlot(1, new ItemStack(Items.WHEAT, 1));
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        BlockPos crop = new BlockPos(9, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        // Light goes through a crop: it cuts the one just before what it ends on.
+        helper.setBlock(crop.east(), Blocks.STONE);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        helper.setBlock(crop, ripe);
+        helper.onEachTick(() -> {
+            if (helper.getBlockState(crop).isAir()) helper.setBlock(crop, ripe);
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(crop)).inflate(3)).isEmpty(),
+                    "nothing left on the ground");
+        });
+        helper.runAfterDelay(180, () -> {
+            helper.assertTrue(count(collector, Items.WHEAT) > 1, "it did cut, when the seeds fit");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.freeze
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aFreezingLensStopsTheMachineItEndsOn(GameTestHelper helper) {
@@ -308,6 +357,12 @@ public final class LensTests {
     public static void aFreezingLensHoldsAMobStillAndItThaws(GameTestHelper helper) {
         emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.FREEZING_LENS.get());
+        // Penned in glass along the beam (light goes through glass), so it can't wander out before it's frozen.
+        for (int x = 8; x <= 10; x++) {
+            helper.setBlock(new BlockPos(x, Y, 7), Blocks.GLASS);
+            helper.setBlock(new BlockPos(x, Y, 9), Blocks.GLASS);
+        }
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.GLASS);
         Pig pig = helper.spawn(EntityType.PIG, new BlockPos(9, Y, 8));
         helper.succeedWhen(() -> {
             helper.assertTrue(pig.isNoAi(), "the pig was frozen in place");

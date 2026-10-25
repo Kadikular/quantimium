@@ -330,6 +330,7 @@ public final class LensAction {
             networks.pay(this, LaserTuning.FREEZE_MACHINE_FE);
             lastWorked = now;
         }
+        chill(networks);
         if (!sweep) {
             want = Math.max(0, freezeWanted() - charged);
             return;
@@ -347,16 +348,9 @@ public final class LensAction {
                 if (charged < cost) continue;
                 charged -= cost;
                 Freezing.freeze(mob, LaserTuning.FREEZE_MOB_TICKS);
-            } else if (entity.canFreeze()) {
-                if (!networks.canPay(this, LaserTuning.FREEZE_CHILL_FE)) continue;
-                networks.pay(this, LaserTuning.FREEZE_CHILL_FE);
-                // Slowed by it, as in powder snow, but never so frozen it hurts.
-                entity.setTicksFrozen(Math.min(entity.getTicksRequiredToFreeze() - 1, entity.getTicksFrozen() + LaserTuning.FREEZE_CHILL_TICKS));
-            } else {
-                continue;
+                networks.workDone(this);
+                lastWorked = now;
             }
-            networks.workDone(this);
-            lastWorked = now;
         }
         want = Math.max(0, freezeWanted() - charged);
         if (area == null) {
@@ -367,6 +361,20 @@ public final class LensAction {
             BlockPos pos = new BlockPos(area.minX() + level.getRandom().nextInt(area.getXSpan()),
                     area.minY() + level.getRandom().nextInt(area.getYSpan()), area.minZ() + level.getRandom().nextInt(area.getZSpan()));
             if (within.test(pos) && level.isLoaded(pos) && !level.getBlockState(pos).isAir() && inSight(level, pos)) freezeBlock(level, networks, pos);
+        }
+    }
+
+    /**
+     * Each tick, players (and anything else living it doesn't freeze in place) it found in the beam get colder, as in
+     * powder snow: slower the colder, but never so frozen it hurts.
+     */
+    private void chill(LaserNetworks networks) {
+        for (LivingEntity entity : targets) {
+            if (!entity.isAlive() || Freezing.freezable(entity) || !entity.canFreeze() || !onBeam(entity.getBoundingBox(), 0.25)) continue;
+            if (!networks.canPay(this, LaserTuning.FREEZE_CHILL_FE)) return;
+            networks.pay(this, LaserTuning.FREEZE_CHILL_FE);
+            entity.setTicksFrozen(Math.min(entity.getTicksRequiredToFreeze() - 1, entity.getTicksFrozen() + LaserTuning.FREEZE_CHILL_PER_TICK));
+            lastWorked = now;
         }
     }
 
@@ -1015,8 +1023,9 @@ public final class LensAction {
             want = 0;
             return;
         }
-        // With Pickup, it only cuts what it can carry away: no room up the beam for the drops, it waits.
-        if (pickup && !roomForDrops(level, networks, target)) {
+        // With Pickup, it only cuts what it can carry away: no room up the beam for the drops, it waits. Asked afresh
+        // the tick it breaks, so what was found room for is what's there.
+        if (pickup && !roomForDrops(level, networks, target, cut >= cutCost && cooldown <= 0)) {
             want = 0;
             return;
         }
@@ -1050,7 +1059,7 @@ public final class LensAction {
                 if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos)) {
                     // Out of traces for this tick: this one is looked at first next tick.
                     if (traces-- <= 0) return null;
-                    if (inSight(level, pos) && (!pickup || roomForDrops(level, networks, pos))) {
+                    if (inSight(level, pos) && (!pickup || roomForDrops(level, networks, pos, false))) {
                         cursor = (cursor + 1) % areaVolume();
                         missed = 0;
                         return pos;
@@ -1068,7 +1077,7 @@ public final class LensAction {
             if (mirrored() && beam.hit() != null && cuttable(level, beam.hit())) return beam.hit();
             for (BlockPos pos : beam.path()) {
                 if (level.isLoaded(pos) && !level.getBlockState(pos).isAir() && cuttable(level, pos)
-                        && (!pickup || roomForDrops(level, networks, pos))) return pos;
+                        && (!pickup || roomForDrops(level, networks, pos, false))) return pos;
             }
             return null;
         }
@@ -1133,21 +1142,57 @@ public final class LensAction {
      * Whether the collecting Laser Ports up the beam would take all of what breaking the block would drop: room for it,
      * and filters that let it in. With Pickup, nothing is cut that would be left lying.
      */
-    private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos) {
+    private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean fresh) {
         // With Void there's always room: what won't fit is destroyed.
         if (stream.has(Lens.VOID)) return true;
+        // All of it at once: two stacks of seeds each fitting alone needn't both fit.
+        List<ItemStack> carried = new ArrayList<>();
         for (ItemStack drop : likelyDrops(level, pos)) {
-            for (ItemStack carried : processed(level, drop)) {
-                if (!networks.roomForAll(collectors, carried)) return false;
+            for (ItemStack stack : processed(level, drop)) {
+                boolean merged = false;
+                for (ItemStack had : carried) {
+                    if (ItemStack.isSameItemSameComponents(had, stack)) {
+                        had.grow(stack.getCount());
+                        merged = true;
+                        break;
+                    }
+                }
+                if (!merged) carried.add(stack.copy());
             }
         }
+        for (ItemStack stack : carried) if (!roomFor(networks, stack, fresh)) return false;
         return true;
     }
+
+    /**
+     * Whether the collecting Laser Ports would take all of {@code stack}: remembered half a second by item and count
+     * (an area's scan and a cut ask again and again, and each ask fills the Ports' inventories for pretend), or
+     * asked {@code fresh}.
+     */
+    private boolean roomFor(LaserNetworks networks, ItemStack stack, boolean fresh) {
+        if (now - roomAsked >= 10) {
+            room.clear();
+            roomAsked = now;
+        }
+        RoomKey key = new RoomKey(stack.getItem(), stack.getComponentsPatch(), stack.getCount());
+        Boolean known = fresh ? null : room.get(key);
+        if (known != null) return known;
+        boolean fits = networks.roomForAll(collectors, stack);
+        room.put(key, fits);
+        return fits;
+    }
+
+    private record RoomKey(net.minecraft.world.item.Item item, net.minecraft.core.component.DataComponentPatch components, int count) {}
+
+    private final java.util.Map<RoomKey, Boolean> room = new java.util.HashMap<>();
+    private long roomAsked = Long.MIN_VALUE;
 
     /** Breaks it as its pickaxe would, the drops going back up the beam with Pickup. */
     private void breakBlock(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean pickup) {
         BlockState state = level.getBlockState(pos);
-        List<ItemStack> drops = new ArrayList<>(drops(level, pos));
+        // What was rolled to check for room is what it drops: rolled again, a crop could give more seeds than fit.
+        List<ItemStack> drops = new ArrayList<>(pickup ? likelyDrops(level, pos) : drops(level, pos));
+        rolledAt = null;
         if (mirrored()) {
             // On the mirror's side: the real world hears only the light, and the tear leaks as it always does.
             com.kadikular.quantimium.phase.OverlayBlockEdit.allow(() -> com.kadikular.quantimium.phase.MirrorSounds.breakQuietly(level, pos));
@@ -1182,7 +1227,7 @@ public final class LensAction {
                 if (stack.isEmpty()) continue;
                 // Cut on the mirror's side, it falls there: only the mirror sees it, or can take it.
                 if (mirrored()) com.kadikular.quantimium.event.MirrorPhaseInteractions.dropInMirror(level, pos, stack);
-                else Block.popResource(level, pos, stack);
+                else setDown(level, pos, stack);
             }
         }
         // A beam now reaches on past where the block was; an area's beams don't change.
@@ -1204,18 +1249,22 @@ public final class LensAction {
     }
 
     /**
-     * What breaking the block at {@code pos} would likely drop, for asking whether there's room for it: rolled
-     * once for the block as it stands, not again each tick it's looked at. The break itself rolls afresh.
+     * What breaking the block at {@code pos} will drop, for asking whether there's room for it: rolled for the block
+     * as it stands, and again each second it waits (a luckier roll may fit), not every tick it's looked at. With
+     * Pickup, the break drops what was rolled, so what was found room for is what comes.
      */
     private List<ItemStack> likelyDrops(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        if (!pos.equals(rolledAt) || state != rolledState) {
+        if (!pos.equals(rolledAt) || state != rolledState || now - rolledTick >= 20) {
             rolledAt = pos.immutable();
             rolledState = state;
+            rolledTick = now;
             rolled = drops(level, pos);
         }
         return rolled;
     }
+
+    private long rolledTick;
 
     @Nullable
     private BlockPos rolledAt;
@@ -1322,6 +1371,17 @@ public final class LensAction {
         networks.workDone(this);
         // With Void, what no port had room for goes too.
         replaceWith(level, item, voids ? List.of() : left);
+    }
+
+    /**
+     * Sets {@code stack} down in the middle of where the block was, still: thrown about as a broken block's drops are,
+     * it lands off the beam, out of a Pickup's reach.
+     */
+    private static void setDown(ServerLevel level, BlockPos pos, ItemStack stack) {
+        if (!level.getGameRules().get(net.minecraft.world.level.gamerules.GameRules.BLOCK_DROPS)) return;
+        ItemEntity item = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.25, pos.getZ() + 0.5, stack, 0, 0, 0);
+        item.setDefaultPickUpDelay();
+        level.addFreshEntity(item);
     }
 
     /** {@code item} becomes {@code stacks}, where it lies: gone with none, more items with more. */

@@ -81,6 +81,8 @@ public final class LaserNetworks {
     private final Map<BlockPos, Light> cavityIn = new HashMap<>();
     /** What redstone can switch, and whether each was on when the network was last built. */
     private Map<LaserNode, Integer> switched = new LinkedHashMap<>();
+    /** Nodes found switched this tick: their networks are worked out again in full. */
+    private final Set<BlockPos> switchedAt = new HashSet<>();
     /** For each block a beam charges, the nodes whose beams charge it: they share a network. Kept as beams are traced. */
     private final Map<BlockPos, Set<BlockPos>> chargedBy = new HashMap<>();
     /** Nodes whose beams changed on their own (a block cut, placed, switched): only their networks are worked out again. */
@@ -391,8 +393,12 @@ public final class LaserNetworks {
     private void rebuildAround(Set<BlockPos> seeds, int tries, Map<LensAction.Key, LensAction> carryActions) {
         List<BlockPos> present = seeds.stream().filter(nodes::containsKey).toList();
         dirtyAt.clear();
+        // A node switched on or off traces the same beams as before (dark ones while off), but what they carry has
+        // changed: never only its ends moved.
+        boolean switchedHere = present.stream().anyMatch(switchedAt::contains);
+        switchedAt.clear();
         if (present.isEmpty()) return;
-        if (tries == 0 && onlyEndsMoved(present)) return;
+        if (tries == 0 && !switchedHere && onlyEndsMoved(present)) return;
         Set<BlockPos> scope = group(present);
         // Nearly the whole level: as cheap to do it all.
         if (scope.size() * 10 > nodes.size() * 9) {
@@ -1262,7 +1268,10 @@ public final class LaserNetworks {
         if (!dirty) {
             // Each switched one marks only its own network to be worked out again.
             for (Map.Entry<LaserNode, Integer> entry : switched.entrySet()) {
-                if (entry.getKey().switchState() != entry.getValue()) dirtyAt.add(entry.getKey().nodePos());
+                if (entry.getKey().switchState() != entry.getValue()) {
+                    dirtyAt.add(entry.getKey().nodePos());
+                    switchedAt.add(entry.getKey().nodePos());
+                }
             }
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
                 List<LaserBeam> was = beams.get(node.nodePos());
@@ -1278,8 +1287,10 @@ public final class LaserNetworks {
                 }
             }
         }
-        if (dirty) rebuild();
-        else if (!dirtyAt.isEmpty()) rebuildAround(new HashSet<>(dirtyAt), 0, new HashMap<>());
+        if (dirty) {
+            rebuild();
+            switchedAt.clear();
+        } else if (!dirtyAt.isEmpty()) rebuildAround(new HashSet<>(dirtyAt), 0, new HashMap<>());
         if (profile != null) mark = profile.phase(LaserProfile.Phase.BEAMS, mark);
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
