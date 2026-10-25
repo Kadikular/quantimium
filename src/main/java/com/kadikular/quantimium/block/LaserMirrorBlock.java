@@ -4,6 +4,7 @@ import com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity;
 import com.kadikular.quantimium.init.ModTags;
 import com.kadikular.quantimium.laser.BeamAnchor;
 import com.kadikular.quantimium.laser.LaserNetworks;
+import com.kadikular.quantimium.laser.MirrorPlate;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -40,13 +41,11 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * A Laser Mirror: a silver plate on a steel stand that turns light through a right angle, both ways. It
- * stands on the block it was placed against (its mount), for good. Its plate faces half way between two
- * sides at right angles, neither its mount: one set with a plain click, by hand or wrench, the other with
- * a sneaking click. Light in by either leaves by the other; light from anywhere else hits the back or
- * edge of the plate and stops. Both sides the same (a sneaking click on the side already set) and it's flat,
- * facing that side: light bounces straight back, and facing a Cavity Mirror it closes the cavity. A
- * redstone signal turns it off. (INPUT and OUTPUT name the two sides.)
+ * A Laser Mirror: a silver plate on a steel stand. Its plate faces one of the six sides, or is turned from one towards
+ * another by 22.5° or 45° (see {@link MirrorPlate}): a click on a face sets it, by hand or wrench, the middle square
+ * flat, the rings round it turned towards the side clicked. A sneaking click moves the stand. Light off its silvered
+ * side bounces as off a real mirror, as many beams as reach it, each its own; on its back or edge light stops. Flat,
+ * facing a Cavity Mirror, it closes the cavity. A redstone signal turns it off, and then it stops light.
  */
 public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com.kadikular.quantimium.item.BlockTooltip {
     public static final MapCodec<LaserMirrorBlock> CODEC = simpleCodec(LaserMirrorBlock::new);
@@ -83,29 +82,23 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         builder.add(MOUNT, INPUT, OUTPUT, POWERED);
     }
 
-    /** Whether light coming in by {@code input} may leave by {@code output} on a mirror standing on {@code mount}: at right angles, or straight back (flat). */
-    public static boolean turns(Direction mount, Direction input, Direction output) {
-        return input != mount && output != mount && (output == input || output.getAxis() != input.getAxis());
-    }
-
-    /** Whether its plate is half-silvered (a Laser Splitter): light goes straight through as well as turning. */
+    /** Whether its plate is half-silvered (a Laser Splitter): both sides reflect, and light goes straight through as well. */
     public boolean splits() {
         return false;
     }
 
-    /** Whether it's flat, facing one side: light bounces straight back. */
-    public static boolean flat(BlockState state) {
-        return state.getValue(INPUT) == state.getValue(OUTPUT);
-    }
-
-    /** An output for light in by {@code input}: away from the mount if that's at right angles, else the first that is. */
+    /** An output for light in by {@code input}, as mirrors were placed before plates turned freely. */
     private static Direction outputFor(Direction mount, Direction input) {
         if (input != mount.getOpposite()) return mount.getOpposite();
         for (Direction output : Direction.values()) if (output.getAxis() != input.getAxis() && output != mount) return output;
         return input;
     }
 
-    /** Stands on what it was placed against, takes light from the side facing you, and sends it away from its mount where it can. */
+    /**
+     * Stands on what it was placed against; its plate turns light coming from the side facing you away from its mount
+     * where it can (half way between the two). INPUT and OUTPUT only say how a new mirror's plate starts, and how one
+     * placed before plates turned freely is read (see {@link LaserMirrorBlockEntity}).
+     */
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -116,6 +109,49 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         if (input == mount) input = mount.getOpposite();
         return defaultBlockState().setValue(MOUNT, mount).setValue(INPUT, input).setValue(OUTPUT, outputFor(mount, input))
                 .setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
+    }
+
+    /**
+     * Where on a face of the mirror a click lands: in the middle square ({@code ring} 0), the ring round it (1) or the
+     * outer ring (2), and for a ring, which side of the face it's towards (split by the diagonals).
+     */
+    public record Zone(Direction face, @Nullable Direction toward, int ring) {}
+
+    /** How far from the face's middle the middle square and the inner ring reach, in blocks. */
+    private static final double SQUARE = 0.11, RING = 0.22;
+
+    /** The zone {@code hit} (on the mirror at {@code pos}) lands in. */
+    public static Zone zone(BlockPos pos, BlockHitResult hit) {
+        Direction face = hit.getDirection();
+        net.minecraft.world.phys.Vec3 local = hit.getLocation().subtract(pos.getCenter());
+        Direction best = null;
+        double far = 0;
+        for (Direction side : Direction.values()) {
+            if (side.getAxis() == face.getAxis()) continue;
+            double along = local.x * side.getStepX() + local.y * side.getStepY() + local.z * side.getStepZ();
+            if (along > far) {
+                far = along;
+                best = side;
+            }
+        }
+        int ring = far < SQUARE ? 0 : far < RING ? 1 : 2;
+        return new Zone(face, ring == 0 ? null : best, ring);
+    }
+
+    /**
+     * The plate a click on {@code zone} sets: facing that face, turned towards the side clicked by 22.5° (the inner
+     * ring) or 45° (the outer). Null on the mount's face, or for a plate facing into the mount.
+     */
+    @Nullable
+    public static MirrorPlate plateFor(Zone zone, Direction mount) {
+        if (zone.face() == mount) return null;
+        MirrorPlate plate = zone.toward() == null ? MirrorPlate.flat(zone.face()) : MirrorPlate.of(zone.face(), zone.toward(), zone.ring());
+        return plate.facesInto(mount) ? null : plate;
+    }
+
+    /** The mount a sneaking click on {@code zone} moves the stand to: the face clicked from its middle, else the side clicked towards. */
+    public static Direction mountFor(Zone zone) {
+        return zone.toward() == null ? zone.face() : zone.toward();
     }
 
     @Override
@@ -145,56 +181,46 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
                                           InteractionHand hand, BlockHitResult hit) {
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
-        return set(state, level, pos, player, hit.getDirection(), !player.isSecondaryUseActive());
+        return set(state, level, pos, player, hit);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        return set(state, level, pos, player, hit.getDirection(), !player.isSecondaryUseActive());
+        return set(state, level, pos, player, hit);
     }
 
-    /** A plain click: light comes in by the face clicked. Sneaking: it leaves by it (as a Solar Emitter's output is set). */
-    private static InteractionResult set(BlockState state, Level level, BlockPos pos, Player player, Direction face, boolean input) {
+    /**
+     * A click on a face sets the plate (see {@link #plateFor}); a sneaking click moves the stand (see {@link #mountFor}),
+     * turning the plate away from it if it would face into it.
+     */
+    private static InteractionResult set(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
+        if (!(level.getBlockEntity(pos) instanceof LaserMirrorBlockEntity mirror)) return InteractionResult.PASS;
+        Zone zone = zone(pos, hit);
         Direction mount = state.getValue(MOUNT);
-        BlockState next;
-        if (input) {
-            if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
-            // Light in by the new side turns out of the old one where it can: a flat mirror's turns to where it faced.
-            // A splitter never goes flat, whichever side is clicked first.
-            boolean splits = ((LaserMirrorBlock) state.getBlock()).splits();
-            Direction output = state.getValue(OUTPUT);
-            boolean keeps = turns(mount, face, output) && !(splits && output == face);
-            next = state.setValue(INPUT, face).setValue(OUTPUT, keeps ? output : outputFor(mount, face));
-        } else {
-            if (face == mount) return refuse(player, "message.quantimium.laser_mirror.mount");
-            if (face == state.getValue(INPUT).getOpposite()) return refuse(player, "message.quantimium.laser_mirror.straight");
-            // A Laser Splitter has no flat: its input side made its output swaps the two over.
-            if (face == state.getValue(INPUT) && ((LaserMirrorBlock) state.getBlock()).splits()) {
-                next = state.setValue(INPUT, state.getValue(OUTPUT)).setValue(OUTPUT, face);
-            } else {
-                next = state.setValue(OUTPUT, face);
+        if (player.isSecondaryUseActive()) {
+            Direction next = mountFor(zone);
+            if (next != mount) {
+                level.setBlock(pos, state.setValue(MOUNT, next), Block.UPDATE_ALL);
+                if (mirror.plate().facesInto(next)) mirror.setPlate(MirrorPlate.flat(next.getOpposite()));
+                else LaserNetworks.changed(level);
+                level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 0.8f);
             }
+            player.sendOverlayMessage(Component.translatable("message.quantimium.laser_mirror.stands",
+                    Component.translatable("direction.quantimium." + next.getSerializedName())).withStyle(ChatFormatting.AQUA));
+            return InteractionResult.SUCCESS;
         }
-        if (next != state) {
-            level.setBlock(pos, next, Block.UPDATE_ALL);
-            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, input ? 1.0f : 1.3f);
-            LaserNetworks.changed(level);
+        MirrorPlate plate = plateFor(zone, mount);
+        if (plate == null) {
+            player.sendOverlayMessage(Component.translatable("message.quantimium.laser_mirror.mount").withStyle(ChatFormatting.GRAY));
+            return InteractionResult.SUCCESS;
         }
-        String set = ((LaserMirrorBlock) state.getBlock()).splits() ? "message.quantimium.laser_splitter.set" : "message.quantimium.laser_mirror.set";
-        player.sendOverlayMessage((flat(next) ? Component.translatable("message.quantimium.laser_mirror.flat", direction(next.getValue(INPUT)))
-                : Component.translatable(set, direction(next.getValue(INPUT)), direction(next.getValue(OUTPUT))))
-                .withStyle(ChatFormatting.AQUA));
+        if (!plate.equals(mirror.plate())) {
+            mirror.setPlate(plate);
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 1.0f + 0.15f * plate.steps());
+        }
+        player.sendOverlayMessage(LaserMirrorBlockEntity.describe(plate).withStyle(ChatFormatting.AQUA));
         return InteractionResult.SUCCESS;
-    }
-
-    private static InteractionResult refuse(Player player, String key) {
-        player.sendOverlayMessage(Component.translatable(key).withStyle(ChatFormatting.GRAY));
-        return InteractionResult.SUCCESS;
-    }
-
-    private static Component direction(Direction direction) {
-        return Component.translatable("direction.quantimium." + direction.getSerializedName());
     }
 
     @Override

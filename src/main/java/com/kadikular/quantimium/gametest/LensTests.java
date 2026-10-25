@@ -806,9 +806,10 @@ public final class LensTests {
 
     // covers: laser.splitter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
-    public static void aLaserSplitterJoinsLightOutOfItsTurnSideOnly(GameTestHelper helper) {
-        // Input side west, turn side north. Harvest light in from the west, Damage light from behind the turn side (from
-        // the south): they leave north together, and nothing goes on east.
+    public static void beamsThroughALaserSplitterStayApart(GameTestHelper helper) {
+        // Harvest light from the west and Damage light from the south through one splitter (its plate between west and
+        // north): each splits on its own, the Harvest north and east, the Damage north and east too, and neither takes on
+        // the other's lens.
         splitter(helper, new BlockPos(6, Y, 8), Direction.WEST, Direction.NORTH);
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
@@ -816,45 +817,35 @@ public final class LensTests {
         mount(helper, new BlockPos(6, Y, 12), Direction.NORTH, ModItems.DAMAGE_LENS.get());
         helper.setBlock(new BlockPos(6, Y, 2), Blocks.BEDROCK);
         helper.runAfterDelay(40, () -> {
-            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(6, Y, 8)));
-            helper.assertTrue(beams.stream().anyMatch(beam -> beam.face() == Direction.NORTH
-                    && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.HARVEST)
-                    && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.DAMAGE)), "joined, leaving north: " + beams);
-            helper.assertTrue(beams.stream().noneMatch(beam -> beam.face() != Direction.NORTH), "and only north: " + beams);
+            var networks = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel());
+            var harvest = networks.beamsOf(helper.absolutePos(new BlockPos(3, Y, 8)));
+            var damage = networks.beamsOf(helper.absolutePos(new BlockPos(6, Y, 12)));
+            helper.assertValueEqual(harvest.size(), 2, "the harvest light split in two: " + harvest);
+            helper.assertTrue(harvest.stream().anyMatch(beam -> beam.lastRay() == com.kadikular.quantimium.laser.Ray.NORTH)
+                    && harvest.stream().anyMatch(beam -> beam.lastRay() == com.kadikular.quantimium.laser.Ray.EAST), "north and east: " + harvest);
+            helper.assertTrue(harvest.stream().noneMatch(beam -> com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.DAMAGE)),
+                    "no damage on the harvest light");
+            helper.assertValueEqual(damage.size(), 2, "the damage light split too: " + damage);
+            helper.assertTrue(damage.stream().noneMatch(beam -> com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.HARVEST)),
+                    "no harvest on the damage light");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
     }
 
     // covers: laser.splitter
-    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 20)
-    public static void sneakClickingASplittersInputSwapsItsSides(GameTestHelper helper) {
-        BlockPos at = new BlockPos(6, Y, 8);
-        splitter(helper, at, Direction.WEST, Direction.NORTH);
-        var player = TestSupport.player(helper, new BlockPos(4, Y, 8), net.minecraft.world.level.GameType.SURVIVAL);
-        player.setShiftKeyDown(true);
-        BlockPos abs = helper.absolutePos(at);
-        var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(-0.5, 0, 0), Direction.WEST, abs, false);
-        helper.getLevel().getBlockState(abs).useWithoutItem(helper.getLevel(), player, hit);
-        var state = helper.getLevel().getBlockState(abs);
-        helper.assertTrue(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT) == Direction.WEST
-                && state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT) == Direction.NORTH, "swapped: " + state);
-        helper.succeed();
-    }
-
-    // covers: laser.splitter
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
-    public static void aLaserSplitterStopsLightFromItsOtherSides(GameTestHelper helper) {
-        // Lit only from the east (behind its input side): nothing gets through.
+    public static void aLaserSplitterReflectsOffBothSides(GameTestHelper helper) {
+        // Its plate between west and north, lit from the east (its back): half-silvered, it turns the light south as well
+        // as letting it on west.
         splitter(helper, new BlockPos(6, Y, 8), Direction.WEST, Direction.NORTH);
         emitter(helper, new BlockPos(12, Y, 8), Direction.WEST, true);
-        helper.setBlock(new BlockPos(6, Y, 3), ModBlocks.FOLD_CORE.get());
+        helper.setBlock(new BlockPos(6, Y, 13), ModBlocks.FOLD_CORE.get());
         helper.setBlock(new BlockPos(1, Y, 8), ModBlocks.FOLD_CORE.get());
-        helper.runAfterDelay(60, () -> {
-            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(6, Y, 3), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0, "nothing north");
-            helper.assertValueEqual(helper.getBlockEntity(new BlockPos(1, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored(), 0, "nothing west");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(6, Y, 13), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0, "turned south");
+            helper.assertTrue(helper.getBlockEntity(new BlockPos(1, Y, 8), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0, "and on west");
             TestSupport.finishLasers(helper);
-            helper.succeed();
         });
     }
 
@@ -873,11 +864,13 @@ public final class LensTests {
         mount(helper, new BlockPos(10, Y, 8), Direction.WEST, ModItems.DAMAGE_LENS.get());
         helper.setBlock(new BlockPos(6, Y, 2), Blocks.BEDROCK);
         helper.runAfterDelay(40, () -> {
-            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(at));
-            helper.assertTrue(beams.stream().anyMatch(beam -> beam.face() == Direction.NORTH
-                    && com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.HARVEST)), "the Harvest light turns north: " + beams);
-            helper.assertFalse(beams.stream().anyMatch(beam -> com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.DAMAGE)),
-                    "the Damage light at its back isn't joined: " + beams);
+            var networks = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel());
+            var harvest = networks.beamsOf(helper.absolutePos(new BlockPos(3, Y, 8)));
+            var damage = networks.beamsOf(helper.absolutePos(new BlockPos(10, Y, 8)));
+            helper.assertTrue(harvest.stream().anyMatch(beam -> beam.lastRay() == com.kadikular.quantimium.laser.Ray.NORTH
+                    && !com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.DAMAGE)), "the Harvest light turns north, alone: " + harvest);
+            helper.assertTrue(damage.stream().allMatch(beam -> beam.bounces() == 0 && beam.hit() != null && beam.hit().equals(helper.absolutePos(at))),
+                    "the Damage light stops at its back: " + damage);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

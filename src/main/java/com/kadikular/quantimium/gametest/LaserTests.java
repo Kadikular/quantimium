@@ -113,13 +113,22 @@ public final class LaserTests {
 
     // covers: laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
-    public static void aMirrorOnlyTurnsThroughARightAngle(GameTestHelper helper) {
-        helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.NORTH), "west to north, on the floor");
-        helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.UP, Direction.EAST), "from above, to the east");
-        helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.EAST), "not straight on");
-        helper.assertTrue(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.WEST), "flat, straight back");
-        helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.WEST, Direction.DOWN), "not into its mount");
-        helper.assertFalse(com.kadikular.quantimium.block.LaserMirrorBlock.turns(Direction.DOWN, Direction.DOWN, Direction.NORTH), "not from its mount");
+    public static void aMirrorReflectsAsARealOneDoes(GameTestHelper helper) {
+        var east = new net.minecraft.world.phys.Vec3(1, 0, 0);
+        var turned = com.kadikular.quantimium.laser.MirrorPlate.of(Direction.WEST, Direction.NORTH, 2);
+        helper.assertValueEqual(turned.reflect(east, false), com.kadikular.quantimium.laser.Ray.NORTH, "45°: a right angle");
+        helper.assertValueEqual(com.kadikular.quantimium.laser.MirrorPlate.flat(Direction.WEST).reflect(east, false),
+                com.kadikular.quantimium.laser.Ray.WEST, "flat: straight back");
+        var half = com.kadikular.quantimium.laser.MirrorPlate.of(Direction.WEST, Direction.NORTH, 1);
+        helper.assertValueEqual(half.reflect(east, false), com.kadikular.quantimium.laser.Ray.NORTH_WEST, "22.5°: out at 45°");
+        helper.assertValueEqual(half.reflect(com.kadikular.quantimium.laser.Ray.SOUTH_EAST.unit(), false),
+                com.kadikular.quantimium.laser.Ray.WEST, "45° light off 22.5°: straight");
+        helper.assertTrue(turned.reflect(new net.minecraft.world.phys.Vec3(-1, 0, 0), false) == null, "its back stops light");
+        helper.assertValueEqual(turned.reflect(new net.minecraft.world.phys.Vec3(0, 0, -1), true),
+                com.kadikular.quantimium.laser.Ray.EAST, "a splitter's back reflects too");
+        helper.assertValueEqual(com.kadikular.quantimium.laser.MirrorPlate.ALL.size(), 42, "42 ways a plate can face");
+        helper.assertValueEqual(com.kadikular.quantimium.laser.MirrorPlate.fromSides(Direction.WEST, Direction.NORTH), turned,
+                "a mirror set the old way, west to north, faces between them");
         helper.succeed();
     }
 
@@ -466,16 +475,28 @@ public final class LaserTests {
 
     // covers: laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
-    public static void clickingANewSideOfAFlatMirrorTurnsItToWhereItFaced(GameTestHelper helper) {
+    public static void clickingAMirrorsFaceSetsItsPlate(GameTestHelper helper) {
+        // On the east face: the middle square sets it flat facing east; the inner ring above the middle, 22.5° up from
+        // east; the outer ring there, 45°. The face it stands on sets nothing; sneaking, a click moves the stand.
         BlockPos at = new BlockPos(8, Y, 8);
         helper.setBlock(at, mirror(Direction.DOWN, Direction.NORTH, Direction.NORTH));
         var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
         BlockPos pos = helper.absolutePos(at);
-        helper.getLevel().getBlockState(pos).useWithoutItem(helper.getLevel(), player,
-                new net.minecraft.world.phys.BlockHitResult(pos.getCenter(), Direction.EAST, pos, false));
-        var state = helper.getLevel().getBlockState(pos);
-        helper.assertValueEqual(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT), Direction.EAST, "in by the side clicked");
-        helper.assertValueEqual(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT), Direction.NORTH, "out where it faced");
+        var mirror = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
+        java.util.function.BiConsumer<Direction, net.minecraft.world.phys.Vec3> click = (face, offset) -> helper.getLevel().getBlockState(pos)
+                .useWithoutItem(helper.getLevel(), player, new net.minecraft.world.phys.BlockHitResult(pos.getCenter().add(offset), face, pos, false));
+        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3, 0, 0));
+        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.flat(Direction.EAST), "flat, facing east");
+        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3, 0.16, 0));
+        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 1), "22.5° up");
+        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3, 0.28, 0));
+        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "45° up");
+        click.accept(Direction.DOWN, new net.minecraft.world.phys.Vec3(0, -0.5, 0));
+        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "not into its stand");
+        player.setShiftKeyDown(true);
+        click.accept(Direction.WEST, new net.minecraft.world.phys.Vec3(-0.3, 0, 0));
+        helper.assertValueEqual(helper.getLevel().getBlockState(pos).getValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT), Direction.WEST,
+                "stood on its west now");
         helper.succeed();
     }
 
@@ -1060,8 +1081,11 @@ public final class LaserTests {
         helper.setBlock(new BlockPos(4, Y, 8), mirror(Direction.DOWN, Direction.NORTH, Direction.EAST));
         helper.setBlock(new BlockPos(10, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.WEST));
         helper.succeedWhen(() -> {
-            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(10, Y, 8)));
-            helper.assertTrue(beams.stream().anyMatch(beam -> beam.face() == Direction.WEST && beam.live()), "light leaves the flat mirror west: " + beams);
+            // The emitter's beam: south, turned east, straight back west off the flat one, and (back through the first)
+            // north into the emitter again, as light between real mirrors would.
+            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(4, Y, 2)));
+            helper.assertTrue(beams.stream().anyMatch(beam -> beam.legs().size() >= 2 && beam.legs().get(1).ray() == com.kadikular.quantimium.laser.Ray.WEST
+                    && beam.live()), "light leaves the flat mirror west: " + beams);
             TestSupport.finishLasers(helper);
         });
     }

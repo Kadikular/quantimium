@@ -11,6 +11,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -30,9 +32,27 @@ import java.util.Objects;
  *               a free line to {@code aim}, a prism's
  * @param toFace for a free line: it runs to the middle of {@code aim}'s face it goes in by ({@code face}'s opposite), a
  *               prism's link; else to {@code aim}'s middle (an Area Prism's sight lines)
+ * @param legs   the runs after each Laser Mirror it bounces off, in order: the fields above are its first run, and
+ *               {@code hit} and {@code end} what its last ends on
+ * @param fork   which of the beams a Laser Splitter forks one into this is (0 for the first)
  */
 public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, int length, @Nullable BlockPos hit, End end,
-                        long flow, boolean live, int lenses, @Nullable Ray ray, boolean toFace) {
+                        long flow, boolean live, int lenses, @Nullable Ray ray, boolean toFace, List<Leg> legs, int fork) {
+
+    /** One run after a bounce: from the mirror at {@code at}, {@code length} steps along {@code ray} before what it ends on. */
+    public record Leg(BlockPos at, Ray ray, int length) {}
+
+    /** The most mirrors one beam bounces off: light caught between mirrors fades after so many. */
+    public static final int MAX_BOUNCES = 32;
+
+    public LaserBeam {
+        legs = List.copyOf(legs);
+    }
+
+    public LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, int length, @Nullable BlockPos hit, End end,
+                     long flow, boolean live, int lenses, @Nullable Ray ray, boolean toFace) {
+        this(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace, List.of(), 0);
+    }
 
     /** A beam out of a face (its straight way), or a free line to {@code aim}'s middle. */
     public LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, int length, @Nullable BlockPos hit, End end,
@@ -64,7 +84,9 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         /** A block that stops light and takes nothing. */
         BLOCKED,
         /** Nothing within range: it faded out. */
-        OPEN
+        OPEN,
+        /** A Laser Mirror: only while it's traced, then followed on through (see {@link #follow}). */
+        MIRROR
     }
 
     /** The length an entangled beam is given: it crosses nothing, so it has no path and isn't drawn. */
@@ -87,15 +109,15 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
     }
 
     public LaserBeam withFlow(long flow) {
-        return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace);
+        return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace, legs, fork);
     }
 
     public LaserBeam withLive(boolean live) {
-        return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace);
+        return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace, legs, fork);
     }
 
     public LaserBeam withLenses(int lenses) {
-        return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace);
+        return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, ray, toFace, legs, fork);
     }
 
     private LaserBeam withRay(Ray ray) {
@@ -105,7 +127,84 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
     /** Whether it's the same run of light as {@code other}, whatever each carried. */
     public boolean sameRun(LaserBeam other) {
         return face == other.face && length == other.length && end == other.end && Objects.equals(aim, other.aim)
-                && Objects.equals(hit, other.hit) && ray == other.ray && toFace == other.toFace;
+                && Objects.equals(hit, other.hit) && ray == other.ray && toFace == other.toFace && legs.equals(other.legs)
+                && fork == other.fork;
+    }
+
+    /**
+     * {@code first} (one run, as traced) followed on through every Laser Mirror it ends on: off the plate's mirrored side
+     * it bounces, the way out the nearest of the 26 to the true reflection (light in at a prism's free angle is bent
+     * only here), and its range starts again; on the back or edge, or a mirror switched off, it stops. A Laser Splitter
+     * also lets it straight through, so one beam can become several: each is a whole beam from {@code first}'s start.
+     */
+    public static List<LaserBeam> follow(Level level, LaserBeam first, int range, int marks) {
+        List<LaserBeam> out = new ArrayList<>();
+        if (first.end != End.MIRROR) {
+            out.add(first);
+            return out;
+        }
+        bend(level, first, new ArrayList<>(), first.hit, first.travel(), range, marks, out);
+        return out;
+    }
+
+    private static void bend(Level level, LaserBeam first, List<Leg> legs, BlockPos mirror, Vec3 travel, int range, int marks,
+                             List<LaserBeam> out) {
+        BlockState state = level.getBlockState(mirror);
+        List<Ray> ways = new ArrayList<>(2);
+        if (legs.size() < MAX_BOUNCES && state.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock block
+                && !state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.POWERED)
+                && level.getBlockEntity(mirror) instanceof com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity plate) {
+            Ray turned = plate.plate().reflect(travel, block.splits());
+            if (turned != null) ways.add(turned);
+            // Half-silvered: straight on as well.
+            if (block.splits()) ways.add(Ray.nearest(travel));
+        }
+        if (ways.isEmpty()) {
+            out.add(finish(first, legs, mirror, End.BLOCKED, out.size()));
+            return;
+        }
+        for (Ray way : ways) {
+            LaserBeam run = trace(level, mirror, way, range, marks, null);
+            List<Leg> more = new ArrayList<>(legs);
+            more.add(new Leg(mirror, way, run.length));
+            // Round and round between mirrors, the same way through the same one: it fades.
+            boolean again = legs.stream().anyMatch(leg -> leg.at.equals(run.hit) && leg.ray == way);
+            if (run.end == End.MIRROR && !again) bend(level, first, more, run.hit, way.unit(), range, marks, out);
+            else out.add(finish(first, more, again ? null : run.hit, again ? End.OPEN : run.end, out.size()));
+        }
+    }
+
+    private static LaserBeam finish(LaserBeam first, List<Leg> legs, @Nullable BlockPos hit, End end, int fork) {
+        return new LaserBeam(first.from, first.face, first.aim, first.length, hit, end, 0, false, Lens.NONE, first.ray, first.toFace,
+                legs, fork);
+    }
+
+    /** Which way its first run travels: a unit vector. */
+    private Vec3 travel() {
+        if (ray != null) return ray.unit();
+        return point().subtract(from.getCenter()).normalize();
+    }
+
+    /** Where its first run ends: at the first mirror it bounces off, or on what it ends on. */
+    @Nullable
+    public BlockPos firstEnd() {
+        return legs.isEmpty() ? hit : legs.getFirst().at();
+    }
+
+    /** The way its last run travels; null for a free line that never bounced. */
+    @Nullable
+    public Ray lastRay() {
+        return legs.isEmpty() ? ray : legs.getLast().ray();
+    }
+
+    /** The way, to the nearest of the six, it's travelling as it reaches what it ends on: that block's face it comes in by is this one's opposite. */
+    public Direction arriving() {
+        return legs.isEmpty() ? face : legs.getLast().ray().face();
+    }
+
+    /** How many mirrors it bounced off: each takes a little of what it carries. */
+    public int bounces() {
+        return legs.size();
     }
 
     /**
@@ -229,6 +328,8 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         if (!level.isLoaded(pos)) return new LaserBeam(from, face, aim, length, null, End.OPEN, 0, false, Lens.NONE);
         BlockState state = level.getBlockState(pos);
         if (state.isAir()) return null;
+        // A Laser Mirror: followed on through by follow().
+        if (state.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) return new LaserBeam(from, face, aim, length, pos, End.MIRROR, 0, false, Lens.NONE);
         // Only a block with a block entity can be a laser block or take power: the rest are looked up no further.
         boolean entity = state.hasBlockEntity();
         if (entity && level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
@@ -247,7 +348,8 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
      * farmland; where a block it places goes). Only for a beam that ends on something.
      */
     public BlockPos before() {
-        if (ray != null) return ray.step(hit, -1);
+        Ray last = lastRay();
+        if (last != null) return last.step(hit, -1);
         return hit.relative(face.getOpposite());
     }
 
@@ -258,11 +360,19 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
 
     /** Every block this beam passes on its way, not counting what it ends on. */
     public java.util.List<BlockPos> path() {
+        java.util.List<BlockPos> cells = firstPath();
+        for (Leg leg : legs) for (int step = 1; step <= leg.length(); step++) cells.add(leg.ray().step(leg.at(), step));
+        return cells;
+    }
+
+    /** The blocks its first run crosses. */
+    private java.util.List<BlockPos> firstPath() {
         java.util.List<BlockPos> cells = new java.util.ArrayList<>();
         if (ray != null && !jumps()) {
             for (int step = 1; step <= length; step++) cells.add(ray.step(from, step));
             return cells;
         }
+        BlockPos firstEnd = firstEnd();
         Vec3 start = from.getCenter();
         Vec3 delta = point().subtract(start);
         int x = from.getX(), y = from.getY(), z = from.getZ();
@@ -283,7 +393,7 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
                 tMaxZ += tDeltaZ;
             }
             BlockPos pos = new BlockPos(x, y, z);
-            if (pos.equals(hit) || pos.equals(aim) || pos.getCenter().distanceTo(start) > length + 1) break;
+            if (pos.equals(firstEnd) || pos.equals(aim) || pos.getCenter().distanceTo(start) > length + 1) break;
             cells.add(pos);
         }
         return cells;
@@ -308,22 +418,50 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         return state.getCollisionShape(level, pos).isEmpty();
     }
 
-    /** Traces this beam again the same way: light from a face, or aimed at a block. */
-    public LaserBeam retrace(Level level, int range) {
-        if (jumps()) return jump(level, from, aim);
-        if (aim == null) return trace(level, from, face, range, marks());
-        return ray != null ? trace(level, from, ray, range, marks(), aim) : traceTo(level, from, aim, toFace ? face.getOpposite() : null, range, marks());
+    /** Traces this beam again the same way (light from a face, or aimed at a block), and on through its mirrors: each beam it makes. */
+    public List<LaserBeam> retrace(Level level, int range) {
+        if (jumps()) return List.of(jump(level, from, aim));
+        LaserBeam first;
+        if (aim == null) first = trace(level, from, face, range, marks());
+        else first = ray != null ? trace(level, from, ray, range, marks(), aim) : traceTo(level, from, aim, toFace ? face.getOpposite() : null, range, marks());
+        return follow(level, first, range, marks());
     }
 
     /** Whether this beam still runs as it did: every block it crosses still lets light through, and it ends on the same thing. */
     public boolean stillHolds(Level level, int range) {
-        return sameRun(retrace(level, range));
+        for (LaserBeam again : retrace(level, range)) if (sameRun(again)) return true;
+        return false;
     }
 
     /** Where the light starts and stops, block-world coordinates: from the node's side to what it ends on. */
     public Vec3[] ends() {
+        List<Vec3> points = points();
+        return new Vec3[] {points.getFirst(), points.getLast()};
+    }
+
+    /**
+     * The corners of its line, in order: where it starts, the middle of each mirror it bounces off, and where it ends.
+     * Two points for a beam that never bounced.
+     */
+    public List<Vec3> points() {
+        Vec3[] first = firstEnds();
+        if (legs.isEmpty()) return List.of(first[0], first[1]);
+        List<Vec3> points = new ArrayList<>(legs.size() + 2);
+        points.add(first[0]);
+        for (Leg leg : legs) points.add(leg.at().getCenter());
+        Leg last = legs.getLast();
+        points.add(last.at().getCenter().add(last.ray().vector().scale(last.length() + 0.5)));
+        return points;
+    }
+
+    /** Its first run's two ends: to the middle of the first mirror it bounces off, if it does. */
+    private Vec3[] firstEnds() {
         Vec3 centre = from.getCenter();
         if (jumps()) return new Vec3[] {centre, centre};
+        if (!legs.isEmpty()) {
+            Vec3 mirror = legs.getFirst().at().getCenter();
+            return new Vec3[] {centre.add(mirror.subtract(centre).normalize().scale(0.5)), mirror};
+        }
         if (ray != null) {
             // From the edge (or corner) it leaves by to the one it reaches what it ends on by: half a step each end.
             Vec3 step = ray.vector();
@@ -351,6 +489,18 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         if (lenses != Lens.NONE) tag.putInt("Lenses", lenses);
         if (ray != null && aim != null) tag.putInt("Ray", ray.ordinal());
         if (toFace) tag.putBoolean("ToFace", true);
+        if (!legs.isEmpty()) {
+            net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+            for (Leg leg : legs) {
+                CompoundTag one = new CompoundTag();
+                one.putLong("At", leg.at().asLong());
+                one.putInt("Ray", leg.ray().ordinal());
+                one.putInt("Length", leg.length());
+                list.add(one);
+            }
+            tag.put("Legs", list);
+        }
+        if (fork != 0) tag.putInt("Fork", fork);
         return tag;
     }
 
@@ -361,8 +511,14 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         BlockPos aim = tag.getLong("Aim").map(BlockPos::of).orElse(null);
         BlockPos hit = tag.getLong("Hit").map(BlockPos::of).orElse(null);
         int ray = tag.getIntOr("Ray", -1);
+        List<Leg> legs = new ArrayList<>();
+        for (net.minecraft.nbt.Tag one : tag.getListOrEmpty("Legs")) {
+            if (!(one instanceof CompoundTag leg)) continue;
+            int way = leg.getIntOr("Ray", 0);
+            legs.add(new Leg(BlockPos.of(leg.getLongOr("At", 0)), Ray.values()[Math.clamp(way, 0, Ray.values().length - 1)], leg.getIntOr("Length", 0)));
+        }
         return new LaserBeam(from, face, aim, length, hit, end, tag.getLongOr("Flow", 0), tag.getBooleanOr("Live", false),
                 tag.getIntOr("Lenses", Lens.NONE), aim == null ? Ray.of(face) : ray >= 0 && ray < Ray.values().length ? Ray.values()[ray] : null,
-                tag.getBooleanOr("ToFace", false));
+                tag.getBooleanOr("ToFace", false), legs, tag.getIntOr("Fork", 0));
     }
 }

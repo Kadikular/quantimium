@@ -2,15 +2,14 @@ package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.block.LaserMirrorBlock;
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.laser.LaserBeam;
-import com.kadikular.quantimium.laser.LaserBeamView;
 import com.kadikular.quantimium.laser.LaserNetworks;
-import com.kadikular.quantimium.laser.LaserNode;
-import com.kadikular.quantimium.laser.LaserTuning;
+import com.kadikular.quantimium.laser.MirrorPlate;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -18,165 +17,68 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.phys.Vec3;
-
-import java.util.List;
-import java.util.Set;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /**
- * A Laser Mirror's light: it turns light between its two sides, both ways, as a mirror would: what comes
- * in by one leaves by the other, refocused, so its range starts again; flat, it goes back the way it came.
- * A Laser Splitter's half-silvered plate splits light from its input side, on and turned, and joins light
- * from behind its turn side to what it turns.
- * Light from anywhere else stops on it. Off while a redstone signal reaches it.
+ * A Laser Mirror's plate: which way it faces (see {@link MirrorPlate}). Light isn't held here: a beam that reaches the
+ * mirror bounces off the plate and goes on as the same beam, with its own light, so beams crossing one mirror never mix
+ * (see {@link com.kadikular.quantimium.laser.LaserBeam#follow}). A Laser Splitter's plate is half-silvered: both sides
+ * reflect, and light goes straight through as well. Off while a redstone signal reaches it: then it stops light.
  */
-public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, LaserBeamView, com.kadikular.quantimium.flux.FluxMeterReadout {
+public class LaserMirrorBlockEntity extends BlockEntity implements com.kadikular.quantimium.flux.FluxMeterReadout {
 
-    private List<LaserBeam> shownBeams = List.of();
+    private MirrorPlate plate;
+    /** Whether the plate's been read or set: a mirror from before plates takes its from its old sides. */
+    private boolean plateKnown;
 
     public LaserMirrorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LASER_MIRROR_BE.get(), pos, state);
+        plate = MirrorPlate.fromSides(state.getValue(LaserMirrorBlock.INPUT), state.getValue(LaserMirrorBlock.OUTPUT));
     }
 
-    private Direction input() {
-        return getBlockState().getValue(LaserMirrorBlock.INPUT);
+    public MirrorPlate plate() {
+        return plate;
     }
 
-    private Direction output() {
-        return getBlockState().getValue(LaserMirrorBlock.OUTPUT);
-    }
-
-    @Override
-    public BlockPos nodePos() {
-        return worldPosition;
-    }
-
-    /** The sides light leaves by, as the network last found it arriving: what its beams are, so they're checked against it. */
-    private Set<Direction> passing = Set.of();
-
-    @Override
-    public Set<Direction> outputs() {
-        return passing;
-    }
-
-    /**
-     * A Mirror turns light between its two sides. A Laser Splitter splits light in by its input side, on and out
-     * of its turn side; light from behind its turn side passes straight through and out of it; both at once leave
-     * by the turn side only, joined. Any other light stops here. With none, where light would go.
-     */
-    @Override
-    public Set<Direction> outputsFor(Set<Direction> arriving) {
-        Direction mount = getBlockState().getValue(LaserMirrorBlock.MOUNT);
-        Set<Direction> out = java.util.EnumSet.noneOf(Direction.class);
-        if (!splits()) {
-            if (arriving.isEmpty() || arriving.contains(input().getOpposite())) out.add(output());
-            if (arriving.isEmpty() || arriving.contains(output().getOpposite())) out.add(input());
-        } else {
-            boolean in = arriving.contains(input().getOpposite()) && input() != mount;
-            boolean behind = arriving.contains(output()) && output().getOpposite() != mount;
-            if (in || behind || arriving.isEmpty()) out.add(output());
-            // Split on only while nothing joins it from behind: joined light leaves by the turn side alone.
-            if ((in && !behind) || arriving.isEmpty()) out.add(input().getOpposite());
-            out.remove(mount);
+    /** Turns the plate to {@code plate}: the light through it is worked out again. */
+    public void setPlate(MirrorPlate plate) {
+        if (plate.equals(this.plate) && plateKnown) return;
+        this.plate = plate;
+        plateKnown = true;
+        setChanged();
+        if (level != null) {
+            LaserNetworks.changed(level);
+            if (!level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
-        passing = out;
-        return out;
     }
 
-    /** Whether its plate is half-silvered: light goes straight through as well as turning. */
     private boolean splits() {
         return getBlockState().getBlock() instanceof LaserMirrorBlock mirror && mirror.splits();
     }
 
-    /**
-     * The faces light gets in by. A Mirror: its two sides. A Laser Splitter: its input side, and the face behind
-     * its turn side; not one facing its mount.
-     */
-    private Set<Direction> entries() {
-        if (!splits()) return java.util.EnumSet.of(input(), output());
-        Set<Direction> entries = java.util.EnumSet.of(input(), output().getOpposite());
-        entries.remove(getBlockState().getValue(LaserMirrorBlock.MOUNT));
-        return entries;
-    }
-
-    /** A mirror is straight still: diagonal light stops on it. */
     @Override
-    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
-        return ray.straight() && accepts(ray.face());
-    }
-
-    /** Only light coming in by one of its entries; the rest hits the back or edge of the plate. */
-    @Override
-    public boolean accepts(Direction travel) {
-        return entries().contains(travel.getOpposite());
-    }
-
-    @Override
-    public int range() {
-        return LaserTuning.RELAY_RANGE;
-    }
-
-    @Override
-    public boolean relays() {
-        return true;
-    }
-
-    @Override
-    public boolean enabled() {
-        return !getBlockState().getValue(LaserMirrorBlock.POWERED);
-    }
-
-    /** Its light leaves from the plate, not its face. */
-    @Override
-    public Vec3[] endsOf(LaserBeam beam) {
-        Vec3[] ends = beam.ends();
-        Vec3 from = getBlockState().getBlock() instanceof LaserMirrorBlock mirror ? mirror.beamPoint(getBlockState(), worldPosition) : ends[0];
-        return new Vec3[] {from, ends[1]};
-    }
-
-    @Override
-    public void showBeams(List<LaserBeam> beams) {
-        boolean same = LaserBeamView.sameLook(shownBeams, beams);
-        shownBeams = beams;
-        if (!same && level != null && !level.isClientSide()) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
-    }
-
-    @Override
-    public List<LaserBeam> syncedBeams() {
-        return shownBeams;
-    }
-
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        if (level != null && !level.isClientSide()) LaserNetworks.add(level, this);
-    }
-
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-        if (level != null) LaserNetworks.remove(level, this);
-    }
-
-    @Override
-    public void onChunkUnloaded() {
-        super.onChunkUnloaded();
-        if (level != null) LaserNetworks.remove(level, this);
+    protected void saveAdditional(ValueOutput out) {
+        super.saveAdditional(out);
+        out.putInt("Plate", plate.index());
     }
 
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
-        in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
+        int saved = in.getIntOr("Plate", -1);
+        if (saved >= 0) {
+            plate = MirrorPlate.byIndex(saved);
+            plateKnown = true;
+        } else {
+            // Set the old way: its plate faces half way between the side light came in by and the one it left by.
+            BlockState state = getBlockState();
+            plate = MirrorPlate.fromSides(state.getValue(LaserMirrorBlock.INPUT), state.getValue(LaserMirrorBlock.OUTPUT));
+        }
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = saveWithoutMetadata(registries);
-        tag.put("Beams", LaserBeamView.save(shownBeams));
-        return tag;
+        return saveWithoutMetadata(registries);
     }
 
     @Override
@@ -184,16 +86,21 @@ public class LaserMirrorBlockEntity extends BlockEntity implements LaserNode, La
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    /** Which sides are which: a Mirror's two, a Splitter's input and turn sides; what's passing. */
+    /** Which way it faces, and whether it's off. */
     @Override
-    public net.minecraft.network.chat.MutableComponent fluxMeterLine() {
-        net.minecraft.network.chat.Component in = net.minecraft.network.chat.Component.translatable("direction.quantimium." + input().getSerializedName());
-        net.minecraft.network.chat.Component out = net.minecraft.network.chat.Component.translatable("direction.quantimium." + output().getSerializedName());
-        String key = splits() ? "message.quantimium.laser_splitter.sides" : input() == output() ? "message.quantimium.laser_mirror.flat_sides"
-                : "message.quantimium.laser_mirror.sides";
-        long passing = level instanceof net.minecraft.server.level.ServerLevel server ? LaserNetworks.of(server).throughput(worldPosition) : 0;
-        Object[] values = input() == output() && !splits() ? new Object[] {in, passing} : new Object[] {in, out, passing};
-        return net.minecraft.network.chat.Component.translatable(key, values)
-                .withStyle(enabled() ? net.minecraft.ChatFormatting.AQUA : net.minecraft.ChatFormatting.GRAY);
+    public MutableComponent fluxMeterLine() {
+        MutableComponent line = describe(plate);
+        if (splits()) line = Component.translatable("message.quantimium.laser_splitter.plate", line);
+        if (getBlockState().getValue(LaserMirrorBlock.POWERED)) line.append(Component.translatable("message.quantimium.laser_mirror.off"));
+        return line.withStyle(getBlockState().getValue(LaserMirrorBlock.POWERED) ? ChatFormatting.GRAY : ChatFormatting.AQUA);
+    }
+
+    /** "Facing north", "Facing north, 22.5° towards up", "Facing between north and up". */
+    public static MutableComponent describe(MirrorPlate plate) {
+        Component face = Component.translatable("direction.quantimium." + plate.face().getSerializedName());
+        if (plate.toward() == null) return Component.translatable("message.quantimium.laser_mirror.facing", face);
+        Component toward = Component.translatable("direction.quantimium." + plate.toward().getSerializedName());
+        return plate.steps() == 1 ? Component.translatable("message.quantimium.laser_mirror.tilted", face, toward)
+                : Component.translatable("message.quantimium.laser_mirror.between", face, toward);
     }
 }

@@ -190,7 +190,7 @@ public final class LaserNetworks {
             for (LaserBeam beam : list) {
                 if (pos.equals(beam.hit()) || beam.jumps() && pos.equals(beam.aim())) {
                     crossing.add(from);
-                } else if (beam.aim() == null) {
+                } else if (beam.aim() == null && beam.legs().isEmpty()) {
                     // A straight beam: on its line, within its length.
                     int dx = pos.getX() - from.getX(), dy = pos.getY() - from.getY(), dz = pos.getZ() - from.getZ();
                     Direction face = beam.face();
@@ -199,7 +199,7 @@ public final class LaserNetworks {
                             && dx == along * face.getStepX() && dy == along * face.getStepY() && dz == along * face.getStepZ()) {
                         crossing.add(from);
                     }
-                } else if (beam.path().contains(pos)) {
+                } else if (beam.path().contains(pos) || beam.legs().stream().anyMatch(leg -> leg.at().equals(pos))) {
                     crossing.add(from);
                 }
             }
@@ -1140,13 +1140,16 @@ public final class LaserNetworks {
         Set<Direction> arriving = java.util.EnumSet.noneOf(Direction.class);
         for (BlockPos from : into.getOrDefault(node.nodePos(), List.of())) {
             for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
-                if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit()) && admits(node, beam)) arriving.add(beam.face());
+                if (beam.end() == LaserBeam.End.NODE && node.nodePos().equals(beam.hit()) && admits(node, beam)) arriving.add(beam.arriving());
             }
         }
         for (Direction face : node.outputsFor(arriving)) {
             // A face with lenses of its own reaches, and passes, as its own light does.
             Light own = node.lensesFor(face).isEmpty() ? null : faceLight(node, face);
-            traced.add(LaserBeam.trace(level, node.nodePos(), face, own == null ? range : own.reach(), own == null ? marks : own.marks()));
+            int reach = own == null ? range : own.reach();
+            int with = own == null ? marks : own.marks();
+            // On through any mirrors it meets: one beam may become several at a splitter.
+            traced.addAll(LaserBeam.follow(level, LaserBeam.trace(level, node.nodePos(), face, reach, with), reach, with));
         }
         for (BlockPos target : List.copyOf(node.targets())) {
             // A link to a block that's gone is let go.
@@ -1157,7 +1160,7 @@ public final class LaserNetworks {
             // Straight to the middle of the face it was linked by, at whatever angle, and in by that face; to a laser block's
             // focus, its middle.
             Direction inBy = level.isLoaded(target) && level.getBlockEntity(target) instanceof LaserNode ? null : node.linkFace(target);
-            traced.add(LaserBeam.traceTo(level, node.nodePos(), target, inBy, range, marks));
+            traced.addAll(LaserBeam.follow(level, LaserBeam.traceTo(level, node.nodePos(), target, inBy, range, marks), range, marks));
         }
         // And to each Entangled Mirror drawing on it, at once.
         for (BlockPos mirror : drawing(node.nodePos())) traced.add(LaserBeam.jump(level, node.nodePos(), mirror));
@@ -1170,7 +1173,8 @@ public final class LaserNetworks {
      */
     private static boolean admits(LaserNode node, LaserBeam beam) {
         if (beam.jumps()) return node.entangledFace() != null;
-        return beam.ray() != null ? node.accepts(beam.ray()) : node.accepts(beam.face());
+        Ray last = beam.lastRay();
+        return last != null ? node.accepts(last) : node.accepts(beam.face());
     }
 
     /**
@@ -1234,6 +1238,8 @@ public final class LaserNetworks {
             List<LaserBeam> out = beams.getOrDefault(visit.node(), List.of());
             for (int i = 0; i < out.size(); i++) {
                 LaserBeam beam = out.get(i);
+                // What its bounces off mirrors leave of what it carries.
+                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * kept(beam));
                 List<Hop> path = new ArrayList<>(visit.path());
                 LaserNode from = relay ? nodes.get(visit.node()) : null;
                 path.add(new Hop(visit.node(), i, from, carried.get(visit.node()),
@@ -1247,29 +1253,29 @@ public final class LaserNetworks {
                         if (!stream.payers().contains(source.nodePos())) continue;
                         LensAction action = actions.get(new LensAction.Key(visit.node(), i, stream.action()));
                         if (action != null) {
-                            route(sinks, action.key(), beam.hit(), beam.face(), null, action, source.nodePos(), index, path, visit.efficiency());
+                            route(sinks, action.key(), beam.hit(), beam.arriving(), null, action, source.nodePos(), index, path, through.efficiency());
                         }
                     }
                 }
                 if (beam.end() == LaserBeam.End.SINK) {
-                    route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
+                    route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                 } else if (beam.end() == LaserBeam.End.NODE) {
                     LaserNode next = nodes.get(beam.hit());
                     // A cavity takes light from emitters, never from another cavity.
                     if (next != null && next.buffers() && !source.buffers()) {
-                        route(sinks, beam.hit(), beam.face().getOpposite(), next, source.nodePos(), index, path, visit.efficiency());
+                        route(sinks, beam.hit(), beam.arriving().getOpposite(), next, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that light charges (a Logistics Controller) is a block that takes power too, though never from itself.
                     if (next != null && next.chargedByLight() && next != source) {
-                        route(sinks, beam.hit(), beam.face().getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
+                        route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that hands light on to a machine beside it (a Receptacle powering what it's on): that machine.
                     net.minecraft.core.Direction feeds = next == null || next == source ? null : next.feeds();
                     if (feeds != null) {
-                        route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, visit.efficiency());
+                        route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {
-                        queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, visit.efficiency() * (1.0 - next.tax())));
+                        queue.add(new Visit(beam.hit(), List.copyOf(path), visit.relays() + 1, through.efficiency() * (1.0 - next.tax())));
                     }
                 }
             }
@@ -1313,7 +1319,9 @@ public final class LaserNetworks {
             }
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
                 List<LaserBeam> was = beams.get(node.nodePos());
-                if (was == null || was.size() != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) {
+                // A splitter forks a beam into more: only each first is counted against the node's ways out.
+                long firsts = was == null ? 0 : was.stream().filter(beam -> beam.fork() == 0).count();
+                if (was == null || firsts != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) {
                     dirtyAt.add(node.nodePos());
                     continue;
                 }
@@ -1643,8 +1651,20 @@ public final class LaserNetworks {
                 hop.lost()[0] += Math.round(tax);
                 power -= tax;
             }
+            // What the mirrors it bounces off take, lost where the beam starts.
+            List<LaserBeam> out = beams.get(hop.node());
+            if (out != null && hop.beam() < out.size() && out.get(hop.beam()).bounces() > 0) {
+                double lostToMirrors = power * (1.0 - kept(out.get(hop.beam())));
+                lost.computeIfAbsent(hop.node(), key -> new long[1])[0] += Math.round(lostToMirrors);
+                power -= lostToMirrors;
+            }
             if (hop.beam() < hop.carried().length) hop.carried()[hop.beam()] += Math.round(power);
         }
+    }
+
+    /** What's left of a beam's power after the mirrors it bounces off. */
+    private static double kept(LaserBeam beam) {
+        return beam.bounces() == 0 ? 1.0 : Math.pow(1.0 - LaserTuning.MIRROR_LOSS, beam.bounces());
     }
 
     /** Once a second: the relays' losses into the field, and each beam's brightness to its node. */

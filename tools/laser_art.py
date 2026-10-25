@@ -489,51 +489,27 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
             face["uv"] = [3, 6, 4, 7]
         return notch
 
-    if splits:
-        # Each way round: the dot shows which of the two sides light goes in by.
-        for a in DIRS:
-            for b in DIRS:
-                if "down" in (a, b) or a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0:
-                    continue
-                normal = tuple(p + q for p, q in zip(DIRS[a], DIRS[b]))
-                face_plate = plate(normal)
-                write(f"{name}_{a}_to_{b}", stand(normal) + [face_plate, focus(face_plate), marker(a, b)])
-    else:
-        for key, normal in floor_normals.items():
-            write(f"{name}_{key}", stand(normal) + [plate(normal)])
+    # In the world, the block draws only its stand; the plate (and the hub behind it) are drawn at their true angle by
+    # LaserMirrorBER, since a plate turns in 22.5 degree steps no block model can.
+    write(f"{name}_stand", [box([2, 0, 2], [14, 1, 14], "down"), box([4, 1, 4], [12, 2, 12]), box([7, 2, 7], [9, 6, 9])])
     # Facing north, the way an inventory icon looks at it.
     item_normal = tuple(p + q for p, q in zip(DIRS["north"], DIRS["up"])) if splits else DIRS["north"]
     item_plate = plate(item_normal)
-    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate), marker("north", "up")] if splits else []))
+    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate)] if splits else []))
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
-    names = {v: k for k, v in DIRS.items()}
-
-    def back_to_floor(direction, rx, ry):
-        # The direction on a floor mirror that turning by (rx, ry) takes to {direction}.
-        for name, vector in DIRS.items():
-            if names[_rotated(vector, rx, ry)] == direction:
-                return name
-        raise AssertionError(direction)
-
-    parts = []
-    for mount, (rx, ry) in mounts.items():
-        for a in DIRS:
-            for b in DIRS:
-                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0) or (splits and a == b):
-                    continue
-                if splits:
-                    key = f"{back_to_floor(a, rx, ry)}_to_{back_to_floor(b, rx, ry)}"
-                else:
-                    key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
-                    assert key in floor_normals, (mount, a, b, key)
-                parts.append({"when": {"mount": mount, "input": a, "output": b},
-                              "apply": dict({"model": f"quantimium:block/{name}_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
+    parts = [{"when": {"mount": mount}, "apply": dict({"model": f"quantimium:block/{name}_stand"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})}
+             for mount, (rx, ry) in mounts.items()]
     with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
     with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
-    for stale in ("laser_mirror_stand", "laser_mirror_plate", "laser_mirror_plate_upright", "laser_mirror_plate_flat"):
+    # The plate models of before, one for each way it could face.
+    for model in os.listdir(MODELS):
+        if model.startswith(name + "_") and model not in (f"{name}_stand.json", f"{name}_item.json") \
+                and not model.startswith("laser_mirror_steel"):
+            os.remove(os.path.join(MODELS, model))
+    for stale in ("laser_mirror_plate", "laser_mirror_plate_upright", "laser_mirror_plate_flat"):
         path = os.path.join(MODELS, f"{stale}.json")
         if os.path.exists(path):
             os.remove(path)

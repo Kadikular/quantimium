@@ -65,6 +65,11 @@ public enum Ray {
         return from.offset(dx * steps, dy * steps, dz * steps);
     }
 
+    /** Which way it goes, as a unit vector. */
+    public Vec3 unit() {
+        return new Vec3(dx / length, dy / length, dz / length);
+    }
+
     /** The step as a vector: block centre to the next block's centre. */
     public Vec3 vector() {
         return new Vec3(dx, dy, dz);

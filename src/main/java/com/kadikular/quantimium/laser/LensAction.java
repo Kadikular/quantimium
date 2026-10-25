@@ -571,8 +571,8 @@ public final class LensAction {
         BlockPos before = beam.before();
         BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
         BlockState state = level.getBlockState(pos);
-        var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(beam.face().getOpposite(), 0.5),
-                beam.face().getOpposite(), pos, false);
+        var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(beam.arriving().getOpposite(), 0.5),
+                beam.arriving().getOpposite(), pos, false);
         net.minecraft.world.InteractionResult result = hand.gameMode.useItemOn(hand, level, held, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
         return result.consumesAction();
     }
@@ -709,8 +709,8 @@ public final class LensAction {
         BlockPos at = handSpot();
         hand.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         if (beam == null) return hand;
-        hand.setYRot(beam.face().toYRot());
-        hand.setXRot(beam.face() == net.minecraft.core.Direction.UP ? -90 : beam.face() == net.minecraft.core.Direction.DOWN ? 90 : 0);
+        hand.setYRot(beam.arriving().toYRot());
+        hand.setXRot(beam.arriving() == net.minecraft.core.Direction.UP ? -90 : beam.arriving() == net.minecraft.core.Direction.DOWN ? 90 : 0);
         return hand;
     }
 
@@ -746,7 +746,7 @@ public final class LensAction {
         }
         BlockPos at = area == null ? inventoryAtEnd(level) : nextAreaInventory(level);
         if (at == null) return;
-        net.minecraft.core.Direction side = area == null ? beam.face().getOpposite() : null;
+        net.minecraft.core.Direction side = area == null ? beam.arriving().getOpposite() : null;
         net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(
                 level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
         if (handler == null) return;
@@ -854,7 +854,7 @@ public final class LensAction {
     @Nullable
     private BlockPos inventoryAtEnd(ServerLevel level) {
         if (beam == null || beam.hit() == null || beam.end() == LaserBeam.End.OPEN) return null;
-        return level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, beam.hit(), beam.face().getOpposite()) == null
+        return level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, beam.hit(), beam.arriving().getOpposite()) == null
                 ? null : beam.hit();
     }
 
@@ -931,7 +931,7 @@ public final class LensAction {
         if (beam == null || beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return null;
         BlockPos spot = beam.before();
         if (!level.getBlockState(spot).canBeReplaced()) return null;
-        return new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(beam.hit()), beam.face().getOpposite(), beam.hit(), false);
+        return new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(beam.hit()), beam.arriving().getOpposite(), beam.hit(), false);
     }
 
     /** Whether {@code stack} would go in where {@code at} says, and the stream's filter lets it. */
@@ -1674,17 +1674,23 @@ public final class LensAction {
     /** Round the beam, or the area, to look for things in it. */
     private AABB box() {
         if (area != null) return AABB.of(area);
-        Vec3[] ends = beam.ends();
-        return new AABB(ends[0], ends[1]).inflate(1.0);
+        AABB box = null;
+        for (Vec3 point : beam.points()) box = box == null ? new AABB(point, point) : box.minmax(new AABB(point, point));
+        return box.inflate(1.0);
     }
 
     /** Whether a box comes within {@code slack} of the beam's line, or for an area, is in it. */
     private boolean onBeam(AABB box, double slack) {
         if (area != null) return box.intersects(AABB.of(area)) && within.test(BlockPos.containing(box.getCenter())) && sightLevel != null
                 && inSight(sightLevel, BlockPos.containing(box.getCenter()));
-        Vec3[] ends = beam.ends();
+        // Along every run of it, between the mirrors it bounces off.
+        List<Vec3> points = beam.points();
         AABB near = box.inflate(slack);
-        return near.clip(ends[0], ends[1]).isPresent() || near.contains(ends[0]) || near.contains(ends[1]);
+        for (int i = 1; i < points.size(); i++) {
+            Vec3 a = points.get(i - 1), b = points.get(i);
+            if (near.clip(a, b).isPresent() || near.contains(a) || near.contains(b)) return true;
+        }
+        return false;
     }
 
     /** What this stream is and who pays: for the Spectroscope. */

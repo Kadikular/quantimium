@@ -71,9 +71,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             if (bright == 0) {
                 // Live but carrying nothing: a dim line, checking. Dark, it shows only while aiming.
                 if (beam.live()) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.04f, tint[0], tint[1], tint[2], 0.10f);
-                // A mirror's way out is no preview: only light it's given shows.
-                else if (aiming && !(view instanceof com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity))
-                    BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
+                else if (aiming) BeamRibbon.draw(halo, pose, Vec3.ZERO, line(view, beam, camera), 0.03f, 0.55f, 0.6f, 0.75f, 0.18f);
                 continue;
             }
             Vec3[] line = line(view, beam, camera);
@@ -140,11 +138,18 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
         if (beam.hit() != null && level != null) {
             var state = level.getBlockState(beam.hit());
             // Light it won't take (into a base, onto a plate's back) stops at its side.
+            var last = beam.lastRay();
             boolean refused = level.getBlockEntity(beam.hit()) instanceof com.kadikular.quantimium.laser.LaserNode node
-                    && !(beam.ray() != null ? node.accepts(beam.ray()) : node.accepts(beam.face()));
+                    && !(last != null ? node.accepts(last) : node.accepts(beam.face()));
             if (!refused && state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
         }
-        return new Vec3[] {ends[0].subtract(camera), end.subtract(camera)};
+        // Bent by mirrors: through the middle of each it bounces off.
+        java.util.List<Vec3> points = beam.points();
+        Vec3[] line = new Vec3[points.size()];
+        line[0] = ends[0].subtract(camera);
+        for (int i = 1; i < points.size() - 1; i++) line[i] = points.get(i).subtract(camera);
+        line[line.length - 1] = end.subtract(camera);
+        return line;
     }
 
     /** Beams reach as far as they go. */
@@ -152,6 +157,7 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
     public AABB getRenderBoundingBox(T node) {
         AABB box = new AABB(node.getBlockPos());
         for (LaserBeam beam : node.syncedBeams()) {
+            for (Vec3 point : beam.points()) box = box.minmax(new AABB(point, point));
             Vec3[] ends = node.endsOf(beam);
             box = box.minmax(new AABB(ends[1], ends[1]));
         }

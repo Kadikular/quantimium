@@ -10,6 +10,8 @@ public final class LaserTuning {
 
     /** What each relay a beam passes takes of what passes, as flux. */
     public static final double HOP_TAX = 0.01;
+    /** What each bounce off a Laser Mirror (or Splitter) takes of what a beam carries: half a relay's tax. */
+    public static final double MIRROR_LOSS = 0.005;
     /** What an Entangled Mirror takes of what it sends to its partner, as flux: a few relays' worth, for any distance. */
     public static final double JUMP_TAX = 0.05;
     /** How far a mirror's light reaches before it needs refocusing again. */
