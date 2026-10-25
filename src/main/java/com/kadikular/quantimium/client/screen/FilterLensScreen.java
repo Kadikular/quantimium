@@ -61,6 +61,12 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
         Tab allow = Tab.glyph(() -> menu.filter().allows(menu.part()) ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(FilterLensMenu.BUTTON_ALLOW),
                 () -> List.of(Component.translatable(menu.filter().allows(menu.part()) ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
                         hint("gui.quantimium.tab.switch")));
+        if (menu.voidLens()) {
+            return List.of(allow,
+                    Tab.glyph(() -> menu.voidsAll() ? GuiIcon.VOID : GuiIcon.KEEP, () -> press(FilterLensMenu.BUTTON_VOID_ALL),
+                            () -> List.of(Component.translatable(menu.voidsAll() ? "item.quantimium.void_lens.all" : "item.quantimium.void_lens.excess"),
+                                    hint("gui.quantimium.tab.switch"))));
+        }
         if (entities()) {
             return List.of(
                     allow,
@@ -103,7 +109,10 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
     }
 
     private void press(int button) {
-        if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
+        if (minecraft == null || minecraft.gameMode == null || minecraft.player == null) return;
+        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
+        // Shown at once: a lens in hand isn't sent back while this is open.
+        menu.clickMenuButton(minecraft.player, button);
     }
 
     @Override

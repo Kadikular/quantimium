@@ -48,7 +48,7 @@ public class VoidLensItem extends LensItem implements LensWithSettings {
 
     @Override
     public AbstractContainerMenu menu(int containerId, Inventory inventory, LensHolder holder) {
-        return new LensSettingsMenu(containerId, inventory, holder);
+        return new com.kadikular.quantimium.menu.FilterLensMenu(containerId, inventory, holder);
     }
 
     @Override
@@ -56,5 +56,11 @@ public class VoidLensItem extends LensItem implements LensWithSettings {
         super.appendHoverText(stack, context, display, tooltip, flag);
         tooltip.accept(Component.translatable(voidsAll(stack) ? "item.quantimium.void_lens.all" : "item.quantimium.void_lens.excess")
                 .withStyle(ChatFormatting.AQUA));
+        var filter = stack.get(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get());
+        long listed = filter == null ? 0 : filter.entries(com.kadikular.quantimium.laser.LensFilter.ITEMS).stream().filter(entry -> !entry.isEmpty()).count();
+        if (listed > 0) {
+            tooltip.accept(Component.translatable(filter.allows(com.kadikular.quantimium.laser.LensFilter.ITEMS) ? "item.quantimium.filter_lens.allows"
+                    : "item.quantimium.filter_lens.denies", listed).withStyle(ChatFormatting.AQUA));
+        }
     }
 }

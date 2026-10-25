@@ -30,6 +30,8 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     public static final int BUTTON_KEEP_FEWER_TEN = 6;
     /** Toggling a kind of living thing: this plus {@link LensFilter#HOSTILE}, {@link LensFilter#ANIMALS} or {@link LensFilter#PLAYERS}. */
     public static final int BUTTON_KIND = 8;
+    /** A Void Lens: void all, or only what won't fit. */
+    public static final int BUTTON_VOID_ALL = 20;
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 35;
     public static final int FILTER_END = LensFilter.SLOTS;
@@ -38,6 +40,8 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     /** After a change: a mount's light changes with its lens. */
     private final Runnable changed;
     private final java.util.function.Predicate<Player> valid;
+    /** On the client a change only shows at once: the server's is what's kept. */
+    private final boolean client;
     /** What the slots show; the lens itself holds the truth. */
     private final SimpleContainer shown = new SimpleContainer(LensFilter.SLOTS);
 
@@ -50,6 +54,7 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
         this.lens = holder.lens();
         this.changed = holder.changed();
         this.valid = holder.valid();
+        this.client = playerInv.player.level().isClientSide();
         int heldSlot = holder.heldSlot();
         for (int i = 0; i < LensFilter.SLOTS; i++) {
             addSlot(new Slot(shown, i, FILTER_X + i * 18, FILTER_Y) {
@@ -95,11 +100,22 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     }
 
     private void set(LensFilter filter) {
-        if (lens().getItem() instanceof FilterLensItem) {
+        // A Void Lens keeps a list too: what it destroys.
+        if (lens().getItem() instanceof FilterLensItem || voidLens()) {
             lens().set(ModDataComponents.LENS_FILTER.get(), filter);
-            changed.run();
+            if (!client) changed.run();
         }
         refresh();
+    }
+
+    /** Whether it's a Void Lens being set: its list, and void all or only what won't fit. */
+    public boolean voidLens() {
+        return lens().getItem() instanceof com.kadikular.quantimium.item.VoidLensItem;
+    }
+
+    /** For a Void Lens: whether it voids all it frees (that its list lets), not only what won't fit. */
+    public boolean voidsAll() {
+        return com.kadikular.quantimium.item.VoidLensItem.voidsAll(lens());
     }
 
     private void refresh() {
@@ -129,7 +145,10 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
     public boolean clickMenuButton(Player who, int id) {
         LensFilter filter = filter();
         int part = part();
-        if (id == BUTTON_ALLOW) set(filter.withAllow(part, !filter.allows(part)));
+        if (id == BUTTON_VOID_ALL && voidLens()) {
+            com.kadikular.quantimium.item.VoidLensItem.toggle(lens());
+            if (!client) changed.run();
+        } else if (id == BUTTON_ALLOW) set(filter.withAllow(part, !filter.allows(part)));
         else if (id == BUTTON_RIPE && part == LensFilter.BLOCKS) set(filter.withRipe(!filter.ripe()));
         else if (id == BUTTON_YOUNG && part == LensFilter.ENTITIES) set(filter.withSpareYoung(!filter.spareYoung()));
         else if (id == BUTTON_KEEP_MORE && part == LensFilter.ENTITIES) set(filter.withKeep(filter.keep() + 1));

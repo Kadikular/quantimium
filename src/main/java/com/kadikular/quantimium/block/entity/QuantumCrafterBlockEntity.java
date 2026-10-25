@@ -1151,6 +1151,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
         // Drawing on another network as well, it watches its links: that one's changes don't reach this one's table.
         for (var linked : linkedNetworks()) if (linked != network) return false;
+        // So with a Tesseract to a plain chest (or another Crafter): a hand in that chest is nothing the network sees.
+        if (level != null) {
+            for (int slot = 0; slot < INPUT_SLOTS; slot++) {
+                ItemStack link = inventory.getStackInSlot(slot);
+                if (!EntangledLinks.isLink(link)) continue;
+                GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
+                if (bound == null || !level.isLoaded(bound.pos())
+                        || !(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity)) return false;
+            }
+        }
         for (var member : network.members()) if (member.maker() == this) return true;
         feeder = null;
         return false;
@@ -1397,6 +1407,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         updateStatusFromPreview();
         clientSyncDirty = true;
         setChanged();
+        // A network it makes for counts what it could make: worked out again, or it hands back the old.
+        if (feeder != null) feeder.makerChanged();
     }
 
     /**

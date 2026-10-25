@@ -19,8 +19,11 @@
   (Acceleration, Freezing and the rest) didn't start working.
 - **Fixed:** Harvest with Pickup could cut a crop when there was room for some of its seeds but not all, dropping the
   rest: it now drops exactly what it found room for.
-- **Fixed:** the Void Lens's setting showed its old mode till the screen was closed; it now just says "Void all" or
-  "Void excess".
+- **The Void Lens has a list**: its screen is the Item Filter Lens's (nine entries, allow or deny) with a tab for void
+  all or excess. Listed, it destroys only those (or all but those): seeds listed with void excess, a wheat farm keeps
+  every wheat and destroys the seeds it has no room for.
+- **Light goes through water** (and waterlogged blocks it would go through dry); lava still stops it. A Freezing beam
+  freezes the first water on its way; an Interact beam's bucket fills from the first source on its way.
 - **Fixed:** a Quantum Crafter reading a chest through a Tesseract kept showing what it could make before the chest
   was emptied (or refilled) by hand, till its Tesseract was replaced.
 - **The Spectroscope says what a Harvest beam is doing**: cutting (and how far), nothing to cut, or no room for what

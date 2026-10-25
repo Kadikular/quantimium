@@ -429,6 +429,29 @@ public final class CrafterTests {
         }));
     }
 
+    // covers: crafter.tesseract
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_tesseract", timeoutTicks = 200)
+    public static void aLinkedChestOfCoalOreTwoStacksTakenOut(GameTestHelper helper) {
+        BlockPos chestPos = new BlockPos(1, 2, 1);
+        ChestBlockEntity chest = chest(helper, chestPos, new ItemStack(Items.COAL_ORE, 64));
+        for (int slot = 1; slot < 4; slot++) chest.setItem(slot, new ItemStack(Items.COAL_ORE, 64));
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
+        grid(crafter, link(helper, chestPos, Blocks.CHEST));
+        helper.runAfterDelay(30, () -> {
+            ResolvedCraft smelt = craftOf(crafter, Items.COAL);
+            helper.assertTrue(smelt != null && smelt.availableOutputCount(0) == 256, "256 to start: " + (smelt == null ? null : smelt.availableOutputCount(0)));
+            chest.setItem(2, ItemStack.EMPTY);
+            chest.setItem(3, ItemStack.EMPTY);
+        });
+        helper.runAfterDelay(31, () -> helper.succeedWhen(() -> {
+            ResolvedCraft smelt = craftOf(crafter, Items.COAL);
+            helper.assertTrue(smelt != null && smelt.availableOutputCount(0) == 128, "128 left: " + (smelt == null ? null : smelt.availableOutputCount(0)));
+        }));
+        helper.runAfterDelay(100, () -> {
+            for (int slot = 0; slot < 3; slot++) chest.setItem(slot, new ItemStack(Items.COAL_ORE, 64));
+        });
+    }
+
     // covers: crafter.entangled_loop
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_loop", timeoutTicks = 80)
     public static void crafterLinkedInARingStop(GameTestHelper helper) {

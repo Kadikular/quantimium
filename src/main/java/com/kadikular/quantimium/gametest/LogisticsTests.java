@@ -855,6 +855,35 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: crafter.tesseract, laser.logistics.maker
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 300)
+    public static void aNetworksCrafterFollowsAChestItReadsThroughATesseract(GameTestHelper helper) {
+        // A furnace Crafter making for the network, reading a plain chest of raw iron through a Tesseract: two stacks
+        // taken out of the chest by hand show in what it could make, though the network never saw the chest.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.FURNACE, false, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        BlockPos chestPos = new BlockPos(6, Y - 1, 12);
+        helper.setBlock(chestPos, Blocks.CHEST);
+        var chest = helper.getBlockEntity(chestPos, net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        for (int slot = 0; slot < 4; slot++) chest.setItem(slot, new ItemStack(Items.RAW_IRON, 64));
+        crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, chestPos, Blocks.CHEST));
+        java.util.function.LongSupplier makes = () -> crafter.getPreview().stream()
+                .filter(craft -> craft.primaryOutput().is(Items.IRON_INGOT)).mapToLong(craft -> craft.availableOutputCount(0)).max().orElse(-1);
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(makes.getAsLong(), 256L, "all four stacks to start");
+            helper.assertValueEqual(take(helper, Items.IRON_INGOT, 300, false), 256, "the network offers what it makes");
+            chest.setItem(0, ItemStack.EMPTY);
+            chest.setItem(1, ItemStack.EMPTY);
+        });
+        helper.runAfterDelay(81, () -> helper.succeedWhen(() -> {
+            com.kadikular.quantimium.work.WorkQueue.drain();
+            helper.assertValueEqual(makes.getAsLong(), 128L, "two stacks left");
+            helper.assertValueEqual(take(helper, Items.IRON_INGOT, 300, false), 128, "and the network offers that");
+        }));
+    }
+
     /**
      * A Crafter at {@code x} under the controller's light, making with {@code catalyst}: drawing on the network (a
      * Tesseract bound to the Logistics Materialiser at {@link #MATERIALISER}) if {@code draws}, offering what it can

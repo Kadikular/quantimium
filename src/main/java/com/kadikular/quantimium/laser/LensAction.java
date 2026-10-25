@@ -360,7 +360,16 @@ public final class LensAction {
         }
         want = Math.max(0, freezeWanted() - charged);
         if (area == null) {
-            if (beam != null && beam.hit() != null) freezeBlock(level, networks, beam.hit());
+            if (beam == null) return;
+            // Light goes through water: it freezes the first it meets, then (ice stopping it) the next beyond.
+            for (BlockPos pos : beam.path()) {
+                BlockState state = level.getBlockState(pos);
+                if (state.is(net.minecraft.world.level.block.Blocks.WATER) && state.getFluidState().isSource()) {
+                    freezeBlock(level, networks, pos);
+                    return;
+                }
+            }
+            if (beam.hit() != null) freezeBlock(level, networks, beam.hit());
             return;
         }
         for (int i = 0; i < LaserTuning.FREEZE_AREA_BLOCKS * stream.pace(); i++) {
@@ -542,18 +551,25 @@ public final class LensAction {
         if (targets != LensUse.BLOCKS && !held.isEmpty() && useOnLiving(level, hand)) return true;
         if (targets == LensUse.ENTITIES) return false;
         if (area != null) return useInArea(level, hand, held);
+        // An empty bucket fills from the first fluid source on the beam's way (light goes through water), or the one it
+        // ends on.
+        if (held.is(Items.BUCKET)) {
+            List<BlockPos> along = new ArrayList<>(beam.path());
+            if (beam.hit() != null) along.add(beam.hit());
+            for (BlockPos at : along) {
+                BlockState there = level.getBlockState(at);
+                if (!(there.getBlock() instanceof net.minecraft.world.level.block.BucketPickup pickup) || !there.getFluidState().isSource()) continue;
+                ItemStack filled = pickup.pickupBlock(hand, level, at, there);
+                if (filled.isEmpty()) continue;
+                hand.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, filled);
+                return true;
+            }
+        }
         if (beam.hit() == null) return false;
         // Something light passes, just before the end (a lever, a button, a crop), is what it uses; else what it ends on.
         BlockPos before = beam.hit().relative(beam.face().getOpposite());
         BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
         BlockState state = level.getBlockState(pos);
-        // An empty bucket fills from a fluid's source.
-        if (held.is(Items.BUCKET) && state.getBlock() instanceof net.minecraft.world.level.block.BucketPickup pickup && !state.getFluidState().isEmpty()) {
-            ItemStack filled = pickup.pickupBlock(hand, level, pos, state);
-            if (filled.isEmpty()) return false;
-            hand.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, filled);
-            return true;
-        }
         var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(beam.face().getOpposite(), 0.5),
                 beam.face().getOpposite(), pos, false);
         net.minecraft.world.InteractionResult result = hand.gameMode.useItemOn(hand, level, held, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
@@ -1196,12 +1212,12 @@ public final class LensAction {
      * and filters that let it in. With Pickup, nothing is cut that would be left lying.
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean fresh) {
-        // With Void there's always room: what won't fit is destroyed.
-        if (stream.has(Lens.VOID)) return true;
-        // All of it at once: two stacks of seeds each fitting alone needn't both fit.
+        // All of it at once: two stacks of seeds each fitting alone needn't both fit. What a Void lens destroys when it
+        // won't fit needs no room.
         List<ItemStack> carried = new ArrayList<>();
         for (ItemStack drop : likelyDrops(level, pos)) {
             for (ItemStack stack : processed(level, drop)) {
+                if (stream.voids(stack)) continue;
                 boolean merged = false;
                 for (ItemStack had : carried) {
                     if (ItemStack.isSameItemSameComponents(had, stack)) {
@@ -1280,20 +1296,19 @@ public final class LensAction {
                 out = List.of(drop);
                 smelt = 0;
             }
+            // Voiding all, what its list lets is gone, never carried.
+            if (stream.voidsAll()) out = out.stream().filter(stack -> !stream.voids(stack)).toList();
+            if (out.isEmpty()) continue;
             List<ItemStack> left = out;
-            boolean voids = stream.has(Lens.VOID);
-            // Voiding all, nothing is carried: it's all gone.
-            if (stream.voidsAll()) continue;
-            if (pickup && (voids || out.stream().allMatch(stack -> networks.roomFor(collectors, stack)))
+            if (pickup && (out.stream().allMatch(stack -> stream.voids(stack) || networks.roomFor(collectors, stack)))
                     && networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + smelt)) {
                 left = out.stream().map(stack -> networks.collect(collectors, stack)).toList();
             } else if (smelt > 0) {
                 networks.pay(this, smelt);
             }
-            // With Void, what no port took is gone.
-            if (voids) continue;
             for (ItemStack stack : left) {
-                if (stack.isEmpty()) continue;
+                // What no port took, a Void lens's list letting it, is gone.
+                if (stack.isEmpty() || stream.voids(stack)) continue;
                 // Cut on the mirror's side, it falls there: only the mirror sees it, or can take it.
                 if (mirrored()) com.kadikular.quantimium.event.MirrorPhaseInteractions.dropInMirror(level, pos, stack);
                 else setDown(level, pos, stack);
@@ -1423,9 +1438,9 @@ public final class LensAction {
         ItemStack stack = item.getItem();
         if (filtered && stream.filter() != null && !stream.filter().lets(stack)) return;
         ServerLevel level = (ServerLevel) item.level();
-        boolean voids = stream.has(Lens.VOID);
-        // Voiding all, or Void with nowhere to carry it: destroyed where it lies, for nothing.
-        if (stream.voidsAll() || voids && collectors.isEmpty()) {
+        boolean voids = stream.voids(stack);
+        // Voiding all, or Void with nowhere to carry it: destroyed where it lies, for nothing (if its list lets it).
+        if (voids && (stream.voidsAll() || collectors.isEmpty())) {
             item.discard();
             return;
         }

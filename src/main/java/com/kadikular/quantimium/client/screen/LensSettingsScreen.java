@@ -4,7 +4,6 @@ import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.item.InteractLensItem;
-import com.kadikular.quantimium.item.VoidLensItem;
 import com.kadikular.quantimium.menu.LensSettingsMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A lens's few switches: an Interact lens's use or hit and what it works on, a Void lens's mode; the switches on the
+ * An Interact lens's few switches: whether it uses or hits, and what it works on; the switches on the
  * left rail, what they're set to written on the panel. Layout: tools/gui_panels.py lens_settings.
  */
 public class LensSettingsScreen extends QuantumMachineScreen<LensSettingsMenu> {
@@ -50,11 +49,6 @@ public class LensSettingsScreen extends QuantumMachineScreen<LensSettingsMenu> {
                     }, () -> press(LensSettingsMenu.BUTTON_TARGETS),
                     () -> List.of(InteractLensItem.describe(menu.lens()).get(1), hint("gui.quantimium.tab.cycle"))));
         }
-        if (lens.getItem() instanceof VoidLensItem) {
-            tabs.add(Tab.glyph(() -> VoidLensItem.voidsAll(menu.lens()) ? GuiIcon.VOID : GuiIcon.KEEP, () -> press(LensSettingsMenu.BUTTON_VOID_ALL),
-                    () -> List.of(Component.translatable(VoidLensItem.voidsAll(menu.lens()) ? "item.quantimium.void_lens.all" : "item.quantimium.void_lens.excess"),
-                            hint("gui.quantimium.tab.switch"))));
-        }
         return tabs;
     }
 
@@ -70,8 +64,6 @@ public class LensSettingsScreen extends QuantumMachineScreen<LensSettingsMenu> {
         List<Component> lines = new ArrayList<>();
         if (lens.getItem() instanceof InteractLensItem) {
             lines.addAll(InteractLensItem.describe(lens));
-        } else if (lens.getItem() instanceof VoidLensItem) {
-            lines.add(Component.translatable(VoidLensItem.voidsAll(lens) ? "item.quantimium.void_lens.all" : "item.quantimium.void_lens.excess"));
         }
         return lines;
     }

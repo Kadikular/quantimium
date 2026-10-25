@@ -216,8 +216,10 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
     public static boolean passes(Level level, BlockPos pos, BlockState state) {
         if (state.isAir()) return true;
         if (state.is(Tags.Blocks.GLASS_BLOCKS) || state.is(Tags.Blocks.GLASS_PANES) || state.is(com.kadikular.quantimium.init.ModTags.LASER_CLEAR)) return true;
-        if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) return false;
-        return state.getCollisionShape(level, pos).isEmpty() && state.getFluidState().isEmpty();
+        // Light goes through water, and a waterlogged block it would go through dry; any other fluid stops it.
+        var fluid = state.getFluidState();
+        if (!fluid.isEmpty() && !fluid.is(net.minecraft.tags.FluidTags.WATER)) return false;
+        return state.getCollisionShape(level, pos).isEmpty();
     }
 
     /** Traces this beam again the same way: light from a face, or aimed at a block. */

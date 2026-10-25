@@ -2,7 +2,6 @@ package com.kadikular.quantimium.menu;
 
 import com.kadikular.quantimium.init.ModMenuTypes;
 import com.kadikular.quantimium.item.InteractLensItem;
-import com.kadikular.quantimium.item.VoidLensItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -13,14 +12,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * A lens's few switches, in hand, in a mount or in a Relay emitter: an Interact lens's use or hit and what it works on,
- * a Void lens's mode. Changes go straight onto the lens. Layout: tools/gui_panels.py lens_settings.
+ * An Interact lens's few switches, in hand, in a mount or in a Relay emitter: whether it uses or hits, and what it works
+ * on. Changes go straight onto the lens. Layout: tools/gui_panels.py lens_settings.
  */
 public class LensSettingsMenu extends AbstractContainerMenu {
 
     public static final int BUTTON_HITS = 0;
     public static final int BUTTON_TARGETS = 1;
-    public static final int BUTTON_VOID_ALL = 2;
 
     private final Supplier<ItemStack> lens;
     private final Runnable changed;
@@ -48,7 +46,6 @@ public class LensSettingsMenu extends AbstractContainerMenu {
         boolean done = switch (id) {
             case BUTTON_HITS -> stack.getItem() instanceof InteractLensItem && InteractLensItem.toggle(stack) == InteractLensItem.hits(stack);
             case BUTTON_TARGETS -> stack.getItem() instanceof InteractLensItem && InteractLensItem.cycleTargets(stack) >= 0;
-            case BUTTON_VOID_ALL -> stack.getItem() instanceof VoidLensItem && VoidLensItem.toggle(stack) == VoidLensItem.voidsAll(stack);
             default -> false;
         };
         // On the client it only shows the change at once: a lens in hand isn't sent back while this is open.

@@ -102,9 +102,20 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
      * it works on).
      */
     public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, int interact,
-                         int fortune, List<Lens> steps, boolean inWorld) {
+                         int fortune, List<Lens> steps, boolean inWorld, @Nullable LensFilter voids) {
         public Stream {
             steps = List.copyOf(steps);
+        }
+
+        /** {@code voids}: a Void lens's list of what it destroys (only those, or all but those); null for everything. */
+        public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, int interact,
+                      int fortune, List<Lens> steps, boolean inWorld) {
+            this(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, null);
+        }
+
+        /** Whether a Void lens on it destroys {@code stack}: it has one, and its list (if it has one) lets it. */
+        public boolean voids(net.minecraft.world.item.ItemStack stack) {
+            return has(Lens.VOID) && (voids == null || voids.lets(stack));
         }
 
         public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits, int fortune) {
@@ -152,21 +163,21 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         }
 
         Stream paidBy(Set<BlockPos> payers) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld);
+            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids);
         }
 
         Stream with(int modifiers, int amps, @Nullable LensFilter filter) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld);
+            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids);
         }
 
         Stream faster() {
             return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), interact, fortune,
-                    steps, inWorld);
+                    steps, inWorld, voids);
         }
 
         Stream luckier() {
             return new Stream(action, modifiers | 1 << Lens.HARMONIC.ordinal(), payers, amps, filter, speed, interact,
-                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1), steps, inWorld);
+                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1), steps, inWorld, voids);
         }
 
         /** Through an Isolator Lens: without the modifiers it stops. */
@@ -178,15 +189,21 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             List<Lens> keptSteps = steps.stream().filter(passes).toList();
             return new Stream(action, kept, payers,
                     passes.test(Lens.AMPLIFY) ? amps : 0, passes.test(Lens.FILTER) ? filter : null, passes.test(Lens.SPEED) ? speed : 0, interact,
-                    passes.test(Lens.HARMONIC) ? fortune : 0, keptSteps, inWorld);
+                    passes.test(Lens.HARMONIC) ? fortune : 0, keptSteps, inWorld, passes.test(Lens.VOID) ? voids : null);
         }
 
         /** Through a Smelting or Crushing lens: one more step, after those it had, up to {@link LaserTuning#PROCESS_STEPS}. */
         Stream processedBy(Lens lens) {
             List<Lens> more = new java.util.ArrayList<>(steps);
             if (more.size() < LaserTuning.PROCESS_STEPS) more.add(lens);
-            return new Stream(action, modifiers | 1 << lens.ordinal(), payers, amps, filter, speed, interact, fortune, more, inWorld);
+            return new Stream(action, modifiers | 1 << lens.ordinal(), payers, amps, filter, speed, interact, fortune, more, inWorld, voids);
         }
+    }
+
+    /** A Void lens's list, if it's been given one with anything on it: else it voids everything. */
+    @Nullable
+    private static LensFilter voidList(@Nullable LensFilter filter) {
+        return filter == null || filter.entries(LensFilter.ITEMS).stream().allMatch(net.minecraft.world.item.ItemStack::isEmpty) ? null : filter;
     }
 
     /**
@@ -247,7 +264,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     streams.put(stream.action(), new Stream(stream.action(), had.modifiers() | stream.modifiers(), Set.copyOf(payers),
                             Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter(),
                             Math.max(had.speed(), stream.speed()), had.interact() | stream.interact(), Math.max(had.fortune(), stream.fortune()),
-                            joinedSteps(had.steps(), stream.steps()), had.inWorld() || stream.inWorld()));
+                            joinedSteps(had.steps(), stream.steps()), had.inWorld() || stream.inWorld(), had.voids() != null ? had.voids() : stream.voids()));
                 }
             }
         }
@@ -281,7 +298,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             if (lens.action) {
                 Stream had = streams.get(lens);
                 streams.put(lens, new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
-                        had == null ? 0 : had.speed(), use.interact(), had == null ? 0 : had.fortune(), had == null ? List.of() : had.steps(), false));
+                        had == null ? 0 : had.speed(), use.interact(), had == null ? 0 : had.fortune(), had == null ? List.of() : had.steps(), false,
+                        had == null ? null : had.voids()));
             } else switch (lens) {
                 case PICKUP -> {
                     // After an action (Harvest, Damage...): it picks up what that action frees, and the action waits
@@ -320,7 +338,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 // A Void lens set to void all marks the streams it changes so.
                 case VOID -> streams.replaceAll((action, stream) -> new Stream(stream.action(), stream.modifiers() | 1 << Lens.VOID.ordinal(),
                         stream.payers(), stream.amps(), stream.filter(), stream.speed(), stream.interact() | use.interact() & LensUse.VOID_ALL,
-                        stream.fortune(), stream.steps(), stream.inWorld()));
+                        stream.fortune(), stream.steps(), stream.inWorld(), voidList(use.filter())));
                 case PRECISION, UNREALISE -> streams.replaceAll((action, stream) ->
                         stream.with(stream.modifiers() | 1 << lens.ordinal(), stream.amps(), stream.filter()));
                 case SMELT, CRUSH -> {
@@ -353,7 +371,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 acting.add(stream);
             } else if (stream.inWorld()) {
                 merged = merged == null ? stream : new Stream(merged.action(), merged.modifiers() | stream.modifiers(), merged.payers(), merged.amps(),
-                        merged.filter(), merged.speed(), merged.interact(), merged.fortune(), joinedSteps(merged.steps(), stream.steps()), true);
+                        merged.filter(), merged.speed(), merged.interact(), merged.fortune(), joinedSteps(merged.steps(), stream.steps()), true, merged.voids());
             }
         }
         if (merged != null) acting.add(merged);
@@ -402,6 +420,9 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             if (stream.filter() != null) {
                 LensFilter.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, stream.filter()).result().ifPresent(filter -> entry.put("Filter", filter));
             }
+            if (stream.voids() != null) {
+                LensFilter.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, stream.voids()).result().ifPresent(voids -> entry.put("Voids", voids));
+            }
             list.add(entry);
         }
         tag.put("Streams", list);
@@ -421,7 +442,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             streams.add(new Stream(Lens.values()[action], stream.getIntOr("Modifiers", 0), Set.of(source), stream.getIntOr("Amps", 0), filter,
                     stream.getIntOr("Speed", 0), stream.getIntOr("Interact", 0), stream.getIntOr("Fortune", 0),
                     java.util.Arrays.stream(stream.getIntArray("Steps").orElse(new int[0])).filter(i -> i >= 0 && i < Lens.values().length)
-                            .mapToObj(i -> Lens.values()[i]).toList(), stream.getBooleanOr("InWorld", false)));
+                            .mapToObj(i -> Lens.values()[i]).toList(), stream.getBooleanOr("InWorld", false),
+                    stream.get("Voids") == null ? null : LensFilter.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, stream.get("Voids")).result().orElse(null)));
         }
         return new Light(tag.getIntOr("Range", LaserTuning.RELAY_RANGE), tag.getIntOr("Boosts", 0),
                 List.copyOf(streams), Set.of(source), -1, tag.getIntOr("Marks", 0));

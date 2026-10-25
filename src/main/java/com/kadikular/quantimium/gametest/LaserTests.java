@@ -135,6 +135,27 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.power
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void lightGoesThroughWater(GameTestHelper helper) {
+        // Two blocks of still water, held in glass, between an emitter and a machine: the machine is charged.
+        emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        for (int x = 7; x <= 8; x++) {
+            helper.setBlock(new BlockPos(x, Y, 7), Blocks.GLASS);
+            helper.setBlock(new BlockPos(x, Y, 9), Blocks.GLASS);
+            helper.setBlock(new BlockPos(x, Y + 1, 8), Blocks.GLASS);
+        }
+        helper.setBlock(new BlockPos(6, Y, 8), Blocks.GLASS);
+        helper.setBlock(new BlockPos(9, Y, 8), Blocks.GLASS);
+        helper.setBlock(new BlockPos(7, Y, 8), Blocks.WATER);
+        helper.setBlock(new BlockPos(8, Y, 8), Blocks.WATER);
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 8));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "charged through the water");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     private static void solar(GameTestHelper helper, BlockPos pos, Direction output) {
         helper.setBlock(pos, ModBlocks.SOLAR_EMITTER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.SolarEmitterBlock.OUTPUT, output));
     }
