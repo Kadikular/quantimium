@@ -534,7 +534,8 @@ public final class LensAction {
         ItemStack left = same ? networks.returnTo(senders, stack) : stack;
         if (!left.isEmpty() && !collectors.isEmpty()) left = networks.collect(collectors, left);
         if (!same && !left.isEmpty()) left = networks.returnTo(senders, left);
-        if (!left.isEmpty()) Block.popResource(level, handSpot(), left);
+        // What no Laser Port takes back, a Void lens on the light destroys (as its list lets).
+        if (!left.isEmpty() && !stream.voids(left)) Block.popResource(level, handSpot(), left);
     }
 
     /** Where the stand-in player stands: before what the beam ends on, or in an area, by what it's working on. */
@@ -725,10 +726,24 @@ public final class LensAction {
             placeCooldown--;
             return;
         }
-        if (in ? senders.isEmpty() : collectors.isEmpty()) return;
+        // Extract with Void all and a list needs no Laser Port: what it takes goes.
+        if (in ? senders.isEmpty() : collectors.isEmpty() && !(stream.voidsAll() && stream.voids() != null)) return;
         long most = LaserTuning.PICKUP_FE_PER_STACK + moveMost() * ((stream.has(Lens.SMELT) ? LaserTuning.SMELT_FE_PER_ITEM : 0)
                 + (stream.has(Lens.CRUSH) ? LaserTuning.CRUSH_FE_PER_ITEM : 0));
         if (!networks.canPay(this, most)) return;
+        // Insert with Void all: what the sending Laser Ports send (as its list lets) is destroyed, wherever the beam ends.
+        if (in && stream.voidsAll()) {
+            ItemStack gone = networks.take(senders, stack -> lets(stack) && stream.voids(stack), moveMost(), false);
+            if (gone.isEmpty()) {
+                placeCooldown = nextWait(false);
+                return;
+            }
+            networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK);
+            networks.workDone(this);
+            placeCooldown = nextWait(true);
+            lastWorked = now;
+            return;
+        }
         BlockPos at = area == null ? inventoryAtEnd(level) : nextAreaInventory(level);
         if (at == null) return;
         net.minecraft.core.Direction side = area == null ? beam.face().getOpposite() : null;
@@ -757,12 +772,14 @@ public final class LensAction {
      * cost, or -1 for none moved. What makes several things of one goes one at a time.
      */
     private long insertInto(ServerLevel level, LaserNetworks networks, net.neoforged.neoforge.items.IItemHandler handler, BlockPos spill) {
-        ItemStack offered = networks.take(senders, stack -> lets(stack)
-                && arriving(level, stack, 1).stream().allMatch(each -> fits(handler, each) == each.getCount()), moveMost(), true);
+        // With Void excess, what its list lets goes whether it fits or not: what doesn't is destroyed.
+        ItemStack offered = networks.take(senders, stack -> lets(stack) && (stream.voids(stack)
+                || arriving(level, stack, 1).stream().allMatch(each -> fits(handler, each) == each.getCount())), moveMost(), true);
         if (offered.isEmpty()) return -1;
+        boolean voids = stream.voids(offered);
         Processing.Made made = made(level, offered);
-        int count = 1;
-        if (made.ofOne().size() == 1) {
+        int count = voids ? offered.getCount() : 1;
+        if (!voids && made.ofOne().size() == 1) {
             ItemStack one = made.ofOne().getFirst();
             count = fits(handler, times(one, offered.getCount())) / one.getCount();
         }
@@ -771,6 +788,7 @@ public final class LensAction {
         if (taken.isEmpty()) return -1;
         for (ItemStack each : arriving(level, taken, taken.getCount())) {
             ItemStack left = net.neoforged.neoforge.items.ItemHandlerHelper.insertItem(handler, each, false);
+            if (voids) continue;
             if (!left.isEmpty()) left = networks.returnTo(senders, left);
             if (!left.isEmpty()) Block.popResource(level, spill, left);
         }
@@ -783,6 +801,14 @@ public final class LensAction {
             ItemStack there = handler.extractItem(slot, moveMost(), true);
             if (there.isEmpty() || !lets(there)) continue;
             Processing.Made made = made(level, there);
+            // A Void lens with a list, and what it lists: taken whether there's room or not, and what no Laser Port takes
+            // destroyed (with Void all, all of it). Without a list, Extract never empties an inventory into nothing.
+            if (stream.voids() != null && stream.voids(there)) {
+                ItemStack taken = handler.extractItem(slot, there.getCount(), false);
+                if (stream.voidsAll()) return 0;
+                for (ItemStack each : arriving(level, taken, taken.getCount())) networks.collect(collectors, each);
+                return made.fe() * taken.getCount();
+            }
             int room;
             if (made.ofOne().size() == 1) {
                 ItemStack one = made.ofOne().getFirst();

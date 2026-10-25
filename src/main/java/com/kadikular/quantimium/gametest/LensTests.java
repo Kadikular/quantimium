@@ -538,6 +538,70 @@ public final class LensTests {
         }));
     }
 
+    /** A Void Lens set to void all ({@code all}) or excess, listing {@code listed} if any. */
+    private static ItemStack voidLens(boolean all, Item... listed) {
+        ItemStack lens = new ItemStack(ModItems.VOID_LENS.get());
+        if (all) com.kadikular.quantimium.item.VoidLensItem.toggle(lens);
+        if (listed.length > 0) {
+            lens.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.items(
+                    java.util.Arrays.stream(listed).map(ItemStack::new).toList(), true));
+        }
+        return lens;
+    }
+
+    // covers: laser.lens.void, laser.lens.insert
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void insertWithVoidAllIsATrashCan(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.COBBLESTONE, 32));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INSERT_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, voidLens(true));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(sender, Items.COBBLESTONE), 0, "all of it destroyed");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.void, laser.lens.insert
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void insertWithVoidExcessFillsThenDestroysTheRest(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity sender = sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.COBBLESTONE, 32));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.INSERT_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, voidLens(false));
+        BlockPos at = new BlockPos(9, Y, 8);
+        helper.setBlock(at, Blocks.CHEST);
+        var chest = helper.getBlockEntity(at, net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        for (int slot = 0; slot < chest.getContainerSize(); slot++) chest.setItem(slot, new ItemStack(Items.DIRT, 64));
+        chest.setItem(0, new ItemStack(Items.COBBLESTONE, 54));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(sender, Items.COBBLESTONE), 0, "all sent");
+            helper.assertValueEqual(chest.getItem(0).getCount(), 64, "the chest filled");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.void, laser.lens.extract
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void extractWithAListedVoidEmptiesOnlyWhatsListed(GameTestHelper helper) {
+        // The collecting Port full: cobblestone (listed) is taken out and destroyed; the dirt stays.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.STONE, 64));
+        LensMountBlockEntity mount = mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get());
+        mount.getLensSlots().setStackInSlot(1, voidLens(false, Items.COBBLESTONE));
+        BlockPos at = new BlockPos(9, Y, 8);
+        helper.setBlock(at, Blocks.CHEST);
+        var chest = helper.getBlockEntity(at, net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        chest.setItem(0, new ItemStack(Items.COBBLESTONE, 40));
+        chest.setItem(1, new ItemStack(Items.DIRT, 10));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(chest.getItem(0).isEmpty(), "the cobblestone gone");
+            helper.assertValueEqual(chest.getItem(1).getCount(), 10, "the dirt kept");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.lens.void
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
     public static void aVoidLensBeforeTheHarvestStillVoids(GameTestHelper helper) {

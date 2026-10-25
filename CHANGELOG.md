@@ -31,7 +31,10 @@
   time stayed idle till the network was rebuilt). Acceleration and Freezing through an Area Prism never found the
   machines in their area; both work now.
 - **The Void Lens stays on the light**, as Pickup does: actions added after it (in a later mount, or later in its own)
-  get it too.
+  get it too. It covers every way items travel along the beam: Insert with void excess puts in what fits and destroys
+  the rest, with void all it's a trash can; Extract with a listed Void takes what's listed and destroys what no Port
+  holds; what Interact hands back that no Port takes is destroyed. The guide now explains Laser Ports as the beam's
+  item ends, and Pickup and Void as rules for that traffic.
 - **The Spectroscope says what a Harvest beam is doing**: cutting (and how far), nothing to cut, or no room for what
   it would cut (and what).
 - **The Entity Filter Lens can list one creature, or you**: sneak-use it on a creature or player to list just that one

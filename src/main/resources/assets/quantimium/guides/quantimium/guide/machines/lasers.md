@@ -214,6 +214,23 @@ then Harvest cuts anything. Pickup works by the same rule, two ways:
 Both on one beam (Pickup, Harvest, Pickup) do both: a tree farm's logs come back as they're cut, and its leaves
 as they fall.
 
+**The Laser Ports are the beam's item ends.** A collecting <ItemLink id="quantimium:laser_port" /> up the light is where what it frees
+goes back to; a sending one is where what it uses comes from. Pickup and Void aren't about any one action: they're
+rules for that traffic. Pickup says "carry what's freed back to the Ports"; Void says "what the Ports won't take (or,
+set to void all, everything) is destroyed". So where they sit matters less than for other modifiers: once the light
+has met a Void lens, every action on it from there on gets it, and every way items travel along the beam follows
+it:
+
+| Items on the move | With Void excess | With Void all |
+|---|---|---|
+| Freed (Harvest's drops, what Damage kills, Pickup's gathering) | What no Port has room for is destroyed | Destroyed |
+| Sent down to Insert | Put in where there's room; the rest destroyed | Destroyed, whatever the beam ends on: a trash can |
+| Taken out by Extract (only with a list on the Void lens) | Listed things taken, what no Port has room for destroyed | Listed things taken and destroyed |
+| What Interact hands back (an empty bucket, a worn tool) | Destroyed if no Port takes it | The same |
+
+A Void lens's list (allow or deny) says what it may destroy; anything else is carried, or waits for room, as if
+it weren't there. Place never destroys what it can't place.
+
 | Lens | Kind | What it does | Costs |
 | --- | --- | --- | --- |
 | <ItemLink id="quantimium:harvest_lens" /> | Action | Cuts the block the beam ends on, or one light passes through just before it (a crop on farmland, grass), as an iron pickaxe would (a diamond one with an Amplify lens), and breaks it when the cut's through; the cracks show how far it's got. A block that goes before then takes the cut with it. One block every 0.5 s at most. It never breaks a block with a block entity (a machine, a chest), Anomalite, or what a wither can't break. With the block gone, the beam reaches on to the next. | 400 FE for each point of hardness, as it cuts |
@@ -227,7 +244,7 @@ as they fall.
 | <ItemLink id="quantimium:extract_lens" /> | Action | Takes from the inventory the beam ends on, up to 8 items each 0.5 s (each Speed lens doubles that, to 64, and halves the wait), as much as the Laser Ports up the beam have room for, back up to them; with an Area Prism, from each inventory in its area in turn. A Filter lens says what. | 200 FE a stack |
 | <ItemLink id="quantimium:precision_lens" /> | Modifier | Harvest cuts with Silk Touch: blocks come away whole. | none |
 | <ItemLink id="quantimium:acceleration_lens" /> | Action | Speeds up the machine the beam ends on, giving it extra ticks of its own: 2x, doubled by each <ItemLink id="quantimium:speed_lens" /> to 4x, 8x and 16x (the most is configurable). Through an Area Prism, every machine in the area. Each machine's extra ticks may take at most 100 µs a tick, and all of them together 5,000 µs (both configurable): one that would take longer is given fewer. Jade shows how fast it's going, and when the tick budget held it back ("Accelerated 5x of 8x (tick budget)"). Machines that don't tick, Quantimium's own machines, and blocks tagged `quantimium:not_accelerated` aren't sped up. | 500 FE for each extra tick (configurable), so 500 FE/t at 2x |
-| <ItemLink id="quantimium:void_lens" /> | Modifier | Destroys what the actions on its light free: like Pickup, it stays on the light, so actions added after it get it too. Use it in the air (or its button in a mount) to set it. **Void excess** (the default): with Pickup, what the Laser Ports or network up the beam have room for goes to them and the rest is destroyed, so Harvest never waits for room; with no ports, or without Pickup, everything they free is destroyed. **Void all**: everything they free or Pickup gathers is destroyed, ports or not (Harvest's drops, what Damage kills, items lying in the beam). Its screen has nine entries and allow or deny, as the Item Filter Lens's: listed, it destroys only those (or all but those), and keeps the rest as if it weren't there; seeds listed with void excess, a wheat farm keeps its wheat and burns the seeds it has no room for. | none |
+| <ItemLink id="quantimium:void_lens" /> | Modifier | Destroys what the beam's Laser Ports won't take (see above): like Pickup, it stays on the light, so actions added after it get it too. Use it in the air (or its button in a mount) to set it. **Void excess** (the default): with Pickup, what the Laser Ports or network up the beam have room for goes to them and the rest is destroyed, so Harvest never waits for room; with no ports, or without Pickup, everything they free is destroyed. **Void all**: everything they free or Pickup gathers is destroyed, ports or not (Harvest's drops, what Damage kills, items lying in the beam). Its screen has nine entries and allow or deny, as the Item Filter Lens's: listed, it destroys only those (or all but those), and keeps the rest as if it weren't there; seeds listed with void excess, a wheat farm keeps its wheat and burns the seeds it has no room for. | none |
 | <ItemLink id="quantimium:harmonic_lens" /> | Modifier | Harvest cuts with Fortune, and Damage hits with Looting, a level for each, up to 3. | none |
 | <ItemLink id="quantimium:unrealising_lens" /> | Modifier | Ore a Harvest beam cuts (anything in `#c:ores`) comes away as <ItemLink id="quantimium:unrealised_matter" />, one to a block, with no history yet. A pack can turn it off in the config, where Matter would duplicate ores. | none |
 | <ItemLink id="quantimium:smelting_lens" /> | Modifier | Smelts, as a furnace would, what the actions before it free or move: what a Harvest beam cuts and what Damage kills (picked up or left lying), what Pickup gathers, what Insert puts in and Extract takes out. Sand becomes glass, ore ingots, a pig's drops cooked. Unrealised Matter gets smelting in its history, as a Quantum Crafter with a furnace gives it. What a furnace can't smelt stays as it is, for nothing. With no other action on the light it's an action of its own: it smelts what lies in the beam where it lies, else the block the beam ends on, every 0.5 s. A block it smelts into takes its place (sand becomes glass, and the light goes on through to the next); anything else drops there. | 25 FE for each item it smelts |
