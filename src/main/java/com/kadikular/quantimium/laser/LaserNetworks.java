@@ -1001,6 +1001,28 @@ public final class LaserNetworks {
         return simulateCollect(positions, stack).isEmpty();
     }
 
+    /**
+     * Whether the collecting Laser Ports at {@code positions} would take all of {@code stacks} together: what the
+     * first fills, the second can't use (seeds and wheat both wanting the one empty slot). Tried for real in a
+     * transaction that's never committed.
+     */
+    boolean roomForAllTogether(List<BlockPos> positions, List<ItemStack> stacks) {
+        var outer = net.neoforged.neoforge.transfer.transaction.Transaction.getCurrentOpenedTransaction();
+        try (var transaction = outer == null ? net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()
+                : net.neoforged.neoforge.transfer.transaction.Transaction.open(outer)) {
+            Map<Object, Object> scratch = new HashMap<>();
+            for (ItemStack stack : stacks) {
+                ItemStack left = stack;
+                for (BlockPos pos : positions) {
+                    LaserNode node = nodes.get(pos);
+                    if (node != null && node.collects() && !left.isEmpty()) left = node.collectAlong(left, transaction, scratch);
+                }
+                if (!left.isEmpty()) return false;
+            }
+            return true;
+        }
+    }
+
     /** Whether any of the collecting Laser Ports at {@code positions} would take some of {@code stack}. */
     boolean roomFor(List<BlockPos> positions, ItemStack stack) {
         for (BlockPos pos : positions) {

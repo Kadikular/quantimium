@@ -266,6 +266,47 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         return left;
     }
 
+    /**
+     * As {@link #collect}, but for one of several things dropped at once: what's passed on goes into the neighbours
+     * inside {@code transaction} (rolled back by the caller), and its own slots are a pretend copy in {@code scratch},
+     * so the drop's second thing finds the room its first took gone.
+     */
+    @Override
+    public ItemStack collectAlong(ItemStack stack, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction,
+                                  java.util.Map<Object, Object> scratch) {
+        if (level == null || !collects() || !acceptsItem(stack)) return stack;
+        ItemStack left = stack.copy();
+        for (Direction side : Direction.values()) {
+            SideConfig config = sideConfigs.get(side.get3DDataValue());
+            if (!config.autoItemOutput() || !config.itemMode().allowsOutput()) continue;
+            var neighbour = level.getCapability(Capabilities.Item.BLOCK, worldPosition.relative(side), side.getOpposite());
+            if (neighbour == null) continue;
+            int put = net.neoforged.neoforge.transfer.ResourceHandlerUtil.insertStacking(neighbour,
+                    net.neoforged.neoforge.transfer.item.ItemResource.of(left), left.getCount(), transaction);
+            left.shrink(put);
+            if (left.isEmpty()) return ItemStack.EMPTY;
+        }
+        ItemStack[] own = (ItemStack[]) scratch.computeIfAbsent(this, key -> {
+            ItemStack[] copy = new ItemStack[SLOTS];
+            for (int slot = 0; slot < SLOTS; slot++) copy[slot] = items.getStackInSlot(slot).copy();
+            return copy;
+        });
+        // Onto what's like it first, then into empty slots, as its slots take things.
+        for (int pass = 0; pass < 2 && !left.isEmpty(); pass++) {
+            for (int slot = 0; slot < SLOTS && !left.isEmpty(); slot++) {
+                ItemStack there = own[slot];
+                if (pass == 0 ? there.isEmpty() || !ItemStack.isSameItemSameComponents(there, left) : !there.isEmpty()) continue;
+                if (!items.isItemValid(slot, left)) continue;
+                int room = Math.min(items.getSlotLimit(slot), left.getMaxStackSize()) - there.getCount();
+                if (room <= 0) continue;
+                int moved = Math.min(room, left.getCount());
+                own[slot] = there.isEmpty() ? left.copyWithCount(moved) : there.copyWithCount(there.getCount() + moved);
+                left.shrink(moved);
+            }
+        }
+        return left;
+    }
+
     /** Takes a stack from {@code from}, as far as its slots take it; whether it took anything. */
     private boolean pull(IItemHandler from) {
         for (int source = 0; source < from.getSlots(); source++) {

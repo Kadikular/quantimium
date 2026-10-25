@@ -21,6 +21,10 @@
   rest: it now drops exactly what it found room for.
 - **Fixed:** the Void Lens's setting showed its old mode till the screen was closed; it now just says "Void all" or
   "Void excess".
+- **Fixed:** Harvest with Pickup could cut a crop whose wheat and seeds each fit a Laser Port's last empty slot but
+  not both, and lose the seeds. A drop's things are now checked together.
+- **Harvest with Pickup rests when full**: half a second, then twice as long each time it's still full, up to 4
+  seconds (as Insert and Extract do), and back to work at once when it can cut again.
 - **Harvest sets what it cuts down where the block was**, still, rather than throwing it about: a Pickup sweeping the
   beam always reaches it.
 - **Lighter lens scanning.** An Area Prism remembers for a second which blocks it couldn't see, instead of tracing to

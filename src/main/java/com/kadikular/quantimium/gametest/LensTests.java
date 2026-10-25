@@ -333,6 +333,34 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void harvestWithPickupWontSplitADropOverOneEmptySlot(GameTestHelper helper) {
+        // Seeds full, one empty slot: wheat and seeds would each fit there alone, not both. It cuts only a crop that
+        // drops no seeds, and nothing is ever left on the ground.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) collector.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
+        collector.getItems().setStackInSlot(0, new ItemStack(Items.WHEAT_SEEDS, 64));
+        collector.getItems().setStackInSlot(1, ItemStack.EMPTY);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        BlockPos crop = new BlockPos(9, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop.east(), Blocks.STONE);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        helper.setBlock(crop, ripe);
+        helper.onEachTick(() -> {
+            if (helper.getBlockState(crop).isAir()) helper.setBlock(crop, ripe);
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(crop)).inflate(3)).isEmpty(),
+                    "nothing left on the ground");
+            helper.assertValueEqual(count(collector, Items.WHEAT_SEEDS), 64, "no seeds squeezed in");
+        });
+        helper.runAfterDelay(180, () -> {
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.lens.pickup, laser.area_prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
     public static void anAreaHarvestWithPickupGathersAWheatField(GameTestHelper helper) {

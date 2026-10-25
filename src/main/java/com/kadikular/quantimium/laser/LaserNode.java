@@ -219,6 +219,16 @@ public interface LaserNode {
         return false;
     }
 
+    /**
+     * For a drop of several things at once: what of {@code stack} it would take, after what it already took of the
+     * same drop. Inventories it fills are filled inside {@code transaction}, which the caller rolls back; what it holds
+     * itself is pretended in {@code scratch}. Alone, as a simulated {@link #collect}.
+     */
+    default net.minecraft.world.item.ItemStack collectAlong(net.minecraft.world.item.ItemStack stack,
+            net.neoforged.neoforge.transfer.transaction.TransactionContext transaction, java.util.Map<Object, Object> scratch) {
+        return collect(stack, true);
+    }
+
     /** Takes what it can of {@code stack}, a collecting Laser Port (or with {@code simulate}, says what it would); what's left. */
     default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack, boolean simulate) {
         return stack;

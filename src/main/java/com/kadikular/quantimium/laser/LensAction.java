@@ -1008,7 +1008,14 @@ public final class LensAction {
     /** Puts power into cutting the block the beam ends on; breaks it when the cut is through. */
     private void harvest(ServerLevel level, LaserNetworks networks, boolean pickup) {
         if (cooldown > 0) cooldown--;
+        // Full up: it rests, longer each time it finds no room, as Insert and Extract do.
+        if (now < fullUntil) {
+            want = 0;
+            return;
+        }
+        roomShort = false;
         BlockPos target = harvestTarget(level, networks, pickup);
+        if (target == null && roomShort) full();
         if (target == null || !target.equals(cutting)) {
             // A new block, or none: the cut on the old one is lost, as a player's would be.
             if (cutting != null) level.destroyBlockProgress(crackId(), cutting, -1);
@@ -1031,8 +1038,10 @@ public final class LensAction {
         // the tick it breaks, so what was found room for is what's there.
         if (pickup && !roomForDrops(level, networks, target, cut >= cutCost && cooldown <= 0)) {
             want = 0;
+            full();
             return;
         }
+        fullWait = 0;
         if (cut >= cutCost && cooldown <= 0) {
             level.destroyBlockProgress(crackId(), target, -1);
             breakBlock(level, networks, target, pickup);
@@ -1063,10 +1072,13 @@ public final class LensAction {
                 if (within.test(pos) && level.isLoaded(pos) && cuttable(level, pos)) {
                     // Out of traces for this tick: this one is looked at first next tick.
                     if (traces-- <= 0) return null;
-                    if (inSight(level, pos) && (!pickup || roomForDrops(level, networks, pos, false))) {
-                        cursor = (cursor + 1) % areaVolume();
-                        missed = 0;
-                        return pos;
+                    if (inSight(level, pos)) {
+                        if (!pickup || roomForDrops(level, networks, pos, false)) {
+                            cursor = (cursor + 1) % areaVolume();
+                            missed = 0;
+                            return pos;
+                        }
+                        roomShort = true;
                     }
                 }
                 cursor = (cursor + 1) % areaVolume();
@@ -1106,6 +1118,20 @@ public final class LensAction {
         if (cuts.size() < 512) cuts.put(state, may);
         return may;
     }
+
+    /**
+     * No room for what it would cut: rests half a second, then twice as long each time it's still full, up to
+     * {@link com.kadikular.quantimium.Config#laserIdleTicks()}. Cutting again, it's back to looking every tick.
+     */
+    private void full() {
+        fullWait = fullWait <= 0 ? 10 : Math.min(com.kadikular.quantimium.Config.laserIdleTicks(), fullWait * 2);
+        fullUntil = now + fullWait;
+    }
+
+    /** How long it rests when full, and till when; whether this look passed over something for want of room. */
+    private int fullWait;
+    private long fullUntil;
+    private boolean roomShort;
 
     /** Whether it may cut a block in {@code state}: the same answer wherever one stands, so it's kept. */
     private boolean cuttableState(ServerLevel level, BlockPos pos, BlockState state) {
@@ -1164,9 +1190,23 @@ public final class LensAction {
                 if (!merged) carried.add(stack.copy());
             }
         }
-        for (ItemStack stack : carried) if (!roomFor(networks, stack, fresh)) return false;
-        return true;
+        if (carried.size() <= 1) return carried.isEmpty() || roomFor(networks, carried.getFirst(), fresh);
+        // More than one thing: they're tried together, so two don't count on the same empty slot.
+        if (now - roomAsked >= 10) {
+            room.clear();
+            roomTogether.clear();
+            roomAsked = now;
+        }
+        List<RoomKey> keys = new ArrayList<>();
+        for (ItemStack stack : carried) keys.add(new RoomKey(stack.getItem(), stack.getComponentsPatch(), stack.getCount()));
+        Boolean known = fresh ? null : roomTogether.get(keys);
+        if (known != null) return known;
+        boolean fits = networks.roomForAllTogether(collectors, carried);
+        roomTogether.put(keys, fits);
+        return fits;
     }
+
+    private final java.util.Map<List<RoomKey>, Boolean> roomTogether = new java.util.HashMap<>();
 
     /**
      * Whether the collecting Laser Ports would take all of {@code stack}: remembered half a second by item and count
@@ -1176,6 +1216,7 @@ public final class LensAction {
     private boolean roomFor(LaserNetworks networks, ItemStack stack, boolean fresh) {
         if (now - roomAsked >= 10) {
             room.clear();
+            roomTogether.clear();
             roomAsked = now;
         }
         RoomKey key = new RoomKey(stack.getItem(), stack.getComponentsPatch(), stack.getCount());
