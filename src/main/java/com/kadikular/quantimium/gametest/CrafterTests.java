@@ -407,6 +407,28 @@ public final class CrafterTests {
         });
     }
 
+    // covers: crafter.tesseract
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_tesseract", timeoutTicks = 160)
+    public static void aLinkedChestEmptyingShowsInWhatItCouldMake(GameTestHelper helper) {
+        // 256 raw iron in a linked chest, then 100 taken out of the chest by hand: what it could make follows,
+        // though a batch is a stack either way.
+        BlockPos chestPos = new BlockPos(1, 2, 1);
+        ChestBlockEntity chest = chest(helper, chestPos, new ItemStack(Items.RAW_IRON, 64));
+        for (int slot = 1; slot < 4; slot++) chest.setItem(slot, new ItemStack(Items.RAW_IRON, 64));
+        QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.FURNACE);
+        grid(crafter, link(helper, chestPos, Blocks.CHEST));
+        helper.runAfterDelay(30, () -> {
+            ResolvedCraft smelt = craftOf(crafter, Items.IRON_INGOT);
+            helper.assertTrue(smelt != null && smelt.availableOutputCount(0) == 256, "256 to start: " + (smelt == null ? null : smelt.availableOutputCount(0)));
+            chest.setItem(0, ItemStack.EMPTY);
+            chest.setItem(1, new ItemStack(Items.RAW_IRON, 28));
+        });
+        helper.runAfterDelay(31, () -> helper.succeedWhen(() -> {
+            ResolvedCraft smelt = craftOf(crafter, Items.IRON_INGOT);
+            helper.assertTrue(smelt != null && smelt.availableOutputCount(0) == 156, "156 left: " + (smelt == null ? null : smelt.availableOutputCount(0)));
+        }));
+    }
+
     // covers: crafter.entangled_loop
     @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_loop", timeoutTicks = 80)
     public static void crafterLinkedInARingStop(GameTestHelper helper) {

@@ -270,12 +270,16 @@ public final class LaserNetworks {
                         lens.itemKey()));
             }
             int collectors = 0;
+            List<net.minecraft.network.chat.Component> said = new ArrayList<>();
             for (LensAction action : actions.values()) {
-                if (action.key().node().equals(pos) && action.key().action() == stream.action()) collectors = action.collectors().size();
+                if (!action.key().node().equals(pos) || action.key().action() != stream.action()) continue;
+                collectors = action.collectors().size();
+                if (action.said() != null) said.add(action.said().copy().withStyle(body));
             }
             lines.add(net.minecraft.network.chat.Component.translatable("message.quantimium.spectroscope.stream",
                     net.minecraft.network.chat.Component.translatable(stream.action().itemKey()),
                     modifiers, stream.payers().size(), collectors).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+            lines.addAll(said);
         }
         for (LaserBeam beam : beamsOf(pos)) {
             lines.add(net.minecraft.network.chat.Component.translatable("message.quantimium.spectroscope.beam",

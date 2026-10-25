@@ -384,6 +384,81 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.pickup, laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
+    public static void wheatAndSeedsGoToTheirOwnFilteredPorts(GameTestHelper helper) {
+        // A playtest farm: two emitters, each through a Laser Port (one only wheat, one only seeds), joined at a relay;
+        // then a mount with Harvest, a ripe-only Block Filter and two Speed, and one with Pickup, Range and two Speed.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity wheat = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        wheat.getFilter().setItem(0, new ItemStack(Items.WHEAT));
+        emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
+        LaserPortBlockEntity seeds = collector(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
+        seeds.getFilter().setItem(0, new ItemStack(Items.WHEAT_SEEDS));
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        LensMountBlockEntity first = mount(helper, new BlockPos(8, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.BLOCK_FILTER_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        ItemStack grown = new ItemStack(ModItems.BLOCK_FILTER_LENS.get());
+        grown.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true));
+        first.getLensSlots().setStackInSlot(1, grown);
+        mount(helper, new BlockPos(9, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.RANGE_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        BlockPos crop = new BlockPos(12, Y, 8);
+        helper.setBlock(crop.below(), Blocks.FARMLAND);
+        helper.setBlock(crop.east(), Blocks.STONE);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        helper.setBlock(crop, ripe);
+        int[] planted = {0};
+        helper.onEachTick(() -> {
+            if (helper.getBlockState(crop).isAir() && planted[0] < 3) {
+                helper.setBlock(crop, ripe);
+                planted[0]++;
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(count(wheat, Items.WHEAT) >= 3, "three wheat came back: " + count(wheat, Items.WHEAT)
+                    + ", seeds " + count(seeds, Items.WHEAT_SEEDS));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.pickup, laser.area_prism, laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 400)
+    public static void anAreaFarmSortsWheatAndSeedsIntoFilteredPorts(GameTestHelper helper) {
+        // As the playtest farm, into an Area Prism over a 3x3 ripe field: wheat to its Port, seeds to theirs.
+        int top = Y + 3;
+        emitter(helper, new BlockPos(1, top, 8), Direction.EAST, true);
+        LaserPortBlockEntity wheat = collector(helper, new BlockPos(3, top, 8), Direction.EAST);
+        wheat.getFilter().setItem(0, new ItemStack(Items.WHEAT));
+        emitter(helper, new BlockPos(6, top, 1), Direction.SOUTH, true);
+        LaserPortBlockEntity seeds = collector(helper, new BlockPos(6, top, 4), Direction.SOUTH);
+        seeds.getFilter().setItem(0, new ItemStack(Items.WHEAT_SEEDS));
+        helper.setBlock(new BlockPos(6, top, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        LensMountBlockEntity first = mount(helper, new BlockPos(8, top, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.BLOCK_FILTER_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        ItemStack grown = new ItemStack(ModItems.BLOCK_FILTER_LENS.get());
+        grown.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.blocks(java.util.List.of(), true, true));
+        first.getLensSlots().setStackInSlot(1, grown);
+        mount(helper, new BlockPos(9, top, 8), Direction.EAST, ModItems.PICKUP_LENS.get(), ModItems.RANGE_LENS.get(),
+                ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
+        helper.setBlock(new BlockPos(12, top, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(12, top, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        for (int x = 11; x <= 13; x++) {
+            for (int z = 7; z <= 9; z++) {
+                helper.setBlock(new BlockPos(x, Y - 1, z), Blocks.FARMLAND);
+                helper.setBlock(new BlockPos(x, Y, z), ripe);
+            }
+        }
+        prism.setArea(helper.absolutePos(new BlockPos(11, Y, 7)), helper.absolutePos(new BlockPos(13, Y, 9)));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(wheat, Items.WHEAT), 9, "all the wheat (seeds " + count(seeds, Items.WHEAT_SEEDS) + ")");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.lens.pickup, laser.area_prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
     public static void anAreaHarvestWithPickupGathersAWheatField(GameTestHelper helper) {

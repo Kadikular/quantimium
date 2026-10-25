@@ -64,7 +64,7 @@ public final class ModTags {
     public static final TagKey<Block> NOT_ACCELERATED = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "not_accelerated"));
 
-    /** Machines a Freezing Lens never stops: a pack's to fill. */
+    /** Blocks a Freezing Lens leaves alone: never stopped if they tick, never iced or snowed on. A pack's to fill. */
     public static final TagKey<Block> NOT_FREEZABLE = TagKey.create(
             Registries.BLOCK, Identifier.fromNamespaceAndPath(Quantimium.MODID, "not_freezable"));
 

@@ -21,6 +21,10 @@
   rest: it now drops exactly what it found room for.
 - **Fixed:** the Void Lens's setting showed its old mode till the screen was closed; it now just says "Void all" or
   "Void excess".
+- **Fixed:** a Quantum Crafter reading a chest through a Tesseract kept showing what it could make before the chest
+  was emptied (or refilled) by hand, till its Tesseract was replaced.
+- **The Spectroscope says what a Harvest beam is doing**: cutting (and how far), nothing to cut, or no room for what
+  it would cut (and what).
 - **The Entity Filter Lens can list one creature, or you**: sneak-use it on a creature or player to list just that one
   (their head or spawn egg, with their name), or in the air to list yourself. With Healing through an Area Prism,
   it heals only you; set to deny, it spares only you. Clicked out of its slot, it's off the list.

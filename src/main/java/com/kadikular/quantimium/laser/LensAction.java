@@ -4,6 +4,8 @@ import com.kadikular.quantimium.init.ModDamageTypes;
 import com.kadikular.quantimium.init.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -400,6 +402,8 @@ public final class LensAction {
     /** Water to ice; on anything else, now and then, a layer of snow on top where it would lie. */
     private void freezeBlock(ServerLevel level, LaserNetworks networks, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
+        // A pack's not-freezable blocks get neither ice nor snow.
+        if (state.is(com.kadikular.quantimium.init.ModTags.NOT_FREEZABLE)) return;
         BlockState into;
         BlockPos at = pos;
         if (state.is(net.minecraft.world.level.block.Blocks.WATER) && state.getFluidState().isSource()) {
@@ -1016,6 +1020,7 @@ public final class LensAction {
         roomShort = false;
         BlockPos target = harvestTarget(level, networks, pickup);
         if (target == null && roomShort) full();
+        if (target == null && !roomShort) said = Component.translatable("message.quantimium.spectroscope.harvest.idle");
         if (target == null || !target.equals(cutting)) {
             // A new block, or none: the cut on the old one is lost, as a player's would be.
             if (cutting != null) level.destroyBlockProgress(crackId(), cutting, -1);
@@ -1042,6 +1047,8 @@ public final class LensAction {
             return;
         }
         fullWait = 0;
+        said = Component.translatable("message.quantimium.spectroscope.harvest.cutting", level.getBlockState(target).getBlock().getName(),
+                cutCost <= 0 ? 0 : Math.min(100, cut * 100 / cutCost));
         if (cut >= cutCost && cooldown <= 0) {
             level.destroyBlockProgress(crackId(), target, -1);
             breakBlock(level, networks, target, pickup);
@@ -1126,6 +1133,22 @@ public final class LensAction {
     private void full() {
         fullWait = fullWait <= 0 ? 10 : Math.min(com.kadikular.quantimium.Config.laserIdleTicks(), fullWait * 2);
         fullUntil = now + fullWait;
+        MutableComponent what = Component.empty();
+        for (ItemStack stack : unfit) {
+            if (!what.getSiblings().isEmpty()) what.append(", ");
+            what.append(stack.getCount() + " ").append(stack.getHoverName());
+        }
+        said = Component.translatable("message.quantimium.spectroscope.harvest.full", what, String.format(java.util.Locale.ROOT, "%.1f", fullWait / 20.0));
+    }
+
+    /** What it last said it was doing, for the Spectroscope; what didn't fit, last it looked. */
+    @Nullable
+    private Component said;
+    private List<ItemStack> unfit = List.of();
+
+    @Nullable
+    Component said() {
+        return said;
     }
 
     /** How long it rests when full, and till when; whether this look passed over something for want of room. */
@@ -1190,6 +1213,7 @@ public final class LensAction {
                 if (!merged) carried.add(stack.copy());
             }
         }
+        unfit = carried;
         if (carried.size() <= 1) return carried.isEmpty() || roomFor(networks, carried.getFirst(), fresh);
         // More than one thing: they're tried together, so two don't count on the same empty slot.
         if (now - roomAsked >= 10) {

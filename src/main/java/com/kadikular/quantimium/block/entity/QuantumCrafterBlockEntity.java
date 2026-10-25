@@ -1418,6 +1418,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             ResolvedCraft right = b.get(i);
             if (!left.recipeId().equals(right.recipeId())) return false;
             if (left.batchSize() != right.batchSize()) return false;
+            // A batch is capped at one stack: less (or more) on hand shows only in how much it could make in all.
+            if (left.availableOutputCount(0) != right.availableOutputCount(0)) return false;
             if (left.feCost() != right.feCost()) return false;
             if (left.energyCapped() != right.energyCapped()) return false;
             if (left.outputs().size() != right.outputs().size()) return false;
