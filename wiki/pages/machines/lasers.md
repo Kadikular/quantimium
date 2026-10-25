@@ -52,22 +52,38 @@ redstone: not at all, on only with a signal, or off with a signal.
 
 ## Mirrors and relays
 
-[[mechanic:laser.mirror]] A [[block:laser_mirror]] is a silver plate on a steel stand that turns light
-through a right angle, both ways. It stands on the block it was placed against, for good. Its plate faces
-half way between two sides at right angles, neither the one it stands on: click one side (by hand or with
-a wrench) and sneak-click another. Light in by either side leaves by the other; light from anywhere else
-hits the back of the plate and stops. Sneak-click the side it already takes light from and it's **flat**, facing that side: light goes straight back the way it came, and facing a
-Cavity Mirror across a gap it's the far end of the cavity; click another side and it turns light from there back out where it faced. It never sends light straight on. A redstone
-signal turns it off.
+[[mechanic:laser.mirror]] A [[block:laser_mirror]] is a silver plate on a steel stand. Light reflects off it as off a
+real mirror: a beam that reaches it bounces and goes on as the same beam, with its own light, so beams crossing one
+mirror never mix. Light on the back or edge of the plate stops. A redstone signal turns it off, and then it stops light.
 
-[[mechanic:laser.splitter]] A [[block:laser_splitter]] is a Laser Mirror with a half-silvered plate, set
-the same way (never flat): click its **input side**, sneak-click its **output (turn) side**, at right
-angles, as you sneak-click a Solar Emitter's output; sneak-clicking its input side swaps the two. Its plate has a light-blue mark in the middle, and a
-notch on its rim by the output side; the Flux Meter or Jade names both sides.
-Light in by its input side splits: half goes straight on, half turns out of its turn side. Light from
-behind its turn side passes straight through the plate and out of the turn side too; with both coming
-in, they leave by the turn side only, joined: a combiner. Light from any other side stops on it, and so
-does light into a side facing what it stands on. It closes no cavity.
+**Setting the plate.** Each face of the mirror has three parts: a middle square, a ring round it, and an outer ring,
+each ring split four ways by the diagonals. Click (by hand or with a wrench):
+
+| Where | The plate |
+|---|---|
+| The middle square of a face | Flat, facing that face: light goes straight back the way it came |
+| The inner ring, towards a side | Facing that face, turned 22.5° towards that side |
+| The outer ring, towards a side | Half way between that face and that side (45°): light turns through a right angle |
+
+The part under your crosshair is outlined; holding a wrench, a ghost shows where the plate would turn. A plate never
+faces into its stand. Sneak-click to move the stand: a face's middle puts it on that face, a ring the side it's
+towards.
+
+**Angles.** Light travels in 26 ways: the 6 straight, the 12 flat diagonals (45° in one plane) and the 8 corner
+diagonals. Off a 45° plate straight light turns a right angle; off a 22.5° plate it leaves at 45°, and 45° light off
+a 22.5° plate leaves straight. What leaves a mirror is always one of the 26 (the nearest, where a true reflection isn't
+one): a Prism's light, at any angle, is bent onto them only there. A diagonal step counts its true length towards the
+light's reach, and diagonal light slips between two blocks that meet only at a corner (unless the
+`diagonalsPassCorners` config is off). A block takes diagonal light if it would take light through any face it comes in
+by.
+
+[[mechanic:laser.splitter]] A [[block:laser_splitter]] is a Laser Mirror with a half-silvered plate, set the same way.
+Light reaching it goes straight on and is reflected, off both sides of the plate: one beam becomes two, each its own,
+sharing the power by what each end asks for. Two beams through one splitter stay apart. It closes no cavity.
+
+Both refocus the light to its source's range: each run after a bounce reaches as far as a run from the emitter that
+sent it. Each bounce takes {{c:LaserTuning.MIRROR_LOSS|pct}} of what the beam carries, which becomes flux where the
+beam starts.
 
 [[mechanic:laser.relay]] A [[block:laser_relay]] is a focus on a post, on a base on the block it was
 placed against, with an emitter on any of its other sides. Light reaching its focus, from any side but
@@ -77,9 +93,8 @@ wrench) a side of its focus to put an emitter there, or an emitter to take it aw
 open it: it holds one lens, which only the light leaving by that emitter goes through (a Harvest lens on
 one emitter cuts only there), and its tip takes the lens's colour. Taking an emitter away drops its lens.
 
-Both refocus the light to its source's range: a run from a mirror or relay reaches as far as a run from
-the emitter that sent it, so a Flash Emitter's light goes 8 blocks a run however many it passes. Each
-one a beam passes takes {{c:LaserTuning.HOP_TAX|pct}} of what passes, and that becomes flux where it
+A relay refocuses the light to its source's range: a run from it reaches as far as a run from the emitter that sent
+it. Each relay a beam passes takes {{c:LaserTuning.HOP_TAX|pct}} of what passes, and that becomes flux where it
 stands.
 
 [[mechanic:laser.relay.redstone]] Each of a relay's emitters listens to the redstone reaching the block its

@@ -1090,6 +1090,55 @@ public final class LaserTests {
         });
     }
 
+    /** A floor mirror at {@code pos}, its plate set to {@code plate}. */
+    private static com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity mirror(GameTestHelper helper, BlockPos pos,
+                                                                                         com.kadikular.quantimium.laser.MirrorPlate plate) {
+        helper.setBlock(pos, mirror(Direction.DOWN, Direction.NORTH, Direction.NORTH));
+        var mirror = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
+        mirror.setPlate(plate);
+        return mirror;
+    }
+
+    // covers: laser.mirror, laser.ray
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void twoTurnedPlatesTakeLightOnADiagonalAndBack(GameTestHelper helper) {
+        // East into a plate facing west turned 22.5° north: out north-west, at 45°. Three diagonal steps on, a plate
+        // facing east turned 22.5° north sends it straight north, to a machine.
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        mirror(helper, new BlockPos(6, Y, 8), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.WEST, Direction.NORTH, 1));
+        mirror(helper, new BlockPos(3, Y, 5), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.NORTH, 1));
+        FoldCoreBlockEntity core = sink(helper, new BlockPos(3, Y, 1));
+        helper.succeedWhen(() -> {
+            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(2, Y, 8)));
+            helper.assertTrue(beams.stream().anyMatch(beam -> beam.bounces() == 2 && beam.legs().get(0).ray() == com.kadikular.quantimium.laser.Ray.NORTH_WEST
+                    && beam.lastRay() == com.kadikular.quantimium.laser.Ray.NORTH), "east, north-west, north: " + beams);
+            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "the machine charged");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void beamsCrossingOneMirrorStayApart(GameTestHelper helper) {
+        // One plate, between west and north: Harvest light from the west turns north; plain light from the north turns
+        // west. Each goes its own way with its own light.
+        mirror(helper, new BlockPos(8, Y, 8), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.WEST, Direction.NORTH, 2));
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(4, Y, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(new BlockPos(4, Y, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class).getLensSlots()
+                .setStackInSlot(0, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        emitter(helper, new BlockPos(8, Y, 4), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        helper.succeedWhen(() -> {
+            var networks = LaserNetworks.of(helper.getLevel());
+            var harvest = networks.beamsOf(helper.absolutePos(new BlockPos(4, Y, 8)));
+            var plain = networks.beamsOf(helper.absolutePos(new BlockPos(8, Y, 4)));
+            helper.assertTrue(harvest.stream().anyMatch(beam -> beam.lastRay() == com.kadikular.quantimium.laser.Ray.NORTH), "Harvest light north: " + harvest);
+            helper.assertTrue(plain.stream().anyMatch(beam -> beam.lastRay() == com.kadikular.quantimium.laser.Ray.WEST
+                    && !com.kadikular.quantimium.laser.Lens.has(beam.lenses(), com.kadikular.quantimium.laser.Lens.HARVEST)), "plain light west, still plain: " + plain);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void anUnpairedCavityMirrorPassesLightOn(GameTestHelper helper) {
