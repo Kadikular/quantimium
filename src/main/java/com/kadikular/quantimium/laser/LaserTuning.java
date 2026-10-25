@@ -110,6 +110,8 @@ public final class LaserTuning {
     public static final float HEAL_PER_SWEEP = 2.0f;
     /** What it does to the undead each sweep instead, doubled by each Amplify lens. */
     public static final float HEAL_HARM_PER_SWEEP = 3.0f;
+    /** How many times as often Speed lenses make a Healing beam sweep, at most (two lenses' worth). */
+    public static final int HEAL_FASTEST = 4;
     /** FE for each sweep's heal (or harm) of one, doubled by each Amplify lens. */
     public static final long HEAL_FE_PER_SWEEP = 500;
     /** FE a tick for each machine a Freezing beam holds still. */

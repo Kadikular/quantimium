@@ -203,7 +203,11 @@ public final class LensAction {
         switch (key.action()) {
             case HARVEST -> harvest(level, networks, pickup);
             case DAMAGE -> damage(level, networks, phase == 0, pickup || voids);
-            case HEAL -> heal(level, networks, phase == 0, pickup || voids);
+            case HEAL -> {
+                // Each Speed lens heals twice as often, up to four times: every 10, 5 or 2 ticks.
+                int every = Math.max(1, LaserTuning.DAMAGE_INTERVAL / Math.min(LaserTuning.HEAL_FASTEST, stream.pace()));
+                heal(level, networks, Math.floorMod(key.hashCode() + (int) level.getGameTime(), every) == 0, pickup || voids);
+            }
             case FREEZE -> {
                 if (!mirrored()) freeze(level, networks, phase == 0);
             }

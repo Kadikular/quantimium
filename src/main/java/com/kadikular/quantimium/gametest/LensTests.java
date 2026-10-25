@@ -333,6 +333,42 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.pickup, laser.area_prism
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
+    public static void anAreaHarvestWithPickupGathersAWheatField(GameTestHelper helper) {
+        // An Area Prism over a 3x3 field of ripe wheat, Harvest and Pickup, into an empty Laser Port: all of it comes back.
+        emitter(helper, new BlockPos(1, Y + 3, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y + 3, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y + 3, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(8, Y + 3, 8), ModBlocks.AREA_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(8, Y + 3, 8), com.kadikular.quantimium.block.entity.AreaPrismBlockEntity.class);
+        var ripe = Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7);
+        for (int x = 7; x <= 9; x++) {
+            for (int z = 7; z <= 9; z++) {
+                helper.setBlock(new BlockPos(x, Y - 1, z), Blocks.FARMLAND);
+                helper.setBlock(new BlockPos(x, Y, z), ripe);
+            }
+        }
+        prism.setArea(helper.absolutePos(new BlockPos(7, Y, 7)), helper.absolutePos(new BlockPos(9, Y, 9)));
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.WHEAT), 9, "the whole field came back");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.pickup
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void harvestWithPickupCutsSandstone(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        for (int x = 9; x <= 11; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.SANDSTONE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(collector, Items.SANDSTONE), 3, "all three cut and brought back");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.lens.freeze
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aFreezingLensStopsTheMachineItEndsOn(GameTestHelper helper) {
