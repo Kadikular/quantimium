@@ -38,10 +38,12 @@ public final class MirrorZoneOutline {
     public static void onOutline(ExtractBlockOutlineRenderStateEvent event) {
         if (!(event.getBlockState().getBlock() instanceof LaserMirrorBlock)) return;
         Player player = Minecraft.getInstance().player;
-        if (player == null) return;
+        // By hand or wrench only: anything else does its own thing.
+        if (player == null || !player.getMainHandItem().isEmpty() && !player.getMainHandItem().is(com.kadikular.quantimium.init.ModTags.TOOLS_WRENCH)) return;
         BlockPos pos = event.getBlockPos();
         LaserMirrorBlock.Zone zone = LaserMirrorBlock.zone(pos, event.getHitResult());
         Direction mount = event.getBlockState().getValue(LaserMirrorBlock.MOUNT);
+        if (!LaserMirrorBlock.onGrid(pos, event.getHitResult(), mount)) return;
         boolean sneaking = player.isShiftKeyDown();
         // A plain click on the face it stands on does nothing: nothing to show.
         if (!sneaking && zone.face() == mount) return;

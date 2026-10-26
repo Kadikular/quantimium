@@ -140,6 +140,15 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
      */
     public static final double SQUARE = 0.11, EDGE = 0.3125, RING = (SQUARE + EDGE) / 2;
 
+    /**
+     * Whether {@code hit} lands where the click grid is: on a face of the mirror's middle, or under the face it stands
+     * on; not on the rest of its base.
+     */
+    public static boolean onGrid(BlockPos pos, BlockHitResult hit, Direction mount) {
+        double depth = hit.getLocation().subtract(pos.getCenter()).dot(net.minecraft.world.phys.Vec3.atLowerCornerOf(hit.getDirection().getUnitVec3i()));
+        return hit.getDirection() == mount ? depth > 0.49 : Math.abs(depth - EDGE) < 0.01;
+    }
+
     /** The zone {@code hit} (on the mirror at {@code pos}) lands in. */
     public static Zone zone(BlockPos pos, BlockHitResult hit) {
         Direction face = hit.getDirection();
@@ -214,9 +223,10 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
      * turning the plate away from it if it would face into it.
      */
     private static InteractionResult set(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        Direction mount = state.getValue(MOUNT);
+        if (!onGrid(pos, hit, mount)) return InteractionResult.PASS;
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         Zone zone = zone(pos, hit);
-        Direction mount = state.getValue(MOUNT);
         if (player.isSecondaryUseActive()) {
             Direction next = mountFor(zone);
             if (next != mount) {

@@ -157,6 +157,9 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             if (turned != null) ways.add(turned);
             // Half-silvered: straight on as well.
             if (block.splits()) ways.add(Ray.nearest(travel));
+            // Straight into its stand, light stops there.
+            Ray stand = Ray.of(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT));
+            ways.removeIf(way -> way == stand);
         }
         if (ways.isEmpty()) {
             out.add(finish(first, legs, mirror, End.BLOCKED, out.size()));

@@ -485,16 +485,16 @@ public final class LaserTests {
         var mirror = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
         java.util.function.BiConsumer<Direction, net.minecraft.world.phys.Vec3> click = (face, offset) -> helper.getLevel().getBlockState(pos)
                 .useWithoutItem(helper.getLevel(), player, new net.minecraft.world.phys.BlockHitResult(pos.getCenter().add(offset), face, pos, false));
-        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3, 0, 0));
+        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3125, 0, 0));
         helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.flat(Direction.EAST), "flat, facing east");
-        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3, 0.16, 0));
+        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3125, 0.16, 0));
         helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 1), "22.5° up");
-        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3, 0.28, 0));
+        click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3125, 0.28, 0));
         helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "45° up");
         click.accept(Direction.DOWN, new net.minecraft.world.phys.Vec3(0, -0.5, 0));
         helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "not into its stand");
         player.setShiftKeyDown(true);
-        click.accept(Direction.WEST, new net.minecraft.world.phys.Vec3(-0.3, 0, 0));
+        click.accept(Direction.WEST, new net.minecraft.world.phys.Vec3(-0.3125, 0, 0));
         helper.assertValueEqual(helper.getLevel().getBlockState(pos).getValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT), Direction.WEST,
                 "stood on its west now");
         helper.succeed();
@@ -1052,6 +1052,38 @@ public final class LaserTests {
             helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
             TestSupport.finishLasers(helper);
             helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity, laser.mirror
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void aCavityRunsRoundMirrors(GameTestHelper helper) {
+        // Out east, turned north by a 45° mirror, and straight back off a flat one: 3 blocks, the turning mirror, 3 more.
+        // A splitter where it turns lets the light out: no cavity. Nor with the turning mirror switched off.
+        var a = cavityMirror(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        helper.setBlock(new BlockPos(7, Y, 8), mirror(Direction.DOWN, Direction.WEST, Direction.NORTH));
+        helper.setBlock(new BlockPos(7, Y, 4), mirror(Direction.DOWN, Direction.SOUTH, Direction.SOUTH));
+        var b = cavityMirror(helper, new BlockPos(3, Y, 14), Direction.EAST);
+        helper.setBlock(new BlockPos(7, Y, 14), ModBlocks.LASER_SPLITTER.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.WEST).setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.NORTH));
+        helper.setBlock(new BlockPos(7, Y, 10), mirror(Direction.DOWN, Direction.SOUTH, Direction.SOUTH));
+        // Two Cavity Mirrors round a corner.
+        var c = cavityMirror(helper, new BlockPos(10, Y, 2), Direction.EAST);
+        helper.setBlock(new BlockPos(14, Y, 2), mirror(Direction.DOWN, Direction.WEST, Direction.SOUTH));
+        var d = cavityMirror(helper, new BlockPos(14, Y, 6), Direction.NORTH);
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(a.paired(), "round the corner and back");
+            helper.assertValueEqual(a.capacity(), 7 * LaserTuning.CAVITY_FE_PER_BLOCK, "seven blocks of light");
+            helper.assertFalse(b.paired(), "a splitter lets it out");
+            helper.assertTrue(c.paired() && d.paired(), "two cavity mirrors round a corner");
+            helper.assertValueEqual(d.capacity(), 7 * LaserTuning.CAVITY_FE_PER_BLOCK, "both hold the same");
+            helper.setBlock(new BlockPos(7, Y, 7), Blocks.REDSTONE_BLOCK);
+            helper.runAfterDelay(25, () -> {
+                helper.assertFalse(a.paired(), "a mirror switched off breaks it");
+                helper.setBlock(new BlockPos(3, Y, 8), Blocks.AIR);
+                TestSupport.finishLasers(helper);
+                helper.succeed();
+            });
         });
     }
 

@@ -33,8 +33,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * One mirror of an optical cavity. A Cavity Mirror facing another mirror (a Laser Mirror, or a second
- * Cavity Mirror) across a clear gap holds light between them, as a laser's cavity does. Unpaired, it
+ * One mirror of an optical cavity. Light out of a Cavity Mirror's front that comes back to it holds there, as in a
+ * laser's cavity: off a flat Laser Mirror straight back, or round any number of plain Laser Mirrors to one that sends it
+ * back the way it came, or into a second Cavity Mirror's front. A splitter, a mirror switched off, or anything else in
+ * the way, and there's no cavity. Unpaired, it
  * passes light on out of its front, towards where its partner would stand, as a Laser Mirror does. Light that reaches either mirror from outside charges it;
  * light leaves through its back, the output coupler, for blocks that ask for it. Each holds
  * {@link LaserTuning#CAVITY_FE_PER_BLOCK} for each block of gap, and loses a little every tick, as flux.
@@ -43,8 +45,11 @@ import java.util.Set;
 public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
 
     private long stored;
-    /** Blocks of clear gap to the partner, or 0 for none. */
+    /** Blocks of light held one way round, mirrors on the way included; 0 for no cavity. */
     private int gap;
+    /** The way light runs round the cavity, from its front to where it turns back or its partner; null for none. */
+    @Nullable
+    private LaserBeam loop;
     /** Whether the partner is a Cavity Mirror too, so both hold the light; a Laser Mirror holds none. */
     private boolean partnerHolds;
     private double leaked;
@@ -143,31 +148,71 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         return gap * LaserTuning.CAVITY_FE_PER_BLOCK;
     }
 
-    /** Whether a mirror faces this one across a clear gap; how many blocks of gap, or 0. */
+    /**
+     * Follows light out of its front, round plain Laser Mirrors, until it comes back: off a mirror that sends it back
+     * the way it came (from there it retraces its way here), into a Cavity Mirror's front, or a Relay giving light back
+     * along it. How many blocks of light that holds one way, mirrors on the way included, or 0 for no cavity; at most
+     * {@link LaserTuning#CAVITY_MAX_GAP}, a loop of twice that.
+     */
     private int findGap() {
         partnerHolds = false;
+        loop = null;
         if (level == null) return 0;
-        BlockPos.MutableBlockPos at = worldPosition.mutable();
         Direction facing = facing();
-        for (int step = 1; step <= LaserTuning.CAVITY_MAX_GAP + 1; step++) {
-            at.move(facing);
-            if (!level.isLoaded(at)) return 0;
-            if (level.getBlockEntity(at) instanceof CavityMirrorBlockEntity other) {
-                partnerHolds = true;
-                return other.facing() == facing.getOpposite() && step > 1 ? step - 1 : 0;
+        com.kadikular.quantimium.laser.Ray way = com.kadikular.quantimium.laser.Ray.of(facing);
+        BlockPos from = worldPosition;
+        int firstLength = -1;
+        List<LaserBeam.Leg> legs = new ArrayList<>();
+        double length = 0;
+        while (legs.size() <= LaserBeam.MAX_BOUNCES) {
+            // One block further than it may hold, for what closes it.
+            int reach = (int) Math.floor(LaserTuning.CAVITY_MAX_GAP - length + way.length);
+            if (reach < 1) return 0;
+            LaserBeam run = LaserBeam.trace(level, from, way, reach, 0, null);
+            BlockPos hit = run.hit();
+            if (hit == null || !level.isLoaded(hit)) return 0;
+            length += run.length() * way.length;
+            if (length > LaserTuning.CAVITY_MAX_GAP + 1.0e-6) return 0;
+            if (firstLength < 0) firstLength = run.length();
+            else legs.set(legs.size() - 1, new LaserBeam.Leg(from, way, run.length()));
+            BlockState there = level.getBlockState(hit);
+            boolean straightIn = way.straight();
+            if (level.getBlockEntity(hit) instanceof CavityMirrorBlockEntity other) {
+                if (!straightIn || other.facing() != way.face().getOpposite() || length < 1) return 0;
+                partnerHolds = other != this;
+                return closed(hit, firstLength, legs, length);
             }
-            BlockState there = level.getBlockState(at);
             if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserRelayBlock) {
-                return there.getValue(com.kadikular.quantimium.block.LaserRelayBlock.OUTPUTS.get(facing.getOpposite())) && step > 1 ? step - 1 : 0;
+                if (!straightIn || !there.getValue(com.kadikular.quantimium.block.LaserRelayBlock.OUTPUTS.get(way.face().getOpposite())) || length < 1) return 0;
+                return closed(hit, firstLength, legs, length);
             }
-            // A Laser Mirror set flat, facing back across the gap, closes the cavity as a real laser's end mirror does.
-            if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock mirror && !mirror.splits()) {
-                return com.kadikular.quantimium.block.LaserMirrorBlock.plate(there).equals(com.kadikular.quantimium.laser.MirrorPlate.flat(facing.getOpposite()))
-                        && step > 1 ? step - 1 : 0;
-            }
-            if (!LaserBeam.passes(level, at, level.getBlockState(at))) return 0;
+            // Only plain Laser Mirrors, switched on: a splitter would let the light out.
+            if (!(there.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock mirror) || mirror.splits()
+                    || there.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.POWERED)) return 0;
+            com.kadikular.quantimium.laser.Ray turned = com.kadikular.quantimium.block.LaserMirrorBlock.plate(there).reflect(way.unit(), false);
+            if (turned == null || turned == com.kadikular.quantimium.laser.Ray.of(there.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT))) return 0;
+            // Straight back the way it came: it retraces its way here, and the cavity's closed.
+            if (turned == way.opposite()) return length < 1 ? 0 : closed(hit, firstLength, legs, length);
+            // The mirror's own block holds light too.
+            length += 1;
+            legs.add(new LaserBeam.Leg(hit, turned, 0));
+            from = hit;
+            way = turned;
         }
         return 0;
+    }
+
+    /** A cavity closed at {@code end}: remembers its way round, for the glow of the light it holds. */
+    private int closed(BlockPos end, int firstLength, List<LaserBeam.Leg> legs, double length) {
+        loop = new LaserBeam(worldPosition, facing(), null, firstLength, end, LaserBeam.End.BLOCKED, 0, true,
+                com.kadikular.quantimium.laser.Lens.NONE, com.kadikular.quantimium.laser.Ray.of(facing()), false, List.copyOf(legs), 0);
+        return Math.max(1, (int) Math.floor(length + 1.0e-6));
+    }
+
+    /** Where the light it holds turns back, or its partner: the cavity's far end. */
+    @Nullable
+    private BlockPos farEnd() {
+        return loop != null ? loop.hit() : null;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CavityMirrorBlockEntity mirror) {
@@ -195,8 +240,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
      */
     private void share(ServerLevel server) {
         if (!paired() || !partnerHolds) return;
-        BlockPos other = worldPosition.relative(facing(), gap + 1);
-        if (other.compareTo(worldPosition) < 0 || !(server.getBlockEntity(other) instanceof CavityMirrorBlockEntity partner)) return;
+        BlockPos other = farEnd();
+        if (other == null || other.compareTo(worldPosition) < 0 || !(server.getBlockEntity(other) instanceof CavityMirrorBlockEntity partner)) return;
         long total = stored + partner.stored;
         if (Math.abs(stored - partner.stored) <= 1) return;
         stored = Math.min(capacity(), total / 2);
@@ -251,13 +296,15 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
 
     private void checkPartner(ServerLevel server) {
         boolean held = partnerHolds;
+        LaserBeam was = loop;
         int now = findGap();
-        if (now == gap && held == partnerHolds) return;
+        if (now == gap && held == partnerHolds && java.util.Objects.equals(was, loop)) return;
         gap = now;
         if (stored > capacity()) release(server, stored - capacity());
         setChanged();
         LaserNetworks.changed(server);
         showCharge();
+        sync();
     }
 
     /** Lets {@code fe} of held light go, as flux where it stands. */
@@ -345,34 +392,21 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         if (!same) sync();
     }
 
-    /** The glow of the light held is wider than a beam carrying as much. */
+    /** The glow of the light held is wider than a beam carrying as much: the only light out of its front while paired. */
     @Override
     public float widthScale(LaserBeam beam) {
-        return beam.end() == LaserBeam.End.OPEN && beam.aim() == null && beam.face() == facing() && beam.length() == gap ? 1.8f : 1.0f;
+        return gap > 0 && beam.face() == facing() ? 1.8f : 1.0f;
     }
 
-    /** The light held runs on into a flat Laser Mirror at the far end, to its plate in the block's middle. */
-    @Override
-    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
-        net.minecraft.world.phys.Vec3[] ends = beam.ends();
-        if (level == null || beam.end() != LaserBeam.End.OPEN || beam.aim() != null || beam.face() != facing() || beam.length() != gap) return ends;
-        BlockPos far = worldPosition.relative(facing(), gap + 1);
-        BlockState there = level.getBlockState(far);
-        // A Cavity Mirror's own plate is on its face, where the light already ends.
-        if (there.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor && !(there.getBlock() instanceof CavityMirrorBlock)) {
-            ends[1] = anchor.beamPoint(there, far);
-        }
-        return ends;
-    }
-
-    /** Its output, and the light held, drawn across the whole gap: by this one, or the lower of two Cavity Mirrors. */
+    /** Its output, and the light held, drawn all the way round: by this one, or the lower of two Cavity Mirrors. */
     @Override
     public List<LaserBeam> syncedBeams() {
-        if (gap <= 0 || shownCharge <= 0) return shownBeams;
-        if (partnerHolds && worldPosition.relative(facing(), gap + 1).compareTo(worldPosition) < 0) return shownBeams;
+        if (gap <= 0 || loop == null || shownCharge <= 0) return shownBeams;
+        BlockPos other = farEnd();
+        if (partnerHolds && other != null && other.compareTo(worldPosition) < 0) return shownBeams;
         List<LaserBeam> all = new ArrayList<>(shownBeams);
         long flow = (long) Math.pow(10, shownCharge - 1);
-        all.add(new LaserBeam(worldPosition, facing(), null, gap, null, LaserBeam.End.OPEN, flow, true, shownLenses));
+        all.add(loop.withFlow(flow).withLenses(shownLenses));
         return all;
     }
 
@@ -443,12 +477,15 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         shownCharge = in.getIntOr("Charge", 0);
         shownLenses = in.getIntOr("Lenses", 0);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
+        loop = in.read("Loop", CompoundTag.CODEC).map(tag -> LaserBeamView.load(worldPosition, tag)).filter(beams -> !beams.isEmpty())
+                .map(List::getFirst).orElse(null);
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = saveWithoutMetadata(registries);
         tag.put("Beams", LaserBeamView.save(shownBeams));
+        if (loop != null) tag.put("Loop", LaserBeamView.save(List.of(loop)));
         tag.putInt("Charge", shownCharge);
         tag.putInt("Lenses", shownLenses);
         return tag;

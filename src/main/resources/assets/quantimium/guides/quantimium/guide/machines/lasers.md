@@ -84,7 +84,8 @@ by.
 
 A <ItemLink id="quantimium:laser_splitter" /> is a Laser Mirror with a half-silvered plate, set the same way.
 Light reaching it goes straight on and is reflected, off both sides of the plate: one beam becomes two, each its own,
-sharing the power by what each end asks for. Two beams through one splitter stay apart. It closes no cavity.
+sharing the power by what each end asks for. Two beams through one splitter stay apart. Light never leaves a
+mirror or splitter through its stand: straight into it, it stops. A splitter closes no cavity.
 
 Both refocus the light to its source's range: each run after a bounce reaches as far as a run from the emitter that
 sent it. Each bounce takes 0.5% of what the beam carries, which becomes flux where the
@@ -166,11 +167,14 @@ place it.
 
 ## Optical cavities
 
-A <ItemLink id="quantimium:cavity_mirror" /> facing a flat <ItemLink id="quantimium:laser_mirror" />, a <ItemLink id="quantimium:laser_relay" />, or another Cavity
-Mirror, across a clear gap of up to 16 blocks holds light between them,
-as a real laser's cavity does: a battery for a laser network. Only one end needs to be a Cavity Mirror.
-Each Cavity Mirror holds 10,000,000 FE for each block of gap, and takes or
-gives up to 512,000 FE/t; a Laser Mirror or Relay at the other end holds nothing.
+Light out of a <ItemLink id="quantimium:cavity_mirror" />'s front that comes back to it is held there,
+as in a real laser's cavity: a battery for a laser network. It comes back off a flat <ItemLink id="quantimium:laser_mirror" /> facing
+it, off a <ItemLink id="quantimium:laser_relay" /> giving light back, or from another Cavity Mirror's front; and it can run round any
+number of plain Laser Mirrors on the way, to a corner or several. Only one end needs to be a Cavity Mirror. A Laser
+Splitter, a mirror switched off by redstone, or anything else in the way, and there's no cavity: what it held goes
+as flux. The light may run up to 16 blocks one way (a loop of twice that), counting
+each mirror it turns at as a block. Each Cavity Mirror holds 10,000,000 FE for each of
+those blocks, and takes or gives up to 512,000 FE/t; a Laser Mirror or Relay at the other end holds nothing.
 
 A Cavity Mirror looks like a <ItemLink id="quantimium:laser_relay" /> with a flat Splitter mirror for its front: it stands on the
 block it was placed against, as a Relay does, its mirror faces its partner, and an emitter stands on each face

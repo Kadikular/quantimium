@@ -506,30 +506,10 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
                 continue
             key = "_".join(sorted({a, b}))
             floor_normals[key] = tuple(p + q for p, q in zip(va, vb)) if a != b else va
-    def marker(into, out):
-        """On a splitter, a notch on the plate's rim by its output (turn) side, the rim's own darker silver."""
-        n = [p + q for p, q in zip(DIRS[into], DIRS[out])]
-        along = [q - p for p, q in zip(DIRS[into], DIRS[out])]
-        nl, al = sum(v * v for v in n) ** 0.5, sum(v * v for v in along) ** 0.5
-        middle = [8 + along[k] / al * 4.625 + n[k] / nl * 0.025 for k in range(3)]
-        notch = box([v - 0.75 for v in middle], [v + 0.75 for v in middle])
-        for face in notch["faces"].values():
-            face["texture"] = "#plate"
-            face["uv"] = [3, 6, 4, 7]
-        return notch
-
-    if splits:
-        # Each way round: the dot shows which of the two sides light goes in by.
-        for a in DIRS:
-            for b in DIRS:
-                if "down" in (a, b) or a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0:
-                    continue
-                normal = tuple(p + q for p, q in zip(DIRS[a], DIRS[b]))
-                face_plate = plate(normal)
-                write(f"{name}_{a}_to_{b}", stand(normal) + [face_plate, focus(face_plate), marker(a, b)])
-    else:
-        for key, normal in floor_normals.items():
-            write(f"{name}_{key}", stand(normal) + [plate(normal)])
+    # A splitter's plate is the same both sides, and has its focus in the middle.
+    for key, normal in floor_normals.items():
+        face_plate = plate(normal)
+        write(f"{name}_{key}", stand(normal) + [face_plate] + ([focus(face_plate)] if splits else []))
     # The 22.5 degree plates (22.5 and 67.5 from up, and between two sides), for a mirror standing on the floor; never
     # facing towards it.
     for a, b in half_turns:
@@ -539,7 +519,7 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     # Facing north, the way an inventory icon looks at it.
     item_normal = tuple(p + q for p, q in zip(DIRS["north"], DIRS["up"])) if splits else DIRS["north"]
     item_plate = plate(item_normal)
-    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate), marker("north", "up")] if splits else []))
+    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate)] if splits else []))
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
     names = {v: k for k, v in DIRS.items()}
@@ -555,13 +535,10 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
     for mount, (rx, ry) in mounts.items():
         for a in DIRS:
             for b in DIRS:
-                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0) or (splits and a == b):
+                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0):
                     continue
-                if splits:
-                    key = f"{back_to_floor(a, rx, ry)}_to_{back_to_floor(b, rx, ry)}"
-                else:
-                    key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
-                    assert key in floor_normals, (mount, a, b, key)
+                key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
+                assert key in floor_normals, (mount, a, b, key)
                 parts.append({"when": {"mount": mount, "input": a, "output": b, "half": "false"},
                               "apply": dict({"model": f"quantimium:block/{name}_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
         # Turned 22.5 degrees from {a} towards {b}: never from or towards what it stands on.

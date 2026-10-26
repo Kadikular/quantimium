@@ -14,7 +14,10 @@
   the plate would turn. A plate never faces towards its stand. Light now travels diagonally too (26 ways in all); what leaves a mirror
   is always one of them. Mirrors already placed keep the way they faced. Each bounce takes 0.5% (a relay 1%).
 - **The Laser Splitter** reflects off both sides and lets light through: one beam becomes two, each its own. It no
-  longer joins beams into one.
+  longer joins beams into one. It can face straight on too. Light never leaves a mirror or splitter through its stand.
+- **Cavities round corners.** A cavity's light can run round any number of plain Laser Mirrors, back off a flat one
+  or into another Cavity Mirror: up to 16 blocks one way, each mirror counting as one. A splitter, or a mirror
+  switched off, breaks it.
 - Mirrors no longer show where light would go while holding a wrench or the Linker.
 
 ## 0.6.1-alpha: Healing, freezing, and a lens pass
