@@ -6,18 +6,11 @@ import com.kadikular.quantimium.laser.LaserNetworks;
 import com.kadikular.quantimium.laser.MirrorPlate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * A Laser Mirror's plate: which way it faces (see {@link MirrorPlate}). Light isn't held here: a beam that reaches the
@@ -27,69 +20,30 @@ import net.minecraft.world.level.storage.ValueOutput;
  */
 public class LaserMirrorBlockEntity extends BlockEntity implements com.kadikular.quantimium.flux.FluxMeterReadout {
 
-    private MirrorPlate plate;
-    /** Whether the plate's been read or set: a mirror from before plates takes its from its old sides. */
-    private boolean plateKnown;
-
     public LaserMirrorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LASER_MIRROR_BE.get(), pos, state);
-        plate = MirrorPlate.fromSides(state.getValue(LaserMirrorBlock.INPUT), state.getValue(LaserMirrorBlock.OUTPUT));
     }
 
+    /** Its plate: kept in its block state (see {@link LaserMirrorBlock#plate}). */
     public MirrorPlate plate() {
-        return plate;
+        return LaserMirrorBlock.plate(getBlockState());
     }
 
     /** Turns the plate to {@code plate}: the light through it is worked out again. */
     public void setPlate(MirrorPlate plate) {
-        if (plate.equals(this.plate) && plateKnown) return;
-        this.plate = plate;
-        plateKnown = true;
-        setChanged();
-        if (level != null) {
-            LaserNetworks.changed(level);
-            if (!level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        if (level == null || plate.equals(plate())) return;
+        level.setBlock(worldPosition, LaserMirrorBlock.withPlate(getBlockState(), plate), Block.UPDATE_ALL);
+        LaserNetworks.changed(level);
     }
 
     private boolean splits() {
         return getBlockState().getBlock() instanceof LaserMirrorBlock mirror && mirror.splits();
     }
 
-    @Override
-    protected void saveAdditional(ValueOutput out) {
-        super.saveAdditional(out);
-        out.putInt("Plate", plate.index());
-    }
-
-    @Override
-    protected void loadAdditional(ValueInput in) {
-        super.loadAdditional(in);
-        int saved = in.getIntOr("Plate", -1);
-        if (saved >= 0) {
-            plate = MirrorPlate.byIndex(saved);
-            plateKnown = true;
-        } else {
-            // Set the old way: its plate faces half way between the side light came in by and the one it left by.
-            BlockState state = getBlockState();
-            plate = MirrorPlate.fromSides(state.getValue(LaserMirrorBlock.INPUT), state.getValue(LaserMirrorBlock.OUTPUT));
-        }
-    }
-
-    @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveWithoutMetadata(registries);
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
     /** Which way it faces, and whether it's off. */
     @Override
     public MutableComponent fluxMeterLine() {
-        MutableComponent line = describe(plate);
+        MutableComponent line = describe(plate());
         if (splits()) line = Component.translatable("message.quantimium.laser_splitter.plate", line);
         if (getBlockState().getValue(LaserMirrorBlock.POWERED)) line.append(Component.translatable("message.quantimium.laser_mirror.off"));
         return line.withStyle(getBlockState().getValue(LaserMirrorBlock.POWERED) ? ChatFormatting.GRAY : ChatFormatting.AQUA);

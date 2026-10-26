@@ -53,6 +53,8 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
     public static final EnumProperty<Direction> INPUT = EnumProperty.create("input", Direction.class);
     public static final EnumProperty<Direction> OUTPUT = EnumProperty.create("output", Direction.class);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    /** Whether the plate is turned only 22.5° from INPUT towards OUTPUT, not 45° between them. */
+    public static final BooleanProperty HALF = BooleanProperty.create("half");
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
@@ -69,7 +71,7 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
     public LaserMirrorBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(MOUNT, Direction.DOWN).setValue(INPUT, Direction.NORTH)
-                .setValue(OUTPUT, Direction.UP).setValue(POWERED, false));
+                .setValue(OUTPUT, Direction.UP).setValue(HALF, false).setValue(POWERED, false));
     }
 
     @Override
@@ -79,7 +81,23 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(MOUNT, INPUT, OUTPUT, POWERED);
+        builder.add(MOUNT, INPUT, OUTPUT, HALF, POWERED);
+    }
+
+    /**
+     * The plate {@code state} has: flat facing INPUT when OUTPUT is the same; else turned from INPUT towards OUTPUT, by
+     * 22.5° with HALF, 45° (half way between the two) without.
+     */
+    public static MirrorPlate plate(BlockState state) {
+        Direction input = state.getValue(INPUT), output = state.getValue(OUTPUT);
+        if (state.getValue(HALF) && output.getAxis() != input.getAxis()) return MirrorPlate.of(input, output, 1);
+        return MirrorPlate.fromSides(input, output);
+    }
+
+    /** {@code state} with its plate set to {@code plate}. */
+    public static BlockState withPlate(BlockState state, MirrorPlate plate) {
+        Direction toward = plate.toward() == null ? plate.face() : plate.toward();
+        return state.setValue(INPUT, plate.face()).setValue(OUTPUT, toward).setValue(HALF, plate.steps() == 1);
     }
 
     /** Whether its plate is half-silvered (a Laser Splitter): both sides reflect, and light goes straight through as well. */
@@ -96,8 +114,7 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
 
     /**
      * Stands on what it was placed against; its plate turns light coming from the side facing you away from its mount
-     * where it can (half way between the two). INPUT and OUTPUT only say how a new mirror's plate starts, and how one
-     * placed before plates turned freely is read (see {@link LaserMirrorBlockEntity}).
+     * where it can (half way between the two).
      */
     @Nullable
     @Override
@@ -107,7 +124,7 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         Direction input = mount.getAxis() == Direction.Axis.Y ? context.getHorizontalDirection().getOpposite()
                 : context.getNearestLookingDirection().getOpposite();
         if (input == mount) input = mount.getOpposite();
-        return defaultBlockState().setValue(MOUNT, mount).setValue(INPUT, input).setValue(OUTPUT, outputFor(mount, input))
+        return defaultBlockState().setValue(MOUNT, mount).setValue(INPUT, input).setValue(OUTPUT, outputFor(mount, input)).setValue(HALF, false)
                 .setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
     }
 
@@ -140,7 +157,7 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
 
     /**
      * The plate a click on {@code zone} sets: facing that face, turned towards the side clicked by 22.5° (the inner
-     * ring) or 45° (the outer). Null on the mount's face, or for a plate facing into the mount.
+     * ring) or 45° (the outer). Null on the mount's face, or for a plate facing at all towards the mount.
      */
     @Nullable
     public static MirrorPlate plateFor(Zone zone, Direction mount) {
@@ -195,15 +212,16 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
      */
     private static InteractionResult set(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
-        if (!(level.getBlockEntity(pos) instanceof LaserMirrorBlockEntity mirror)) return InteractionResult.PASS;
         Zone zone = zone(pos, hit);
         Direction mount = state.getValue(MOUNT);
         if (player.isSecondaryUseActive()) {
             Direction next = mountFor(zone);
             if (next != mount) {
-                level.setBlock(pos, state.setValue(MOUNT, next), Block.UPDATE_ALL);
-                if (mirror.plate().facesInto(next)) mirror.setPlate(MirrorPlate.flat(next.getOpposite()));
-                else LaserNetworks.changed(level);
+                BlockState moved = state.setValue(MOUNT, next);
+                // Facing at all towards where it now stands, it turns to face away.
+                if (plate(state).facesInto(next)) moved = withPlate(moved, MirrorPlate.flat(next.getOpposite()));
+                level.setBlock(pos, moved, Block.UPDATE_ALL);
+                LaserNetworks.changed(level);
                 level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 0.8f);
             }
             player.sendOverlayMessage(Component.translatable("message.quantimium.laser_mirror.stands",
@@ -215,8 +233,9 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
             player.sendOverlayMessage(Component.translatable("message.quantimium.laser_mirror.mount").withStyle(ChatFormatting.GRAY));
             return InteractionResult.SUCCESS;
         }
-        if (!plate.equals(mirror.plate())) {
-            mirror.setPlate(plate);
+        if (!plate.equals(plate(state))) {
+            level.setBlock(pos, withPlate(state, plate), Block.UPDATE_ALL);
+            LaserNetworks.changed(level);
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 1.0f + 0.15f * plate.steps());
         }
         player.sendOverlayMessage(LaserMirrorBlockEntity.describe(plate).withStyle(ChatFormatting.AQUA));

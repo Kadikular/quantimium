@@ -2,9 +2,8 @@
   "parent": "minecraft:block/block",
   "textures": {
     "steel": "quantimium:block/laser_mirror_steel",
-    "plate": "quantimium:block/laser_splitter_plate",
-    "particle": "quantimium:block/laser_mirror_steel",
-    "focus": "quantimium:block/laser_focus"
+    "plate": "quantimium:block/laser_mirror_plate",
+    "particle": "quantimium:block/laser_mirror_steel"
   },
   "elements": [
     {
@@ -146,72 +145,207 @@
     },
     {
       "from": [
-        7,
-        2,
-        7
+        7.0,
+        7.0,
+        5.1
       ],
       "to": [
-        9,
-        6,
-        9
+        9.0,
+        9.0,
+        7.1
       ],
       "faces": {
         "north": {
           "texture": "#steel",
           "uv": [
-            7,
-            10,
-            9,
+            7.0,
+            7.0,
+            9.0,
+            9.0
+          ]
+        },
+        "south": {
+          "texture": "#steel",
+          "uv": [
+            7.0,
+            7.0,
+            9.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#steel",
+          "uv": [
+            5.1,
+            7.0,
+            7.1,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#steel",
+          "uv": [
+            5.1,
+            7.0,
+            7.1,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#steel",
+          "uv": [
+            7.0,
+            5.1,
+            9.0,
+            7.1
+          ]
+        },
+        "down": {
+          "texture": "#steel",
+          "uv": [
+            7.0,
+            5.1,
+            9.0,
+            7.1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.0,
+        2,
+        5.1
+      ],
+      "to": [
+        9.0,
+        7.0,
+        7.1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel",
+          "uv": [
+            7.0,
+            9.0,
+            9.0,
             14
           ]
         },
         "south": {
           "texture": "#steel",
           "uv": [
-            7,
-            10,
-            9,
+            7.0,
+            9.0,
+            9.0,
             14
           ]
         },
         "east": {
           "texture": "#steel",
           "uv": [
-            7,
-            10,
-            9,
+            5.1,
+            9.0,
+            7.1,
             14
           ]
         },
         "west": {
           "texture": "#steel",
           "uv": [
-            7,
-            10,
-            9,
+            5.1,
+            9.0,
+            7.1,
             14
           ]
         },
         "up": {
           "texture": "#steel",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            7.0,
+            5.1,
+            9.0,
+            7.1
           ]
         },
         "down": {
           "texture": "#steel",
           "uv": [
-            7,
-            7,
-            9,
-            9
+            7.0,
+            5.1,
+            9.0,
+            7.1
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3,
+        7.0
+      ],
+      "to": [
+        13,
+        13,
+        8.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#plate",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#steel",
+          "uv": [
+            7.0,
+            3,
+            8.0,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#steel",
+          "uv": [
+            7.0,
+            3,
+            8.0,
+            13
+          ]
+        },
+        "up": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            7.0,
+            13,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#steel",
+          "uv": [
+            3,
+            7.0,
+            13,
+            8.0
           ]
         }
       }
     }
-  ],
-  "render_type": "minecraft:translucent"
+  ]
 }

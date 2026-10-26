@@ -119,8 +119,8 @@ public record MirrorPlate(Direction face, @Nullable Direction toward, int steps)
         return toward == null ? flat(mirror.mirror(face)) : of(mirror.mirror(face), mirror.mirror(toward), steps);
     }
 
-    /** Whether it faces into {@code mount}, where the mirror stands: it can't. */
+    /** Whether it faces at all towards {@code mount}, where the mirror stands: it can't. */
     public boolean facesInto(Direction mount) {
-        return normal().dot(Vec3.atLowerCornerOf(mount.getUnitVec3i())) > 0.8;
+        return normal().dot(Vec3.atLowerCornerOf(mount.getUnitVec3i())) > 1.0e-6;
     }
 }

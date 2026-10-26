@@ -14,6 +14,7 @@ mirror is a framed silver plate on its face.
 from __future__ import annotations
 
 import json
+import math
 import os
 import random
 
@@ -418,6 +419,34 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
         element["rotation"] = {"origin": [cx, cy, cz], "axis": "y", "angle": angle, "rescale": False}
         return element
 
+    # A plate turned 22.5 degrees from one face ({a}) towards a side at right angles ({b}): the turns are those the 45
+    # degree plates above use (about x, up turns south; about z, up turns west; about y, north turns west), by half.
+    half_turns = {
+        ("up", "south"): ("x", 22.5), ("up", "north"): ("x", -22.5), ("up", "west"): ("z", 22.5), ("up", "east"): ("z", -22.5),
+        ("north", "up"): ("x", 22.5), ("south", "up"): ("x", -22.5), ("east", "up"): ("z", 22.5), ("west", "up"): ("z", -22.5),
+        ("north", "west"): ("y", 22.5), ("north", "east"): ("y", -22.5), ("south", "east"): ("y", 22.5), ("south", "west"): ("y", -22.5),
+        ("east", "north"): ("y", 22.5), ("east", "south"): ("y", -22.5), ("west", "south"): ("y", 22.5), ("west", "north"): ("y", -22.5),
+    }
+    cos, sin = math.cos(math.radians(22.5)), math.sin(math.radians(22.5))
+
+    def half_normal(a, b):
+        return tuple(cos * p + sin * q for p, q in zip(DIRS[a], DIRS[b]))
+
+    def half_plate(a, b):
+        """The plate facing {a}, turned 22.5 degrees towards {b}: drawn facing {a}, then turned by half a 45."""
+        nx, ny, nz = half_normal(a, b)
+        cx, cy, cz = 8 - nx * 0.5, 8 - ny * 0.5, 8 - nz * 0.5
+        if a == "up":
+            element = box([cx - 5, cy - 0.5, cz - 5], [cx + 5, cy + 0.5, cz + 5])
+        elif a in ("north", "south"):
+            element = box([cx - 5, cy - 5, cz - 0.5], [cx + 5, cy + 5, cz + 0.5])
+        else:
+            element = box([cx - 0.5, cy - 5, cz - 5], [cx + 0.5, cy + 5, cz + 5])
+        faced(element, a)
+        axis, angle = half_turns[(a, b)]
+        element["rotation"] = {"origin": [round(cx, 4), round(cy, 4), round(cz, 4)], "axis": axis, "angle": angle, "rescale": False}
+        return element
+
     def focus(plate_element):
         """
         A splitter's focus: the 2x2 of the plate's middle, filling its window flush (the plate has no texture there);
@@ -489,27 +518,66 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
             face["uv"] = [3, 6, 4, 7]
         return notch
 
-    # In the world, the block draws only its stand; the plate (and the hub behind it) are drawn at their true angle by
-    # LaserMirrorBER, since a plate turns in 22.5 degree steps no block model can.
-    write(f"{name}_stand", [box([2, 0, 2], [14, 1, 14], "down"), box([4, 1, 4], [12, 2, 12]), box([7, 2, 7], [9, 6, 9])])
+    if splits:
+        # Each way round: the dot shows which of the two sides light goes in by.
+        for a in DIRS:
+            for b in DIRS:
+                if "down" in (a, b) or a == b or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0:
+                    continue
+                normal = tuple(p + q for p, q in zip(DIRS[a], DIRS[b]))
+                face_plate = plate(normal)
+                write(f"{name}_{a}_to_{b}", stand(normal) + [face_plate, focus(face_plate), marker(a, b)])
+    else:
+        for key, normal in floor_normals.items():
+            write(f"{name}_{key}", stand(normal) + [plate(normal)])
+    # The 22.5 degree plates (22.5 and 67.5 from up, and between two sides), for a mirror standing on the floor; never
+    # facing towards it.
+    for a, b in half_turns:
+        half = half_plate(a, b)
+        parts = stand(half_normal(a, b)) + [half] + ([focus(half)] if splits else [])
+        write(f"{name}_{a}_{b}_half", parts)
     # Facing north, the way an inventory icon looks at it.
     item_normal = tuple(p + q for p, q in zip(DIRS["north"], DIRS["up"])) if splits else DIRS["north"]
     item_plate = plate(item_normal)
-    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate)] if splits else []))
+    write(f"{name}_item", stand(item_normal) + [item_plate] + ([focus(item_plate), marker("north", "up")] if splits else []))
 
     mounts = {"down": (0, 0), "up": (180, 0), "south": (90, 0), "west": (90, 90), "north": (90, 180), "east": (90, 270)}
-    parts = [{"when": {"mount": mount}, "apply": dict({"model": f"quantimium:block/{name}_stand"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})}
-             for mount, (rx, ry) in mounts.items()]
+    names = {v: k for k, v in DIRS.items()}
+
+    def back_to_floor(direction, rx, ry):
+        # The direction on a floor mirror that turning by (rx, ry) takes to {direction}.
+        for name, vector in DIRS.items():
+            if names[_rotated(vector, rx, ry)] == direction:
+                return name
+        raise AssertionError(direction)
+
+    parts = []
+    for mount, (rx, ry) in mounts.items():
+        for a in DIRS:
+            for b in DIRS:
+                if mount in (a, b) or (a != b and sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0) or (splits and a == b):
+                    continue
+                if splits:
+                    key = f"{back_to_floor(a, rx, ry)}_to_{back_to_floor(b, rx, ry)}"
+                else:
+                    key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
+                    assert key in floor_normals, (mount, a, b, key)
+                parts.append({"when": {"mount": mount, "input": a, "output": b, "half": "false"},
+                              "apply": dict({"model": f"quantimium:block/{name}_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
+        # Turned 22.5 degrees from {a} towards {b}: never from or towards what it stands on.
+        for a in DIRS:
+            for b in DIRS:
+                if mount in (a, b) or sum(p * q for p, q in zip(DIRS[a], DIRS[b])) != 0 or a == b:
+                    continue
+                fa, fb = back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)
+                assert (fa, fb) in half_turns, (mount, a, b, fa, fb)
+                parts.append({"when": {"mount": mount, "input": a, "output": b, "half": "true"},
+                              "apply": dict({"model": f"quantimium:block/{name}_{fa}_{fb}_half"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
     with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
     with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
         json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{name}_item"}}, handle, indent=2)
-    # The plate models of before, one for each way it could face.
-    for model in os.listdir(MODELS):
-        if model.startswith(name + "_") and model not in (f"{name}_stand.json", f"{name}_item.json") \
-                and not model.startswith("laser_mirror_steel"):
-            os.remove(os.path.join(MODELS, model))
-    for stale in ("laser_mirror_plate", "laser_mirror_plate_upright", "laser_mirror_plate_flat"):
+    for stale in ("laser_mirror_stand", "laser_mirror_plate", "laser_mirror_plate_upright", "laser_mirror_plate_flat"):
         path = os.path.join(MODELS, f"{stale}.json")
         if os.path.exists(path):
             os.remove(path)

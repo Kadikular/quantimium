@@ -71,9 +71,9 @@ each ring split four ways by the diagonals. Click (by hand or with a wrench):
 | The inner ring, towards a side | Facing that face, turned 22.5° towards that side |
 | The outer ring, towards a side | Half way between that face and that side (45°): light turns through a right angle |
 
-The part under your crosshair is outlined; holding a wrench, a ghost shows where the plate would turn. A plate never
-faces into its stand. Sneak-click to move the stand: a face's middle puts it on that face, a ring the side it's
-towards.
+Looking at a face shows its parts outlined in grey, the one under your crosshair in blue; holding a wrench, an outline
+shows where the plate would turn. A plate never faces towards its stand, not even a little. Sneak-click to move the
+stand: a face's middle puts it on that face, a ring the side it's towards.
 
 **Angles.** Light travels in 26 ways: the 6 straight, the 12 flat diagonals (45° in one plane) and the 8 corner
 diagonals. Off a 45° plate straight light turns a right angle; off a 22.5° plate it leaves at 45°, and 45° light off

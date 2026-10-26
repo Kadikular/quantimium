@@ -10,8 +10,8 @@
 - **Mirrors reflect like real ones.** A beam bounces off a Laser Mirror and goes on as the same beam, with its own
   light: beams crossing one mirror never mix. A plate faces one of 42 ways: flat to a face, or turned 22.5° or 45°
   towards a neighbouring one. Click a face's middle for flat, the ring round it for 22.5°, the outer ring for 45°
-  towards the side clicked; sneak-click to move the stand. The part you're pointing at is outlined, and with a
-  wrench a ghost shows the plate's new angle. Light now travels diagonally too (26 ways in all); what leaves a mirror
+  towards the side clicked; sneak-click to move the stand. Looking at a face shows its parts outlined, the one you're
+  pointing at in blue, and with a wrench an outline of the plate's new angle. A plate never faces towards its stand. Light now travels diagonally too (26 ways in all); what leaves a mirror
   is always one of them. Mirrors already placed keep the way they faced. Each bounce takes 0.5% (a relay 1%).
 - **The Laser Splitter** reflects off both sides and lets light through: one beam becomes two, each its own. It no
   longer joins beams into one.

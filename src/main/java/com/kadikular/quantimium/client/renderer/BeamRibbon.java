@@ -38,13 +38,26 @@ public final class BeamRibbon {
         for (int i = 0; i < points.length - 1; i++) {
             Vec3 a = points[i];
             Vec3 b = points[i + 1];
+            // Sent back along itself (off a flat mirror): drawn once, only as far past where it came from as it goes.
+            if (i > 0 && reverses(points[i - 1], a, b)) {
+                if (b.distanceToSqr(a) <= points[i - 1].distanceToSqr(a) + 1.0E-6) continue;
+                a = points[i - 1];
+            }
             Vec3 sideA = side(camera, a, b, halfWidth);
-            Vec3 sideB = side(camera, b, i + 2 < points.length ? points[i + 2] : b.add(b.subtract(a)), halfWidth);
+            Vec3 after = i + 2 < points.length && !reverses(a, b, points[i + 2]) ? points[i + 2] : b.add(b.subtract(a));
+            Vec3 sideB = side(camera, b, after, halfWidth);
             vertex(buffer, pose, a.subtract(sideA), red, green, blue, alpha);
             vertex(buffer, pose, a.add(sideA), red, green, blue, alpha);
             vertex(buffer, pose, b.add(sideB), red, green, blue, alpha);
             vertex(buffer, pose, b.subtract(sideB), red, green, blue, alpha);
         }
+    }
+
+    /** Whether the way from {@code at} to {@code next} is straight back the way from {@code before} to {@code at}. */
+    private static boolean reverses(Vec3 before, Vec3 at, Vec3 next) {
+        Vec3 there = at.subtract(before), back = next.subtract(at);
+        double lengths = there.length() * back.length();
+        return lengths > 1.0E-8 && there.dot(back) < -0.9999 * lengths;
     }
 
     private static Vec3 side(Vec3 camera, Vec3 at, Vec3 next, float halfWidth) {
