@@ -76,7 +76,8 @@ def lang() -> Dict[str, str]:
 
 
 # Not real content: template leftovers, and blocks that only exist at runtime.
-HIDDEN = {"example_block", "example_item", "veiled_spawn_egg", "debug_field_emitter"}
+# The Laser Relay became a Laser Focus with a Stand and Emitters: its block is only kept to turn old ones into that.
+HIDDEN = {"example_block", "example_item", "veiled_spawn_egg", "debug_field_emitter", "laser_relay"}
 INTERNAL = {"quantum_containment", "stabilised_portal", "mirror_vine", "mirror_short_grass",
             "mirror_tall_grass", "mirror_dead_bush", "mirror_hanging_roots"}
 
@@ -84,7 +85,8 @@ INTERNAL = {"quantum_containment", "stabilised_portal", "mirror_vine", "mirror_s
 def catalogue_entries(names: Dict[str, str]) -> Tuple[List[str], List[str]]:
     blocks = sorted(k.split(".")[2] for k in names if k.startswith("block.quantimium.") and k.count(".") == 2)
     items = sorted(k.split(".")[2] for k in names if k.startswith("item.quantimium.") and k.count(".") == 2)
-    return [b for b in blocks if b not in HIDDEN], [i for i in items if i not in HIDDEN]
+    # A block placed by items of its own (the Laser Focus) is listed once, as its item.
+    return [b for b in blocks if b not in HIDDEN and b not in items], [i for i in items if i not in HIDDEN]
 
 
 def content_rows() -> Dict[str, Tuple[str, str]]:

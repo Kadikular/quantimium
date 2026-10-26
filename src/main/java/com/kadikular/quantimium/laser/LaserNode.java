@@ -94,6 +94,11 @@ public interface LaserNode {
         return com.kadikular.quantimium.Config.relayLoss();
     }
 
+    /** What light leaving by {@code face} loses on the way out, as flux: a Laser Focus's emitter's loss. */
+    default double outTax(Direction face) {
+        return 0;
+    }
+
     /** The network has traced this node's beams, or worked out what flows along them: for rendering. */
     void showBeams(List<LaserBeam> beams);
 

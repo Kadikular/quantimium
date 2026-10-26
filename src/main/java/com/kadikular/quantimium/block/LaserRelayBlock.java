@@ -272,6 +272,14 @@ public class LaserRelayBlock extends BaseEntityBlock implements com.kadikular.qu
         return InteractionResult.SUCCESS;
     }
 
+    /** A Laser Relay becomes a Laser Focus the tick after it loads or is placed (see {@link LaserRelayBlockEntity#becomeFocus}). */
+    @Override
+    protected void tick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos, net.minecraft.util.RandomSource random) {
+        if (state.is(com.kadikular.quantimium.init.ModBlocks.LASER_RELAY.get()) && level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay) {
+            relay.becomeFocus();
+        }
+    }
+
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new LaserRelayBlockEntity(pos, state);

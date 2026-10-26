@@ -2,7 +2,7 @@
 navigation:
   title: ME Superposition Port
   parent: blocks/index.md
-  position: 71
+  position: 70
   icon: quantimium:reactor_me_port
 ---
 

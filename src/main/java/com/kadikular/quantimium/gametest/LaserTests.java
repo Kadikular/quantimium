@@ -1,7 +1,6 @@
 package com.kadikular.quantimium.gametest;
 
 import com.kadikular.quantimium.block.LaserEmitterBlock;
-import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
@@ -210,8 +209,8 @@ public final class LaserTests {
         for (int x = 1; x <= 8; x++) solar(helper, new BlockPos(x, Y, 8), Direction.EAST);
         for (int z = 0; z <= 7; z++) solar(helper, new BlockPos(11, Y, z), Direction.SOUTH);
         BlockPos relay = new BlockPos(11, Y, 8);
-        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.EAST));
-        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        TestSupport.relay(helper, relay, Direction.DOWN, Direction.EAST);
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).addEmitter(Direction.SOUTH);
         helper.setBlock(new BlockPos(15, Y, 8), ModBlocks.QUANTUM_CRAFTER.get());
         var crafter = helper.getBlockEntity(new BlockPos(15, Y, 8), com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.class);
         FoldCoreBlockEntity empty = sink(helper, new BlockPos(11, Y, 12));
@@ -242,8 +241,8 @@ public final class LaserTests {
         for (int z = 0; z <= 7; z++) solar(helper, new BlockPos(9, Y, z), Direction.SOUTH);
         helper.setBlock(new BlockPos(9, Y, 8), splitter(Direction.WEST, Direction.SOUTH));
         BlockPos relay = new BlockPos(9, Y, 11);
-        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.EAST));
-        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        TestSupport.relay(helper, relay, Direction.DOWN, Direction.EAST);
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).addEmitter(Direction.SOUTH);
         FoldCoreBlockEntity first = sink(helper, new BlockPos(13, Y, 11));
         helper.setBlock(new BlockPos(9, Y, 14), splitter(Direction.NORTH, Direction.EAST));
         helper.setBlock(new BlockPos(12, Y, 14), ModBlocks.QUANTUM_CRAFTER.get());
@@ -358,8 +357,8 @@ public final class LaserTests {
         // that takes at most 1,000. Short of power, each gets a fair share: the Projector all it asks, not a third less.
         emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         BlockPos relay = new BlockPos(8, Y, 8);
-        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.NORTH));
-        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        TestSupport.relay(helper, relay, Direction.DOWN, Direction.NORTH);
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).addEmitter(Direction.SOUTH);
         helper.setBlock(new BlockPos(8, Y, 4), ModBlocks.QUANTUM_CRAFTER.get());
         var crafter = helper.getBlockEntity(new BlockPos(8, Y, 4), com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.class);
         helper.setBlock(new BlockPos(8, Y, 12), ModBlocks.DECOHERENCE_PROJECTOR.get());
@@ -395,7 +394,7 @@ public final class LaserTests {
         // bound to it sends that light out of its muzzle, less the jump's tax. Its Tesseract taken out, nothing comes.
         emitter(helper, new BlockPos(1, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         BlockPos relay = new BlockPos(5, Y, 3);
-        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.UP));
+        TestSupport.relay(helper, relay, Direction.DOWN, Direction.UP);
         for (int x = 0; x < 17; x++) helper.setBlock(new BlockPos(x, Y, 7), net.minecraft.world.level.block.Blocks.STONE);
         var mirror = entangled(helper, new BlockPos(12, Y, 10), Direction.SOUTH, relay);
         FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 14));
@@ -424,8 +423,8 @@ public final class LaserTests {
         // drawing on it still gets its light.
         emitter(helper, new BlockPos(1, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         BlockPos relay = new BlockPos(5, Y, 3);
-        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.NORTH));
-        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).cycleMode(Direction.NORTH);
+        TestSupport.relay(helper, relay, Direction.DOWN, Direction.NORTH);
+        helper.getBlockEntity(relay, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).cycleMode(Direction.NORTH);
         FoldCoreBlockEntity north = sink(helper, new BlockPos(5, Y, 0));
         entangled(helper, new BlockPos(12, Y, 10), Direction.SOUTH, relay);
         FoldCoreBlockEntity core = sink(helper, new BlockPos(12, Y, 14));
@@ -456,7 +455,7 @@ public final class LaserTests {
     public static void aRelayTurnsTheBeamAndTakesItsTax(GameTestHelper helper) {
         emitter(helper, new BlockPos(3, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         BlockPos mirror = new BlockPos(9, Y, 3);
-        helper.setBlock(mirror, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, Direction.SOUTH));
+        TestSupport.relay(helper, mirror, Direction.DOWN, Direction.SOUTH);
         FoldCoreBlockEntity core = sink(helper, new BlockPos(9, Y, 12));
         long[] before = {-1};
         helper.runAfterDelay(40, () -> before[0] = core.getEnergyStorage().getEnergyStored());
@@ -506,8 +505,7 @@ public final class LaserTests {
         // A Relay and a Laser Mirror each stood on glass, with an emitter shining through the glass into the base.
         emitter(helper, new BlockPos(3, Y, 3), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         helper.setBlock(new BlockPos(8, Y, 3), Blocks.GLASS);
-        helper.setBlock(new BlockPos(9, Y, 3), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(LaserRelayBlock.FACING, Direction.SOUTH).setValue(LaserRelayBlock.MOUNT, Direction.WEST));
+        TestSupport.relay(helper, new BlockPos(9, Y, 3), Direction.WEST, Direction.SOUTH);
         FoldCoreBlockEntity relayed = sink(helper, new BlockPos(9, Y, 7));
         emitter(helper, new BlockPos(3, Y, 10), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         helper.setBlock(new BlockPos(8, Y, 10), Blocks.GLASS);
@@ -657,7 +655,7 @@ public final class LaserTests {
         FoldCoreBlockEntity charged = sink(helper, core);
         prism.toggleLink(helper.absolutePos(core), Direction.UP);
         BlockPos relay = new BlockPos(7, Y + 4, 4);
-        helper.setBlock(relay, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.UP));
+        TestSupport.relay(helper, relay, Direction.DOWN, Direction.UP);
         prism.toggleLink(helper.absolutePos(relay), Direction.EAST);
         helper.succeedWhen(() -> {
             var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(7, Y, 8)));
@@ -1022,8 +1020,7 @@ public final class LaserTests {
     public static void aCavityMirrorAndALaserRelayMakeACavity(GameTestHelper helper) {
         // Only one end needs to be a Cavity Mirror: it holds the light, the Laser Relay holds none.
         var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
-        helper.setBlock(new BlockPos(9, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.WEST));
+        TestSupport.relay(helper, new BlockPos(9, Y, 8), Direction.DOWN, Direction.WEST);
         helper.runAfterDelay(25, () -> {
             helper.assertTrue(a.paired(), "paired with the Laser Relay");
             helper.assertValueEqual(a.capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks of gap");
@@ -1102,6 +1099,92 @@ public final class LaserTests {
             helper.assertValueEqual(LaserNetworks.of(helper.getLevel()).rebuilds(), settled[0], "no rebuilds once settled");
             TestSupport.finishLasers(helper);
             helper.succeed();
+        });
+    }
+
+    /** A Laser Focus block at {@code pos} holding {@code core}, with nothing on its faces. */
+    private static com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus(GameTestHelper helper, BlockPos pos,
+                                                                                     com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core core) {
+        helper.setBlock(pos, ModBlocks.LASER_FOCUS.get());
+        var focus = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+        focus.setCore(core);
+        return focus;
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aClearFocusLetsLightThroughAndALaserFocusStopsIt(GameTestHelper helper) {
+        // Two rows: through a Clear Laser Focus with nothing on it, light reaches the block beyond; a Laser Focus with
+        // no Emitter stops it; a Clear one with a Cover on its far face too.
+        var clear = com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.CLEAR;
+        emitter(helper, new BlockPos(1, Y, 4), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        focus(helper, new BlockPos(5, Y, 4), clear);
+        var through = sink(helper, new BlockPos(9, Y, 4));
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        focus(helper, new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+        var stopped = sink(helper, new BlockPos(9, Y, 8));
+        emitter(helper, new BlockPos(1, Y, 12), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        focus(helper, new BlockPos(5, Y, 12), clear).setPart(Direction.EAST, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.COVER);
+        var covered = sink(helper, new BlockPos(9, Y, 12));
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(through.getEnergyStorage().getEnergyStored() > 0, "light passes a Clear Laser Focus");
+            helper.assertValueEqual(stopped.getEnergyStorage().getEnergyStored(), 0, "a Laser Focus with no emitter stops it");
+            helper.assertValueEqual(covered.getEnergyStorage().getEnergyStored(), 0, "a Cover on the far face stops it");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void attachmentsDoNothingUntilAFocusGoesIn(GameTestHelper helper) {
+        // An Emitter and a Stand with no focus: no light. Put a Laser Focus in, and light leaves by the Emitter.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LASER_FOCUS.get());
+        var focus = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+        focus.setPart(Direction.DOWN, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND);
+        focus.addEmitter(Direction.SOUTH);
+        var sink = sink(helper, new BlockPos(5, Y, 12));
+        helper.runAfterDelay(40, () -> {
+            helper.assertValueEqual(sink.getEnergyStorage().getEnergyStored(), 0, "no focus, no light");
+            helper.assertValueEqual(focus.takeCore().isEmpty(), true, "nothing to take out");
+            focus.setCore(com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+            helper.succeedWhen(() -> {
+                helper.assertTrue(sink.getEnergyStorage().getEnergyStored() > 0, "with a focus, out of its emitter");
+                TestSupport.finishLasers(helper);
+            });
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void onlyAFocusEmitterTakesALoss(GameTestHelper helper) {
+        var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        helper.assertValueEqual(focus.tax(), 0.0, "the focus itself loses nothing");
+        helper.assertValueEqual(focus.outTax(Direction.EAST), com.kadikular.quantimium.Config.relayLoss(), "its emitter does");
+        helper.assertValueEqual(focus.outTax(Direction.WEST), 0.0, "light passing out of a bare face doesn't");
+        helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void aLaserRelayBecomesALaserFocus(GameTestHelper helper) {
+        // On its west wall, emitters east and south, a lens in the south one: a Laser Focus with a Stand west, the same
+        // Emitters and the lens.
+        BlockPos at = new BlockPos(5, Y, 8);
+        helper.setBlock(at, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.MOUNT, Direction.WEST));
+        var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        relay.addEmitter(Direction.SOUTH);
+        relay.setLens(Direction.SOUTH, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()));
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(ModBlocks.LASER_FOCUS.get(), at);
+            var focus = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+            helper.assertValueEqual(focus.core(), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER, "a Laser Focus");
+            helper.assertValueEqual(focus.part(Direction.WEST), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND, "stood on its wall");
+            helper.assertTrue(focus.hasEmitter(Direction.EAST) && focus.hasEmitter(Direction.SOUTH), "its emitters");
+            helper.assertTrue(focus.lens(Direction.SOUTH).is(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()), "and its lens");
+            TestSupport.finishLasers(helper);
         });
     }
 

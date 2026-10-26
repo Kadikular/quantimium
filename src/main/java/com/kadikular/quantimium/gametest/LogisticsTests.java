@@ -840,8 +840,7 @@ public final class LogisticsTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void aReceptacleRightBesideARelayJoinsTheNetwork(GameTestHelper helper) {
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
-        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
         LogisticsReceptacleBlockEntity storage = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
         // And one shone on from above, onto its outer face: it joins, and the light stops there.
         helper.setBlock(new BlockPos(12, Y - 1, 12), Blocks.CHEST);
@@ -1058,10 +1057,9 @@ public final class LogisticsTests {
         crafterOn(helper, 6, Items.FURNACE, true, true);
         // The light up a level at a relay, and along over the Materialiser, through a provider sitting on it.
         BlockPos split = new BlockPos(10, Y, 8);
-        helper.setBlock(split, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        helper.getBlockEntity(split, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.UP);
-        helper.setBlock(split.above(), ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.MOUNT, Direction.NORTH));
+        TestSupport.relay(helper, split, Direction.DOWN, Direction.EAST);
+        helper.getBlockEntity(split, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).addEmitter(Direction.UP);
+        TestSupport.relay(helper, split.above(), Direction.NORTH, Direction.EAST);
         helper.setBlock(MATERIALISER.above(), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
         var onItself = helper.getBlockEntity(MATERIALISER.above(), LogisticsReceptacleBlockEntity.class);
         while (onItself.role() != LogisticsMember.Role.PROVIDER) onItself.cycleRole();
@@ -1743,8 +1741,8 @@ public final class LogisticsTests {
         // An emitter into a Relay: east to a controller and on to a void, south straight to another void.
         emitter(helper, 1);
         BlockPos relayAt = new BlockPos(3, Y, 8);
-        helper.setBlock(relayAt, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).addEmitter(Direction.SOUTH);
+        TestSupport.relay(helper, relayAt, Direction.DOWN, Direction.EAST);
+        helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).addEmitter(Direction.SOUTH);
         controller(helper, new BlockPos(5, Y, 8), Direction.EAST, false);
         helper.setBlock(new BlockPos(10, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
         helper.setBlock(new BlockPos(3, Y, 12), ModBlocks.CREATIVE_ENERGY_VOID.get());
@@ -1756,7 +1754,7 @@ public final class LogisticsTests {
             helper.assertTrue(past.taking() > 0, "light past the controller charges again once it's clear");
             helper.assertTrue(beside.taking() > 0, "and the Relay's other output still charges");
             var emitterBeams = helper.getBlockEntity(new BlockPos(1, Y, 8), com.kadikular.quantimium.block.entity.LaserEmitterBlockEntity.class).syncedBeams();
-            var relayBeams = helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).syncedBeams();
+            var relayBeams = helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).syncedBeams();
             var controllerBeams = helper.getBlockEntity(new BlockPos(5, Y, 8), LogisticsControllerBlockEntity.class).syncedBeams();
             helper.assertTrue(emitterBeams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "the emitter's beam shows lit: " + emitterBeams);
             helper.assertTrue(relayBeams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "both of the Relay's show lit: " + relayBeams);
@@ -1773,8 +1771,7 @@ public final class LogisticsTests {
         helper.setBlock(new BlockPos(12, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
         var end = helper.getBlockEntity(new BlockPos(12, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
         BlockPos relayAt = new BlockPos(6, Y, 8);
-        helper.runAfterDelay(30, () -> helper.setBlock(relayAt, ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)));
+        helper.runAfterDelay(30, () -> TestSupport.relay(helper, relayAt, Direction.DOWN, Direction.EAST));
         helper.runAfterDelay(80, () -> {
             helper.assertTrue(end.taking() > 0, "light runs on through the Relay placed in it");
             helper.setBlock(relayAt, Blocks.AIR);

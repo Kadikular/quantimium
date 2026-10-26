@@ -2,7 +2,7 @@
 navigation:
   title: Isolator Lens
   parent: items/index.md
-  position: 23
+  position: 27
   icon: quantimium:isolator_lens
 item_ids:
 - quantimium:isolator_lens

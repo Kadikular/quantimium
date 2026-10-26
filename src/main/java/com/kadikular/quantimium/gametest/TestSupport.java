@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import com.kadikular.quantimium.block.entity.ContainmentHallBlockEntity;
+import com.kadikular.quantimium.block.entity.LaserFocusBlockEntity;
 import com.kadikular.quantimium.block.entity.RiftAnchorBlockEntity;
 import com.kadikular.quantimium.block.entity.QuantumEnergyStorage;
 import com.kadikular.quantimium.flux.ChunkFlux;
@@ -69,6 +70,21 @@ public final class TestSupport {
 
     /** The block entity at {@code relative}, whatever it is. */
     @org.jspecify.annotations.Nullable
+    /**
+     * A Laser Focus at {@code relative}, set up as a Laser Relay was: a Stand on {@code mount}, and an Emitter on each of
+     * {@code emitters}.
+     */
+    public static LaserFocusBlockEntity relay(GameTestHelper helper, BlockPos relative,
+                                                                                    net.minecraft.core.Direction mount,
+                                                                                    net.minecraft.core.Direction... emitters) {
+        helper.setBlock(relative, com.kadikular.quantimium.init.ModBlocks.LASER_FOCUS.get());
+        var focus = helper.getBlockEntity(relative, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+        focus.setCore(com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+        focus.setPart(mount, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND);
+        for (net.minecraft.core.Direction face : emitters) focus.addEmitter(face);
+        return focus;
+    }
+
     public static BlockEntity blockEntity(GameTestHelper helper, BlockPos relative) {
         return helper.getLevel().getBlockEntity(helper.absolutePos(relative));
     }

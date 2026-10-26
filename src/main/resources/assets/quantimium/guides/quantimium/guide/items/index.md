@@ -17,6 +17,7 @@ navigation:
 - <ItemLink id="quantimium:anomaly_fragment" />
 - <ItemLink id="quantimium:basic_decoherence_matrix" />
 - <ItemLink id="quantimium:block_filter_lens" />
+- <ItemLink id="quantimium:clear_laser_focus" />
 - <ItemLink id="quantimium:crushing_lens" />
 - <ItemLink id="quantimium:damage_lens" />
 - <ItemLink id="quantimium:decoherence_lance" />
@@ -24,6 +25,9 @@ navigation:
 - <ItemLink id="quantimium:extract_lens" />
 - <ItemLink id="quantimium:filter_lens" />
 - <ItemLink id="quantimium:flux_meter" />
+- <ItemLink id="quantimium:focus_cover" />
+- <ItemLink id="quantimium:focus_emitter" />
+- <ItemLink id="quantimium:focus_stand" />
 - <ItemLink id="quantimium:folded_tesseract" />
 - <ItemLink id="quantimium:freezing_lens" />
 - <ItemLink id="quantimium:harmonic_lens" />
@@ -32,6 +36,7 @@ navigation:
 - <ItemLink id="quantimium:insert_lens" />
 - <ItemLink id="quantimium:interact_lens" />
 - <ItemLink id="quantimium:isolator_lens" />
+- <ItemLink id="quantimium:laser_focus" />
 - <ItemLink id="quantimium:laser_linker" />
 - <ItemLink id="quantimium:mirror_lens" />
 - <ItemLink id="quantimium:phantom_lens" />

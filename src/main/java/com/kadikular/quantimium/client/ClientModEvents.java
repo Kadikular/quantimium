@@ -104,6 +104,8 @@ public class ClientModEvents {
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_RELAY_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.LASER_FOCUS_BE.get(),
+                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_EMITTER_BE.get(),
                 com.kadikular.quantimium.client.renderer.SolarEmitterBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_PRISM_BE.get(),
@@ -144,6 +146,13 @@ public class ClientModEvents {
     }
 
     /** The Tesseract and Sophon draw themselves; their item definitions name these types. */
+    /** The Laser Focus block's model, drawn from what it holds. */
+    @SubscribeEvent
+    public static void registerBlockStateModels(net.neoforged.neoforge.client.event.RegisterBlockStateModels event) {
+        event.registerModel(Identifier.fromNamespaceAndPath(Quantimium.MODID, "laser_focus"),
+                com.kadikular.quantimium.client.model.LaserFocusModel.Unbaked.MAP_CODEC);
+    }
+
     @SubscribeEvent
     public static void registerItemModels(RegisterItemModelsEvent event) {
         event.register(Identifier.fromNamespaceAndPath(Quantimium.MODID, "animated"), AnimatedItemModel.Unbaked.MAP_CODEC);
@@ -183,6 +192,7 @@ public class ClientModEvents {
         MirrorPhaseColours.register(event);
         event.register(LensTints.lensMountSlots(), ModBlocks.LENS_MOUNT.get());
         event.register(LensTints.relayTips(), ModBlocks.LASER_RELAY.get());
+        event.register(LensTints.relayTips(), ModBlocks.LASER_FOCUS.get());
     }
 
     @SubscribeEvent

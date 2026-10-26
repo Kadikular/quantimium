@@ -71,7 +71,11 @@ public class ModCreativeTabs {
                         output.accept(ModItems.SOLAR_EMITTER_ITEM.get());
                         output.accept(ModItems.LASER_MIRROR_ITEM.get());
                         output.accept(ModItems.LASER_SPLITTER_ITEM.get());
-                        output.accept(ModItems.LASER_RELAY_ITEM.get());
+                        output.accept(ModItems.LASER_FOCUS.get());
+                        output.accept(ModItems.CLEAR_LASER_FOCUS.get());
+                        output.accept(ModItems.FOCUS_STAND.get());
+                        output.accept(ModItems.FOCUS_EMITTER.get());
+                        output.accept(ModItems.FOCUS_COVER.get());
                         output.accept(ModItems.LASER_PRISM_ITEM.get());
                         output.accept(ModItems.CAVITY_MIRROR_ITEM.get());
                         output.accept(ModItems.ENTANGLED_MIRROR_ITEM.get());

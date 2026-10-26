@@ -2,7 +2,7 @@
 navigation:
   title: Extract Lens
   parent: items/index.md
-  position: 13
+  position: 14
   icon: quantimium:extract_lens
 item_ids:
 - quantimium:extract_lens

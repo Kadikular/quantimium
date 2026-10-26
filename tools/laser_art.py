@@ -729,6 +729,93 @@ def laser_relay() -> None:
             os.remove(path)
 
 
+def clear_focus() -> Image.Image:
+    """The Clear Laser Focus: as the focus, but glass light passes through, faint inside and edged in pale blue."""
+    img = Image.new("RGBA", (16, 16), hx("e8f4ff", 70))
+    for x in range(16):
+        for y in range(16):
+            edge = x in (6, 9) or y in (6, 9)
+            inside = 6 <= x <= 9 and 6 <= y <= 9
+            if inside and edge:
+                img.putpixel((x, y), hx("9fd4ff", 190))
+            elif not inside:
+                img.putpixel((x, y), hx("cfe8ff", 110))
+    img.putpixel((7, 7), hx("ffffff", 200))
+    return img
+
+
+def laser_focus_block() -> None:
+    """
+    The Laser Focus block: a Laser Focus or Clear Laser Focus in the middle, and on any face a Stand (the Relay's base,
+    boss and post), an Emitter (the simple nozzle) or a Cover (a plain cap on a neck). Each is its own model, drawn for
+    one face and turned to the rest; the block's model (LaserFocusModel) picks them by what the block holds.
+    """
+    clear_focus().save(os.path.join(TEX, "clear_laser_focus.png"))
+    t = {"steel": "quantimium:block/laser_mirror_steel", "focus": "quantimium:block/laser_focus",
+         "particle": "quantimium:block/laser_mirror_steel"}
+
+    def cube(start, end, texture, cull=None):
+        faces = {f: {"texture": texture} for f in ("north", "south", "east", "west", "up", "down")}
+        if cull:
+            faces[cull]["cullface"] = cull
+        return {"from": start, "to": end, "faces": faces}
+
+    def write(name, elements, textures=t, translucent=False, parent=None):
+        body = {"textures": textures, "elements": elements}
+        if parent:
+            body["parent"] = parent
+        if translucent:
+            body["render_type"] = "minecraft:translucent"
+        with open(os.path.join(MODELS, f"{name}.json"), "w") as handle:
+            json.dump(body, handle, indent=2)
+
+    def focus_cube(start=(6, 6, 6), end=(10, 10, 10)):
+        element = cube(list(start), list(end), "#focus")
+        for face in element["faces"].values():
+            face["uv"] = [6, 6, 10, 10]
+        return element
+
+    clear = dict(t, focus="quantimium:block/clear_laser_focus")
+    write("laser_focus_core", [focus_cube()], translucent=True)
+    write("clear_laser_focus_core", [focus_cube()], clear, translucent=True)
+    stand = [cube([2, 0, 2], [14, 1, 14], "#steel", "down"), cube([4, 1, 4], [12, 2, 12], "#steel"), cube([7, 2, 7], [9, 6, 9], "#steel")]
+    write("laser_focus_stand", stand)
+    cover = [cube([5, 5, 0], [11, 11, 1], "#steel"), cube([6, 6, 1], [10, 10, 6], "#steel")]
+    write("laser_focus_cover", cover)
+    # Each face's nozzle tints its tip by that face (LensTints: the lens in that emitter).
+    for side in DIRS:
+        nozzle = emitter_nozzle()
+        for face in nozzle[-1]["faces"].values():
+            face["tintindex"] = DIR_INDEX[side]
+        write(f"laser_focus_emitter_{side}", nozzle)
+
+    # The stand is drawn for a floor; the nozzle and cap pointing north.
+    mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180},
+              "east": {"x": 90, "y": 270}}
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
+    model = {
+        "type": "quantimium:laser_focus",
+        "focus": {"model": "quantimium:block/laser_focus_core"},
+        "clear_focus": {"model": "quantimium:block/clear_laser_focus_core"},
+        "stand": {side: dict({"model": "quantimium:block/laser_focus_stand"}, **r) for side, r in mounts.items()},
+        "emitter": {side: dict({"model": f"quantimium:block/laser_focus_emitter_{side}"}, **turns[side]) for side in DIRS},
+        "cover": {side: dict({"model": "quantimium:block/laser_focus_cover"}, **r) for side, r in turns.items()},
+    }
+    with open(os.path.join(STATES, "laser_focus.json"), "w") as handle:
+        json.dump({"variants": {"": model}}, handle, indent=1)
+
+    # The items, larger than in the block so they read in a slot.
+    block = "minecraft:block/block"
+    write("laser_focus_item", [focus_cube((4, 4, 4), (12, 12, 12))], parent=block, translucent=True)
+    write("clear_laser_focus_item", [focus_cube((4, 4, 4), (12, 12, 12))], clear, parent=block, translucent=True)
+    write("focus_stand_item", stand, parent=block)
+    write("focus_emitter_item", emitter_nozzle(), parent=block)
+    write("focus_cover_item", cover, parent=block)
+    for item in ("laser_focus", "clear_laser_focus", "focus_stand", "focus_emitter", "focus_cover"):
+        with open(os.path.join(ITEMS, f"{item}.json"), "w") as handle:
+            json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{item}_item"}}, handle, indent=2)
+
+
 def outputs_block(name: str, face: str, side: str) -> None:
     """
     A block light leaves by any faces you set (the Laser Relay, the Isolator): its plain casing, and its face
@@ -1293,6 +1380,7 @@ def main() -> None:
     laser_emitters()
 
     laser_relay()
+    laser_focus_block()
     laser_mirror()
     laser_mirror("laser_splitter", splits=True)
     solar_emitter()

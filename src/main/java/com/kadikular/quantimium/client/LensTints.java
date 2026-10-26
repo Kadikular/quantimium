@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.client;
 
-import com.kadikular.quantimium.block.entity.LaserRelayBlockEntity;
+import com.kadikular.quantimium.block.entity.EmitterHolder;
 import com.kadikular.quantimium.block.entity.LensMountBlockEntity;
 import com.kadikular.quantimium.item.LensItem;
 import net.minecraft.client.color.block.BlockTintSource;
@@ -65,7 +65,7 @@ public final class LensTints {
 
                 @Override
                 public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
-                    return level.getBlockEntity(pos) instanceof LaserRelayBlockEntity relay ? colour(relay.lens(face), BARE) : BARE;
+                    return level.getBlockEntity(pos) instanceof EmitterHolder relay ? colour(relay.lens(face), BARE) : BARE;
                 }
             });
         }

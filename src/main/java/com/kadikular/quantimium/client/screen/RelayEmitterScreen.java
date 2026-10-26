@@ -1,7 +1,7 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
-import com.kadikular.quantimium.block.entity.LaserRelayBlockEntity;
+import com.kadikular.quantimium.block.entity.EmitterHolder;
 import com.kadikular.quantimium.laser.RelayMode;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.menu.RelayEmitterMenu;
@@ -21,7 +21,7 @@ public class RelayEmitterScreen extends QuantumMachineScreen<RelayEmitterMenu> {
     }
 
     private RelayMode mode() {
-        LaserRelayBlockEntity relay = menu.getBlockEntity();
+        EmitterHolder relay = menu.getBlockEntity();
         return relay == null ? RelayMode.IGNORED : relay.modeOf(menu.face());
     }
 
@@ -79,7 +79,7 @@ public class RelayEmitterScreen extends QuantumMachineScreen<RelayEmitterMenu> {
 
     /** Whether the lens in it has settings: a filter lens, an Interact lens. */
     private boolean hasSettings() {
-        LaserRelayBlockEntity relay = menu.getBlockEntity();
+        EmitterHolder relay = menu.getBlockEntity();
         var item = relay == null ? null : relay.lens(menu.face()).getItem();
         return item instanceof com.kadikular.quantimium.item.LensWithSettings || item instanceof com.kadikular.quantimium.item.InteractLensItem;
     }

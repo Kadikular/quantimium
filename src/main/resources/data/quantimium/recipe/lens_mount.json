@@ -4,7 +4,7 @@
   "key": {
     "S": "quantimium:anomalite_shard",
     "G": "quantimium:quantum_attuned_glass",
-    "M": "quantimium:laser_relay"
+    "M": "quantimium:laser_focus"
   },
   "pattern": [
     " S ",

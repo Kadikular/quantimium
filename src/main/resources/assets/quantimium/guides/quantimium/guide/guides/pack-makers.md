@@ -109,7 +109,7 @@ to be sure every value is picked up.
 
 | Key | Default | What it does |
 | --- | --- | --- |
-| `relayLoss` | 0.005 | What each Laser Relay takes of what passes, as flux where it stands. |
+| `relayLoss` | 0.005 | What each Focus Emitter (and Isolator) takes of what leaves by it, as flux where it stands. |
 | `mirrorLoss` | 0.0025 | What each bounce off a Laser Mirror or Splitter takes of what a beam carries. |
 | `diagonalsPassCorners` | `true` | Whether diagonal light slips between two blocks touching only at a corner. |
 | `acceleration` | `true` | Whether the Acceleration Lens speeds machines up at all. |

@@ -34,7 +34,7 @@ import java.util.Set;
 
 /**
  * One mirror of an optical cavity. Light out of a Cavity Mirror's front that comes back to it holds there, as in a
- * laser's cavity: off a flat Laser Mirror straight back, or round any number of plain Laser Mirrors to one that sends it
+ * laser's cavity: off a flat Laser Mirror straight back, or a Laser Focus's Emitter, or round any number of plain Laser Mirrors to one that sends it
  * back the way it came, or into a second Cavity Mirror's front. A splitter, a mirror switched off, or anything else in
  * the way, and there's no cavity. Unpaired, it
  * passes light on out of its front, towards where its partner would stand, as a Laser Mirror does. Light that reaches either mirror from outside charges it;
@@ -184,6 +184,11 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
             if (level.getBlockEntity(hit) instanceof CavityMirrorBlockEntity other) {
                 if (!straightIn || other.facing() != way.face().getOpposite() || length < 1) return 0;
                 partnerHolds = other != this;
+                return closed(hit, firstLength, legs, length);
+            }
+            // A Laser Focus with an Emitter giving light back along it.
+            if (level.getBlockEntity(hit) instanceof LaserFocusBlockEntity focus) {
+                if (!straightIn || focus.core() == LaserFocusBlockEntity.Core.NONE || !focus.hasEmitter(way.face().getOpposite()) || length < 1) return 0;
                 return closed(hit, firstLength, legs, length);
             }
             if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserRelayBlock) {

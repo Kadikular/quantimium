@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "quantimium:laser_relay",
+    "quantimium:laser_focus",
     "minecraft:obsidian"
   ],
   "result": {

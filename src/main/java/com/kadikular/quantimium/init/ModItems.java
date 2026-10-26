@@ -235,6 +235,17 @@ public class ModItems {
             "laser_mirror", ModBlocks.LASER_MIRROR);
     public static final DeferredItem<BlockItem> LASER_SPLITTER_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_splitter", ModBlocks.LASER_SPLITTER);
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> LASER_FOCUS = ITEMS.registerItem(
+            "laser_focus", props -> com.kadikular.quantimium.item.FocusPieceItem.focus(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER));
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> CLEAR_LASER_FOCUS = ITEMS.registerItem(
+            "clear_laser_focus", props -> com.kadikular.quantimium.item.FocusPieceItem.focus(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.CLEAR));
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> FOCUS_STAND = ITEMS.registerItem(
+            "focus_stand", props -> com.kadikular.quantimium.item.FocusPieceItem.attachment(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND));
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> FOCUS_EMITTER = ITEMS.registerItem(
+            "focus_emitter", props -> com.kadikular.quantimium.item.FocusPieceItem.attachment(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.EMITTER));
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> FOCUS_COVER = ITEMS.registerItem(
+            "focus_cover", props -> com.kadikular.quantimium.item.FocusPieceItem.attachment(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.COVER));
+    /** The Laser Relay, before it became a Laser Focus with a Stand and Emitters: placed, it becomes one. */
     public static final DeferredItem<BlockItem> LASER_RELAY_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_relay", ModBlocks.LASER_RELAY);
     public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerItem(

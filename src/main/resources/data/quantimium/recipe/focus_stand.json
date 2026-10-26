@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    " N ",
+    "III"
+  ],
+  "result": {
+    "id": "quantimium:focus_stand",
+    "count": 2
+  }
+}

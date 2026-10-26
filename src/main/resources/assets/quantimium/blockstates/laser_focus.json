@@ -1,0 +1,91 @@
+{
+ "variants": {
+  "": {
+   "type": "quantimium:laser_focus",
+   "focus": {
+    "model": "quantimium:block/laser_focus_core"
+   },
+   "clear_focus": {
+    "model": "quantimium:block/clear_laser_focus_core"
+   },
+   "stand": {
+    "down": {
+     "model": "quantimium:block/laser_focus_stand"
+    },
+    "up": {
+     "model": "quantimium:block/laser_focus_stand",
+     "x": 180
+    },
+    "south": {
+     "model": "quantimium:block/laser_focus_stand",
+     "x": 90
+    },
+    "west": {
+     "model": "quantimium:block/laser_focus_stand",
+     "x": 90,
+     "y": 90
+    },
+    "north": {
+     "model": "quantimium:block/laser_focus_stand",
+     "x": 90,
+     "y": 180
+    },
+    "east": {
+     "model": "quantimium:block/laser_focus_stand",
+     "x": 90,
+     "y": 270
+    }
+   },
+   "emitter": {
+    "down": {
+     "model": "quantimium:block/laser_focus_emitter_down",
+     "x": 90
+    },
+    "up": {
+     "model": "quantimium:block/laser_focus_emitter_up",
+     "x": 270
+    },
+    "north": {
+     "model": "quantimium:block/laser_focus_emitter_north"
+    },
+    "south": {
+     "model": "quantimium:block/laser_focus_emitter_south",
+     "y": 180
+    },
+    "west": {
+     "model": "quantimium:block/laser_focus_emitter_west",
+     "y": 270
+    },
+    "east": {
+     "model": "quantimium:block/laser_focus_emitter_east",
+     "y": 90
+    }
+   },
+   "cover": {
+    "north": {
+     "model": "quantimium:block/laser_focus_cover"
+    },
+    "east": {
+     "model": "quantimium:block/laser_focus_cover",
+     "y": 90
+    },
+    "south": {
+     "model": "quantimium:block/laser_focus_cover",
+     "y": 180
+    },
+    "west": {
+     "model": "quantimium:block/laser_focus_cover",
+     "y": 270
+    },
+    "up": {
+     "model": "quantimium:block/laser_focus_cover",
+     "x": 270
+    },
+    "down": {
+     "model": "quantimium:block/laser_focus_cover",
+     "x": 90
+    }
+   }
+  }
+ }
+}

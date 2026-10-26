@@ -326,7 +326,7 @@ public final class Config {
             .defineInRange("cavityLeakCapFePerTick", 20, 0, 1_000_000);
 
     public static final ModConfigSpec.DoubleValue RELAY_LOSS = BUILDER
-            .comment("Fraction of what passes that each Laser Relay (or other relaying laser block) takes, as flux where it stands.")
+            .comment("Fraction of what leaves by each Focus Emitter (and of what passes an Isolator) taken, as flux where it stands.")
             .defineInRange("relayLoss", com.kadikular.quantimium.laser.LaserTuning.HOP_TAX, 0.0, 0.5);
 
     public static final ModConfigSpec.DoubleValue MIRROR_LOSS = BUILDER

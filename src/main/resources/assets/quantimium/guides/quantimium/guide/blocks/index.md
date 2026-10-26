@@ -41,7 +41,6 @@ navigation:
 - <ItemLink id="quantimium:laser_mirror" />
 - <ItemLink id="quantimium:laser_port" />
 - <ItemLink id="quantimium:laser_prism" />
-- <ItemLink id="quantimium:laser_relay" />
 - <ItemLink id="quantimium:laser_splitter" />
 - <ItemLink id="quantimium:lens_mount" />
 - <ItemLink id="quantimium:lit_reactor_plinth" />

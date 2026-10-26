@@ -2,7 +2,7 @@
 navigation:
   title: Reactor Logistics Port
   parent: blocks/index.md
-  position: 69
+  position: 68
   icon: quantimium:reactor_logistics_port
 item_ids:
 - quantimium:reactor_logistics_port

@@ -2,7 +2,7 @@
 navigation:
   title: Logistics Materialiser
   parent: blocks/index.md
-  position: 39
+  position: 38
   icon: quantimium:logistics_materialiser
 item_ids:
 - quantimium:logistics_materialiser

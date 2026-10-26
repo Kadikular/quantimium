@@ -2,7 +2,7 @@
 navigation:
   title: Laser Splitter
   parent: blocks/index.md
-  position: 34
+  position: 33
   icon: quantimium:laser_splitter
 item_ids:
 - quantimium:laser_splitter
