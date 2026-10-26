@@ -95,7 +95,6 @@ public class FocusPieceItem extends Item {
         String key = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(this).toLanguageKey("item") + ".tip";
         Object loss = new java.text.DecimalFormat("0.##").format(com.kadikular.quantimium.Config.relayLoss() * 100);
         tooltip.accept(Component.translatable(key, loss).withStyle(ChatFormatting.GRAY));
-        tooltip.accept(Component.translatable("item.quantimium.focus_piece.how").withStyle(ChatFormatting.DARK_GRAY));
     }
 
     /** Whether this goes onto {@code focus}: a focus into an empty middle, an attachment onto an empty face. */

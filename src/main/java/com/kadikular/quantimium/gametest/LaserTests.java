@@ -1181,6 +1181,26 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 120)
+    public static void lightPassesABlockWhoseFocusIsTakenOut(GameTestHelper helper) {
+        // A Laser Focus with an Emitter south stops the light east and sends it south. Its focus taken out, the light
+        // goes on east past its attachments, and it shows none leaving it.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.SOUTH);
+        var east = sink(helper, new BlockPos(9, Y, 8));
+        sink(helper, new BlockPos(5, Y, 12));
+        helper.runAfterDelay(40, () -> {
+            helper.assertValueEqual(east.getEnergyStorage().getEnergyStored(), 0, "the focus stops it");
+            focus.takeCore();
+            helper.succeedWhen(() -> {
+                helper.assertTrue(east.getEnergyStorage().getEnergyStored() > 0, "past it now");
+                helper.assertTrue(focus.syncedBeams().isEmpty(), "and none leaves it: " + focus.syncedBeams());
+                TestSupport.finishLasers(helper);
+            });
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
     public static void onlyAFocusEmitterTakesALoss(GameTestHelper helper) {
         var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);

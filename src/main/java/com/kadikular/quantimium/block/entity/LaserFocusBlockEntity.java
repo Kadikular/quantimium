@@ -236,8 +236,13 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         boolean should = core != Core.NONE && !isRemoved();
         if (should == joined) return;
         joined = should;
-        if (should) LaserNetworks.add(level, this);
-        else LaserNetworks.remove(level, this);
+        if (should) {
+            LaserNetworks.add(level, this);
+        } else {
+            LaserNetworks.remove(level, this);
+            // Out of the network, it shows no light leaving it.
+            showBeams(List.of());
+        }
     }
 
     // ---- emitters ----
@@ -441,6 +446,14 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     @Override
     public List<LaserBeam> syncedBeams() {
         return shownBeams;
+    }
+
+    /** Light leaves an Emitter at its tip; light passing straight through a face with none leaves from the focus. */
+    @Override
+    public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
+        net.minecraft.world.phys.Vec3[] ends = beam.ends();
+        if (beam.aim() == null && !beam.jumps() && !hasEmitter(beam.face())) ends[0] = worldPosition.getCenter();
+        return ends;
     }
 
     // ---- life ----

@@ -6,7 +6,6 @@ import com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part;
 import com.kadikular.quantimium.init.ModTags;
 import com.kadikular.quantimium.item.LensItem;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -142,7 +141,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
                 } else {
                     focus.setLens(face, stack.split(1));
                 }
-                if (!was.isEmpty() && !player.getInventory().add(was)) player.drop(was, false);
+                if (!was.isEmpty() && !player.getInventory().add(was)) Block.popResource(level, pos, was);
                 level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 1.0f, 1.2f);
             }
             return InteractionResult.SUCCESS;
@@ -176,12 +175,10 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         List<ItemStack> taken = face != null ? focus.takePart(face) : List.of(focus.takeCore());
         if (taken.isEmpty() || taken.getFirst().isEmpty()) return InteractionResult.PASS;
-        for (ItemStack stack : taken) if (!player.getInventory().add(stack)) player.drop(stack, false);
+        // What won't fit drops where it came off, not from the player.
+        for (ItemStack stack : taken) if (!player.getInventory().add(stack)) Block.popResource(level, pos, stack);
         level.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0f, face == null ? 0.8f : 1.0f);
         if (focus.empty()) level.removeBlock(pos, false);
-        else if (face == null) {
-            player.sendOverlayMessage(Component.translatable("message.quantimium.laser_focus.taken").withStyle(ChatFormatting.GRAY));
-        }
         return InteractionResult.SUCCESS;
     }
 
