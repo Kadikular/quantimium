@@ -147,19 +147,17 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
             }
             return InteractionResult.SUCCESS;
         }
-        if (stack.is(ModTags.TOOLS_WRENCH)) {
-            if (player.isSecondaryUseActive()) return takeOff(focus, level, pos, player, face);
-            return useWithoutItem(state, level, pos, player, hit);
-        }
+        if (stack.is(ModTags.TOOLS_WRENCH)) return useWithoutItem(state, level, pos, player, hit);
         // Focuses and attachments go on by their items; anything else in hand does its own thing.
         return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
     }
 
-    /** On an emitter: opens it. */
+    /** On an emitter: opens it. Sneaking, takes off what it's pointed at, as a sneaking wrench does. */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus)) return InteractionResult.PASS;
         Direction face = partAt(focus, pos, hit);
+        if (player.isSecondaryUseActive()) return takeOff(focus, level, pos, player, face);
         if (face == null || !focus.hasEmitter(face)) return InteractionResult.PASS;
         if (!level.isClientSide() && player instanceof ServerPlayer server) {
             server.openMenu(new SimpleMenuProvider(
@@ -200,6 +198,14 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         if (!(level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus)) return ItemStack.EMPTY;
         List<ItemStack> contents = focus.contents();
         return contents.isEmpty() ? ItemStack.EMPTY : contents.getFirst();
+    }
+
+    /** On the client, each one checks its model shows what it holds (see {@link LaserFocusBlockEntity#clientTick}). */
+    @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                                                         net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        return level.isClientSide() ? createTickerHelper(type, com.kadikular.quantimium.init.ModBlockEntities.LASER_FOCUS_BE.get(),
+                (world, at, blockState, focus) -> focus.clientTick()) : null;
     }
 
     @Override

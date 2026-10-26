@@ -25,7 +25,13 @@ public final class WrenchInteractions {
         if (!event.getEntity().isShiftKeyDown()) return;
         if (!event.getItemStack().is(ModTags.TOOLS_WRENCH)) return;
         if (event.getFace() == null) return;
-        if (!(event.getLevel().getBlockEntity(event.getPos()) instanceof SideConfigurable)) return;
+        var level = event.getLevel();
+        // Machines with sides to set, a Laser Focus (a sneaking wrench takes off what it's pointed at) and a Laser Mirror
+        // (a sneaking wrench moves its stand).
+        boolean ours = level.getBlockEntity(event.getPos()) instanceof SideConfigurable
+                || level.getBlockEntity(event.getPos()) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity
+                || level.getBlockState(event.getPos()).getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock;
+        if (!ours) return;
 
         event.setUseBlock(TriState.TRUE);
         event.setUseItem(TriState.FALSE);

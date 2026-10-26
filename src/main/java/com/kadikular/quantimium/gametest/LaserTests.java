@@ -1158,6 +1158,30 @@ public final class LaserTests {
 
     // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void attachmentsGoOnFromTheBlockBesideAndComeOffSneaking(GameTestHelper helper) {
+        // A focus floating beside a stone block: an Emitter used on the stone's face goes onto the focus, against it.
+        // Then a sneaking click with an empty hand takes it off, into the hand.
+        BlockPos stone = new BlockPos(7, Y, 8);
+        helper.setBlock(stone, net.minecraft.world.level.block.Blocks.STONE);
+        var focus = focus(helper, new BlockPos(6, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+        var player = TestSupport.player(helper, new BlockPos(4, Y, 8), net.minecraft.world.level.GameType.SURVIVAL);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FOCUS_EMITTER.get()));
+        BlockPos stoneAbs = helper.absolutePos(stone);
+        var onStone = new net.minecraft.world.phys.BlockHitResult(stoneAbs.getCenter().add(-0.5, 0, 0), Direction.WEST, stoneAbs, false);
+        com.kadikular.quantimium.init.ModItems.FOCUS_EMITTER.get().useOn(
+                new net.minecraft.world.item.context.UseOnContext(player, net.minecraft.world.InteractionHand.MAIN_HAND, onStone));
+        helper.assertTrue(focus.hasEmitter(Direction.EAST), "the emitter went onto the focus, against the stone");
+        player.setShiftKeyDown(true);
+        BlockPos at = helper.absolutePos(new BlockPos(6, Y, 8));
+        var onEmitter = new net.minecraft.world.phys.BlockHitResult(at.getCenter().add(0.45, 0, 0), Direction.EAST, at, false);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertFalse(focus.hasEmitter(Direction.EAST), "sneaking took it off");
+        helper.assertTrue(player.getInventory().contains(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FOCUS_EMITTER.get())), "into the hand");
+        helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
     public static void onlyAFocusEmitterTakesALoss(GameTestHelper helper) {
         var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
         helper.assertValueEqual(focus.tax(), 0.0, "the focus itself loses nothing");

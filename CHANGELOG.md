@@ -7,7 +7,7 @@
 - **The Laser Focus replaces the Laser Relay.** Put a Laser Focus down, then put attachments on its faces: Focus
   Stands (as many as you like, or none and it floats), Focus Emitters (each with its lens and redstone setting) and
   Focus Covers. A **Clear Laser Focus** also lets light pass straight through. Attachments can go on a block with no
-  focus and do nothing until one goes in; a sneaking wrench takes off the focus or an attachment and leaves the rest.
+  focus and do nothing until one goes in; a sneaking click (by hand or with a wrench) takes off the focus or an attachment and leaves the rest.
   The focus loses nothing: each Emitter takes the loss, 0.5% by default (`relayLoss`), and mirrors 0.25%
   (`mirrorLoss`). Relays in your world become a Laser Focus with a Stand and their Emitters, lenses and redstone
   settings kept.

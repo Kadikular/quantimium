@@ -100,8 +100,9 @@ linking. A <ItemLink id="quantimium:clear_laser_focus" /> does the same, and lig
 opposite face, unless a Stand or Cover there stops it.
 
 As with a cable and its parts, an attachment can go on a block with no focus (used against any block, it puts down a
-Laser Focus block holding just it), and it does nothing until a focus is put in. Sneak-use a wrench on the focus to
-take it out and leave the attachments, or on an attachment to take just that off; the block goes when it holds
+Laser Focus block holding just it, or puts it onto the Laser Focus block already beside that face), and it does
+nothing until a focus is put in. Sneak-click the focus (by hand or with a wrench) to take it out and leave the
+attachments, or an attachment to take just that off; the block goes when it holds
 nothing. Click an Emitter to open it: it holds one lens, which only the light leaving by it goes through (a Harvest
 lens on one emitter cuts only there), and its tip takes the lens's colour; using a lens on it puts the lens in.
 Laser Relays from before become a Laser Focus with a Stand on their base and an Emitter on each of their outputs.

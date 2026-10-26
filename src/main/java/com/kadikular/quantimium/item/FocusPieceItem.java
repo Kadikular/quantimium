@@ -60,6 +60,16 @@ public class FocusPieceItem extends Item {
             }
             return InteractionResult.SUCCESS;
         }
+        // Against a block with a Laser Focus block already beside it: onto that one's face against it.
+        BlockPos beside = context.getClickedPos().relative(face);
+        if (level.getBlockEntity(beside) instanceof LaserFocusBlockEntity next) {
+            if (!fits(next, face.getOpposite())) return InteractionResult.FAIL;
+            if (!level.isClientSide()) {
+                put(next, face.getOpposite());
+                used(context, beside);
+            }
+            return InteractionResult.SUCCESS;
+        }
         // Anywhere else: a new one, held against the block clicked.
         BlockPlaceContext place = new BlockPlaceContext(context);
         if (!place.canPlace()) return InteractionResult.FAIL;
@@ -74,9 +84,6 @@ public class FocusPieceItem extends Item {
             if (!(level.getBlockEntity(at) instanceof LaserFocusBlockEntity focus)) return InteractionResult.FAIL;
             put(focus, face.getOpposite());
             used(context, at);
-            if (player != null && core == null) {
-                player.sendOverlayMessage(Component.translatable("message.quantimium.laser_focus.needs_focus").withStyle(ChatFormatting.GRAY));
-            }
         }
         return InteractionResult.SUCCESS;
     }

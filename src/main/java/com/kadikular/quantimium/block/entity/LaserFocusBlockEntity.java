@@ -457,6 +457,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
 
     @Override
     public void setRemoved() {
+        // Its model data goes with it: one put down here next starts afresh.
+        requestModelDataUpdate();
         super.setRemoved();
         if (level != null) LaserNetworks.remove(level, this);
         joined = false;
@@ -536,6 +538,10 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         return tag;
     }
 
+    /** On the client: the look its model was last asked to draw (see {@link #look}), or none yet. */
+    @Nullable
+    private List<Object> drawn;
+
     /** What it holds, and its lenses: its model is drawn from them, so its chunk is built again when they change. */
     private List<Object> look() {
         List<Object> look = new ArrayList<>();
@@ -544,14 +550,25 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         return look;
     }
 
+    /**
+     * On the client, every tick: if what it holds isn't what its model was last asked to draw (new data arrived, or it
+     * was put down or broken and placed again), its model data is refreshed and its chunk built again. Checked each tick
+     * rather than only when data arrives, so no timing between the block, its data and its chunk can leave it unseen.
+     */
+    public void clientTick() {
+        if (level == null || !level.isClientSide()) return;
+        List<Object> look = look();
+        if (look.equals(drawn)) return;
+        drawn = look;
+        requestModelDataUpdate();
+        // Built again off the main thread: a chunk full of them loading mustn't stall a frame.
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
     @Override
     public void onDataPacket(net.minecraft.network.Connection connection, ValueInput input) {
-        List<Object> before = look();
         super.onDataPacket(connection, input);
-        if (!before.equals(look()) && level != null) {
-            requestModelDataUpdate();
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_IMMEDIATE);
-        }
+        clientTick();
     }
 
     @Override
