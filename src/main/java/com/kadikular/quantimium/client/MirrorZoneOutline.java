@@ -2,7 +2,7 @@ package com.kadikular.quantimium.client;
 
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.LaserMirrorBlock;
-import com.kadikular.quantimium.init.ModTags;
+import com.kadikular.quantimium.client.renderer.QuantumRenderTypes;
 import com.kadikular.quantimium.laser.MirrorPlate;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -21,26 +22,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Looking at a face of a Laser Mirror: the parts a click on it lands in, outlined in grey (the middle square, and the
- * two rings round it split four ways by the diagonals), the one under the crosshair in blue. With a wrench, the outline
- * of the plate where that click would turn it. Sneaking, a click moves the stand instead: the two rings are one, the
- * side of the face it would move to; the face it stands on only shows while sneaking.
+ * Looking at a face of a Laser Mirror: the parts a click on it lands in, outlined as the block's own outline is (the
+ * middle square, the two rings round it, split four ways by the diagonals), and a ghost of the plate where a click
+ * there would turn it. Sneaking, a click moves the stand instead: the two rings are one, and there's no ghost. The face
+ * it stands on only shows while sneaking.
  */
 @EventBusSubscriber(modid = Quantimium.MODID, value = Dist.CLIENT)
 public final class MirrorZoneOutline {
     private MirrorZoneOutline() {}
 
-    /** How far the rings reach from the face's middle, in blocks: the middle part of the mirror is 10 pixels across. */
-    private static final double SQUARE = 0.11, RING = 0.22, EDGE = 0.3125;
-    /** Half the plate, in blocks: it's 10 pixels across. */
-    private static final double PLATE = 5 / 16.0;
+    /** Half the ghost across, and how far it reaches in front of and behind the plate's face, in blocks: just round the plate. */
+    private static final double GHOST = 5.25 / 16, FRONT = 0.25 / 16, BACK = 1.25 / 16;
 
     @SubscribeEvent
     public static void onOutline(ExtractBlockOutlineRenderStateEvent event) {
         if (!(event.getBlockState().getBlock() instanceof LaserMirrorBlock)) return;
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
-        boolean wrench = player.getMainHandItem().is(ModTags.TOOLS_WRENCH);
         BlockPos pos = event.getBlockPos();
         LaserMirrorBlock.Zone zone = LaserMirrorBlock.zone(pos, event.getHitResult());
         Direction mount = event.getBlockState().getValue(LaserMirrorBlock.MOUNT);
@@ -48,104 +46,77 @@ public final class MirrorZoneOutline {
         // A plain click on the face it stands on does nothing: nothing to show.
         if (!sneaking && zone.face() == mount) return;
         MirrorPlate plate = sneaking ? null : LaserMirrorBlock.plateFor(zone, mount);
-        double depth = event.getHitResult().getLocation().subtract(pos.getCenter()).dot(Vec3.atLowerCornerOf(zone.face().getUnitVec3i())) + 0.003;
+        // On the face itself, as the block's own outline is.
+        double depth = event.getHitResult().getLocation().subtract(pos.getCenter()).dot(Vec3.atLowerCornerOf(zone.face().getUnitVec3i()));
         List<Vec3[]> grid = grid(zone.face(), depth, sneaking);
-        // Sneaking, the two rings are one: the side it would stand on. A plate that would face its stand isn't set.
-        List<Vec3> outline = sneaking || plate != null ? outline(zone, depth, sneaking) : List.of();
-        List<Vec3> ghost = wrench && plate != null ? ghost(plate) : List.of();
-        event.addCustomRenderer((state, buffers, poses, translucent, level) -> {
+        List<Vec3[]> ghost = plate != null ? ghost(plate) : List.of();
+        event.addCustomRenderer((outline, buffers, poses, translucent, level) -> {
+            // Called for the solid and the translucent pass: drawn in the one the block's own outline is.
+            if (outline.isTranslucent() != translucent) return false;
             Vec3 camera = level.cameraRenderState.pos;
             poses.pushPose();
             poses.translate(pos.getX() - camera.x + 0.5, pos.getY() - camera.y + 0.5, pos.getZ() - camera.z + 0.5);
-            VertexConsumer lines = buffers.getBuffer(RenderTypes.lines());
             PoseStack.Pose pose = poses.last();
-            for (Vec3[] line : grid) line(lines, pose, line[0], line[1], 0f, 0f, 0f, 0.45f, 1.5f);
-            loop(lines, pose, outline, 0.55f, 0.85f, 1f, 0.9f, 2.5f);
-            loop(lines, pose, ghost, 1f, 1f, 1f, 0.8f, 2f);
+            if (!ghost.isEmpty()) {
+                VertexConsumer panes = buffers.getBuffer(QuantumRenderTypes.SHELL_PANE);
+                for (Vec3[] quad : ghost) for (Vec3 corner : quad) panes.addVertex(pose, (float) corner.x, (float) corner.y, (float) corner.z).setColor(1f, 1f, 1f, 0.3f);
+            }
+            VertexConsumer lines = buffers.getBuffer(RenderTypes.lines());
+            int color = outline.highContrast() ? -11010079 : ARGB.black(102);
+            float width = Minecraft.getInstance().gameRenderer.getGameRenderState().windowRenderState.appropriateLineWidth;
+            for (Vec3[] line : grid) {
+                Vec3 a = line[0], b = line[1], d = b.subtract(a).normalize();
+                lines.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(color).setNormal(pose, (float) d.x, (float) d.y, (float) d.z).setLineWidth(width);
+                lines.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(color).setNormal(pose, (float) d.x, (float) d.y, (float) d.z).setLineWidth(width);
+            }
             poses.popPose();
-            // The block's own outline still drawn.
+            // The block's own outline still drawn: it's the grid's edge.
             return false;
         });
     }
 
-    private static void loop(VertexConsumer lines, PoseStack.Pose pose, List<Vec3> corners, float r, float g, float b, float a, float width) {
-        for (int i = 0; i < corners.size(); i++) line(lines, pose, corners.get(i), corners.get((i + 1) % corners.size()), r, g, b, a, width);
-    }
-
-    private static void line(VertexConsumer lines, PoseStack.Pose pose, Vec3 a, Vec3 b, float red, float green, float blue, float alpha, float width) {
-        Vec3 d = b.subtract(a).normalize();
-        lines.addVertex(pose, (float) a.x, (float) a.y, (float) a.z).setColor(red, green, blue, alpha).setNormal(pose, (float) d.x, (float) d.y, (float) d.z).setLineWidth(width);
-        lines.addVertex(pose, (float) b.x, (float) b.y, (float) b.z).setColor(red, green, blue, alpha).setNormal(pose, (float) d.x, (float) d.y, (float) d.z).setLineWidth(width);
-    }
-
     /**
-     * Every part of {@code face}, as lines relative to the block's middle: the middle square, the rings' edges, and the
-     * diagonals splitting the rings four ways. Merged, the rings are one.
+     * The parts of {@code face}, as lines relative to the block's middle: the middle square, the inner ring's edge, and
+     * the diagonals splitting the rings four ways, out to the mirror's edge (the block's own outline). Merged, the rings
+     * are one.
      */
     private static List<Vec3[]> grid(Direction face, double depth, boolean merged) {
         Vec3 out = Vec3.atLowerCornerOf(face.getUnitVec3i()).scale(depth);
         Direction[] axes = across(face);
         Vec3 u = Vec3.atLowerCornerOf(axes[0].getUnitVec3i()), v = Vec3.atLowerCornerOf(axes[1].getUnitVec3i());
         List<Vec3[]> lines = new ArrayList<>();
-        for (double size : merged ? new double[] {SQUARE, EDGE} : new double[] {SQUARE, RING, EDGE}) {
+        for (double size : merged ? new double[] {LaserMirrorBlock.SQUARE} : new double[] {LaserMirrorBlock.SQUARE, LaserMirrorBlock.RING}) {
             Vec3[] corners = {out.add(u.scale(-size)).add(v.scale(-size)), out.add(u.scale(size)).add(v.scale(-size)),
                     out.add(u.scale(size)).add(v.scale(size)), out.add(u.scale(-size)).add(v.scale(size))};
             for (int i = 0; i < 4; i++) lines.add(new Vec3[] {corners[i], corners[(i + 1) % 4]});
         }
+        double edge = LaserMirrorBlock.EDGE, square = LaserMirrorBlock.SQUARE;
         for (int su = -1; su <= 1; su += 2) {
             for (int sv = -1; sv <= 1; sv += 2) {
-                lines.add(new Vec3[] {out.add(u.scale(su * SQUARE)).add(v.scale(sv * SQUARE)), out.add(u.scale(su * EDGE)).add(v.scale(sv * EDGE))});
+                lines.add(new Vec3[] {out.add(u.scale(su * square)).add(v.scale(sv * square)), out.add(u.scale(su * edge)).add(v.scale(sv * edge))});
             }
         }
         return lines;
     }
 
-    /** The plate's outline, turned as {@code plate} is, relative to the block's middle: its face's middle is there. */
-    private static List<Vec3> ghost(MirrorPlate plate) {
+    /**
+     * A thin white slab where the plate would turn, relative to the block's middle, as quads: a little larger than the
+     * plate all round, so set the way it already faces it wraps the plate rather than fighting it.
+     */
+    private static List<Vec3[]> ghost(MirrorPlate plate) {
         Vec3 n = plate.normal();
         // Along the plate: the axis it's turned about, and the way across that.
-        Vec3 u;
-        if (plate.toward() == null) {
-            u = Vec3.atLowerCornerOf(across(plate.face())[0].getUnitVec3i());
-        } else {
-            u = Vec3.atLowerCornerOf(plate.face().getUnitVec3i()).cross(Vec3.atLowerCornerOf(plate.toward().getUnitVec3i()));
-        }
+        Vec3 u = plate.toward() == null ? Vec3.atLowerCornerOf(across(plate.face())[0].getUnitVec3i())
+                : Vec3.atLowerCornerOf(plate.face().getUnitVec3i()).cross(Vec3.atLowerCornerOf(plate.toward().getUnitVec3i()));
         Vec3 v = n.cross(u).normalize();
-        Vec3 front = n.scale(0.004);
-        return List.of(front.add(u.scale(-PLATE)).add(v.scale(-PLATE)), front.add(u.scale(PLATE)).add(v.scale(-PLATE)),
-                front.add(u.scale(PLATE)).add(v.scale(PLATE)), front.add(u.scale(-PLATE)).add(v.scale(PLATE)));
-    }
-
-    /** The part of the face, as corners relative to the block's middle. */
-    private static List<Vec3> outline(LaserMirrorBlock.Zone zone, double depth, boolean merged) {
-        Vec3 out = Vec3.atLowerCornerOf(zone.face().getUnitVec3i()).scale(depth);
-        List<Vec3> corners = new ArrayList<>(4);
-        if (zone.toward() == null) {
-            Direction[] axes = across(zone.face());
-            Vec3 u = Vec3.atLowerCornerOf(axes[0].getUnitVec3i()), v = Vec3.atLowerCornerOf(axes[1].getUnitVec3i());
-            corners.add(out.add(u.scale(-SQUARE)).add(v.scale(-SQUARE)));
-            corners.add(out.add(u.scale(SQUARE)).add(v.scale(-SQUARE)));
-            corners.add(out.add(u.scale(SQUARE)).add(v.scale(SQUARE)));
-            corners.add(out.add(u.scale(-SQUARE)).add(v.scale(SQUARE)));
-            return corners;
+        Vec3[] corner = new Vec3[8];
+        for (int i = 0; i < 8; i++) {
+            corner[i] = u.scale((i & 1) == 0 ? -GHOST : GHOST).add(v.scale((i & 2) == 0 ? -GHOST : GHOST)).add(n.scale((i & 4) == 0 ? -BACK : FRONT));
         }
-        double inner = merged || zone.ring() == 1 ? SQUARE : RING;
-        double outer = merged || zone.ring() == 2 ? EDGE : RING;
-        Vec3 d = Vec3.atLowerCornerOf(zone.toward().getUnitVec3i());
-        // The other way across the face.
-        Direction otherAxis = null;
-        for (Direction side : Direction.values()) {
-            if (side.getAxis() != zone.face().getAxis() && side.getAxis() != zone.toward().getAxis()) {
-                otherAxis = side;
-                break;
-            }
-        }
-        Vec3 e = Vec3.atLowerCornerOf(otherAxis.getUnitVec3i());
-        corners.add(out.add(d.scale(inner)).add(e.scale(-inner)));
-        corners.add(out.add(d.scale(outer)).add(e.scale(-outer)));
-        corners.add(out.add(d.scale(outer)).add(e.scale(outer)));
-        corners.add(out.add(d.scale(inner)).add(e.scale(inner)));
-        return corners;
+        int[][] faces = {{0, 1, 3, 2}, {4, 6, 7, 5}, {0, 4, 5, 1}, {2, 3, 7, 6}, {0, 2, 6, 4}, {1, 5, 7, 3}};
+        List<Vec3[]> quads = new ArrayList<>(6);
+        for (int[] f : faces) quads.add(new Vec3[] {corner[f[0]], corner[f[1]], corner[f[2]], corner[f[3]]});
+        return quads;
     }
 
     /** Two directions across {@code face}: along its plane. */

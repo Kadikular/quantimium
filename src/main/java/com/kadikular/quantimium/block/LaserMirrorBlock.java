@@ -134,8 +134,11 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
      */
     public record Zone(Direction face, @Nullable Direction toward, int ring) {}
 
-    /** How far from the face's middle the middle square and the inner ring reach, in blocks. */
-    private static final double SQUARE = 0.11, RING = 0.22;
+    /**
+     * How far from the face's middle the middle square and the inner ring reach, in blocks: the two rings are as wide as
+     * each other, out to the edge of the mirror's middle (5 pixels out).
+     */
+    public static final double SQUARE = 0.11, EDGE = 0.3125, RING = (SQUARE + EDGE) / 2;
 
     /** The zone {@code hit} (on the mirror at {@code pos}) lands in. */
     public static Zone zone(BlockPos pos, BlockHitResult hit) {

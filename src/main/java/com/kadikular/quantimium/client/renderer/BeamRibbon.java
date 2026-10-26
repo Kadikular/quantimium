@@ -44,13 +44,22 @@ public final class BeamRibbon {
                 a = points[i - 1];
             }
             Vec3 sideA = side(camera, a, b, halfWidth);
-            Vec3 after = i + 2 < points.length && !reverses(a, b, points[i + 2]) ? points[i + 2] : b.add(b.subtract(a));
+            // Joined smoothly round a gentle bend (a thrashing line); at a sharp one (off a mirror) each keeps its own
+            // width, which the next segment's way would pinch.
+            Vec3 after = i + 2 < points.length && gentle(a, b, points[i + 2]) ? points[i + 2] : b.add(b.subtract(a));
             Vec3 sideB = side(camera, b, after, halfWidth);
             vertex(buffer, pose, a.subtract(sideA), red, green, blue, alpha);
             vertex(buffer, pose, a.add(sideA), red, green, blue, alpha);
             vertex(buffer, pose, b.add(sideB), red, green, blue, alpha);
             vertex(buffer, pose, b.subtract(sideB), red, green, blue, alpha);
         }
+    }
+
+    /** Whether the way from {@code at} to {@code next} bends less than about 18° from the way from {@code before}. */
+    private static boolean gentle(Vec3 before, Vec3 at, Vec3 next) {
+        Vec3 there = at.subtract(before), on = next.subtract(at);
+        double lengths = there.length() * on.length();
+        return lengths > 1.0E-8 && there.dot(on) > 0.95 * lengths;
     }
 
     /** Whether the way from {@code at} to {@code next} is straight back the way from {@code before} to {@code at}. */
