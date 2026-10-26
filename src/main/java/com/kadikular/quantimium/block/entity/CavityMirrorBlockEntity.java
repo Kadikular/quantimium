@@ -50,6 +50,9 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     /** The way light runs round the cavity, from its front to where it turns back or its partner; null for none. */
     @Nullable
     private LaserBeam loop;
+    /** Where the light it holds turns back, or its partner: the cavity's far end. Null for none. */
+    @Nullable
+    private BlockPos farEnd;
     /** Whether the partner is a Cavity Mirror too, so both hold the light; a Laser Mirror holds none. */
     private boolean partnerHolds;
     private double leaked;
@@ -157,6 +160,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     private int findGap() {
         partnerHolds = false;
         loop = null;
+        farEnd = null;
         if (level == null) return 0;
         Direction facing = facing();
         com.kadikular.quantimium.laser.Ray way = com.kadikular.quantimium.laser.Ray.of(facing);
@@ -204,15 +208,12 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
 
     /** A cavity closed at {@code end}: remembers its way round, for the glow of the light it holds. */
     private int closed(BlockPos end, int firstLength, List<LaserBeam.Leg> legs, double length) {
-        loop = new LaserBeam(worldPosition, facing(), null, firstLength, end, LaserBeam.End.BLOCKED, 0, true,
+        farEnd = end;
+        // Into a Cavity Mirror, the glow ends on its face, its plate; into a mirror or relay, on to its middle.
+        boolean onFace = level != null && level.getBlockEntity(end) instanceof CavityMirrorBlockEntity;
+        loop = new LaserBeam(worldPosition, facing(), null, firstLength, onFace ? null : end, onFace ? LaserBeam.End.OPEN : LaserBeam.End.BLOCKED, 0, true,
                 com.kadikular.quantimium.laser.Lens.NONE, com.kadikular.quantimium.laser.Ray.of(facing()), false, List.copyOf(legs), 0);
         return Math.max(1, (int) Math.floor(length + 1.0e-6));
-    }
-
-    /** Where the light it holds turns back, or its partner: the cavity's far end. */
-    @Nullable
-    private BlockPos farEnd() {
-        return loop != null ? loop.hit() : null;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CavityMirrorBlockEntity mirror) {
@@ -240,7 +241,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
      */
     private void share(ServerLevel server) {
         if (!paired() || !partnerHolds) return;
-        BlockPos other = farEnd();
+        BlockPos other = farEnd;
         if (other == null || other.compareTo(worldPosition) < 0 || !(server.getBlockEntity(other) instanceof CavityMirrorBlockEntity partner)) return;
         long total = stored + partner.stored;
         if (Math.abs(stored - partner.stored) <= 1) return;
@@ -297,8 +298,9 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     private void checkPartner(ServerLevel server) {
         boolean held = partnerHolds;
         LaserBeam was = loop;
+        BlockPos wasEnd = farEnd;
         int now = findGap();
-        if (now == gap && held == partnerHolds && java.util.Objects.equals(was, loop)) return;
+        if (now == gap && held == partnerHolds && java.util.Objects.equals(was, loop) && java.util.Objects.equals(wasEnd, farEnd)) return;
         gap = now;
         if (stored > capacity()) release(server, stored - capacity());
         setChanged();
@@ -316,7 +318,8 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
 
     /** Tells clients when the light held changes enough to see. */
     private void showCharge() {
-        int charge = LaserNetworks.brightness(stored / 100);
+        // By how full it is: from a glimmer to full brightness at 80% full.
+        int charge = stored <= 0 || capacity() <= 0 ? 0 : 1 + (int) Math.min(6, Math.floor(stored / (capacity() * 0.8) * 6));
         BlockState state = getBlockState();
         boolean lit = stored > 0 && paired();
         if (level != null && state.getValue(CavityMirrorBlock.LIT) != lit) {
@@ -402,7 +405,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
     @Override
     public List<LaserBeam> syncedBeams() {
         if (gap <= 0 || loop == null || shownCharge <= 0) return shownBeams;
-        BlockPos other = farEnd();
+        BlockPos other = farEnd;
         if (partnerHolds && other != null && other.compareTo(worldPosition) < 0) return shownBeams;
         List<LaserBeam> all = new ArrayList<>(shownBeams);
         long flow = (long) Math.pow(10, shownCharge - 1);
@@ -479,6 +482,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
         loop = in.read("Loop", CompoundTag.CODEC).map(tag -> LaserBeamView.load(worldPosition, tag)).filter(beams -> !beams.isEmpty())
                 .map(List::getFirst).orElse(null);
+        farEnd = in.getLong("FarEnd").map(BlockPos::of).orElse(null);
     }
 
     @Override
@@ -486,6 +490,7 @@ public class CavityMirrorBlockEntity extends BlockEntity implements LaserNode, F
         CompoundTag tag = saveWithoutMetadata(registries);
         tag.put("Beams", LaserBeamView.save(shownBeams));
         if (loop != null) tag.put("Loop", LaserBeamView.save(List.of(loop)));
+        if (farEnd != null) tag.putLong("FarEnd", farEnd.asLong());
         tag.putInt("Charge", shownCharge);
         tag.putInt("Lenses", shownLenses);
         return tag;
