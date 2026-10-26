@@ -482,17 +482,17 @@ public final class LaserTests {
         helper.setBlock(at, mirror(Direction.DOWN, Direction.NORTH, Direction.NORTH));
         var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
         BlockPos pos = helper.absolutePos(at);
-        var mirror = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
+        java.util.function.Supplier<com.kadikular.quantimium.laser.MirrorPlate> plate = () -> com.kadikular.quantimium.block.LaserMirrorBlock.plate(helper.getLevel().getBlockState(pos));
         java.util.function.BiConsumer<Direction, net.minecraft.world.phys.Vec3> click = (face, offset) -> helper.getLevel().getBlockState(pos)
                 .useWithoutItem(helper.getLevel(), player, new net.minecraft.world.phys.BlockHitResult(pos.getCenter().add(offset), face, pos, false));
         click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3125, 0, 0));
-        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.flat(Direction.EAST), "flat, facing east");
+        helper.assertValueEqual(plate.get(), com.kadikular.quantimium.laser.MirrorPlate.flat(Direction.EAST), "flat, facing east");
         click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3125, 0.16, 0));
-        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 1), "22.5° up");
+        helper.assertValueEqual(plate.get(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 1), "22.5° up");
         click.accept(Direction.EAST, new net.minecraft.world.phys.Vec3(0.3125, 0.28, 0));
-        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "45° up");
+        helper.assertValueEqual(plate.get(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "45° up");
         click.accept(Direction.DOWN, new net.minecraft.world.phys.Vec3(0, -0.5, 0));
-        helper.assertValueEqual(mirror.plate(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "not into its stand");
+        helper.assertValueEqual(plate.get(), com.kadikular.quantimium.laser.MirrorPlate.of(Direction.EAST, Direction.UP, 2), "not into its stand");
         player.setShiftKeyDown(true);
         click.accept(Direction.WEST, new net.minecraft.world.phys.Vec3(-0.3125, 0, 0));
         helper.assertValueEqual(helper.getLevel().getBlockState(pos).getValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT), Direction.WEST,
@@ -1105,6 +1105,24 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.splitter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void lightBetweenTwoSplittersFades(GameTestHelper helper) {
+        // Two flat splitters facing each other: every bounce forks, but light leaving one the way it left it before
+        // fades, so the beams stay few.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        for (int x : new int[] {5, 9}) {
+            helper.setBlock(new BlockPos(x, Y, 8), ModBlocks.LASER_SPLITTER.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.WEST)
+                    .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.WEST));
+        }
+        helper.succeedWhen(() -> {
+            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(1, Y, 8)));
+            helper.assertTrue(!beams.isEmpty() && beams.size() <= 8, "a few beams, not thousands: " + beams.size());
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aFlatMirrorSendsLightBack(GameTestHelper helper) {
@@ -1123,12 +1141,8 @@ public final class LaserTests {
     }
 
     /** A floor mirror at {@code pos}, its plate set to {@code plate}. */
-    private static com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity mirror(GameTestHelper helper, BlockPos pos,
-                                                                                         com.kadikular.quantimium.laser.MirrorPlate plate) {
-        helper.setBlock(pos, mirror(Direction.DOWN, Direction.NORTH, Direction.NORTH));
-        var mirror = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity.class);
-        mirror.setPlate(plate);
-        return mirror;
+    private static void mirror(GameTestHelper helper, BlockPos pos, com.kadikular.quantimium.laser.MirrorPlate plate) {
+        helper.setBlock(pos, com.kadikular.quantimium.block.LaserMirrorBlock.withPlate(mirror(Direction.DOWN, Direction.NORTH, Direction.NORTH), plate));
     }
 
     // covers: laser.mirror, laser.ray

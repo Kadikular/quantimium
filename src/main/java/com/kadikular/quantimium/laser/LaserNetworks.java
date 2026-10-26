@@ -1159,7 +1159,8 @@ public final class LaserNetworks {
             }
             // Straight to the middle of the face it was linked by, at whatever angle, and in by that face; to a laser block's
             // focus, its middle.
-            Direction inBy = level.isLoaded(target) && level.getBlockEntity(target) instanceof LaserNode ? null : node.linkFace(target);
+            Direction inBy = level.isLoaded(target) && (level.getBlockEntity(target) instanceof LaserNode
+                    || level.getBlockState(target).getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) ? null : node.linkFace(target);
             traced.addAll(LaserBeam.follow(level, LaserBeam.traceTo(level, node.nodePos(), target, inBy, range, marks), range, marks));
         }
         // And to each Entangled Mirror drawing on it, at once.

@@ -569,7 +569,7 @@ public final class LensAction {
         if (beam.hit() == null) return false;
         // Something light passes, just before the end (a lever, a button, a crop), is what it uses; else what it ends on.
         BlockPos before = beam.before();
-        BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
+        BlockPos pos = beam.lastLength() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
         BlockState state = level.getBlockState(pos);
         var hit = new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(pos).relative(beam.arriving().getOpposite(), 0.5),
                 beam.arriving().getOpposite(), pos, false);
@@ -644,7 +644,7 @@ public final class LensAction {
     private boolean mine(ServerLevel level, LaserNetworks networks, LaserHand hand) {
         if (area != null || mirrored() || beam == null || beam.hit() == null) return false;
         BlockPos before = beam.before();
-        BlockPos pos = beam.length() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
+        BlockPos pos = beam.lastLength() > 0 && !level.getBlockState(before).isAir() ? before : beam.hit();
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || state.hasBlockEntity() || state.getDestroySpeed(level, pos) < 0 || state.is(ModTags.LASER_UNBREAKABLE)) return false;
         long cost = harvestCost(level, pos);
@@ -1149,7 +1149,7 @@ public final class LensAction {
         if (beam.hit() == null) return null;
         if (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK) return null;
         BlockPos before = beam.before();
-        if (beam.length() > 0 && !level.getBlockState(before).isAir() && cuttable(level, before)) return before;
+        if (beam.lastLength() > 0 && !level.getBlockState(before).isAir() && cuttable(level, before)) return before;
         return cuttable(level, beam.hit()) ? beam.hit() : null;
     }
 
@@ -1589,7 +1589,7 @@ public final class LensAction {
             if (beam.hit() == null || (beam.end() != LaserBeam.End.BLOCKED && beam.end() != LaserBeam.End.SINK)) return false;
             // As Harvest picks: something light passes just before the end (a glass block, a crop), else the end.
             BlockPos before = beam.before();
-            pos = beam.length() > 0 && !level.getBlockState(before).isAir() && processable(level, before) ? before : beam.hit();
+            pos = beam.lastLength() > 0 && !level.getBlockState(before).isAir() && processable(level, before) ? before : beam.hit();
             if (!processable(level, pos)) return false;
         }
         BlockState state = level.getBlockState(pos);

@@ -44,6 +44,8 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
 
     /** The most mirrors one beam bounces off: light caught between mirrors fades after so many. */
     public static final int MAX_BOUNCES = 32;
+    /** The most beams Laser Splitters fork one beam into: past that, light forked further fades. */
+    public static final int MAX_FORKS = 64;
 
     public LaserBeam {
         legs = List.copyOf(legs);
@@ -166,13 +168,17 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             return;
         }
         for (Ray way : ways) {
+            // Round and round between mirrors, leaving one the same way it was left before (or forked too many times): it
+            // fades there.
+            if (out.size() >= MAX_FORKS || legs.stream().anyMatch(leg -> leg.at.equals(mirror) && leg.ray == way)) {
+                if (out.size() < MAX_FORKS) out.add(finish(first, legs, mirror, End.OPEN, out.size()));
+                continue;
+            }
             LaserBeam run = trace(level, mirror, way, range, marks, null);
             List<Leg> more = new ArrayList<>(legs);
             more.add(new Leg(mirror, way, run.length));
-            // Round and round between mirrors, the same way through the same one: it fades.
-            boolean again = legs.stream().anyMatch(leg -> leg.at.equals(run.hit) && leg.ray == way);
-            if (run.end == End.MIRROR && !again) bend(level, first, more, run.hit, way.unit(), range, marks, out);
-            else out.add(finish(first, more, again ? null : run.hit, again ? End.OPEN : run.end, out.size()));
+            if (run.end == End.MIRROR) bend(level, first, more, run.hit, way.unit(), range, marks, out);
+            else out.add(finish(first, more, run.hit, run.end, out.size()));
         }
     }
 
@@ -202,6 +208,11 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
     /** The way, to the nearest of the six, it's travelling as it reaches what it ends on: that block's face it comes in by is this one's opposite. */
     public Direction arriving() {
         return legs.isEmpty() ? face : legs.getLast().ray().face();
+    }
+
+    /** How many steps its last run takes before what it ends on: its first run's, if it never bounced. */
+    public int lastLength() {
+        return legs.isEmpty() ? length : legs.getLast().length();
     }
 
     /** How many mirrors it bounced off: each takes a little of what it carries. */

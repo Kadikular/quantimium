@@ -2,13 +2,11 @@ package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.block.LaserMirrorBlock;
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.laser.LaserNetworks;
 import com.kadikular.quantimium.laser.MirrorPlate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -24,18 +22,6 @@ public class LaserMirrorBlockEntity extends BlockEntity implements com.kadikular
         super(ModBlockEntities.LASER_MIRROR_BE.get(), pos, state);
     }
 
-    /** Its plate: kept in its block state (see {@link LaserMirrorBlock#plate}). */
-    public MirrorPlate plate() {
-        return LaserMirrorBlock.plate(getBlockState());
-    }
-
-    /** Turns the plate to {@code plate}: the light through it is worked out again. */
-    public void setPlate(MirrorPlate plate) {
-        if (level == null || plate.equals(plate())) return;
-        level.setBlock(worldPosition, LaserMirrorBlock.withPlate(getBlockState(), plate), Block.UPDATE_ALL);
-        LaserNetworks.changed(level);
-    }
-
     private boolean splits() {
         return getBlockState().getBlock() instanceof LaserMirrorBlock mirror && mirror.splits();
     }
@@ -43,7 +29,7 @@ public class LaserMirrorBlockEntity extends BlockEntity implements com.kadikular
     /** Which way it faces, and whether it's off. */
     @Override
     public MutableComponent fluxMeterLine() {
-        MutableComponent line = describe(plate());
+        MutableComponent line = describe(LaserMirrorBlock.plate(getBlockState()));
         if (splits()) line = Component.translatable("message.quantimium.laser_splitter.plate", line);
         if (getBlockState().getValue(LaserMirrorBlock.POWERED)) line.append(Component.translatable("message.quantimium.laser_mirror.off"));
         return line.withStyle(getBlockState().getValue(LaserMirrorBlock.POWERED) ? ChatFormatting.GRAY : ChatFormatting.AQUA);

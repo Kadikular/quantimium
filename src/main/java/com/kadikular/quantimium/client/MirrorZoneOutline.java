@@ -34,6 +34,9 @@ public final class MirrorZoneOutline {
     /** Half the ghost across, and how far it reaches in front of and behind the plate's face, in blocks: just round the plate. */
     private static final double GHOST = 5.25 / 16, FRONT = 0.25 / 16, BACK = 1.25 / 16;
 
+    /** The block outline's colours, as vanilla draws it (LevelRenderer.renderBlockOutline): high contrast, and not. */
+    private static final int HIGH_CONTRAST = -11010079, OUTLINE = ARGB.black(102);
+
     @SubscribeEvent
     public static void onOutline(ExtractBlockOutlineRenderStateEvent event) {
         if (!(event.getBlockState().getBlock() instanceof LaserMirrorBlock)) return;
@@ -64,7 +67,7 @@ public final class MirrorZoneOutline {
                 for (Vec3[] quad : ghost) for (Vec3 corner : quad) panes.addVertex(pose, (float) corner.x, (float) corner.y, (float) corner.z).setColor(1f, 1f, 1f, 0.3f);
             }
             VertexConsumer lines = buffers.getBuffer(RenderTypes.lines());
-            int color = outline.highContrast() ? -11010079 : ARGB.black(102);
+            int color = outline.highContrast() ? HIGH_CONTRAST : OUTLINE;
             float width = Minecraft.getInstance().gameRenderer.getGameRenderState().windowRenderState.appropriateLineWidth;
             for (Vec3[] line : grid) {
                 Vec3 a = line[0], b = line[1], d = b.subtract(a).normalize();
