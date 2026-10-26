@@ -91,7 +91,7 @@ public interface LaserNode {
 
     /** What this relay takes of what passes, as flux: a mirror's tax, or nothing for a photodetector. */
     default double tax() {
-        return LaserTuning.HOP_TAX;
+        return com.kadikular.quantimium.Config.relayLoss();
     }
 
     /** The network has traced this node's beams, or worked out what flows along them: for rendering. */

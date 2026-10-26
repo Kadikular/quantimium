@@ -88,8 +88,8 @@ sharing the power by what each end asks for. Two beams through one splitter stay
 mirror or splitter through its stand: straight into it, it stops. A splitter closes no cavity.
 
 Both refocus the light to its source's range: each run after a bounce reaches as far as a run from the emitter that
-sent it. Each bounce takes 0.5% of what the beam carries, which becomes flux where the
-beam starts.
+sent it. Each bounce takes 0.25% of what the beam carries (a pack can change it), which becomes flux
+where the beam starts.
 
 A <ItemLink id="quantimium:laser_relay" /> is a focus on a post, on a base on the block it was
 placed against, with an emitter on any of its other sides. Light reaching its focus, from any side but
@@ -100,8 +100,8 @@ open it: it holds one lens, which only the light leaving by that emitter goes th
 one emitter cuts only there), and its tip takes the lens's colour. Taking an emitter away drops its lens.
 
 A relay refocuses the light to its source's range: a run from it reaches as far as a run from the emitter that sent
-it. Each relay a beam passes takes 1% of what passes, and that becomes flux where it
-stands.
+it. Each relay a beam passes takes 0.5% of what passes (a pack can change it), and that
+becomes flux where it stands.
 
 Each of a relay's emitters listens to the redstone reaching the block its
 own way, set in its screen: it ignores it, lets light out only with a signal, only without one, or in

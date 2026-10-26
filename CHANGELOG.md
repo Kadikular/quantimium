@@ -12,7 +12,7 @@
   towards a neighbouring one. Click a face's middle for flat, the ring round it for 22.5°, the outer ring for 45°
   towards the side clicked; sneak-click to move the stand. Looking at a face outlines its parts, and a ghost shows where
   the plate would turn. A plate never faces towards its stand. Light now travels diagonally too (26 ways in all); what leaves a mirror
-  is always one of them. Mirrors already placed keep the way they faced. Each bounce takes 0.5% (a relay 1%).
+  is always one of them. Mirrors already placed keep the way they faced. Each bounce takes 0.25%.
 - **The Laser Splitter** reflects off both sides and lets light through: one beam becomes two, each its own. It no
   longer joins beams into one. It can face straight on too. Light never leaves a mirror or splitter through its stand.
 - **Cavities round corners.** A cavity's light can run round any number of plain Laser Mirrors, back off a flat one

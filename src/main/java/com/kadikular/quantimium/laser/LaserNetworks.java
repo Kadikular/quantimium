@@ -1665,7 +1665,7 @@ public final class LaserNetworks {
 
     /** What's left of a beam's power after the mirrors it bounces off. */
     private static double kept(LaserBeam beam) {
-        return beam.bounces() == 0 ? 1.0 : Math.pow(1.0 - LaserTuning.MIRROR_LOSS, beam.bounces());
+        return beam.bounces() == 0 ? 1.0 : Math.pow(1.0 - com.kadikular.quantimium.Config.mirrorLoss(), beam.bounces());
     }
 
     /** Once a second: the relays' losses into the field, and each beam's brightness to its node. */

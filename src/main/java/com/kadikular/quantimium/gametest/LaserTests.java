@@ -465,7 +465,7 @@ public final class LaserTests {
             helper.assertTrue(gained > 0, "the light turned the corner");
             // 20 ticks at the emitter's full rate, less the mirror's one percent.
             long full = 20L * LaserTuning.Tier.ONE.rate;
-            helper.assertTrue(gained < full && gained >= full * (1.0 - LaserTuning.HOP_TAX) - LaserTuning.Tier.ONE.rate,
+            helper.assertTrue(gained < full && gained >= full * (1.0 - com.kadikular.quantimium.Config.relayLoss()) - LaserTuning.Tier.ONE.rate,
                     "the mirror takes its tax: " + gained + " of " + full);
             helper.assertTrue(LaserNetworks.of(helper.getLevel()).throughput(helper.absolutePos(mirror)) > 0, "light passes the mirror");
             TestSupport.finishLasers(helper);
