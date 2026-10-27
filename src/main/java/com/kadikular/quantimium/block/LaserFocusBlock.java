@@ -62,7 +62,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         }
     }
 
-    private static final Map<Integer, VoxelShape> SHAPES = new ConcurrentHashMap<>();
+    private static final Map<Long, VoxelShape> SHAPES = new ConcurrentHashMap<>();
 
     public LaserFocusBlock(Properties properties) {
         super(properties);
@@ -88,11 +88,11 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        int layout = level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus ? focus.layout() : Core.LASER.ordinal();
+        long layout = level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus ? focus.layout() : Core.LASER.ordinal();
         return SHAPES.computeIfAbsent(layout, LaserFocusBlock::shapeOf);
     }
 
-    private static VoxelShape shapeOf(int layout) {
+    private static VoxelShape shapeOf(long layout) {
         VoxelShape shape = Shapes.empty();
         if (LaserFocusBlockEntity.coreOf(layout) != Core.NONE) shape = box(FOCUS);
         for (Direction face : Direction.values()) {
@@ -126,7 +126,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
     public static List<AABB> boxes(Part part, Direction face) {
         return switch (part) {
             case NONE -> List.of();
-            case STAND -> List.of(STANDS.get(face), POSTS.get(face));
+            case STAND, RECEPTACLE -> List.of(STANDS.get(face), POSTS.get(face));
             case EMITTER, COVER -> List.of(NOZZLES.get(face));
         };
     }
@@ -177,6 +177,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         if (!(level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus)) return InteractionResult.PASS;
         Direction face = partAt(focus, pos, hit);
         if (player.isSecondaryUseActive()) return takeOff(focus, level, pos, player, face);
+        if (face != null && focus.receptacle(face) != null) return openReceptacle(focus, level, player, face);
         if (face == null || !focus.hasEmitter(face)) return InteractionResult.PASS;
         if (!level.isClientSide() && player instanceof ServerPlayer server) {
             server.openMenu(new SimpleMenuProvider(
@@ -186,6 +187,21 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
                         buffer.writeBlockPos(pos);
                         buffer.writeEnum(face);
                     });
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Opens the receptacle on {@code face}: its role, priority, filter and the rest. */
+    public static InteractionResult openReceptacle(LaserFocusBlockEntity focus, Level level, Player player, Direction face) {
+        if (!level.isClientSide() && player instanceof ServerPlayer server) {
+            var receptacle = focus.receptacle(face);
+            // Whether what it's on takes power, for the screen to offer powering it.
+            receptacle.checkPower();
+            server.openMenu(new SimpleMenuProvider((id, inventory, who) -> new com.kadikular.quantimium.menu.LogisticsReceptacleMenu(id, inventory, receptacle),
+                    Component.translatable("block.quantimium.logistics_receptacle")), buffer -> {
+                buffer.writeBlockPos(focus.getBlockPos());
+                buffer.writeEnum(face);
+            });
         }
         return InteractionResult.SUCCESS;
     }

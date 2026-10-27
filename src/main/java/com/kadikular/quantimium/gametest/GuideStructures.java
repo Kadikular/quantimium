@@ -133,9 +133,8 @@ public final class GuideStructures {
             for (int i = 0; i < roles.length; i++) {
                 BlockPos at = new BlockPos(4 + 2 * i, 2, 8);
                 h.setBlock(at.below(), Blocks.CHEST);
-                h.setBlock(at, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState()
-                        .setValue(com.kadikular.quantimium.block.LogisticsReceptacleBlock.FACING, Direction.DOWN));
-                var receptacle = h.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity.class);
+                TestSupport.receptacle(h, at, net.minecraft.core.Direction.DOWN);
+                var receptacle = TestSupport.receptacleAt(h, at);
                 while (receptacle.role() != roles[i]) receptacle.cycleRole();
             }
             h.setBlock(new BlockPos(11, 2, 8), ModBlocks.LOGISTICS_LECTERN.get().defaultBlockState()

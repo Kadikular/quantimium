@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import com.kadikular.quantimium.block.entity.ContainmentHallBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserFocusBlockEntity;
+import com.kadikular.quantimium.block.entity.Receptacle;
 import com.kadikular.quantimium.block.entity.RiftAnchorBlockEntity;
 import com.kadikular.quantimium.block.entity.QuantumEnergyStorage;
 import com.kadikular.quantimium.flux.ChunkFlux;
@@ -70,6 +71,24 @@ public final class TestSupport {
 
     /** The block entity at {@code relative}, whatever it is. */
     @org.jspecify.annotations.Nullable
+    /** A Clear Laser Focus at {@code relative} with a Logistics Receptacle on {@code face}, as a Logistics Receptacle block was. */
+    public static Receptacle receptacle(GameTestHelper helper, BlockPos relative, net.minecraft.core.Direction face) {
+        helper.setBlock(relative, com.kadikular.quantimium.init.ModBlocks.LASER_FOCUS.get());
+        var focus = helper.getBlockEntity(relative, LaserFocusBlockEntity.class);
+        focus.setCore(LaserFocusBlockEntity.Core.CLEAR);
+        focus.setPart(face, LaserFocusBlockEntity.Part.RECEPTACLE);
+        return focus.receptacle(face);
+    }
+
+    /** The (first) Logistics Receptacle on the Laser Focus at {@code relative}. */
+    public static Receptacle receptacleAt(GameTestHelper helper, BlockPos relative) {
+        var focus = helper.getBlockEntity(relative, LaserFocusBlockEntity.class);
+        for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+            if (focus.receptacle(face) != null) return focus.receptacle(face);
+        }
+        throw new net.minecraft.gametest.framework.GameTestAssertException(net.minecraft.network.chat.Component.literal("no receptacle at " + relative), 0);
+    }
+
     /**
      * A Laser Focus at {@code relative}, set up as a Laser Relay was: a Stand on {@code mount}, and an Emitter on each of
      * {@code emitters}.

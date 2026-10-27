@@ -79,10 +79,12 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         NONE,
         /** A stand on the block that face is against. Light neither gets in nor out by it. */
         STAND,
-        /** An emitter: light leaves by it. Light also gets in by it. */
+        /** An emitter: light leaves by it; only diagonal light gets in by it. */
         EMITTER,
         /** A plain cap: light neither gets in nor out by it. */
-        COVER;
+        COVER,
+        /** A Logistics Receptacle: the inventory that face is against is on the network (see {@link Receptacle}). */
+        RECEPTACLE;
 
         /** Whether light gets in and out by a face with this on it. */
         public boolean open() {
@@ -96,6 +98,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
                 case STAND -> ModItems.FOCUS_STAND.get();
                 case EMITTER -> ModItems.FOCUS_EMITTER.get();
                 case COVER -> ModItems.FOCUS_COVER.get();
+                case RECEPTACLE -> ModItems.LOGISTICS_RECEPTACLE_ITEM.get();
             };
             return item == null ? ItemStack.EMPTY : new ItemStack(item);
         }
@@ -106,10 +109,12 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     }
 
     /** What its model draws: its focus and each face's part, packed as {@link #layout()} says. */
-    public static final ModelProperty<Integer> LAYOUT = new ModelProperty<>();
+    public static final ModelProperty<Long> LAYOUT = new ModelProperty<>();
 
     private Core core = Core.NONE;
     private final Map<Direction, Part> parts = new EnumMap<>(Direction.class);
+    /** The Logistics Receptacle on each face that has one. */
+    private final Map<Direction, Receptacle> receptacles = new EnumMap<>(Direction.class);
     /** The lens in each emitter that has one. */
     private final Map<Direction, ItemStack> lenses = new EnumMap<>(Direction.class);
     /** How each emitter that's been set listens to redstone; the rest follow {@link #mode}. */
@@ -167,6 +172,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     public boolean setPart(Direction face, Part part) {
         if (part == Part.NONE || part(face) != Part.NONE) return false;
         parts.put(face, part);
+        if (part == Part.RECEPTACLE) receptacles.put(face, new Receptacle(this, face));
         changed();
         return true;
     }
@@ -186,6 +192,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         if (lens != null && !lens.isEmpty()) out.add(lens);
         modes.remove(face);
         pulses.remove(face);
+        receptacles.remove(face);
         changed();
         return out;
     }
@@ -199,19 +206,60 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         return out;
     }
 
-    /** Its focus and its faces, packed: 2 bits for the focus, then 3 for each face, by its 3D data value. */
-    public int layout() {
-        int packed = core.ordinal();
-        for (Direction face : Direction.values()) packed |= part(face).ordinal() << (2 + 3 * face.get3DDataValue());
+    /**
+     * Its focus and its faces, packed: 2 bits for the focus, then 6 for each face, by its 3D data value: 3 for what's
+     * there and 3 for how it looks (a receptacle's role and whether it's lit).
+     */
+    public long layout() {
+        long packed = core.ordinal();
+        for (Direction face : Direction.values()) {
+            Receptacle receptacle = receptacles.get(face);
+            long look = receptacle != null ? receptacle.look() : 0;
+            packed |= (part(face).ordinal() | look << 3) << (2 + 6 * face.get3DDataValue());
+        }
         return packed;
     }
 
-    public static Core coreOf(int layout) {
-        return Core.byOrdinal(layout & 3);
+    public static Core coreOf(long layout) {
+        return Core.byOrdinal((int) (layout & 3));
     }
 
-    public static Part partOf(int layout, Direction face) {
-        return Part.byOrdinal(layout >> (2 + 3 * face.get3DDataValue()) & 7);
+    public static Part partOf(long layout, Direction face) {
+        return Part.byOrdinal((int) (layout >> (2 + 6 * face.get3DDataValue()) & 7));
+    }
+
+    /** How what's on {@code face} looks: a receptacle's role and whether it's lit, as {@link Receptacle#look}. */
+    public static int lookOf(long layout, Direction face) {
+        return (int) (layout >> (5 + 6 * face.get3DDataValue()) & 7);
+    }
+
+    /** The Logistics Receptacle on {@code face}, or null. */
+    @Nullable
+    public Receptacle receptacle(Direction face) {
+        return receptacles.get(face);
+    }
+
+    /** A receptacle's settings or state changed: saved, shown, and its look sent to clients. */
+    void receptacleChanged() {
+        setChanged();
+        if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    /** Its receptacles, on a logistics network while there's a focus in it. */
+    @Override
+    public List<com.kadikular.quantimium.laser.LogisticsMember> logisticsMembers() {
+        return core == Core.NONE ? List.of() : List.copyOf(receptacles.values());
+    }
+
+    /** The faces whose receptacle powers the machine it's on, with a focus in it. */
+    @Override
+    public Set<Direction> feedsAll() {
+        if (core == Core.NONE) return Set.of();
+        Set<Direction> out = EnumSet.noneOf(Direction.class);
+        receptacles.forEach((face, receptacle) -> {
+            if (receptacle.powers()) out.add(face);
+        });
+        return out;
     }
 
     @Override
@@ -409,10 +457,19 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         return out;
     }
 
-    /** Light gets in by any open face, with a focus to take it. */
+    /** Straight light gets in by a bare face, with a focus to take it: not by a Stand, Cover or Emitter. */
     @Override
     public boolean accepts(Direction travel) {
-        return core != Core.NONE && part(travel.getOpposite()).open();
+        return core != Core.NONE && part(travel.getOpposite()) == Part.NONE;
+    }
+
+    /** Diagonal light gets in past an Emitter as well: by any face it crosses that has no Stand or Cover. */
+    @Override
+    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
+        if (ray.straight()) return accepts(ray.face());
+        if (core == Core.NONE) return false;
+        for (Direction travel : ray.faces()) if (part(travel.getOpposite()).open()) return true;
+        return false;
     }
 
     /** The focus loses nothing: its emitters do. */
@@ -487,21 +544,19 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         joined = false;
     }
 
-    /** Broken, it drops everything it holds. */
     /** Forgets everything it holds, without dropping it: broken in creative. */
     public void clearContents() {
         core = Core.NONE;
         parts.clear();
         lenses.clear();
+        receptacles.clear();
     }
 
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
         if (level != null) for (ItemStack stack : contents()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
-        core = Core.NONE;
-        parts.clear();
-        lenses.clear();
+        clearContents();
     }
 
     @Override
@@ -515,6 +570,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             if (!lens.isEmpty()) out.store("Lens_" + face.getSerializedName(), ItemStack.CODEC, lens);
             RelayMode own = modes.get(face);
             if (own != null) out.putInt("Mode_" + face.getSerializedName(), own.ordinal());
+            Receptacle receptacle = receptacles.get(face);
+            if (receptacle != null) receptacle.save(out.child("Receptacle_" + face.getSerializedName()));
         }
     }
 
@@ -532,6 +589,13 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             in.read("Lens_" + face.getSerializedName(), ItemStack.CODEC).ifPresent(stack -> lenses.put(face, stack));
             int own = in.getIntOr("Mode_" + face.getSerializedName(), -1);
             if (own >= 0) modes.put(face, RelayMode.byOrdinal(own));
+            // Kept, not made again, so an open screen goes on showing the one there.
+            if (part == Part.RECEPTACLE) {
+                Receptacle receptacle = receptacles.computeIfAbsent(face, side -> new Receptacle(this, side));
+                receptacle.load(in.childOrEmpty("Receptacle_" + face.getSerializedName()));
+            } else {
+                receptacles.remove(face);
+            }
         }
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }

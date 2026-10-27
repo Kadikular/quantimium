@@ -11,6 +11,10 @@
   The focus loses nothing: each Emitter takes the loss, 0.5% by default (`relayLoss`), and mirrors 0.25%
   (`mirrorLoss`). Relays in your world become a Laser Focus with a Stand and their Emitters, lenses and redstone
   settings kept.
+- **Logistics Receptacles are Laser Focus attachments**: several on one focus, each serving its own inventory. On a
+  Clear Laser Focus light passes through as before. Receptacle blocks become a Clear Laser Focus with a Receptacle,
+  settings kept.
+- Straight light no longer gets into a Laser Focus by a face with an Emitter (diagonal light still does).
 - **A Prism links to the face you click**: its light runs at any angle to the middle of that face and goes in by it,
   so you choose which side of a machine it charges. A laser block is still lit at its middle (its focus). Links made
   before take the face facing the prism.

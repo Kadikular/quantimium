@@ -264,8 +264,9 @@ public class ModItems {
             "lens_mount", ModBlocks.LENS_MOUNT);
     public static final DeferredItem<BlockItem> LOGISTICS_CONTROLLER_ITEM = ITEMS.registerSimpleBlockItem(
             "logistics_controller", ModBlocks.LOGISTICS_CONTROLLER);
-    public static final DeferredItem<BlockItem> LOGISTICS_RECEPTACLE_ITEM = ITEMS.registerSimpleBlockItem(
-            "logistics_receptacle", ModBlocks.LOGISTICS_RECEPTACLE);
+    /** An attachment of a Laser Focus now; Logistics Receptacle blocks from before become one on a Clear Laser Focus. */
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> LOGISTICS_RECEPTACLE_ITEM = ITEMS.registerItem(
+            "logistics_receptacle", props -> com.kadikular.quantimium.item.FocusPieceItem.attachment(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.RECEPTACLE));
     public static final DeferredItem<BlockItem> LOGISTICS_TERMINAL_ITEM = ITEMS.registerSimpleBlockItem(
             "logistics_terminal", ModBlocks.LOGISTICS_TERMINAL);
     public static final DeferredItem<BlockItem> LOGISTICS_LECTERN_ITEM = ITEMS.registerSimpleBlockItem(

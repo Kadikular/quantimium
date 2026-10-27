@@ -387,8 +387,11 @@ Item Filter Lens, so they work as active requesters: unfiltered, they take nothi
 up the beam still feeds them). As ever, a stream from one side of a join reaches back up its own side:
 put the controller before the lenses, or on their side of the join.
 
-A <ItemLink id="quantimium:logistics_receptacle" /> goes on the inventory it serves (a chest, a machine, a drawer), and light
-passes straight through it, so one beam along a row of machines joins them all; light onto its outer face joins it too, and stops there. Open it to set what that
+A <ItemLink id="quantimium:logistics_receptacle" /> is an attachment of a <ItemLink id="quantimium:laser_focus" />: it goes on the face against the inventory
+it serves (a chest, a machine, a drawer), and works while light reaches the focus. One focus can hold several, each
+serving its own inventory with its own settings. On a <ItemLink id="quantimium:clear_laser_focus" /> light passes straight through, so
+one beam along a row of machines joins them all; on a Laser Focus the light stops there. Logistics Receptacle blocks
+from before become a Clear Laser Focus with a Receptacle on the same face. Open it to set what that
 inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
 with tags (empty, storage and providers take or give everything; a requester asks for nothing as a whitelist,
 everything as a blacklist). Its plate lights in its role's colour while a controller's

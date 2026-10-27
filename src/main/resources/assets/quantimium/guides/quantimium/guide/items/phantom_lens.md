@@ -2,7 +2,7 @@
 navigation:
   title: Phantom Lens
   parent: items/index.md
-  position: 31
+  position: 32
   icon: quantimium:phantom_lens
 item_ids:
 - quantimium:phantom_lens

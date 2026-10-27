@@ -33,10 +33,11 @@ public final class LaserFocusModel implements DynamicBlockStateModel {
 
     private final BlockStateModel laser;
     private final BlockStateModel clear;
-    private final Map<Part, Map<Direction, BlockStateModel>> parts;
+    /** Each attachment's model on each face, by {@link #key}: its part, and for a receptacle its role and whether lit. */
+    private final Map<String, Map<Direction, BlockStateModel>> parts;
     private final int flags;
 
-    private LaserFocusModel(BlockStateModel laser, BlockStateModel clear, Map<Part, Map<Direction, BlockStateModel>> parts) {
+    private LaserFocusModel(BlockStateModel laser, BlockStateModel clear, Map<String, Map<Direction, BlockStateModel>> parts) {
         this.laser = laser;
         this.clear = clear;
         this.parts = parts;
@@ -47,9 +48,9 @@ public final class LaserFocusModel implements DynamicBlockStateModel {
 
     @Override
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> out) {
-        Integer layout = level.getModelData(pos).get(LaserFocusBlockEntity.LAYOUT);
+        Long layout = level.getModelData(pos).get(LaserFocusBlockEntity.LAYOUT);
         // Not known yet (or an item, or a preview): a plain focus.
-        int packed = layout != null ? layout : Core.LASER.ordinal();
+        long packed = layout != null ? layout : Core.LASER.ordinal();
         long seed = random.nextLong();
         Core core = LaserFocusBlockEntity.coreOf(packed);
         if (core != Core.NONE) {
@@ -57,7 +58,9 @@ public final class LaserFocusModel implements DynamicBlockStateModel {
             (core == Core.CLEAR ? clear : laser).collectParts(level, pos, state, random, out);
         }
         for (Direction face : Direction.values()) {
-            Map<Direction, BlockStateModel> faces = parts.get(LaserFocusBlockEntity.partOf(packed, face));
+            Part part = LaserFocusBlockEntity.partOf(packed, face);
+            if (part == Part.NONE) continue;
+            Map<Direction, BlockStateModel> faces = parts.get(key(part, LaserFocusBlockEntity.lookOf(packed, face)));
             BlockStateModel model = faces == null ? null : faces.get(face);
             if (model == null) continue;
             random.setSeed(seed);
@@ -68,11 +71,20 @@ public final class LaserFocusModel implements DynamicBlockStateModel {
     @Override
     @Nullable
     public Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random) {
-        Integer layout = level.getModelData(pos).get(LaserFocusBlockEntity.LAYOUT);
+        Long layout = level.getModelData(pos).get(LaserFocusBlockEntity.LAYOUT);
         return new GeometryKey(layout != null ? layout : Core.LASER.ordinal(), this);
     }
 
-    private record GeometryKey(int layout, LaserFocusModel model) {}
+    private record GeometryKey(long layout, LaserFocusModel model) {}
+
+    /** The name of {@code part}'s model with {@code look}: "stand", "emitter", "receptacle_provider_lit". */
+    static String key(Part part, int look) {
+        if (part == Part.RECEPTACLE) {
+            var roles = com.kadikular.quantimium.laser.LogisticsMember.Role.values();
+            return "receptacle_" + roles[Math.min(look / 2, roles.length - 1)].getSerializedName() + ((look & 1) != 0 ? "_lit" : "");
+        }
+        return part.name().toLowerCase(java.util.Locale.ROOT);
+    }
 
     @Override
     public Material.Baked particleMaterial() {
@@ -84,9 +96,8 @@ public final class LaserFocusModel implements DynamicBlockStateModel {
         return flags;
     }
 
-    /** Read from its blockstate file: the two focuses, and each attachment turned to each face. */
-    public record Unbaked(BlockStateModel.Unbaked laser, BlockStateModel.Unbaked clear, Map<Direction, BlockStateModel.Unbaked> stand,
-                          Map<Direction, BlockStateModel.Unbaked> emitter, Map<Direction, BlockStateModel.Unbaked> cover)
+    /** Read from its blockstate file: the two focuses, and each attachment (by {@link #key}) turned to each face. */
+    public record Unbaked(BlockStateModel.Unbaked laser, BlockStateModel.Unbaked clear, Map<String, Map<Direction, BlockStateModel.Unbaked>> parts)
             implements CustomUnbakedBlockStateModel {
 
         private static final Codec<Map<Direction, BlockStateModel.Unbaked>> FACES = Codec.unboundedMap(Direction.CODEC, BlockStateModel.Unbaked.CODEC);
@@ -94,30 +105,24 @@ public final class LaserFocusModel implements DynamicBlockStateModel {
         public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 BlockStateModel.Unbaked.CODEC.fieldOf("focus").forGetter(Unbaked::laser),
                 BlockStateModel.Unbaked.CODEC.fieldOf("clear_focus").forGetter(Unbaked::clear),
-                FACES.fieldOf("stand").forGetter(Unbaked::stand),
-                FACES.fieldOf("emitter").forGetter(Unbaked::emitter),
-                FACES.fieldOf("cover").forGetter(Unbaked::cover)).apply(instance, Unbaked::new));
+                Codec.unboundedMap(Codec.STRING, FACES).fieldOf("parts").forGetter(Unbaked::parts)).apply(instance, Unbaked::new));
 
         @Override
         public BlockStateModel bake(ModelBaker baker) {
-            Map<Part, Map<Direction, BlockStateModel>> parts = new EnumMap<>(Part.class);
-            parts.put(Part.STAND, bake(stand, baker));
-            parts.put(Part.EMITTER, bake(emitter, baker));
-            parts.put(Part.COVER, bake(cover, baker));
-            return new LaserFocusModel(laser.bake(baker), clear.bake(baker), parts);
-        }
-
-        private static Map<Direction, BlockStateModel> bake(Map<Direction, BlockStateModel.Unbaked> faces, ModelBaker baker) {
-            Map<Direction, BlockStateModel> out = new EnumMap<>(Direction.class);
-            faces.forEach((face, model) -> out.put(face, model.bake(baker)));
-            return out;
+            Map<String, Map<Direction, BlockStateModel>> baked = new java.util.HashMap<>();
+            parts.forEach((key, faces) -> {
+                Map<Direction, BlockStateModel> out = new EnumMap<>(Direction.class);
+                faces.forEach((face, model) -> out.put(face, model.bake(baker)));
+                baked.put(key, out);
+            });
+            return new LaserFocusModel(laser.bake(baker), clear.bake(baker), baked);
         }
 
         @Override
         public void resolveDependencies(ResolvableModel.Resolver resolver) {
             laser.resolveDependencies(resolver);
             clear.resolveDependencies(resolver);
-            for (Map<Direction, BlockStateModel.Unbaked> faces : List.of(stand, emitter, cover)) {
+            for (Map<Direction, BlockStateModel.Unbaked> faces : parts.values()) {
                 for (BlockStateModel.Unbaked model : faces.values()) model.resolveDependencies(resolver);
             }
         }

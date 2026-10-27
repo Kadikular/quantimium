@@ -319,6 +319,13 @@ public final class WikiScreenshots {
             BlockPos pos = slot(player, index);
             if (player.level().getBlockEntity(pos) instanceof MenuProvider provider) {
                 player.openMenu(provider, pos);
+            } else if (player.level().getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus) {
+                for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+                    if (focus.receptacle(face) != null) {
+                        com.kadikular.quantimium.block.LaserFocusBlock.openReceptacle(focus, player.level(), player, face);
+                        break;
+                    }
+                }
             }
         }));
         if (overlay == Overlay.FILTER_VIEW || overlay == Overlay.INPUT_LIST) {
@@ -769,8 +776,11 @@ public final class WikiScreenshots {
         // The laser and logistics blocks, standing alone: their screens, not their networks.
         place(level, slot(player, MATERIALISER), ModBlocks.MATERIALISER.get().defaultBlockState());
         place(level, slot(player, MONITOR), ModBlocks.FIELD_MONITOR.get().defaultBlockState());
-        place(level, slot(player, RECEPTACLE), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState());
-        if (level.getBlockEntity(slot(player, RECEPTACLE)) instanceof com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity receptacle) {
+        place(level, slot(player, RECEPTACLE), ModBlocks.LASER_FOCUS.get().defaultBlockState());
+        if (level.getBlockEntity(slot(player, RECEPTACLE)) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus
+                && focus.setCore(com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.CLEAR)
+                && focus.setPart(net.minecraft.core.Direction.DOWN, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.RECEPTACLE)) {
+            var receptacle = focus.receptacle(net.minecraft.core.Direction.DOWN);
             receptacle.cycleRole();
             receptacle.addPriority(5);
             receptacle.setFilterSlot(0, new ItemStack(Items.IRON_INGOT));

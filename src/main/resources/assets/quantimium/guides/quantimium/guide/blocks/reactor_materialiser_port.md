@@ -2,7 +2,7 @@
 navigation:
   title: Reactor Materialiser Port
   parent: blocks/index.md
-  position: 69
+  position: 68
   icon: quantimium:reactor_materialiser_port
 ---
 

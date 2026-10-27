@@ -58,8 +58,7 @@ public final class Logistics {
         Set<BlockPos> clashing = new HashSet<>();
         List<LogisticsMember> all = new ArrayList<>();
         for (LaserNode node : nodes) {
-            LogisticsMember member = node.logistics();
-            if (member == null) continue;
+            for (LogisticsMember member : node.logisticsMembers()) {
             all.add(member);
             Light light = lights.get(node.nodePos());
             if (light == null) continue;
@@ -75,6 +74,7 @@ public final class Logistics {
                 }
             }
             if (owner != null) owners.put(member, owner);
+            }
         }
         Map<BlockPos, List<LogisticsMember>> networks = new HashMap<>();
         for (LogisticsMember member : all) {

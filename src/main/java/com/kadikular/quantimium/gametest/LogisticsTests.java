@@ -1,9 +1,8 @@
 package com.kadikular.quantimium.gametest;
 
 import com.kadikular.quantimium.block.LogisticsControllerBlock;
-import com.kadikular.quantimium.block.LogisticsReceptacleBlock;
 import com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity;
-import com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity;
+import com.kadikular.quantimium.block.entity.Receptacle;
 import com.kadikular.quantimium.init.ModBlocks;
 import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
@@ -39,14 +38,14 @@ public final class LogisticsTests {
     }
 
     /** A chest at {@code x} under the light, holding {@code stock}, and a receptacle on it set to {@code role}. */
-    private static LogisticsReceptacleBlockEntity onChest(GameTestHelper helper, int x, LogisticsMember.Role role, boolean active, ItemStack... stock) {
+    private static Receptacle onChest(GameTestHelper helper, int x, LogisticsMember.Role role, boolean active, ItemStack... stock) {
         BlockPos chest = new BlockPos(x, Y - 1, 8);
         helper.setBlock(chest, Blocks.CHEST);
         ChestBlockEntity box = helper.getBlockEntity(chest, ChestBlockEntity.class);
         for (int i = 0; i < stock.length; i++) box.setItem(i, stock[i]);
         BlockPos pos = new BlockPos(x, Y, 8);
-        helper.setBlock(pos, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(pos, LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, pos, net.minecraft.core.Direction.DOWN);
+        Receptacle receptacle = TestSupport.receptacleAt(helper, pos);
         while (receptacle.role() != role) receptacle.cycleRole();
         if (active) receptacle.toggleActive();
         return receptacle;
@@ -98,7 +97,7 @@ public final class LogisticsTests {
     public static void anActiveProviderPushesIntoStorage(GameTestHelper helper) {
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.PROVIDER, true, new ItemStack(Items.COBBLESTONE, 32));
-        LogisticsReceptacleBlockEntity storage = onChest(helper, 7, LogisticsMember.Role.STORAGE, false);
+        Receptacle storage = onChest(helper, 7, LogisticsMember.Role.STORAGE, false);
         helper.succeedWhen(() -> {
             helper.assertTrue(storage.isConnected(), "the storage is on the network");
             helper.assertValueEqual(count(helper, 7, Items.COBBLESTONE), 32, "cobblestone moved into storage");
@@ -123,12 +122,32 @@ public final class LogisticsTests {
     }
 
     // covers: laser.logistics.requester
+    // covers: laser.logistics.network
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 120)
+    public static void twoReceptaclesOnOneFocusEachServeTheirOwn(GameTestHelper helper) {
+        // One Clear Laser Focus, a providing receptacle down onto one chest and a storage one up into another: the dirt
+        // moves from the one below to the one above.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y - 1, 8), Blocks.CHEST);
+        helper.getBlockEntity(new BlockPos(6, Y - 1, 8), ChestBlockEntity.class).setItem(0, new ItemStack(Items.DIRT, 16));
+        helper.setBlock(new BlockPos(6, Y + 1, 8), Blocks.CHEST);
+        Receptacle provider = TestSupport.receptacle(helper, new BlockPos(6, Y, 8), Direction.DOWN);
+        provider.cycleRole();
+        provider.toggleActive();
+        var focus = helper.getBlockEntity(new BlockPos(6, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+        focus.setPart(Direction.UP, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.RECEPTACLE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(helper.getBlockEntity(new BlockPos(6, Y + 1, 8), ChestBlockEntity.class), Items.DIRT), 16, "all of it moved up");
+            helper.assertTrue(focus.receptacle(Direction.UP).isConnected() && provider.isConnected(), "both on the network");
+        });
+    }
+
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 120)
     public static void aRequesterKeepingCountsTakesOnlyWhatItsShortOf(GameTestHelper helper) {
         // Keeping 10 cobblestone with 3 already there: it pulls 7 of storage's 64 and stops.
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 64));
-        LogisticsReceptacleBlockEntity requester = onChest(helper, 7, LogisticsMember.Role.REQUESTER, true, new ItemStack(Items.COBBLESTONE, 3));
+        Receptacle requester = onChest(helper, 7, LogisticsMember.Role.REQUESTER, true, new ItemStack(Items.COBBLESTONE, 3));
         requester.setFilterSlot(0, new ItemStack(Items.COBBLESTONE, 10));
         requester.toggleKeep();
         helper.runAfterDelay(90, () -> {
@@ -156,7 +175,7 @@ public final class LogisticsTests {
     public static void anActiveRequesterPullsWhatItLists(GameTestHelper helper) {
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIAMOND, 5), new ItemStack(Items.DIRT, 10));
-        LogisticsReceptacleBlockEntity requester = onChest(helper, 7, LogisticsMember.Role.REQUESTER, true);
+        Receptacle requester = onChest(helper, 7, LogisticsMember.Role.REQUESTER, true);
         requester.setFilterSlot(0, new ItemStack(Items.DIAMOND));
         helper.succeedWhen(() -> {
             helper.assertValueEqual(count(helper, 7, Items.DIAMOND), 5, "the diamonds came");
@@ -180,7 +199,7 @@ public final class LogisticsTests {
         onChest(helper, 4, LogisticsMember.Role.PROVIDER, true, new ItemStack(Items.COBBLESTONE, 8));
         helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.ISOLATOR.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        LogisticsReceptacleBlockEntity storage = onChest(helper, 8, LogisticsMember.Role.STORAGE, false);
+        Receptacle storage = onChest(helper, 8, LogisticsMember.Role.STORAGE, false);
         helper.runAfterDelay(60, () -> {
             helper.assertFalse(storage.isConnected(), "past the isolator, not on the network");
             helper.assertValueEqual(count(helper, 4, Items.COBBLESTONE), 8, "nothing moved");
@@ -211,11 +230,11 @@ public final class LogisticsTests {
         LogisticsControllerBlockEntity controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, false);
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false);
         helper.runAfterDelay(40, () -> {
-            helper.assertBlockProperty(new BlockPos(4, Y, 8), LogisticsReceptacleBlock.LIT, false);
+            helper.assertValueEqual(TestSupport.receptacleAt(helper, new BlockPos(4, Y, 8)).lit(), false, "lit");
             controller.getEnergyStorage().setEnergy(LaserTuning.LOGISTICS_CAPACITY);
         });
         helper.runAfterDelay(80, () -> {
-            helper.assertBlockProperty(new BlockPos(4, Y, 8), LogisticsReceptacleBlock.LIT, true);
+            helper.assertValueEqual(TestSupport.receptacleAt(helper, new BlockPos(4, Y, 8)).lit(), true, "lit");
             helper.succeed();
         });
     }
@@ -229,8 +248,8 @@ public final class LogisticsTests {
         controller(helper, new BlockPos(3, Y, 8), Direction.EAST, false);
         helper.setBlock(new BlockPos(5, Y - 1, 8), ModBlocks.FOLD_CORE.get());
         var core = helper.getBlockEntity(new BlockPos(5, Y - 1, 8), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
-        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(new BlockPos(5, Y, 8), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, new BlockPos(5, Y, 8), net.minecraft.core.Direction.DOWN);
+        Receptacle receptacle = TestSupport.receptacleAt(helper, new BlockPos(5, Y, 8));
         helper.runAfterDelay(60, () -> {
             helper.assertValueEqual(core.getEnergyStorage().getEnergyStored(), 0, "not powering it, the core gets nothing");
             receptacle.checkPower();
@@ -391,8 +410,8 @@ public final class LogisticsTests {
         var port = helper.getBlockEntity(portAt, com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
         for (int i = 0; i < stock.length; i++) port.getItems().setStackInSlot(i, stock[i]);
         BlockPos pos = new BlockPos(x, Y, 8);
-        helper.setBlock(pos, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        LogisticsReceptacleBlockEntity receptacle = helper.getBlockEntity(pos, LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, pos, net.minecraft.core.Direction.DOWN);
+        Receptacle receptacle = TestSupport.receptacleAt(helper, pos);
         while (receptacle.role() != role) receptacle.cycleRole();
         if (active) receptacle.toggleActive();
         return port;
@@ -637,8 +656,8 @@ public final class LogisticsTests {
         BlockPos chest = portAt.east(2).above();
         helper.setBlock(chest, Blocks.CHEST);
         helper.getBlockEntity(chest, ChestBlockEntity.class).setItem(0, new ItemStack(Items.DIAMOND, 4));
-        helper.setBlock(portAt.east(2), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.UP));
-        LogisticsReceptacleBlockEntity provider = helper.getBlockEntity(portAt.east(2), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, portAt.east(2), net.minecraft.core.Direction.UP);
+        Receptacle provider = TestSupport.receptacleAt(helper, portAt.east(2));
         provider.cycleRole();
         provider.toggleActive();
         controller(helper, portAt.east(3), Direction.WEST, true);
@@ -679,7 +698,7 @@ public final class LogisticsTests {
         helper.setBlock(chest, Blocks.CHEST);
         ChestBlockEntity box = helper.getBlockEntity(chest, ChestBlockEntity.class);
         for (int i = 0; i < stock.length; i++) box.setItem(i, stock[i]);
-        helper.setBlock(portAt.east(2), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.UP));
+        TestSupport.receptacle(helper, portAt.east(2), net.minecraft.core.Direction.UP);
         controller(helper, portAt.east(3), Direction.WEST, true);
         return helper.getBlockEntity(portAt, com.kadikular.quantimium.block.entity.ReactorLogisticsPortBlockEntity.class);
     }
@@ -795,8 +814,8 @@ public final class LogisticsTests {
         onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 23));
         QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, new BlockPos(6, Y - 1, 8), Items.FURNACE);
         TestSupport.fill(crafter.getEnergyStorage());
-        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        var provider = helper.getBlockEntity(new BlockPos(6, Y, 8), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, new BlockPos(6, Y, 8), net.minecraft.core.Direction.DOWN);
+        var provider = TestSupport.receptacleAt(helper, new BlockPos(6, Y, 8));
         while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
         BlockPos at = new BlockPos(9, Y, 8);
         helper.setBlock(at, ModBlocks.LOGISTICS_MATERIALISER.get());
@@ -841,11 +860,11 @@ public final class LogisticsTests {
     public static void aReceptacleRightBesideARelayJoinsTheNetwork(GameTestHelper helper) {
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
-        LogisticsReceptacleBlockEntity storage = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
+        Receptacle storage = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
         // And one shone on from above, onto its outer face: it joins, and the light stops there.
         helper.setBlock(new BlockPos(12, Y - 1, 12), Blocks.CHEST);
-        helper.setBlock(new BlockPos(12, Y, 12), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        LogisticsReceptacleBlockEntity under = helper.getBlockEntity(new BlockPos(12, Y, 12), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, new BlockPos(12, Y, 12), net.minecraft.core.Direction.DOWN);
+        Receptacle under = TestSupport.receptacleAt(helper, new BlockPos(12, Y, 12));
         controller(helper, new BlockPos(12, Y + 1, 12), Direction.DOWN, true);
         helper.runAfterDelay(60, () -> {
             helper.assertTrue(storage.isConnected(), "the relay's light reaches it");
@@ -893,8 +912,8 @@ public final class LogisticsTests {
         TestSupport.fill(crafter.getEnergyStorage());
         if (draws) crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get()));
         if (provides) {
-            helper.setBlock(new BlockPos(x, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-            var provider = helper.getBlockEntity(new BlockPos(x, Y, 8), LogisticsReceptacleBlockEntity.class);
+            TestSupport.receptacle(helper, new BlockPos(x, Y, 8), net.minecraft.core.Direction.DOWN);
+            var provider = TestSupport.receptacleAt(helper, new BlockPos(x, Y, 8));
             while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
         }
         return crafter;
@@ -1017,8 +1036,8 @@ public final class LogisticsTests {
         crafterOn(helper, 6, Items.FURNACE, true, true);
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         controller(helper, new BlockPos(2, Y + 1, 8), Direction.EAST, true);
-        helper.setBlock(MATERIALISER.above(), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        var importer = helper.getBlockEntity(MATERIALISER.above(), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, MATERIALISER.above(), net.minecraft.core.Direction.DOWN);
+        var importer = TestSupport.receptacleAt(helper, MATERIALISER.above());
         while (importer.role() != LogisticsMember.Role.PROVIDER) importer.cycleRole();
         BlockPos theirs = new BlockPos(14, Y + 1, 8);
         helper.setBlock(theirs, ModBlocks.LOGISTICS_MATERIALISER.get());
@@ -1060,8 +1079,8 @@ public final class LogisticsTests {
         TestSupport.relay(helper, split, Direction.DOWN, Direction.EAST);
         helper.getBlockEntity(split, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).addEmitter(Direction.UP);
         TestSupport.relay(helper, split.above(), Direction.NORTH, Direction.EAST);
-        helper.setBlock(MATERIALISER.above(), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        var onItself = helper.getBlockEntity(MATERIALISER.above(), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, MATERIALISER.above(), net.minecraft.core.Direction.DOWN);
+        var onItself = TestSupport.receptacleAt(helper, MATERIALISER.above());
         while (onItself.role() != LogisticsMember.Role.PROVIDER) onItself.cycleRole();
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         var materialiser = helper.getBlockEntity(MATERIALISER, com.kadikular.quantimium.block.entity.LogisticsMaterialiserBlockEntity.class);
@@ -1100,8 +1119,8 @@ public final class LogisticsTests {
             TestSupport.fill(crafter.getEnergyStorage());
             crafter.getInventory().setStackInSlot(0, CrafterTests.link(helper, MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get()));
         }
-        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        var provider = helper.getBlockEntity(new BlockPos(6, Y, 8), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, new BlockPos(6, Y, 8), net.minecraft.core.Direction.DOWN);
+        var provider = TestSupport.receptacleAt(helper, new BlockPos(6, Y, 8));
         while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         helper.runAfterDelay(100, () -> {
@@ -1297,7 +1316,7 @@ public final class LogisticsTests {
         controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
         QuantumCrafterBlockEntity furnace = crafterOn(helper, 4, Items.FURNACE, false, true);
         furnace.getInventory().setStackInSlot(1, new ItemStack(Items.COBBLESTONE, 16));
-        LogisticsReceptacleBlockEntity requester = onChest(helper, 8, LogisticsMember.Role.REQUESTER, true);
+        Receptacle requester = onChest(helper, 8, LogisticsMember.Role.REQUESTER, true);
         requester.setFilterSlot(0, new ItemStack(Items.STONE));
         requester.toggleRequestsMade();
         helper.runAfterDelay(80, () -> {
@@ -1489,7 +1508,7 @@ public final class LogisticsTests {
                 net.minecraft.resources.Identifier.parse("energizedpower:pulverizer")), true, false);
         QuantumCrafterBlockEntity furnace = crafterOn(helper, 8, Items.FURNACE, false, true);
         furnace.getInventory().setStackInSlot(0, CrafterTests.link(helper, new BlockPos(6, Y - 1, 8), ModBlocks.QUANTUM_CRAFTER.get()));
-        var provider = helper.getBlockEntity(new BlockPos(8, Y, 8), LogisticsReceptacleBlockEntity.class);
+        var provider = TestSupport.receptacleAt(helper, new BlockPos(8, Y, 8));
         provider.setFilterSlot(0, new ItemStack(Items.IRON_INGOT));
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         var ingots = resource(Items.IRON_INGOT);
@@ -1551,8 +1570,8 @@ public final class LogisticsTests {
                 new ItemStack(ModItems.ANOMALITE_DUST.get(), 4));
         for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) TestSupport.setField(helper, at.offset(dx * 16, 0, dz * 16), 500.0, 0.0);
         materialiser.bandGate().update(helper.getLevel(), helper.absolutePos(at));
-        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState().setValue(LogisticsReceptacleBlock.FACING, Direction.DOWN));
-        var provider = helper.getBlockEntity(new BlockPos(6, Y, 8), LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, new BlockPos(6, Y, 8), net.minecraft.core.Direction.DOWN);
+        var provider = TestSupport.receptacleAt(helper, new BlockPos(6, Y, 8));
         while (provider.role() != LogisticsMember.Role.PROVIDER) provider.cycleRole();
         var copper = resource(Items.RAW_COPPER);
         helper.runAfterDelay(100, () -> {
@@ -1703,8 +1722,8 @@ public final class LogisticsTests {
         QuantumCrafterBlockEntity first = crafterOn(helper, 6, Items.FURNACE, true, true);
         QuantumCrafterBlockEntity second = crafterOn(helper, 9, Items.FURNACE, true, true);
         for (int x : new int[] {6, 9}) {
-            var provider = helper.getBlockEntity(new BlockPos(x, Y, 8), LogisticsReceptacleBlockEntity.class);
-            while (provider.crafts() != LogisticsReceptacleBlockEntity.Crafts.STORED) provider.cycleCrafts();
+            var provider = TestSupport.receptacleAt(helper, new BlockPos(x, Y, 8));
+            while (provider.crafts() != Receptacle.Crafts.STORED) provider.cycleCrafts();
         }
         helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
         helper.runAfterDelay(80, () -> {

@@ -1271,8 +1271,7 @@ public final class LaserNetworks {
                         route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that hands light on to a machine beside it (a Receptacle powering what it's on): that machine.
-                    net.minecraft.core.Direction feeds = next == null || next == source ? null : next.feeds();
-                    if (feeds != null) {
+                    for (net.minecraft.core.Direction feeds : next == null || next == source ? Set.<net.minecraft.core.Direction>of() : next.feedsAll()) {
                         route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {

@@ -1221,6 +1221,8 @@
   "block.quantimium.logistics_controller": "Logistics Controller",
   "block.quantimium.logistics_controller.tip": "Its light makes a logistics network; light in by its back goes on.",
   "block.quantimium.logistics_receptacle": "Logistics Receptacle",
+  "item.quantimium.logistics_receptacle": "Logistics Receptacle",
+  "item.quantimium.logistics_receptacle.tip": "Puts the inventory behind it on the logistics network.",
   "block.quantimium.logistics_receptacle.tip": "Puts the inventory it's on into a logistics network.",
   "message.quantimium.logistics_controller.status": "Logistics network: %s members, %s FE",
   "message.quantimium.logistics_controller.unpowered": "Logistics network: %s members, out of power",

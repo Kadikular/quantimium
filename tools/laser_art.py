@@ -793,13 +793,27 @@ def laser_focus_block() -> None:
     mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180},
               "east": {"x": 90, "y": 270}}
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
+    # A Logistics Receptacle: the stand with a plate marked in its role's colour (lit while on a working network).
+    outline = {"from": [4, 2.01, 4], "to": [12, 2.01, 12], "faces": {"up": {"texture": "#mark", "uv": [4, 4, 12, 12]}}}
+    receptacle = [cube([2, 0, 2], [14, 1, 14], "#steel", "down"), cube([3, 1, 3], [13, 2, 13], "#steel"), outline, cube([7, 2, 7], [9, 6, 9], "#steel")]
+    receptacles = {}
+    for role in ROLE_COLOURS:
+        for lit in (False, True):
+            tag = "_lit" if lit else ""
+            write(f"laser_focus_receptacle_{role}{tag}", receptacle, dict(t, mark=f"quantimium:block/logistics_receptacle_{role}{tag}"))
+            receptacles[f"receptacle_{role}{tag}"] = {side: dict({"model": f"quantimium:block/laser_focus_receptacle_{role}{tag}"}, **r)
+                                                       for side, r in mounts.items()}
+    parts = {
+        "stand": {side: dict({"model": "quantimium:block/laser_focus_stand"}, **r) for side, r in mounts.items()},
+        "emitter": {side: dict({"model": f"quantimium:block/laser_focus_emitter_{side}"}, **turns[side]) for side in DIRS},
+        "cover": {side: dict({"model": "quantimium:block/laser_focus_cover"}, **r) for side, r in turns.items()},
+    }
+    parts.update(receptacles)
     model = {
         "type": "quantimium:laser_focus",
         "focus": {"model": "quantimium:block/laser_focus_core"},
         "clear_focus": {"model": "quantimium:block/clear_laser_focus_core"},
-        "stand": {side: dict({"model": "quantimium:block/laser_focus_stand"}, **r) for side, r in mounts.items()},
-        "emitter": {side: dict({"model": f"quantimium:block/laser_focus_emitter_{side}"}, **turns[side]) for side in DIRS},
-        "cover": {side: dict({"model": "quantimium:block/laser_focus_cover"}, **r) for side, r in turns.items()},
+        "parts": parts,
     }
     with open(os.path.join(STATES, "laser_focus.json"), "w") as handle:
         json.dump({"variants": {"": model}}, handle, indent=1)
