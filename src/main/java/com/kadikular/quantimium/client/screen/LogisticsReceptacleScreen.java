@@ -1,7 +1,7 @@
 package com.kadikular.quantimium.client.screen;
 
 import com.kadikular.quantimium.Quantimium;
-import com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity;
+import com.kadikular.quantimium.block.entity.Receptacle;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumUiColours;
@@ -32,7 +32,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
         super(menu, playerInventory, title);
     }
 
-    private LogisticsReceptacleBlockEntity receptacle() {
+    private Receptacle receptacle() {
         return menu.getBlockEntity();
     }
 
@@ -103,7 +103,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     @Override
     public List<Rect2i> ghostTargets() {
         List<Rect2i> targets = new ArrayList<>();
-        for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
+        for (int i = 0; i < Receptacle.FILTER_SLOTS; i++) {
             targets.add(new Rect2i(leftPos + LogisticsReceptacleMenu.FILTER_X + i * 18, topPos + LogisticsReceptacleMenu.FILTER_Y, 16, 16));
         }
         return targets;
@@ -172,7 +172,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     @Override
     protected void renderMachineForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         graphics.nextStratum();
-        for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
+        for (int i = 0; i < Receptacle.FILTER_SLOTS; i++) {
             ItemStack entry = receptacle().getFilter().getItem(i);
             if (entry.isEmpty()) continue;
             int x = leftPos + LogisticsReceptacleMenu.FILTER_X + i * 18;
@@ -193,7 +193,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (activeOverlay() == null && keeping() && scrollY != 0) {
-            for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
+            for (int i = 0; i < Receptacle.FILTER_SLOTS; i++) {
                 int x = leftPos + LogisticsReceptacleMenu.FILTER_X + i * 18;
                 int y = topPos + LogisticsReceptacleMenu.FILTER_Y;
                 if (mouseX < x || mouseX >= x + 16 || mouseY < y || mouseY >= y + 16) continue;

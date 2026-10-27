@@ -44,7 +44,7 @@ import java.util.Set;
  *
  * <p>The Isolator, built on it, has no base: its faces are set as the Relay's were, all with one redstone way.
  */
-public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView {
+public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, EmitterHolder {
 
     /** The faces light leaves by: where its emitters are. */
     private final Set<Direction> outputs = EnumSet.noneOf(Direction.class);
@@ -135,11 +135,18 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         if (shown != state) level.setBlock(worldPosition, shown, Block.UPDATE_CLIENTS);
     }
 
+    @Override
+    public boolean hasEmitter(Direction face) {
+        return outputs.contains(face);
+    }
+
     /** The lens in the emitter on {@code face}: empty for none. */
+    @Override
     public ItemStack lens(Direction face) {
         return lenses.getOrDefault(face, ItemStack.EMPTY);
     }
 
+    @Override
     public void setLens(Direction face, ItemStack stack) {
         if (stack.isEmpty()) lenses.remove(face);
         else lenses.put(face, stack);
@@ -167,6 +174,25 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
         lenses.clear();
     }
 
+    /**
+     * Becomes a Laser Focus with a Stand on its base and an Emitter on each of its outputs, keeping its lenses and how
+     * each listens to redstone: what a Laser Relay is now.
+     */
+    public void becomeFocus() {
+        if (level == null || level.isClientSide() || isRemoved()) return;
+        Direction mount = mount() != null ? mount() : Direction.DOWN;
+        Set<Direction> faces = EnumSet.copyOf(outputs.isEmpty() ? EnumSet.of(facing()) : outputs);
+        Map<Direction, ItemStack> kept = new EnumMap<>(lenses);
+        Map<Direction, RelayMode> keptModes = new EnumMap<>(modes);
+        RelayMode keptMode = mode;
+        // Its lenses go with it, not on the floor.
+        lenses.clear();
+        BlockPos at = worldPosition;
+        net.minecraft.world.level.Level world = level;
+        world.setBlock(at, com.kadikular.quantimium.init.ModBlocks.LASER_FOCUS.get().defaultBlockState(), Block.UPDATE_ALL);
+        if (world.getBlockEntity(at) instanceof LaserFocusBlockEntity focus) focus.becomeRelay(mount, faces, kept, keptMode, keptModes);
+    }
+
     // ---- redstone ----
 
     /** How its emitters listen to redstone, but for those set one by one. */
@@ -184,11 +210,13 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
     }
 
     /** How the emitter on {@code face} listens to redstone. */
+    @Override
     public RelayMode modeOf(Direction face) {
         return modes.getOrDefault(face, mode);
     }
 
     /** Steps the emitter on {@code face} on to its next way of listening to redstone. */
+    @Override
     public void cycleMode(Direction face) {
         modes.put(face, modeOf(face).next());
         pulses.remove(face);
@@ -316,6 +344,10 @@ public class LaserRelayBlockEntity extends BlockEntity implements LaserNode, Flu
             powered = level.hasNeighborSignal(worldPosition);
             // A face that's become its base (a Relay from before it had one) loses its emitter.
             if (mount() != null) outputs.remove(mount());
+            // A Laser Relay is a Laser Focus now: it becomes one (the Isolator, built on it, stays).
+            if (getBlockState().is(com.kadikular.quantimium.init.ModBlocks.LASER_RELAY.get())) {
+                level.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
+            }
             showOutputs();
             LaserNetworks.add(level, this);
         }

@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.menu;
 
-import com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity;
+import com.kadikular.quantimium.block.entity.Receptacle;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
@@ -30,18 +30,18 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
     public static final int FILTER_X = 8;
     public static final int FILTER_Y = 35;
     public static final int FILTER_START = 0;
-    public static final int FILTER_END = LogisticsReceptacleBlockEntity.FILTER_SLOTS;
+    public static final int FILTER_END = Receptacle.FILTER_SLOTS;
 
-    private final LogisticsReceptacleBlockEntity receptacle;
+    private final Receptacle receptacle;
 
     public LogisticsReceptacleMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        this(containerId, playerInv, (LogisticsReceptacleBlockEntity) playerInv.player.level().getBlockEntity(extraData.readBlockPos()));
+        this(containerId, playerInv, receptacleAt(playerInv, extraData));
     }
 
-    public LogisticsReceptacleMenu(int containerId, Inventory playerInv, LogisticsReceptacleBlockEntity receptacle) {
+    public LogisticsReceptacleMenu(int containerId, Inventory playerInv, Receptacle receptacle) {
         super(ModMenuTypes.LOGISTICS_RECEPTACLE_MENU.get(), containerId);
         this.receptacle = receptacle;
-        for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
+        for (int i = 0; i < Receptacle.FILTER_SLOTS; i++) {
             addSlot(new GhostSlot(receptacle.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
         }
         for (int row = 0; row < 3; row++) {
@@ -70,7 +70,14 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
         }
     }
 
-    public LogisticsReceptacleBlockEntity getBlockEntity() {
+    /** On the client: the receptacle the server named, on its block's face. */
+    private static Receptacle receptacleAt(Inventory playerInv, FriendlyByteBuf extraData) {
+        var pos = extraData.readBlockPos();
+        var face = extraData.readEnum(net.minecraft.core.Direction.class);
+        return ((com.kadikular.quantimium.block.entity.LaserFocusBlockEntity) playerInv.player.level().getBlockEntity(pos)).receptacle(face);
+    }
+
+    public Receptacle getBlockEntity() {
         return receptacle;
     }
 
@@ -96,7 +103,7 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
             receptacle.addPriority(PriorityButton.decode(id) - receptacle.priority());
             return true;
         }
-        if (id >= BUTTON_COUNT && id < BUTTON_COUNT + LogisticsReceptacleBlockEntity.FILTER_SLOTS * 4) {
+        if (id >= BUTTON_COUNT && id < BUTTON_COUNT + Receptacle.FILTER_SLOTS * 4) {
             int at = id - BUTTON_COUNT;
             int step = (at & 2) != 0 ? 16 : 1;
             receptacle.addKeepCount(at / 4, (at & 1) != 0 ? -step : step);
@@ -123,7 +130,7 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
         if (index < FILTER_END) return ItemStack.EMPTY;
         ItemStack stack = slots.get(index).getItem();
         if (stack.isEmpty()) return ItemStack.EMPTY;
-        for (int i = 0; i < LogisticsReceptacleBlockEntity.FILTER_SLOTS; i++) {
+        for (int i = 0; i < Receptacle.FILTER_SLOTS; i++) {
             if (receptacle.getFilter().getItem(i).isEmpty()) {
                 setGhost(i, stack);
                 break;
@@ -134,6 +141,6 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
 
     @Override
     public boolean stillValid(Player player) {
-        return stillValid(ContainerLevelAccess.create(receptacle.getLevel(), receptacle.getBlockPos()), player, receptacle.getBlockState().getBlock());
+        return receptacle.present() && player.distanceToSqr(receptacle.getBlockPos().getCenter()) <= 64.0;
     }
 }

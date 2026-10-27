@@ -1,7 +1,6 @@
 package com.kadikular.quantimium.gametest;
 
 import com.kadikular.quantimium.block.LaserEmitterBlock;
-import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity;
 import com.kadikular.quantimium.block.entity.FoldCoreBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserPrismBlockEntity;
@@ -88,7 +87,7 @@ public final class LaserTimingTests {
     }
 
     private static void relay(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(LaserRelayBlock.FACING, facing));
+        TestSupport.relay(helper, pos, Direction.DOWN, facing);
     }
 
     private static void emitter(GameTestHelper helper, BlockPos pos, Block block, Direction facing) {

@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.menu;
 
-import com.kadikular.quantimium.block.entity.LaserRelayBlockEntity;
+import com.kadikular.quantimium.block.entity.EmitterHolder;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import com.kadikular.quantimium.item.LensItem;
 import net.minecraft.core.Direction;
@@ -27,15 +27,15 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
     public static final int LENS_X = 80;
     public static final int LENS_Y = 35;
 
-    private final LaserRelayBlockEntity relay;
+    private final EmitterHolder relay;
     private final Direction face;
 
     public RelayEmitterMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        this(containerId, playerInv, (LaserRelayBlockEntity) playerInv.player.level().getBlockEntity(extraData.readBlockPos()),
+        this(containerId, playerInv, (EmitterHolder) playerInv.player.level().getBlockEntity(extraData.readBlockPos()),
                 extraData.readEnum(Direction.class));
     }
 
-    public RelayEmitterMenu(int containerId, Inventory playerInv, LaserRelayBlockEntity relay, Direction face) {
+    public RelayEmitterMenu(int containerId, Inventory playerInv, EmitterHolder relay, Direction face) {
         super(ModMenuTypes.RELAY_EMITTER_MENU.get(), containerId);
         this.relay = relay;
         this.face = face;
@@ -56,7 +56,7 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
         for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
     }
 
-    public LaserRelayBlockEntity getBlockEntity() {
+    public EmitterHolder getBlockEntity() {
         return relay;
     }
 
@@ -101,12 +101,12 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return relay != null && !relay.isRemoved() && relay.outputs().contains(face)
+        return relay != null && !relay.isRemoved() && relay.hasEmitter(face)
                 && player.distanceToSqr(relay.getBlockPos().getCenter()) <= 64.0;
     }
 
     /** The emitter's lens, as a one-slot container. */
-    private record LensHolder(LaserRelayBlockEntity relay, Direction face) implements Container {
+    private record LensHolder(EmitterHolder relay, Direction face) implements Container {
         @Override
         public int getContainerSize() {
             return 1;

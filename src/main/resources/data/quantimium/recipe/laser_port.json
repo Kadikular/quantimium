@@ -4,7 +4,7 @@
   "key": {
     "I": "minecraft:iron_ingot",
     "D": "minecraft:dropper",
-    "M": "quantimium:laser_relay",
+    "M": "quantimium:laser_focus",
     "G": "minecraft:glass_pane"
   },
   "pattern": [

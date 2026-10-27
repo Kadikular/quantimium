@@ -8,11 +8,10 @@
   },
   "pattern": [
     "IGI",
-    "GCG",
-    "IGI"
+    " C "
   ],
   "result": {
-    "id": "quantimium:laser_relay",
+    "id": "quantimium:focus_emitter",
     "count": 2
   }
 }

@@ -731,6 +731,9 @@ public class ModBlocks {
             "laser_mirror", id -> new com.kadikular.quantimium.block.LaserMirrorBlock(laserBlock(id, MapColor.METAL).noOcclusion()));
     public static final DeferredBlock<Block> LASER_SPLITTER = BLOCKS.register(
             "laser_splitter", id -> new com.kadikular.quantimium.block.LaserSplitterBlock(laserBlock(id, MapColor.METAL).noOcclusion()));
+    /** A Laser Focus and its attachments: never placed as itself, but by its pieces (see FocusPieceItem). */
+    public static final DeferredBlock<Block> LASER_FOCUS = BLOCKS.register(
+            "laser_focus", id -> new com.kadikular.quantimium.block.LaserFocusBlock(laserBlock(id, MapColor.QUARTZ).noOcclusion().dynamicShape()));
     public static final DeferredBlock<Block> LASER_RELAY = BLOCKS.register(
             "laser_relay", id -> new LaserRelayBlock(laserBlock(id, MapColor.QUARTZ)));
 

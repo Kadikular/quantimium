@@ -19,7 +19,7 @@ something to do, and a logistics network moves items by it.
   <IsometricCamera yaw="195" pitch="30" />
 </GameScene>
 
-*An Emitter II's light, split by a Laser Relay, powering a Quantum Crafter and a Quantum Simulator.*
+*An Emitter II's light, split by a Laser Focus, powering a Quantum Crafter and a Quantum Simulator.*
 
 ## Emitters
 
@@ -88,27 +88,35 @@ sharing the power by what each end asks for. Two beams through one splitter stay
 mirror or splitter through its stand: straight into it, it stops. A splitter closes no cavity.
 
 Both refocus the light to its source's range: each run after a bounce reaches as far as a run from the emitter that
-sent it. Each bounce takes 0.5% of what the beam carries, which becomes flux where the
-beam starts.
+sent it. Each bounce takes 0.25% of what the beam carries (a pack can change it), which becomes flux
+where the beam starts.
 
-A <ItemLink id="quantimium:laser_relay" /> is a focus on a post, on a base on the block it was
-placed against, with an emitter on any of its other sides. Light reaching its focus, from any side but
-its base, leaves by each emitter, shared by what each beam's blocks ask for: a prism's job for the six
-straight directions, with no linking. Placed, its one emitter faces you. Sneak-click (by hand or with a
-wrench) a side of its focus to put an emitter there, or an emitter to take it away. Click an emitter to
-open it: it holds one lens, which only the light leaving by that emitter goes through (a Harvest lens on
-one emitter cuts only there), and its tip takes the lens's colour. Taking an emitter away drops its lens.
+A <ItemLink id="quantimium:laser_focus" /> is where light gathers and sets off again.
+Put it down, then put attachments on its faces, one to a face, by using them on it: a <ItemLink id="quantimium:focus_stand" /> (a base on
+the block behind, as many as you like; without one it floats), a <ItemLink id="quantimium:focus_emitter" /> (light leaves by it) or a
+<ItemLink id="quantimium:focus_cover" /> (a plain cap). Light reaching it by any face without a Stand or Cover stops there and leaves by
+each Emitter, shared by what each beam's blocks ask for: a prism's job for the six straight directions, with no
+linking. A <ItemLink id="quantimium:clear_laser_focus" /> does the same, and light also passes straight through it and on out of the
+opposite face, unless a Stand or Cover there stops it.
 
-A relay refocuses the light to its source's range: a run from it reaches as far as a run from the emitter that sent
-it. Each relay a beam passes takes 1% of what passes, and that becomes flux where it
-stands.
+As with a cable and its parts, an attachment can go on a block with no focus (used against any block, it puts down a
+Laser Focus block holding just it, or puts it onto the Laser Focus block already beside that face), and it does
+nothing until a focus is put in: light passes a block with no focus by. Sneak-click the focus (by hand or with a wrench) to take it out and leave the
+attachments, or an attachment to take just that off; the block goes when it holds
+nothing. Click an Emitter to open it: it holds one lens, which only the light leaving by it goes through (a Harvest
+lens on one emitter cuts only there), and its tip takes the lens's colour; using a lens on it puts the lens in.
+Laser Relays from before become a Laser Focus with a Stand on their base and an Emitter on each of their outputs.
 
-Each of a relay's emitters listens to the redstone reaching the block its
+A focus refocuses the light to its source's range: a run from it reaches as far as a run from the emitter that sent
+it. The focus itself loses nothing; each Emitter takes 0.5% of what leaves by it (a pack can
+change it), and that becomes flux where it stands. Light passing straight through a Clear Laser Focus loses nothing.
+
+Each of a focus's emitters listens to the redstone reaching the block its
 own way, set in its screen: it ignores it, lets light out only with a signal, only without one, or in
 **pulse** mode, where each signal it gets lets light out until one action down its beam is done (a block
 cut, a hit, an item carried) or two seconds pass. One signal can open one emitter and close another. A
 pulse emitter before a Harvest lens breaks one block per pulse. An emitter switched off sends nothing; with
-all of them off, the relay passes no light at all, and what's beyond gets only the light that reaches it
+all of them off, the focus passes no light at all, and what's beyond gets only the light that reaches it
 some other way. An emitter switched off by redstone gives out none.
 
 An <ItemLink id="quantimium:isolator" /> passes light on as a relay does, but lets only power
@@ -152,7 +160,7 @@ distance away, through anything, in the same dimension. It's made in pairs in th
 <ItemLink id="quantimium:quantum_foundry_controller" />, from a <ItemLink id="quantimium:tesseract" /> and two Laser Mirrors. Its muzzle faces you as you
 place it.
 
-- Bind a Tesseract to the laser block the light should come from, a <ItemLink id="quantimium:laser_relay" /> say (sneak and use it on
+- Bind a Tesseract to the laser block the light should come from, a <ItemLink id="quantimium:laser_focus" /> say (sneak and use it on
   that block), then use it on the Entangled Mirror. It floats in the mirror's window.
 - Light reaching that block reaches the mirror too, at once, and leaves by its muzzle, refocused, as from any
   mirror; the block still sends its own light on as well. The jump takes 5% of what crosses (a few relays' worth),
@@ -167,30 +175,28 @@ place it.
 
 ## Optical cavities
 
-Light out of a <ItemLink id="quantimium:cavity_mirror" />'s front that comes back to it is held there,
+A <ItemLink id="quantimium:cavity_mirror" /> is an attachment of a <ItemLink id="quantimium:laser_focus" />: a flat half-silvered
+plate on one face, facing out. Light out of it that comes back to it is held there,
 as in a real laser's cavity: a battery for a laser network. It comes back off a flat <ItemLink id="quantimium:laser_mirror" /> facing
-it, off a <ItemLink id="quantimium:laser_relay" /> giving light back, or from another Cavity Mirror's front; and it can run round any
+it, or from another Cavity Mirror facing back; and it can run round any
 number of plain Laser Mirrors on the way, to a corner or several. Only one end needs to be a Cavity Mirror. A Laser
 Splitter, a mirror switched off by redstone, or anything else in the way, and there's no cavity: what it held goes
 as flux. The light may run up to 16 blocks one way (a loop of twice that), counting
 each mirror it turns at as a block. Each Cavity Mirror holds 10,000,000 FE for each of
-those blocks, and takes or gives up to 512,000 FE/t; a Laser Mirror or Relay at the other end holds nothing.
+those blocks, and takes or gives up to 512,000 FE/t; a Laser Mirror at the other end holds nothing.
 
-A Cavity Mirror looks like a <ItemLink id="quantimium:laser_relay" /> with a flat Splitter mirror for its front: it stands on the
-block it was placed against, as a Relay does, its mirror faces its partner, and an emitter stands on each face
-light leaves by. No light comes in by its base. With nothing facing it, it's just a relay:
-light that reaches it leaves by its mirror, towards where its partner would stand. Once paired, what it
-holds leaves by its outputs instead.
+One focus can hold several Cavity Mirrors, each on its own face, each finding its own cavity and holding its own
+light. What they hold leaves by the focus's Emitters, for the blocks that ask for it; with no Emitter it only stores.
+Light reaching the focus passes on by its Emitters as ever, and what the network's emitters have left over charges
+its cavities. Cavity Mirror blocks from before become a Laser Focus with a Stand, a Cavity Mirror on the same face,
+and an Emitter on each of their outputs, holding what they held.
 
 - Light that reaches a cavity mirror from outside charges it, but only with what the network's
   emitters have left over once its blocks are served. One cavity never fills another.
-- Light leaves by its **outputs**, set as a Relay's are (its back, to begin with), for the blocks that ask
-  for it. A network serves its blocks from its emitters first, then from its cavities. Sneak-click a face
-  with an empty hand to add an output there, or take it away; never on the mirror or the base. With no outputs it only
-  stores. Use a wrench on a face to turn the mirror there.
+- A network serves its blocks from its emitters first, then from its cavities.
 - With two Cavity Mirrors, the light bounces between them, so what either holds evens out between
   them: both glow, and both can give it out.
-- Light reaching the Laser Relay at the far end is passed into the cavity, so that end can feed it.
+- Light reaching the Laser Focus at the far end is passed into the cavity, so that end can feed it.
 - A cavity can leak: a pack can set it to lose a share of what it holds
   each tick, up to a cap, as flux where it stands. Out of the box it doesn't leak. Break a charged
   mirror, or block its gap, and the light it held all goes into the field at once.
@@ -379,8 +385,11 @@ Item Filter Lens, so they work as active requesters: unfiltered, they take nothi
 up the beam still feeds them). As ever, a stream from one side of a join reaches back up its own side:
 put the controller before the lenses, or on their side of the join.
 
-A <ItemLink id="quantimium:logistics_receptacle" /> goes on the inventory it serves (a chest, a machine, a drawer), and light
-passes straight through it, so one beam along a row of machines joins them all; light onto its outer face joins it too, and stops there. Open it to set what that
+A <ItemLink id="quantimium:logistics_receptacle" /> is an attachment of a <ItemLink id="quantimium:laser_focus" />: it goes on the face against the inventory
+it serves (a chest, a machine, a drawer), and works while light reaches the focus. One focus can hold several, each
+serving its own inventory with its own settings. On a <ItemLink id="quantimium:clear_laser_focus" /> light passes straight through, so
+one beam along a row of machines joins them all; on a Laser Focus the light stops there. Logistics Receptacle blocks
+from before become a Clear Laser Focus with a Receptacle on the same face. Open it to set what that
 inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
 with tags (empty, storage and providers take or give everything; a requester asks for nothing as a whitelist,
 everything as a blacklist). Its plate lights in its role's colour while a controller's

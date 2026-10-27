@@ -589,7 +589,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     @Override
     public boolean readsFrom(Level level, BlockPos pos, Direction side) {
         for (LogisticsMember member : networkMembers()) {
-            if (member instanceof LogisticsReceptacleBlockEntity receptacle && receptacle.getBlockPos().equals(pos) && receptacle.facing() == side) return true;
+            if (member instanceof Receptacle receptacle && receptacle.getBlockPos().equals(pos) && receptacle.facing() == side) return true;
         }
         return false;
     }

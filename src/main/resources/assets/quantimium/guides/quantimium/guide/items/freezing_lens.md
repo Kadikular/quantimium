@@ -2,7 +2,7 @@
 navigation:
   title: Freezing Lens
   parent: items/index.md
-  position: 17
+  position: 22
   icon: quantimium:freezing_lens
 item_ids:
 - quantimium:freezing_lens

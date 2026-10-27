@@ -1,8 +1,8 @@
 ---
 navigation:
   title: Logistics Receptacle
-  parent: blocks/index.md
-  position: 40
+  parent: items/index.md
+  position: 31
   icon: quantimium:logistics_receptacle
 item_ids:
 - quantimium:logistics_receptacle
@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_receptacle" scale="2" />
 
-Logistics: puts the inventory it's on into a controller's network, as storage, a provider or a requester.
+A Laser Focus attachment: puts the inventory behind it on a controller's network, as storage, a provider or a requester.
 
 ## Recipes
 

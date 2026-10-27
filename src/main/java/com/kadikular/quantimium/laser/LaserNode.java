@@ -91,7 +91,12 @@ public interface LaserNode {
 
     /** What this relay takes of what passes, as flux: a mirror's tax, or nothing for a photodetector. */
     default double tax() {
-        return LaserTuning.HOP_TAX;
+        return com.kadikular.quantimium.Config.relayLoss();
+    }
+
+    /** What light leaving by {@code face} loses on the way out, as flux: a Laser Focus's emitter's loss. */
+    default double outTax(Direction face) {
+        return 0;
     }
 
     /** The network has traced this node's beams, or worked out what flows along them: for rendering. */
@@ -257,6 +262,12 @@ public interface LaserNode {
         return null;
     }
 
+    /** Everything it puts on a logistics network: a Laser Focus can hold several receptacles. */
+    default List<LogisticsMember> logisticsMembers() {
+        LogisticsMember member = logistics();
+        return member == null ? List.of() : List.of(member);
+    }
+
     /**
      * Whether light ending on it charges it, as it would any block that takes power, besides passing on: a Logistics
      * Controller fills its own store this way. Its energy is the block's own (Capabilities.Energy).
@@ -272,5 +283,11 @@ public interface LaserNode {
     @org.jetbrains.annotations.Nullable
     default net.minecraft.core.Direction feeds() {
         return null;
+    }
+
+    /** Every face of a block beside it that light reaching it powers (see {@link #feeds}). */
+    default Set<net.minecraft.core.Direction> feedsAll() {
+        net.minecraft.core.Direction face = feeds();
+        return face == null ? Set.of() : Set.of(face);
     }
 }

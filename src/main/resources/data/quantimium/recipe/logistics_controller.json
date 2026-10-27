@@ -5,7 +5,7 @@
     "I": "minecraft:iron_ingot",
     "C": "minecraft:comparator",
     "E": "minecraft:ender_pearl",
-    "R": "quantimium:laser_relay"
+    "R": "quantimium:laser_focus"
   },
   "pattern": [
     "ICI",

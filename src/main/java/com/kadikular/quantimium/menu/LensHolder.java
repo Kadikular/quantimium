@@ -1,6 +1,6 @@
 package com.kadikular.quantimium.menu;
 
-import com.kadikular.quantimium.block.entity.LaserRelayBlockEntity;
+import com.kadikular.quantimium.block.entity.EmitterHolder;
 import com.kadikular.quantimium.block.entity.LensMountBlockEntity;
 import com.kadikular.quantimium.item.LensWithSettings;
 import net.minecraft.core.BlockPos;
@@ -44,7 +44,7 @@ public record LensHolder(Supplier<ItemStack> lens, Runnable changed, Predicate<P
                         && who.distanceToSqr(mount.getBlockPos().getCenter()) <= 64, -1);
     }
 
-    public static LensHolder relay(LaserRelayBlockEntity relay, Direction face) {
+    public static LensHolder relay(EmitterHolder relay, Direction face) {
         return new LensHolder(() -> relay.lens(face), () -> relay.setLens(face, relay.lens(face)),
                 who -> !relay.isRemoved() && settable(relay.lens(face)) && who.distanceToSqr(relay.getBlockPos().getCenter()) <= 64, -1);
     }
@@ -59,7 +59,7 @@ public record LensHolder(Supplier<ItemStack> lens, Runnable changed, Predicate<P
         } else if (where == IN_RELAY) {
             BlockPos pos = buf.readBlockPos();
             Direction face = buf.readEnum(Direction.class);
-            if (inventory.player.level().getBlockEntity(pos) instanceof LaserRelayBlockEntity relay) return relay(relay, face);
+            if (inventory.player.level().getBlockEntity(pos) instanceof EmitterHolder relay) return relay(relay, face);
         } else {
             return hand(inventory, buf.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
         }
@@ -82,7 +82,7 @@ public record LensHolder(Supplier<ItemStack> lens, Runnable changed, Predicate<P
         });
     }
 
-    public static void openInRelay(ServerPlayer player, LaserRelayBlockEntity relay, Direction face) {
+    public static void openInRelay(ServerPlayer player, EmitterHolder relay, Direction face) {
         open(player, relay.lens(face), relay(relay, face), buf -> {
             buf.writeByte(IN_RELAY);
             buf.writeBlockPos(relay.getBlockPos());

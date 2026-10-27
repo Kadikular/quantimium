@@ -1240,7 +1240,7 @@ public final class LaserNetworks {
             for (int i = 0; i < out.size(); i++) {
                 LaserBeam beam = out.get(i);
                 // What its bounces off mirrors leave of what it carries.
-                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * kept(beam));
+                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * kept(at, beam));
                 List<Hop> path = new ArrayList<>(visit.path());
                 LaserNode from = relay ? nodes.get(visit.node()) : null;
                 path.add(new Hop(visit.node(), i, from, carried.get(visit.node()),
@@ -1271,8 +1271,7 @@ public final class LaserNetworks {
                         route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that hands light on to a machine beside it (a Receptacle powering what it's on): that machine.
-                    net.minecraft.core.Direction feeds = next == null || next == source ? null : next.feeds();
-                    if (feeds != null) {
+                    for (net.minecraft.core.Direction feeds : next == null || next == source ? Set.<net.minecraft.core.Direction>of() : next.feedsAll()) {
                         route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {
@@ -1652,10 +1651,11 @@ public final class LaserNetworks {
                 hop.lost()[0] += Math.round(tax);
                 power -= tax;
             }
-            // What the mirrors it bounces off take, lost where the beam starts.
+            // What the emitter it leaves by and the mirrors it bounces off take, lost where the beam starts.
             List<LaserBeam> out = beams.get(hop.node());
-            if (out != null && hop.beam() < out.size() && out.get(hop.beam()).bounces() > 0) {
-                double lostToMirrors = power * (1.0 - kept(out.get(hop.beam())));
+            double keeps = out != null && hop.beam() < out.size() ? kept(nodes.get(hop.node()), out.get(hop.beam())) : 1.0;
+            if (keeps < 1.0) {
+                double lostToMirrors = power * (1.0 - keeps);
                 lost.computeIfAbsent(hop.node(), key -> new long[1])[0] += Math.round(lostToMirrors);
                 power -= lostToMirrors;
             }
@@ -1663,9 +1663,10 @@ public final class LaserNetworks {
         }
     }
 
-    /** What's left of a beam's power after the mirrors it bounces off. */
-    private static double kept(LaserBeam beam) {
-        return beam.bounces() == 0 ? 1.0 : Math.pow(1.0 - LaserTuning.MIRROR_LOSS, beam.bounces());
+    /** What's left of a beam's power after the emitter it leaves {@code from} by and the mirrors it bounces off. */
+    private static double kept(@Nullable LaserNode from, LaserBeam beam) {
+        double out = from == null || beam.jumps() ? 1.0 : 1.0 - from.outTax(beam.face());
+        return beam.bounces() == 0 ? out : out * Math.pow(1.0 - com.kadikular.quantimium.Config.mirrorLoss(), beam.bounces());
     }
 
     /** Once a second: the relays' losses into the field, and each beam's brightness to its node. */

@@ -395,8 +395,7 @@ public final class LensTests {
         emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
         LaserPortBlockEntity seeds = collector(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
         seeds.getFilter().setItem(0, new ItemStack(Items.WHEAT_SEEDS));
-        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.EAST);
         LensMountBlockEntity first = mount(helper, new BlockPos(8, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.BLOCK_FILTER_LENS.get(),
                 ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
         ItemStack grown = new ItemStack(ModItems.BLOCK_FILTER_LENS.get());
@@ -434,8 +433,7 @@ public final class LensTests {
         emitter(helper, new BlockPos(6, top, 1), Direction.SOUTH, true);
         LaserPortBlockEntity seeds = collector(helper, new BlockPos(6, top, 4), Direction.SOUTH);
         seeds.getFilter().setItem(0, new ItemStack(Items.WHEAT_SEEDS));
-        helper.setBlock(new BlockPos(6, top, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        TestSupport.relay(helper, new BlockPos(6, top, 8), Direction.DOWN, Direction.EAST);
         LensMountBlockEntity first = mount(helper, new BlockPos(8, top, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.BLOCK_FILTER_LENS.get(),
                 ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
         ItemStack grown = new ItemStack(ModItems.BLOCK_FILTER_LENS.get());
@@ -506,8 +504,7 @@ public final class LensTests {
         emitter(helper, new BlockPos(6, top, 1), Direction.SOUTH, true);
         LaserPortBlockEntity seeds = collector(helper, new BlockPos(6, top, 4), Direction.SOUTH);
         seeds.getFilter().setItem(0, new ItemStack(Items.WHEAT_SEEDS));
-        helper.setBlock(new BlockPos(6, top, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        TestSupport.relay(helper, new BlockPos(6, top, 8), Direction.DOWN, Direction.EAST);
         LensMountBlockEntity first = mount(helper, new BlockPos(8, top, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.BLOCK_FILTER_LENS.get(),
                 ModItems.SPEED_LENS.get(), ModItems.SPEED_LENS.get());
         ItemStack grown = new ItemStack(ModItems.BLOCK_FILTER_LENS.get());
@@ -721,8 +718,7 @@ public final class LensTests {
         LaserPortBlockEntity west = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
         emitter(helper, new BlockPos(6, Y, 1), Direction.SOUTH, true);
         LaserPortBlockEntity north = collector(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
-        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
+        TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.EAST);
         mount(helper, new BlockPos(8, Y, 8), Direction.EAST, ModItems.PICKUP_LENS.get());
         for (LaserPortBlockEntity full : java.util.List.of(west, north)) {
             for (int slot = 0; slot < LaserPortBlockEntity.SLOTS; slot++) full.getItems().setStackInSlot(slot, new ItemStack(Items.DIRT, 64));
@@ -779,7 +775,7 @@ public final class LensTests {
     }
 
     private static void relay(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, facing));
+        TestSupport.relay(helper, pos, Direction.DOWN, facing);
     }
 
     private static void splitter(GameTestHelper helper, BlockPos pos, Direction input, Direction output) {
@@ -1024,10 +1020,11 @@ public final class LensTests {
         // cavity pays for it.
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
-        helper.setBlock(new BlockPos(6, Y, 4), ModBlocks.CAVITY_MIRROR.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, Direction.SOUTH));
-        relay(helper, new BlockPos(6, Y, 8), Direction.NORTH);
-        var cavity = helper.getBlockEntity(new BlockPos(6, Y, 4), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+        var cavity = TestSupport.cavity(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.NORTH)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.NORTH));
         helper.setBlock(new BlockPos(6, Y, 1), Blocks.STONE);
         helper.setBlock(new BlockPos(6, Y, 0), Blocks.BEDROCK);
         helper.succeedWhen(() -> {
@@ -1119,9 +1116,8 @@ public final class LensTests {
         });
     }
 
-    private static com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity cavityAt(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.CAVITY_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, facing));
-        return helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+    private static com.kadikular.quantimium.block.entity.CavityPlate cavityAt(GameTestHelper helper, BlockPos pos, Direction facing) {
+        return TestSupport.cavity(helper, pos, facing);
     }
 
     // covers: laser.lens.pickup
@@ -1289,8 +1285,8 @@ public final class LensTests {
     public static void aRelaySendsLightOutOfEveryFaceSet(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
         relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
-        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
-        relay.toggleOutput(Direction.SOUTH);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+        relay.addEmitter(Direction.SOUTH);
         helper.setBlock(new BlockPos(10, Y, 6), ModBlocks.FOLD_CORE.get());
         helper.setBlock(new BlockPos(5, Y, 11), ModBlocks.FOLD_CORE.get());
         helper.succeedWhen(() -> {
@@ -1306,9 +1302,8 @@ public final class LensTests {
         // Harvest light through a pulse mirror, at a row of stone: one pulse, one block.
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
-        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        var mirror = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        var mirror = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         while (mirror.mode() != com.kadikular.quantimium.laser.RelayMode.PULSE) mirror.cycleMode();
         for (int x = 7; x <= 9; x++) helper.setBlock(new BlockPos(x, Y, 8), Blocks.STONE);
         helper.runAfterDelay(30, () -> {
@@ -1506,15 +1501,15 @@ public final class LensTests {
         relay(helper, at, Direction.EAST);
         helper.setBlock(new BlockPos(5, Y, 11), ModBlocks.FOLD_CORE.get());
         var player = TestSupport.player(helper, new BlockPos(5, Y, 9), net.minecraft.world.level.GameType.SURVIVAL);
-        player.setShiftKeyDown(true);
         BlockPos abs = helper.absolutePos(at);
-        // A sneaking click on the south side of its focus puts an emitter there.
+        // A Focus Emitter used on the south side of its focus goes on there.
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(ModItems.FOCUS_EMITTER.get()));
         var hit = new net.minecraft.world.phys.BlockHitResult(abs.getCenter().add(0, 0, 2 / 16.0), Direction.SOUTH, abs, false);
-        helper.getLevel().getBlockState(abs).useWithoutItem(helper.getLevel(), player, hit);
-        var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        ModItems.FOCUS_EMITTER.get().useOn(new net.minecraft.world.item.context.UseOnContext(player, net.minecraft.world.InteractionHand.MAIN_HAND, hit));
+        var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         helper.succeedWhen(() -> {
             helper.assertTrue(relay.outputs().contains(Direction.SOUTH), "the face was added: " + relay.outputs());
-            helper.assertTrue(relay.getBlockState().getValue(com.kadikular.quantimium.block.LaserRelayBlock.OUTPUTS.get(Direction.SOUTH)), "and shows");
+            helper.assertTrue(player.getMainHandItem().isEmpty(), "the emitter came from the hand");
             helper.assertTrue(helper.getBlockEntity(new BlockPos(5, Y, 11), FoldCoreBlockEntity.class).getEnergyStorage().getEnergyStored() > 0,
                     "and sends: " + relay.syncedBeams());
             TestSupport.finishLasers(helper);
@@ -1542,7 +1537,7 @@ public final class LensTests {
         // A Harvest lens in the east emitter: the stone east is cut, the stone south isn't.
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
         relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
-        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         relay.addEmitter(Direction.SOUTH);
         relay.setLens(Direction.EAST, new ItemStack(ModItems.HARVEST_LENS.get()));
         helper.setBlock(new BlockPos(9, Y, 6), Blocks.STONE);
@@ -1559,17 +1554,14 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 40)
     public static void takingAwayARelayEmitterDropsItsLens(GameTestHelper helper) {
         relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
-        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         relay.addEmitter(Direction.NORTH);
         relay.setLens(Direction.NORTH, new ItemStack(ModItems.RANGE_LENS.get()));
-        helper.assertTrue(relay.removeEmitter(Direction.NORTH), "taken away");
-        helper.runAfterDelay(2, () -> {
-            var dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(5, Y, 6))).inflate(2),
-                    item -> item.getItem().is(ModItems.RANGE_LENS.get()));
-            helper.assertFalse(dropped.isEmpty(), "its lens dropped");
-            dropped.forEach(ItemEntity::discard);
-            helper.succeed();
-        });
+        var taken = relay.takePart(Direction.NORTH);
+        helper.assertTrue(taken.stream().anyMatch(stack -> stack.is(ModItems.FOCUS_EMITTER.get())), "the emitter came off: " + taken);
+        helper.assertTrue(taken.stream().anyMatch(stack -> stack.is(ModItems.RANGE_LENS.get())), "with its lens: " + taken);
+        helper.assertFalse(relay.hasEmitter(Direction.NORTH), "and is gone");
+        helper.succeed();
     }
 
     // covers: laser.relay.redstone
@@ -1578,7 +1570,7 @@ public final class LensTests {
         // East needs a signal, south runs without one: with no signal, only south gets light.
         emitter(helper, new BlockPos(1, Y, 6), Direction.EAST, true);
         relay(helper, new BlockPos(5, Y, 6), Direction.EAST);
-        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        var relay = helper.getBlockEntity(new BlockPos(5, Y, 6), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         relay.addEmitter(Direction.SOUTH);
         relay.cycleMode(Direction.EAST);
         helper.assertTrue(relay.modeOf(Direction.EAST) == com.kadikular.quantimium.laser.RelayMode.WITH_SIGNAL, "east needs a signal");
@@ -1669,9 +1661,8 @@ public final class LensTests {
     public static void anAreaPrismBehindAnUnpoweredMirrorDoesNothing(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
         sender(helper, new BlockPos(3, Y, 8), Direction.EAST, new ItemStack(Items.COBBLESTONE, 16));
-        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        var mirror = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        var mirror = helper.getBlockEntity(new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         mirror.cycleMode();
         helper.assertTrue(mirror.mode() == com.kadikular.quantimium.laser.RelayMode.WITH_SIGNAL, "needs a signal");
         mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.PLACE_LENS.get());
@@ -1749,9 +1740,8 @@ public final class LensTests {
         // A: emitter, mirror needing a signal (none), Laser Port, Placement mount, into a join mirror.
         // B: emitter, Harvest + Pickup mount, into the same join. The join's light goes on into an Area Prism.
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
-        helper.setBlock(new BlockPos(3, Y, 4), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        var off = helper.getBlockEntity(new BlockPos(3, Y, 4), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        TestSupport.relay(helper, new BlockPos(3, Y, 4), Direction.DOWN, Direction.EAST);
+        var off = helper.getBlockEntity(new BlockPos(3, Y, 4), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
         off.cycleMode();
         sender(helper, new BlockPos(5, Y, 4), Direction.EAST, new ItemStack(Items.COBBLESTONE, 16));
         mount(helper, new BlockPos(7, Y, 4), Direction.EAST, ModItems.PLACE_LENS.get());
@@ -1772,9 +1762,8 @@ public final class LensTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
     public static void aSenderBehindAnUnpoweredMirrorShipsNothing(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
-        helper.setBlock(new BlockPos(3, Y, 8), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        helper.getBlockEntity(new BlockPos(3, Y, 8), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).cycleMode();
+        TestSupport.relay(helper, new BlockPos(3, Y, 8), Direction.DOWN, Direction.EAST);
+        helper.getBlockEntity(new BlockPos(3, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).cycleMode();
         sender(helper, new BlockPos(5, Y, 8), Direction.EAST, new ItemStack(Items.DIAMOND, 5));
         LaserPortBlockEntity collector = collector(helper, new BlockPos(9, Y, 8), Direction.EAST);
         helper.setBlock(new BlockPos(13, Y, 8), Blocks.BEDROCK);
@@ -1809,9 +1798,8 @@ public final class LensTests {
         // Two: an emitter straight into the shared mirror. The prism's light must be plain, and cut nothing.
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.SPEED_LENS.get());
-        helper.setBlock(new BlockPos(5, Y, 4), ModBlocks.LASER_RELAY.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST));
-        helper.getBlockEntity(new BlockPos(5, Y, 4), com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class).cycleMode();
+        TestSupport.relay(helper, new BlockPos(5, Y, 4), Direction.DOWN, Direction.EAST);
+        helper.getBlockEntity(new BlockPos(5, Y, 4), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class).cycleMode();
         emitter(helper, new BlockPos(8, Y, 0), Direction.SOUTH, true);
         relay(helper, new BlockPos(8, Y, 4), Direction.SOUTH);
         BlockPos stone = new BlockPos(12, Y, 12);

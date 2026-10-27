@@ -2,7 +2,7 @@
 navigation:
   title: Fold Core
   parent: blocks/index.md
-  position: 22
+  position: 21
   icon: quantimium:fold_core
 ---
 

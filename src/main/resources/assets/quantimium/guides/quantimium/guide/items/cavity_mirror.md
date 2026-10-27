@@ -1,8 +1,8 @@
 ---
 navigation:
   title: Cavity Mirror
-  parent: blocks/index.md
-  position: 10
+  parent: items/index.md
+  position: 9
   icon: quantimium:cavity_mirror
 item_ids:
 - quantimium:cavity_mirror
@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:cavity_mirror" scale="2" />
 
-Two facing each other across a clear gap hold light: a laser network's battery, which leaks a little.
+A Laser Focus attachment: light out of it that comes back to it is held, a battery for a laser network.
 
 ## Recipes
 

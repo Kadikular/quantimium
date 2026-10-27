@@ -4,6 +4,21 @@
 
 ### Lasers
 
+- **The Laser Focus replaces the Laser Relay.** Put a Laser Focus down, then put attachments on its faces: Focus
+  Stands (as many as you like, or none and it floats), Focus Emitters (each with its lens and redstone setting) and
+  Focus Covers. A **Clear Laser Focus** also lets light pass straight through. Attachments can go on a block with no
+  focus and do nothing until one goes in; a sneaking click (by hand or with a wrench) takes off the focus or an attachment and leaves the rest.
+  The focus loses nothing: each Emitter takes the loss, 0.5% by default (`relayLoss`), and mirrors 0.25%
+  (`mirrorLoss`). Relays in your world become a Laser Focus with a Stand and their Emitters, lenses and redstone
+  settings kept.
+- **Logistics Receptacles are Laser Focus attachments**: several on one focus, each serving its own inventory. On a
+  Clear Laser Focus light passes through as before. Receptacle blocks become a Clear Laser Focus with a Receptacle,
+  settings kept.
+- **Cavity Mirrors are Laser Focus attachments**: several on one focus, each with its own cavity. What they hold
+  leaves by the focus's Emitters. Cavity Mirror blocks become a Laser Focus with a Stand, the plate and their
+  Emitters, holding what they held. An unpaired one no longer acts as a mirror, and an
+  Emitter facing back no longer closes a cavity: only a mirror does.
+- Straight light no longer gets into a Laser Focus by a face with an Emitter (diagonal light still does).
 - **A Prism links to the face you click**: its light runs at any angle to the middle of that face and goes in by it,
   so you choose which side of a machine it charges. A laser block is still lit at its middle (its focus). Links made
   before take the face facing the prism.
@@ -12,7 +27,7 @@
   towards a neighbouring one. Click a face's middle for flat, the ring round it for 22.5°, the outer ring for 45°
   towards the side clicked; sneak-click to move the stand. Looking at a face outlines its parts, and a ghost shows where
   the plate would turn. A plate never faces towards its stand. Light now travels diagonally too (26 ways in all); what leaves a mirror
-  is always one of them. Mirrors already placed keep the way they faced. Each bounce takes 0.5% (a relay 1%).
+  is always one of them. Mirrors already placed keep the way they faced. Each bounce takes 0.25%.
 - **The Laser Splitter** reflects off both sides and lets light through: one beam becomes two, each its own. It no
   longer joins beams into one. It can face straight on too. Light never leaves a mirror or splitter through its stand.
 - **Cavities round corners.** A cavity's light can run round any number of plain Laser Mirrors, back off a flat one

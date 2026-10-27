@@ -118,32 +118,10 @@ public class LogisticsReceptacleBlock extends BaseEntityBlock implements BeamAnc
         return Vec3.atCenterOf(pos);
     }
 
+    /** A Logistics Receptacle block becomes a Laser Focus with a Receptacle the tick after it loads (see {@link LogisticsReceptacleBlockEntity#becomeFocus}). */
     @Override
-    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
-                                          InteractionHand hand, BlockHitResult hit) {
-        if (!stack.is(ModTags.TOOLS_WRENCH)) return LaserTools.isOne(stack) ? InteractionResult.PASS : InteractionResult.TRY_WITH_EMPTY_HAND;
-        return point(state, level, pos, hit.getDirection());
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player.isSecondaryUseActive()) return point(state, level, pos, hit.getDirection());
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsReceptacleBlockEntity receptacle) {
-            // Whether what it's on takes power, for the screen to offer powering it.
-            receptacle.checkPower();
-            player.openMenu(receptacle, pos);
-        }
-        return InteractionResult.SUCCESS;
-    }
-
-    /** Moves its part to the face clicked. */
-    private static InteractionResult point(BlockState state, Level level, BlockPos pos, Direction face) {
-        if (!level.isClientSide() && state.getValue(FACING) != face) {
-            level.setBlock(pos, state.setValue(FACING, face), Block.UPDATE_ALL);
-            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, 1.2f);
-            LaserNetworks.changed(level);
-        }
-        return InteractionResult.SUCCESS;
+    protected void tick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos, net.minecraft.util.RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof LogisticsReceptacleBlockEntity receptacle) receptacle.becomeFocus();
     }
 
     @Override

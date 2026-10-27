@@ -21,6 +21,9 @@ public final class QuantimiumJadePlugin implements IWailaPlugin {
     public void register(IWailaCommonRegistration registration) {
         registration.registerBlockDataProvider(FieldData.INSTANCE, BlockEntity.class);
         registration.registerBlockDataProvider(AccelerationProvider.Data.INSTANCE, BlockEntity.class);
+        // A Laser Focus block is named for the piece looked at (its pick result), not the whole block.
+        registration.blockOperations().pick(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BLOCK,
+                net.minecraft.resources.Identifier.fromNamespaceAndPath(com.kadikular.quantimium.Quantimium.MODID, "laser_focus")));
     }
 
     @Override

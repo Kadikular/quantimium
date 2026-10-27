@@ -2,7 +2,7 @@
 navigation:
   title: Logistics Controller
   parent: blocks/index.md
-  position: 37
+  position: 35
   icon: quantimium:logistics_controller
 item_ids:
 - quantimium:logistics_controller

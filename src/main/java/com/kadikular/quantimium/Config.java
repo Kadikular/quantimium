@@ -325,6 +325,14 @@ public final class Config {
             .comment("The most FE a tick one Cavity Mirror loses to its leak, however much it holds.")
             .defineInRange("cavityLeakCapFePerTick", 20, 0, 1_000_000);
 
+    public static final ModConfigSpec.DoubleValue RELAY_LOSS = BUILDER
+            .comment("Fraction of what leaves by each Focus Emitter (and of what passes an Isolator) taken, as flux where it stands.")
+            .defineInRange("relayLoss", com.kadikular.quantimium.laser.LaserTuning.HOP_TAX, 0.0, 0.5);
+
+    public static final ModConfigSpec.DoubleValue MIRROR_LOSS = BUILDER
+            .comment("Fraction of what a beam carries that each bounce off a Laser Mirror or Splitter takes, as flux where the beam starts.")
+            .defineInRange("mirrorLoss", com.kadikular.quantimium.laser.LaserTuning.MIRROR_LOSS, 0.0, 0.5);
+
     public static final ModConfigSpec.BooleanValue UNREALISING_LENS = BUILDER
             .comment("Whether the Unrealising lens turns ore a Harvest beam cuts into Unrealised Matter. Off, ore comes away as it would anyway: for packs where Matter would duplicate ores.")
             .define("unrealisingLens", true);
@@ -450,6 +458,16 @@ public final class Config {
 
     public static int maxLaserRange() {
         return SPEC.isLoaded() ? MAX_RANGE.get() : 64;
+    }
+
+    /** What each relay takes of what passes, as flux. */
+    public static double relayLoss() {
+        return SPEC.isLoaded() ? RELAY_LOSS.get() : com.kadikular.quantimium.laser.LaserTuning.HOP_TAX;
+    }
+
+    /** What each bounce off a mirror takes of what a beam carries. */
+    public static double mirrorLoss() {
+        return SPEC.isLoaded() ? MIRROR_LOSS.get() : com.kadikular.quantimium.laser.LaserTuning.MIRROR_LOSS;
     }
 
     /** What a Cavity Mirror holding {@code stored} loses this tick: a fraction of it, up to the cap. */

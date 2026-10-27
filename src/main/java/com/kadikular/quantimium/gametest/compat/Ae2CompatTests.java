@@ -601,9 +601,8 @@ public final class Ae2CompatTests {
     }
 
     private static void receptacle(GameTestHelper helper, BlockPos pos, com.kadikular.quantimium.laser.LogisticsMember.Role role) {
-        helper.setBlock(pos, ModBlocks.LOGISTICS_RECEPTACLE.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.LogisticsReceptacleBlock.FACING, net.minecraft.core.Direction.DOWN));
-        var receptacle = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LogisticsReceptacleBlockEntity.class);
+        TestSupport.receptacle(helper, pos, net.minecraft.core.Direction.DOWN);
+        var receptacle = TestSupport.receptacleAt(helper, pos);
         while (receptacle.role() != role) receptacle.cycleRole();
     }
 

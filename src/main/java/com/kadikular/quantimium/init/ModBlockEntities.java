@@ -227,6 +227,9 @@ public class ModBlockEntities {
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserMirrorBlockEntity::new, ModBlocks.LASER_MIRROR.get(),
                             ModBlocks.LASER_SPLITTER.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserFocusBlockEntity>> LASER_FOCUS_BE =
+            BLOCK_ENTITIES.register("laser_focus_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserFocusBlockEntity::new, ModBlocks.LASER_FOCUS.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaserRelayBlockEntity>> LASER_RELAY_BE =
             BLOCK_ENTITIES.register("laser_relay_be", () ->
                     new BlockEntityType<>(LaserRelayBlockEntity::new, ModBlocks.LASER_RELAY.get()));
