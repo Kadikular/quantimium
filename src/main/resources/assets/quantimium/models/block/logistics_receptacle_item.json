@@ -127,5 +127,109 @@
       }
     }
   ],
-  "parent": "minecraft:block/block"
+  "parent": "minecraft:block/block",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0.0,
+        3.157,
+        1.823
+      ],
+      "scale": [
+        0.7292,
+        0.7292,
+        0.7292
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.0,
+        4.458,
+        0.0
+      ],
+      "scale": [
+        0.2917,
+        0.2917,
+        0.2917
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.0,
+        2.917,
+        0.0
+      ],
+      "scale": [
+        0.5833,
+        0.5833,
+        0.5833
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0.0,
+        3.066,
+        2.113
+      ],
+      "scale": [
+        0.4375,
+        0.4375,
+        0.4375
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0.0,
+        2.333,
+        0.0
+      ],
+      "scale": [
+        0.4667,
+        0.4667,
+        0.4667
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        0.0,
+        2.333,
+        0.0
+      ],
+      "scale": [
+        0.4667,
+        0.4667,
+        0.4667
+      ]
+    }
+  }
 }

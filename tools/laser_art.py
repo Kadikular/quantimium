@@ -1393,6 +1393,50 @@ def entangled_mirror() -> None:
         os.remove(stale)
 
 
+# minecraft:block/block's display transforms: (rotation, translation, scale).
+BLOCK_DISPLAY = {"gui": ([30, 225, 0], [0, 0, 0], 0.625), "ground": ([0, 0, 0], [0, 3, 0], 0.25), "fixed": ([0, 0, 0], [0, 0, 0], 0.5),
+                 "thirdperson_righthand": ([75, 45, 0], [0, 2.5, 0], 0.375), "firstperson_righthand": ([0, 45, 0], [0, 0, 0], 0.4),
+                 "firstperson_lefthand": ([0, 225, 0], [0, 0, 0], 0.4)}
+
+
+def centre_in_slot(model: str) -> None:
+    """
+    Shows a block model that fills only part of its block (an attachment, a plate) centred wherever it's held, and
+    larger the smaller it is: each of block/block's display transforms, scaled up and moved by its turned offset.
+    """
+    path = os.path.join(MODELS, f"{model}.json")
+    with open(path) as handle:
+        body = json.load(handle)
+    elements = body["elements"]
+    lo = [min(min(e["from"][i], e["to"][i]) for e in elements) for i in range(3)]
+    hi = [max(max(e["from"][i], e["to"][i]) for e in elements) for i in range(3)]
+    grow = min(14 / max(hi[i] - lo[i] for i in range(3)), 1.8)
+    offset = [(lo[i] + hi[i]) / 2 - 8 for i in range(3)]
+
+    def turn(v, rotation):
+        # As JOML's rotationXYZ: about X, then Y, then Z, applied to v from the right.
+        x, y, z = v
+        for axis, degrees in (("z", rotation[2]), ("y", rotation[1]), ("x", rotation[0])):
+            c, s = math.cos(math.radians(degrees)), math.sin(math.radians(degrees))
+            if axis == "x":
+                y, z = c * y - s * z, s * y + c * z
+            elif axis == "y":
+                x, z = c * x + s * z, -s * x + c * z
+            else:
+                x, y = c * x - s * y, s * x + c * y
+        return [x, y, z]
+
+    display = {}
+    for name, (rotation, translation, scale) in BLOCK_DISPLAY.items():
+        size = scale * grow
+        moved = turn([o * size for o in offset], rotation)
+        display[name] = {"rotation": rotation, "translation": [round(translation[i] - moved[i], 3) for i in range(3)],
+                         "scale": [round(size, 4)] * 3}
+    body["display"] = display
+    with open(path, "w") as handle:
+        json.dump(body, handle, indent=2)
+
+
 def main() -> None:
     written = 0
     laser_emitters()
@@ -1438,6 +1482,9 @@ def main() -> None:
             json.dump({"parent": "minecraft:item/generated", "textures": {"layer0": f"quantimium:item/{name}"}}, handle, indent=2)
         with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:item/{name}"}}, handle, indent=2)
+    for model in ("focus_stand_item", "focus_emitter_item", "focus_cover_item", "logistics_receptacle_item", "cavity_mirror_item",
+                  "laser_splitter_item"):
+        centre_in_slot(model)
     area_prism_face().save(os.path.join(TEX, "area_prism.png"))
     with open(os.path.join(MODELS, "area_prism.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/cube_all", "textures": {"all": "quantimium:block/area_prism"}}, handle, indent=2)
