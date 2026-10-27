@@ -13,8 +13,8 @@
 - A Clear Laser Focus no longer passes light straight out through an Emitter on its far face.
 - Beams notice a block placed or broken on them the next tick, instead of within half a second, and cost far less to keep
   watch over: only a change light can't pass, or one where a beam ends, is looked at.
-- Light lights up as soon as it's there: from an Emitter put down or switched on, and on through each Laser Focus it
-  reaches, not up to a second later.
+- Light lights up, at its full brightness, and goes dark as soon as it should: from an Emitter put down or switched
+  on, and through each Laser Focus it reaches or stops reaching, not up to a second later.
 - A Laser Focus that light meets on a Stand, Cover or Emitter shows no light leaving it.
 - **The Laser Focus replaces the Laser Relay.** Put a Laser Focus down, then put attachments on its faces: Focus
   Stands (as many as you like, or none and it floats), Focus Emitters (each with its lens and redstone setting) and

@@ -1206,6 +1206,30 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 160)
+    public static void aFocusGoesDarkAndLightsUpAsItsLightIsBlockedAndFreed(GameTestHelper helper) {
+        // Light into a focus sending it on to a block that takes power. Stone in the way, then gone, each just after a
+        // settle: the focus's light is dark, then lit and bright, well before the next.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var focus = TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.SOUTH);
+        sink(helper, new BlockPos(6, Y, 12));
+        BlockPos stone = new BlockPos(4, Y, 8);
+        long now = helper.getLevel().getGameTime();
+        int block = 40 + (int) Math.floorMod(1 - (now + 40), 20L);
+        helper.runAfterDelay(block - 2, () -> helper.assertTrue(focus.syncedBeams().stream().allMatch(beam -> beam.live() && beam.flow() > 0), "lit to begin with"));
+        helper.runAfterDelay(block, () -> helper.setBlock(stone, Blocks.STONE));
+        helper.runAfterDelay(block + 4, () -> helper.assertTrue(focus.syncedBeams().stream().noneMatch(com.kadikular.quantimium.laser.LaserBeam::live), "dark at once"));
+        helper.runAfterDelay(block + 40, () -> helper.setBlock(stone, Blocks.AIR));
+        helper.runAfterDelay(block + 44, () -> {
+            var beams = focus.syncedBeams();
+            helper.assertFalse(beams.isEmpty(), "light leaves it");
+            helper.assertTrue(beams.stream().allMatch(beam -> beam.live() && beam.flow() > 0), "lit and bright at once");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void anEmitterPutDownLightsUpAtOnce(GameTestHelper helper) {
         // The focus and what it charges first; the Emitter just after a settle, and both its light and the focus's lit
