@@ -86,6 +86,81 @@ public final class LaserTimingTests {
         sink.accept(new BlockPos(14, Y + 5, 1));
     }
 
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_beams_quiet", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void beamsQuiet(GameTestHelper helper) {
+        List<FoldCoreBlockEntity> cores = zigzags(helper);
+        helper.onEachTick(() -> cores.forEach(core -> TestSupport.fill(core.getEnergyStorage())));
+        TickTiming.measure(helper, new Scenario("laser.beams_quiet", "Laser networks",
+                        "Six Emitter IIIs, each along a 12-mirror zigzag into a full block: 78 beams, nothing changing", 40),
+                LaserNetworks.of(helper.getLevel()), () -> "78 beams", () -> TestSupport.finishLasers(helper));
+    }
+
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_beams_busy_world", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void beamsBusyWorld(GameTestHelper helper) {
+        // As quiet, while 66 blocks change every tick: glass in and out of the beams, stone in and out beside them.
+        List<FoldCoreBlockEntity> cores = zigzags(helper);
+        long[] spent = {0, 0};
+        helper.onEachTick(() -> {
+            cores.forEach(core -> TestSupport.fill(core.getEnergyStorage()));
+            boolean on = helper.getTick() % 2 == 0;
+            long start = System.nanoTime();
+            for (int layer = 0; layer < 6; layer++) {
+                int y = Y + 2 * layer;
+                for (int column = 0; column < 6; column++) {
+                    helper.setBlock(new BlockPos(2 + 2 * column, y, 5), on ? net.minecraft.world.level.block.Blocks.GLASS : net.minecraft.world.level.block.Blocks.AIR);
+                    if (column < 5) helper.setBlock(new BlockPos(3 + 2 * column, y, 5), on ? net.minecraft.world.level.block.Blocks.STONE : net.minecraft.world.level.block.Blocks.AIR);
+                }
+            }
+            spent[0] += System.nanoTime() - start;
+            spent[1] += 66;
+        });
+        TickTiming.measure(helper, new Scenario("laser.beams_busy_world", "Laser networks",
+                        "As quiet, while 66 blocks change each tick: glass in and out of the beams, stone beside them", 40),
+                LaserNetworks.of(helper.getLevel()), () -> String.format(java.util.Locale.ROOT, "%d ns a block change; the lasers' look at one %s",
+                        spent[0] / Math.max(1, spent[1]), hookCost(helper)),
+                () -> TestSupport.finishLasers(helper));
+    }
+
+    /** What the lasers' look at a changed block costs: glass on a beam (let through), and stone beside one. */
+    private static String hookCost(GameTestHelper helper) {
+        var level = helper.getLevel();
+        BlockPos onBeam = helper.absolutePos(new BlockPos(2, Y, 6));
+        BlockPos beside = helper.absolutePos(new BlockPos(3, Y, 6));
+        var glass = net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState();
+        var stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+        long[] ns = new long[2];
+        for (int round = 0; round < 3; round++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < 1_000_000; i++) LaserNetworks.blockChanged(level, onBeam, glass);
+            ns[0] = System.nanoTime() - start;
+            start = System.nanoTime();
+            for (int i = 0; i < 1_000_000; i++) LaserNetworks.blockChanged(level, beside, stone);
+            ns[1] = System.nanoTime() - start;
+        }
+        return String.format(java.util.Locale.ROOT, "%.0f ns on a beam, %.0f ns beside", ns[0] / 1e6, ns[1] / 1e6);
+    }
+
+    /** Six of the grid's mirror zigzags stacked two apart, each into a Fold Core: the cores. */
+    private static List<FoldCoreBlockEntity> zigzags(GameTestHelper helper) {
+        // The laser profile over the recorded ticks, to the log: how much of each tick is spent checking beams.
+        helper.runAfterDelay(TickTiming.WARMUP_TICKS, () -> com.kadikular.quantimium.laser.LaserProfile.start(helper.getLevel(),
+                helper.getLevel().getServer().createCommandSourceStack(), TickTiming.SAMPLE_TICKS / 20 - 5));
+        List<FoldCoreBlockEntity> cores = new ArrayList<>();
+        for (int layer = 0; layer < 6; layer++) {
+            int y = Y + 2 * layer;
+            emitter(helper, new BlockPos(1, y, 1), ModBlocks.LASER_EMITTER_3.get(), Direction.EAST);
+            for (int column = 0; column < 6; column++) {
+                int x = 2 + 2 * column;
+                boolean down = column % 2 == 0;
+                relay(helper, new BlockPos(x, y, down ? 1 : 11), down ? Direction.SOUTH : Direction.NORTH);
+                relay(helper, new BlockPos(x, y, down ? 11 : 1), Direction.EAST);
+            }
+            helper.setBlock(new BlockPos(14, y, 1), ModBlocks.FOLD_CORE.get());
+            cores.add(helper.getBlockEntity(new BlockPos(14, y, 1), FoldCoreBlockEntity.class));
+        }
+        return cores;
+    }
+
     private static void relay(GameTestHelper helper, BlockPos pos, Direction facing) {
         TestSupport.relay(helper, pos, Direction.DOWN, facing);
     }

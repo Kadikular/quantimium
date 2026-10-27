@@ -31,8 +31,9 @@ import java.util.WeakHashMap;
  * Every laser network in a level: the nodes, the beams between them, and the power they move.
  *
  * <p>Fast by construction. A beam is traced when its node arrives, when the network changes, and
- * again every {@link #RECHECK_TICKS} ticks to see if something has been built across it, a node a
- * tick at a time; it's never traced every tick. The graph is rebuilt only when a beam has changed.
+ * again when a block on it changes ({@link #blockChanged}): any change to what it ends on or bounces off,
+ * and one that stops light where it passes. Every {@link #RECHECK_TICKS} ticks besides, a node a tick
+ * at a time, in case a block changed without the level knowing; it's never traced every tick. The graph is rebuilt only when a beam has changed.
  * Each tick then just asks what the blocks at the beams' ends would take and moves that much.
  *
  * <p>Power goes where it's asked for. Every source sends only what the blocks its beams reach can take,
@@ -46,8 +47,8 @@ import java.util.WeakHashMap;
 @EventBusSubscriber(modid = Quantimium.MODID)
 public final class LaserNetworks {
 
-    /** How often each node's beams are traced again, spread so a few are checked each tick. */
-    public static final int RECHECK_TICKS = 10;
+    /** How often each node's beams are traced again anyway, spread so a few are checked each tick. */
+    public static final int RECHECK_TICKS = 100;
     /** How often what the relays lost is put into the field, and beams' brightness is sent to clients. */
     private static final int SETTLE_TICKS = 20;
 
@@ -89,6 +90,22 @@ public final class LaserNetworks {
     private final Map<BlockPos, Set<BlockPos>> chargedBy = new HashMap<>();
     /** Nodes whose beams changed on their own (a block cut, placed, switched): only their networks are worked out again. */
     private final Set<BlockPos> dirtyAt = new HashSet<>();
+    /**
+     * For each block a beam passes, ends on or bounces off, the nodes whose beams do: one lookup tells a changed
+     * block whose beams to check, however many networks cross it.
+     */
+    private final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<Watchers> watchers = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+    /** The blocks each node's beams are watched at, to take them off again. */
+    private final Map<BlockPos, long[]> watching = new HashMap<>();
+    /** Nodes with a block on their beams changed since the last tick: traced again to see if they still hold. */
+    private final Set<BlockPos> touched = new HashSet<>();
+
+    /** The nodes watching one block: those whose beams only pass through it, and those whose beams end or bounce there. */
+    private static final class Watchers {
+        final List<BlockPos> passing = new ArrayList<>(1);
+        final List<BlockPos> ending = new ArrayList<>(1);
+    }
+
     /** Each Entangled Mirror, by where it stands, and the node it draws light from. */
     private final Map<BlockPos, BlockPos> drawsOn = new HashMap<>();
     /** The nodes light ran through at the last settle. */
@@ -170,6 +187,7 @@ public final class LaserNetworks {
             }
             unindex(pos, old);
         }
+        unwatch(pos);
         nodes.remove(pos);
         BlockPos source = drawsOn.remove(pos);
         if (source != null) seeds.add(source);
@@ -381,6 +399,9 @@ public final class LaserNetworks {
         beams.clear();
         into.clear();
         chargedBy.clear();
+        watchers.clear();
+        watching.clear();
+        touched.clear();
         carried.clear();
         // What the relays still standing lost so far goes into the field.
         lost.forEach((pos, fe) -> {
@@ -538,7 +559,56 @@ public final class LaserNetworks {
     }
 
     /** Takes {@code pos}'s old beams off the indexes of what beams reach. */
+    /**
+     * A block changed in {@code level} (from the level, after it's set): the nodes whose beams end or bounce there,
+     * or pass there and now can't, are traced again next tick. Light passing something it still passes (water,
+     * glass, air) isn't checked.
+     */
+    public static void blockChanged(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState now) {
+        LaserNetworks networks = LEVELS.get(level);
+        if (networks == null || networks.watchers.isEmpty()) return;
+        Watchers at = networks.watchers.get(pos.asLong());
+        if (at == null) return;
+        networks.touched.addAll(at.ending);
+        if (!at.passing.isEmpty() && !LaserBeam.passes(level, pos, now)) networks.touched.addAll(at.passing);
+    }
+
+    /** Watches the blocks {@code node}'s beams cross, end on and bounce off, in place of what it watched before. */
+    private void watch(BlockPos node, List<LaserBeam> traced) {
+        unwatch(node);
+        it.unimi.dsi.fastutil.longs.LongArrayList cells = new it.unimi.dsi.fastutil.longs.LongArrayList();
+        for (LaserBeam beam : traced) {
+            // Entangled light crosses nothing: its partner coming or going is the node's own news.
+            if (beam.jumps()) continue;
+            for (BlockPos cell : beam.path()) watchAt(cell, node, false, cells);
+            for (LaserBeam.Leg leg : beam.legs()) watchAt(leg.at(), node, true, cells);
+            if (beam.hit() != null) watchAt(beam.hit(), node, true, cells);
+        }
+        if (!cells.isEmpty()) watching.put(node, cells.toLongArray());
+    }
+
+    private void watchAt(BlockPos cell, BlockPos node, boolean ends, it.unimi.dsi.fastutil.longs.LongArrayList cells) {
+        long key = cell.asLong();
+        Watchers at = watchers.computeIfAbsent(key, k -> new Watchers());
+        (ends ? at.ending : at.passing).add(node);
+        // Each block, then which list it's on, to take it off the right one.
+        cells.add(key);
+        cells.add(ends ? 1 : 0);
+    }
+
+    private void unwatch(BlockPos node) {
+        long[] cells = watching.remove(node);
+        if (cells == null) return;
+        for (int i = 0; i < cells.length; i += 2) {
+            Watchers at = watchers.get(cells[i]);
+            if (at == null) continue;
+            (cells[i + 1] == 1 ? at.ending : at.passing).remove(node);
+            if (at.ending.isEmpty() && at.passing.isEmpty()) watchers.remove(cells[i]);
+        }
+    }
+
     private void unindex(BlockPos pos, List<LaserBeam> old) {
+        unwatch(pos);
         for (LaserBeam beam : old) {
             if (beam.end() == LaserBeam.End.NODE) {
                 List<BlockPos> list = into.get(beam.hit());
@@ -548,6 +618,18 @@ public final class LaserNetworks {
                 if (set != null) set.remove(pos);
             }
         }
+    }
+
+    /** Whether {@code node}'s beams still run as they did: as many as its ways out, each the same as it was traced. */
+    private boolean holds(LaserNode node) {
+        List<LaserBeam> was = beams.get(node.nodePos());
+        // A splitter forks a beam into more: only each first is counted against the node's ways out.
+        long firsts = was == null ? 0 : was.stream().filter(beam -> beam.fork() == 0).count();
+        if (was == null || firsts != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) return false;
+        for (LaserBeam beam : was) {
+            if (!beam.stillHolds(level, rangeOf(node, beam))) return false;
+        }
+        return true;
     }
 
     /**
@@ -716,6 +798,7 @@ public final class LaserNetworks {
             if (same != null) traced.set(i, beam.withFlow(same.flow()).withLive(same.live()));
         }
         beams.put(node.nodePos(), traced);
+        watch(node.nodePos(), traced);
     }
 
     /**
@@ -1402,7 +1485,6 @@ public final class LaserNetworks {
         }
         long mark = profile == null ? 0 : System.nanoTime();
         long time = level.getGameTime();
-        // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
         // Something redstone switches has been switched: what light carries changes.
         if (bucketsStale) rebucket();
         if (!dirty) {
@@ -1413,22 +1495,17 @@ public final class LaserNetworks {
                     switchedAt.add(entry.getKey().nodePos());
                 }
             }
+            // A block changed on these nodes' beams: do they still run as they did?
+            for (BlockPos pos : touched) {
+                LaserNode node = nodes.get(pos);
+                if (node != null && !dirtyAt.contains(pos) && !holds(node)) dirtyAt.add(pos);
+            }
+            // And a slice of the nodes each tick, whatever: a block can change without the level knowing.
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
-                List<LaserBeam> was = beams.get(node.nodePos());
-                // A splitter forks a beam into more: only each first is counted against the node's ways out.
-                long firsts = was == null ? 0 : was.stream().filter(beam -> beam.fork() == 0).count();
-                if (was == null || firsts != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) {
-                    dirtyAt.add(node.nodePos());
-                    continue;
-                }
-                for (LaserBeam beam : was) {
-                    if (!beam.stillHolds(level, rangeOf(node, beam))) {
-                        dirtyAt.add(node.nodePos());
-                        break;
-                    }
-                }
+                if (!dirtyAt.contains(node.nodePos()) && !holds(node)) dirtyAt.add(node.nodePos());
             }
         }
+        touched.clear();
         if (dirty) {
             rebuild();
             switchedAt.clear();

@@ -6,6 +6,7 @@
   "mixins": [
     "BlockEntityTickTimingMixin",
     "LevelMixin",
+    "ServerLevelLaserMixin",
     "ServerLevelZenoMixin"
   ],
   "client": [

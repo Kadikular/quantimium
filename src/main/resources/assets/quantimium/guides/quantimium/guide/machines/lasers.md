@@ -505,7 +505,7 @@ Light passes a Containment Hall's attuned glass, as it does any glass.
 
 Anything solid in the way stops a beam: it ends on that block, and charges
 it only if it takes power. Light passes air, glass, glass panes, water, and blocks with nothing to bump into.
-A beam is checked again every 0.5 s or so, so building across it cuts it
+A beam is checked again every 5 s or so, so building across it cuts it
 off within a moment, and clearing it lets the light through again.
 
 A run of light only reaches so far: its source's range, or less for light with an

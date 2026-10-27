@@ -534,9 +534,9 @@ public final class LaserTests {
             helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "through the glass");
             helper.setBlock(new BlockPos(8, Y, 8), Blocks.STONE);
         });
-        // Within a recheck, the beam stops at the stone.
-        helper.runAfterDelay(30 + LaserNetworks.RECHECK_TICKS + 5, () -> at[0] = core.getEnergyStorage().getEnergyStored());
-        helper.runAfterDelay(30 + LaserNetworks.RECHECK_TICKS + 25, () -> {
+        // The next tick, the beam stops at the stone: no waiting for a recheck.
+        helper.runAfterDelay(30 + 3, () -> at[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(30 + 23, () -> {
             helper.assertValueEqual((long) core.getEnergyStorage().getEnergyStored(), at[0], "nothing gets past the stone");
             TestSupport.finishLasers(helper);
             helper.succeed();
@@ -913,7 +913,7 @@ public final class LaserTests {
             helper.assertValueEqual(prism.targets().size(), 1, "linked");
             helper.setBlock(target, Blocks.AIR);
         });
-        helper.runAfterDelay(20 + LaserNetworks.RECHECK_TICKS + 5, () -> {
+        helper.runAfterDelay(20 + 3, () -> {
             helper.assertValueEqual(prism.targets().size(), 0, "the link to a block that's gone is let go");
             TestSupport.finishLasers(helper);
             helper.succeed();

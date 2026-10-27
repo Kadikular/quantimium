@@ -11,6 +11,8 @@
 - **Isolator Lens**: two new switches. It can stop power (nothing past it is charged, though what the light does
   is still paid for), and pass a Redstone Lens's signal, which it stops by default.
 - A Clear Laser Focus no longer passes light straight out through an Emitter on its far face.
+- Beams notice a block placed or broken on them the next tick, instead of within half a second, and cost far less to keep
+  watch over: only a change light can't pass, or one where a beam ends, is looked at.
 - **The Laser Focus replaces the Laser Relay.** Put a Laser Focus down, then put attachments on its faces: Focus
   Stands (as many as you like, or none and it floats), Focus Emitters (each with its lens and redstone setting) and
   Focus Covers. A **Clear Laser Focus** also lets light pass straight through. Attachments can go on a block with no
