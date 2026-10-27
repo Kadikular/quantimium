@@ -227,6 +227,9 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             join();
             LaserNetworks.changed(level);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_ALL);
+            // Its shape changed: a lever on a Stand that's gone falls off.
+            getBlockState().updateNeighbourShapes(level, worldPosition, Block.UPDATE_ALL);
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
     }
 

@@ -102,6 +102,26 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         return shape.isEmpty() ? box(FOCUS) : shape;
     }
 
+    /**
+     * What other blocks can rest on: its shape, and a Stand's face whole, so a lever or torch can go on a stand that
+     * holds nothing up.
+     */
+    @Override
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        VoxelShape shape = getShape(state, level, pos, CollisionContext.empty());
+        if (!(level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus)) return shape;
+        for (Direction face : Direction.values()) {
+            if (focus.part(face) != Part.STAND) continue;
+            double lo = face.getAxisDirection() == Direction.AxisDirection.POSITIVE ? 15 : 0;
+            shape = Shapes.or(shape, switch (face.getAxis()) {
+                case X -> Block.box(lo, 0, 0, lo + 1, 16, 16);
+                case Y -> Block.box(0, lo, 0, 16, lo + 1, 16);
+                case Z -> Block.box(0, 0, lo, 16, 16, lo + 1);
+            });
+        }
+        return shape;
+    }
+
     /** The boxes {@code part} on {@code face} fills, in sixteenths. */
     public static List<AABB> boxes(Part part, Direction face) {
         return switch (part) {

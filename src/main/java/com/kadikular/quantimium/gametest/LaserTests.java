@@ -1202,6 +1202,24 @@ public final class LaserTests {
 
     // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void aLeverGoesOnAStandsFace(GameTestHelper helper) {
+        // A focus floating with a Stand on top: a lever can sit on the stand. Taken off, the lever falls.
+        BlockPos at = new BlockPos(5, Y + 1, 8);
+        var focus = focus(helper, at, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+        var lever = net.minecraft.world.level.block.Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.FLOOR);
+        BlockPos above = helper.absolutePos(at.above());
+        helper.assertFalse(lever.canSurvive(helper.getLevel(), above), "no stand, no lever");
+        focus.setPart(Direction.UP, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND);
+        helper.assertTrue(lever.canSurvive(helper.getLevel(), above), "on the stand's face");
+        helper.getLevel().setBlock(above, lever, net.minecraft.world.level.block.Block.UPDATE_ALL);
+        focus.takePart(Direction.UP);
+        helper.assertBlockNotPresent(net.minecraft.world.level.block.Blocks.LEVER, at.above());
+        helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
     public static void onlyAFocusEmitterTakesALoss(GameTestHelper helper) {
         var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
         helper.assertValueEqual(focus.tax(), 0.0, "the focus itself loses nothing");
