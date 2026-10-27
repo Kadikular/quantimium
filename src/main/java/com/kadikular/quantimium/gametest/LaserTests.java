@@ -534,9 +534,9 @@ public final class LaserTests {
             helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "through the glass");
             helper.setBlock(new BlockPos(8, Y, 8), Blocks.STONE);
         });
-        // Within a recheck, the beam stops at the stone.
-        helper.runAfterDelay(30 + LaserNetworks.RECHECK_TICKS + 5, () -> at[0] = core.getEnergyStorage().getEnergyStored());
-        helper.runAfterDelay(30 + LaserNetworks.RECHECK_TICKS + 25, () -> {
+        // The next tick, the beam stops at the stone: no waiting for a recheck.
+        helper.runAfterDelay(30 + 3, () -> at[0] = core.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(30 + 23, () -> {
             helper.assertValueEqual((long) core.getEnergyStorage().getEnergyStored(), at[0], "nothing gets past the stone");
             TestSupport.finishLasers(helper);
             helper.succeed();
@@ -913,7 +913,7 @@ public final class LaserTests {
             helper.assertValueEqual(prism.targets().size(), 1, "linked");
             helper.setBlock(target, Blocks.AIR);
         });
-        helper.runAfterDelay(20 + LaserNetworks.RECHECK_TICKS + 5, () -> {
+        helper.runAfterDelay(20 + 3, () -> {
             helper.assertValueEqual(prism.targets().size(), 0, "the link to a block that's gone is let go");
             TestSupport.finishLasers(helper);
             helper.succeed();
@@ -1129,6 +1129,23 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aClearFocusPassesNoLightOutThroughAnEmitter(GameTestHelper helper) {
+        // A Clear Laser Focus with an Emitter on its far face, switched off (it listens for a signal, and has none): no
+        // light passes straight through and out of it.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var clear = focus(helper, new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.CLEAR);
+        clear.addEmitter(Direction.EAST);
+        clear.cycleMode();
+        var beyond = sink(helper, new BlockPos(9, Y, 8));
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(beyond.getEnergyStorage().getEnergyStored(), 0, "stopped at the emitter");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 140)
     public static void straightLightDoesNotEnterByAnEmitter(GameTestHelper helper) {
         // Two relays lit from the west, each sending light south: one with a bare west face, one with an Emitter there.
@@ -1148,6 +1165,62 @@ public final class LaserTests {
         helper.runAfterDelay(100, () -> {
             helper.assertTrue(bare.getEnergyStorage().getEnergyStored() > 0, "in by a bare face");
             helper.assertValueEqual(blocked.getEnergyStorage().getEnergyStored(), then[0], "not in by an Emitter");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void lightOnAStandShowsNoLightLeavingTheFocus(GameTestHelper helper) {
+        // Light meets one focus's Stand: it can't get in, so no light shows leaving by its Emitter. A focus no light
+        // reaches still shows where light would go.
+        emitter(helper, new BlockPos(1, Y, 4), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var shut = TestSupport.relay(helper, new BlockPos(5, Y, 4), Direction.WEST, Direction.SOUTH);
+        var alone = TestSupport.relay(helper, new BlockPos(5, Y, 12), Direction.DOWN, Direction.SOUTH);
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(shut.syncedBeams().isEmpty(), "nothing leaves a focus its light can't get into");
+            helper.assertFalse(alone.syncedBeams().isEmpty(), "an unlit focus shows where light would go");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aFocusLightsUpAsSoonAsLightReachesIt(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        sink(helper, new BlockPos(5, Y, 12));
+        // Put in just after a settle, and looked at well before the next: its light shows lit without waiting for it.
+        long now = helper.getLevel().getGameTime();
+        int put = 40 + (int) Math.floorMod(1 - (now + 40), 20L);
+        com.kadikular.quantimium.block.entity.LaserFocusBlockEntity[] focus = {null};
+        helper.runAfterDelay(put, () -> focus[0] = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.SOUTH));
+        helper.runAfterDelay(put + 4, () -> {
+            var beams = focus[0].syncedBeams();
+            helper.assertFalse(beams.isEmpty(), "light leaves it");
+            helper.assertTrue(beams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "lit at once");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void anEmitterPutDownLightsUpAtOnce(GameTestHelper helper) {
+        // The focus and what it charges first; the Emitter just after a settle, and both its light and the focus's lit
+        // well before the next.
+        var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.SOUTH);
+        sink(helper, new BlockPos(5, Y, 12));
+        long now = helper.getLevel().getGameTime();
+        int put = 40 + (int) Math.floorMod(1 - (now + 40), 20L);
+        helper.runAfterDelay(put, () -> emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true));
+        helper.runAfterDelay(put + 4, () -> {
+            var networks = LaserNetworks.of(helper.getLevel());
+            var out = networks.beamsOf(helper.absolutePos(new BlockPos(1, Y, 8)));
+            helper.assertFalse(out.isEmpty(), "light leaves the Emitter");
+            helper.assertTrue(out.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "the Emitter's light lit at once");
+            helper.assertTrue(focus.syncedBeams().stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "and the focus's");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

@@ -159,6 +159,7 @@ interact_lens: "A lens: uses what a Laser Port sends, or an empty hand, on what 
 precision_lens: "A lens: Harvest cuts with Silk Touch."
 void_lens: "A lens: what the actions free and no Laser Port takes is destroyed."
 freezing_lens: "A lens: freezes what the beam ends on: water to ice, snow on blocks, machines stopped, mobs held still, players chilled."
+redstone_lens: "A lens: gives what the beam ends on a redstone signal: always, by a count of an item up the light, or sent on from its own block."
 healing_lens: "A lens: heals what's living in the beam, and hurts the undead."
 acceleration_lens: "A lens: speeds up the machine the beam ends on, 2x and doubled by each Speed lens, within a tick-time budget."
 harmonic_lens: "A lens: Harvest cuts with Fortune, Damage hits with Looting, a level each."

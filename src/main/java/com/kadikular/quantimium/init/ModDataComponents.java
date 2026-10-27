@@ -27,6 +27,11 @@ public final class ModDataComponents {
                     builder -> builder.persistent(GlobalPos.CODEC).networkSynchronized(GlobalPos.STREAM_CODEC));
 
     /** What a Filter lens lets the actions it changes act on. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.kadikular.quantimium.laser.RedstoneSettings>> REDSTONE =
+            COMPONENTS.registerComponentType("redstone",
+                    builder -> builder.persistent(com.kadikular.quantimium.laser.RedstoneSettings.CODEC)
+                            .networkSynchronized(com.kadikular.quantimium.laser.RedstoneSettings.STREAM_CODEC));
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.kadikular.quantimium.laser.IsolatorSettings>> ISOLATOR =
             COMPONENTS.registerComponentType("isolator",
                     builder -> builder.persistent(com.kadikular.quantimium.laser.IsolatorSettings.CODEC)

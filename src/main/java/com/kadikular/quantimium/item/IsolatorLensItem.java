@@ -47,14 +47,16 @@ public class IsolatorLensItem extends LensItem implements LensWithSettings {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
         IsolatorSettings settings = settingsOf(stack);
-        if (!settings.logistics() && !settings.actions() && !settings.modifiers()) {
+        if (!settings.power()) tooltip.accept(Component.translatable("item.quantimium.isolator_lens.no_power").withStyle(ChatFormatting.AQUA));
+        if (settings.power() && !settings.logistics() && !settings.actions() && !settings.modifiers() && !settings.redstone()) {
             tooltip.accept(Component.translatable("item.quantimium.isolator_lens.power_only").withStyle(ChatFormatting.AQUA));
             return;
         }
-        for (String part : new String[] {"logistics", "actions", "modifiers"}) {
+        for (String part : new String[] {"logistics", "actions", "modifiers", "redstone"}) {
             boolean on = switch (part) {
                 case "logistics" -> settings.logistics();
                 case "actions" -> settings.actions();
+                case "redstone" -> settings.redstone();
                 default -> settings.modifiers();
             };
             if (on) tooltip.accept(Component.translatable("item.quantimium.isolator_lens.passes." + part).withStyle(ChatFormatting.AQUA));

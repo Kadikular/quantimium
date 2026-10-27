@@ -3,6 +3,7 @@ package com.kadikular.quantimium.laser;
 import com.kadikular.quantimium.init.ModDamageTypes;
 import com.kadikular.quantimium.init.ModTags;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -139,6 +140,13 @@ public final class LensAction {
         worldSteps = steps;
     }
 
+    /** The Logistics Controllers whose light carries it: a Redstone Lens on a logistics beam counts their networks. */
+    private java.util.Set<BlockPos> logistics = java.util.Set.of();
+
+    void logistics(java.util.Set<BlockPos> controllers) {
+        logistics = controllers;
+    }
+
     /**
      * What an action costs over its own price: twice, carried by Phantom light, on top of the light's upkeep for
      * the blocks it passes through.
@@ -241,10 +249,102 @@ public final class LensAction {
             case SMELT, CRUSH -> {
                 if (!mirrored()) processAt(level, networks);
             }
+            case REDSTONE -> {
+                if (!mirrored()) redstone(level, networks);
+            }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
             case PHANTOM -> want = cutCost = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
             default -> {}
         }
+    }
+
+    // ---- redstone ----
+
+    /** How often a Redstone Lens counts its item up the light. */
+    private static final int COUNT_TICKS = 20;
+    /** What it counted last, or -1 before it first has. */
+    private long counted = -1;
+
+    /**
+     * A Redstone Lens: the signal its settings give now, held on what the beam ends on: a Laser Focus is switched by it
+     * as by a wired signal; any other block gets it from the air in front of it, as from a lever.
+     */
+    private void redstone(ServerLevel level, LaserNetworks networks) {
+        Light.Signal signal = stream.signal();
+        if (signal == null || beam == null || beam.hit() == null) return;
+        RedstoneSettings settings = signal.settings();
+        int strength = switch (settings.mode()) {
+            case ALWAYS -> settings.level();
+            case FORWARD -> forwarded(level, signal.from());
+            default -> {
+                if (counted < 0 || Math.floorMod(key.hashCode() + now, COUNT_TICKS) == 0) counted = countUp(level, networks, settings.item());
+                yield settings.signalFor(counted);
+            }
+        };
+        BlockPos hit = beam.hit();
+        if (beam.end() == LaserBeam.End.NODE) {
+            if (strength > 0 && level.getBlockEntity(hit) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus) focus.lightSignal();
+            return;
+        }
+        Direction toward = beam.arriving();
+        BlockPos cell = hit.relative(toward.getOpposite());
+        if (!level.isLoaded(cell)) return;
+        // Right against the laser block the beam leaves: that block gives the signal itself.
+        if (cell.equals(key.node())) {
+            if (strength > 0) networks.holdSignal(cell, toward, strength, settings.strong());
+            return;
+        }
+        BlockState there = level.getBlockState(cell);
+        boolean ours = there.is(com.kadikular.quantimium.init.ModBlocks.LASER_SIGNAL.get());
+        if (strength <= 0) {
+            if (ours && there.getValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING) == toward) level.removeBlock(cell, false);
+            return;
+        }
+        // Only into open air: never over a block, nor another lens's signal for another block.
+        if (!ours && !there.isAir() || ours && there.getValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING) != toward) return;
+        networks.holdSignal(cell);
+        BlockState want = com.kadikular.quantimium.init.ModBlocks.LASER_SIGNAL.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING, toward)
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.POWER, strength)
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.STRONG, settings.strong());
+        if (!there.equals(want)) level.setBlock(cell, want, Block.UPDATE_ALL);
+    }
+
+    /**
+     * The signal a Redstone Lens sending on its block's signal reads at {@code from}: the strongest reaching it, but
+     * none it gives itself (a lens right against what it powers would hold its own signal on for ever).
+     */
+    private int forwarded(ServerLevel level, @Nullable BlockPos from) {
+        if (from == null || !level.isLoaded(from)) return 0;
+        int best = 0;
+        for (Direction side : Direction.values()) {
+            if (from.equals(key.node()) && beam != null && beam.hit() != null && from.relative(side).equals(beam.hit())) continue;
+            best = Math.max(best, level.getSignal(from.relative(side), side));
+        }
+        return best;
+    }
+
+    /**
+     * How many of {@code item} there are up the light: on a logistics beam, in its controller's network; else in the
+     * Laser Ports up the light, with the inventories they move to and from.
+     */
+    private long countUp(ServerLevel level, LaserNetworks networks, ItemStack item) {
+        if (item.isEmpty()) return 0;
+        long held = 0;
+        if (!logistics.isEmpty()) {
+            var resource = net.neoforged.neoforge.transfer.item.ItemResource.of(item);
+            for (BlockPos at : logistics) {
+                LogisticsController controller = networks.controllerAt(at);
+                if (controller != null) held += controller.offers().real(resource);
+            }
+            return held;
+        }
+        for (BlockPos port : new java.util.LinkedHashSet<>(java.util.stream.Stream.concat(collectors.stream(), senders.stream()).toList())) {
+            if (level.isLoaded(port) && level.getBlockEntity(port) instanceof com.kadikular.quantimium.block.entity.LaserPortBlockEntity laserPort) {
+                held += laserPort.count(item);
+            }
+        }
+        return held;
     }
 
     // ---- hitting ----
@@ -1239,9 +1339,14 @@ public final class LensAction {
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean fresh) {
         // All of it at once: two stacks of seeds each fitting alone needn't both fit. What a Void lens destroys when it
-        // won't fit needs no room.
+        // won't fit needs no room. Worked out again only when the drops are rolled again (each second, or another block).
+        List<ItemStack> drops = likelyDrops(level, pos);
+        if (drops == carriedFrom && stream == carriedFor) {
+            unfit = carriedMemo;
+            return roomForCarried(networks, carriedMemo, fresh);
+        }
         List<ItemStack> carried = new ArrayList<>();
-        for (ItemStack drop : likelyDrops(level, pos)) {
+        for (ItemStack drop : drops) {
             for (ItemStack stack : processed(level, drop)) {
                 if (stream.voids(stack)) continue;
                 boolean merged = false;
@@ -1256,6 +1361,21 @@ public final class LensAction {
             }
         }
         unfit = carried;
+        carriedFrom = drops;
+        carriedFor = stream;
+        carriedMemo = carried;
+        return roomForCarried(networks, carried, fresh);
+    }
+
+    /** What roomForDrops last worked out a block's drops come to, carried; from which roll, and for which stream. */
+    private List<ItemStack> carriedMemo = List.of();
+    @Nullable
+    private List<ItemStack> carriedFrom;
+    @Nullable
+    private Light.Stream carriedFor;
+
+    /** Whether the collecting Laser Ports would take all of {@code carried} together. */
+    private boolean roomForCarried(LaserNetworks networks, List<ItemStack> carried, boolean fresh) {
         if (carried.size() <= 1) return carried.isEmpty() || roomFor(networks, carried.getFirst(), fresh);
         // More than one thing: they're tried together, so two don't count on the same empty slot.
         if (now - roomAsked >= 10) {

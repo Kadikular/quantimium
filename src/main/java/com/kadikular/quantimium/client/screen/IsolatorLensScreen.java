@@ -40,7 +40,9 @@ public class IsolatorLensScreen extends QuantumMachineScreen<IsolatorLensMenu> i
                                 hint("gui.quantimium.tab.switch"))),
                 passes("logistics", IsolatorLensMenu.BUTTON_LOGISTICS, GuiIcon.LOGISTICS, IsolatorSettings::logistics),
                 passes("actions", IsolatorLensMenu.BUTTON_ACTIONS, GuiIcon.ACTIONS, IsolatorSettings::actions),
-                passes("modifiers", IsolatorLensMenu.BUTTON_MODIFIERS, GuiIcon.MODIFIERS, IsolatorSettings::modifiers));
+                passes("modifiers", IsolatorLensMenu.BUTTON_MODIFIERS, GuiIcon.MODIFIERS, IsolatorSettings::modifiers),
+                passes("power", IsolatorLensMenu.BUTTON_POWER, GuiIcon.ENERGY, IsolatorSettings::power),
+                passes("redstone", IsolatorLensMenu.BUTTON_REDSTONE, GuiIcon.REDSTONE, IsolatorSettings::redstone));
     }
 
     /** A switch for what passes it: lit while it does. */

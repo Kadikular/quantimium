@@ -92,6 +92,9 @@ public class ModMenuTypes {
             MENUS.register("lens_settings_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LensSettingsMenu::fromNetwork));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.RedstoneLensMenu>> REDSTONE_LENS_MENU =
+            MENUS.register("redstone_lens_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.RedstoneLensMenu::fromNetwork));
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.IsolatorLensMenu>> ISOLATOR_LENS_MENU =
             MENUS.register("isolator_lens_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.IsolatorLensMenu::fromNetwork));

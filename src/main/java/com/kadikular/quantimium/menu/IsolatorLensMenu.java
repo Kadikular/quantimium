@@ -18,7 +18,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * An Isolator Lens in hand, in a mount or in a Relay emitter: whether a network, actions and modifiers pass it, and
+ * An Isolator Lens in hand, in a mount or in a Relay emitter: whether power, a network, actions, modifiers and redstone
+ * pass it, and
  * nine ghost entries of lenses let through only, or stopped. Changes go straight onto the lens. Layout:
  * tools/gui_panels.py laser_port_filter, as a filter lens's.
  */
@@ -28,6 +29,8 @@ public class IsolatorLensMenu extends AbstractContainerMenu implements GhostFilt
     public static final int BUTTON_LOGISTICS = 1;
     public static final int BUTTON_ACTIONS = 2;
     public static final int BUTTON_MODIFIERS = 3;
+    public static final int BUTTON_POWER = 4;
+    public static final int BUTTON_REDSTONE = 5;
     public static final int FILTER_X = FilterLensMenu.FILTER_X;
     public static final int FILTER_Y = FilterLensMenu.FILTER_Y;
 
@@ -115,6 +118,8 @@ public class IsolatorLensMenu extends AbstractContainerMenu implements GhostFilt
             case BUTTON_LOGISTICS -> set(settings.withLogistics(!settings.logistics()));
             case BUTTON_ACTIONS -> set(settings.withActions(!settings.actions()));
             case BUTTON_MODIFIERS -> set(settings.withModifiers(!settings.modifiers()));
+            case BUTTON_POWER -> set(settings.withPower(!settings.power()));
+            case BUTTON_REDSTONE -> set(settings.withRedstone(!settings.redstone()));
             default -> {
                 return false;
             }

@@ -120,4 +120,17 @@ public class LensMountBlock extends BaseEntityBlock implements com.kadikular.qua
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new LensMountBlockEntity(pos, state);
     }
+
+    /** A Redstone Lens's light, ending on the block right beside it, gives that block its signal from here. */
+    @Override
+    protected int getSignal(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.BlockGetter level,
+                            net.minecraft.core.BlockPos pos, net.minecraft.core.Direction direction) {
+        return com.kadikular.quantimium.laser.LaserNetworks.heldSignal(level, pos, direction, false);
+    }
+
+    @Override
+    protected int getDirectSignal(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.BlockGetter level,
+                                  net.minecraft.core.BlockPos pos, net.minecraft.core.Direction direction) {
+        return com.kadikular.quantimium.laser.LaserNetworks.heldSignal(level, pos, direction, true);
+    }
 }

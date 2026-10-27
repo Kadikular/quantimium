@@ -31,8 +31,9 @@ import java.util.WeakHashMap;
  * Every laser network in a level: the nodes, the beams between them, and the power they move.
  *
  * <p>Fast by construction. A beam is traced when its node arrives, when the network changes, and
- * again every {@link #RECHECK_TICKS} ticks to see if something has been built across it, a node a
- * tick at a time; it's never traced every tick. The graph is rebuilt only when a beam has changed.
+ * again when a block on it changes ({@link #blockChanged}): any change to what it ends on or bounces off,
+ * and one that stops light where it passes. Every {@link #RECHECK_TICKS} ticks besides, a node a tick
+ * at a time, in case a block changed without the level knowing; it's never traced every tick. The graph is rebuilt only when a beam has changed.
  * Each tick then just asks what the blocks at the beams' ends would take and moves that much.
  *
  * <p>Power goes where it's asked for. Every source sends only what the blocks its beams reach can take,
@@ -46,8 +47,8 @@ import java.util.WeakHashMap;
 @EventBusSubscriber(modid = Quantimium.MODID)
 public final class LaserNetworks {
 
-    /** How often each node's beams are traced again, spread so a few are checked each tick. */
-    public static final int RECHECK_TICKS = 10;
+    /** How often each node's beams are traced again anyway, spread so a few are checked each tick. */
+    public static final int RECHECK_TICKS = 100;
     /** How often what the relays lost is put into the field, and beams' brightness is sent to clients. */
     private static final int SETTLE_TICKS = 20;
 
@@ -73,6 +74,8 @@ public final class LaserNetworks {
     /** Where each action's power comes from: its network and the routes from the sources paying for it. */
     private final Map<LensAction.Key, ActionSink> actionSinks = new HashMap<>();
     private record ActionSink(Network network, Sink sink) {}
+    /** Each Redstone Lens signal in the world (a LaserSignalBlock): when a lens's light last held it. */
+    private final Map<BlockPos, Long> signals = new HashMap<>();
     /** The light at each node's core, as last worked out: what leaves it, but for lenses on one face only. */
     private final Map<BlockPos, Light> lights = new HashMap<>();
     /** The light leaving each node by each face with lenses of its own, worked out as asked and kept till the next rebuild. */
@@ -87,14 +90,36 @@ public final class LaserNetworks {
     private final Map<BlockPos, Set<BlockPos>> chargedBy = new HashMap<>();
     /** Nodes whose beams changed on their own (a block cut, placed, switched): only their networks are worked out again. */
     private final Set<BlockPos> dirtyAt = new HashSet<>();
+    /**
+     * For each block a beam passes, ends on or bounces off, the nodes whose beams do: one lookup tells a changed
+     * block whose beams to check, however many networks cross it.
+     */
+    private final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<Watchers> watchers = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+    /** The blocks each node's beams are watched at, to take them off again. */
+    private final Map<BlockPos, long[]> watching = new HashMap<>();
+    /** Nodes with a block on their beams changed since the last tick: traced again to see if they still hold. */
+    private final Set<BlockPos> touched = new HashSet<>();
+
+    /** The nodes watching one block: those whose beams only pass through it, and those whose beams end or bounce there. */
+    private static final class Watchers {
+        final List<BlockPos> passing = new ArrayList<>(1);
+        final List<BlockPos> ending = new ArrayList<>(1);
+    }
+
     /** Each Entangled Mirror, by where it stands, and the node it draws light from. */
     private final Map<BlockPos, BlockPos> drawsOn = new HashMap<>();
     /** The nodes light ran through at the last settle. */
-    private Set<BlockPos> litNow = Set.of();
+    private Set<BlockPos> litNow = new HashSet<>();
+    /** Relays light reaches but can't get into (by a Stand, Cover or Emitter): they show no light leaving them. */
+    private final Set<BlockPos> shutOut = new HashSet<>();
 
     private LaserNetworks(ServerLevel level) {
         this.level = level;
+        this.born = level.getGameTime();
     }
+
+    /** When it was made: signals in the world are left alone a while after, till their lenses' light is traced again. */
+    private final long born;
 
     public static LaserNetworks of(ServerLevel level) {
         return LEVELS.computeIfAbsent(level, key -> new LaserNetworks(level));
@@ -164,6 +189,8 @@ public final class LaserNetworks {
             }
             unindex(pos, old);
         }
+        unwatch(pos);
+        shutOut.remove(pos);
         nodes.remove(pos);
         BlockPos source = drawsOn.remove(pos);
         if (source != null) seeds.add(source);
@@ -343,7 +370,12 @@ public final class LaserNetworks {
      * A beam on a sink's path: its node, which of the node's beams, the relay it leaves from (null at the
      * source), and where what it carries and what the relay loses are counted.
      */
-    private record Hop(BlockPos node, int beam, @Nullable LaserNode relay, long[] carried, long @Nullable [] lost) {}
+    /**
+     * One beam of a route: {@code keeps}, what's left of its power after the emitter it leaves by and the mirrors it
+     * bounces off, and {@code spill}, where that loss is counted (null for none), both as the route was worked out.
+     */
+    private record Hop(BlockPos node, int beam, @Nullable LaserNode relay, long[] carried, long @Nullable [] lost, double keeps,
+                       long @Nullable [] spill) {}
 
     /** For tests: how many times it's rebuilt, so a test can see it settle. */
     private long rebuilds;
@@ -370,6 +402,10 @@ public final class LaserNetworks {
         beams.clear();
         into.clear();
         chargedBy.clear();
+        watchers.clear();
+        watching.clear();
+        touched.clear();
+        shutOut.clear();
         carried.clear();
         // What the relays still standing lost so far goes into the field.
         lost.forEach((pos, fe) -> {
@@ -527,7 +563,61 @@ public final class LaserNetworks {
     }
 
     /** Takes {@code pos}'s old beams off the indexes of what beams reach. */
+    /**
+     * A block changed in {@code level} (from the level, after it's set): the nodes whose beams end or bounce there,
+     * or pass there and now can't, are traced again next tick. Light passing something it still passes (water,
+     * glass, air) isn't checked, nor light ending on a block that's only changed its state and lets light through as
+     * it did (a crop growing). Laser blocks that change what light does (a mirror turned) say so themselves.
+     */
+    public static void blockChanged(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState was,
+                                    net.minecraft.world.level.block.state.BlockState now) {
+        LaserNetworks networks = LEVELS.get(level);
+        if (networks == null || networks.watchers.isEmpty()) return;
+        Watchers at = networks.watchers.get(pos.asLong());
+        if (at == null) return;
+        boolean passes = LaserBeam.passes(level, pos, now);
+        if (!at.ending.isEmpty() && (was.getBlock() != now.getBlock() || LaserBeam.passes(level, pos, was) != passes)) {
+            networks.touched.addAll(at.ending);
+        }
+        if (!at.passing.isEmpty() && !passes) networks.touched.addAll(at.passing);
+    }
+
+    /** Watches the blocks {@code node}'s beams cross, end on and bounce off, in place of what it watched before. */
+    private void watch(BlockPos node, List<LaserBeam> traced) {
+        unwatch(node);
+        it.unimi.dsi.fastutil.longs.LongArrayList cells = new it.unimi.dsi.fastutil.longs.LongArrayList();
+        for (LaserBeam beam : traced) {
+            // Entangled light crosses nothing: its partner coming or going is the node's own news.
+            if (beam.jumps()) continue;
+            for (BlockPos cell : beam.path()) watchAt(cell, node, false, cells);
+            for (LaserBeam.Leg leg : beam.legs()) watchAt(leg.at(), node, true, cells);
+            if (beam.hit() != null) watchAt(beam.hit(), node, true, cells);
+        }
+        if (!cells.isEmpty()) watching.put(node, cells.toLongArray());
+    }
+
+    private void watchAt(BlockPos cell, BlockPos node, boolean ends, it.unimi.dsi.fastutil.longs.LongArrayList cells) {
+        long key = cell.asLong();
+        Watchers at = watchers.computeIfAbsent(key, k -> new Watchers());
+        (ends ? at.ending : at.passing).add(node);
+        // Each block, then which list it's on, to take it off the right one.
+        cells.add(key);
+        cells.add(ends ? 1 : 0);
+    }
+
+    private void unwatch(BlockPos node) {
+        long[] cells = watching.remove(node);
+        if (cells == null) return;
+        for (int i = 0; i < cells.length; i += 2) {
+            Watchers at = watchers.get(cells[i]);
+            if (at == null) continue;
+            (cells[i + 1] == 1 ? at.ending : at.passing).remove(node);
+            if (at.ending.isEmpty() && at.passing.isEmpty()) watchers.remove(cells[i]);
+        }
+    }
+
     private void unindex(BlockPos pos, List<LaserBeam> old) {
+        unwatch(pos);
         for (LaserBeam beam : old) {
             if (beam.end() == LaserBeam.End.NODE) {
                 List<BlockPos> list = into.get(beam.hit());
@@ -537,6 +627,18 @@ public final class LaserNetworks {
                 if (set != null) set.remove(pos);
             }
         }
+    }
+
+    /** Whether {@code node}'s beams still run as they did: as many as its ways out, each the same as it was traced. */
+    private boolean holds(LaserNode node) {
+        List<LaserBeam> was = beams.get(node.nodePos());
+        // A splitter forks a beam into more: only each first is counted against the node's ways out.
+        long firsts = was == null ? 0 : was.stream().filter(beam -> beam.fork() == 0).count();
+        if (was == null || firsts != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) return false;
+        for (LaserBeam beam : was) {
+            if (!beam.stillHolds(level, rangeOf(node, beam))) return false;
+        }
+        return true;
     }
 
     /**
@@ -569,7 +671,7 @@ public final class LaserNetworks {
             if (node == null || !node.relays() || !passes(node)) continue;
             Light in = incoming(node);
             if (in == null) continue;
-            Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
+            Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses(), at) : in;
             if (node.rifts()) out = out.throughRift();
             // One that gives out light of its own too (a Solar Emitter): its own joins what it passes on.
             if (node.generates()) out = Light.join(out, node.emits());
@@ -579,11 +681,14 @@ public final class LaserNetworks {
             if (escapes(at, scope)) return false;
             hits(at, work);
         }
-        // Relays no light reaches still show where light would go, at their own range.
+        // Relays no light reaches still show where light would go, at their own range; unless light does reach them
+        // and can't get in, which would look as if it had.
         for (LaserNode node : which) {
+            shutOut.remove(node.nodePos());
             if (node.relays() && !lights.containsKey(node.nodePos())) {
                 traceAt(node, node.range(), before);
                 if (escapes(node.nodePos(), scope)) return false;
+                if (shutOut(node)) shutOut.add(node.nodePos());
             }
         }
         for (LaserNode node : which) {
@@ -686,6 +791,7 @@ public final class LaserNetworks {
         ranges.put(node.nodePos(), range);
         Light light = lights.get(node.nodePos());
         List<LaserBeam> traced = trace(node, range, light == null ? 0 : light.marks());
+        boolean lit = litNow(node);
         // What this node's beams end on, now: off the index for the old beams, on for the new.
         unindex(node.nodePos(), beams.getOrDefault(node.nodePos(), List.of()));
         for (LaserBeam beam : traced) {
@@ -702,9 +808,52 @@ public final class LaserNetworks {
             // A beam that now runs differently (a block broken at its end) keeps how bright it was until
             // the next settle says otherwise, so it doesn't blink out meanwhile.
             if (same == null && i < was.size() && was.get(i).face() == beam.face()) same = was.get(i);
-            if (same != null) traced.set(i, beam.withFlow(same.flow()).withLive(same.live()));
+            if (same != null) traced.set(i, beam.withFlow(same.flow()).withLive(same.live() || lit));
+            else if (lit) traced.set(i, beam.withLive(true));
         }
         beams.put(node.nodePos(), traced);
+        watch(node.nodePos(), traced);
+    }
+
+    /**
+     * Whether light runs through {@code node} now: it did at the last settle, it's a source just put down or switched
+     * on that shines, or it's a relay just reached from one that does. Its beams light up at once rather than at the
+     * next settle.
+     */
+    private boolean litNow(LaserNode node) {
+        BlockPos pos = node.nodePos();
+        if (litNow.contains(pos)) return true;
+        if (node.generates() && node.enabled() && shines(node)) {
+            litNow.add(pos);
+            return true;
+        }
+        if (!node.relays() || !lights.containsKey(pos) || !passes(node)) return false;
+        for (BlockPos from : into.getOrDefault(pos, List.of())) {
+            if (litNow.contains(from)) {
+                litNow.add(pos);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether light reaches {@code node} but none of it gets in: every beam ending on it meets a Stand, Cover or Emitter. */
+    private boolean shutOut(LaserNode node) {
+        BlockPos pos = node.nodePos();
+        boolean met = false;
+        for (BlockPos from : into.getOrDefault(pos, List.of())) {
+            for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
+                if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit())) continue;
+                if (admits(node, beam)) return false;
+                met = true;
+            }
+        }
+        return met;
+    }
+
+    /** What {@code node} shows of {@code list}: nothing, if light reaches it and can't get in. */
+    private List<LaserBeam> shown(BlockPos pos, List<LaserBeam> list) {
+        return shutOut.contains(pos) ? List.of() : list;
     }
 
     /**
@@ -735,6 +884,7 @@ public final class LaserNetworks {
                                 sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
+                        action.logistics(light.logistics());
                         actions.put(key, action);
                     }
                 }
@@ -753,7 +903,7 @@ public final class LaserNetworks {
                     }
                 }
             }
-            node.showBeams(list);
+            node.showBeams(shown(pos, list));
         }
     }
 
@@ -910,6 +1060,83 @@ public final class LaserNetworks {
             }
         }
         return found;
+    }
+
+    /**
+     * Redstone Lens signals a laser block gives itself, where the beam leaving it ends on the block right beside it
+     * (no air between for a LaserSignalBlock): by block, then by the way towards what it powers.
+     */
+    private final Map<BlockPos, Map<Direction, Held>> held = new HashMap<>();
+    private record Held(int power, boolean strong, long at) {}
+
+    /** A Redstone Lens's light gives the block beside {@code pos}, towards {@code toward}, this signal this tick. */
+    void holdSignal(BlockPos pos, Direction toward, int power, boolean strong) {
+        Map<Direction, Held> here = held.computeIfAbsent(pos.immutable(), key -> new java.util.EnumMap<>(Direction.class));
+        Held was = here.put(toward, new Held(power, strong, level.getGameTime()));
+        if (was == null || was.power() != power || was.strong() != strong) signalChanged(pos, toward);
+    }
+
+    /** The signal changed: the block it powers and, strongly powered, that block's neighbours, see it. */
+    private void signalChanged(BlockPos pos, Direction toward) {
+        net.minecraft.world.level.block.Block block = level.getBlockState(pos).getBlock();
+        level.updateNeighborsAt(pos, block);
+        level.updateNeighborsAt(pos.relative(toward), block);
+    }
+
+    /** Signals no light holds any more go, and what they powered sees it. */
+    private void letGoOfSignals() {
+        if (held.isEmpty()) return;
+        long now = level.getGameTime();
+        List<Map.Entry<BlockPos, Direction>> gone = new ArrayList<>();
+        held.forEach((pos, ways) -> ways.forEach((toward, signal) -> {
+            if (now - signal.at() > SIGNAL_GRACE) gone.add(Map.entry(pos, toward));
+        }));
+        // Told after, not while looking: what it powered may ask again as it's told.
+        for (Map.Entry<BlockPos, Direction> signal : gone) {
+            Map<Direction, Held> ways = held.get(signal.getKey());
+            ways.remove(signal.getValue());
+            if (ways.isEmpty()) held.remove(signal.getKey());
+            signalChanged(signal.getKey(), signal.getValue());
+        }
+    }
+
+    /**
+     * The signal a laser block at {@code pos} gives a block beside it, as
+     * {@link net.minecraft.world.level.block.state.BlockBehaviour#getSignal} asks: {@code direction} points from the
+     * asking block to this one. {@code direct}: only a strong signal counts.
+     */
+    public static int heldSignal(net.minecraft.world.level.BlockGetter getter, BlockPos pos, Direction direction, boolean direct) {
+        if (!(getter instanceof ServerLevel server)) return 0;
+        LaserNetworks networks = LEVELS.get(server);
+        if (networks == null || networks.held.isEmpty()) return 0;
+        Map<Direction, Held> here = networks.held.get(pos);
+        Held signal = here == null ? null : here.get(direction.getOpposite());
+        if (signal == null || direct && !signal.strong()) return 0;
+        return signal.power();
+    }
+
+    /** How long a Redstone Lens's signal in the world outlasts the light holding it; for a while after a reload, longer. */
+    private static final int SIGNAL_GRACE = 5;
+
+    /** The Logistics Controller at {@code pos}, if there's one in these networks. */
+    @Nullable
+    LogisticsController controllerAt(BlockPos pos) {
+        return nodes.get(pos) instanceof LogisticsController controller ? controller : null;
+    }
+
+    /** A Redstone Lens's light holds its signal at {@code pos} this tick. */
+    void holdSignal(BlockPos pos) {
+        signals.put(pos.immutable(), level.getGameTime());
+    }
+
+    /** Whether a Redstone Lens's light still holds the signal at {@code pos}; one let go of is forgotten. */
+    public static boolean holdsSignal(ServerLevel level, BlockPos pos) {
+        LaserNetworks networks = of(level);
+        Long at = networks.signals.get(pos);
+        if (at == null && level.getGameTime() - networks.born <= 100) return true;
+        if (at != null && level.getGameTime() - at <= SIGNAL_GRACE) return true;
+        networks.signals.remove(pos);
+        return false;
     }
 
     /**
@@ -1117,7 +1344,7 @@ public final class LaserNetworks {
         if (core == null) return null;
         List<LensUse> own = node.lensesFor(face);
         if (own.isEmpty()) return core;
-        return faceLights.computeIfAbsent(node.nodePos(), key -> new java.util.EnumMap<>(Direction.class)).computeIfAbsent(face, key -> core.through(own));
+        return faceLights.computeIfAbsent(node.nodePos(), key -> new java.util.EnumMap<>(Direction.class)).computeIfAbsent(face, key -> core.through(own, node.nodePos()));
     }
 
     /** The light {@code beam}, leaving the node at {@code pos}, carries: a linked beam, the node's core light. */
@@ -1182,6 +1409,9 @@ public final class LaserNetworks {
      * Whether light gets through a relay: it's switched on, or it's a Relay with every emitter off and an Entangled
      * Mirror drawing on it, which gets the light all the same.
      */
+    /** Whether each relay lets light through, as asked while charging this tick: each route asks of every relay on it. */
+    private final Map<LaserNode, Boolean> passesMemo = new java.util.IdentityHashMap<>();
+
     private boolean passes(LaserNode node) {
         return node.enabled() || node.passesEntangled() && !drawing(node.nodePos()).isEmpty();
     }
@@ -1240,11 +1470,13 @@ public final class LaserNetworks {
             for (int i = 0; i < out.size(); i++) {
                 LaserBeam beam = out.get(i);
                 // What its bounces off mirrors leave of what it carries.
-                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * kept(at, beam));
+                double keeps = kept(at, beam);
+                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * keeps);
                 List<Hop> path = new ArrayList<>(visit.path());
                 LaserNode from = relay ? nodes.get(visit.node()) : null;
                 path.add(new Hop(visit.node(), i, from, carried.get(visit.node()),
-                        from == null ? null : lost.computeIfAbsent(visit.node(), key -> new long[1])));
+                        from == null ? null : lost.computeIfAbsent(visit.node(), key -> new long[1]), keeps,
+                        keeps < 1.0 ? lost.computeIfAbsent(visit.node(), key -> new long[1]) : null));
                 // Each action this beam carries is paid for by its stream's sources, as a block's power is.
                 Light light = lightOf(visit.node(), beam);
                 if (light != null) {
@@ -1258,20 +1490,22 @@ public final class LaserNetworks {
                         }
                     }
                 }
-                if (beam.end() == LaserBeam.End.SINK) {
+                // Past an Isolator Lens that stops power, light powers nothing, but goes on to pay for what it does.
+                boolean powers = light == null || !light.unpowered();
+                if (beam.end() == LaserBeam.End.SINK && powers) {
                     route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                 } else if (beam.end() == LaserBeam.End.NODE) {
                     LaserNode next = nodes.get(beam.hit());
                     // A cavity takes light from emitters, never from another cavity.
-                    if (next != null && next.buffers() && !source.buffers()) {
+                    if (powers && next != null && next.buffers() && !source.buffers()) {
                         route(sinks, beam.hit(), beam.arriving().getOpposite(), next, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that light charges (a Logistics Controller) is a block that takes power too, though never from itself.
-                    if (next != null && next.chargedByLight() && next != source) {
+                    if (powers && next != null && next.chargedByLight() && next != source) {
                         route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that hands light on to a machine beside it (a Receptacle powering what it's on): that machine.
-                    for (net.minecraft.core.Direction feeds : next == null || next == source ? Set.<net.minecraft.core.Direction>of() : next.feedsAll()) {
+                    for (net.minecraft.core.Direction feeds : !powers || next == null || next == source ? Set.<net.minecraft.core.Direction>of() : next.feedsAll()) {
                         route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {
@@ -1306,7 +1540,6 @@ public final class LaserNetworks {
         }
         long mark = profile == null ? 0 : System.nanoTime();
         long time = level.getGameTime();
-        // A slice of the nodes each tick: has anything been built across, or taken out of, their beams?
         // Something redstone switches has been switched: what light carries changes.
         if (bucketsStale) rebucket();
         if (!dirty) {
@@ -1317,22 +1550,17 @@ public final class LaserNetworks {
                     switchedAt.add(entry.getKey().nodePos());
                 }
             }
+            // A block changed on these nodes' beams: do they still run as they did?
+            for (BlockPos pos : touched) {
+                LaserNode node = nodes.get(pos);
+                if (node != null && !dirtyAt.contains(pos) && !holds(node)) dirtyAt.add(pos);
+            }
+            // And a slice of the nodes each tick, whatever: a block can change without the level knowing.
             for (LaserNode node : rechecks.isEmpty() ? List.<LaserNode>of() : rechecks.get(Math.floorMod(-time, RECHECK_TICKS))) {
-                List<LaserBeam> was = beams.get(node.nodePos());
-                // A splitter forks a beam into more: only each first is counted against the node's ways out.
-                long firsts = was == null ? 0 : was.stream().filter(beam -> beam.fork() == 0).count();
-                if (was == null || firsts != node.outputs().size() + node.targets().size() + drawing(node.nodePos()).size() || linkGone(node)) {
-                    dirtyAt.add(node.nodePos());
-                    continue;
-                }
-                for (LaserBeam beam : was) {
-                    if (!beam.stillHolds(level, rangeOf(node, beam))) {
-                        dirtyAt.add(node.nodePos());
-                        break;
-                    }
-                }
+                if (!dirtyAt.contains(node.nodePos()) && !holds(node)) dirtyAt.add(node.nodePos());
             }
         }
+        touched.clear();
         if (dirty) {
             rebuild();
             switchedAt.clear();
@@ -1340,7 +1568,10 @@ public final class LaserNetworks {
         if (profile != null) mark = profile.phase(LaserProfile.Phase.BEAMS, mark);
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
+        passesMemo.clear();
         for (Network network : networks) refill(network);
+        // Filling the sources is power's time, not the first lens's.
+        if (profile != null) mark = profile.phase(LaserProfile.Phase.POWER, mark);
         if (profile == null) {
             for (LensAction action : actions.values()) action.act(level, this);
         } else {
@@ -1355,6 +1586,7 @@ public final class LaserNetworks {
         // Each logistics network moves once a second, in its own slice of it, not all in one tick.
         Logistics.run(level, nodes.values(), lights, (int) Math.floorMod(time, SETTLE_TICKS));
         if (time % 2 == 0) showAreaWork();
+        letGoOfSignals();
         if (profile != null) mark = profile.phase(LaserProfile.Phase.LOGISTICS, mark);
         passing.clear();
         for (Network network : networks) move(network);
@@ -1609,6 +1841,9 @@ public final class LaserNetworks {
         if (sink.buffer() != null) return Math.min(cap, sink.buffer().room());
         EnergyHandler handler = sink.energy() == null ? null : sink.energy().getCapability();
         if (handler == null) return 0;
+        // A full block costs no transaction (each one opened walks the stack): most machines are full most ticks.
+        long capacity = handler.getCapacityAsLong();
+        if (capacity > 0 && handler.getAmountAsLong() >= capacity) return 0;
         try (Transaction simulation = Transaction.openRoot()) {
             return handler.insert(cap, simulation);
         }
@@ -1637,7 +1872,7 @@ public final class LaserNetworks {
     /** Whether every relay on the route is switched on. */
     private boolean open(Route route) {
         for (Hop hop : route.path()) {
-            if (hop.relay() != null && !passes(hop.relay())) return false;
+            if (hop.relay() != null && !passesMemo.computeIfAbsent(hop.relay(), this::passes)) return false;
         }
         return true;
     }
@@ -1652,11 +1887,9 @@ public final class LaserNetworks {
                 power -= tax;
             }
             // What the emitter it leaves by and the mirrors it bounces off take, lost where the beam starts.
-            List<LaserBeam> out = beams.get(hop.node());
-            double keeps = out != null && hop.beam() < out.size() ? kept(nodes.get(hop.node()), out.get(hop.beam())) : 1.0;
-            if (keeps < 1.0) {
-                double lostToMirrors = power * (1.0 - keeps);
-                lost.computeIfAbsent(hop.node(), key -> new long[1])[0] += Math.round(lostToMirrors);
+            if (hop.spill() != null) {
+                double lostToMirrors = power * (1.0 - hop.keeps());
+                hop.spill()[0] += Math.round(lostToMirrors);
                 power -= lostToMirrors;
             }
             if (hop.beam() < hop.carried().length) hop.carried()[hop.beam()] += Math.round(power);
@@ -1690,7 +1923,7 @@ public final class LaserNetworks {
             }
             beams.put(pos, flowing);
             // The node tells its clients only if the beams look different: shape, liveness, or a step in brightness.
-            node.showBeams(flowing);
+            node.showBeams(shown(pos, flowing));
         }
         carried.values().forEach(sum -> java.util.Arrays.fill(sum, 0));
     }
@@ -1735,9 +1968,7 @@ public final class LaserNetworks {
             // A Logistics Controller gives no power, but its light shows while its store can pay for moves.
             // One whose power all went out this tick (a cavity filling took the lot) shines too: its other beams
             // still glow dimly, rather than going dark beside the one carrying it all.
-            boolean shines = node.available() > 0 || node instanceof LogisticsController controller && controller.powered()
-                    || sending(node.nodePos());
-            if (node.generates() && node.enabled() && shines && live.add(node.nodePos())) queue.add(node.nodePos());
+            if (node.generates() && node.enabled() && shines(node) && live.add(node.nodePos())) queue.add(node.nodePos());
         }
         while (!queue.isEmpty()) {
             for (LaserBeam beam : beams.getOrDefault(queue.poll(), List.of())) {
@@ -1747,6 +1978,11 @@ public final class LaserNetworks {
             }
         }
         return live;
+    }
+
+    /** Whether a source's light shows: it has power to give, or is a Logistics Controller whose store can pay for moves. */
+    private boolean shines(LaserNode node) {
+        return node.available() > 0 || node instanceof LogisticsController controller && controller.powered() || sending(node.nodePos());
     }
 
     /** Whether any beam leaving {@code pos} carried power when last worked out. */

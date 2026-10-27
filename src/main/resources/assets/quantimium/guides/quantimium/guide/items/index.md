@@ -47,6 +47,7 @@ navigation:
 - <ItemLink id="quantimium:precision_lens" />
 - <ItemLink id="quantimium:quantimium_trace" />
 - <ItemLink id="quantimium:range_lens" />
+- <ItemLink id="quantimium:redstone_lens" />
 - <ItemLink id="quantimium:rift_residue" />
 - <ItemLink id="quantimium:rift_seed" />
 - <ItemLink id="quantimium:semi_stable_tesseract" />

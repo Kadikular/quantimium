@@ -452,6 +452,30 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         }
     };
 
+    /**
+     * How many of {@code item} it holds, with what's in each inventory beside it that it moves items to or from: what a
+     * Redstone Lens counts.
+     */
+    public long count(ItemStack item) {
+        long held = 0;
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (ItemStack.isSameItemSameComponents(stack, item)) held += stack.getCount();
+        }
+        if (level == null) return held;
+        for (Direction side : Direction.values()) {
+            SideConfig config = sideConfigs.get(side.get3DDataValue());
+            if (!config.autoItemInput() && !config.autoItemOutput()) continue;
+            IItemHandler neighbour = LegacyItems.legacy(level.getCapability(Capabilities.Item.BLOCK, worldPosition.relative(side), side.getOpposite()));
+            if (neighbour == null) continue;
+            for (int slot = 0; slot < neighbour.getSlots(); slot++) {
+                ItemStack stack = neighbour.getStackInSlot(slot);
+                if (ItemStack.isSameItemSameComponents(stack, item)) held += stack.getCount();
+            }
+        }
+        return held;
+    }
+
     /** Its nine slots, whole: what a Logistics Receptacle on it works with, whatever its faces are set to. */
     private final IItemHandler networkView = com.kadikular.quantimium.util.LegacyItems.legacy(
             com.kadikular.quantimium.util.LegacyItems.of(itemsView, items));

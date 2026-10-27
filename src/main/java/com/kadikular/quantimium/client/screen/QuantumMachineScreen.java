@@ -617,9 +617,11 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         boolean lit = tab.open != null ? tab.open.getAsBoolean() : tab.on != null && tab.on.getAsBoolean();
         boolean usable = tab.enabled.getAsBoolean();
         rail().tab(graphics, tab.x, tab.y, tab.width, lit, hovered && usable, !tab.slot.page);
-        if (tab.glyph != null) {
+        // A glyph tab may show a texture instead for some settings (its glyph null then).
+        GuiIcon glyph = tab.glyph != null ? tab.glyph.get() : null;
+        if (glyph != null) {
             boolean dim = !usable || (tab.on != null && !lit);
-            tab.glyph.get().draw(graphics, tab.x + (tab.width - GuiIcon.SIZE) / 2, tab.y + 3, dim ? GuiIcon.DIMMED : 0xFFFFFFFF);
+            glyph.draw(graphics, tab.x + (tab.width - GuiIcon.SIZE) / 2, tab.y + 3, dim ? GuiIcon.DIMMED : 0xFFFFFFFF);
         } else if (tab.texture != null) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, tab.texture.get(), tab.x + (tab.width - 16) / 2, tab.y + 3, 0.0f, 0.0f,
                     16, 16, 16, 16, usable ? 0xFFFFFFFF : GuiIcon.DIMMED);
