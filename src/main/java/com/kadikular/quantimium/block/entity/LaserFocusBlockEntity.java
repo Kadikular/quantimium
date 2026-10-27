@@ -304,8 +304,12 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             LaserNetworks.add(level, this);
         } else {
             LaserNetworks.remove(level, this);
-            // Out of the network, it shows no light leaving it.
+            // Out of the network, it shows no light leaving it, and its receptacles go dark.
             showBeams(List.of());
+            for (Receptacle receptacle : receptacles.values()) {
+                receptacle.connected(false);
+                receptacle.networkPowered(false);
+            }
         }
     }
 
@@ -489,7 +493,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     /** On while any of its emitters is; a Clear Laser Focus always lets light through. */
     @Override
     public boolean enabled() {
-        if (core == Core.CLEAR) return true;
+        // A Receptacle needs the light reaching it, emitters on or not.
+        if (core == Core.CLEAR || !receptacles.isEmpty()) return true;
         for (Direction face : emitters()) if (on(face)) return true;
         return false;
     }

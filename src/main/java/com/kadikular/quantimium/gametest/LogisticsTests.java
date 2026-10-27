@@ -142,6 +142,30 @@ public final class LogisticsTests {
         });
     }
 
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 160)
+    public static void aReceptacleWorksOnALaserFocusAndGoesDarkWithoutOne(GameTestHelper helper) {
+        // A receptacle on a plain Laser Focus (no Emitter) at the end of the line moves dirt; taking the focus out, it's
+        // off the network and unlit.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        helper.setBlock(new BlockPos(6, Y - 1, 8), Blocks.CHEST);
+        helper.getBlockEntity(new BlockPos(6, Y - 1, 8), ChestBlockEntity.class).setItem(0, new ItemStack(Items.DIRT, 16));
+        helper.setBlock(new BlockPos(6, Y + 1, 8), Blocks.CHEST);
+        Receptacle provider = TestSupport.receptacle(helper, new BlockPos(6, Y, 8), Direction.DOWN);
+        var focus = helper.getBlockEntity(new BlockPos(6, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+        focus.takeCore();
+        focus.setCore(com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+        provider.cycleRole();
+        provider.toggleActive();
+        focus.setPart(Direction.UP, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.RECEPTACLE);
+        helper.runAfterDelay(110, () -> {
+            helper.assertValueEqual(count(helper.getBlockEntity(new BlockPos(6, Y + 1, 8), ChestBlockEntity.class), Items.DIRT), 16, "all of it moved up");
+            helper.assertTrue(provider.lit(), "lit");
+            focus.takeCore();
+            helper.assertTrue(!provider.isConnected() && !provider.lit() && !focus.receptacle(Direction.UP).lit(), "dark without a focus");
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 120)
     public static void aRequesterKeepingCountsTakesOnlyWhatItsShortOf(GameTestHelper helper) {
         // Keeping 10 cobblestone with 3 already there: it pulls 7 of storage's 64 and stops.

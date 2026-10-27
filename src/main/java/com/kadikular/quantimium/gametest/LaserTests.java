@@ -1134,6 +1134,31 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 140)
+    public static void straightLightDoesNotEnterByAnEmitter(GameTestHelper helper) {
+        // Two relays lit from the west, each sending light south: one with a bare west face, one with an Emitter there.
+        emitter(helper, new BlockPos(1, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        TestSupport.relay(helper, new BlockPos(5, Y, 2), Direction.DOWN, Direction.SOUTH);
+        var bare = sink(helper, new BlockPos(5, Y, 6));
+        emitter(helper, new BlockPos(1, Y, 10), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var lit = TestSupport.relay(helper, new BlockPos(5, Y, 10), Direction.DOWN, Direction.SOUTH);
+        var blocked = sink(helper, new BlockPos(5, Y, 14));
+        // The second gets its Emitter while light is already coming in.
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(blocked.getEnergyStorage().getEnergyStored() > 0, "lit before");
+            lit.addEmitter(Direction.WEST);
+        });
+        int[] then = new int[1];
+        helper.runAfterDelay(60, () -> then[0] = blocked.getEnergyStorage().getEnergyStored());
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(bare.getEnergyStorage().getEnergyStored() > 0, "in by a bare face");
+            helper.assertValueEqual(blocked.getEnergyStorage().getEnergyStored(), then[0], "not in by an Emitter");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void attachmentsDoNothingUntilAFocusGoesIn(GameTestHelper helper) {
         // An Emitter and a Stand with no focus: no light. Put a Laser Focus in, and light leaves by the Emitter.

@@ -173,8 +173,13 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
             return InteractionResult.SUCCESS;
         }
         if (stack.is(ModTags.TOOLS_WRENCH)) return useWithoutItem(state, level, pos, player, hit);
-        // Focuses and attachments go on by their items; anything else in hand does its own thing.
-        return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
+        if (stack.isEmpty()) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        // An emitter or receptacle opens as a chest does, whatever's in hand (sneak to place against it); a focus going
+        // into an empty block, and a laser tool, do their own thing.
+        boolean menu = face != null && (focus.hasEmitter(face) || focus.receptacle(face) != null);
+        boolean fills = stack.getItem() instanceof com.kadikular.quantimium.item.FocusPieceItem piece && piece.core() != null
+                && focus.core() == LaserFocusBlockEntity.Core.NONE;
+        return menu && !fills && !LaserTools.isOne(stack) ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
     }
 
     /** On an emitter: opens it. Sneaking, takes off what it's pointed at, as a sneaking wrench does. */
