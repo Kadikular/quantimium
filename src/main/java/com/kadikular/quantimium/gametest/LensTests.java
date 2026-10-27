@@ -1020,10 +1020,8 @@ public final class LensTests {
         // cavity pays for it.
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
-        helper.setBlock(new BlockPos(6, Y, 4), ModBlocks.CAVITY_MIRROR.get().defaultBlockState()
-                .setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, Direction.SOUTH));
+        var cavity = TestSupport.cavity(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
         relay(helper, new BlockPos(6, Y, 8), Direction.NORTH);
-        var cavity = helper.getBlockEntity(new BlockPos(6, Y, 4), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
         helper.setBlock(new BlockPos(6, Y, 1), Blocks.STONE);
         helper.setBlock(new BlockPos(6, Y, 0), Blocks.BEDROCK);
         helper.succeedWhen(() -> {
@@ -1115,9 +1113,8 @@ public final class LensTests {
         });
     }
 
-    private static com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity cavityAt(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.CAVITY_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, facing));
-        return helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+    private static com.kadikular.quantimium.block.entity.CavityPlate cavityAt(GameTestHelper helper, BlockPos pos, Direction facing) {
+        return TestSupport.cavity(helper, pos, facing);
     }
 
     // covers: laser.lens.pickup

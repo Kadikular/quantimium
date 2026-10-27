@@ -2,7 +2,7 @@
 navigation:
   title: Tesseract
   parent: items/index.md
-  position: 46
+  position: 47
   icon: quantimium:tesseract
 item_ids:
 - quantimium:tesseract

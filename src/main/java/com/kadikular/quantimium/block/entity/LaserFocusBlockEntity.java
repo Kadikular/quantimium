@@ -84,11 +84,13 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         /** A plain cap: light neither gets in nor out by it. */
         COVER,
         /** A Logistics Receptacle: the inventory that face is against is on the network (see {@link Receptacle}). */
-        RECEPTACLE;
+        RECEPTACLE,
+        /** A Cavity Mirror plate, facing out: it holds light that comes back to it (see {@link CavityPlate}). */
+        CAVITY;
 
-        /** Whether light gets in and out by a face with this on it. */
+        /** Whether diagonal light gets in by a face with this on it (straight light only by a bare face). */
         public boolean open() {
-            return this == NONE || this == EMITTER;
+            return this == NONE || this == EMITTER || this == CAVITY;
         }
 
         /** The item it is, or nothing. */
@@ -99,6 +101,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
                 case EMITTER -> ModItems.FOCUS_EMITTER.get();
                 case COVER -> ModItems.FOCUS_COVER.get();
                 case RECEPTACLE -> ModItems.LOGISTICS_RECEPTACLE_ITEM.get();
+                case CAVITY -> ModItems.CAVITY_MIRROR_ITEM.get();
             };
             return item == null ? ItemStack.EMPTY : new ItemStack(item);
         }
@@ -115,6 +118,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     private final Map<Direction, Part> parts = new EnumMap<>(Direction.class);
     /** The Logistics Receptacle on each face that has one. */
     private final Map<Direction, Receptacle> receptacles = new EnumMap<>(Direction.class);
+    /** The Cavity Mirror plate on each face that has one. */
+    private final Map<Direction, CavityPlate> cavities = new EnumMap<>(Direction.class);
     /** The lens in each emitter that has one. */
     private final Map<Direction, ItemStack> lenses = new EnumMap<>(Direction.class);
     /** How each emitter that's been set listens to redstone; the rest follow {@link #mode}. */
@@ -173,6 +178,11 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         if (part == Part.NONE || part(face) != Part.NONE) return false;
         parts.put(face, part);
         if (part == Part.RECEPTACLE) receptacles.put(face, new Receptacle(this, face));
+        if (part == Part.CAVITY) {
+            CavityPlate cavity = new CavityPlate(this, face);
+            cavities.put(face, cavity);
+            if (level instanceof net.minecraft.server.level.ServerLevel server) cavity.checkPartner(server);
+        }
         changed();
         return true;
     }
@@ -193,6 +203,9 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         modes.remove(face);
         pulses.remove(face);
         receptacles.remove(face);
+        // A cavity taken off lets all it held go, as flux.
+        CavityPlate cavity = cavities.remove(face);
+        if (cavity != null && level instanceof net.minecraft.server.level.ServerLevel server) cavity.releaseAll(server);
         changed();
         return out;
     }
@@ -386,6 +399,93 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         return out;
     }
 
+    // ---- cavities ----
+
+    /** The Cavity Mirror plate on {@code face}, or null. */
+    @Nullable
+    public CavityPlate cavity(Direction face) {
+        return cavities.get(face);
+    }
+
+    /** With a focus in it and a cavity of one of its plates closed, it stores light. */
+    @Override
+    public boolean buffers() {
+        if (core == Core.NONE) return false;
+        for (CavityPlate cavity : cavities.values()) if (cavity.paired()) return true;
+        return false;
+    }
+
+    /** Storing light, it gives it out too, as well as passing on what reaches it. */
+    @Override
+    public boolean generates() {
+        return buffers();
+    }
+
+    /** What its cavities hold leaves by its Emitters: with none, it only stores. */
+    @Override
+    public long available() {
+        if (core == Core.NONE || emitters().isEmpty()) return 0;
+        long total = 0;
+        for (CavityPlate cavity : cavities.values()) total += cavity.available();
+        return total;
+    }
+
+    @Override
+    public void draw(long fe) {
+        for (CavityPlate cavity : cavities.values()) {
+            if (fe <= 0) break;
+            long part = Math.min(fe, cavity.available());
+            cavity.draw(part);
+            fe -= part;
+        }
+    }
+
+    @Override
+    public long room() {
+        if (core == Core.NONE) return 0;
+        long total = 0;
+        for (CavityPlate cavity : cavities.values()) total += cavity.room();
+        return total;
+    }
+
+    @Override
+    public void fill(long fe) {
+        for (CavityPlate cavity : cavities.values()) {
+            if (fe <= 0) break;
+            long part = Math.min(fe, cavity.room());
+            cavity.fill(part);
+            fe -= part;
+        }
+    }
+
+    /** What its cavities' light does: whatever filled them. */
+    @Override
+    public com.kadikular.quantimium.laser.Light emits() {
+        com.kadikular.quantimium.laser.Light out = null;
+        for (CavityPlate cavity : cavities.values()) {
+            if (cavity.held() == null) continue;
+            out = out == null ? cavity.held() : com.kadikular.quantimium.laser.Light.join(out, cavity.held());
+        }
+        return out != null ? out.reEmitted(worldPosition) : com.kadikular.quantimium.laser.Light.from(worldPosition, range());
+    }
+
+    @Override
+    public boolean absorb(com.kadikular.quantimium.laser.Light light) {
+        boolean more = false;
+        for (CavityPlate cavity : cavities.values()) more |= cavity.absorb(light);
+        return more;
+    }
+
+    /** On the server, each tick: its cavities. */
+    public void serverTick() {
+        if (cavities.isEmpty() || !(level instanceof net.minecraft.server.level.ServerLevel server)) return;
+        boolean show = false;
+        boolean before = buffers();
+        for (CavityPlate cavity : cavities.values()) show |= cavity.tick(server);
+        if (before != buffers()) LaserNetworks.changed(server);
+        if (show) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+    }
+
     /** On while any of its emitters is; a Clear Laser Focus always lets light through. */
     @Override
     public boolean enabled() {
@@ -503,16 +603,30 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         }
     }
 
+    /** Its beams, and the light its cavities hold, drawn all the way round. */
     @Override
     public List<LaserBeam> syncedBeams() {
-        return shownBeams;
+        if (cavities.isEmpty()) return shownBeams;
+        List<LaserBeam> all = new ArrayList<>(shownBeams);
+        for (CavityPlate cavity : cavities.values()) {
+            LaserBeam glow = cavity.glow();
+            if (glow != null) all.add(glow);
+        }
+        return all;
+    }
+
+    /** The glow of the light a cavity holds is wider than a beam carrying as much. */
+    @Override
+    public float widthScale(LaserBeam beam) {
+        CavityPlate cavity = beam.aim() == null ? cavities.get(beam.face()) : null;
+        return cavity != null && cavity.paired() ? 1.8f : 1.0f;
     }
 
     /** Light leaves an Emitter at its tip; light passing straight through a face with none leaves from the focus. */
     @Override
     public net.minecraft.world.phys.Vec3[] endsOf(LaserBeam beam) {
         net.minecraft.world.phys.Vec3[] ends = beam.ends();
-        if (beam.aim() == null && !beam.jumps() && !hasEmitter(beam.face())) ends[0] = worldPosition.getCenter();
+        if (beam.aim() == null && !beam.jumps() && !hasEmitter(beam.face()) && part(beam.face()) != Part.CAVITY) ends[0] = worldPosition.getCenter();
         return ends;
     }
 
@@ -550,12 +664,15 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         parts.clear();
         lenses.clear();
         receptacles.clear();
+        cavities.clear();
     }
 
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
         if (level != null) for (ItemStack stack : contents()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
+        // Broken, its cavities let all they held go, as flux.
+        if (level instanceof net.minecraft.server.level.ServerLevel server) for (CavityPlate cavity : cavities.values()) cavity.releaseAll(server);
         clearContents();
     }
 
@@ -572,6 +689,12 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             if (own != null) out.putInt("Mode_" + face.getSerializedName(), own.ordinal());
             Receptacle receptacle = receptacles.get(face);
             if (receptacle != null) receptacle.save(out.child("Receptacle_" + face.getSerializedName()));
+            CavityPlate cavity = cavities.get(face);
+            if (cavity != null) {
+                ValueOutput child = out.child("Cavity_" + face.getSerializedName());
+                cavity.save(child);
+                cavity.saveLook(child);
+            }
         }
     }
 
@@ -595,6 +718,11 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
                 receptacle.load(in.childOrEmpty("Receptacle_" + face.getSerializedName()));
             } else {
                 receptacles.remove(face);
+            }
+            if (part == Part.CAVITY) {
+                cavities.computeIfAbsent(face, side -> new CavityPlate(this, side)).load(in.childOrEmpty("Cavity_" + face.getSerializedName()));
+            } else {
+                cavities.remove(face);
             }
         }
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
@@ -674,6 +802,12 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     @Nullable
     public MutableComponent fluxMeterLine() {
         if (core == Core.NONE) return Component.translatable("message.quantimium.laser_focus.empty").withStyle(ChatFormatting.GRAY);
+        // A cavity: what it holds.
+        for (CavityPlate cavity : cavities.values()) {
+            if (!cavity.paired()) continue;
+            return Component.translatable("message.quantimium.cavity.holds", String.format(java.util.Locale.ROOT, "%,d", cavity.stored()),
+                    String.format(java.util.Locale.ROOT, "%,d", cavity.capacity()), cavity.gap()).withStyle(ChatFormatting.DARK_AQUA);
+        }
         long passing = 0;
         for (LaserBeam beam : shownBeams) passing += beam.flow();
         MutableComponent line = passing <= 0 ? Component.translatable("message.quantimium.laser.mirror.dark").withStyle(ChatFormatting.GRAY)

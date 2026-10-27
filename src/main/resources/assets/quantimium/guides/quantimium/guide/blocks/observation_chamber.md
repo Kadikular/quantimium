@@ -2,7 +2,7 @@
 navigation:
   title: Observation Chamber
   parent: blocks/index.md
-  position: 42
+  position: 41
   icon: quantimium:observation_chamber
 item_ids:
 - quantimium:observation_chamber

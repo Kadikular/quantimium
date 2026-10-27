@@ -19,6 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.kadikular.quantimium.block.entity.ContainmentHallBlockEntity;
 import com.kadikular.quantimium.block.entity.LaserFocusBlockEntity;
 import com.kadikular.quantimium.block.entity.Receptacle;
+import com.kadikular.quantimium.block.entity.CavityPlate;
 import com.kadikular.quantimium.block.entity.RiftAnchorBlockEntity;
 import com.kadikular.quantimium.block.entity.QuantumEnergyStorage;
 import com.kadikular.quantimium.flux.ChunkFlux;
@@ -78,6 +79,30 @@ public final class TestSupport {
         focus.setCore(LaserFocusBlockEntity.Core.CLEAR);
         focus.setPart(face, LaserFocusBlockEntity.Part.RECEPTACLE);
         return focus.receptacle(face);
+    }
+
+    /**
+     * A Laser Focus at {@code relative} set up as a Cavity Mirror block was: a Stand on the floor (or the ceiling, facing
+     * down), a Cavity Mirror plate on {@code facing}, and an Emitter on its back (or a free side).
+     */
+    public static CavityPlate cavity(GameTestHelper helper, BlockPos relative, net.minecraft.core.Direction facing) {
+        net.minecraft.core.Direction mount = facing == net.minecraft.core.Direction.DOWN ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
+        helper.setBlock(relative, com.kadikular.quantimium.init.ModBlocks.LASER_FOCUS.get());
+        var focus = helper.getBlockEntity(relative, LaserFocusBlockEntity.class);
+        focus.setCore(LaserFocusBlockEntity.Core.LASER);
+        focus.setPart(mount, LaserFocusBlockEntity.Part.STAND);
+        focus.setPart(facing, LaserFocusBlockEntity.Part.CAVITY);
+        focus.addEmitter(com.kadikular.quantimium.block.CavityMirrorBlock.outputFor(facing, mount));
+        return focus.cavity(facing);
+    }
+
+    /** The (first) Cavity Mirror plate on the Laser Focus at {@code relative}. */
+    public static CavityPlate cavityAt(GameTestHelper helper, BlockPos relative) {
+        var focus = helper.getBlockEntity(relative, LaserFocusBlockEntity.class);
+        for (net.minecraft.core.Direction face : net.minecraft.core.Direction.values()) {
+            if (focus.cavity(face) != null) return focus.cavity(face);
+        }
+        throw new net.minecraft.gametest.framework.GameTestAssertException(net.minecraft.network.chat.Component.literal("no cavity at " + relative), 0);
     }
 
     /** The (first) Logistics Receptacle on the Laser Focus at {@code relative}. */

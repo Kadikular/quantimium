@@ -748,9 +748,8 @@ public final class LaserTests {
         helper.succeed();
     }
 
-    private static com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity cavityMirror(GameTestHelper helper, BlockPos pos, Direction facing) {
-        helper.setBlock(pos, ModBlocks.CAVITY_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, facing));
-        return helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class);
+    private static com.kadikular.quantimium.block.entity.CavityPlate cavityMirror(GameTestHelper helper, BlockPos pos, Direction facing) {
+        return TestSupport.cavity(helper, pos, facing);
     }
 
     // covers: laser.cavity
@@ -759,14 +758,14 @@ public final class LaserTests {
         // Its south emitter, clicked on its top rather than its end, goes, as a Relay's does.
         BlockPos pos = new BlockPos(8, 2, 8);
         var mirror = cavityMirror(helper, pos, Direction.NORTH);
-        helper.assertTrue(mirror.outputFaces().contains(Direction.SOUTH), "it starts with a south output");
+        helper.assertTrue(mirror.host().hasEmitter(Direction.SOUTH), "it starts with a south output");
         var player = TestSupport.player(helper, new BlockPos(8, 2, 11));
         player.setShiftKeyDown(true);
         BlockPos at = helper.absolutePos(pos);
         var hit = new net.minecraft.world.phys.BlockHitResult(
                 net.minecraft.world.phys.Vec3.atLowerCornerOf(at).add(8 / 16.0, 11 / 16.0, 13 / 16.0), Direction.UP, at, false);
         helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, hit);
-        helper.assertFalse(mirror.outputFaces().contains(Direction.SOUTH), "the south emitter went");
+        helper.assertFalse(mirror.host().hasEmitter(Direction.SOUTH), "the south emitter went");
         helper.succeed();
     }
 
@@ -814,8 +813,7 @@ public final class LaserTests {
             a.fill(20_000);
         });
         helper.runAfterDelay(45, () -> {
-            helper.assertTrue(a.stored() + helper.getBlockEntity(new BlockPos(10, Y, 8),
-                    com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class).stored() < 20_000, "it leaks");
+            helper.assertTrue(a.stored() + TestSupport.cavityAt(helper, new BlockPos(10, Y, 8)).stored() < 20_000, "it leaks");
             var chunk = helper.getLevel().getChunkAt(helper.absolutePos(new BlockPos(5, Y, 8)));
             double before = chunk.getData(com.kadikular.quantimium.init.ModAttachments.CHUNK_FLUX).pendingFlux();
             helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
@@ -964,9 +962,9 @@ public final class LaserTests {
         emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
         var far = cavityMirror(helper, new BlockPos(9, Y, 8), Direction.WEST);
-        helper.assertFalse(far.toggleOutput(Direction.WEST), "never an output on its mirror");
-        far.toggleOutput(Direction.EAST);
-        far.toggleOutput(Direction.NORTH);
+        helper.assertFalse(far.host().addEmitter(Direction.WEST), "never an emitter on its mirror");
+        far.host().takePart(Direction.EAST);
+        far.host().addEmitter(Direction.NORTH);
         FoldCoreBlockEntity side = sink(helper, new BlockPos(9, Y, 5));
         helper.succeedWhen(() -> {
             helper.assertTrue(side.getEnergyStorage().getEnergyStored() > 0, "what it holds leaves by its side output");
@@ -985,7 +983,7 @@ public final class LaserTests {
         helper.setBlock(new BlockPos(13, Y, 8), ModBlocks.CREATIVE_ENERGY_VOID.get());
         var drain = helper.getBlockEntity(new BlockPos(13, Y, 8), com.kadikular.quantimium.block.entity.CreativeEnergyVoidBlockEntity.class);
         // Its one output, its back, turned off.
-        helper.getBlockEntity(new BlockPos(9, Y, 8), com.kadikular.quantimium.block.entity.CavityMirrorBlockEntity.class).toggleOutput(Direction.EAST);
+        TestSupport.cavityAt(helper, new BlockPos(9, Y, 8)).host().takePart(Direction.EAST);
         helper.runAfterDelay(45, () -> {
             helper.assertTrue(a.stored() > 0, "it fills");
             helper.assertValueEqual(drain.taking(), 0L, "and gives nothing out");
@@ -1218,6 +1216,39 @@ public final class LaserTests {
         helper.succeed();
     }
 
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void twoCavityPlatesOnOneFocusEachHoldTheirOwn(GameTestHelper helper) {
+        // Plates east and north of one focus: a flat mirror 3 blocks east, another 5 north. Each its own cavity.
+        var focus = focus(helper, new BlockPos(6, Y, 10), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.LASER);
+        focus.setPart(Direction.EAST, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.CAVITY);
+        focus.setPart(Direction.NORTH, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.CAVITY);
+        helper.setBlock(new BlockPos(10, Y, 10), mirror(Direction.DOWN, Direction.WEST, Direction.WEST));
+        helper.setBlock(new BlockPos(6, Y, 4), mirror(Direction.DOWN, Direction.SOUTH, Direction.SOUTH));
+        helper.runAfterDelay(25, () -> {
+            helper.assertValueEqual(focus.cavity(Direction.EAST).capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks east");
+            helper.assertValueEqual(focus.cavity(Direction.NORTH).capacity(), 5 * LaserTuning.CAVITY_FE_PER_BLOCK, "five blocks north");
+            helper.assertTrue(focus.buffers(), "it stores light");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.cavity
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void aCavityMirrorBlockBecomesALaserFocus(GameTestHelper helper) {
+        BlockPos at = new BlockPos(5, Y, 8);
+        helper.setBlock(at, ModBlocks.CAVITY_MIRROR.get().defaultBlockState().setValue(com.kadikular.quantimium.block.CavityMirrorBlock.FACING, Direction.EAST));
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(ModBlocks.LASER_FOCUS.get(), at);
+            var focus = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+            helper.assertTrue(focus.cavity(Direction.EAST) != null, "its plate faces east");
+            helper.assertValueEqual(focus.part(Direction.DOWN), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND, "on a stand");
+            helper.assertTrue(focus.hasEmitter(Direction.WEST), "its output on its back");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
     public static void onlyAFocusEmitterTakesALoss(GameTestHelper helper) {
@@ -1330,17 +1361,4 @@ public final class LaserTests {
         });
     }
 
-    // covers: laser.cavity
-    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
-    public static void anUnpairedCavityMirrorPassesLightOn(GameTestHelper helper) {
-        // Alone, light reaching it leaves by its front, as a Laser Mirror's does.
-        emitter(helper, new BlockPos(3, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
-        var mirror = cavityMirror(helper, new BlockPos(7, Y, 8), Direction.NORTH);
-        FoldCoreBlockEntity core = sink(helper, new BlockPos(7, Y, 3));
-        helper.succeedWhen(() -> {
-            helper.assertTrue(!mirror.paired(), "nothing faces it");
-            helper.assertTrue(core.getEnergyStorage().getEnergyStored() > 0, "light out of its front");
-            TestSupport.finishLasers(helper);
-        });
-    }
 }

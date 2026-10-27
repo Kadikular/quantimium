@@ -17,6 +17,7 @@ navigation:
 - <ItemLink id="quantimium:anomaly_fragment" />
 - <ItemLink id="quantimium:basic_decoherence_matrix" />
 - <ItemLink id="quantimium:block_filter_lens" />
+- <ItemLink id="quantimium:cavity_mirror" />
 - <ItemLink id="quantimium:clear_laser_focus" />
 - <ItemLink id="quantimium:crushing_lens" />
 - <ItemLink id="quantimium:damage_lens" />

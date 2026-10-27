@@ -254,6 +254,31 @@
       "x": 90,
       "y": 270
      }
+    },
+    "cavity": {
+     "north": {
+      "model": "quantimium:block/laser_focus_cavity"
+     },
+     "east": {
+      "model": "quantimium:block/laser_focus_cavity",
+      "y": 90
+     },
+     "south": {
+      "model": "quantimium:block/laser_focus_cavity",
+      "y": 180
+     },
+     "west": {
+      "model": "quantimium:block/laser_focus_cavity",
+      "y": 270
+     },
+     "up": {
+      "model": "quantimium:block/laser_focus_cavity",
+      "x": 270
+     },
+     "down": {
+      "model": "quantimium:block/laser_focus_cavity",
+      "x": 90
+     }
     }
    }
   }

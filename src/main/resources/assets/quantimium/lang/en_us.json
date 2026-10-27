@@ -931,6 +931,8 @@
   "message.quantimium.laser_splitter.plate": "Half-silvered: %s",
   "block.quantimium.laser_prism": "Laser Prism",
   "block.quantimium.cavity_mirror": "Cavity Mirror",
+  "item.quantimium.cavity_mirror": "Cavity Mirror",
+  "item.quantimium.cavity_mirror.tip": "Holds light that comes back to it. Gives it out by the focus's Emitters.",
   "block.quantimium.cavity_mirror.tip": "Stores light between itself and a mirror; gives up to %s FE/t (%s FE a block).",
   "block.quantimium.entangled_mirror": "Entangled Mirror",
   "block.quantimium.entangled_mirror.tip": "Draws the light of the laser block its Tesseract is bound to, any distance; %s%% lost.",

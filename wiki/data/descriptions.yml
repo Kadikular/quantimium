@@ -131,7 +131,7 @@ focus_emitter: "Light leaves a Laser Focus by it, through the one lens it holds,
 focus_cover: "Closes a face of a Laser Focus: no light gets in or out by it."
 laser_prism: "Sends the light that reaches it to each block it's linked to, in a straight line at any angle: splits and joins beams."
 laser_linker: "Links a Laser Prism to the blocks its light should reach."
-cavity_mirror: "Two facing each other across a clear gap hold light: a laser network's battery, which leaks a little."
+cavity_mirror: "A Laser Focus attachment: light out of it that comes back to it is held, a battery for a laser network."
 entangled_mirror: "Sends on the light of the laser block its Tesseract is bound to, any distance away."
 photodetector: "Light passes through it, and it gives a redstone signal for how much."
 lens_mount: "A holder for four lenses: light goes straight through it, through each in turn."

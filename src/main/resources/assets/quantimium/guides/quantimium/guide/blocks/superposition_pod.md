@@ -2,7 +2,7 @@
 navigation:
   title: Superposition Pod
   parent: blocks/index.md
-  position: 78
+  position: 77
   icon: quantimium:superposition_pod
 ---
 

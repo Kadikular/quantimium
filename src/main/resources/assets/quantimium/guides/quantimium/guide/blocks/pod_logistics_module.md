@@ -2,7 +2,7 @@
 navigation:
   title: Pod Logistics Module
   parent: blocks/index.md
-  position: 47
+  position: 46
   icon: quantimium:pod_logistics_module
 item_ids:
 - quantimium:pod_logistics_module

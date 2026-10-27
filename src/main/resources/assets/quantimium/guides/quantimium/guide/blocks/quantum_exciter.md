@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Exciter
   parent: blocks/index.md
-  position: 57
+  position: 56
   icon: quantimium:quantum_exciter
 item_ids:
 - quantimium:quantum_exciter

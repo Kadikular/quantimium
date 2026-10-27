@@ -809,6 +809,17 @@ def laser_focus_block() -> None:
         "cover": {side: dict({"model": "quantimium:block/laser_focus_cover"}, **r) for side, r in turns.items()},
     }
     parts.update(receptacles)
+    # A Cavity Mirror plate: the Splitter's half-silvered plate on the face, its see-through window, a rod back to the
+    # focus. Drawn on the north face.
+    cavity_plate = cube([3, 3, 0], [13, 13, 1], "#steel")
+    cavity_plate["faces"]["north"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+    cavity_plate["faces"]["south"] = {"texture": "#plate", "uv": [3, 3, 13, 13]}
+    window = cube([7, 7, 0], [9, 9, 1], "#focus")
+    for face in window["faces"].values():
+        face["uv"] = [7, 7, 9, 9]
+    write("laser_focus_cavity", [cavity_plate, window, cube([7, 7, 1], [9, 9, 6], "#steel")],
+          dict(t, plate="quantimium:block/laser_splitter_plate"), translucent=True)
+    parts["cavity"] = {side: dict({"model": "quantimium:block/laser_focus_cavity"}, **r) for side, r in turns.items()}
     model = {
         "type": "quantimium:laser_focus",
         "focus": {"model": "quantimium:block/laser_focus_core"},

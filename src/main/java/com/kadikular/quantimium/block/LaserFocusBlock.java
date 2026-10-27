@@ -53,6 +53,11 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
     private static final Map<Direction, AABB> STANDS = new EnumMap<>(Direction.class);
     private static final Map<Direction, AABB> POSTS = new EnumMap<>(Direction.class);
     private static final Map<Direction, AABB> NOZZLES = new EnumMap<>(Direction.class);
+    /** A Cavity Mirror plate: 10 across, a pixel thick, on the face. */
+    private static final Map<Direction, AABB> PLATES = new EnumMap<>(Map.of(
+            Direction.NORTH, new AABB(3, 3, 0, 13, 13, 1), Direction.SOUTH, new AABB(3, 3, 15, 13, 13, 16),
+            Direction.WEST, new AABB(0, 3, 3, 1, 13, 13), Direction.EAST, new AABB(15, 3, 3, 16, 13, 13),
+            Direction.DOWN, new AABB(3, 0, 3, 13, 1, 13), Direction.UP, new AABB(3, 15, 3, 13, 16, 13)));
 
     static {
         for (Direction face : Direction.values()) {
@@ -128,6 +133,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
             case NONE -> List.of();
             case STAND, RECEPTACLE -> List.of(STANDS.get(face), POSTS.get(face));
             case EMITTER, COVER -> List.of(NOZZLES.get(face));
+            case CAVITY -> List.of(PLATES.get(face), NOZZLES.get(face));
         };
     }
 
@@ -250,7 +256,8 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
     public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                                                          net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
         return level.isClientSide() ? createTickerHelper(type, com.kadikular.quantimium.init.ModBlockEntities.LASER_FOCUS_BE.get(),
-                (world, at, blockState, focus) -> focus.clientTick()) : null;
+                (world, at, blockState, focus) -> focus.clientTick())
+                : createTickerHelper(type, com.kadikular.quantimium.init.ModBlockEntities.LASER_FOCUS_BE.get(), (world, at, blockState, focus) -> focus.serverTick());
     }
 
     @Override

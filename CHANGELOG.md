@@ -14,6 +14,9 @@
 - **Logistics Receptacles are Laser Focus attachments**: several on one focus, each serving its own inventory. On a
   Clear Laser Focus light passes through as before. Receptacle blocks become a Clear Laser Focus with a Receptacle,
   settings kept.
+- **Cavity Mirrors are Laser Focus attachments**: several on one focus, each with its own cavity. What they hold
+  leaves by the focus's Emitters. Cavity Mirror blocks become a Laser Focus with a Stand, the plate and their
+  Emitters, holding what they held. An unpaired one no longer acts as a mirror.
 - Straight light no longer gets into a Laser Focus by a face with an Emitter (diagonal light still does).
 - **A Prism links to the face you click**: its light runs at any angle to the middle of that face and goes in by it,
   so you choose which side of a machine it charges. A laser block is still lit at its middle (its focus). Links made

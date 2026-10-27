@@ -2,7 +2,7 @@
 navigation:
   title: Entangled Mirror
   parent: blocks/index.md
-  position: 15
+  position: 14
   icon: quantimium:entangled_mirror
 item_ids:
 - quantimium:entangled_mirror

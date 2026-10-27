@@ -110,8 +110,6 @@ public class ClientModEvents {
                 com.kadikular.quantimium.client.renderer.SolarEmitterBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LASER_PRISM_BE.get(),
                 com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.CAVITY_MIRROR_BE.get(),
-                com.kadikular.quantimium.client.renderer.LaserBeamBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ENTANGLED_MIRROR_BE.get(),
                 com.kadikular.quantimium.client.renderer.EntangledMirrorBER::new);
         event.registerBlockEntityRenderer(ModBlockEntities.PHOTODETECTOR_BE.get(),

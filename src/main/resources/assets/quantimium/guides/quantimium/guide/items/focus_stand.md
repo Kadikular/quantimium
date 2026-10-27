@@ -2,7 +2,7 @@
 navigation:
   title: Focus Stand
   parent: items/index.md
-  position: 19
+  position: 20
   icon: quantimium:focus_stand
 item_ids:
 - quantimium:focus_stand

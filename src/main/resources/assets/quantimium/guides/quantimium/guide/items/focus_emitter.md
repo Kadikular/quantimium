@@ -2,7 +2,7 @@
 navigation:
   title: Focus Emitter
   parent: items/index.md
-  position: 18
+  position: 19
   icon: quantimium:focus_emitter
 item_ids:
 - quantimium:focus_emitter

@@ -18,7 +18,6 @@ navigation:
 - <ItemLink id="quantimium:basic_quantum_crafter" />
 - <ItemLink id="quantimium:budding_anomalite" />
 - <ItemLink id="quantimium:catalyst_bay" />
-- <ItemLink id="quantimium:cavity_mirror" />
 - <ItemLink id="quantimium:creative_energy_cell" />
 - <ItemLink id="quantimium:creative_energy_void" />
 - <ItemLink id="quantimium:decoherence_projector" />

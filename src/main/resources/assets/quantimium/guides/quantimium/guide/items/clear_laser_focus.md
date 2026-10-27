@@ -2,7 +2,7 @@
 navigation:
   title: Clear Laser Focus
   parent: items/index.md
-  position: 9
+  position: 10
   icon: quantimium:clear_laser_focus
 item_ids:
 - quantimium:clear_laser_focus

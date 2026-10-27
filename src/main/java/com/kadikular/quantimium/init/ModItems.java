@@ -248,8 +248,9 @@ public class ModItems {
     /** The Laser Relay, before it became a Laser Focus with a Stand and Emitters: placed, it becomes one. */
     public static final DeferredItem<BlockItem> LASER_RELAY_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_relay", ModBlocks.LASER_RELAY);
-    public static final DeferredItem<BlockItem> CAVITY_MIRROR_ITEM = ITEMS.registerItem(
-            "cavity_mirror", props -> new TooltipBlockItem(ModBlocks.CAVITY_MIRROR.get(), props.useBlockDescriptionPrefix()));
+    /** An attachment of a Laser Focus now; Cavity Mirror blocks from before become one on a Laser Focus. */
+    public static final DeferredItem<com.kadikular.quantimium.item.FocusPieceItem> CAVITY_MIRROR_ITEM = ITEMS.registerItem(
+            "cavity_mirror", props -> com.kadikular.quantimium.item.FocusPieceItem.attachment(props, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.CAVITY));
     public static final DeferredItem<BlockItem> ENTANGLED_MIRROR_ITEM = ITEMS.registerItem(
             "entangled_mirror", props -> new TooltipBlockItem(ModBlocks.ENTANGLED_MIRROR.get(), props.useBlockDescriptionPrefix()));
     public static final DeferredItem<BlockItem> PHOTODETECTOR_ITEM = ITEMS.registerSimpleBlockItem(

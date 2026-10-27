@@ -2,7 +2,7 @@
 navigation:
   title: Attunement Pillar
   parent: blocks/index.md
-  position: 61
+  position: 60
   icon: quantimium:quantum_foundry_pillar
 ---
 

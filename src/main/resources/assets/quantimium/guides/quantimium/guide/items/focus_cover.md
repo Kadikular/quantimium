@@ -2,7 +2,7 @@
 navigation:
   title: Focus Cover
   parent: items/index.md
-  position: 17
+  position: 18
   icon: quantimium:focus_cover
 item_ids:
 - quantimium:focus_cover

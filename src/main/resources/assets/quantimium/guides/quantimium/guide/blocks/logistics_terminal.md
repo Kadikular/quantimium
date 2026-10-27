@@ -2,7 +2,7 @@
 navigation:
   title: Logistics Terminal
   parent: blocks/index.md
-  position: 39
+  position: 38
   icon: quantimium:logistics_terminal
 item_ids:
 - quantimium:logistics_terminal
