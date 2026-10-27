@@ -166,6 +166,22 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.lens.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
+    public static void aRedstoneLensOnALogisticsBeamCountsItsNetwork(GameTestHelper helper) {
+        // The network's chest holds 10 dirt: a Redstone Lens on its light, set to 5 or more, lights the lamp past it.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT, 10));
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        ItemStack lens = new ItemStack(com.kadikular.quantimium.init.ModItems.REDSTONE_LENS.get());
+        lens.set(com.kadikular.quantimium.init.ModDataComponents.REDSTONE.get(), new com.kadikular.quantimium.laser.RedstoneSettings(
+                com.kadikular.quantimium.laser.RedstoneSettings.Mode.AT_LEAST, 15, new ItemStack(Items.DIRT), 5, true));
+        helper.getBlockEntity(new BlockPos(6, Y, 8), com.kadikular.quantimium.block.entity.LensMountBlockEntity.class).getLensSlots().setStackInSlot(0, lens);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.REDSTONE_LAMP);
+        helper.succeedWhen(() -> helper.assertTrue(helper.getBlockState(new BlockPos(10, Y, 8)).getValue(net.minecraft.world.level.block.RedstoneLampBlock.LIT),
+                "lit by the network's count"));
+    }
+
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 120)
     public static void aRequesterKeepingCountsTakesOnlyWhatItsShortOf(GameTestHelper helper) {
         // Keeping 10 cobblestone with 3 already there: it pulls 7 of storage's 64 and stops.

@@ -140,6 +140,13 @@ public final class LensAction {
         worldSteps = steps;
     }
 
+    /** The Logistics Controllers whose light carries it: a Redstone Lens on a logistics beam counts their networks. */
+    private java.util.Set<BlockPos> logistics = java.util.Set.of();
+
+    void logistics(java.util.Set<BlockPos> controllers) {
+        logistics = controllers;
+    }
+
     /**
      * What an action costs over its own price: twice, carried by Phantom light, on top of the light's upkeep for
      * the blocks it passes through.
@@ -270,7 +277,7 @@ public final class LensAction {
             case ALWAYS -> settings.level();
             case FORWARD -> forwarded(level, signal.from());
             default -> {
-                if (counted < 0 || Math.floorMod(key.hashCode() + now, COUNT_TICKS) == 0) counted = countUp(level, settings.item());
+                if (counted < 0 || Math.floorMod(key.hashCode() + now, COUNT_TICKS) == 0) counted = countUp(level, networks, settings.item());
                 yield settings.signalFor(counted);
             }
         };
@@ -317,10 +324,21 @@ public final class LensAction {
         return best;
     }
 
-    /** How many of {@code item} the Laser Ports up the light hold, with the inventories they move to and from. */
-    private long countUp(ServerLevel level, ItemStack item) {
+    /**
+     * How many of {@code item} there are up the light: on a logistics beam, in its controller's network; else in the
+     * Laser Ports up the light, with the inventories they move to and from.
+     */
+    private long countUp(ServerLevel level, LaserNetworks networks, ItemStack item) {
         if (item.isEmpty()) return 0;
         long held = 0;
+        if (!logistics.isEmpty()) {
+            var resource = net.neoforged.neoforge.transfer.item.ItemResource.of(item);
+            for (BlockPos at : logistics) {
+                LogisticsController controller = networks.controllerAt(at);
+                if (controller != null) held += controller.offers().real(resource);
+            }
+            return held;
+        }
         for (BlockPos port : new java.util.LinkedHashSet<>(java.util.stream.Stream.concat(collectors.stream(), senders.stream()).toList())) {
             if (level.isLoaded(port) && level.getBlockEntity(port) instanceof com.kadikular.quantimium.block.entity.LaserPortBlockEntity laserPort) {
                 held += laserPort.count(item);

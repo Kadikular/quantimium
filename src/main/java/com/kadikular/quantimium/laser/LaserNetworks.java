@@ -741,6 +741,7 @@ public final class LaserNetworks {
                                 sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
+                        action.logistics(light.logistics());
                         actions.put(key, action);
                     }
                 }
@@ -973,6 +974,12 @@ public final class LaserNetworks {
 
     /** How long a Redstone Lens's signal in the world outlasts the light holding it; for a while after a reload, longer. */
     private static final int SIGNAL_GRACE = 5;
+
+    /** The Logistics Controller at {@code pos}, if there's one in these networks. */
+    @Nullable
+    LogisticsController controllerAt(BlockPos pos) {
+        return nodes.get(pos) instanceof LogisticsController controller ? controller : null;
+    }
 
     /** A Redstone Lens's light holds its signal at {@code pos} this tick. */
     void holdSignal(BlockPos pos) {
