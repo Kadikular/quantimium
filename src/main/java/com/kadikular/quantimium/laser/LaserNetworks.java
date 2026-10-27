@@ -73,6 +73,8 @@ public final class LaserNetworks {
     /** Where each action's power comes from: its network and the routes from the sources paying for it. */
     private final Map<LensAction.Key, ActionSink> actionSinks = new HashMap<>();
     private record ActionSink(Network network, Sink sink) {}
+    /** Each Redstone Lens signal in the world (a LaserSignalBlock): when a lens's light last held it. */
+    private final Map<BlockPos, Long> signals = new HashMap<>();
     /** The light at each node's core, as last worked out: what leaves it, but for lenses on one face only. */
     private final Map<BlockPos, Light> lights = new HashMap<>();
     /** The light leaving each node by each face with lenses of its own, worked out as asked and kept till the next rebuild. */
@@ -94,7 +96,11 @@ public final class LaserNetworks {
 
     private LaserNetworks(ServerLevel level) {
         this.level = level;
+        this.born = level.getGameTime();
     }
+
+    /** When it was made: signals in the world are left alone a while after, till their lenses' light is traced again. */
+    private final long born;
 
     public static LaserNetworks of(ServerLevel level) {
         return LEVELS.computeIfAbsent(level, key -> new LaserNetworks(level));
@@ -569,7 +575,7 @@ public final class LaserNetworks {
             if (node == null || !node.relays() || !passes(node)) continue;
             Light in = incoming(node);
             if (in == null) continue;
-            Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses()) : in;
+            Light out = node.isolates() ? in.refocused().isolated() : node.refocuses() ? in.refocused().through(node.lenses(), at) : in;
             if (node.rifts()) out = out.throughRift();
             // One that gives out light of its own too (a Solar Emitter): its own joins what it passes on.
             if (node.generates()) out = Light.join(out, node.emits());
@@ -912,6 +918,24 @@ public final class LaserNetworks {
         return found;
     }
 
+    /** How long a Redstone Lens's signal in the world outlasts the light holding it; for a while after a reload, longer. */
+    private static final int SIGNAL_GRACE = 5;
+
+    /** A Redstone Lens's light holds its signal at {@code pos} this tick. */
+    void holdSignal(BlockPos pos) {
+        signals.put(pos.immutable(), level.getGameTime());
+    }
+
+    /** Whether a Redstone Lens's light still holds the signal at {@code pos}; one let go of is forgotten. */
+    public static boolean holdsSignal(ServerLevel level, BlockPos pos) {
+        LaserNetworks networks = of(level);
+        Long at = networks.signals.get(pos);
+        if (at == null && level.getGameTime() - networks.born <= 100) return true;
+        if (at != null && level.getGameTime() - at <= SIGNAL_GRACE) return true;
+        networks.signals.remove(pos);
+        return false;
+    }
+
     /**
      * The Logistics Controller whose light reaches the node at {@code pos}, or null for none, or for light from
      * two (which stops both).
@@ -1117,7 +1141,7 @@ public final class LaserNetworks {
         if (core == null) return null;
         List<LensUse> own = node.lensesFor(face);
         if (own.isEmpty()) return core;
-        return faceLights.computeIfAbsent(node.nodePos(), key -> new java.util.EnumMap<>(Direction.class)).computeIfAbsent(face, key -> core.through(own));
+        return faceLights.computeIfAbsent(node.nodePos(), key -> new java.util.EnumMap<>(Direction.class)).computeIfAbsent(face, key -> core.through(own, node.nodePos()));
     }
 
     /** The light {@code beam}, leaving the node at {@code pos}, carries: a linked beam, the node's core light. */
@@ -1258,20 +1282,22 @@ public final class LaserNetworks {
                         }
                     }
                 }
-                if (beam.end() == LaserBeam.End.SINK) {
+                // Past an Isolator Lens that stops power, light powers nothing, but goes on to pay for what it does.
+                boolean powers = light == null || !light.unpowered();
+                if (beam.end() == LaserBeam.End.SINK && powers) {
                     route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                 } else if (beam.end() == LaserBeam.End.NODE) {
                     LaserNode next = nodes.get(beam.hit());
                     // A cavity takes light from emitters, never from another cavity.
-                    if (next != null && next.buffers() && !source.buffers()) {
+                    if (powers && next != null && next.buffers() && !source.buffers()) {
                         route(sinks, beam.hit(), beam.arriving().getOpposite(), next, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that light charges (a Logistics Controller) is a block that takes power too, though never from itself.
-                    if (next != null && next.chargedByLight() && next != source) {
+                    if (powers && next != null && next.chargedByLight() && next != source) {
                         route(sinks, beam.hit(), beam.arriving().getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     // One that hands light on to a machine beside it (a Receptacle powering what it's on): that machine.
-                    for (net.minecraft.core.Direction feeds : next == null || next == source ? Set.<net.minecraft.core.Direction>of() : next.feedsAll()) {
+                    for (net.minecraft.core.Direction feeds : !powers || next == null || next == source ? Set.<net.minecraft.core.Direction>of() : next.feedsAll()) {
                         route(sinks, beam.hit().relative(feeds), feeds.getOpposite(), null, source.nodePos(), index, path, through.efficiency());
                     }
                     if (next != null && next.relays() && admits(next, beam) && seen.add(beam.hit())) {

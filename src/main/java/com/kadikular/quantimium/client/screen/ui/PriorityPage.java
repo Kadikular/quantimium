@@ -12,7 +12,8 @@ import java.util.function.Supplier;
 
 /**
  * The priority page every block with a priority opens from its rail: type the number, click a step, or
- * scroll over the page (shift for tens). Each change is sent as it's made.
+ * scroll over the page (shift for tens). Each change is sent as it's made. Also any other number set the same way
+ * (a Redstone Lens's count), with its own title, hint and lowest value.
  */
 public final class PriorityPage extends Page {
 
@@ -25,15 +26,23 @@ public final class PriorityPage extends Page {
 
     private final IntSupplier value;
     private final IntConsumer set;
+    private final int min;
     private final int max;
+    private final Component hint;
     /** What's being typed, or null while it shows the value as it is. */
     private String typed;
 
     public PriorityPage(Supplier<Rect2i> panel, Rail rail, IntSupplier value, IntConsumer set, int max) {
-        super(panel, rail, Component.translatable("gui.quantimium.priority"));
+        this(panel, rail, Component.translatable("gui.quantimium.priority"), Component.translatable("gui.quantimium.priority.hint"), value, set, -max, max);
+    }
+
+    public PriorityPage(Supplier<Rect2i> panel, Rail rail, Component title, Component hint, IntSupplier value, IntConsumer set, int min, int max) {
+        super(panel, rail, title);
         this.value = value;
         this.set = set;
+        this.min = min;
         this.max = max;
+        this.hint = hint;
     }
 
     private int fieldX() {
@@ -55,7 +64,7 @@ public final class PriorityPage extends Page {
     }
 
     private void change(int to) {
-        int clamped = Math.clamp(to, -max, max);
+        int clamped = Math.clamp(to, min, max);
         if (clamped != value.getAsInt()) set.accept(clamped);
     }
 
@@ -78,7 +87,6 @@ public final class PriorityPage extends Page {
             button(graphics, font, label, stepX(i), stepY(), STEP_WIDTH, STEP_HEIGHT, hovered);
         }
 
-        Component hint = Component.translatable("gui.quantimium.priority.hint");
         graphics.text(font, hint, left + (width - font.width(hint)) / 2, stepY() + STEP_HEIGHT + 10, rail.textDim(), false);
     }
 
@@ -108,7 +116,7 @@ public final class PriorityPage extends Page {
         String now = typed == null ? "" : typed;
         if (codepoint >= '0' && codepoint <= '9' && now.replace("-", "").length() < Integer.toString(max).length()) {
             typed = now + (char) codepoint;
-        } else if (codepoint == '-') {
+        } else if (codepoint == '-' && min < 0) {
             typed = now.startsWith("-") ? now.substring(1) : "-" + now;
         } else {
             return true;

@@ -57,6 +57,19 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         return new Light(range, boosts, streams, feeders, left, marks, Set.of(controller), voiding);
     }
 
+    /**
+     * A Redstone Lens's stream: its settings, and the block it's in ({@code from}: where a lens sending on its block's
+     * signal reads it; null where that isn't known).
+     */
+    public record Signal(RedstoneSettings settings, @Nullable BlockPos from) {}
+
+    /** Past an Isolator Lens that stops power: it powers nothing, though what it does is still paid for. */
+    public static final int UNPOWERED = 16;
+
+    public boolean unpowered() {
+        return (marks & UNPOWERED) != 0;
+    }
+
     /** Seen only with a wrench or the Linker in hand. */
     public static final int UV = 1;
     /** Passes through blocks: only laser blocks, and blocks that take power, stop it. */
@@ -109,9 +122,14 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
      * it works on).
      */
     public record Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, int interact,
-                         int fortune, List<Lens> steps, boolean inWorld, @Nullable LensFilter voids) {
+                         int fortune, List<Lens> steps, boolean inWorld, @Nullable LensFilter voids, @Nullable Signal signal) {
         public Stream {
             steps = List.copyOf(steps);
+        }
+
+        public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, int interact,
+                      int fortune, List<Lens> steps, boolean inWorld, @Nullable LensFilter voids) {
+            this(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids, null);
         }
 
         /** {@code voids}: a Void lens's list of what it destroys (only those, or all but those); null for everything. */
@@ -170,21 +188,21 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         }
 
         Stream paidBy(Set<BlockPos> payers) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids);
+            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids, signal);
         }
 
         Stream with(int modifiers, int amps, @Nullable LensFilter filter) {
-            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids);
+            return new Stream(action, modifiers, payers, amps, filter, speed, interact, fortune, steps, inWorld, voids, signal);
         }
 
         Stream faster() {
             return new Stream(action, modifiers | 1 << Lens.SPEED.ordinal(), payers, amps, filter, Math.min(LaserTuning.SPEED_LENSES, speed + 1), interact, fortune,
-                    steps, inWorld, voids);
+                    steps, inWorld, voids, signal);
         }
 
         Stream luckier() {
             return new Stream(action, modifiers | 1 << Lens.HARMONIC.ordinal(), payers, amps, filter, speed, interact,
-                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1), steps, inWorld, voids);
+                    Math.min(LaserTuning.HARMONIC_LENSES, fortune + 1), steps, inWorld, voids, signal);
         }
 
         /** Through an Isolator Lens: without the modifiers it stops. */
@@ -196,14 +214,14 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             List<Lens> keptSteps = steps.stream().filter(passes).toList();
             return new Stream(action, kept, payers,
                     passes.test(Lens.AMPLIFY) ? amps : 0, passes.test(Lens.FILTER) ? filter : null, passes.test(Lens.SPEED) ? speed : 0, interact,
-                    passes.test(Lens.HARMONIC) ? fortune : 0, keptSteps, inWorld, passes.test(Lens.VOID) ? voids : null);
+                    passes.test(Lens.HARMONIC) ? fortune : 0, keptSteps, inWorld, passes.test(Lens.VOID) ? voids : null, signal);
         }
 
         /** Through a Smelting or Crushing lens: one more step, after those it had, up to {@link LaserTuning#PROCESS_STEPS}. */
         Stream processedBy(Lens lens) {
             List<Lens> more = new java.util.ArrayList<>(steps);
             if (more.size() < LaserTuning.PROCESS_STEPS) more.add(lens);
-            return new Stream(action, modifiers | 1 << lens.ordinal(), payers, amps, filter, speed, interact, fortune, more, inWorld, voids);
+            return new Stream(action, modifiers | 1 << lens.ordinal(), payers, amps, filter, speed, interact, fortune, more, inWorld, voids, signal);
         }
     }
 
@@ -271,7 +289,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     streams.put(stream.action(), new Stream(stream.action(), had.modifiers() | stream.modifiers(), Set.copyOf(payers),
                             Math.max(had.amps(), stream.amps()), had.filter() != null ? had.filter() : stream.filter(),
                             Math.max(had.speed(), stream.speed()), had.interact() | stream.interact(), Math.max(had.fortune(), stream.fortune()),
-                            joinedSteps(had.steps(), stream.steps()), had.inWorld() || stream.inWorld(), had.voids() != null ? had.voids() : stream.voids()));
+                            joinedSteps(had.steps(), stream.steps()), had.inWorld() || stream.inWorld(), had.voids() != null ? had.voids() : stream.voids(),
+                            had.signal() != null ? had.signal() : stream.signal()));
                 }
             }
         }
@@ -283,7 +302,9 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         int left = a.left < 0 && b.left < 0 ? -1 : Math.max(a.reach(), b.reach());
         return new Light(Math.max(a.range, b.range), Math.max(a.boosts, b.boosts),
                 List.copyOf(streams.values()), Set.copyOf(feeders), left,
-                withSpeeds(a.marks | b.marks, Math.max(a.speeds(), b.speeds())), Set.copyOf(logistics), a.voiding != null ? a.voiding : b.voiding);
+                // Unpowered only if both sides are: power from either side reaches what it ends on.
+                withSpeeds((a.marks | b.marks) & ~UNPOWERED | a.marks & b.marks & UNPOWERED, Math.max(a.speeds(), b.speeds())), Set.copyOf(logistics),
+                a.voiding != null ? a.voiding : b.voiding);
     }
 
     /**
@@ -294,6 +315,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
      * doubles the reach; UV hides the light from here on.
      */
     public Light through(List<LensUse> lenses) {
+        return through(lenses, null);
+    }
+
+    /** As {@link #through(List)}, at {@code at}: where a Redstone Lens set to send on its block's signal reads it. */
+    public Light through(List<LensUse> lenses, @Nullable BlockPos at) {
         if (lenses.isEmpty()) return this;
         Map<Lens, Stream> streams = new EnumMap<>(Lens.class);
         for (Stream stream : this.streams) streams.put(stream.action(), stream);
@@ -308,6 +334,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 Stream made = new Stream(lens, had == null ? 0 : had.modifiers(), feeders, had == null ? 0 : had.amps(), had == null ? null : had.filter(),
                         had == null ? 0 : had.speed(), use.interact(), had == null ? 0 : had.fortune(), had == null ? List.of() : had.steps(), false,
                         had == null ? null : had.voids());
+                if (lens == Lens.REDSTONE) {
+                    made = new Stream(made.action(), made.modifiers(), made.payers(), made.amps(), made.filter(), made.speed(), made.interact(),
+                            made.fortune(), made.steps(), made.inWorld(), made.voids(),
+                            new Signal(use.redstone() == null ? RedstoneSettings.DEFAULT : use.redstone(), at));
+                }
                 // A Void lens met before stays on the light: this action gets it too.
                 streams.put(lens, voiding == null || made.has(Lens.VOID) ? made : voided(made, voiding));
             } else switch (lens) {
@@ -340,6 +371,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                     if (!passing.passes(Lens.PHANTOM)) marks &= ~PHANTOM;
                     if (!passing.passes(Lens.SPEED)) marks = withSpeeds(marks, 0);
                     if (!passing.logistics()) logistics = Set.of();
+                    if (!passing.power()) marks |= UNPOWERED;
                     if (!passing.passes(Lens.VOID)) voiding = null;
                 }
                 case SPEED -> {
@@ -374,7 +406,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
     private static Stream voided(Stream stream, LensUse use) {
         return new Stream(stream.action(), stream.modifiers() | 1 << Lens.VOID.ordinal(), stream.payers(), stream.amps(), stream.filter(),
                 stream.speed(), stream.interact() | use.interact() & LensUse.VOID_ALL, stream.fortune(), stream.steps(), stream.inWorld(),
-                voidList(use.filter()));
+                voidList(use.filter()), stream.signal());
     }
 
     /**
@@ -391,7 +423,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
                 acting.add(stream);
             } else if (stream.inWorld()) {
                 merged = merged == null ? stream : new Stream(merged.action(), merged.modifiers() | stream.modifiers(), merged.payers(), merged.amps(),
-                        merged.filter(), merged.speed(), merged.interact(), merged.fortune(), joinedSteps(merged.steps(), stream.steps()), true, merged.voids());
+                        merged.filter(), merged.speed(), merged.interact(), merged.fortune(), joinedSteps(merged.steps(), stream.steps()), true, merged.voids(),
+                        merged.signal());
             }
         }
         if (merged != null) acting.add(merged);
@@ -404,7 +437,7 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
 
     /** What an Isolator lets through: power, at the light's reach, and nothing it did; still in the mirror, if it was. */
     public Light isolated() {
-        return new Light(range, boosts, List.of(), feeders, left, marks & MIRRORED);
+        return new Light(range, boosts, List.of(), feeders, left, marks & (MIRRORED | UNPOWERED));
     }
 
     /** For the beam's look: a bit for each action it carries, and for each modifier any stream has. */
@@ -428,6 +461,8 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
         tag.putInt("Boosts", boosts);
         ListTag list = new ListTag();
         for (Stream stream : streams) {
+            // A Redstone Lens's signal isn't kept: its settings are the lens's, not the light's.
+            if (stream.signal() != null) continue;
             CompoundTag entry = new CompoundTag();
             entry.putInt("Action", stream.action().ordinal());
             entry.putInt("Modifiers", stream.modifiers());

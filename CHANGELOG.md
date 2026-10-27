@@ -4,6 +4,12 @@
 
 ### Lasers
 
+- **Redstone Lens** (action): gives what the beam ends on a redstone signal of 1 to 15. Set it to give it always, to
+  send on the signal its own block gets, or as a level emitter: while the Laser Ports up the light hold fewer than a
+  count of an item, or that many or more. A Laser Focus it reaches is switched as by a wired signal, and the light it
+  then passes on carries the signal further.
+- **Isolator Lens**: two new switches. It can stop power (nothing past it is charged, though what the light does
+  is still paid for), and pass a Redstone Lens's signal, which it stops by default.
 - **The Laser Focus replaces the Laser Relay.** Put a Laser Focus down, then put attachments on its faces: Focus
   Stands (as many as you like, or none and it floats), Focus Emitters (each with its lens and redstone setting) and
   Focus Covers. A **Clear Laser Focus** also lets light pass straight through. Attachments can go on a block with no

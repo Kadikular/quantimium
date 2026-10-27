@@ -734,6 +734,14 @@ public class ModBlocks {
     /** A Laser Focus and its attachments: never placed as itself, but by its pieces (see FocusPieceItem). */
     public static final DeferredBlock<Block> LASER_FOCUS = BLOCKS.register(
             "laser_focus", id -> new com.kadikular.quantimium.block.LaserFocusBlock(laserBlock(id, MapColor.QUARTZ).noOcclusion().dynamicShape()));
+    /** A Redstone Lens's signal, in the air in front of what its beam ends on; see LaserSignalBlock. */
+    public static final DeferredBlock<Block> LASER_SIGNAL = BLOCKS.register(
+            "laser_signal", id -> new com.kadikular.quantimium.block.LaserSignalBlock(BlockBehaviour.Properties.of()
+                    .setId(ResourceKey.create(Registries.BLOCK, id))
+                    .air()
+                    .replaceable()
+                    .noCollision()
+                    .noLootTable()));
     public static final DeferredBlock<Block> LASER_RELAY = BLOCKS.register(
             "laser_relay", id -> new LaserRelayBlock(laserBlock(id, MapColor.QUARTZ)));
 

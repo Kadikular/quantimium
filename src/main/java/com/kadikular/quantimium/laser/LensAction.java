@@ -3,6 +3,7 @@ package com.kadikular.quantimium.laser;
 import com.kadikular.quantimium.init.ModDamageTypes;
 import com.kadikular.quantimium.init.ModTags;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -241,10 +242,71 @@ public final class LensAction {
             case SMELT, CRUSH -> {
                 if (!mirrored()) processAt(level, networks);
             }
+            case REDSTONE -> {
+                if (!mirrored()) redstone(level, networks);
+            }
             // Phantom light's upkeep: so much a tick for each block it passes through, while it's lit.
             case PHANTOM -> want = cutCost = (long) solids * com.kadikular.quantimium.Config.phantomFePerBlock();
             default -> {}
         }
+    }
+
+    // ---- redstone ----
+
+    /** How often a Redstone Lens counts its item up the light. */
+    private static final int COUNT_TICKS = 20;
+    /** What it counted last, or -1 before it first has. */
+    private long counted = -1;
+
+    /**
+     * A Redstone Lens: the signal its settings give now, held on what the beam ends on: a Laser Focus is switched by it
+     * as by a wired signal; any other block gets it from the air in front of it, as from a lever.
+     */
+    private void redstone(ServerLevel level, LaserNetworks networks) {
+        Light.Signal signal = stream.signal();
+        if (signal == null || beam == null || beam.hit() == null) return;
+        RedstoneSettings settings = signal.settings();
+        int strength = switch (settings.mode()) {
+            case ALWAYS -> settings.level();
+            case FORWARD -> signal.from() == null || !level.isLoaded(signal.from()) ? 0 : level.getBestNeighborSignal(signal.from());
+            default -> {
+                if (counted < 0 || Math.floorMod(key.hashCode() + now, COUNT_TICKS) == 0) counted = countUp(level, settings.item());
+                yield settings.signalFor(counted);
+            }
+        };
+        BlockPos hit = beam.hit();
+        if (beam.end() == LaserBeam.End.NODE) {
+            if (strength > 0 && level.getBlockEntity(hit) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus) focus.lightSignal();
+            return;
+        }
+        Direction toward = beam.arriving();
+        BlockPos cell = hit.relative(toward.getOpposite());
+        if (!level.isLoaded(cell)) return;
+        BlockState there = level.getBlockState(cell);
+        boolean ours = there.is(com.kadikular.quantimium.init.ModBlocks.LASER_SIGNAL.get());
+        if (strength <= 0) {
+            if (ours && there.getValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING) == toward) level.removeBlock(cell, false);
+            return;
+        }
+        // Only into open air: never over a block, nor another lens's signal for another block.
+        if (!ours && !there.isAir() || ours && there.getValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING) != toward) return;
+        networks.holdSignal(cell);
+        BlockState want = com.kadikular.quantimium.init.ModBlocks.LASER_SIGNAL.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING, toward)
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.POWER, strength);
+        if (!there.equals(want)) level.setBlock(cell, want, Block.UPDATE_ALL);
+    }
+
+    /** How many of {@code item} the Laser Ports up the light hold, with the inventories they move to and from. */
+    private long countUp(ServerLevel level, ItemStack item) {
+        if (item.isEmpty()) return 0;
+        long held = 0;
+        for (BlockPos port : new java.util.LinkedHashSet<>(java.util.stream.Stream.concat(collectors.stream(), senders.stream()).toList())) {
+            if (level.isLoaded(port) && level.getBlockEntity(port) instanceof com.kadikular.quantimium.block.entity.LaserPortBlockEntity laserPort) {
+                held += laserPort.count(item);
+            }
+        }
+        return held;
     }
 
     // ---- hitting ----

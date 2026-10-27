@@ -134,6 +134,9 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     private RelayMode mode = RelayMode.IGNORED;
     /** Whether a redstone signal reaches it, as last told. */
     private boolean powered;
+    /** A wired signal beside it; and until when a Redstone Lens's light, reaching it, holds it switched as one would. */
+    private boolean wired;
+    private long litUntil = Long.MIN_VALUE;
     /** Whether it's joined to the laser network: only with a focus in it. */
     private boolean joined;
 
@@ -377,6 +380,20 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
 
     /** The block next to it changed: a signal arriving opens a pulse on each emitter waiting for one. */
     public void onSignal(boolean signal) {
+        wired = signal;
+        refreshSignal();
+    }
+
+    /** A Redstone Lens's light reached it this tick with a signal: it's switched as by a wired one, for two ticks more. */
+    public void lightSignal() {
+        if (level == null) return;
+        litUntil = level.getGameTime() + 2;
+        refreshSignal();
+    }
+
+    /** Whether it has a signal now, wired or by light; one arriving opens a pulse on each emitter waiting for one. */
+    private void refreshSignal() {
+        boolean signal = wired || level != null && level.getGameTime() <= litUntil;
         if (signal && !powered && level != null) {
             for (Direction face : emitters()) if (modeOf(face) == RelayMode.PULSE) pulses.put(face, level.getGameTime());
         }
@@ -482,6 +499,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
 
     /** On the server, each tick: its cavities. */
     public void serverTick() {
+        // A Redstone Lens's light gone: its signal goes.
+        if (powered && !wired && level != null && level.getGameTime() > litUntil) refreshSignal();
         if (cavities.isEmpty() || !(level instanceof net.minecraft.server.level.ServerLevel server)) return;
         boolean show = false;
         boolean before = buffers();
@@ -641,7 +660,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     public void onLoad() {
         super.onLoad();
         if (level != null && !level.isClientSide()) {
-            powered = level.hasNeighborSignal(worldPosition);
+            wired = level.hasNeighborSignal(worldPosition);
+            powered = wired;
             joined = false;
             join();
         }

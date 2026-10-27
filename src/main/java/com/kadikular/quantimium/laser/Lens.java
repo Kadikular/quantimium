@@ -51,7 +51,12 @@ public enum Lens {
     /** Heals what's living in the beam; hurts the undead, as Instant Health does. */
     HEAL(true, 0xFFFF7FB0),
     /** Freezes what the beam ends on: water to ice, snow on blocks, machines stopped; mobs held still, players chilled. */
-    FREEZE(true, 0xFF9FE8FF);
+    FREEZE(true, 0xFF9FE8FF),
+    /**
+     * Gives what the beam ends on a redstone signal: always, by a count of an item up the light, or the signal at the
+     * lens's own block, sent on. A Laser Focus it ends on is switched by it, as by a wired signal.
+     */
+    REDSTONE(true, 0xFFE02020);
 
     /** The lens item's translation key: its name, but for the two named for what they do to things. */
     public String itemKey() {

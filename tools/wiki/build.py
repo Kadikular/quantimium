@@ -77,7 +77,7 @@ def lang() -> Dict[str, str]:
 
 # Not real content: template leftovers, and blocks that only exist at runtime.
 # The Laser Relay became a Laser Focus with a Stand and Emitters: its block is only kept to turn old ones into that.
-HIDDEN = {"example_block", "example_item", "veiled_spawn_egg", "debug_field_emitter", "laser_relay"}
+HIDDEN = {"example_block", "example_item", "veiled_spawn_egg", "debug_field_emitter", "laser_relay", "laser_signal"}
 INTERNAL = {"quantum_containment", "stabilised_portal", "mirror_vine", "mirror_short_grass",
             "mirror_tall_grass", "mirror_dead_bush", "mirror_hanging_roots"}
 

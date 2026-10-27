@@ -414,6 +414,15 @@ def relay_emitter() -> Panel:
     return panel
 
 
+def redstone_lens() -> Panel:
+    """A Redstone Lens: the one item it counts, a ghost slot in the middle (RedstoneLensMenu.ITEM_X, ITEM_Y); its
+    mode, strength and count on the rail."""
+    panel = Panel(HIGH)
+    panel.slot(80, 35)
+    panel.player()
+    return panel
+
+
 def unfolding_array() -> Panel:
     """The Unfolding Array: three reagents down the left, the Sophon on the right in brackets, the
     readout and the Unfold button between them, and the progress along the bottom."""
@@ -521,6 +530,7 @@ def lens_settings() -> Panel:
 PANELS = {
     "lens_settings": lens_settings,
     "relay_emitter": relay_emitter,
+    "redstone_lens": redstone_lens,
     "quantum_crafter": lambda: crafter(MID, basic=False),
     "basic_quantum_crafter": lambda: crafter(LOW, basic=True),
     "quantum_simulator": simulator,
