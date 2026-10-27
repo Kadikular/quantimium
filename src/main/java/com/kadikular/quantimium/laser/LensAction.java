@@ -1301,9 +1301,14 @@ public final class LensAction {
      */
     private boolean roomForDrops(ServerLevel level, LaserNetworks networks, BlockPos pos, boolean fresh) {
         // All of it at once: two stacks of seeds each fitting alone needn't both fit. What a Void lens destroys when it
-        // won't fit needs no room.
+        // won't fit needs no room. Worked out again only when the drops are rolled again (each second, or another block).
+        List<ItemStack> drops = likelyDrops(level, pos);
+        if (drops == carriedFrom && stream == carriedFor) {
+            unfit = carriedMemo;
+            return roomForCarried(networks, carriedMemo, fresh);
+        }
         List<ItemStack> carried = new ArrayList<>();
-        for (ItemStack drop : likelyDrops(level, pos)) {
+        for (ItemStack drop : drops) {
             for (ItemStack stack : processed(level, drop)) {
                 if (stream.voids(stack)) continue;
                 boolean merged = false;
@@ -1318,6 +1323,21 @@ public final class LensAction {
             }
         }
         unfit = carried;
+        carriedFrom = drops;
+        carriedFor = stream;
+        carriedMemo = carried;
+        return roomForCarried(networks, carried, fresh);
+    }
+
+    /** What roomForDrops last worked out a block's drops come to, carried; from which roll, and for which stream. */
+    private List<ItemStack> carriedMemo = List.of();
+    @Nullable
+    private List<ItemStack> carriedFrom;
+    @Nullable
+    private Light.Stream carriedFor;
+
+    /** Whether the collecting Laser Ports would take all of {@code carried} together. */
+    private boolean roomForCarried(LaserNetworks networks, List<ItemStack> carried, boolean fresh) {
         if (carried.size() <= 1) return carried.isEmpty() || roomFor(networks, carried.getFirst(), fresh);
         // More than one thing: they're tried together, so two don't count on the same empty slot.
         if (now - roomAsked >= 10) {

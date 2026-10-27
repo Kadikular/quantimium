@@ -1367,6 +1367,8 @@ public final class LaserNetworks {
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
         for (Network network : networks) refill(network);
+        // Filling the sources is power's time, not the first lens's.
+        if (profile != null) mark = profile.phase(LaserProfile.Phase.POWER, mark);
         if (profile == null) {
             for (LensAction action : actions.values()) action.act(level, this);
         } else {
@@ -1635,6 +1637,9 @@ public final class LaserNetworks {
         if (sink.buffer() != null) return Math.min(cap, sink.buffer().room());
         EnergyHandler handler = sink.energy() == null ? null : sink.energy().getCapability();
         if (handler == null) return 0;
+        // A full block costs no transaction (each one opened walks the stack): most machines are full most ticks.
+        long capacity = handler.getCapacityAsLong();
+        if (capacity > 0 && handler.getAmountAsLong() >= capacity) return 0;
         try (Transaction simulation = Transaction.openRoot()) {
             return handler.insert(cap, simulation);
         }
