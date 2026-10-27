@@ -17,17 +17,18 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * A Redstone Lens in hand, in a mount or in an emitter: its mode, its signal's strength, and for a count the item (a
- * ghost entry) and how many. Changes go straight onto the lens. Layout: tools/gui_panels.py redstone_lens.
+ * A Redstone Lens in hand, in a mount or in an emitter: its mode, its signal's strength, strong or weak, and for a
+ * count the item (a ghost entry) and how many. Changes go straight onto the lens. Layout: tools/gui_panels.py redstone_lens.
  */
 public class RedstoneLensMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
     public static final int BUTTON_MODE = 0;
     public static final int BUTTON_STRONGER = 1;
     public static final int BUTTON_WEAKER = 2;
+    public static final int BUTTON_STRONG = 3;
     /** Sets the count outright: the count rides in the id, above this. */
     public static final int BUTTON_COUNT = 1_000_000;
-    public static final int ITEM_X = 80;
+    public static final int ITEM_X = 19;
     public static final int ITEM_Y = 35;
 
     private final Supplier<ItemStack> lens;
@@ -117,6 +118,7 @@ public class RedstoneLensMenu extends AbstractContainerMenu implements GhostFilt
             case BUTTON_MODE -> set(settings.withMode(settings.mode().next()));
             case BUTTON_STRONGER -> set(settings.withLevel(settings.level() % 15 + 1));
             case BUTTON_WEAKER -> set(settings.withLevel((settings.level() + 13) % 15 + 1));
+            case BUTTON_STRONG -> set(settings.withStrong(!settings.strong()));
             default -> {
                 return false;
             }

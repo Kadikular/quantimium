@@ -3,26 +3,40 @@ package com.kadikular.quantimium.client.screen;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.client.screen.ui.GuiIcon;
 import com.kadikular.quantimium.client.screen.ui.PanelTheme;
-import com.kadikular.quantimium.client.screen.ui.PriorityPage;
-import com.kadikular.quantimium.item.RedstoneLensItem;
+import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
 import com.kadikular.quantimium.laser.RedstoneSettings;
 import com.kadikular.quantimium.menu.RedstoneLensMenu;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
 /**
  * A Redstone Lens's settings: on the rail its mode (click to cycle), its signal's strength (click, right-click or
- * scroll) and for a count how many (its page, as a priority's); the item it counts in the panel's one slot.
+ * scroll) and whether it's strong or weak; on the panel the item it counts and how many, with -64, -1, +1 and +64
+ * buttons beside the count (shift: ten times as many), dimmed unless it counts.
  */
 public class RedstoneLensScreen extends QuantumMachineScreen<RedstoneLensMenu> implements GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/redstone_lens.png");
     private static final Identifier ALWAYS = Identifier.withDefaultNamespace("textures/block/redstone_torch.png");
     private static final Identifier FORWARD = Identifier.withDefaultNamespace("textures/item/repeater.png");
+    private static final Identifier STRONG = Identifier.withDefaultNamespace("textures/block/redstone_block.png");
+    private static final Identifier WEAK = Identifier.withDefaultNamespace("textures/item/redstone.png");
+    /** The count's buttons: what each adds, and where (the count's well is between them, tools/gui_panels.py). */
+    private static final int[] STEPS = {-64, -1, 1, 64};
+    private static final int[] STEP_X = {41, 63, 121, 137};
+    private static final int[] STEP_W = {20, 14, 14, 20};
+    private static final int COUNT_X = 79;
+    private static final int COUNT_W = 40;
+    private static final int ROW_Y = 35;
+    private static final int ROW_H = 16;
 
     public RedstoneLensScreen(RedstoneLensMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -55,23 +69,50 @@ public class RedstoneLensScreen extends QuantumMachineScreen<RedstoneLensMenu> i
                         }),
                 // Its strength, on the tab: click or scroll up for more, right-click or scroll down for less.
                 Tab.of(() -> Component.literal(Integer.toString(settings().level())), () -> press(RedstoneLensMenu.BUTTON_STRONGER),
-                                () -> List.of(Component.translatable("gui.quantimium.redstone_lens.level", settings().level()),
-                                        hint("gui.quantimium.redstone_lens.level.hint")))
+                                () -> List.of(Component.translatable("gui.quantimium.redstone_lens.level", settings().level())))
                         .onRightClick(() -> press(RedstoneLensMenu.BUTTON_WEAKER))
                         .onScroll(step -> press(step > 0 ? RedstoneLensMenu.BUTTON_STRONGER : RedstoneLensMenu.BUTTON_WEAKER))
                         .visible(() -> settings().mode() != RedstoneSettings.Mode.FORWARD),
-                Tab.glyph(() -> GuiIcon.COUNT, () -> openOverlay(new PriorityPage(this::panelArea, rail(),
-                                        Component.translatable("gui.quantimium.redstone_lens.count.title"),
-                                        Component.translatable("gui.quantimium.redstone_lens.count.hint"),
-                                        () -> settings().count(), this::setCount, 0, RedstoneSettings.MAX_COUNT)),
-                                () -> List.of(Component.translatable("gui.quantimium.redstone_lens.count", settings().count())))
-                        .page(RailSlot.PRIORITY, () -> activeOverlay() instanceof PriorityPage, this::closeOverlay)
-                        .onScroll(step -> setCount(settings().count() + step * (minecraft != null && minecraft.hasShiftDown() ? 10 : 1)))
-                        .visible(() -> settings().mode().counts()));
+                Tab.of(Component::empty, () -> press(RedstoneLensMenu.BUTTON_STRONG),
+                                () -> List.of(Component.translatable(settings().strong() ? "gui.quantimium.redstone_lens.strong" : "gui.quantimium.redstone_lens.weak")))
+                        .texture(() -> settings().strong() ? STRONG : WEAK));
     }
 
-    private void setCount(int count) {
-        press(RedstoneLensMenu.BUTTON_COUNT + Math.clamp(count, 0, RedstoneSettings.MAX_COUNT));
+    @Override
+    protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
+        boolean counts = settings().mode().counts();
+        for (int i = 0; i < STEPS.length; i++) {
+            int x = leftPos + STEP_X[i];
+            int y = topPos + ROW_Y;
+            boolean hovered = counts && QuantumWidgets.hit(mouseX, mouseY, x, y, STEP_W[i], ROW_H);
+            rail().button(graphics, x, y, STEP_W[i], ROW_H, false, hovered);
+            String label = (STEPS[i] > 0 ? "+" : "") + STEPS[i];
+            graphics.text(font, label, x + (STEP_W[i] - font.width(label)) / 2, y + 4, counts ? rail().text() : rail().textDim(), false);
+        }
+        String count = Integer.toString(settings().count());
+        graphics.text(font, count, leftPos + COUNT_X + (COUNT_W - font.width(count)) / 2, topPos + ROW_Y + 4,
+                counts ? rail().text() : rail().textDim(), false);
+        // Not counting: the item's slot is dimmed with the buttons.
+        if (!counts) {
+            int x = leftPos + RedstoneLensMenu.ITEM_X;
+            int y = topPos + RedstoneLensMenu.ITEM_Y;
+            graphics.fill(x, y, x + 16, y + 16, 0x80000000);
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (activeOverlay() == null && event.button() == 0 && settings().mode().counts()) {
+            for (int i = 0; i < STEPS.length; i++) {
+                if (QuantumWidgets.hit(event.x(), event.y(), leftPos + STEP_X[i], topPos + ROW_Y, STEP_W[i], ROW_H)) {
+                    int step = STEPS[i] * (event.hasShiftDown() ? 10 : 1);
+                    press(RedstoneLensMenu.BUTTON_COUNT + (int) Math.clamp((long) settings().count() + step, 0, RedstoneSettings.MAX_COUNT));
+                    if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void press(int button) {
@@ -119,14 +160,13 @@ public class RedstoneLensScreen extends QuantumMachineScreen<RedstoneLensMenu> i
         return 0;
     }
 
-    /** What it's set to, on the title strip. */
     @Override
     protected Component statusLabel() {
-        return RedstoneLensItem.describe(settings());
+        return Component.empty();
     }
 
     @Override
     protected List<Component> statusTooltip() {
-        return List.of(RedstoneLensItem.describe(settings()));
+        return List.of();
     }
 }

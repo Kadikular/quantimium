@@ -415,10 +415,11 @@ def relay_emitter() -> Panel:
 
 
 def redstone_lens() -> Panel:
-    """A Redstone Lens: the one item it counts, a ghost slot in the middle (RedstoneLensMenu.ITEM_X, ITEM_Y); its
-    mode, strength and count on the rail."""
+    """A Redstone Lens: the item it counts in a ghost slot (RedstoneLensMenu.ITEM_X, ITEM_Y), then its count in a well
+    between the -64, -1 and +1, +64 buttons the screen draws (RedstoneLensScreen); mode and strength on the rail."""
     panel = Panel(HIGH)
-    panel.slot(80, 35)
+    panel.slot(19, 35)
+    panel.well(79, 35, 40, 16)
     panel.player()
     return panel
 

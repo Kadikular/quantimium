@@ -20,7 +20,7 @@ import net.minecraft.world.level.redstone.Orientation;
 
 /**
  * Where a Redstone Lens's beam ends on a block: the air in front of it, giving that block (and only it) a strong
- * signal, as a lever on it would. Unseen and air to everything else. It goes when no Redstone Lens's light holds it
+ * signal, as a lever on it would (or weak, as dust would). Unseen and air to everything else. It goes when no Redstone Lens's light holds it
  * (checked twice a second, so one left by an unloaded or broken beam clears itself).
  */
 public class LaserSignalBlock extends Block {
@@ -29,11 +29,14 @@ public class LaserSignalBlock extends Block {
     /** Towards the block it powers. */
     public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
     public static final IntegerProperty POWER = BlockStateProperties.POWER;
+    /** Strongly, through the block it powers (as a lever); or weakly, that block only (as dust). */
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty STRONG =
+            net.minecraft.world.level.block.state.properties.BooleanProperty.create("strong");
     private static final int CHECK_TICKS = 10;
 
     public LaserSignalBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWER, 15));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWER, 15).setValue(STRONG, true));
     }
 
     @Override
@@ -43,7 +46,7 @@ public class LaserSignalBlock extends Block {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, POWER);
+        builder.add(FACING, POWER, STRONG);
     }
 
     @Override
@@ -63,7 +66,7 @@ public class LaserSignalBlock extends Block {
 
     @Override
     protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        return getSignal(state, level, pos, direction);
+        return state.getValue(STRONG) ? getSignal(state, level, pos, direction) : 0;
     }
 
     @Override

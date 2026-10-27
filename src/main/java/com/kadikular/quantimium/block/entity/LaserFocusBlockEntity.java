@@ -567,7 +567,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
 
     /**
      * Out of each emitter that's on (with no light coming, all of them: where light would go); a Clear Laser Focus also
-     * lets light straight on out of the opposite face, if that's open.
+     * lets light straight on out of the opposite face, unless an Emitter, Stand, Cover or Receptacle is on it.
      */
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {
@@ -575,7 +575,12 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         Set<Direction> out = EnumSet.noneOf(Direction.class);
         for (Direction face : emitters()) if (arriving.isEmpty() || on(face)) out.add(face);
         Set<Direction> through = EnumSet.noneOf(Direction.class);
-        if (core == Core.CLEAR) for (Direction travel : arriving) if (part(travel).open()) through.add(travel);
+        // Straight on through, out of the far face unless something's on it: an Emitter there sends its own light.
+        if (core == Core.CLEAR) {
+            for (Direction travel : arriving) {
+                if (part(travel) == Part.NONE || part(travel) == Part.CAVITY) through.add(travel);
+            }
+        }
         passing = through;
         out.addAll(through);
         return out;

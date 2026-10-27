@@ -268,7 +268,7 @@ public final class LensAction {
         RedstoneSettings settings = signal.settings();
         int strength = switch (settings.mode()) {
             case ALWAYS -> settings.level();
-            case FORWARD -> signal.from() == null || !level.isLoaded(signal.from()) ? 0 : level.getBestNeighborSignal(signal.from());
+            case FORWARD -> forwarded(level, signal.from());
             default -> {
                 if (counted < 0 || Math.floorMod(key.hashCode() + now, COUNT_TICKS) == 0) counted = countUp(level, settings.item());
                 yield settings.signalFor(counted);
@@ -282,6 +282,11 @@ public final class LensAction {
         Direction toward = beam.arriving();
         BlockPos cell = hit.relative(toward.getOpposite());
         if (!level.isLoaded(cell)) return;
+        // Right against the laser block the beam leaves: that block gives the signal itself.
+        if (cell.equals(key.node())) {
+            if (strength > 0) networks.holdSignal(cell, toward, strength, settings.strong());
+            return;
+        }
         BlockState there = level.getBlockState(cell);
         boolean ours = there.is(com.kadikular.quantimium.init.ModBlocks.LASER_SIGNAL.get());
         if (strength <= 0) {
@@ -293,8 +298,23 @@ public final class LensAction {
         networks.holdSignal(cell);
         BlockState want = com.kadikular.quantimium.init.ModBlocks.LASER_SIGNAL.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.LaserSignalBlock.FACING, toward)
-                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.POWER, strength);
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.POWER, strength)
+                .setValue(com.kadikular.quantimium.block.LaserSignalBlock.STRONG, settings.strong());
         if (!there.equals(want)) level.setBlock(cell, want, Block.UPDATE_ALL);
+    }
+
+    /**
+     * The signal a Redstone Lens sending on its block's signal reads at {@code from}: the strongest reaching it, but
+     * none it gives itself (a lens right against what it powers would hold its own signal on for ever).
+     */
+    private int forwarded(ServerLevel level, @Nullable BlockPos from) {
+        if (from == null || !level.isLoaded(from)) return 0;
+        int best = 0;
+        for (Direction side : Direction.values()) {
+            if (from.equals(key.node()) && beam != null && beam.hit() != null && from.relative(side).equals(beam.hit())) continue;
+            best = Math.max(best, level.getSignal(from.relative(side), side));
+        }
+        return best;
     }
 
     /** How many of {@code item} the Laser Ports up the light hold, with the inventories they move to and from. */

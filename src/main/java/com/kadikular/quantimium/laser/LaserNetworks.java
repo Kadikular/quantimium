@@ -918,6 +918,59 @@ public final class LaserNetworks {
         return found;
     }
 
+    /**
+     * Redstone Lens signals a laser block gives itself, where the beam leaving it ends on the block right beside it
+     * (no air between for a LaserSignalBlock): by block, then by the way towards what it powers.
+     */
+    private final Map<BlockPos, Map<Direction, Held>> held = new HashMap<>();
+    private record Held(int power, boolean strong, long at) {}
+
+    /** A Redstone Lens's light gives the block beside {@code pos}, towards {@code toward}, this signal this tick. */
+    void holdSignal(BlockPos pos, Direction toward, int power, boolean strong) {
+        Map<Direction, Held> here = held.computeIfAbsent(pos.immutable(), key -> new java.util.EnumMap<>(Direction.class));
+        Held was = here.put(toward, new Held(power, strong, level.getGameTime()));
+        if (was == null || was.power() != power || was.strong() != strong) signalChanged(pos, toward);
+    }
+
+    /** The signal changed: the block it powers and, strongly powered, that block's neighbours, see it. */
+    private void signalChanged(BlockPos pos, Direction toward) {
+        net.minecraft.world.level.block.Block block = level.getBlockState(pos).getBlock();
+        level.updateNeighborsAt(pos, block);
+        level.updateNeighborsAt(pos.relative(toward), block);
+    }
+
+    /** Signals no light holds any more go, and what they powered sees it. */
+    private void letGoOfSignals() {
+        if (held.isEmpty()) return;
+        long now = level.getGameTime();
+        List<Map.Entry<BlockPos, Direction>> gone = new ArrayList<>();
+        held.forEach((pos, ways) -> ways.forEach((toward, signal) -> {
+            if (now - signal.at() > SIGNAL_GRACE) gone.add(Map.entry(pos, toward));
+        }));
+        // Told after, not while looking: what it powered may ask again as it's told.
+        for (Map.Entry<BlockPos, Direction> signal : gone) {
+            Map<Direction, Held> ways = held.get(signal.getKey());
+            ways.remove(signal.getValue());
+            if (ways.isEmpty()) held.remove(signal.getKey());
+            signalChanged(signal.getKey(), signal.getValue());
+        }
+    }
+
+    /**
+     * The signal a laser block at {@code pos} gives a block beside it, as
+     * {@link net.minecraft.world.level.block.state.BlockBehaviour#getSignal} asks: {@code direction} points from the
+     * asking block to this one. {@code direct}: only a strong signal counts.
+     */
+    public static int heldSignal(net.minecraft.world.level.BlockGetter getter, BlockPos pos, Direction direction, boolean direct) {
+        if (!(getter instanceof ServerLevel server)) return 0;
+        LaserNetworks networks = LEVELS.get(server);
+        if (networks == null || networks.held.isEmpty()) return 0;
+        Map<Direction, Held> here = networks.held.get(pos);
+        Held signal = here == null ? null : here.get(direction.getOpposite());
+        if (signal == null || direct && !signal.strong()) return 0;
+        return signal.power();
+    }
+
     /** How long a Redstone Lens's signal in the world outlasts the light holding it; for a while after a reload, longer. */
     private static final int SIGNAL_GRACE = 5;
 
@@ -1383,6 +1436,7 @@ public final class LaserNetworks {
         // Each logistics network moves once a second, in its own slice of it, not all in one tick.
         Logistics.run(level, nodes.values(), lights, (int) Math.floorMod(time, SETTLE_TICKS));
         if (time % 2 == 0) showAreaWork();
+        letGoOfSignals();
         if (profile != null) mark = profile.phase(LaserProfile.Phase.LOGISTICS, mark);
         passing.clear();
         for (Network network : networks) move(network);

@@ -1129,6 +1129,23 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aClearFocusPassesNoLightOutThroughAnEmitter(GameTestHelper helper) {
+        // A Clear Laser Focus with an Emitter on its far face, switched off (it listens for a signal, and has none): no
+        // light passes straight through and out of it.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var clear = focus(helper, new BlockPos(5, Y, 8), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.CLEAR);
+        clear.addEmitter(Direction.EAST);
+        clear.cycleMode();
+        var beyond = sink(helper, new BlockPos(9, Y, 8));
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(beyond.getEnergyStorage().getEnergyStored(), 0, "stopped at the emitter");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 140)
     public static void straightLightDoesNotEnterByAnEmitter(GameTestHelper helper) {
         // Two relays lit from the west, each sending light south: one with a bare west face, one with an Emitter there.

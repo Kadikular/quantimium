@@ -82,6 +82,43 @@ public final class RedstoneLensTests {
 
     // covers: laser.lens.redstone
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aRedstoneLensRightAgainstALampLightsIt(GameTestHelper helper) {
+        // No air between the mount and the lamp: the mount gives the signal itself.
+        emitter(helper, new BlockPos(1, Y, 8));
+        mount(helper, new BlockPos(3, Y, 8), redstone(RedstoneSettings.DEFAULT));
+        BlockPos lamp = lamp(helper, new BlockPos(4, Y, 8));
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(lit(helper, lamp), "lit by the mount beside it");
+            helper.setBlock(new BlockPos(3, Y, 8), Blocks.STONE);
+        });
+        helper.runAfterDelay(60, () -> {
+            helper.assertFalse(lit(helper, lamp), "dark once the mount's gone");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void aStrongSignalPowersThroughABlockAndAWeakOneDoesnt(GameTestHelper helper) {
+        // Into stone with a lamp beyond: a strong signal powers the stone, which lights the lamp; a weak one doesn't.
+        for (boolean strong : new boolean[] {true, false}) {
+            int z = strong ? 4 : 10;
+            emitter(helper, new BlockPos(1, Y, z));
+            mount(helper, new BlockPos(3, Y, z), redstone(RedstoneSettings.DEFAULT.withStrong(strong)));
+            helper.setBlock(new BlockPos(7, Y, z), Blocks.STONE);
+            lamp(helper, new BlockPos(8, Y, z));
+        }
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(lit(helper, new BlockPos(8, Y, 4)), "strong: through the stone");
+            helper.assertFalse(lit(helper, new BlockPos(8, Y, 10)), "weak: the stone only");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.lens.redstone
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
     public static void aRedstoneLensSwitchesAFocusDownTheLight(GameTestHelper helper) {
         // Two Laser Focuses whose emitter listens for a signal: the one a Redstone Lens's light reaches lets light on.
         for (int z : new int[] {2, 9}) {
@@ -112,7 +149,7 @@ public final class RedstoneLensTests {
             emitter(helper, new BlockPos(1, Y, z));
             helper.setBlock(new BlockPos(3, Y, z), ModBlocks.LASER_PORT.get().defaultBlockState().setValue(LaserPortBlock.FACING, Direction.EAST));
             helper.getBlockEntity(new BlockPos(3, Y, z), LaserPortBlockEntity.class).getItems().setStackInSlot(0, new ItemStack(Items.DIRT, 10));
-            mount(helper, new BlockPos(5, Y, z), redstone(new RedstoneSettings(mode, 15, new ItemStack(Items.DIRT), 5)));
+            mount(helper, new BlockPos(5, Y, z), redstone(new RedstoneSettings(mode, 15, new ItemStack(Items.DIRT), 5, true)));
             lamp(helper, new BlockPos(9, Y, z));
         }
         helper.runAfterDelay(60, () -> {
