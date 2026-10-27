@@ -349,7 +349,12 @@ public final class LaserNetworks {
      * A beam on a sink's path: its node, which of the node's beams, the relay it leaves from (null at the
      * source), and where what it carries and what the relay loses are counted.
      */
-    private record Hop(BlockPos node, int beam, @Nullable LaserNode relay, long[] carried, long @Nullable [] lost) {}
+    /**
+     * One beam of a route: {@code keeps}, what's left of its power after the emitter it leaves by and the mirrors it
+     * bounces off, and {@code spill}, where that loss is counted (null for none), both as the route was worked out.
+     */
+    private record Hop(BlockPos node, int beam, @Nullable LaserNode relay, long[] carried, long @Nullable [] lost, double keeps,
+                       long @Nullable [] spill) {}
 
     /** For tests: how many times it's rebuilt, so a test can see it settle. */
     private long rebuilds;
@@ -1266,6 +1271,9 @@ public final class LaserNetworks {
      * Whether light gets through a relay: it's switched on, or it's a Relay with every emitter off and an Entangled
      * Mirror drawing on it, which gets the light all the same.
      */
+    /** Whether each relay lets light through, as asked while charging this tick: each route asks of every relay on it. */
+    private final Map<LaserNode, Boolean> passesMemo = new java.util.IdentityHashMap<>();
+
     private boolean passes(LaserNode node) {
         return node.enabled() || node.passesEntangled() && !drawing(node.nodePos()).isEmpty();
     }
@@ -1324,11 +1332,13 @@ public final class LaserNetworks {
             for (int i = 0; i < out.size(); i++) {
                 LaserBeam beam = out.get(i);
                 // What its bounces off mirrors leave of what it carries.
-                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * kept(at, beam));
+                double keeps = kept(at, beam);
+                Visit through = new Visit(visit.node(), visit.path(), visit.relays(), visit.efficiency() * keeps);
                 List<Hop> path = new ArrayList<>(visit.path());
                 LaserNode from = relay ? nodes.get(visit.node()) : null;
                 path.add(new Hop(visit.node(), i, from, carried.get(visit.node()),
-                        from == null ? null : lost.computeIfAbsent(visit.node(), key -> new long[1])));
+                        from == null ? null : lost.computeIfAbsent(visit.node(), key -> new long[1]), keeps,
+                        keeps < 1.0 ? lost.computeIfAbsent(visit.node(), key -> new long[1]) : null));
                 // Each action this beam carries is paid for by its stream's sources, as a block's power is.
                 Light light = lightOf(visit.node(), beam);
                 if (light != null) {
@@ -1426,6 +1436,7 @@ public final class LaserNetworks {
         if (profile != null) mark = profile.phase(LaserProfile.Phase.BEAMS, mark);
         // What each source has this tick. Work done at once (a hit, an item carried, a block placed) pays
         // first, so machines taking everything can't starve it; blocks are charged from what's left.
+        passesMemo.clear();
         for (Network network : networks) refill(network);
         // Filling the sources is power's time, not the first lens's.
         if (profile != null) mark = profile.phase(LaserProfile.Phase.POWER, mark);
@@ -1729,7 +1740,7 @@ public final class LaserNetworks {
     /** Whether every relay on the route is switched on. */
     private boolean open(Route route) {
         for (Hop hop : route.path()) {
-            if (hop.relay() != null && !passes(hop.relay())) return false;
+            if (hop.relay() != null && !passesMemo.computeIfAbsent(hop.relay(), this::passes)) return false;
         }
         return true;
     }
@@ -1744,11 +1755,9 @@ public final class LaserNetworks {
                 power -= tax;
             }
             // What the emitter it leaves by and the mirrors it bounces off take, lost where the beam starts.
-            List<LaserBeam> out = beams.get(hop.node());
-            double keeps = out != null && hop.beam() < out.size() ? kept(nodes.get(hop.node()), out.get(hop.beam())) : 1.0;
-            if (keeps < 1.0) {
-                double lostToMirrors = power * (1.0 - keeps);
-                lost.computeIfAbsent(hop.node(), key -> new long[1])[0] += Math.round(lostToMirrors);
+            if (hop.spill() != null) {
+                double lostToMirrors = power * (1.0 - hop.keeps());
+                hop.spill()[0] += Math.round(lostToMirrors);
                 power -= lostToMirrors;
             }
             if (hop.beam() < hop.carried().length) hop.carried()[hop.beam()] += Math.round(power);
