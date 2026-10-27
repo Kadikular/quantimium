@@ -836,7 +836,11 @@ def laser_focus_block() -> None:
     write("focus_stand_item", stand, parent=block)
     write("focus_emitter_item", emitter_nozzle(), parent=block)
     write("focus_cover_item", cover, parent=block)
-    for item in ("laser_focus", "clear_laser_focus", "focus_stand", "focus_emitter", "focus_cover"):
+    # The attachments that replaced blocks: just the attachment.
+    write("logistics_receptacle_item", receptacle, dict(t, mark="quantimium:block/logistics_receptacle_storage_lit"), parent=block)
+    write("cavity_mirror_item", [cavity_plate, window, cube([7, 7, 1], [9, 9, 6], "#steel")],
+          dict(t, plate="quantimium:block/laser_splitter_plate"), parent=block, translucent=True)
+    for item in ("laser_focus", "clear_laser_focus", "focus_stand", "focus_emitter", "focus_cover", "logistics_receptacle", "cavity_mirror"):
         with open(os.path.join(ITEMS, f"{item}.json"), "w") as handle:
             json.dump({"model": {"type": "minecraft:model", "model": f"quantimium:block/{item}_item"}}, handle, indent=2)
 
@@ -1154,8 +1158,6 @@ def logistics_receptacle() -> None:
                 variants[f"facing={facing},lit={str(lit).lower()},role={role}"] = dict({"model": f"quantimium:block/logistics_receptacle_{role}{tag}"}, **r)
     with open(os.path.join(STATES, "logistics_receptacle.json"), "w") as handle:
         json.dump({"variants": variants}, handle, indent=1)
-    with open(os.path.join(ITEMS, "logistics_receptacle.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/logistics_receptacle_storage_lit"}}, handle, indent=2)
 
 PORT_MODES = {"collect": ("5be38a",), "send": ("f0a040",), "both": ("5be38a", "f0a040")}
 
@@ -1346,13 +1348,6 @@ def cavity_mirror() -> None:
         json.dump({"textures": t, "elements": stand}, handle, indent=2)
     with open(os.path.join(MODELS, "cavity_mirror.json"), "w") as handle:
         json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t, "elements": core}, handle, indent=2)
-    nozzle_south = []
-    for element in emitter_nozzle():
-        a, b = FACE_FRAMES["south"](*element["from"]), FACE_FRAMES["south"](*element["to"])
-        nozzle_south.append(dict(element, **{"from": [min(a[i], b[i]) for i in range(3)], "to": [max(a[i], b[i]) for i in range(3)]}))
-    with open(os.path.join(MODELS, "cavity_mirror_item.json"), "w") as handle:
-        json.dump({"parent": "minecraft:block/block", "render_type": "minecraft:translucent", "textures": t,
-                   "elements": core + nozzle_south + stand}, handle, indent=2)
     mounts = {"down": {}, "up": {"x": 180}, "south": {"x": 90}, "west": {"x": 90, "y": 90}, "north": {"x": 90, "y": 180}, "east": {"x": 90, "y": 270}}
     turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "up": {"x": 270}, "down": {"x": 90}}
     parts = [{"when": {"facing": facing}, "apply": dict({"model": "quantimium:block/cavity_mirror"}, **r)} for facing, r in ROTATIONS.items()]
@@ -1360,8 +1355,6 @@ def cavity_mirror() -> None:
     parts += [{"when": {side: "true"}, "apply": dict({"model": "quantimium:block/laser_emitter_nozzle"}, **r)} for side, r in turns.items()]
     with open(os.path.join(STATES, "cavity_mirror.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
-    with open(os.path.join(ITEMS, "cavity_mirror.json"), "w") as handle:
-        json.dump({"model": {"type": "minecraft:model", "model": "quantimium:block/cavity_mirror_item"}}, handle, indent=2)
     for stale in ("textures/block/cavity_mirror_front.png", "textures/block/cavity_mirror_front_lit.png", "textures/block/cavity_mirror_back.png",
                   "textures/block/cavity_mirror_back_lit.png", "textures/block/cavity_mirror_side.png", "models/block/cavity_mirror_lit.json"):
         path = os.path.join(ASSETS, stale)

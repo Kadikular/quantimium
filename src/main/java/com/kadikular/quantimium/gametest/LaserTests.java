@@ -1015,17 +1015,12 @@ public final class LaserTests {
 
     // covers: laser.cavity
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
-    public static void aCavityMirrorAndALaserRelayMakeACavity(GameTestHelper helper) {
-        // Only one end needs to be a Cavity Mirror: it holds the light, the Laser Relay holds none.
+    public static void anEmitterFacingBackMakesNoCavity(GameTestHelper helper) {
+        // A Laser Focus's Emitter giving light back into a Cavity Mirror doesn't close a cavity: only a mirror does.
         var a = cavityMirror(helper, new BlockPos(5, Y, 8), Direction.EAST);
         TestSupport.relay(helper, new BlockPos(9, Y, 8), Direction.DOWN, Direction.WEST);
         helper.runAfterDelay(25, () -> {
-            helper.assertTrue(a.paired(), "paired with the Laser Relay");
-            helper.assertValueEqual(a.capacity(), 3 * LaserTuning.CAVITY_FE_PER_BLOCK, "three blocks of gap");
-            a.fill(20_000);
-        });
-        helper.runAfterDelay(30, () -> {
-            helper.assertTrue(a.stored() > 19_000, "it keeps what it holds: " + a.stored());
+            helper.assertFalse(a.paired(), "no cavity with an Emitter");
             helper.setBlock(new BlockPos(5, Y, 8), Blocks.AIR);
             TestSupport.finishLasers(helper);
             helper.succeed();

@@ -178,12 +178,12 @@ place it.
 A <ItemLink id="quantimium:cavity_mirror" /> is an attachment of a <ItemLink id="quantimium:laser_focus" />: a flat half-silvered
 plate on one face, facing out. Light out of it that comes back to it is held there,
 as in a real laser's cavity: a battery for a laser network. It comes back off a flat <ItemLink id="quantimium:laser_mirror" /> facing
-it, off a Laser Focus's Emitter giving light back, or from another Cavity Mirror facing back; and it can run round any
+it, or from another Cavity Mirror facing back; and it can run round any
 number of plain Laser Mirrors on the way, to a corner or several. Only one end needs to be a Cavity Mirror. A Laser
 Splitter, a mirror switched off by redstone, or anything else in the way, and there's no cavity: what it held goes
 as flux. The light may run up to 16 blocks one way (a loop of twice that), counting
 each mirror it turns at as a block. Each Cavity Mirror holds 10,000,000 FE for each of
-those blocks, and takes or gives up to 512,000 FE/t; a Laser Mirror or Laser Focus at the other end holds nothing.
+those blocks, and takes or gives up to 512,000 FE/t; a Laser Mirror at the other end holds nothing.
 
 One focus can hold several Cavity Mirrors, each on its own face, each finding its own cavity and holding its own
 light. What they hold leaves by the focus's Emitters, for the blocks that ask for it; with no Emitter it only stores.

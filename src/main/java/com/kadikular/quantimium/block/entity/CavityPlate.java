@@ -22,9 +22,8 @@ import java.util.List;
 
 /**
  * A Cavity Mirror plate on a face of a Laser Focus block: a flat half-silvered mirror facing out. Light out of it that
- * comes back to it is held there, as in a real laser's cavity: off a flat Laser Mirror straight back, off a Laser Focus's
- * Emitter giving light back, into another Cavity Mirror plate facing back, or round any number of plain Laser Mirrors on
- * the way. Each plate on a focus finds its own cavity and holds its own light. What they hold leaves by the focus's
+ * comes back to it is held there, as in a real laser's cavity: off a flat Laser Mirror straight back, or into another
+ * Cavity Mirror plate facing back, round any number of plain Laser Mirrors on the way. Each plate on a focus finds its own cavity and holds its own light. What they hold leaves by the focus's
  * Emitters; light reaching the focus from outside charges them.
  */
 public final class CavityPlate {
@@ -113,8 +112,7 @@ public final class CavityPlate {
 
     /**
      * Follows light out of the plate, round plain Laser Mirrors, until it comes back: off a mirror that sends it back the
-     * way it came (from there it retraces its way here), into a Cavity Mirror plate facing back, or a Laser Focus's
-     * Emitter giving light back along it. How many blocks of light that holds one way, mirrors on the way included, or
+     * way it came (from there it retraces its way here), or into a Cavity Mirror plate facing back. How many blocks of light that holds one way, mirrors on the way included, or
      * 0 for no cavity; at most {@link LaserTuning#CAVITY_MAX_GAP}, a loop of twice that.
      */
     private int findGap() {
@@ -149,13 +147,7 @@ public final class CavityPlate {
                     partnerHolds = other != host;
                     return closed(hit, firstLength, legs, length, true);
                 }
-                // An Emitter of a focus giving light back along it.
-                if (other.core() != LaserFocusBlockEntity.Core.NONE && other.hasEmitter(back)) return closed(hit, firstLength, legs, length, false);
                 return 0;
-            }
-            if (there.getBlock() instanceof com.kadikular.quantimium.block.LaserRelayBlock) {
-                if (!straightIn || !there.getValue(com.kadikular.quantimium.block.LaserRelayBlock.OUTPUTS.get(way.face().getOpposite())) || length < 1) return 0;
-                return closed(hit, firstLength, legs, length, false);
             }
             // Only plain Laser Mirrors, switched on: a splitter would let the light out.
             if (!(there.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock mirror) || mirror.splits()

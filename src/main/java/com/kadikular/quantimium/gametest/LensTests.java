@@ -1021,7 +1021,10 @@ public final class LensTests {
         emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
         mount(helper, new BlockPos(3, Y, 4), Direction.EAST, ModItems.HARVEST_LENS.get());
         var cavity = TestSupport.cavity(helper, new BlockPos(6, Y, 4), Direction.SOUTH);
-        relay(helper, new BlockPos(6, Y, 8), Direction.NORTH);
+        helper.setBlock(new BlockPos(6, Y, 8), ModBlocks.LASER_MIRROR.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.NORTH)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.NORTH));
         helper.setBlock(new BlockPos(6, Y, 1), Blocks.STONE);
         helper.setBlock(new BlockPos(6, Y, 0), Blocks.BEDROCK);
         helper.succeedWhen(() -> {
