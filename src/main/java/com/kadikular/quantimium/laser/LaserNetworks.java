@@ -816,12 +816,17 @@ public final class LaserNetworks {
     }
 
     /**
-     * Whether light runs through {@code node} now: it did at the last settle, or it's a relay just reached from one
-     * that did. Its beams light up at once rather than at the next settle.
+     * Whether light runs through {@code node} now: it did at the last settle, it's a source just put down or switched
+     * on that shines, or it's a relay just reached from one that does. Its beams light up at once rather than at the
+     * next settle.
      */
     private boolean litNow(LaserNode node) {
         BlockPos pos = node.nodePos();
         if (litNow.contains(pos)) return true;
+        if (node.generates() && node.enabled() && shines(node)) {
+            litNow.add(pos);
+            return true;
+        }
         if (!node.relays() || !lights.containsKey(pos) || !passes(node)) return false;
         for (BlockPos from : into.getOrDefault(pos, List.of())) {
             if (litNow.contains(from)) {
@@ -1963,9 +1968,7 @@ public final class LaserNetworks {
             // A Logistics Controller gives no power, but its light shows while its store can pay for moves.
             // One whose power all went out this tick (a cavity filling took the lot) shines too: its other beams
             // still glow dimly, rather than going dark beside the one carrying it all.
-            boolean shines = node.available() > 0 || node instanceof LogisticsController controller && controller.powered()
-                    || sending(node.nodePos());
-            if (node.generates() && node.enabled() && shines && live.add(node.nodePos())) queue.add(node.nodePos());
+            if (node.generates() && node.enabled() && shines(node) && live.add(node.nodePos())) queue.add(node.nodePos());
         }
         while (!queue.isEmpty()) {
             for (LaserBeam beam : beams.getOrDefault(queue.poll(), List.of())) {
@@ -1975,6 +1978,11 @@ public final class LaserNetworks {
             }
         }
         return live;
+    }
+
+    /** Whether a source's light shows: it has power to give, or is a Logistics Controller whose store can pay for moves. */
+    private boolean shines(LaserNode node) {
+        return node.available() > 0 || node instanceof LogisticsController controller && controller.powered() || sending(node.nodePos());
     }
 
     /** Whether any beam leaving {@code pos} carried power when last worked out. */

@@ -1207,6 +1207,27 @@ public final class LaserTests {
 
     // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void anEmitterPutDownLightsUpAtOnce(GameTestHelper helper) {
+        // The focus and what it charges first; the Emitter just after a settle, and both its light and the focus's lit
+        // well before the next.
+        var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.SOUTH);
+        sink(helper, new BlockPos(5, Y, 12));
+        long now = helper.getLevel().getGameTime();
+        int put = 40 + (int) Math.floorMod(1 - (now + 40), 20L);
+        helper.runAfterDelay(put, () -> emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true));
+        helper.runAfterDelay(put + 4, () -> {
+            var networks = LaserNetworks.of(helper.getLevel());
+            var out = networks.beamsOf(helper.absolutePos(new BlockPos(1, Y, 8)));
+            helper.assertFalse(out.isEmpty(), "light leaves the Emitter");
+            helper.assertTrue(out.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "the Emitter's light lit at once");
+            helper.assertTrue(focus.syncedBeams().stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "and the focus's");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void attachmentsDoNothingUntilAFocusGoesIn(GameTestHelper helper) {
         // An Emitter and a Stand with no focus: no light. Put a Laser Focus in, and light leaves by the Emitter.
         emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
