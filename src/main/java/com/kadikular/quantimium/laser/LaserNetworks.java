@@ -109,7 +109,9 @@ public final class LaserNetworks {
     /** Each Entangled Mirror, by where it stands, and the node it draws light from. */
     private final Map<BlockPos, BlockPos> drawsOn = new HashMap<>();
     /** The nodes light ran through at the last settle. */
-    private Set<BlockPos> litNow = Set.of();
+    private Set<BlockPos> litNow = new HashSet<>();
+    /** Relays light reaches but can't get into (by a Stand, Cover or Emitter): they show no light leaving them. */
+    private final Set<BlockPos> shutOut = new HashSet<>();
 
     private LaserNetworks(ServerLevel level) {
         this.level = level;
@@ -188,6 +190,7 @@ public final class LaserNetworks {
             unindex(pos, old);
         }
         unwatch(pos);
+        shutOut.remove(pos);
         nodes.remove(pos);
         BlockPos source = drawsOn.remove(pos);
         if (source != null) seeds.add(source);
@@ -402,6 +405,7 @@ public final class LaserNetworks {
         watchers.clear();
         watching.clear();
         touched.clear();
+        shutOut.clear();
         carried.clear();
         // What the relays still standing lost so far goes into the field.
         lost.forEach((pos, fe) -> {
@@ -562,15 +566,20 @@ public final class LaserNetworks {
     /**
      * A block changed in {@code level} (from the level, after it's set): the nodes whose beams end or bounce there,
      * or pass there and now can't, are traced again next tick. Light passing something it still passes (water,
-     * glass, air) isn't checked.
+     * glass, air) isn't checked, nor light ending on a block that's only changed its state and lets light through as
+     * it did (a crop growing). Laser blocks that change what light does (a mirror turned) say so themselves.
      */
-    public static void blockChanged(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState now) {
+    public static void blockChanged(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState was,
+                                    net.minecraft.world.level.block.state.BlockState now) {
         LaserNetworks networks = LEVELS.get(level);
         if (networks == null || networks.watchers.isEmpty()) return;
         Watchers at = networks.watchers.get(pos.asLong());
         if (at == null) return;
-        networks.touched.addAll(at.ending);
-        if (!at.passing.isEmpty() && !LaserBeam.passes(level, pos, now)) networks.touched.addAll(at.passing);
+        boolean passes = LaserBeam.passes(level, pos, now);
+        if (!at.ending.isEmpty() && (was.getBlock() != now.getBlock() || LaserBeam.passes(level, pos, was) != passes)) {
+            networks.touched.addAll(at.ending);
+        }
+        if (!at.passing.isEmpty() && !passes) networks.touched.addAll(at.passing);
     }
 
     /** Watches the blocks {@code node}'s beams cross, end on and bounce off, in place of what it watched before. */
@@ -672,11 +681,14 @@ public final class LaserNetworks {
             if (escapes(at, scope)) return false;
             hits(at, work);
         }
-        // Relays no light reaches still show where light would go, at their own range.
+        // Relays no light reaches still show where light would go, at their own range; unless light does reach them
+        // and can't get in, which would look as if it had.
         for (LaserNode node : which) {
+            shutOut.remove(node.nodePos());
             if (node.relays() && !lights.containsKey(node.nodePos())) {
                 traceAt(node, node.range(), before);
                 if (escapes(node.nodePos(), scope)) return false;
+                if (shutOut(node)) shutOut.add(node.nodePos());
             }
         }
         for (LaserNode node : which) {
@@ -779,6 +791,7 @@ public final class LaserNetworks {
         ranges.put(node.nodePos(), range);
         Light light = lights.get(node.nodePos());
         List<LaserBeam> traced = trace(node, range, light == null ? 0 : light.marks());
+        boolean lit = litNow(node);
         // What this node's beams end on, now: off the index for the old beams, on for the new.
         unindex(node.nodePos(), beams.getOrDefault(node.nodePos(), List.of()));
         for (LaserBeam beam : traced) {
@@ -795,10 +808,47 @@ public final class LaserNetworks {
             // A beam that now runs differently (a block broken at its end) keeps how bright it was until
             // the next settle says otherwise, so it doesn't blink out meanwhile.
             if (same == null && i < was.size() && was.get(i).face() == beam.face()) same = was.get(i);
-            if (same != null) traced.set(i, beam.withFlow(same.flow()).withLive(same.live()));
+            if (same != null) traced.set(i, beam.withFlow(same.flow()).withLive(same.live() || lit));
+            else if (lit) traced.set(i, beam.withLive(true));
         }
         beams.put(node.nodePos(), traced);
         watch(node.nodePos(), traced);
+    }
+
+    /**
+     * Whether light runs through {@code node} now: it did at the last settle, or it's a relay just reached from one
+     * that did. Its beams light up at once rather than at the next settle.
+     */
+    private boolean litNow(LaserNode node) {
+        BlockPos pos = node.nodePos();
+        if (litNow.contains(pos)) return true;
+        if (!node.relays() || !lights.containsKey(pos) || !passes(node)) return false;
+        for (BlockPos from : into.getOrDefault(pos, List.of())) {
+            if (litNow.contains(from)) {
+                litNow.add(pos);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether light reaches {@code node} but none of it gets in: every beam ending on it meets a Stand, Cover or Emitter. */
+    private boolean shutOut(LaserNode node) {
+        BlockPos pos = node.nodePos();
+        boolean met = false;
+        for (BlockPos from : into.getOrDefault(pos, List.of())) {
+            for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
+                if (beam.end() != LaserBeam.End.NODE || !pos.equals(beam.hit())) continue;
+                if (admits(node, beam)) return false;
+                met = true;
+            }
+        }
+        return met;
+    }
+
+    /** What {@code node} shows of {@code list}: nothing, if light reaches it and can't get in. */
+    private List<LaserBeam> shown(BlockPos pos, List<LaserBeam> list) {
+        return shutOut.contains(pos) ? List.of() : list;
     }
 
     /**
@@ -848,7 +898,7 @@ public final class LaserNetworks {
                     }
                 }
             }
-            node.showBeams(list);
+            node.showBeams(shown(pos, list));
         }
     }
 
@@ -1868,7 +1918,7 @@ public final class LaserNetworks {
             }
             beams.put(pos, flowing);
             // The node tells its clients only if the beams look different: shape, liveness, or a step in brightness.
-            node.showBeams(flowing);
+            node.showBeams(shown(pos, flowing));
         }
         carried.values().forEach(sum -> java.util.Arrays.fill(sum, 0));
     }

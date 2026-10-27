@@ -18,6 +18,6 @@ public abstract class ServerLevelLaserMixin {
 
     @Inject(method = "updatePOIOnBlockStateChange", at = @At("HEAD"))
     private void quantimium$tellLasers(BlockPos pos, BlockState oldState, BlockState newState, CallbackInfo ci) {
-        LaserNetworks.blockChanged((ServerLevel) (Object) this, pos, newState);
+        LaserNetworks.blockChanged((ServerLevel) (Object) this, pos, oldState, newState);
     }
 }

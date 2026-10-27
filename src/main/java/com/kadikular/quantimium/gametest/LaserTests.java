@@ -1171,6 +1171,41 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 60)
+    public static void lightOnAStandShowsNoLightLeavingTheFocus(GameTestHelper helper) {
+        // Light meets one focus's Stand: it can't get in, so no light shows leaving by its Emitter. A focus no light
+        // reaches still shows where light would go.
+        emitter(helper, new BlockPos(1, Y, 4), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var shut = TestSupport.relay(helper, new BlockPos(5, Y, 4), Direction.WEST, Direction.SOUTH);
+        var alone = TestSupport.relay(helper, new BlockPos(5, Y, 12), Direction.DOWN, Direction.SOUTH);
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(shut.syncedBeams().isEmpty(), "nothing leaves a focus its light can't get into");
+            helper.assertFalse(alone.syncedBeams().isEmpty(), "an unlit focus shows where light would go");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aFocusLightsUpAsSoonAsLightReachesIt(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        sink(helper, new BlockPos(5, Y, 12));
+        // Put in just after a settle, and looked at well before the next: its light shows lit without waiting for it.
+        long now = helper.getLevel().getGameTime();
+        int put = 40 + (int) Math.floorMod(1 - (now + 40), 20L);
+        com.kadikular.quantimium.block.entity.LaserFocusBlockEntity[] focus = {null};
+        helper.runAfterDelay(put, () -> focus[0] = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.SOUTH));
+        helper.runAfterDelay(put + 4, () -> {
+            var beams = focus[0].syncedBeams();
+            helper.assertFalse(beams.isEmpty(), "light leaves it");
+            helper.assertTrue(beams.stream().allMatch(com.kadikular.quantimium.laser.LaserBeam::live), "lit at once");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void attachmentsDoNothingUntilAFocusGoesIn(GameTestHelper helper) {
         // An Emitter and a Stand with no focus: no light. Put a Laser Focus in, and light leaves by the Emitter.

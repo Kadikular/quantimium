@@ -131,10 +131,10 @@ public final class LaserTimingTests {
         long[] ns = new long[2];
         for (int round = 0; round < 3; round++) {
             long start = System.nanoTime();
-            for (int i = 0; i < 1_000_000; i++) LaserNetworks.blockChanged(level, onBeam, glass);
+            for (int i = 0; i < 1_000_000; i++) LaserNetworks.blockChanged(level, onBeam, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), glass);
             ns[0] = System.nanoTime() - start;
             start = System.nanoTime();
-            for (int i = 0; i < 1_000_000; i++) LaserNetworks.blockChanged(level, beside, stone);
+            for (int i = 0; i < 1_000_000; i++) LaserNetworks.blockChanged(level, beside, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), stone);
             ns[1] = System.nanoTime() - start;
         }
         return String.format(java.util.Locale.ROOT, "%.0f ns on a beam, %.0f ns beside", ns[0] / 1e6, ns[1] / 1e6);
