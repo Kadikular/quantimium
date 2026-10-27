@@ -49,7 +49,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
     public static final MapCodec<LaserFocusBlock> CODEC = simpleCodec(LaserFocusBlock::new);
 
     /** In sixteenths: the focus, and on each face, what's there. */
-    private static final AABB FOCUS = new AABB(6, 6, 6, 10, 10, 10);
+    public static final AABB FOCUS = new AABB(6, 6, 6, 10, 10, 10);
     private static final Map<Direction, AABB> STANDS = new EnumMap<>(Direction.class);
     private static final Map<Direction, AABB> POSTS = new EnumMap<>(Direction.class);
     private static final Map<Direction, AABB> NOZZLES = new EnumMap<>(Direction.class);
@@ -103,7 +103,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
     }
 
     /** The boxes {@code part} on {@code face} fills, in sixteenths. */
-    private static List<AABB> boxes(Part part, Direction face) {
+    public static List<AABB> boxes(Part part, Direction face) {
         return switch (part) {
             case NONE -> List.of();
             case STAND -> List.of(STANDS.get(face), POSTS.get(face));
@@ -175,8 +175,8 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         List<ItemStack> taken = face != null ? focus.takePart(face) : List.of(focus.takeCore());
         if (taken.isEmpty() || taken.getFirst().isEmpty()) return InteractionResult.PASS;
-        // What won't fit drops where it came off, not from the player.
-        for (ItemStack stack : taken) if (!player.getInventory().add(stack)) Block.popResource(level, pos, stack);
+        // What won't fit drops where it came off, not from the player; in creative, nothing.
+        if (!player.isCreative()) for (ItemStack stack : taken) if (!player.getInventory().add(stack)) Block.popResource(level, pos, stack);
         level.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0f, face == null ? 0.8f : 1.0f);
         if (focus.empty()) level.removeBlock(pos, false);
         return InteractionResult.SUCCESS;
@@ -189,12 +189,24 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus) focus.onSignal(level.hasNeighborSignal(pos));
     }
 
-    /** Picked: its focus, or else what's on it. */
+    /** Picked: what the player's looking at, an attachment or the focus; else anything it holds. */
     @Override
     public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData, Player player) {
         if (!(level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus)) return ItemStack.EMPTY;
+        if (player.pick(player.blockInteractionRange(), 1.0f, false) instanceof BlockHitResult hit && hit.getBlockPos().equals(pos)) {
+            Direction face = partAt(focus, pos, hit);
+            if (face != null) return focus.part(face).item();
+            if (focus.core() != Core.NONE) return focus.core().item();
+        }
         List<ItemStack> contents = focus.contents();
         return contents.isEmpty() ? ItemStack.EMPTY : contents.getFirst();
+    }
+
+    /** Broken in creative, it drops nothing. */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide() && player.isCreative() && level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus) focus.clearContents();
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     /** On the client, each one checks its model shows what it holds (see {@link LaserFocusBlockEntity#clientTick}). */

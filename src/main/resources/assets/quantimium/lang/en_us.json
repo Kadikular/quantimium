@@ -914,7 +914,7 @@
   "item.quantimium.focus_emitter.tip": "Light leaves the focus here, through its lens. Loses %s%%.",
   "item.quantimium.focus_cover": "Focus Cover",
   "item.quantimium.focus_cover.tip": "Closes a face of a focus.",
-  "message.quantimium.laser_focus.empty": "No focus",
+  "message.quantimium.laser_focus.empty": "Disabled: missing focus",
   "block.quantimium.laser_relay.tip": "Sends light on out of each of its emitters.",
   "gui.quantimium.relay_emitter.title": "Emitter (%s)",
   "gui.quantimium.relay_emitter.lens.tip": "Acts only on this emitter's light",

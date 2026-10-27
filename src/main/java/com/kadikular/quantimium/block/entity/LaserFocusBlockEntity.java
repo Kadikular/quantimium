@@ -485,6 +485,13 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     }
 
     /** Broken, it drops everything it holds. */
+    /** Forgets everything it holds, without dropping it: broken in creative. */
+    public void clearContents() {
+        core = Core.NONE;
+        parts.clear();
+        lenses.clear();
+    }
+
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);

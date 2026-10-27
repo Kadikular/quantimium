@@ -97,6 +97,33 @@ public class FocusPieceItem extends Item {
         tooltip.accept(Component.translatable(key, loss).withStyle(ChatFormatting.GRAY));
     }
 
+    /** The focus it is, or null for an attachment. */
+    @Nullable
+    public Core core() {
+        return core;
+    }
+
+    /** The attachment it is, or null for a focus. */
+    @Nullable
+    public Part part() {
+        return part;
+    }
+
+    /** Where using it at {@code hit} puts it: the block, and for an attachment the face. */
+    public record Spot(BlockPos pos, Direction face) {}
+
+    /** Where using it at {@code hit} would put it, as {@link #useOn} does; null where it can't go. */
+    @Nullable
+    public Spot spot(Level level, net.minecraft.world.phys.BlockHitResult hit) {
+        Direction face = hit.getDirection();
+        BlockPos clicked = hit.getBlockPos();
+        if (level.getBlockEntity(clicked) instanceof LaserFocusBlockEntity focus && fits(focus, face)) return new Spot(clicked, face);
+        BlockPos beside = clicked.relative(face);
+        if (level.getBlockEntity(beside) instanceof LaserFocusBlockEntity next) return fits(next, face.getOpposite()) ? new Spot(beside, face.getOpposite()) : null;
+        BlockPos at = level.getBlockState(clicked).canBeReplaced() ? clicked : beside;
+        return level.getBlockState(at).canBeReplaced() ? new Spot(at, face.getOpposite()) : null;
+    }
+
     /** Whether this goes onto {@code focus}: a focus into an empty middle, an attachment onto an empty face. */
     private boolean fits(LaserFocusBlockEntity focus, Direction face) {
         return core != null ? focus.core() == Core.NONE : focus.part(face) == Part.NONE;
