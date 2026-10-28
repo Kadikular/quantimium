@@ -7,7 +7,7 @@ unrealised_ore: "Ore that drops Unrealized Matter. Silk Touch keeps the block, w
 unrealised_matter: "Unidentified ore. Becomes a real ore in an Observation Chamber or Materializer."
 observation_chamber: "Turns Unrealized Matter into ore on a redstone pulse, sometimes leaving a Quantimium Trace."
 quantum_observation_chamber: "The powered Observation Chamber. It works through Matter on its own and connects to pipes on every side."
-materialiser: "Turns Unrealized Matter into an ore you choose, for Traces, flux and power. Hotter fields allow rarer ores."
+materialiser: "Turns Unrealized Matter into an ore you choose, for Anomalite Dust, flux and power. Hotter fields allow rarer ores."
 quantimium_trace: "Residue left by Observation Chambers. The base material of most Quantimium machines."
 # ---- Reading and steering the field ----
 flux_meter: "Shows the flux and anomaly of your chunk. Use it on a machine to see what it is doing."

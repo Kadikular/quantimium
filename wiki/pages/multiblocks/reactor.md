@@ -81,7 +81,7 @@ Items go in exactly as they are, data and all, through Input ports, the Material
 
 [[mechanic:reactor.matter]] [[item:unrealised_matter]] in the horizon is observed into whatever it could be, with no catalyst: everything a [Materializer](../blocks/materialiser.md) could make of it, as its history would make it, from commons to rares, and never a very rare ore, whatever field the Reactor stands in.
 
-- One Matter makes what one makes at a Materializer and costs {{c:MaterialiserBlockEntity.FE_PER_MATTER}} FE, and no Trace or flux.
+- One Matter makes what one makes at a Materializer and costs {{c:MaterialiserBlockEntity.FE_PER_MATTER}} FE, and no Anomalite Dust or flux.
 - A horizon of Matter shows raw iron, dusts and the rest on its list, and a hopper asks for iron the Matter becomes on the way.
 
 ## The Materializer Port

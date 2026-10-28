@@ -521,3 +521,64 @@ tether:
   obtained: "Crafted"
   energy_buffer: "{{c:TetherItem.CAPACITY}} FE"
   works_with: "[[block:superposition_pod]], [[block:pod_charge_module]]"
+observation_chamber:
+  category: "Machine"
+  tier: "Low"
+  obtained: "Crafted"
+  energy_use: "None: redstone pulse"
+  automation: "Items, every face"
+  works_with: "[[item:unrealised_matter]], [[block:quantum_observation_chamber]]"
+quantum_observation_chamber:
+  category: "Machine"
+  tier: "Mid"
+  obtained: "Crafted"
+  energy_buffer: "{{c:QuantumObservationChamberBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:QuantumObservationChamberBlockEntity.ENERGY_MAX_RECEIVE}} FE/t"
+  energy_use: "{{c:QuantumObservationChamberBlockEntity.FE_PER_COLLAPSE}} FE per collapse"
+  emits_flux: "1 per 1,000 FE"
+  automation: "Items, every face, configurable"
+  works_with: "[[block:observation_chamber]], [[block:materialiser]]"
+unrealised_ore:
+  category: "World block"
+  obtained: "Mined underground"
+  works_with: "[[item:unrealised_matter]]"
+materialiser:
+  category: "Machine"
+  obtained: "Crafted"
+  energy_buffer: "{{c:MaterialiserBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:MaterialiserBlockEntity.ENERGY_MAX_RECEIVE}} FE/t"
+  energy_use: "{{c:MaterialiserBlockEntity.FE_PER_MATTER}} FE per Matter"
+  automation: "Items, every face, configurable"
+  works_with: "[[item:unrealised_matter]], [[item:anomalite_dust]]"
+quantimium_trace:
+  category: "Material"
+  obtained: "Observation Chambers, mirror mites"
+  works_with: "[[block:observation_chamber]]"
+basic_decoherence_matrix:
+  category: "Component"
+  obtained: "Crafted"
+  works_with: "[[block:basic_quantum_crafter]]"
+anomaly_fragment:
+  category: "Material"
+  obtained: "Produced by Anomaly Siphons"
+  works_with: "[[block:anomaly_siphon]]"
+anomalite_shard:
+  category: "Material"
+  obtained: "Harvested from crystals"
+  works_with: "[[block:anomalite_crystal]], [[block:anomalite_lattice]]"
+anomalite_dust:
+  category: "Material"
+  obtained: "Broken early crystals"
+  works_with: "[[block:materialiser]]"
+anomalite_crystal:
+  category: "World block"
+  obtained: "Grows on machines"
+  works_with: "[[item:anomalite_shard]], [[item:harvest_lens]]"
+anomalite_lattice:
+  category: "Material"
+  obtained: "Crafted"
+  works_with: "[[item:anomalite_shard]]"
+budding_anomalite:
+  category: "Machine"
+  obtained: "Crafted"
+  works_with: "[[block:anomalite_crystal]]"
