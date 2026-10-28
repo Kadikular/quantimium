@@ -157,11 +157,18 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return !any || listed == itemsAllow;
     }
 
-    /** The fluid a filter entry stands for: what it holds, if it's a filled container. */
+    /**
+     * The fluid a filter entry stands for: what it holds, if it's a filled container. Entries are bare items (a water
+     * bucket), so it's looked up once per item.
+     */
     private static net.neoforged.neoforge.fluids.FluidStack fluidOf(ItemStack entry) {
         if (entry.isEmpty()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
-        return net.neoforged.neoforge.transfer.fluid.FluidUtil.getFirstStackContained(entry);
+        if (!entry.isComponentsPatchEmpty()) return net.neoforged.neoforge.transfer.fluid.FluidUtil.getFirstStackContained(entry);
+        return HELD.computeIfAbsent(entry.getItem(), item -> net.neoforged.neoforge.transfer.fluid.FluidUtil.getFirstStackContained(new ItemStack(item)));
     }
+
+    private static final java.util.Map<net.minecraft.world.item.Item, net.neoforged.neoforge.fluids.FluidStack> HELD =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Whether it lets a Placement beam place this item: the item, and as a block, the block it places. */
     public boolean letsPlace(ItemStack stack) {
