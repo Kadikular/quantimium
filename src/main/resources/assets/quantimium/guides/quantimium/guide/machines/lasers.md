@@ -137,8 +137,10 @@ it in the air to set it.
 
 A <ItemLink id="quantimium:laser_prism" /> sends the light that reaches it to each block
 it's linked to, along a straight line at any angle, sharing it by what each asks for. Its light runs to the middle of
-the face you linked the block by and goes in by that face (which side of a machine it charges); a laser block, which
-takes light at its focus, is lit at its middle whatever face you clicked.
+the face you linked the block by and goes in by that face (which side of a machine it charges, or a Laser Port's or
+Lens Mount's back). It reaches a face only from out beyond it: a Prism level with the face, or in front of it, is
+stopped by the block. A Laser Focus, Mirror or Prism, whose focus is at its middle, is lit at its middle whatever face
+you clicked.
 
 Light can reach it from any side, from any number of beams, so a prism
 also joins several emitters into one network: a block it's linked to can take more than any one of

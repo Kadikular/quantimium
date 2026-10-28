@@ -297,6 +297,8 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         Vec3 delta = point(target, inBy).subtract(start);
         Direction face = inBy != null ? inBy.getOpposite() : Direction.getApproximateNearest(delta.x, delta.y, delta.z);
         boolean toFace = inBy != null;
+        // A face is reached only from out beyond it: level with it, or in front, the light would cross the block first.
+        boolean facing = inBy == null || Vec3.atLowerCornerOf(inBy.getUnitVec3i()).dot(start.subtract(target.getCenter())) > 0.5;
         if (delta.length() > range) return new LaserBeam(from, face, target, range, null, End.OPEN, 0, false, Lens.NONE, null, toFace);
         // Every block the line passes through, in order (Amanatides and Woo's walk).
         int x = from.getX(), y = from.getY(), z = from.getZ();
@@ -321,6 +323,7 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             BlockPos pos = new BlockPos(x, y, z);
             int length = (int) Math.round(pos.getCenter().distanceTo(start)) - 1;
             if (pos.equals(target)) {
+                if (!facing) return new LaserBeam(from, face, target, length, pos, End.BLOCKED, 0, false, Lens.NONE).free(toFace);
                 LaserBeam ended = endsAt(level, from, face, target, length, pos, marks);
                 return (ended != null ? ended : new LaserBeam(from, face, target, length, pos, End.BLOCKED, 0, false, Lens.NONE)).free(toFace);
             }

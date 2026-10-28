@@ -1447,15 +1447,23 @@ public final class LaserNetworks {
                 node.forget(target);
                 continue;
             }
-            // Straight to the middle of the face it was linked by, at whatever angle, and in by that face; to a laser block's
-            // focus, its middle.
-            Direction inBy = level.isLoaded(target) && (level.getBlockEntity(target) instanceof LaserNode
-                    || level.getBlockState(target).getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) ? null : node.linkFace(target);
+            // Straight to the middle of the face it was linked by, at whatever angle, and in by that face; to a block whose
+            // focus is its middle (a Laser Focus, Mirror or Prism), its middle.
+            Direction inBy = level.isLoaded(target) && litAtMiddle(level, target) ? null : node.linkFace(target);
             traced.addAll(LaserBeam.follow(level, LaserBeam.traceTo(level, node.nodePos(), target, inBy, range, marks), range, marks));
         }
         // And to each Entangled Mirror drawing on it, at once.
         for (BlockPos mirror : drawing(node.nodePos())) traced.add(LaserBeam.jump(level, node.nodePos(), mirror));
         return traced;
+    }
+
+    /** Whether a Prism's link to {@code pos} goes to its middle rather than a face: a block with its focus there. */
+    private static boolean litAtMiddle(Level level, BlockPos pos) {
+        var entity = level.getBlockEntity(pos);
+        return entity instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity
+                || entity instanceof com.kadikular.quantimium.block.entity.LaserPrismBlockEntity
+                || entity instanceof com.kadikular.quantimium.block.entity.AreaPrismBlockEntity
+                || level.getBlockState(pos).getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock;
     }
 
     /**

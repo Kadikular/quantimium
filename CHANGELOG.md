@@ -41,8 +41,9 @@
   Emitter facing back no longer closes a cavity: only a mirror does.
 - Straight light no longer gets into a Laser Focus by a face with an Emitter (diagonal light still does).
 - **A Prism links to the face you click**: its light runs at any angle to the middle of that face and goes in by it,
-  so you choose which side of a machine it charges. A laser block is still lit at its middle (its focus). Links made
-  before take the face facing the prism.
+  so you choose which side of a machine it charges, or a Laser Port's or Lens Mount's back. Only a Prism out beyond a
+  face reaches it. A Laser Focus, Mirror or Prism is still lit at its middle (its focus). Links made before take the
+  face facing the prism.
 - **Mirrors reflect like real ones.** A beam bounces off a Laser Mirror and goes on as the same beam, with its own
   light: beams crossing one mirror never mix. A plate faces one of 42 ways: flat to a face, or turned 22.5° or 45°
   towards a neighbouring one. Click a face's middle for flat, the ring round it for 22.5°, the outer ring for 45°

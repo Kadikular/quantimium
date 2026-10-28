@@ -648,6 +648,27 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinksToALaserPortsBackFromAnywhereBehindIt(GameTestHelper helper) {
+        // Two Laser Ports facing east, each linked by its back face: from a prism off to the side but behind that face,
+        // which reaches it; and from one level with the face, which would have to cross the port to, so doesn't.
+        emitter(helper, new BlockPos(1, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        prism(helper, new BlockPos(4, Y, 13)).toggleLink(helper.absolutePos(new BlockPos(6, Y, 9)), Direction.WEST);
+        port(helper, new BlockPos(6, Y, 9));
+        FoldCoreBlockEntity behind = sink(helper, new BlockPos(9, Y, 9));
+        emitter(helper, new BlockPos(9, Y, 1), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        prism(helper, new BlockPos(9, Y, 3)).toggleLink(helper.absolutePos(new BlockPos(9, Y, 6)), Direction.WEST);
+        port(helper, new BlockPos(9, Y, 6));
+        FoldCoreBlockEntity level = sink(helper, new BlockPos(12, Y, 6));
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(behind.getEnergyStorage().getEnergyStored() > 0, "behind its back face, at a steep angle");
+            helper.assertValueEqual(level.getEnergyStorage().getEnergyStored(), 0, "level with its back face");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     private static void port(GameTestHelper helper, BlockPos pos) {
         helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
     }
@@ -671,19 +692,19 @@ public final class LaserTests {
     // covers: laser.prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismLinkedByAFaceSendsLightInByIt(GameTestHelper helper) {
-        // Linked by a machine's top, from beside and below: the light runs at its own angle to that face's middle and goes
+        // Linked by a machine's top, from beside and above: the light runs at its own angle to that face's middle and goes
         // in from above. Linked to a relay, it goes to its middle (its focus), whatever face was clicked.
-        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
-        helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.LASER_PRISM.get());
-        var prism = helper.getBlockEntity(new BlockPos(7, Y, 8), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
-        BlockPos core = new BlockPos(12, Y + 2, 11);
+        emitter(helper, new BlockPos(2, Y + 4, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(7, Y + 4, 8), ModBlocks.LASER_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(7, Y + 4, 8), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
+        BlockPos core = new BlockPos(12, Y + 1, 11);
         FoldCoreBlockEntity charged = sink(helper, core);
         prism.toggleLink(helper.absolutePos(core), Direction.UP);
         BlockPos relay = new BlockPos(7, Y + 4, 4);
         TestSupport.relay(helper, relay, Direction.DOWN, Direction.UP);
         prism.toggleLink(helper.absolutePos(relay), Direction.EAST);
         helper.succeedWhen(() -> {
-            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(7, Y, 8)));
+            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(7, Y + 4, 8)));
             var toCore = beams.stream().filter(beam -> helper.absolutePos(core).equals(beam.hit())).findFirst().orElse(null);
             helper.assertTrue(toCore != null && toCore.face() == Direction.DOWN && toCore.toFace() && toCore.ray() == null,
                     "in by the top, at its own angle: " + toCore);
