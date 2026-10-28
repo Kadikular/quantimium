@@ -582,3 +582,19 @@ budding_anomalite:
   category: "Machine"
   obtained: "Crafted"
   works_with: "[[block:anomalite_crystal]]"
+stabilised_portal_frame:
+  category: "Portal part"
+  obtained: "Crafted"
+  works_with: "[[item:rift_seed]], [[block:stabilised_portal]]"
+stabilised_portal:
+  category: "Portal"
+  obtained: "Lit with a Rift Seed"
+  works_with: "[[block:stabilised_portal_frame]]"
+creative_energy_cell:
+  category: "Creative"
+  obtained: "Creative tab"
+  energy_use: "Supplies endless FE"
+creative_energy_void:
+  category: "Creative"
+  obtained: "Creative tab"
+  energy_use: "Voids any FE"
