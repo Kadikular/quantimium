@@ -18,6 +18,7 @@ something to do, and a logistics network moves items by it.
 - [Prisms](prisms.md)
 - [Optical cavities](cavities.md)
 - [Photodetectors](photodetectors.md)
-- [Lenses](lenses.md)
+- [Laser Ports](ports.md)
+- [Lenses](lenses/overview.md)
 - [Logistics](logistics.md)
 - [Networks and rules](networks.md)

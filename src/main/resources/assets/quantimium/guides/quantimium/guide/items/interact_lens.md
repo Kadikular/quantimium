@@ -12,7 +12,49 @@ item_ids:
 
 <ItemImage id="quantimium:interact_lens" scale="2" />
 
-Uses a Laser Port's item, or an empty hand, on the laser's target.
+Interact Lens adds the Interact action to a laser. The laser uses an item a Laser Port sends, or an empty hand, on what it ends on, as a player would.
+
+## How it works
+
+- Acts once every 0.5 s.
+- It works with what the port holds where it lies, trying each kind of thing in turn (carrots, then wheat, then shears) until one is used. Nothing moves unless using it changes it.
+- What it used goes back where it belongs: the same thing (a worn sword) to the sending port, anything new (a filled bucket) up the laser to a collecting one.
+- Through an <ItemLink id="quantimium:area_prism" /> it works on the area: on living things first if it holds something for them, otherwise on blocks in turn, each from the side facing the prism.
+- It repeats: behind a pulse mirror it acts once per signal.
+- A tool bound to an <ItemLink id="quantimium:entangled_dock" /> is charged from the dock as it is used.
+
+## Settings
+
+Use the lens in the air, or its button in a Lens Mount.
+
+- **Use** (right click): with something in hand, on the first living thing in the laser that takes it (feeding, shearing, milking). Otherwise on the block the laser ends on, or something it passes just before (a lever, a button): opens doors, flips levers, works items on blocks. An empty bucket fills from the fluid it ends on.
+- **Hit** (left click): a swing at the first living thing in the laser, as hard as what it holds. With nothing living there, it mines the block the laser ends on as a player holding that item would: drops fall there, the tool wears, its enchantments count.
+- **Works on**: blocks and living things (default), blocks only, or living things only.
+
+## Energy
+
+200 FE per use. Mining with Hit costs a Harvest Lens's FE by hardness instead.
+
+## Works with
+
+| Modifier | Effect |
+| --- | --- |
+| <ItemLink id="quantimium:amplify_lens" /> | No effect. |
+| <ItemLink id="quantimium:speed_lens" /> | Acts twice as often per lens (10 ticks at base). |
+| <ItemLink id="quantimium:entity_filter_lens" /> | Works only on the listed living things, for example only grown animals. |
+| <ItemLink id="quantimium:pickup_lens" /> | No effect. |
+| <ItemLink id="quantimium:void_lens" /> | Destroys what it hands back (an empty bucket, a worn tool) if no Laser Port takes it. |
+| <ItemLink id="quantimium:smelting_lens" /> | No effect. |
+| <ItemLink id="quantimium:crushing_lens" /> | No effect. |
+| <ItemLink id="quantimium:precision_lens" /> | No effect. |
+| <ItemLink id="quantimium:harmonic_lens" /> | No effect. |
+| <ItemLink id="quantimium:unrealising_lens" /> | No effect. |
+
+Range, Phantom, UV and Isolator work on every action: see [Lenses](../lasers/lenses/overview.md).
+
+## Examples
+
+- **Bone meal field.** A sending <ItemLink id="quantimium:laser_port" /> of bone meal, Interact in Use mode, an <ItemLink id="quantimium:area_prism" /> over the field.
 
 ## Recipes
 

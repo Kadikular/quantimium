@@ -2,7 +2,7 @@
 navigation:
   title: Logistics
   parent: lasers/index.md
-  position: 25
+  position: 30
 ---
 
 # Logistics

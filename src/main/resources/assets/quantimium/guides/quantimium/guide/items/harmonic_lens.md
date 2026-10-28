@@ -12,7 +12,26 @@ item_ids:
 
 <ItemImage id="quantimium:harmonic_lens" scale="2" />
 
-Harvest mines with Fortune, Damage hits with Looting, a level per lens.
+Harmonic Lens gives Harvest Fortune, and Damage Looting, one level per lens, up to 3.
+
+## Energy
+
+Free.
+
+## Applies to
+
+| Action | Effect |
+| --- | --- |
+| <ItemLink id="quantimium:harvest_lens" /> | Mines with Fortune, one level per lens, up to 3. |
+| <ItemLink id="quantimium:damage_lens" /> | Hits as a hand holding Looting, one level per lens, up to 3. |
+| <ItemLink id="quantimium:healing_lens" /> | No effect. |
+| <ItemLink id="quantimium:freezing_lens" /> | No effect. |
+| <ItemLink id="quantimium:interact_lens" /> | No effect. |
+| <ItemLink id="quantimium:acceleration_lens" /> | No effect. |
+| <ItemLink id="quantimium:place_lens" /> | No effect. |
+| <ItemLink id="quantimium:insert_lens" /> | No effect. |
+| <ItemLink id="quantimium:extract_lens" /> | No effect. |
+| <ItemLink id="quantimium:redstone_lens" /> | No effect. |
 
 ## Recipes
 
