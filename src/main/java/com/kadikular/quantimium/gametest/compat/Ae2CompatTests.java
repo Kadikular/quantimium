@@ -220,6 +220,52 @@ public final class Ae2CompatTests {
         });
     }
 
+    // covers: ae2.superposition.fluids
+    @GameTest(template = TestSupport.FLOOR_9, templateNamespace = NS, batch = "ae2_superposition_fluids", timeoutTicks = 200)
+    public static void fluidsGoInAndOutOfItsRuns(GameTestHelper helper) {
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        TestSupport.setField(helper, AT, 0.0, 0.0);
+        SuperpositionCrafterBlockEntity freezer = superposition(helper, AT.north(2));
+        freezer.getCatalyst().setStackInSlot(0, new ItemStack(item("energizedpower:fluid_freezer")));
+        SuperpositionCrafterBlockEntity liquefier = superposition(helper, AT);
+        liquefier.getCatalyst().setStackInSlot(0, new ItemStack(item("energizedpower:stone_liquefier")));
+        helper.setBlock(AT.east(), block("ae2:creative_energy_cell"));
+        helper.setBlock(AT.west(), block("ae2:drive"));
+        var drive = LegacyItems.legacy(helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(AT.west()), null));
+        drive.insertItem(0, new ItemStack(item("ae2:fluid_storage_cell_1k")), false);
+        var lava = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.LAVA);
+        boolean[] pushed = {false};
+        helper.succeedWhen(() -> {
+            // Ice from water alone: an input that takes water, a bucket's worth.
+            SuperpositionPattern ice = null;
+            for (SuperpositionPattern pattern : freezer.patterns()) if (pattern.shape().primaryOutput().is(Items.ICE)) ice = pattern;
+            helper.assertTrue(ice != null, "the Fluid Freezer offers ice");
+            helper.assertTrue(ice.getInputs()[0].isValid(appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER), null)
+                    && ice.getInputs()[0].getMultiplier() == 1_000, "from 1,000 mB of water");
+            helper.assertTrue(liquefier.getMainNode().isActive(), "the network is still booting");
+            if (!pushed[0]) {
+                SuperpositionPattern melt = patternFor(liquefier, Items.AIR, Items.ANDESITE);
+                if (melt == null) {
+                    for (SuperpositionPattern pattern : liquefier.patterns()) {
+                        if (pattern.getOutputs().stream().anyMatch(out -> out.what().equals(lava))
+                                && pattern.getInputs()[0].isValid(AEItemKey.of(Items.ANDESITE), null)) melt = pattern;
+                    }
+                }
+                helper.assertTrue(melt != null, "the Stone Liquefier offers lava from andesite");
+                KeyCounter inputs = new KeyCounter();
+                inputs.add(AEItemKey.of(Items.ANDESITE), 1);
+                helper.assertTrue(liquefier.pushPattern(melt, new KeyCounter[] {inputs}), "the run taken");
+                pushed[0] = true;
+            }
+            long melted = liquefier.getMainNode().getGrid().getStorageService().getCachedInventory().get(lava);
+            helper.assertTrue(melted > 0, "lava in the network's fluid cell");
+        });
+    }
+
     // covers: ae2.superposition.push, compat.ae2.inscriber
     @GameTest(template = TestSupport.FLOOR_9, templateNamespace = NS, batch = "ae2_superposition_press", timeoutTicks = 200)
     public static void anInscriberRunHandsItsPressBack(GameTestHelper helper) {

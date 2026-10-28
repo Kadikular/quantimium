@@ -105,6 +105,8 @@ With AE2 installed, the [[block:reactor_me_port]] joins the Reactor to an ME net
 
 [[mechanic:reactor.me_port.storage]] **Storage.** What the Reactor holds is storage on the network: it shows in the terminal and can be taken like anything in a drive. Nothing goes in this way. Use Input ports, or an export bus onto one.
 
+Its fluids are AE2 fluids on the network, and with fluid cells the network's fluids are the Reactor's to make with: andesite from water and lava in a cell.
+
 [[mechanic:reactor.me_port.patterns]] **Patterns.** What it can make is patterns on the network, so AE2 plans with them from everything on the network, the Reactor's holdings included. It knows exactly how much can be made and what is missing, and asking for one anvil too many says how much more iron that needs. Each run is paid for from the core's power, at the Reactor's price. What it could make never shows as stock: those counts share their sources, and AE2 would plan to use the same iron twice.
 
 [[mechanic:reactor.me_port.settings]] Use the port to open its screen, where it is set up like a storage bus:

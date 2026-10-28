@@ -39,6 +39,9 @@
 - **The Reactor holds fluids**, a bucket weighing as an item: in through an Input port, out through the Materializer
   Port (made if need be), and to a logistics network through its Logistics Port, drawing on the network's fluids too.
   Its recipes take and make fluids, and buckets fill and empty with no catalyst.
+- **AE2**: the ME Superposition Crafter offers recipes with fluids, taking and giving AE2 fluids. The ME Superposition
+  Port shows the Reactor's fluids as AE2 fluids, takes them in and out, and lets the Reactor make from the network's
+  fluids; its patterns ask for and give fluids as fluids.
 - Fluid gauges are marked like a measuring jug.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors

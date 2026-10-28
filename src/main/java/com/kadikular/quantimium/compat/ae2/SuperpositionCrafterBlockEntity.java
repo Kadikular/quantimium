@@ -438,7 +438,8 @@ public class SuperpositionCrafterBlockEntity extends BlockEntity
             return;
         }
         RecipeFilter filter = recipeFilter();
-        for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst.getStackInSlot(0))) {
+        // Fluids too: the network hands them over and takes them back as it does items.
+        for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst.getStackInSlot(0), true)) {
             // A tool (an Inscriber's press) is lent for the run and handed back with the results.
             RecipeShape allowed = filter.apply(shape);
             if (allowed != null) built.add(new SuperpositionPattern(allowed, batch(), Ae2Content.SUPERPOSITION_CRAFTER_ITEM.get(), true));

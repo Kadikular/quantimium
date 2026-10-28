@@ -152,9 +152,9 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         if (grid == null) return Map.of();
         Map<ItemResource, Long> stock = new HashMap<>();
         for (var entry : grid.getStorageService().getInventory().getAvailableStacks()) {
-            if (entry.getKey() instanceof AEItemKey item && entry.getLongValue() > 0) {
-                stock.merge(item.toResource(), entry.getLongValue(), Long::sum);
-            }
+            // Its fluids too, as the Reactor keeps them: their entries, in mB.
+            ItemResource item = Ae2Keys.resourceOf(entry.getKey());
+            if (item != null && entry.getLongValue() > 0) stock.merge(item, entry.getLongValue(), Long::sum);
         }
         return stock;
     }
@@ -163,7 +163,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     public long extract(ItemResource item, long amount, boolean simulate) {
         IGrid grid = grid();
         if (grid == null || amount <= 0) return 0;
-        return grid.getStorageService().getInventory().extract(AEItemKey.of(item), amount,
+        return grid.getStorageService().getInventory().extract(Ae2Keys.of(item), amount,
                 simulate ? Actionable.SIMULATE : Actionable.MODULATE, source());
     }
 
@@ -335,12 +335,12 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             HorizonCoreBlockEntity horizon = visibleCore();
             if (horizon == null) return;
             horizon.getLedger().view().forEach((item, amount) -> {
-                if (shows(item)) out.add(AEItemKey.of(item), amount);
+                if (shows(item)) out.add(Ae2Keys.of(item), amount);
             });
             // What the Reactor's other linked networks share with it (a laser logistics network), passed on.
             for (com.kadikular.quantimium.reactor.ReactorNetwork other : others(horizon)) {
                 horizon.whileDrawing(other::stock).forEach((item, amount) -> {
-                    if (shows(item)) out.add(AEItemKey.of(item), amount);
+                    if (shows(item)) out.add(Ae2Keys.of(item), amount);
                 });
             }
         }
@@ -359,8 +359,8 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         @Override
         public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
             HorizonCoreBlockEntity horizon = visibleCore();
-            if (horizon == null || !(what instanceof AEItemKey key) || amount <= 0) return 0;
-            ItemResource item = key.toResource();
+            ItemResource item = Ae2Keys.resourceOf(what);
+            if (horizon == null || item == null || amount <= 0) return 0;
             if (!shows(item)) return 0;
             long available = Math.min(amount, horizon.availableCount(item));
             long got = available <= 0 ? 0 : mode == Actionable.MODULATE ? horizon.withdraw(item, available) : available;
@@ -375,10 +375,11 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             HorizonCoreBlockEntity horizon = visibleCore();
-            if (!acceptsItems || horizon == null || !horizon.accepts() || !(what instanceof AEItemKey key) || amount <= 0) return 0;
-            ItemResource item = key.toResource();
+            ItemResource item = Ae2Keys.resourceOf(what);
+            if (!acceptsItems || horizon == null || !horizon.accepts() || item == null || amount <= 0) return 0;
             if (!shows(item)) return 0;
-            long fits = Math.min(amount, horizon.room());
+            // A bucket of fluid weighs as an item.
+            long fits = Math.min(amount, com.kadikular.quantimium.reactor.ReactorLedger.fits(item, horizon.room()));
             if (fits > 0 && mode == Actionable.MODULATE) horizon.store(item, fits);
             return fits;
         }
@@ -719,11 +720,13 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
         if (level == null) return;
         HorizonCoreBlockEntity horizon = core();
         for (GenericStack stack : pending) {
-            if (!(stack.what() instanceof AEItemKey item)) continue;
-            if (horizon != null) {
-                horizon.take(item.toResource(), (int) Math.min(Integer.MAX_VALUE, stack.amount()));
+            ItemResource kept = Ae2Keys.resourceOf(stack.what());
+            if (kept != null && horizon != null) {
+                horizon.take(kept, (int) Math.min(Integer.MAX_VALUE, stack.amount()));
                 continue;
             }
+            // A fluid with no Reactor to go to is lost, as it would be from a broken tank.
+            if (!(stack.what() instanceof AEItemKey item)) continue;
             long left = stack.amount();
             while (left > 0) {
                 int count = (int) Math.min(left, item.getReadOnlyStack().getMaxStackSize());
