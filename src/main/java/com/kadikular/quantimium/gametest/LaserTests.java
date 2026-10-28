@@ -627,6 +627,31 @@ public final class LaserTests {
         return prism;
     }
 
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinkGetsIntoALaserPortOnlyByItsBack(GameTestHelper helper) {
+        // Two Laser Ports facing east, each linked from a prism: one at an angle from behind (in by its back face), one
+        // from beside (in by its side face). Only the first passes the light on to the block in front of it.
+        emitter(helper, new BlockPos(1, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        prism(helper, new BlockPos(4, Y, 2), new BlockPos(10, Y, 4));
+        port(helper, new BlockPos(10, Y, 4));
+        FoldCoreBlockEntity behind = sink(helper, new BlockPos(13, Y, 4));
+        emitter(helper, new BlockPos(1, Y, 12), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        prism(helper, new BlockPos(4, Y, 12), new BlockPos(6, Y, 9));
+        port(helper, new BlockPos(6, Y, 9));
+        FoldCoreBlockEntity beside = sink(helper, new BlockPos(9, Y, 9));
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(behind.getEnergyStorage().getEnergyStored() > 0, "in by its back, at an angle");
+            helper.assertValueEqual(beside.getEnergyStorage().getEnergyStored(), 0, "not in by its side");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    private static void port(GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
+    }
+
     // covers: laser.prism.split
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismSendsLightToEachBlockItsLinkedTo(GameTestHelper helper) {
