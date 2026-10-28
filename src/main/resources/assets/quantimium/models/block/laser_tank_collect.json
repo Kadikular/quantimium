@@ -1,6 +1,7 @@
 {
-  "parent": "quantimium:block/laser_port",
+  "parent": "quantimium:block/laser_tank",
   "textures": {
-    "side": "quantimium:block/laser_tank_side_collect"
+    "side": "quantimium:block/laser_tank_side_collect",
+    "top": "quantimium:block/laser_tank_top_collect"
   }
 }

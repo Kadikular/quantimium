@@ -81,9 +81,11 @@ public class LaserTankBlock extends BaseEntityBlock {
         // The laser tools (the Linker, the Spectroscope) do their own thing; anything else opens it.
         if (!stack.is(ModTags.TOOLS_WRENCH)) {
             if (LaserTools.isOne(stack)) return InteractionResult.PASS;
-            // A bucket, or anything else holding fluid, fills or empties it, whatever its mode.
-            if (level.getBlockEntity(pos) instanceof LaserTankBlockEntity
-                    && net.neoforged.neoforge.transfer.fluid.FluidUtil.interactWithFluidHandler(player, hand, level, pos, null)) {
+            // A bucket, or anything else that holds fluid, fills or empties it, whatever its mode.
+            if (level.getBlockEntity(pos) instanceof LaserTankBlockEntity tank
+                    && net.neoforged.neoforge.transfer.access.ItemAccess.forPlayerInteraction(player, hand)
+                            .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM) != null) {
+                if (!level.isClientSide()) net.neoforged.neoforge.transfer.fluid.FluidUtil.interactWithFluidHandler(player, hand, pos, tank.forHands(), null);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.TRY_WITH_EMPTY_HAND;

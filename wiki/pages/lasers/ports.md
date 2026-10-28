@@ -24,4 +24,6 @@ Use the **Sides** tab to set, face by face, what pipes and hoppers may do there 
 
 [[mechanic:laser.tank.send]] Sending, what it holds goes down the laser to an Insert Lens. Otherwise, once a second up to {{c:LaserTuning.SHIP_FLUID_MB}} mB go to the nearest collecting tank down the laser with room, not past an Isolator.
 
-[[mechanic:laser.tank.pipes]] Pipes drain it on any face, and fill it only while it sends. A bucket used on it fills or empties it in any mode.
+[[mechanic:laser.tank.pipes]] Pipes drain it on any face, and fill it only while it sends. A bucket used on it, or clicked on a tank in its screen, fills or empties it in any mode.
+
+[[mechanic:laser.tank.filter]] Its filter lists fluids it catches: nine entries, as a whitelist or a blacklist. Click an entry with a bucket, or drag a fluid in from JEI. What it turns away goes on up the laser.

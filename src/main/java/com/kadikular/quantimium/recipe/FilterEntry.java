@@ -43,6 +43,8 @@ public final class FilterEntry {
     /** A plain entry for {@code stack}: one of it, no tag. */
     public static ItemStack of(ItemStack stack) {
         if (stack.isEmpty()) return ItemStack.EMPTY;
+        // A fluid entry keeps its fluid.
+        if (FluidEntry.is(stack)) return stack.copyWithCount(1);
         return new ItemStack(stack.getItem());
     }
 
@@ -52,7 +54,7 @@ public final class FilterEntry {
      * click on iron ore gives {@code #c:ores}.
      */
     public static ItemStack cycle(ItemStack entry) {
-        if (entry.isEmpty()) return entry;
+        if (entry.isEmpty() || FluidEntry.is(entry)) return entry;
         List<TagKey<Item>> tags = tags(entry);
         if (tags.isEmpty()) return of(entry);
         Optional<TagKey<Item>> current = tagOf(entry);

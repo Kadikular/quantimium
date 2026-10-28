@@ -118,6 +118,7 @@ public class QuantimiumJeiPlugin implements IModPlugin {
         });
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.CatalystBayScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.LaserPortScreen.class);
+        GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.LaserTankScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.LogisticsReceptacleScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.ReactorLogisticsPortScreen.class);
         GhostFilterTargets.register(registration, com.kadikular.quantimium.client.screen.FilterLensScreen.class);
@@ -137,6 +138,9 @@ public class QuantimiumJeiPlugin implements IModPlugin {
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
+        // Fluid filter entries are never held: not shown as items.
+        runtime.getIngredientManager().removeIngredientsAtRuntime(mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                java.util.List.of(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())));
         // The collapse table sync and JEI's own startup race each other. If the data arrives after
         // this plugin loaded, feed it in rather than leaving the category empty until the next join.
         ClientCollapseOutcomes.listen(outcomes -> runtime.getRecipeManager().addRecipes(

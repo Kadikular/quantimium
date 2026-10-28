@@ -7,21 +7,20 @@ import com.kadikular.quantimium.client.screen.ui.PanelTheme;
 import com.kadikular.quantimium.client.screen.ui.QuantumWidgets;
 import com.kadikular.quantimium.menu.LaserTankMenu;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.client.fluid.FluidTintSource;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** A Laser Tank: its four tanks as gauges, filled from the bottom, and its mode. Layout: tools/gui_panels.py laser_tank. */
-public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> {
+public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> implements GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_tank.png");
+    private static final Identifier FILTER_TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port_filter.png");
     public static final int TANK_X = 50;
     public static final int TANK_Y = 20;
     public static final int TANK_W = 16;
@@ -39,6 +38,12 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> {
     @Override
     protected List<Tab> createTabs() {
         return List.of(
+                filterTab(menu::isFilterView, menu::setFilterView, Component.translatable("gui.quantimium.laser_port.filter"),
+                        "gui.quantimium.laser_tank.filter.tip"),
+                Tab.glyph(() -> tank().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LaserTankMenu.BUTTON_ALLOW),
+                                () -> List.of(Component.translatable(tank().allows() ? "gui.quantimium.filter.allow" : "gui.quantimium.filter.deny"),
+                                        hint("gui.quantimium.tab.switch")))
+                        .during(menu::isFilterView),
                 Tab.glyph(() -> switch (tank().mode()) {
                                     case COLLECT -> GuiIcon.COLLECT;
                                     case SEND -> GuiIcon.SEND;
@@ -57,8 +62,52 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> {
         if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button);
     }
 
+    /** A bucket on the cursor clicked on a tank fills or empties it. */
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        int tank = menu.isFilterView() || menu.getCarried().isEmpty() ? -1 : tankAt(event.x(), event.y());
+        if (tank >= 0) {
+            press(LaserTankMenu.BUTTON_TANK + tank);
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    private int tankAt(double mouseX, double mouseY) {
+        for (int i = 0; i < LaserTankBlockEntity.TANKS; i++) {
+            if (QuantumWidgets.hit((int) mouseX, (int) mouseY, leftPos + TANK_X + i * TANK_STEP - 1, topPos + TANK_Y - 1, TANK_W + 2, TANK_H + 2)) return i;
+        }
+        return -1;
+    }
+
+    @Override
+    public List<net.minecraft.client.renderer.Rect2i> ghostTargets() {
+        List<net.minecraft.client.renderer.Rect2i> targets = new ArrayList<>();
+        if (!menu.isFilterView()) return targets;
+        for (int i = 0; i < LaserTankBlockEntity.FILTER_SLOTS; i++) {
+            targets.add(new net.minecraft.client.renderer.Rect2i(leftPos + LaserTankMenu.FILTER_X + i * 18, topPos + LaserTankMenu.FILTER_Y, 16, 16));
+        }
+        return targets;
+    }
+
+    @Override
+    public int ghostOffset() {
+        return 0;
+    }
+
+    @Override
+    public int ghostContainerId() {
+        return menu.containerId;
+    }
+
+    @Override
+    public boolean ghostFluids() {
+        return true;
+    }
+
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
+        if (menu.isFilterView()) return;
         for (int i = 0; i < LaserTankBlockEntity.TANKS; i++) {
             drawTank(graphics, tank().tanks().get(i), leftPos + TANK_X + i * TANK_STEP, topPos + TANK_Y);
         }
@@ -66,22 +115,24 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> {
 
     /** The well is painted on the panel; this only fills it, from the bottom up. */
     private static void drawTank(GuiGraphicsExtractor graphics, FluidStack fluid, int x, int y) {
-        if (fluid.isEmpty()) return;
-        int filled = Math.max(1, (int) ((long) TANK_H * fluid.getAmount() / LaserTankBlockEntity.CAPACITY));
-        FluidTintSource tint = Minecraft.getInstance().getModelManager().getFluidStateModelSet()
-                .get(fluid.getFluid().defaultFluidState()).fluidTintSource();
-        int color = tint == null ? 0xFFFFFFFF : tint.colorAsStack(fluid);
-        if ((color & 0xFF000000) == 0) color |= 0xFF000000;
-        graphics.fill(x, y + TANK_H - filled, x + TANK_W, y + TANK_H, color);
+        com.kadikular.quantimium.client.screen.ui.FluidSprites.gauge(graphics, fluid, LaserTankBlockEntity.CAPACITY, x, y, TANK_W, TANK_H);
     }
 
     @Override
     protected void renderMachineTooltips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (menu.isFilterView()) {
+            // An empty entry says how to set it.
+            if (hoveredSlot != null && !hoveredSlot.hasItem() && menu.getCarried().isEmpty() && menu.slots.indexOf(hoveredSlot) < LaserTankMenu.FILTER_END) {
+                graphics.setComponentTooltipForNextFrame(font, List.of(Component.translatable("gui.quantimium.laser_tank.filter.hint").withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
+            }
+            return;
+        }
         for (int i = 0; i < LaserTankBlockEntity.TANKS; i++) {
             if (!QuantumWidgets.hit(mouseX, mouseY, leftPos + TANK_X + i * TANK_STEP - 1, topPos + TANK_Y - 1, TANK_W + 2, TANK_H + 2)) continue;
             FluidStack fluid = tank().tanks().get(i);
             List<Component> tip = new ArrayList<>(2);
             tip.add(Component.translatable("gui.quantimium.laser_tank.tank", i + 1));
+            tip.add(Component.translatable("gui.quantimium.laser_tank.tank.hint").withStyle(ChatFormatting.DARK_GRAY));
             tip.add(fluid.isEmpty() ? Component.translatable("gui.quantimium.slot_config.empty").withStyle(ChatFormatting.GRAY)
                     : Component.translatable("gui.quantimium.quantum_simulator.tank.holds", fluid.getHoverName(),
                             String.format("%,d", fluid.getAmount()), String.format("%,d", LaserTankBlockEntity.CAPACITY)).withStyle(ChatFormatting.GRAY));
@@ -92,7 +143,7 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> {
 
     @Override
     protected Identifier panelTexture() {
-        return TEXTURE;
+        return menu.isFilterView() ? FILTER_TEXTURE : TEXTURE;
     }
 
     @Override
@@ -117,6 +168,12 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> {
 
     @Override
     protected Component statusLabel() {
+        if (menu.isFilterView()) {
+            int listed = 0;
+            for (int i = 0; i < LaserTankBlockEntity.FILTER_SLOTS; i++) if (!tank().getFilter().getItem(i).isEmpty()) listed++;
+            if (listed == 0) return Component.translatable("gui.quantimium.laser_port.status.all");
+            return Component.translatable(tank().allows() ? "gui.quantimium.laser_port.status.allow" : "gui.quantimium.laser_port.status.deny", listed);
+        }
         return Component.translatable("gui.quantimium.laser_tank.status." + tank().mode().name().toLowerCase(java.util.Locale.ROOT));
     }
 

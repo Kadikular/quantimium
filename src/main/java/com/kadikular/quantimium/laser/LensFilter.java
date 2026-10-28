@@ -138,13 +138,13 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return !stack.isEmpty() && entries.stream().anyMatch(entry -> FilterEntry.matches(entry, stack));
     }
 
-    /** Whether it lets an action carry, place, put in or take out this item. Entries holding a fluid are for fluids only. */
+    /** Whether it lets an action carry, place, put in or take out this item. Fluid entries are for fluids only. */
     public boolean lets(ItemStack stack) {
         if (items.stream().noneMatch(entry -> !entry.isEmpty() && fluidOf(entry).isEmpty())) return true;
         return items.stream().anyMatch(entry -> fluidOf(entry).isEmpty() && FilterEntry.matches(entry, stack)) == itemsAllow;
     }
 
-    /** Whether it lets Insert or Extract move this fluid: listed as a filled container (a water bucket), or no fluid listed. */
+    /** Whether it lets Insert or Extract move this fluid: listed as a fluid entry, or no fluid listed. */
     public boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
         boolean any = false;
         boolean listed = false;
@@ -157,18 +157,10 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return !any || listed == itemsAllow;
     }
 
-    /**
-     * The fluid a filter entry stands for: what it holds, if it's a filled container. Entries are bare items (a water
-     * bucket), so it's looked up once per item.
-     */
+    /** The fluid a filter entry stands for: a fluid entry's (a right-click with a bucket); empty for an item. */
     private static net.neoforged.neoforge.fluids.FluidStack fluidOf(ItemStack entry) {
-        if (entry.isEmpty()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
-        if (!entry.isComponentsPatchEmpty()) return net.neoforged.neoforge.transfer.fluid.FluidUtil.getFirstStackContained(entry);
-        return HELD.computeIfAbsent(entry.getItem(), item -> net.neoforged.neoforge.transfer.fluid.FluidUtil.getFirstStackContained(new ItemStack(item)));
+        return com.kadikular.quantimium.recipe.FluidEntry.fluidOf(entry);
     }
-
-    private static final java.util.Map<net.minecraft.world.item.Item, net.neoforged.neoforge.fluids.FluidStack> HELD =
-            new java.util.concurrent.ConcurrentHashMap<>();
 
     /** Whether it lets a Placement beam place this item: the item, and as a block, the block it places. */
     public boolean letsPlace(ItemStack stack) {

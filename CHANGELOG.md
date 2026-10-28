@@ -9,8 +9,13 @@
   Once a second a sending tank pours up to four buckets to the next collecting tank down the laser.
 - **Insert and Extract move fluids**: with no items to move, they fill or drain the fluid handler the laser ends on,
   from or to the Laser Tanks up the laser, a bucket at a time (doubled for each Speed Lens).
-- **The Item Filter Lens lists fluids** as filled containers (a water bucket). Fluid entries apply only to fluids and
-  the rest only to items, so a list of items lets every fluid through. The **Void Lens** destroys fluids the same way.
+- **Extract pumps**: with nothing to take from, it takes the first fluid source on its way (the laser runs on through
+  water) up to the collecting Laser Tanks, a bucket at a time.
+- **The Item Filter Lens is now the Filter Lens** and lists fluids: right-click an entry with a bucket to list its fluid
+  (drawn as that fluid), or drag a fluid in from JEI; a plain click lists the bucket itself. Fluid entries apply only
+  to fluids, so a list of items lets every fluid through. The **Void Lens** destroys fluids the same way.
+- The Laser Tank has a filter like the Laser Port's, its tanks fill and empty with a bucket clicked on them, and screens
+  draw fluids with their own texture.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 

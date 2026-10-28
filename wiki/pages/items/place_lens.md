@@ -4,7 +4,7 @@
 
 - Places at most one block every {{c:LaserTuning.PLACE_COOLDOWN|s}}.
 - Seeds count: on farmland they are sown. A bucket of water or lava empties there, and the empty bucket goes back to the port.
-- An Item Filter Lens in the mount says what it places.
+- An Filter Lens in the mount says what it places.
 - Through an [[block:area_prism]] it fills each free space resting on a block.
 - It does nothing in the mirror.
 

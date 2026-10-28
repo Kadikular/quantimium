@@ -33,7 +33,7 @@ The controller has its own store, up to 100,000 FE. It fills it from a laser end
 **Lenses past the controller use the network.** Up the laser from a lens, the controller stands for the whole network, after any Laser Port nearer the lens.
 
 - What a Pickup or Extract Lens brings back goes into the network (to requesters listing it, then storage), so they work as active providers.
-- What an Insert, Placement or Interact Lens uses comes from the network (providers, then storage), but only through an Item Filter Lens, so they work as active requesters. Unfiltered, they take nothing from the network (a Laser Port up the laser still feeds them).
+- What an Insert, Placement or Interact Lens uses comes from the network (providers, then storage), but only through an Filter Lens, so they work as active requesters. Unfiltered, they take nothing from the network (a Laser Port up the laser still feeds them).
 - A stream from one side of a join reaches back up its own side. Put the controller before the lenses, or on their side of the join.
 
 ## Logistics Receptacle

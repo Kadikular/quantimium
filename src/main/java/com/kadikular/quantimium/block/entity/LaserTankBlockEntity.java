@@ -40,7 +40,8 @@ import java.util.Set;
 /**
  * A Laser Tank: the Laser Port's twin for fluids. {@link #TANKS} tanks of {@link #CAPACITY} mB, one fluid in each.
  * Light passes through it and out of its face; it catches what an Extract lens sends back up the light, sends what it
- * holds down it to an Insert lens or another tank, or both. Pipes fill it while it sends, and drain it any time.
+ * holds down it to an Insert lens or another tank, or both. Pipes fill it while it sends, and drain it any time; a
+ * player's bucket does either in any mode. Its filter lists fluids it catches (or lets go on up the light).
  */
 @SuppressWarnings("deprecation")
 public class LaserTankBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, MenuProvider {
@@ -48,8 +49,21 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
     public static final int TANKS = 4;
     public static final int CAPACITY = 16_000;
 
+    public static final int FILTER_SLOTS = 9;
+
     private final FluidTanks tanks = new FluidTanks(TANKS, CAPACITY, this::changed);
     private final IFluidHandler pipes = tanks.view(this::sends, () -> true);
+    /** What a player's bucket sees: it fills and drains in any mode. */
+    private final IFluidHandler hands = tanks.view(() -> true, () -> true);
+    /** Fluid entries: what it catches, or with a blacklist, what it lets go on up the light. */
+    private final net.minecraft.world.SimpleContainer filter = new net.minecraft.world.SimpleContainer(FILTER_SLOTS) {
+        @Override
+        public void setChanged() {
+            super.setChanged();
+            LaserTankBlockEntity.this.setChanged();
+        }
+    };
+    private boolean allow = true;
     private LaserPortBlockEntity.Mode mode = LaserPortBlockEntity.Mode.COLLECT;
     private List<LaserBeam> shownBeams = List.of();
 
@@ -80,6 +94,43 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         if (level != null) LaserNetworks.changed(level);
     }
 
+    /** What a player's bucket fills from or empties into. */
+    public ResourceHandler<FluidResource> forHands() {
+        return tanks.handler(hands);
+    }
+
+    public net.minecraft.world.SimpleContainer getFilter() {
+        return filter;
+    }
+
+    public boolean allows() {
+        return allow;
+    }
+
+    public void toggleAllow() {
+        allow = !allow;
+        setChanged();
+        sync();
+    }
+
+    /** Lists the fluid {@code stack} holds (or stands for) in entry {@code slot}; anything else clears it. */
+    public void setFilterSlot(int slot, net.minecraft.world.item.ItemStack stack) {
+        if (slot >= 0 && slot < FILTER_SLOTS) filter.setItem(slot, com.kadikular.quantimium.recipe.FluidEntry.asFluid(stack));
+    }
+
+    /** Whether its filter lets it catch {@code fluid} when it comes back up the light. */
+    public boolean acceptsFluid(FluidStack fluid) {
+        boolean any = false;
+        boolean listed = false;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            net.minecraft.world.item.ItemStack entry = filter.getItem(i);
+            if (entry.isEmpty()) continue;
+            any = true;
+            if (com.kadikular.quantimium.recipe.FluidEntry.sameFluid(entry, fluid)) listed = true;
+        }
+        return !any || listed == allow;
+    }
+
     /** What a pipe on any face sees. */
     public ResourceHandler<FluidResource> automation(@Nullable Direction side) {
         return tanks.handler(pipes);
@@ -97,7 +148,8 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
 
     @Override
     public int collectFluid(FluidStack fluid, boolean simulate) {
-        return collects() ? tanks.fill(fluid, simulate) : 0;
+        // What it turns away goes on up the light, to the next.
+        return collects() && acceptsFluid(fluid) ? tanks.fill(fluid, simulate) : 0;
     }
 
     @Override
@@ -199,6 +251,10 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         super.saveAdditional(out);
         out.store("Tanks", FluidStack.OPTIONAL_CODEC.listOf(), tanks.contents());
         out.putInt("RelayMode", mode.ordinal());
+        List<net.minecraft.world.item.ItemStack> entries = new java.util.ArrayList<>();
+        for (int i = 0; i < FILTER_SLOTS; i++) entries.add(filter.getItem(i));
+        out.store("Filter", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC.listOf(), entries);
+        out.putBoolean("Allow", allow);
     }
 
     @Override
@@ -207,6 +263,9 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         tanks.load(in.read("Tanks", FluidStack.OPTIONAL_CODEC.listOf()).orElse(List.of()));
         LaserPortBlockEntity.Mode[] modes = LaserPortBlockEntity.Mode.values();
         mode = modes[Math.floorMod(in.getIntOr("RelayMode", 0), modes.length)];
+        List<net.minecraft.world.item.ItemStack> entries = in.read("Filter", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        for (int i = 0; i < FILTER_SLOTS; i++) filter.getItems().set(i, i < entries.size() ? entries.get(i) : net.minecraft.world.item.ItemStack.EMPTY);
+        allow = in.getBooleanOr("Allow", true);
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 

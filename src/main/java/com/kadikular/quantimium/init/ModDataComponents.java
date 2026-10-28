@@ -42,6 +42,12 @@ public final class ModDataComponents {
                     builder -> builder.persistent(com.kadikular.quantimium.laser.LensFilter.CODEC)
                             .networkSynchronized(com.kadikular.quantimium.laser.LensFilter.STREAM_CODEC));
 
+    /** A filter entry standing for a fluid: what {@link com.kadikular.quantimium.recipe.FluidEntry} makes. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.neoforged.neoforge.transfer.fluid.FluidResource>> FLUID_ENTRY =
+            COMPONENTS.registerComponentType("fluid_entry",
+                    builder -> builder.persistent(net.neoforged.neoforge.transfer.fluid.FluidResource.CODEC)
+                            .networkSynchronized(net.neoforged.neoforge.transfer.fluid.FluidResource.STREAM_CODEC));
+
     /** An Interact lens set to hit, rather than use. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> INTERACT_HITS =
             COMPONENTS.registerComponentType("interact_hits",

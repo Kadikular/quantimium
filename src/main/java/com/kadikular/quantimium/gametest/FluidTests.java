@@ -112,13 +112,13 @@ public final class FluidTests {
 
     // covers: laser.lens.filter_fluid
     @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
-    public static void aFilterLensListingABucketMovesOnlyThatFluid(GameTestHelper helper) {
+    public static void aFilterLensListingAFluidMovesOnlyThatFluid(GameTestHelper helper) {
         emitter(helper, new BlockPos(1, Y, 8));
         LaserTankBlockEntity tank = tank(helper, new BlockPos(3, Y, 8), LaserPortBlockEntity.Mode.SEND,
                 new FluidStack(Fluids.WATER, 4_000), new FluidStack(Fluids.LAVA, 4_000));
         ItemStack filter = new ItemStack(ModItems.FILTER_LENS.get());
         filter.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.items(
-                java.util.List.of(new ItemStack(Items.LAVA_BUCKET)), true));
+                java.util.List.of(com.kadikular.quantimium.recipe.FluidEntry.of(new FluidStack(Fluids.LAVA, 1_000))), true));
         mount(helper, new BlockPos(5, Y, 8), lens(ModItems.INSERT_LENS.get()), filter);
         BlockPos cauldron = new BlockPos(8, Y, 8);
         helper.setBlock(cauldron, Blocks.CAULDRON);
@@ -154,7 +154,7 @@ public final class FluidTests {
         ItemStack voids = new ItemStack(ModItems.VOID_LENS.get());
         com.kadikular.quantimium.item.VoidLensItem.toggle(voids);
         voids.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.items(
-                java.util.List.of(new ItemStack(Items.WATER_BUCKET)), true));
+                java.util.List.of(com.kadikular.quantimium.recipe.FluidEntry.of(new FluidStack(Fluids.WATER, 1_000))), true));
         mount(helper, new BlockPos(5, Y, 8), lens(ModItems.EXTRACT_LENS.get()), voids);
         BlockPos cauldron = new BlockPos(8, Y, 8);
         fullWaterCauldron(helper, cauldron);
@@ -183,5 +183,41 @@ public final class FluidTests {
         }
         helper.assertValueEqual(held(tank, Fluids.WATER), 1_500, "filled");
         helper.succeed();
+    }
+
+    // covers: laser.tank.filter
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
+    public static void aLaserTanksFilterSendsOtherFluidsOnUpTheLaser(GameTestHelper helper) {
+        // The nearer tank catches only lava: the water goes on up to the one behind it.
+        emitter(helper, new BlockPos(1, Y, 8));
+        LaserTankBlockEntity far = tank(helper, new BlockPos(3, Y, 8), LaserPortBlockEntity.Mode.COLLECT);
+        LaserTankBlockEntity near = tank(helper, new BlockPos(5, Y, 8), LaserPortBlockEntity.Mode.COLLECT);
+        near.setFilterSlot(0, new ItemStack(Items.LAVA_BUCKET));
+        mount(helper, new BlockPos(7, Y, 8), lens(ModItems.EXTRACT_LENS.get()));
+        BlockPos cauldron = new BlockPos(10, Y, 8);
+        fullWaterCauldron(helper, cauldron);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(held(far, Fluids.WATER), 1_000, "water in the far tank");
+            helper.assertValueEqual(held(near, Fluids.WATER), 0, "none in the lava tank");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.pump
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
+    public static void anExtractLaserPumpsAWaterSourceOnItsWay(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8));
+        LaserTankBlockEntity tank = tank(helper, new BlockPos(3, Y, 8), LaserPortBlockEntity.Mode.COLLECT);
+        mount(helper, new BlockPos(5, Y, 8), lens(ModItems.EXTRACT_LENS.get()));
+        // One source, walled in with glass the light passes, and stone beyond for it to end on.
+        BlockPos water = new BlockPos(8, Y, 8);
+        for (Direction side : Direction.Plane.HORIZONTAL) helper.setBlock(water.relative(side), Blocks.GLASS);
+        helper.setBlock(water, Blocks.WATER);
+        helper.setBlock(new BlockPos(10, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(held(tank, Fluids.WATER), 1_000, "a bucket's worth");
+            helper.assertBlockPresent(Blocks.AIR, water);
+            TestSupport.finishLasers(helper);
+        });
     }
 }

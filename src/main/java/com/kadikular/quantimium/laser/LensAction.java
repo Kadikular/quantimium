@@ -853,8 +853,13 @@ public final class LensAction {
         BlockPos at;
         net.minecraft.core.Direction side;
         if (area == null) {
+            if (beam == null) return;
+            // Extract with nothing to take from pumps a fluid source on the light's way: the light runs on through water.
+            if (beam.hit() == null || beam.end() == LaserBeam.End.OPEN) {
+                if (!in) moved(networks, pump(level, networks), beam.hit());
+                return;
+            }
             // Looked up once: what the beam ends on, if it holds items or fluids.
-            if (beam == null || beam.hit() == null || beam.end() == LaserBeam.End.OPEN) return;
             at = beam.hit();
             side = beam.arriving().getOpposite();
         } else {
@@ -866,24 +871,59 @@ public final class LensAction {
                 level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
         net.neoforged.neoforge.fluids.capability.IFluidHandler fluids = com.kadikular.quantimium.util.LegacyFluids.legacy(
                 level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, at, side));
-        if (handler == null && fluids == null) return;
+        if (handler == null && fluids == null) {
+            if (!in && area == null) moved(networks, pump(level, networks), at);
+            return;
+        }
         // What crushing and smelting on the way cost, or -1 for nothing moved.
         // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
         BlockPos spill = area == null ? beam.before() : at.above();
         long processing = handler == null ? -1 : in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
         // No items to move: fluids, if it holds them.
         if (processing < 0 && fluids != null) processing = in ? pourInto(networks, fluids) : drainFrom(networks, fluids);
-        // Nothing to move (nothing it may take, or no room): it looks again in a while, longer the longer it's idle.
+        moved(networks, processing, at);
+    }
+
+    /**
+     * After a move by Insert or Extract that cost {@code processing} on the way, or -1 for none: paid for, and paced.
+     * Idle, it looks again in a while, longer the longer it's idle; busy, each move in a row halves the wait, down to
+     * its own pace.
+     */
+    private void moved(LaserNetworks networks, long processing, @Nullable BlockPos at) {
         if (processing < 0) {
             placeCooldown = nextWait(false);
             return;
         }
         networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
-        // Busy, it speeds up: each move in a row halves the wait, down to its own pace.
         placeCooldown = nextWait(true);
-        placed = at;
+        if (at != null) placed = at;
         lastWorked = now;
+    }
+
+    /**
+     * Takes the first fluid source on the light's way (or the block it ends on) up to the collecting Laser Tanks, as a
+     * bucket would: a whole bucket's worth, only if they have room for it. With a Void lens listing it, it goes anyway.
+     * 0 for taken, -1 for none.
+     */
+    private long pump(ServerLevel level, LaserNetworks networks) {
+        if (collectors.isEmpty() && stream.voids() == null) return -1;
+        List<BlockPos> along = new ArrayList<>(beam.path());
+        if (beam.hit() != null) along.add(beam.hit());
+        for (BlockPos at : along) {
+            BlockState there = level.getBlockState(at);
+            net.minecraft.world.level.material.FluidState source = there.getFluidState();
+            if (!source.isSource() || !(there.getBlock() instanceof net.minecraft.world.level.block.BucketPickup pickup)) continue;
+            net.neoforged.neoforge.fluids.FluidStack taken = new net.neoforged.neoforge.fluids.FluidStack(source.getType(),
+                    net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME);
+            if (!lets(taken)) continue;
+            boolean voids = stream.voids() != null && stream.voids(taken);
+            if (!voids && networks.collectFluid(collectors, taken, true) < taken.getAmount()) continue;
+            if (pickup.pickupBlock(null, level, at, there).isEmpty()) continue;
+            if (!stream.voidsAll()) networks.collectFluid(collectors, taken, false);
+            return 0;
+        }
+        return -1;
     }
 
     /**

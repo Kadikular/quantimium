@@ -2,6 +2,6 @@ The Logistics Controller starts a logistics network. A laser in by its back goes
 
 - One controller to a network: where lasers from two meet, both stop and say why.
 - It has its own store ({{c:LaserTuning.LOGISTICS_CAPACITY}} FE) and pays {{c:LaserTuning.LOGISTICS_FE_PER_MOVE}} FE for each move its receptacles make. It gives no power to machines.
-- Lenses past it use the network. Pickup and Extract put items into it; Insert, Placement and Interact (through an Item Filter Lens) take items from it.
+- Lenses past it use the network. Pickup and Extract put items into it; Insert, Placement and Interact (through an Filter Lens) take items from it.
 
 See [Logistics](../lasers/logistics.md).

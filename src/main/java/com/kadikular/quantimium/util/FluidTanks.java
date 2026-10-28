@@ -156,6 +156,60 @@ public final class FluidTanks {
         };
     }
 
+    /** Tank {@code tank} alone, filled and drained freely: what a bucket clicked on it in a screen works with. */
+    public ResourceHandler<FluidResource> tank(int tank) {
+        if (single == null) {
+            single = new IFluidHandler[tanks.length];
+            for (int i = 0; i < tanks.length; i++) {
+                int index = i;
+                single[i] = new IFluidHandler() {
+                    @Override
+                    public int getTanks() {
+                        return 1;
+                    }
+
+                    @Override
+                    public FluidStack getFluidInTank(int t) {
+                        return get(index);
+                    }
+
+                    @Override
+                    public int getTankCapacity(int t) {
+                        return capacity;
+                    }
+
+                    @Override
+                    public boolean isFluidValid(int t, FluidStack stack) {
+                        return get(index).isEmpty() || FluidStack.isSameFluidSameComponents(get(index), stack);
+                    }
+
+                    @Override
+                    public int fill(FluidStack resource, FluidAction action) {
+                        if (!isFluidValid(0, resource)) return 0;
+                        FluidStack there = get(index);
+                        int filled = Math.min(capacity - there.getAmount(), resource.getAmount());
+                        if (filled <= 0) return 0;
+                        if (action.execute()) set(index, there.isEmpty() ? resource.copyWithAmount(filled) : there.copyWithAmount(there.getAmount() + filled));
+                        return filled;
+                    }
+
+                    @Override
+                    public FluidStack drain(FluidStack resource, FluidAction action) {
+                        return FluidStack.isSameFluidSameComponents(get(index), resource) ? drain(resource.getAmount(), action) : FluidStack.EMPTY;
+                    }
+
+                    @Override
+                    public FluidStack drain(int maxDrain, FluidAction action) {
+                        return FluidTanks.this.drain(index, maxDrain, action.simulate());
+                    }
+                };
+            }
+        }
+        return handler(single[tank]);
+    }
+
+    private IFluidHandler[] single;
+
     /** {@link #view} as a {@link ResourceHandler}, undone with the transaction it's used in. */
     public ResourceHandler<FluidResource> handler(IFluidHandler view) {
         return LegacyFluids.of(view, this::snapshot, this::restore);
