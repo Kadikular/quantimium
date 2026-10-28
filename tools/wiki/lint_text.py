@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Checks the player-facing text against the writing style (see wiki/pages/guides/writing-style.md):
-the language file, wiki/data/descriptions.yml and the wiki pages.
+Checks the player-facing text against the writing style: the language file, wiki/data/descriptions.yml and the
+wiki pages.
 
     python3 tools/wiki/lint_text.py              # report, exit 1 if there are errors
     python3 tools/wiki/lint_text.py --warnings   # also list the warnings
