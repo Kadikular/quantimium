@@ -132,3 +132,144 @@ isolator_lens:
   obtained: Crafted
   energy_use: "Free"
   works_with: "Every action"
+flash_emitter:
+  category: "Laser emitter"
+  obtained: "Crafted"
+  energy_buffer: "20,000 FE"
+  max_input: "200 FE/t"
+  energy_use: "Ready cost: none"
+  works_with: "[[block:lens_mount]], [[block:laser_mirror]], [[block:laser_prism]]"
+laser_emitter_1:
+  category: "Laser emitter"
+  obtained: "Crafted"
+  energy_buffer: "200,000 FE"
+  max_input: "2,000 FE/t"
+  energy_use: "Ready cost: 2 FE/t"
+  works_with: "[[block:lens_mount]], [[block:laser_mirror]], [[block:laser_prism]]"
+laser_emitter_2:
+  category: "Laser emitter"
+  obtained: "Crafted"
+  energy_buffer: "3,200,000 FE"
+  max_input: "32,000 FE/t"
+  energy_use: "Ready cost: 16 FE/t"
+  works_with: "[[block:lens_mount]], [[block:laser_mirror]], [[block:laser_prism]]"
+laser_emitter_3:
+  category: "Laser emitter"
+  obtained: "Crafted"
+  energy_buffer: "51,200,000 FE"
+  max_input: "512,000 FE/t"
+  energy_use: "Ready cost: 128 FE/t"
+  works_with: "[[block:lens_mount]], [[block:laser_mirror]], [[block:laser_prism]]"
+solar_emitter:
+  category: "Laser emitter"
+  obtained: "Crafted"
+  energy_use: "Makes 20 FE/t in full sun"
+  works_with: "[[block:laser_emitter_1]], [[block:laser_mirror]]"
+laser_mirror:
+  category: "Laser optics"
+  obtained: "Crafted"
+  energy_use: "Takes 0.25% per bounce"
+  works_with: "[[block:laser_splitter]], [[item:cavity_mirror]]"
+laser_splitter:
+  category: "Laser optics"
+  obtained: "Crafted"
+  works_with: "[[block:laser_mirror]], [[block:laser_prism]]"
+laser_prism:
+  category: "Laser optics"
+  obtained: "Crafted"
+  energy_use: "Takes 0.5% per hop"
+  works_with: "[[item:laser_linker]], [[block:area_prism]]"
+area_prism:
+  category: "Laser optics"
+  obtained: "Crafted"
+  energy_use: "x1.5 for cuts and placement"
+  works_with: "[[item:harvest_lens]], [[item:healing_lens]], [[item:laser_linker]]"
+photodetector:
+  category: "Laser block"
+  obtained: "Crafted"
+  energy_use: "Free"
+  works_with: "[[block:laser_emitter_1]]"
+isolator:
+  category: "Laser block"
+  obtained: "Crafted"
+  energy_use: "Free"
+  works_with: "[[item:isolator_lens]]"
+entangled_mirror:
+  category: "Laser optics"
+  obtained: "Crafted in the Quantum Foundry"
+  energy_use: "Takes 5% per jump"
+  works_with: "[[item:tesseract]], [[item:laser_focus]]"
+lens_mount:
+  category: "Laser block"
+  obtained: "Crafted"
+  energy_use: "Free"
+  works_with: "[[item:harvest_lens]], [[block:laser_port]]"
+laser_port:
+  category: "Laser block"
+  obtained: "Crafted"
+  energy_use: "Free; the laser pays to carry items"
+  automation: "Items, per-face"
+  works_with: "[[item:pickup_lens]], [[item:insert_lens]], [[block:lens_mount]]"
+logistics_controller:
+  category: "Logistics"
+  obtained: "Crafted"
+  energy_buffer: "100,000 FE"
+  energy_use: "100 FE per move"
+  works_with: "[[item:logistics_receptacle]], [[block:logistics_terminal]]"
+logistics_terminal:
+  category: "Logistics"
+  obtained: "Crafted"
+  works_with: "[[block:logistics_controller]], [[block:logistics_lectern]]"
+logistics_lectern:
+  category: "Logistics"
+  obtained: "Crafted"
+  works_with: "[[block:logistics_terminal]]"
+logistics_materialiser:
+  category: "Logistics"
+  obtained: "Crafted"
+  energy_use: "100 FE per move"
+  automation: "Items, every face"
+  works_with: "[[block:logistics_controller]]"
+reactor_logistics_port:
+  category: "Reactor part"
+  obtained: "Crafted"
+  works_with: "[[block:logistics_controller]], [[block:horizon_core]]"
+laser_focus:
+  category: "Laser focus"
+  obtained: "Crafted"
+  works_with: "[[item:focus_emitter]], [[item:focus_stand]]"
+clear_laser_focus:
+  category: "Laser focus"
+  obtained: "Crafted"
+  works_with: "[[item:logistics_receptacle]]"
+focus_stand:
+  category: "Laser focus"
+  obtained: "Crafted"
+  works_with: "[[item:laser_focus]]"
+focus_emitter:
+  category: "Laser focus"
+  obtained: "Crafted"
+  works_with: "[[item:laser_focus]], [[item:harvest_lens]]"
+focus_cover:
+  category: "Laser focus"
+  obtained: "Crafted"
+  works_with: "[[item:laser_focus]]"
+cavity_mirror:
+  category: "Laser focus"
+  obtained: "Crafted"
+  energy_buffer: "10,000,000 FE per block of gap"
+  max_input: "512,000 FE/t"
+  works_with: "[[block:laser_mirror]], [[item:laser_focus]]"
+logistics_receptacle:
+  category: "Logistics"
+  obtained: "Crafted"
+  energy_use: "100 FE per move"
+  works_with: "[[block:logistics_controller]], [[item:laser_focus]]"
+laser_linker:
+  category: "Tool"
+  obtained: "Crafted"
+  works_with: "[[block:laser_prism]], [[block:area_prism]]"
+spectroscope:
+  category: "Tool"
+  obtained: "Crafted"
+  works_with: "[[block:laser_emitter_1]]"
