@@ -57,6 +57,14 @@
   switched off, breaks it.
 - Mirrors no longer show where light would go while holding a wrench or the Linker.
 
+### Reactor
+
+- A storage bus reading a busy Reactor's Materialiser Port costs far less: an answer stands for a second while what it
+  uses is still there, however else the Reactor changes, and planning is held to about 1 ms a tick (a bus listing 1,450
+  slots every tick went from about 240 ms to under 2 ms). Things never asked about before can take a few seconds to show.
+- Plans look items up faster, and the ME Superposition Port plans its trees without copying the whole stock for each,
+  in at most about 1 ms a tick.
+
 ## 0.6.1-alpha: Healing, freezing, and a lens pass
 
 Same Minecraft 26.1.2 and NeoForge 26.1.2.109. Worlds from 0.6.0 carry on.

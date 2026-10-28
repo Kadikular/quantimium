@@ -156,3 +156,4 @@ The heavy work, counting, runs on its own thread: a few milliseconds for a typic
 - On the server thread a Reactor costs well under a microsecond a tick, idle or with items streaming in (see tick timing).
 - A storage bus reading a full port of several hundred items takes about a tenth of a millisecond.
 - Each real extraction runs one plan, typically under a millisecond.
+- A bus that also tries taking each item (as an AE2 storage bus does) costs about 1.5 ms a listing once warm. Each answer is kept for a second while what it uses is still there, and planning is held to about 1 ms a tick, so items never asked about before can take a few seconds to show.

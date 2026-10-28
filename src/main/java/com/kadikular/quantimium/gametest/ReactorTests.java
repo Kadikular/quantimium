@@ -413,20 +413,8 @@ public final class ReactorTests {
     // covers: reactor.counts.speed
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor_speed", timeoutTicks = 200)
     public static void aFullMaterialiserPortIsCheapToRead(GameTestHelper helper) {
-        // Every vanilla workstation and a base's worth of stock: hundreds of slots for a storage bus to read.
-        HorizonCoreBlockEntity core = buildReactor(helper, 3);
-        Item[] stations = {Items.CRAFTING_TABLE, Items.FURNACE, Items.BLAST_FURNACE, Items.SMOKER, Items.STONECUTTER};
-        BlockPos[] bays = {CORE.below().north(2), CORE.below().south(2), CORE.below().east(2), CORE.below().west(2), CORE.below().offset(2, 0, -1)};
-        for (int i = 0; i < stations.length; i++) bay(helper, bays[i], stations[i]);
         BlockPos portPos = CORE.below().east(5);
-        helper.setBlock(portPos, ModBlocks.REACTOR_MATERIALISER_PORT.get());
-        core.revalidate(helper.getLevel());
-        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
-        for (String tag : List.of("minecraft:logs", "c:ingots", "c:gems", "c:dusts", "c:cobblestones", "c:stones",
-                "c:sands", "c:raw_materials", "minecraft:wool", "c:dyes")) {
-            BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, Identifier.parse(tag)))
-                    .forEach(holder -> core.take(ItemResource.of(holder.value()), 256));
-        }
+        HorizonCoreBlockEntity core = stockedReactor(helper, portPos);
         helper.runAfterDelay(4, () -> {
             core.recountNow();
             ResourceHandler<ItemResource> port = helper.getLevel().getCapability(Capabilities.Item.BLOCK,
@@ -454,6 +442,71 @@ public final class ReactorTests {
             helper.succeed();
         });
     }
+
+    /** Every vanilla workstation and a base's worth of stock, with a Materialiser Port at {@code portPos}: hundreds of slots for a storage bus to read. */
+    private static HorizonCoreBlockEntity stockedReactor(GameTestHelper helper, BlockPos portPos) {
+        HorizonCoreBlockEntity core = buildReactor(helper, 3);
+        Item[] stations = {Items.CRAFTING_TABLE, Items.FURNACE, Items.BLAST_FURNACE, Items.SMOKER, Items.STONECUTTER};
+        BlockPos[] bays = {CORE.below().north(2), CORE.below().south(2), CORE.below().east(2), CORE.below().west(2), CORE.below().offset(2, 0, -1)};
+        for (int i = 0; i < stations.length; i++) bay(helper, bays[i], stations[i]);
+        helper.setBlock(portPos, ModBlocks.REACTOR_MATERIALISER_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        for (String tag : List.of("minecraft:logs", "c:ingots", "c:gems", "c:dusts", "c:cobblestones", "c:stones",
+                "c:sands", "c:raw_materials", "minecraft:wool", "c:dyes")) {
+            BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, Identifier.parse(tag)))
+                    .forEach(holder -> core.take(ItemResource.of(holder.value()), 256));
+        }
+        return core;
+    }
+
+    // covers: reactor.counts.speed
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor_speed_busy", timeoutTicks = 300)
+    public static void aStorageBusReadingABusyReactorStaysCheap(GameTestHelper helper) {
+        BlockPos portPos = CORE.below().east(5);
+        HorizonCoreBlockEntity core = stockedReactor(helper, portPos);
+        int listings = 200;
+        long[] times = new long[listings];
+        int[] found = new int[listings];
+        int[] at = {-4};
+        helper.onEachTick(() -> {
+            if (at[0] < 0) {
+                if (++at[0] == 0) core.recountNow();
+                return;
+            }
+            if (at[0] >= listings) return;
+            ResourceHandler<ItemResource> port = helper.getLevel().getCapability(Capabilities.Item.BLOCK,
+                    helper.absolutePos(portPos), null);
+            // What an AE2 storage bus does when it lists the port, once a tick: a simulated take of every slot.
+            // Between listings the stock changes, as it does while the Reactor runs.
+            core.take(ItemResource.of(Items.COBBLESTONE), 1);
+            long start = System.nanoTime();
+            for (int i = 0; i < port.size(); i++) {
+                ItemResource item = port.getResource(i);
+                if (item.isEmpty()) continue;
+                try (Transaction transaction = Transaction.openRoot()) {
+                    if (port.extract(i, item, 64, transaction) > 0) found[at[0]]++;
+                }
+            }
+            times[at[0]++] = System.nanoTime() - start;
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(at[0] >= listings, "listing");
+            // The first few ticks warm the JIT up; the last forty are what a bus costs once it has looked a while.
+            long worst = 0;
+            for (int i = 5; i < listings; i++) worst = Math.max(worst, times[i]);
+            long late = 0;
+            for (int i = listings - 40; i < listings; i++) late += times[i];
+            double worstMs = worst / 1_000_000.0;
+            double lateMs = late / 40.0 / 1_000_000.0;
+            Quantimium.LOGGER.info("Busy Reactor read by a storage bus every tick: {} then {} takeable, worst listing {} ms, "
+                    + "{} ms each at the end", found[0], found[listings - 1], String.format("%.2f", worstMs), String.format("%.2f", lateMs));
+            helper.assertTrue(found[listings - 1] > 1000, "most takeable in the end: " + found[listings - 1]);
+            helper.assertTrue(worstMs < 10 * TestSupport.timingSlack(), "the worst listing took " + worstMs + " ms");
+            helper.assertTrue(lateMs < 3 * TestSupport.timingSlack(), "a listing at the end took " + lateMs + " ms");
+        });
+    }
+
 
     // covers: reactor.singularity_holds
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor", timeoutTicks = 40)

@@ -183,7 +183,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
      * What open transactions have promised away (Materialiser Ports' extractions waiting to commit), so
      * no other port, or a network, takes it meanwhile.
      */
-    private final java.util.Map<ItemResource, Long> reserved = new java.util.HashMap<>();
+    private final java.util.Map<ItemResource, Long> reserved = com.kadikular.quantimium.reactor.ItemKeys.map();
 
     public void reserve(java.util.Map<ItemResource, Long> items) {
         items.forEach((item, amount) -> {
@@ -849,7 +849,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     /** Plans worked out from the whole of what's held, while it, the counts and the recipes stand. */
-    private final java.util.Map<ItemResource, java.util.Map<Long, ReactorPlanner.Result>> plans = new java.util.HashMap<>();
+    private final java.util.Map<ItemResource, java.util.Map<Long, ReactorPlanner.Result>> plans = com.kadikular.quantimium.reactor.ItemKeys.map();
     private int plansVersion = -1;
     @org.jetbrains.annotations.Nullable
     private Object plansCounts;
@@ -880,9 +880,15 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /** Plans {@code count} of {@code item} from {@code stock}, which may differ from the ledger. Changes nothing. */
     public ReactorPlanner.Result plan(java.util.Map<ItemResource, Long> stock, ItemResource item, long count) {
-        if (!isActive()) return refused("message.quantimium.reactor.offline");
         // Planned against the ledger itself: it keeps where its kinds are.
-        return ReactorPlanner.plan(recipes, stock, stock == ledger.view() || stock instanceof Unpromised ? ledger : null, item, count);
+        return plan(stock, stock == ledger.view() || stock instanceof Unpromised ? ledger : null, item, count);
+    }
+
+    /** As {@link #plan(java.util.Map, ItemResource, long)}, {@code index} saying where {@code stock}'s kinds are (null to work it out). */
+    public ReactorPlanner.Result plan(java.util.Map<ItemResource, Long> stock, @org.jetbrains.annotations.Nullable com.kadikular.quantimium.reactor.StockIndex index,
+                                      ItemResource item, long count) {
+        if (!isActive()) return refused("message.quantimium.reactor.offline");
+        return ReactorPlanner.plan(recipes, stock, index, item, count);
     }
 
     /**

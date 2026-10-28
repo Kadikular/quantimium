@@ -275,11 +275,23 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
      * amount asked against the ledger as this transaction has left it, trims to what really can be made
      * and paid for, and reserves it. Nothing is used until the outermost transaction commits, so a
      * simulated extraction, which pipes and storage buses make constantly, costs nothing but the plan.
-     * Asked twice in a tick for the same thing with nothing pending, it answers from the last plan.
+     *
+     * <p>With nothing pending, an answer is kept a second while what it uses is still there, however else the
+     * horizon changes: a storage bus asks about every slot each time it looks, and a running Reactor changes
+     * every tick. Planning afresh is held to {@link #PLAN_NANOS_PER_TICK} a tick, and planning again an answer that
+     * still holds to {@link #REPLAN_NANOS_PER_TICK}; past those, older answers that still hold stand in, and asks
+     * with none get nothing until a later tick.
      */
     private final class MaterialiserHandler extends SnapshotJournal<Integer> implements ResourceHandler<ItemResource> {
         /** At most this many plans to find how much of an ask can really be made. */
         private static final int MAX_PLANS = 7;
+        /** How long a kept answer stands before it's planned again, if there's time. */
+        private static final int ANSWER_TICKS = 20;
+        /** Planning time a tick for asks with nothing pending. The first plan of a tick always runs. */
+        private static final long PLAN_NANOS_PER_TICK = 1_000_000;
+        /** Of that, what may go on planning again asks whose kept answer still holds. */
+        private static final long REPLAN_NANOS_PER_TICK = 250_000;
+        private static final int MAX_ANSWERS = 8192;
 
         /** Something this transaction took (a plan) or put in (no plan). */
         private record Op(ItemResource item, int amount, @Nullable com.kadikular.quantimium.reactor.ReactorPlanner.Plan plan,
@@ -289,13 +301,22 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         private com.kadikular.quantimium.reactor.ReactorCounter.Counts slotsFrom;
         private List<ItemResource> slots = List.of();
         private List<Long> amounts = List.of();
-        /** What asks were answered with nothing pending, while the ledger stood at {@link #cachedVersion}, since {@link #cachedTick}. */
-        private record AnswerKey(ItemResource item, int amount) {}
+        private record AnswerKey(ItemResource item, int amount) {
+            @Override
+            public int hashCode() {
+                return 31 * com.kadikular.quantimium.reactor.ItemKeys.hash(item) + amount;
+            }
+        }
 
-        private final java.util.Map<AnswerKey, Op> answers = new java.util.HashMap<>();
-        /** Far enough back that the first ask starts afresh, near enough that the subtraction can't overflow. */
-        private long cachedTick = Long.MIN_VALUE / 2;
-        private int cachedVersion;
+        /** An answer to an ask with nothing pending, and the tick it was planned. */
+        private record Kept(@Nullable Op op, long tick) {}
+
+        private final java.util.Map<AnswerKey, Kept> answers = new java.util.HashMap<>();
+        /** The tick {@link #plannedNanos} is for. */
+        private long planTick = Long.MIN_VALUE;
+        private long plannedNanos;
+        /** Whether the last plan stopped for time before it found how much can be made. */
+        private boolean cutShort;
 
         /**
          * The core, unless this port is to show nothing: while the core is reading or taking from a
@@ -399,19 +420,43 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         @Nullable
         private Op answer(HorizonCoreBlockEntity horizon, ItemResource item, int amount) {
             long tick = level.getGameTime();
+            if (tick != planTick) {
+                planTick = tick;
+                plannedNanos = 0;
+            }
             boolean clean = ops.isEmpty() && !horizon.hasReservations();
-            // Answers are kept while the ledger stands, up to a second: a storage bus asks about everything, often.
-            if (cachedVersion != horizon.ledgerVersion() || tick - cachedTick >= 20) {
-                answers.clear();
-                cachedTick = tick;
-                cachedVersion = horizon.ledgerVersion();
-            }
             AnswerKey askKey = new AnswerKey(item, amount);
-            if (clean && answers.containsKey(askKey)) {
-                Op kept = answers.get(askKey);
-                // Still to be paid for: the power may have gone since.
-                if (kept == null || kept.fe() <= horizon.getEnergyStorage().getEnergyStored()) return kept;
+            if (clean) {
+                Kept kept = answers.get(askKey);
+                if (kept != null && stillHolds(horizon, kept.op())) {
+                    if (tick - kept.tick() < ANSWER_TICKS || plannedNanos >= REPLAN_NANOS_PER_TICK) return kept.op();
+                } else if (plannedNanos >= PLAN_NANOS_PER_TICK) {
+                    return null;
+                }
             }
+            long start = System.nanoTime();
+            Op best = plan(horizon, item, amount, clean, start);
+            if (clean) {
+                plannedNanos += Math.max(1, System.nanoTime() - start);
+                if (answers.size() >= MAX_ANSWERS) answers.clear();
+                // One cut short stands until there's time to plan it again, rather than costing the same again next tick.
+                answers.put(askKey, new Kept(best, cutShort ? tick - ANSWER_TICKS : tick));
+            }
+            return best;
+        }
+
+        /** Whether a kept answer can still be carried out: what it uses is there, and the power to pay for it. */
+        private static boolean stillHolds(HorizonCoreBlockEntity horizon, @Nullable Op op) {
+            if (op == null) return true;
+            if (op.fe() > horizon.getEnergyStorage().getEnergyStored()) return false;
+            for (var entry : op.plan().consumed().entrySet()) {
+                if (horizon.availableCount(entry.getKey()) < entry.getValue()) return false;
+            }
+            return true;
+        }
+
+        @Nullable
+        private Op plan(HorizonCoreBlockEntity horizon, ItemResource item, int amount, boolean clean, long started) {
             // What's held less what any open transaction has promised (this one's included), and what this
             // one's own earlier steps leave or put in.
             // With nothing pending, what's held is the stock as it stands, and the Reactor keeps its plans from that.
@@ -431,7 +476,13 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             int high = amount;
             int plans = 0;
             // The full ask first; if that can't be done, halve towards what can.
+            cutShort = false;
             while (low <= high && plans < MAX_PLANS) {
+                // With nothing pending, out of time for this tick: as much as is found so far.
+                if (clean && plans > 0 && plannedNanos + (System.nanoTime() - started) >= PLAN_NANOS_PER_TICK) {
+                    cutShort = true;
+                    break;
+                }
                 int tryAmount = plans == 0 ? high : (low + high) / 2;
                 plans++;
                 com.kadikular.quantimium.reactor.ReactorPlanner.Result result = clean ? horizon.planFromHeld(item, tryAmount) : horizon.plan(stock, item, tryAmount);
@@ -443,7 +494,6 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
                     high = tryAmount - 1;
                 }
             }
-            if (clean && answers.size() < 256) answers.put(askKey, best);
             return best;
         }
 

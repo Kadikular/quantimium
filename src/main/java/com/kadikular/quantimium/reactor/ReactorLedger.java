@@ -29,12 +29,12 @@ public final class ReactorLedger implements StockIndex {
 
     public static final Codec<List<Entry>> CODEC = Entry.CODEC.listOf();
 
-    private final Map<ItemResource, Long> counts = new LinkedHashMap<>();
+    private final Map<ItemResource, Long> counts = ItemKeys.linkedMap();
     private final Map<ItemResource, Long> readOnly = Collections.unmodifiableMap(counts);
     private long mass;
     /** Its kinds by item, and when each came in: for plans (see {@link StockIndex}). */
     private final Map<net.minecraft.world.item.Item, List<ItemResource>> byItem = new java.util.HashMap<>();
-    private final Map<ItemResource, Long> since = new java.util.HashMap<>();
+    private final Map<ItemResource, Long> since = ItemKeys.map();
     private long arrivals;
 
     /** Changes so far, and the kinds the last of them were to (a few hundred): for what's shown of it to catch up by. */

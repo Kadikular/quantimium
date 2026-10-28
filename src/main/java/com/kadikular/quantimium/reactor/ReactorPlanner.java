@@ -57,8 +57,8 @@ public final class ReactorPlanner {
     /** What's left of the ledger as the plan takes from it. */
     private final Map<ItemResource, Long> stock;
     /** Made by earlier steps and not used yet: spent before stock. */
-    private final Map<ItemResource, Long> made = new LinkedHashMap<>();
-    private final Map<ItemResource, Long> consumed = new LinkedHashMap<>();
+    private final Map<ItemResource, Long> made = ItemKeys.linkedMap();
+    private final Map<ItemResource, Long> consumed = ItemKeys.linkedMap();
     private final List<Step> steps = new ArrayList<>();
     /** Every change to the three maps, so a failed attempt is undone without copying them. */
     private final List<Change> undo = new ArrayList<>();
@@ -103,7 +103,7 @@ public final class ReactorPlanner {
         }
         long energy = 0;
         for (Step step : planner.steps) energy += step.energy();
-        Map<ItemResource, Long> leftovers = new LinkedHashMap<>();
+        Map<ItemResource, Long> leftovers = ItemKeys.linkedMap();
         planner.made.forEach((item, amount) -> {
             if (amount > 0) leftovers.put(item, amount);
         });
@@ -163,7 +163,7 @@ public final class ReactorPlanner {
      * every matching item, then by making whichever matching item can be made.
      */
     private boolean needIngredient(Ingredient ingredient, long n, int depth, List<ItemStack> recipeOutputs) {
-        Map<ItemResource, Long> taken = new LinkedHashMap<>();
+        Map<ItemResource, Long> taken = ItemKeys.linkedMap();
         n -= takeMatching(made, ingredient, n, false, taken);
         n -= takeMatching(stock, ingredient, n, true, taken);
         if (n <= 0) {
@@ -337,12 +337,11 @@ public final class ReactorPlanner {
         if (index != null) {
             List<ItemResource> found = new ArrayList<>();
             ingredient.items().forEach(holder -> found.addAll(index.kindsOf(holder.value())));
-            if (found.size() > 1) found.sort(java.util.Comparator.comparingLong(index::order));
-            return found;
+            return found.size() > 1 ? inOrder(found, index::order) : found;
         }
         if (stockIndex == null) {
             stockIndex = new java.util.HashMap<>();
-            stockOrder = new java.util.HashMap<>();
+            stockOrder = ItemKeys.map();
             for (ItemResource item : ((StockOverlay) stock).base().keySet()) {
                 stockOrder.put(item, stockOrder.size());
                 stockIndex.computeIfAbsent(item.getItem(), k -> new ArrayList<>(1)).add(item);
@@ -353,8 +352,21 @@ public final class ReactorPlanner {
             List<ItemResource> held = stockIndex.get(holder.value());
             if (held != null) found.addAll(held);
         });
-        found.sort(java.util.Comparator.comparingInt(stockOrder::get));
-        return found;
+        return found.size() > 1 ? inOrder(found, item -> stockOrder.get(item)) : found;
+    }
+
+    /** {@code kinds} by {@code order}, each looked up once rather than at every comparison. */
+    private static List<ItemResource> inOrder(List<ItemResource> kinds, java.util.function.ToLongFunction<ItemResource> order) {
+        long[] keys = new long[kinds.size()];
+        Integer[] at = new Integer[kinds.size()];
+        for (int i = 0; i < keys.length; i++) {
+            keys[i] = order.applyAsLong(kinds.get(i));
+            at[i] = i;
+        }
+        java.util.Arrays.sort(at, (a, b) -> Long.compare(keys[a], keys[b]));
+        List<ItemResource> sorted = new ArrayList<>(keys.length);
+        for (int i : at) sorted.add(kinds.get(i));
+        return sorted;
     }
 
     /** What in the stock each ingredient that can't name its items matched, tested once a plan. */
