@@ -332,3 +332,41 @@ field_monitor:
   obtained: "Crafted"
   energy_use: "None"
   works_with: "[[block:flux_detector]], [[item:flux_meter]]"
+quantum_foundry_controller:
+  category: "Multiblock controller"
+  tier: "High"
+  obtained: "Crafted"
+  energy_buffer: "{{c:QuantumFoundryBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:QuantumFoundryBlockEntity.MAX_RECEIVE}} FE/t"
+  energy_use: "Per recipe"
+  emits_flux: "Spends flux per recipe"
+  works_with: "[[block:quantum_foundry_plinth]], [[block:quantum_foundry_pillar]]"
+anomaly_containment_hall:
+  category: "Multiblock controller"
+  tier: "High"
+  obtained: "Crafted"
+  energy_buffer: "{{c:ContainmentHallBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:ContainmentHallBlockEntity.MAX_RECEIVE}} FE/t"
+  energy_use: "180 to 360 FE/t by arms"
+  works_with: "[[block:quantum_attuned_glass]], [[block:quantum_foundry_plinth]]"
+quantum_foundry_plinth:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:quantum_foundry_controller]], [[block:anomaly_containment_hall]]"
+quantum_foundry_conduit:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:quantum_foundry_pillar]]"
+quantum_foundry_pillar:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:quantum_foundry_attunement_tank]]"
+quantum_foundry_attunement_tank:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:quantum_foundry_pillar]]"
+quantum_attuned_glass:
+  category: "Multiblock part"
+  tier: "High"
+  obtained: "Crafted"
+  works_with: "[[block:anomaly_containment_hall]]"
