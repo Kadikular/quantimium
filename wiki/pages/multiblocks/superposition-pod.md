@@ -30,7 +30,7 @@ diagonal corner (a 3×3 with the edges left open so you can walk on).
   [[item:anomaly_fragment]]s** and **{{c:UnfoldingArrayBlockEntity.RESIDUE}} [[item:rift_residue]]**, stand on
   the pad and press **Unfold**.
 - [[mechanic:array.unfold]] Over {{c:UnfoldingArrayBlockEntity.UNFOLD_TICKS|s}} the pylons reach into you,
-  a proton unfolds round you, and your double peels away beside you, to be folded up into a
+  a proton unfolds around you, and your double peels away beside you, to be folded up into a
   **[[item:sophon]]** bound to you. It draws {{c:UnfoldingArrayBlockEntity.FE_PER_TICK}} FE/t as it goes,
   from a {{c:UnfoldingArrayBlockEntity.ENERGY_CAPACITY}} FE buffer.
 - Step off the pad and it waits for you, but loses ground while you are gone.
@@ -115,7 +115,7 @@ doubles, and the power ones draw from the pod's own buffer.
 [[mechanic:pod.buffs]] **Regeneration and Hardening** reach you anywhere in the pod's dimension, and give out
 when you stand in Critical anomaly or worse. They do not stack: two Regeneration pods still give
 Regeneration I, and only one of them pays. [[mechanic:pod.charge]] **Charge** works the same way, topping up
-your armour, tools and batteries between them, as an [[block:entangled_dock]] does for one item.
+your armor, tools and batteries between them, as an [[block:entangled_dock]] does for one item.
 
 While you are online, the pods holding your doubles are kept loaded, so all of this works however far
 away they are (`chunkLoadPods` in the `superposition` config section; off, a pod only works while
@@ -172,7 +172,7 @@ than a pod's, across dimensions too.
 ![A field double](../assets/gui/world_field_double.png){ .qgui }
 
 [[mechanic:tether.swap]] What you leave behind is the catch. Your body stays standing where you were, a
-**field double**: frozen in place (nothing moves it, pushes it or knocks it about) with no pod round it and
+**field double**: frozen in place (nothing moves it, pushes it or knocks it about) with no pod around it and
 nothing guarding it. Hostile mobs within {{c:FieldDouble.PROWL_RANGE}} blocks come for it, and other players
 can hit it when PvP is on; you are warned while it is being hurt. [[mechanic:tether.back]] It is on every
 pod's screen as *In the field*, with where it stands, so you can go scouting, tether home, and swap back
@@ -217,8 +217,8 @@ forgotten with `/quantimium sophons <player> forget`; `list` shows where each of
 
 Placeholders until the crafting overhaul:
 
-- **Superposition Pod:** crying obsidian and Quantum Attuned Glass round a Tesseract, over a respawn anchor.
-- **Pod Cradle** (4): obsidian and Quantimium Trace round an Anomaly Fragment.
+- **Superposition Pod:** crying obsidian and Quantum Attuned Glass around a Tesseract, over a respawn anchor.
+- **Pod Cradle** (4): obsidian and Quantimium Trace around an Anomaly Fragment.
 - **Pod Plating** (4): obsidian and Quantimium Trace.
 - **Pod Rescue Module:** Pod Plating in echo shards and Anomaly Fragments.
 - **Pod Regeneration Module:** Pod Plating in glistering melon and Anomaly Fragments.

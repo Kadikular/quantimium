@@ -1,12 +1,12 @@
 ---
 navigation:
-  title: Tesseract Stabiliser
+  title: Tesseract Stabilizer
   parent: machines/index.md
   position: 13
   icon: quantimium:tesseract_stabilizer
 ---
 
-# Tesseract Stabiliser
+# Tesseract Stabilizer
 
 <ItemImage id="quantimium:tesseract_stabilizer" scale="2" />
 
@@ -20,7 +20,7 @@ navigation:
 | **Automation** | Every face but the open one |
 | **Power** | None |
 
-The Tesseract Stabiliser puts **a remote inventory right here**. Dock a bound Tesseract in it, and
+The Tesseract Stabilizer puts **a remote inventory right here**. Dock a bound Tesseract in it, and
 every face of the Stabilizer behaves like the block the Tesseract is bound to, wherever that block
 is. A hopper under the Stabilizer drains a chest across the world; a pipe into its side fills a
 tank in the Nether.
@@ -46,7 +46,7 @@ reaches the fuel; one bound to the **bottom** reaches the result.
 | Carries | Items and fluids | Items only |
 | Quantum Crafter grid | Remote ingredients | Nearby remote ingredients |
 | Containment Hall residue slot | Yes | Yes |
-| Tesseract Stabiliser | Yes | **No** |
+| Tesseract Stabilizer | Yes | **No** |
 
 A link reaches **only the block it was bound to**. If that block
 is broken or replaced by a different one, the link goes dead until it is bound again. It also goes
@@ -70,7 +70,7 @@ one, and only the full Tesseract; a Semi-Stable Tesseract won't dock.
   the block it reaches, with its position and the face it was bound to.
 - Breaking the Stabilizer drops the docked Tesseract.
 
-![A Tesseract Stabiliser linked to the top of a chest](../assets/gui/tesseract_stabilizer.png)
+![A Tesseract Stabilizer linked to the top of a chest](../assets/gui/tesseract_stabilizer.png)
 
 ## Proxying
 

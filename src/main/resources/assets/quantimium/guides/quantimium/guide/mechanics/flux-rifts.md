@@ -23,9 +23,9 @@ never stop another's.
 **Planting one.** A <ItemLink id="quantimium:rift_seed" /> used on the ground opens a wild
 stage 1 rift standing there, but only where there's anomaly for it to feed on: an uncontained chunk
 at **Medium anomaly or higher**. Anywhere else it fizzles, *nothing here for it to feed on*, and you
-keep the seed. Planted rifts count towards the same limit and spacing as the rest. No hot field? A
+keep the seed. Planted rifts count toward the same limit and spacing as the rest. No hot field? A
 <ItemLink id="quantimium:quantum_exciter" /> will make one. Used on a <ItemLink id="quantimium:rift_anchor" /> instead, a seed opens a held
-rift anywhere: see the [stabilised rift](../multiblocks/stabilised-rift.md).
+rift anywhere: see the [stabilized rift](../multiblocks/stabilised-rift.md).
 
 ## Growth
 
@@ -74,7 +74,7 @@ A contained chunk freezes a rift's growth and its leak. Nothing shrinks a rift o
 
 ## Closing it
 
-From the mirror, hold a Decoherence Lance beam on its centre. Each stage holds 400
+From the mirror, hold a Decoherence Lance beam on its center. Each stage holds 400
 coherence (configurable) and the Lance drains 5 a tick: 4 / 8 / 12 / 16 seconds of unbroken beam.
 Break contact for more than 2 seconds and it heals 3 a tick, so it
 cannot be worn down across visits. It narrows as it weakens.
@@ -92,4 +92,4 @@ A <ItemLink id="quantimium:decoherence_projector" /> can drain a rift unattended
 2 a tick, but from stage 3 the rift lashes it
 with lightning down the beam, burning out its whole charge.
 The rift's own anomaly comes back with it: the Projector bursts out
-**20 anomaly** into the 3×3 of chunks round it.
+**20 anomaly** into the 3×3 of chunks around it.

@@ -17,7 +17,7 @@ The Lance's beam on a pedestal. Every half-second it picks the most pressing tar
 [Veiled](../mechanics/veiled.md) first, then mirror mites
 (3 damage each half-second), then a
 [rift](../mechanics/flux-rifts.md) (2
-coherence a tick). Stabilised rifts are left alone.
+coherence a tick). Stabilized rifts are left alone.
 
 | | |
 | --- | --- |

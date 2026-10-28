@@ -39,7 +39,7 @@ updating a partner mod and rerunning the tests shows at once whether anything br
 - [[mechanic:compat.mi.simulator_steam]] **Boilers boil.** Water in an input tank and fuel in the
   grid make steam in an output tank, once the boiler has heated up.
 - [[mechanic:compat.mi.simulator_fluid_in]] **Fluid inputs are drawn from the input tanks:** a
-  chemical reactor oxidises copper with oxygen from them.
+  chemical reactor oxidizes copper with oxygen from them.
 - [[mechanic:compat.mi.simulator_fluid_out]] **Fluid outputs fill the output tanks:** a mixer turns
   water and sugar into sugar solution, and an electrolyzer splits water into hydrogen and oxygen.
 - [[mechanic:compat.mi.simulator_multiblock]] **Multiblocks can't be simulated.** A controller taken
@@ -159,7 +159,7 @@ runs as before. The **Quantimium field** entry in Jade's plugin settings turns i
 ## GuideME
 
 With [GuideME](https://modrinth.com/mod/guideme) installed, this wiki is also in the game, as the
-**Quantimium Field Guide**: a book crafted from a Book and Unrealised Matter. Hold the guide key
+**Quantimium Field Guide**: a book crafted from a Book and Unrealized Matter. Hold the guide key
 (**G**) over any Quantimium item to open its page, with its recipes drawn by the game itself. Without
 GuideME, the recipe isn't there and nothing else changes.
 
@@ -171,7 +171,7 @@ now:
 
 - glows and fades can show hard, triangular edges instead of fading out smoothly;
 - rifts look dark, without their violet fade;
-- the mirror world's colours and fog aren't kept: shader packs replace them.
+- the mirror world's colors and fog aren't kept: shader packs replace them.
 
 For the best look, turn shaders off near rifts and in the mirror. It's tested with Complementary
 Reimagined; a pack that draws something badly can be steered with `config/quantimium/iris.properties`,

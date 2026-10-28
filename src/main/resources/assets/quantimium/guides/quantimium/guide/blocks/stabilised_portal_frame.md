@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Stabilised Portal Frame
+  title: Stabilized Portal Frame
   parent: blocks/index.md
   position: 76
   icon: quantimium:stabilised_portal_frame
@@ -8,7 +8,7 @@ item_ids:
 - quantimium:stabilised_portal_frame
 ---
 
-# Stabilised Portal Frame
+# Stabilized Portal Frame
 
 <ItemImage id="quantimium:stabilised_portal_frame" scale="2" />
 

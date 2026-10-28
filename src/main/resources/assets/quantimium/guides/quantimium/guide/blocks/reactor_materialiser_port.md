@@ -1,12 +1,12 @@
 ---
 navigation:
-  title: Reactor Materialiser Port
+  title: Reactor Materializer Port
   parent: blocks/index.md
   position: 67
   icon: quantimium:reactor_materialiser_port
 ---
 
-# Reactor Materialiser Port
+# Reactor Materializer Port
 
 <ItemImage id="quantimium:reactor_materialiser_port" scale="2" />
 

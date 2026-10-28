@@ -14,7 +14,7 @@ something to do, and a logistics network moves items by it.
 ## Emitters
 
 [[mechanic:laser.power]] An emitter takes power on any face and sends it out as light from its
-outputs. Placed, it faces you, and its light comes out towards you.
+outputs. Placed, it faces you, and its light comes out toward you.
 
 [[mechanic:laser.demand]] It sends only what the blocks its beams reach ask for, up to its rate: point
 one at a full battery, or at nothing, and it keeps its power, but for a small cost of being ready.
@@ -37,7 +37,7 @@ at night or under a roof. It holds nothing. Light that reaches it from any laser
 a Laser Emitter, by mirrors or not) joins its own and leaves by its emitter, but no more than
 {{c:LaserTuning.SOLAR_CHAIN_MAX}} FE/t leaves it in all, what it makes included: so a row of eight in full
 sun is as much as one row gives. Its light reaches {{c:LaserTuning.SOLAR_RANGE}} blocks a run. Placed, it
-shines towards you; sneak-click a side (by hand or with a wrench) to send its light there, but never up,
+shines toward you; sneak-click a side (by hand or with a wrench) to send its light there, but never up,
 through its glass.
 
 [[mechanic:laser.outputs]] Sneak-click a face with an empty hand, or use any wrench on it, to add an
@@ -52,22 +52,22 @@ redstone: not at all, on only with a signal, or off with a signal.
 real mirror: a beam that reaches it bounces and goes on as the same beam, with its own light, so beams crossing one
 mirror never mix. Light on the back or edge of the plate stops. A redstone signal turns it off, and then it stops light.
 
-**Setting the plate.** Each face of the mirror has three parts: a middle square, a ring round it, and an outer ring,
+**Setting the plate.** Each face of the mirror has three parts: a middle square, a ring around it, and an outer ring,
 each ring split four ways by the diagonals. Click (by hand or with a wrench):
 
 | Where | The plate |
 |---|---|
 | The middle square of a face | Flat, facing that face: light goes straight back the way it came |
-| The inner ring, towards a side | Facing that face, turned 22.5° towards that side |
-| The outer ring, towards a side | Half way between that face and that side (45°): light turns through a right angle |
+| The inner ring, toward a side | Facing that face, turned 22.5° toward that side |
+| The outer ring, toward a side | Half way between that face and that side (45°): light turns through a right angle |
 
-Looking at a face outlines its parts, and a white ghost shows where the plate would turn if you clicked. A plate never faces towards its stand, not even a little. Sneak-click to move the
-stand: a face's middle puts it on that face, a ring the side it's towards.
+Looking at a face outlines its parts, and a white ghost shows where the plate would turn if you clicked. A plate never faces toward its stand, not even a little. Sneak-click to move the
+stand: a face's middle puts it on that face, a ring the side it's toward.
 
 **Angles.** Light travels in 26 ways: the 6 straight, the 12 flat diagonals (45° in one plane) and the 8 corner
 diagonals. Off a 45° plate straight light turns a right angle; off a 22.5° plate it leaves at 45°, and 45° light off
 a 22.5° plate leaves straight. What leaves a mirror is always one of the 26 (the nearest, where a true reflection isn't
-one): a Prism's light, at any angle, is bent onto them only there. A diagonal step counts its true length towards the
+one): a Prism's light, at any angle, is bent onto them only there. A diagonal step counts its true length toward the
 light's reach, and diagonal light slips between two blocks that meet only at a corner (unless the
 `diagonalsPassCorners` config is off). A block takes diagonal light if it would take light through any face it comes in
 by.
@@ -95,7 +95,7 @@ nothing until a focus is put in: light passes a block with no focus by, unless a
 or goes out by. Sneak-click the focus (by hand or with a wrench) to take it out and leave the
 attachments, or an attachment to take just that off (by hand, an Emitter's lens comes out first); the block goes
 when it holds nothing. Click an Emitter to open it: it holds one lens, which only the light leaving by it goes through (a Harvest
-lens on one emitter cuts only there), and its tip takes the lens's colour; using a lens on it puts the lens in.
+lens on one emitter cuts only there), and its tip takes the lens's color; using a lens on it puts the lens in.
 Laser Relays from before become a Laser Focus with a Stand on their base and an Emitter on each of their outputs.
 
 A focus refocuses the light to its source's range: a run from it reaches as far as a run from the emitter that sent
@@ -214,7 +214,7 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 [[mechanic:laser.lens.mount]] A [[block:lens_mount]] holds four lenses in a row, and light goes straight
 through it: in by its back, where half a focus is set in a recess, and out of its front, where half an
 emitter is, refocused, through its lenses in order (its four slots, left to right). Light from any other
-side, or at an angle, stops on it. Down each side, four slot panels show what's fitted: dark when empty, the lens's colour
+side, or at an angle, stops on it. Down each side, four slot panels show what's fitted: dark when empty, the lens's color
 when there's one. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
 lenses say along the way. Open the mount with an empty hand; sneak-click or wrench a side to point it
 there. Under each lens is a button for that lens's own settings (a filter lens's, say), lit when it has
@@ -268,8 +268,8 @@ it weren't there. Place never destroys what it can't place.
 | [[item:void_lens]] | Modifier | [[mechanic:laser.lens.void]] Destroys what the beam's Laser Ports won't take (see above): like Pickup, it stays on the light, so actions added after it get it too. Use it in the air (or its button in a mount) to set it. **Void excess** (the default): with Pickup, what the Laser Ports or network up the beam have room for goes to them and the rest is destroyed, so Harvest never waits for room; with no ports, or without Pickup, everything they free is destroyed. **Void all**: everything they free or Pickup gathers is destroyed, ports or not (Harvest's drops, what Damage kills, items lying in the beam). Its screen has nine entries and allow or deny, as the Item Filter Lens's: listed, it destroys only those (or all but those), and keeps the rest as if it weren't there; seeds listed with void excess, a wheat farm keeps its wheat and burns the seeds it has no room for. | none |
 | [[item:harmonic_lens]] | Modifier | [[mechanic:laser.lens.harmonic]] Harvest cuts with Fortune, and Damage hits with Looting, a level for each, up to {{c:LaserTuning.HARMONIC_LENSES}}. | none |
 | [[item:unrealising_lens]] | Modifier | [[mechanic:laser.lens.unrealise]] Ore a Harvest beam cuts (anything in `#c:ores`) comes away as [[item:unrealised_matter]], one to a block, with no history yet. A pack can turn it off in the config, where Matter would duplicate ores. | none |
-| [[item:smelting_lens]] | Modifier | [[mechanic:laser.lens.smelting]] Smelts, as a furnace would, what the actions before it free or move: what a Harvest beam cuts and what Damage kills (picked up or left lying), what Pickup gathers, what Insert puts in and Extract takes out. Sand becomes glass, ore ingots, a pig's drops cooked. Unrealised Matter gets smelting in its history, as a Quantum Crafter with a furnace gives it. What a furnace can't smelt stays as it is, for nothing. With no other action on the light it's an action of its own: it smelts what lies in the beam where it lies, else the block the beam ends on, every {{c:LaserTuning.PLACE_COOLDOWN|s}}. A block it smelts into takes its place (sand becomes glass, and the light goes on through to the next); anything else drops there. | {{c:LaserTuning.SMELT_FE_PER_ITEM}} FE for each item it smelts |
-| [[item:crushing_lens]] | Modifier | [[mechanic:laser.lens.crushing]] Crushes what the actions before it free or move, everywhere Smelting smelts: stone to cobblestone, cobblestone and deepslate to gravel, gravel and sandstone to sand, and anything else as the pack's crushers would, their sure outputs only (raw ore to dust, say). Which crushers, and in what order, is `crushingRecipeTypes` in the `lasers` config: Energized Power's pulverizer and crusher, Ender IO's SAG Mill, Mekanism, Create, Thermal and others. Each Crushing or Smelting lens is a step, in the lenses' order (up to {{c:LaserTuning.PROCESS_STEPS}}): Crushing then Smelting makes raw ore dust, then ingots; Crushing, Crushing, Smelting makes cobblestone gravel, then sand, then glass. A step that changes nothing is free, and so is a run of steps that ends as it began (glass crushed to sand and smelted again). Where nothing says which came first (a crushing beam and a smelting beam meeting at a mirror) it crushes first. Where they change no action before them (alone, or before one: Crushing, Smelting, Harvest), they act on the world themselves, as one, in their order, and a Harvest after them waits till they've done: sandstone becomes glass, then it's cut. Unrealised Matter gets the first of those crushers that gives it something new in its history. Alone it crushes what lies in the beam, else the block the beam ends on, in place: stone becomes cobblestone, then gravel, then sand. With Phantom, it goes through what it can't change to the first block on its way it can (Smelting too). | {{c:LaserTuning.CRUSH_FE_PER_ITEM}} FE for each item it crushes |
+| [[item:smelting_lens]] | Modifier | [[mechanic:laser.lens.smelting]] Smelts, as a furnace would, what the actions before it free or move: what a Harvest beam cuts and what Damage kills (picked up or left lying), what Pickup gathers, what Insert puts in and Extract takes out. Sand becomes glass, ore ingots, a pig's drops cooked. Unrealized Matter gets smelting in its history, as a Quantum Crafter with a furnace gives it. What a furnace can't smelt stays as it is, for nothing. With no other action on the light it's an action of its own: it smelts what lies in the beam where it lies, else the block the beam ends on, every {{c:LaserTuning.PLACE_COOLDOWN|s}}. A block it smelts into takes its place (sand becomes glass, and the light goes on through to the next); anything else drops there. | {{c:LaserTuning.SMELT_FE_PER_ITEM}} FE for each item it smelts |
+| [[item:crushing_lens]] | Modifier | [[mechanic:laser.lens.crushing]] Crushes what the actions before it free or move, everywhere Smelting smelts: stone to cobblestone, cobblestone and deepslate to gravel, gravel and sandstone to sand, and anything else as the pack's crushers would, their sure outputs only (raw ore to dust, say). Which crushers, and in what order, is `crushingRecipeTypes` in the `lasers` config: Energized Power's pulverizer and crusher, Ender IO's SAG Mill, Mekanism, Create, Thermal and others. Each Crushing or Smelting lens is a step, in the lenses' order (up to {{c:LaserTuning.PROCESS_STEPS}}): Crushing then Smelting makes raw ore dust, then ingots; Crushing, Crushing, Smelting makes cobblestone gravel, then sand, then glass. A step that changes nothing is free, and so is a run of steps that ends as it began (glass crushed to sand and smelted again). Where nothing says which came first (a crushing beam and a smelting beam meeting at a mirror) it crushes first. Where they change no action before them (alone, or before one: Crushing, Smelting, Harvest), they act on the world themselves, as one, in their order, and a Harvest after them waits till they've done: sandstone becomes glass, then it's cut. Unrealized Matter gets the first of those crushers that gives it something new in its history. Alone it crushes what lies in the beam, else the block the beam ends on, in place: stone becomes cobblestone, then gravel, then sand. With Phantom, it goes through what it can't change to the first block on its way it can (Smelting too). | {{c:LaserTuning.CRUSH_FE_PER_ITEM}} FE for each item it crushes |
 | [[item:phantom_lens]] | Modifier | [[mechanic:laser.lens.phantom]] Light passes through blocks: only laser blocks, and blocks it charges, stop it. A Harvest beam with it cuts the first block on its way it's allowed to (with a Block Filter Lens set to ores, just the ore in the ground; with Pickup, it passes over what no Laser Port up the beam would take); an Area Prism with it reaches what it couldn't see. It stays on the light. | each tick it's lit, a configurable FE (20 by default, `phantomFePerBlock`) for each block it passes through; for an Area Prism, for each block between it and what it works on; and the actions it carries cost twice as much |
 | [[item:speed_lens]] | Modifier | [[mechanic:laser.lens.speed]] Its actions work twice as fast: a Harvest beam waits half as long between blocks, Placement too, and an Area Prism looks through its area twice as fast. Three count, for eight times. | none |
 | [[item:filter_lens]] | Modifier | [[mechanic:laser.lens.filter]] The Item Filter Lens: the actions it changes carry, place, put in or take out only the items it lets through. Nine entries, allow or deny, with tags (shift-click an entry). Insert, Extract, Pickup and Placement read it. Use it in the air to set it. | none |
@@ -333,7 +333,7 @@ the prism, and while it's working it shows a beam into what it's working on, fol
 {{c:LaserTuning.AREA_COST}} times as much. Use the [[item:laser_linker]] in the air to switch it to area mode, use it on two
 corners, then on the prism; the area shows as you pick it, and holding the Linker shows the area of any
 prism you look at. Sneak-click the prism with an empty hand to clear its area. [[mechanic:laser.area_prism.shape]] Or open
-the prism and set its area to a **cube** or a **sphere** round it instead, with a radius. Its actions
+the prism and set its area to a **cube** or a **sphere** around it instead, with a radius. Its actions
 work the area **nearest first** (the prism's own height outwards, nearest columns first in each layer),
 **top down** (a quarry: nothing falls into what's cleared) or **bottom up**, as set in its screen; after a
 reload they carry on where they were.
@@ -381,7 +381,7 @@ one beam along a row of machines joins them all; on a Laser Focus the light stop
 from before become a Clear Laser Focus with a Receptacle on the same face. Open it to set what that
 inventory is to the network, its priority, and a filter of nine entries, as a whitelist or a blacklist,
 with tags (empty, storage and providers take or give everything; a requester asks for nothing as a whitelist,
-everything as a blacklist). Its plate lights in its role's colour while a controller's
+everything as a blacklist). Its plate lights in its role's color while a controller's
 light reaches it. Each active part moves as an Insert or Extract lens does: up to 16 items a second, four times as many for each Speed lens the light met on its way to it (up to three). Idle, it looks less often, waiting twice as long each time up to 4 seconds (a config option), and half as long again after each move:
 
 - **Storage**: where the network keeps things. [[mechanic:laser.logistics.priority]] What comes in fills
@@ -439,13 +439,13 @@ JEI, and the rest still go in. The × beside the grid puts it all back into the 
 A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the light comes in to: craft one from the other.
 
 [[mechanic:laser.logistics.materialiser]] A [[block:logistics_materialiser]] where a controller's light ends
-offers the whole network to any mod, as the Reactor's Materialiser Port offers the Reactor: an AE2 storage bus
+offers the whole network to any mod, as the Reactor's Materializer Port offers the Reactor: an AE2 storage bus
 or a pipe on any face sees everything storage holds and providers offer (a Reactor on the network, with what it
 can make), takes from it, and puts things away into storage. Moves happen as part of the other side's transaction,
 so one called off puts everything back and looking is free; each move costs the controller as a receptacle's does.
 Click it to choose what it offers: stored and craftable items (the default), stored items, or craftable items.
-A provider Receptacle on another network's Materialiser brings that network's offers into its own, stored as
-stored and craftable as craftable. A receptacle of the same network on its Materialiser is ignored: it would read
+A provider Receptacle on another network's Materializer brings that network's offers into its own, stored as
+stored and craftable as craftable. A receptacle of the same network on its Materializer is ignored: it would read
 the network into itself.
 
 [[mechanic:laser.logistics.reactor]] A [[block:reactor_logistics_port]] on the Reactor's plinth rim, where a

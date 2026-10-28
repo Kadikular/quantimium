@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Unrealised Matter
+  title: Unrealized Matter
   parent: items/index.md
   position: 50
   icon: quantimium:unrealised_matter
@@ -8,7 +8,7 @@ item_ids:
 - quantimium:unrealised_matter
 ---
 
-# Unrealised Matter
+# Unrealized Matter
 
 <ItemImage id="quantimium:unrealised_matter" scale="2" />
 
@@ -93,7 +93,7 @@ Click the grid holding something it makes to put it back into the buffer.
 as they take it, and what its faces set to push out push. With nothing exported, they see nothing to take.
 
 - **The same count every time.** An ore's drops vary (copper ore drops two to five raw copper), so
-  the Materialiser gives what one ore gives **on average, rounded down**, and that's the number on
+  the Materializer gives what one ore gives **on average, rounded down**, and that's the number on
   its screen: three raw copper a Matter, every time. A Chamber's roll is the real thing, more or
   less.
 
@@ -115,7 +115,7 @@ makes three) gets what it asked for, and the rest waits in the buffer. A provide
 form.
 
 **Through a Tesseract.** A bound <ItemLink id="quantimium:tesseract" /> in
-the Materialiser's Matter slot reads the inventory it links to: the first Matter there, and every
+the Materializer's Matter slot reads the inventory it links to: the first Matter there, and every
 Matter of the same history (hover the slot to see what it's reading). One in its dust slot draws
 dust the same way. Feed it from a chest, a drawer or your storage network.
 

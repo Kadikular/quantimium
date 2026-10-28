@@ -7,7 +7,7 @@ navigation:
 
 # The mirror phase
 
-The mirror is a grey, quiet copy of the world, laid over it. Players who **phase** into it still
+The mirror is a gray, quiet copy of the world, laid over it. Players who **phase** into it still
 walk on the same terrain, but they cannot touch the real world: they cannot break or place blocks,
 use things, or hurt anything real. What lives there can hurt them.
 
@@ -20,7 +20,7 @@ open from the mirror stands open for everyone, and a lever drives real redstone.
 - **Tears.** Uncontained chunks at Medium anomaly or higher tear open on their own
   for about a minute: the hotter the field, the more often. Walk through one to phase. A way back
   opens 10–20 blocks away and lasts 30 seconds.
-- **The Stabilised Portal.** A 4×5 frame of <ItemLink id="quantimium:stabilised_portal_frame" /> with a 2×3 inside, lit
+- **The Stabilized Portal.** A 4×5 frame of <ItemLink id="quantimium:stabilised_portal_frame" /> with a 2×3 inside, lit
   with a <ItemLink id="quantimium:rift_seed" />: a wound opened on purpose and held in the frame. It works from both
   sides.
 - **Leaving.** Walk back through a tear or portal, die, or wait: a five-minute failsafe always brings
@@ -28,7 +28,7 @@ open from the mirror stands open for everyone, and a lever drives real redstone.
 
 ## What is there
 
-- **Flora.** Grey plants on every surface, denser as the field gets hotter. They are only records:
+- **Flora.** Gray plants on every surface, denser as the field gets hotter. They are only records:
   observers and other mods see air. Within a few chunks of someone in the mirror they grow and wither every
   second; elsewhere, with no one there to see, every half minute, in the background.
 - **Mirror mites.** They roll in around phased players from Medium flux or anomaly, but only hunt

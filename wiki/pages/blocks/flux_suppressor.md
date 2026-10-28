@@ -1,7 +1,7 @@
-Holds **flux**, and only flux, under a ceiling in every chunk of the 3×3 round it. It's the one block
+Holds **flux**, and only flux, under a ceiling in every chunk of the 3×3 around it. It's the one block
 that throws flux away, and it's for the places you don't want any:
 
-- **Firebreaks.** Past its containment, a hot base's field spreads and turns the land round it
+- **Firebreaks.** Past its containment, a hot base's field spreads and turns the land around it
   dangerous. A Suppressor at the edge stops the spread before it reaches your house, a village or a
   farm.
 - **Starving rifts.** Flux sets how far a [rift](../mechanics/flux-rifts.md) can grow, and the Veiled

@@ -43,7 +43,7 @@ from a front corner; every other edge has to match. A whole frame lights up.
 
 **Everything inside the box folds, its faces included; only the edges are frame.** So build the
 frame *round* the machine, a block clear of it on every side it reaches. A Foundry, 7×7 and two tall,
-takes a **9 × 3 × 9** chamber, standing on the ground level with the bottom rails and centred four
+takes a **9 × 3 × 9** chamber, standing on the ground level with the bottom rails and centerd four
 blocks back from the core. A 7-wide chamber is too narrow: the Foundry's arms would reach the side
 faces, and their tanks would sit on the top edges where rails have to go. If a block stands where
 the frame's edge should be, the core says which.
@@ -92,7 +92,7 @@ Put a Folded Tesseract in a core and press **Unfold**. It needs:
   does which edge the core is on;
 - every cell the machine needs to be **empty**. The core names the first block in the way.
 
-A fold never rotates: the machine stands up the way it was built, north still north, centred in
+A fold never rotates: the machine stands up the way it was built, north still north, centerd in
 the chamber, as high off its floor as it stood before if there's room, else as low as fits. It forms again from scratch, so nothing in it remembers where it
 used to be. You get the Tesseract back, **bound to the controller** where it
 now stands, ready to fold it again.

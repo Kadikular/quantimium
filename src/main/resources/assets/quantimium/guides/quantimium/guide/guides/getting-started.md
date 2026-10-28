@@ -9,18 +9,18 @@ navigation:
 
 The first hour of Quantimium, from the first strange ore to your first crafter.
 
-## 1. Unrealised Ore
+## 1. Unrealized Ore
 
 Some ore in the world is not quite real. <ItemLink id="quantimium:unrealised_ore" /> looks like ordinary stone or
 deepslate ore until you mine it, and it drops <ItemLink id="quantimium:unrealised_matter" />: loot that has not yet
 decided what it is. Fortune gives more; Silk Touch keeps the ore itself, which machines take as Matter too.
 
-With [GuideME](https://modrinth.com/mod/guideme) installed, a Book and one Unrealised Matter make the
+With [GuideME](https://modrinth.com/mod/guideme) installed, a Book and one Unrealized Matter make the
 **Quantimium Field Guide**: this wiki, in the game.
 
 ## 2. Observing it
 
-An <ItemLink id="quantimium:observation_chamber" /> collapses Unrealised Matter into ordinary items. Now and then it
+An <ItemLink id="quantimium:observation_chamber" /> collapses Unrealized Matter into ordinary items. Now and then it
 leaves behind <ItemLink id="quantimium:quantimium_trace" />, the residue of measurement and the mod's first real
 material. Later, mites killed in the [mirror](../concepts/mirror-phase.md) leave Traces
 too.
@@ -37,9 +37,9 @@ too.
 
 From here machines run on FE. Every craft adds [flux](../concepts/flux-and-anomaly.md) to the
 chunks around it, and anomaly follows. The **<ItemLink id="quantimium:quantum_exciter" />** raises flux when you need a
-higher band. The **<ItemLink id="quantimium:basic_anomaly_siphon" />** keeps anomaly down round a small workshop and
+higher band. The **<ItemLink id="quantimium:basic_anomaly_siphon" />** keeps anomaly down around a small workshop and
 turns what it pulls into <ItemLink id="quantimium:anomaly_fragment" />s. The **<ItemLink id="quantimium:flux_suppressor" />** holds flux
-down where you want none: a firebreak round a hot base, or near a rift.
+down where you want none: a firebreak around a hot base, or near a rift.
 
 ## 5. What comes next
 

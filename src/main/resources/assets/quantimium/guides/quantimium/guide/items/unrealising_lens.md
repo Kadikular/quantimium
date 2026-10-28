@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Unrealising Lens
+  title: Unrealizing Lens
   parent: items/index.md
   position: 51
   icon: quantimium:unrealising_lens
@@ -8,11 +8,11 @@ item_ids:
 - quantimium:unrealising_lens
 ---
 
-# Unrealising Lens
+# Unrealizing Lens
 
 <ItemImage id="quantimium:unrealising_lens" scale="2" />
 
-A lens: ore a Harvest beam cuts comes away as Unrealised Matter.
+A lens: ore a Harvest beam cuts comes away as Unrealized Matter.
 
 ## Recipes
 

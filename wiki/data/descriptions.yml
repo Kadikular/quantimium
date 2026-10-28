@@ -3,13 +3,12 @@
 # Numbers and rules belong on the hand-written pages, where they're quoted from the code.
 
 # ---- Unrealised Matter ----
-unrealised_ore: "Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the block, which machines take as Matter too."
-unrealised_matter: "Ore that hasn't decided what it is yet. An Observation Chamber or a Materialiser turns it into one of your pack's ores."
-observation_chamber: "Turns Unrealised Matter into ore, one at a time, on a redstone pulse. Now and then it leaves a Quantimium Trace."
+unrealised_ore: "Ore that hasn't decided what it is. Mine it for Unrealized Matter; Silk Touch keeps the block, which machines take as Matter too."
+unrealised_matter: "Ore that hasn't decided what it is yet. An Observation Chamber or a Materializer turns it into one of your pack's ores."
+observation_chamber: "Turns Unrealized Matter into ore, one at a time, on a redstone pulse. Now and then it leaves a Quantimium Trace."
 quantum_observation_chamber: "The powered Observation Chamber. It works through Matter on its own and connects to pipes on every side."
-materialiser: "Makes Unrealised Matter into the ore you choose, at a price in Traces, flux and power. A hotter field lets it choose rarer ores."
+materialiser: "Makes Unrealized Matter into the ore you choose, at a price in Traces, flux and power. A hotter field lets it choose rarer ores."
 quantimium_trace: "The residue of measuring something into existence, left behind by Observation Chambers. Most of Quantimium is built from it."
-
 # ---- Reading and steering the field ----
 flux_meter: "Shows the flux and anomaly of the chunk you stand in. Point it at a machine to see what it's doing."
 flux_detector: "Turns the flux or anomaly of its chunk into a redstone signal."
@@ -25,7 +24,6 @@ anomaly_fragment: "Drawn off by Anomaly Siphons as they hold anomaly down. A com
 debug_field_emitter: "Creative only. Stirs the field as a machine spending that much power would."
 creative_energy_cell: "Creative only. An endless supply of power for the blocks next to it."
 creative_energy_void: "Creative only. Takes all the power it's given and keeps none."
-
 # ---- Crafting ----
 basic_decoherence_matrix: "The heart of the Basic Quantum Crafter."
 basic_quantum_crafter: "The first crafter. With a crafting table, furnace or stonecutter as its catalyst, it crafts their recipes instantly."
@@ -33,14 +31,12 @@ quantum_crafter: "Crafts any machine's recipes instantly, with that machine as i
 quantum_simulator: "Runs the machine on top of it in a field of its own, many times over at once: up to 32 times in the hottest field."
 quantum_containment: "The field above an engaged Quantum Simulator, holding its machine."
 me_superposition_crafter: "Offers every recipe of its catalyst to an AE2 network as ready-made patterns."
-
 # ---- Tesseracts ----
 semi_stable_tesseract: "A simple link to an inventory nearby. Also what a Sophon is folded into."
 tesseract: "A stable link to an inventory anywhere. Machines read through it as if the inventory were next to them."
 tesseract_stabilizer: "Holds a Tesseract and opens its inventory to pipes, with a side for each job."
 entangled_dock: "Charges an item you carry, wherever you are, from power fed into the dock."
 folded_tesseract: "A whole multiblock folded into one item. A catalyst for everything the machine makes; unfold it in a Fold Chamber."
-
 # ---- The Quantum Foundry ----
 quantum_foundry_controller: "The heart of the Quantum Foundry, a multiblock that makes the field's own materials."
 quantum_foundry_plinth: "The Foundry's floor, and the base of other multiblocks."
@@ -48,37 +44,33 @@ quantum_foundry_conduit: "Carries the field between the Foundry and an arm's pil
 quantum_foundry_pillar: "Draws on the local field for the Foundry. One stands at the end of each arm."
 quantum_foundry_attunement_tank: "Sits on an Attunement Pillar and holds what the arm has drawn."
 quantum_attuned_glass: "Glass tuned to the field. It walls in the Containment Hall and glows faintly."
-
 # ---- Anomalite ----
 anomalite_crystal: "Grows on machines in an uncontained anomalous field, draining their power. Only the mirror can see it."
 budding_anomalite: "Grows Anomalite Crystals in the mirror while powered, whatever the field."
 anomalite_shard: "What a full-grown Anomalite Crystal breaks into."
-anomalite_dust: "What a crystal broken too early leaves, or Anomalite crushed. The Foundry turns it back into shards; a Materialiser is paid in it."
+anomalite_dust: "What a crystal broken too early leaves, or Anomalite crushed. The Foundry turns it back into shards; a Materializer is paid in it."
 anomalite_lattice: "Four Anomalite Shards packed together, for sturdier parts."
 anomalite_cell: "A prism of Anomalite in glass. The fuel a Decoherence Projector burns."
 anomalite_emitter: "A shard set in a mount: the light of the Decoherence Lance."
 rift_lens: "The stone ring laser light goes through into the mirror, holding a small tear open while it does."
-
 # ---- The mirror ----
 mirror_lens: "Goggles that let the mirror show through: the field around you, and what lives in it."
-decoherence_lance: "Channelled. Closes rifts and unmakes what's caught between the worlds; harmless to everything else."
+decoherence_lance: "Channeled. Closes rifts and unmakes what's caught between the worlds; harmless to everything else."
 decoherence_projector: "A Decoherence Lance on a pedestal, burning Anomalite Cells. Beside a Containment Hall it traps the Veiled."
-mirror_short_grass: "Grey grass that grows in the mirror."
-mirror_tall_grass: "Tall grey grass that grows in the mirror."
-mirror_vine: "Grey vines that hang in the mirror."
-mirror_dead_bush: "A grey dead bush that grows in the mirror."
-mirror_hanging_roots: "Grey roots that hang in the mirror."
-
+mirror_short_grass: "Gray grass that grows in the mirror."
+mirror_tall_grass: "Tall gray grass that grows in the mirror."
+mirror_vine: "Gray vines that hang in the mirror."
+mirror_dead_bush: "A gray dead bush that grows in the mirror."
+mirror_hanging_roots: "Gray roots that hang in the mirror."
 # ---- Rifts ----
-rift_seed: "Opens a rift where the anomaly runs high, on a Rift Anchor, or in a Stabilised Portal's frame."
-rift_anchor: "The footing for a rift held on purpose, with Rift Stabilisers around it."
+rift_seed: "Opens a rift where the anomaly runs high, on a Rift Anchor, or in a Stabilized Portal's frame."
+rift_anchor: "The footing for a rift held on purpose, with Rift Stabilizers around it."
 rift_stabiliser: "Holds a rift on a Rift Anchor while powered. Three or more keep it tame."
 rift_residue: "What's left when a rift closes, and what a held rift makes. A Containment Hall holding the Veiled burns it."
 stabilised_portal_frame: "Built into a frame and lit with a Rift Seed, it opens a way into the mirror and back."
-stabilised_portal: "The way through a Stabilised Portal's frame."
+stabilised_portal: "The way through a Stabilized Portal's frame."
 veil_thread: "A strand of the Veiled itself, drawn out while it's held in a Containment Hall."
 anomaly_containment_hall: "A glass cell that holds anomaly down around it, and can hold the Veiled."
-
 # ---- The Superposition Pod ----
 unfolding_array: "Folds a copy of you into a Sophon, while you stand on its pad."
 array_pylon: "One of the four pylons at the corners of an Unfolding Array."
@@ -96,12 +88,10 @@ pod_relay_module: "A pod module that links pods into a network, to send doubles 
 pod_recovery_module: "A pod module that brings stranded doubles home."
 pod_rescue_module: "A pod module that catches you at death and wakes you in a double."
 tether: "A pod's screen in your hand: swap into your doubles from anywhere."
-
 # ---- The Fold Chamber ----
 fold_core: "The heart of a Fold Chamber, which folds a whole multiblock into a single item."
 fold_pylon: "The corners of a Fold Chamber's frame."
 fold_rail: "The edges of a Fold Chamber's frame."
-
 # ---- The Quantimium Reactor ----
 singularity: "A Tesseract collapsed into a black hole. Seated in a Horizon Core, it holds everything the Reactor holds."
 horizon_core: "The heart of the Quantimium Reactor, where its Singularity is seated."
@@ -114,7 +104,6 @@ reactor_output_port: "Where the Reactor delivers what you take from it."
 reactor_energy_port: "Takes power into the Reactor."
 reactor_materialiser_port: "Shows pipes and storage buses everything the Reactor holds or could make, and makes what they take."
 reactor_me_port: "Joins the Reactor to an ME network: what it holds as storage, its recipes as patterns, and the network's items as its inputs."
-
 # ---- Lasers ----
 flash_emitter: "The first laser emitter. Burns furnace fuel, or takes power, and sends it as light to whatever its beam reaches."
 laser_emitter_1: "Sends power as light, only as much as the blocks its beams reach ask for. Sneak-click a face to add a beam there."
@@ -165,7 +154,7 @@ acceleration_lens: "A lens: speeds up the machine the beam ends on, 2x and doubl
 harmonic_lens: "A lens: Harvest cuts with Fortune, Damage hits with Looting, a level each."
 smelting_lens: "A lens: what the actions before it free or move is smelted; alone, it smelts what the beam ends on."
 crushing_lens: "A lens: what the actions before it free or move is crushed; alone, it crushes what the beam ends on."
-unrealising_lens: "A lens: ore a Harvest beam cuts comes away as Unrealised Matter."
+unrealising_lens: "A lens: ore a Harvest beam cuts comes away as Unrealized Matter."
 extract_lens: "A lens: takes from the inventory the beam ends on, back up to Laser Ports."
 isolator: "Lets power through, and nothing a beam did: actions and items stop at it."
 isolator_lens: "A lens: lets power through, and only what else it's set to pass."

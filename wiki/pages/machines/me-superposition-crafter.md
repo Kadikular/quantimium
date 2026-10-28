@@ -70,7 +70,7 @@ Superposition Crafter:
    chunk's anomaly surcharge. A smelt is 4,000 FE;
 2. puts the result into the network, where AE2 passes it to the job that asked;
 3. [[mechanic:ae2.superposition.flux]] emits flux like any craft: 3 flux per 1,000 FE, each second,
-   into the 3×3 of chunks round it, a fifth to its own. A 64× smelt run (256,000 FE) adds about 154
+   into the 3×3 of chunks around it, a fifth to its own. A 64× smelt run (256,000 FE) adds about 154
    flux to its own chunk, easing in over the next few seconds.
 
 The energy bar's tooltip shows the anomaly surcharge in force.
@@ -161,4 +161,4 @@ is no longer a route AE2 can take. With `#c:ores` as a tag entry, one entry cove
 ## Recipe
 
 A [[block:quantum_crafter]] with two AE2 Pattern Providers, two [[item:tesseract]]s and four
-[[item:anomalite_shard]]s round it.
+[[item:anomalite_shard]]s around it.

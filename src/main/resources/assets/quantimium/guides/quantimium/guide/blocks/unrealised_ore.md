@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Unrealised Ore
+  title: Unrealized Ore
   parent: blocks/index.md
   position: 80
   icon: quantimium:unrealised_ore
@@ -8,11 +8,11 @@ item_ids:
 - quantimium:unrealised_ore
 ---
 
-# Unrealised Ore
+# Unrealized Ore
 
 <ItemImage id="quantimium:unrealised_ore" scale="2" />
 
-Ore that hasn't decided what it is. Mine it for Unrealised Matter; Silk Touch keeps the block, which machines take as Matter too.
+Ore that hasn't decided what it is. Mine it for Unrealized Matter; Silk Touch keeps the block, which machines take as Matter too.
 
 ## Recipes
 

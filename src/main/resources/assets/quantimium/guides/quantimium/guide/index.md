@@ -9,7 +9,7 @@ navigation:
 
 Quantimium is a NeoForge mod about **measuring things into existence** and living with the
 consequences. Its machines craft, simulate and grow by drawing on a local quantum field, and
-every craft stirs that field up. Push it far enough and the world starts to tear: into a grey
+every craft stirs that field up. Push it far enough and the world starts to tear: into a gray
 **mirror** of itself, where things grow that should not, and something watches from the rifts.
 
 ## Where to start

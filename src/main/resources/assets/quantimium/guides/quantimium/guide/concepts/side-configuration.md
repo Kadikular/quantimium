@@ -7,7 +7,7 @@ navigation:
 
 # Side configuration
 
-Quantimium's automated machines let you decide, face by face, what pipes, hoppers and neighbouring
+Quantimium's automated machines let you decide, face by face, what pipes, hoppers and neighboring
 machines can put in and take out. The same **Sides** page is used on every machine
 that has one, and a wrench can change it without opening anything.
 
@@ -15,7 +15,7 @@ that has one, and a wrench can change it without opening anything.
 | --- | --- | --- | --- |
 | [Quantum Crafter](../machines/quantum-crafter.md) | Yes | No | All six |
 | [Quantum Simulator](../machines/quantum-simulator.md) | Yes | Yes | All but the top (the field) |
-| [Tesseract Stabiliser](../machines/tesseract-stabilizer.md) | Yes | Yes | All but the top |
+| [Tesseract Stabilizer](../machines/tesseract-stabilizer.md) | Yes | Yes | All but the top |
 
 The Basic Quantum Crafter has no side configuration: every face is both an input and an output.
 
@@ -47,14 +47,14 @@ the chest and bucket buttons at its left):
 | **Out** | No | Yes |
 | **Both** | Yes | Yes |
 
-The face tiles are coloured by mode: dark for Off, green for In, orange for Out and blue for Both.
+The face tiles are colored by mode: dark for Off, green for In, orange for Out and blue for Both.
 Right-click a face to step its mode on, shift-right-click to step back.
 
 | Machine | Items start as | Fluids start as |
 | --- | --- | --- |
 | Quantum Crafter | Both | (no fluids) |
 | Quantum Simulator | Both | Off |
-| Tesseract Stabiliser | Both | Both |
+| Tesseract Stabilizer | Both | Both |
 
 ## Which slots a face reaches
 
@@ -66,7 +66,7 @@ choose which slots the picked face works on. Click a cell to allow or block it.
   ninth of them (the first cell: outputs 1, 10, 19 and so on). Its ghosts (what it would make) go out of any
   face with at least one output cell on.
 - On the **Fluids** tab the cells are the three input tanks and the three output tanks.
-- A Tesseract Stabiliser has no slots of its own; its faces reach *all remote slots* the link
+- A Tesseract Stabilizer has no slots of its own; its faces reach *all remote slots* the link
   exposes.
 
 **Example.** A Simulator running a furnace, mapped so the odd grid slots take ore and the even
@@ -84,7 +84,7 @@ pipe. Once a second, a face with:
 Pull needs a mode that allows input (In or Both), and Push one that allows output. Two small
 dots on a face tile show which of the two it has on.
 
-On a Quantum Crafter, Push **commits a craft** and pushes it, sized to the room the neighbour
+On a Quantum Crafter, Push **commits a craft** and pushes it, sized to the room the neighbor
 has; see [Automation](../machines/quantum-crafter.md).
 
 ## Saving

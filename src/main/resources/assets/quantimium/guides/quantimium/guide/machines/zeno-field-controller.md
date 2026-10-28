@@ -118,7 +118,7 @@ field is held: the accelerating controller skips it.
 ## In a Quantum Simulator
 
 A controller taken into a [Quantum Simulator](quantum-simulator.md)
-keeps working, centred where it stood (now the Simulator's field block). Accelerating, every copy in
+keeps working, centerd where it stood (now the Simulator's field block). Accelerating, every copy in
 the Simulator's batch adds its own extra ticks: an 8× controller in a Simulator at 4× batch gives the
 field four times the extra ticks. The Simulator pays for every copy, plus its 20% overhead: 4 × 630
 × 1.2 = 3,024 FE/t for the radius 4, 8× example above.
@@ -133,9 +133,9 @@ Holding doesn't multiply: a field is either still or it isn't.
 ## Flux
 
 Like every Quantimium machine, it emits **1 flux per 1,000 FE** it spends. A large field at 16× is a
-steady source of flux; plan containment round it. Inside a Simulator the Simulator emits the flux
+steady source of flux; plan containment around it. Inside a Simulator the Simulator emits the flux
 instead.
 
 ## Recipe
 
-Four polished deepslate, two packed ice and two clocks round a Quantimium Trace.
+Four polished deepslate, two packed ice and two clocks around a Quantimium Trace.

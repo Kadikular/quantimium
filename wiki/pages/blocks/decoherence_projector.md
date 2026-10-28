@@ -3,7 +3,7 @@ The Lance's beam on a pedestal. Every half-second it picks the most pressing tar
 [Veiled](../mechanics/veiled.md#the-decoherence-projector) first, then mirror mites
 ({{c:DecoherenceProjectorBlockEntity.MITE_DAMAGE}} damage each half-second), then a
 [rift](../mechanics/flux-rifts.md#closing-it) ({{c:DecoherenceProjectorBlockEntity.RIFT_DRAIN_PER_TICK}}
-coherence a tick). Stabilised rifts are left alone.
+coherence a tick). Stabilized rifts are left alone.
 
 | | |
 | --- | --- |
