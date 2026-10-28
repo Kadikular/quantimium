@@ -239,7 +239,7 @@ class Guide:
                  "multiblocks": "quantum_foundry_controller", "guides": "quantimium_trace"}
         for position, (title, folder) in enumerate([("Guides", "guides")] + list(CATEGORIES.items())):
             children = [p for p in written if p.startswith(folder + "/")]
-            links = [f"- [{self.title_of(p)}]({os.path.basename(p)})" for p in children]
+            links = [f"- [{self.title_of(p)}]({os.path.relpath(p, folder)})" for p in children]
             self.pages[f"{folder}/index.md"] = front(title, "index.md", position + 1, f"quantimium:{icons[folder]}") + \
                 f"# {title}\n\n" + "\n".join(links) + "\n"
 
