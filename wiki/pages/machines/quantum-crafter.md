@@ -23,10 +23,6 @@ hopper, a pipe, or its own auto-output.
 
 [[render:crafters]]
 
-!!! info "Badges"
-    Badges like [[mechanic:crafter.preview]] show whether an in-game test backs the rule next to
-    them. See [Mechanics coverage](../reference/coverage.md).
-
 ## At a glance
 
 | | Basic Quantum Crafter | Quantum Crafter |

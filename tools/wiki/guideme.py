@@ -7,7 +7,7 @@ data-driven (assets/quantimium/guideme_guides/guide.json), so the mod needs no c
     .venv-wiki/bin/python tools/wiki/guideme.py
 
 Run it after changing the wiki and commit what it writes. What changes on the way:
-  * {{c:...}} constants are filled in, [[mechanic:...]] badges dropped (the guide is for players),
+  * {{c:...}} constants are filled in, [[mechanic:...]] tags dropped (the guide is for players),
     [[item:x]] and [[block:x]] become GuideME item links, [[render:...]] and [[recipes:...]] go;
   * admonitions become quotes, tabs become headings, the info boxes a table with the item's image;
   * block and item pages are generated as on the wiki, and show their recipes with GuideME's own
@@ -109,9 +109,6 @@ class Guide:
                 body, i = self.indented(lines, i + 1)
                 if tab:
                     out += [f"#### {tab.group(1)}", ""] + body
-                elif any(b.lstrip().startswith("Badges like") for b in body):
-                    # About the badges, which the guide drops.
-                    pass
                 else:
                     title = admonition.group(3) or admonition.group(2).capitalize()
                     quoted = [f"> {b}" if b else ">" for b in body]

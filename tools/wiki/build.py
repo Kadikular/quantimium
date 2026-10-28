@@ -96,6 +96,30 @@ def content_rows() -> Dict[str, Tuple[str, str]]:
     return {name: (str(text).strip(), "") for name, text in data.items()}
 
 
+# Infobox rows, in the order they show. The keys are what wiki/data/pages.yml may use.
+INFOBOX_ROWS = [
+    ("category", "Category"), ("tier", "Tier"), ("obtained", "Obtained"),
+    ("energy_buffer", "Energy buffer"), ("max_input", "Max input"), ("energy_use", "Energy use"),
+    ("emits_flux", "Emits flux"), ("automation", "Automation"), ("stack_size", "Stack size"),
+    ("works_with", "Works with"),
+]
+
+
+def page_info() -> Dict[str, Dict[str, str]]:
+    """id → infobox rows from wiki/data/pages.yml. Optional: a page without an entry gets the plain box."""
+    path = os.path.join(ROOT, "wiki", "data", "pages.yml")
+    if not os.path.exists(path):
+        return {}
+    with open(path) as handle:
+        data = yaml.safe_load(handle) or {}
+    allowed = {key for key, _ in INFOBOX_ROWS}
+    for name, rows in data.items():
+        unknown = set(rows) - allowed
+        if unknown:
+            error(f"wiki/data/pages.yml: {name} has unknown rows {sorted(unknown)}; use {sorted(allowed)}")
+    return {name: {k: str(v) for k, v in rows.items()} for name, rows in data.items()}
+
+
 def recipes() -> List[dict]:
     out = []
     for path in sorted(glob.glob(os.path.join(DATA, "recipe", "*.json"))):
@@ -328,12 +352,17 @@ class Site:
         self.names = lang()
         self.blocks, self.items = catalogue_entries(self.names)
         self.rows = content_rows()
+        self.info = page_info()
+        unknown = [n for n in self.info if n not in self.blocks and n not in self.items]
+        if unknown:
+            error("wiki/data/pages.yml names no block or item: " + ", ".join(unknown))
         missing = [n for n in self.blocks + self.items if n not in self.rows]
         if missing:
             error("no description in wiki/data/descriptions.yml for: " + ", ".join(missing))
         self.recipes = recipes()
         self.constants = constants()
         self.mechanics: Dict[str, List[str]] = {}   # id → pages that document it
+        self.rules: Dict[str, List[Tuple[str, str]]] = {}   # page → (mechanic id, the rule's first sentence)
         self.covered = covered_mechanics()
 
     def display(self, resource: str) -> str:
@@ -443,7 +472,7 @@ def expand(site: Site, text: str, here: str) -> str:
 
 
 def _expand(site: Site, text: str, here: str) -> str:
-    """Substitutes constants, mechanic badges, links and renders in a hand-written page."""
+    """Substitutes constants, mechanic tags, links and renders in a hand-written page."""
     def constant(match: re.Match) -> str:
         key, unit = match.group(1), match.group(2) or ""
         if key not in site.constants:
@@ -456,12 +485,13 @@ def _expand(site: Site, text: str, here: str) -> str:
     def mechanic(match: re.Match) -> str:
         mechanic_id = match.group(1)
         site.mechanics.setdefault(mechanic_id, []).append(here)
-        tests = site.covered.get(mechanic_id)
-        state = "tested" if tests else "untested"
-        link = rel(here, "reference/coverage.html")
-        return f'<a class="qmech qmech-{state}" href="{link}#{mechanic_id.replace(".", "-")}" title="{mechanic_id}">{state}</a>'
+        site.rules.setdefault(here, [])
+        if mechanic_id not in [r for r, _ in site.rules[here]]:
+            site.rules[here].append((mechanic_id, ""))
+        return ""
 
-    text = MECHANIC.sub(mechanic, text)
+    # The tag stays in the source; the page shows its rules in a table at the bottom (see rule_footers).
+    text = re.sub(MECHANIC.pattern + r" ?", mechanic, text)
     text = re.sub(r"\[\[(item|block):([a-z0-9_]+)\]\]",
                   lambda m: site.link("quantimium:" + m.group(2), here), text)
 
@@ -491,6 +521,48 @@ def _expand(site: Site, text: str, here: str) -> str:
 
 # ---- Pages ----
 
+def expand_constants(site: Site, text: str, here: str) -> str:
+    def constant(match: re.Match) -> str:
+        key, unit = match.group(1), match.group(2) or ""
+        return format_constant(site.constants[key], unit) if key in site.constants else key
+    return re.sub(r"\{\{c:([A-Za-z0-9_]+\.[A-Z0-9_]+)(?:\|(\w+))?\}\}", constant, text)
+
+
+def rule_sentence(site: Site, rest: str) -> str:
+    """The first sentence after a mechanic tag, as plain text, for the page's tests table."""
+    rest = rest.lstrip().split("\n\n")[0].replace("\n", " ")
+    rest = re.sub(r"\[\[(?:item|block):([a-z0-9_]+)\]\]", lambda m: site.display("quantimium:" + m.group(1)), rest)
+    rest = re.sub(r"\[\[[a-z]+:[^\]]*\]\]|<[^>]+>|[*`|]", "", rest)
+    rest = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", rest).strip()
+    match = re.match(r"(.+?[.!?:])(?:\s|$)", rest)
+    sentence = (match.group(1) if match else rest).strip()
+    return sentence if len(sentence) <= 160 else sentence[:157].rstrip() + "..."
+
+
+def rule_footers(site: Site) -> None:
+    """Appends a collapsed table of the page's rules and the tests behind them, in place of inline tags."""
+    for here, rules in site.rules.items():
+        if here.startswith("reference/") or not rules:
+            continue
+        target = os.path.join(DOCS, here)
+        if not os.path.exists(target):
+            continue
+        tested = sum(1 for mechanic_id, _ in rules if site.covered.get(mechanic_id))
+        coverage = rel(here, "reference/coverage.md")
+        with open(os.path.join(PAGES, here)) as handle:
+            source = handle.read()
+        lines = ["", f'??? note "Tests: {tested} of {len(rules)} rules covered"', "",
+                 "    | Rule | Test |", "    | --- | --- |"]
+        for mechanic_id, _ in rules:
+            tag = source.find(f"[[mechanic:{mechanic_id}]]")
+            sentence = rule_sentence(site, expand_constants(site, source[tag + len(mechanic_id) + 13:], here))
+            tests = ", ".join(sorted({f"`{t.split('/')[-1][:-5]}`" for t in site.covered.get(mechanic_id, [])})) or "not yet tested"
+            anchor = mechanic_id.replace(".", "-")
+            lines.append(f"    | [`{mechanic_id}`]({coverage}#{anchor}): {sentence} | {tests} |")
+        with open(target, "a") as handle:
+            handle.write("\n".join(lines) + "\n")
+
+
 def write(path: str, text: str) -> None:
     target = os.path.join(DOCS, path)
     os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -517,10 +589,17 @@ def catalogue_page(site: Site, kind: str, name: str) -> None:
     if icon:
         info.append(f'<img class="qinfo-icon" src="{rel(here, icon)}" alt="">')
     info.append('<table>')
-    info.append(f"<tr><th>ID</th><td><code>quantimium:{name}</code></td></tr>")
-    info.append(f"<tr><th>Type</th><td>{'Block' if kind == 'blocks' else 'Item'}</td></tr>")
+    rows = site.info.get(name)
+    if rows:
+        for key, label in INFOBOX_ROWS:
+            if key in rows:
+                cell = expand(site, rows[key], here).strip()
+                info.append(f"<tr><th>{label}</th><td>{cell}</td></tr>")
+    else:
+        info.append(f"<tr><th>Type</th><td>{'Block' if kind == 'blocks' else 'Item'}</td></tr>")
     if name in INTERNAL:
         info.append("<tr><th>Obtainable</th><td>No (placed by the game)</td></tr>")
+    info.append(f"<tr><th>ID</th><td><code>quantimium:{name}</code></td></tr>")
     info.append("</table></div>")
     lines.append("\n".join(info))
     lines.append("")
@@ -717,6 +796,7 @@ def generate() -> Site:
     catalogue_index(site, "items")
     constants_page(site)
     tick_timing_page()
+    rule_footers(site)
     coverage_page(site)   # last: every page has registered its mechanics by now
     return site
 

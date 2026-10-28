@@ -23,10 +23,6 @@ is using the Stabilizer. It uses no power and emits no flux.
 
 [[render:stabilizer]]
 
-!!! info "Badges"
-    Badges like [[mechanic:stabilizer.proxy]] show whether an in-game test backs the rule next to
-    them. See [Mechanics coverage](../reference/coverage.md).
-
 ## Tesseracts
 
 A **Tesseract** is bound to one face of one block. Both kinds bind the same way:
