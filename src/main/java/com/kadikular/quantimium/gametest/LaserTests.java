@@ -1296,6 +1296,37 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void aSneakingHandTakesAnEmittersLensBeforeTheEmitter(GameTestHelper helper) {
+        var focus = TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.EAST);
+        focus.setLens(Direction.EAST, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        var player = TestSupport.player(helper, new BlockPos(9, Y, 8), net.minecraft.world.level.GameType.SURVIVAL);
+        player.setShiftKeyDown(true);
+        BlockPos at = helper.absolutePos(new BlockPos(6, Y, 8));
+        var onEmitter = new net.minecraft.world.phys.BlockHitResult(at.getCenter().add(0.45, 0, 0), Direction.EAST, at, false);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertTrue(focus.hasEmitter(Direction.EAST) && focus.lens(Direction.EAST).isEmpty(), "the lens came out, the emitter stayed");
+        helper.assertTrue(player.getInventory().contains(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get())), "the lens into the hand");
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertFalse(focus.hasEmitter(Direction.EAST), "then the emitter");
+        helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void inCreativeWhatComesOffIsGiven(GameTestHelper helper) {
+        var focus = TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.EAST);
+        var player = TestSupport.player(helper, new BlockPos(9, Y, 8), net.minecraft.world.level.GameType.CREATIVE);
+        player.setShiftKeyDown(true);
+        BlockPos at = helper.absolutePos(new BlockPos(6, Y, 8));
+        var onEmitter = new net.minecraft.world.phys.BlockHitResult(at.getCenter().add(0.45, 0, 0), Direction.EAST, at, false);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertFalse(focus.hasEmitter(Direction.EAST), "it came off");
+        helper.assertTrue(player.getInventory().contains(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FOCUS_EMITTER.get())), "into a creative player's hand");
+        helper.succeed();
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 120)
     public static void lightPassesABlockWhoseFocusIsTakenOut(GameTestHelper helper) {
         // A Laser Focus with an Emitter south stops the light east and sends it south. Its focus taken out, the light

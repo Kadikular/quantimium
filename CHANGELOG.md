@@ -11,6 +11,11 @@
 - **Isolator Lens**: two new switches. It can stop power (nothing past it is charged, though what the light does
   is still paid for), and pass a Redstone Lens's signal, which it stops by default.
 - A Clear Laser Focus no longer passes light straight out through an Emitter on its far face.
+- A cut or other work paid for by several sources through a Focus Emitter no longer stalls just short of done (stuck
+  at 99%).
+- A sneaking click with an empty hand takes an Emitter's lens out before the Emitter. In creative, what comes off a
+  Laser Focus goes into your inventory.
+- Isolator Lens: the redstone switch is a redstone torch, lit while signals pass, and its filter is labelled.
 - Beams notice a block placed or broken on them the next tick, instead of within half a second, and cost far less to keep
   watch over: only a change light can't pass, or one where a beam ends, is looked at.
 - Light lights up, at its full brightness, and goes dark as soon as it should: from an Emitter put down or switched

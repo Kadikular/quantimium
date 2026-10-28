@@ -75,6 +75,27 @@ public final class LensTests {
     }
 
     // covers: laser.lens.harvest
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void aCutPaidByTwoSourcesThroughAFocusEmitterFinishes(GameTestHelper helper) {
+        // Two Emitters short of power (5 and 10 FE a tick) light a Laser Focus, whose Emitter (and its loss) sends the
+        // light on to a Harvest lens: the last FE of the cut, split between them, still arrives.
+        LaserEmitterBlockEntity one = emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, false);
+        LaserEmitterBlockEntity two = emitter(helper, new BlockPos(5, Y, 4), Direction.SOUTH, false);
+        helper.onEachTick(() -> {
+            one.getEnergyStorage().setEnergy(5);
+            two.getEnergyStorage().setEnergy(10);
+        });
+        TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        BlockPos stone = new BlockPos(10, Y, 8);
+        helper.setBlock(stone, Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, stone);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.harvest
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
     public static void aHarvestLensNeedsALitBeam(GameTestHelper helper) {
         emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, false);

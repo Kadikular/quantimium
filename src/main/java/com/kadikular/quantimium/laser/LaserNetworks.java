@@ -1731,7 +1731,9 @@ public final class LaserNetworks {
             if (ask == null) continue;
             List<Route> routes = sinks.get(i).routes();
             long[] give = new long[routes.size()];
-            long deliver = 0;
+            // What arrives, summed before it's rounded down: each route's share of a small ask, rounded down after
+            // the tax on its own, would come to nothing (two sources' 1 FE each, less an Emitter's loss, is 0 and 0).
+            double arriving = 0;
             for (int r = 0; r < routes.size(); r++) {
                 if (ask[r] <= 0) continue;
                 int source = routes.get(r).index();
@@ -1745,8 +1747,9 @@ public final class LaserNetworks {
                         }
                     }
                 }
-                deliver += (long) Math.floor(give[r] * routes.get(r).efficiency());
+                arriving += give[r] * routes.get(r).efficiency();
             }
+            long deliver = (long) Math.floor(arriving + 1e-9);
             if (deliver <= 0) continue;
             long got = put(sinks.get(i), (int) Math.min(Integer.MAX_VALUE, deliver));
             if (got <= 0) continue;

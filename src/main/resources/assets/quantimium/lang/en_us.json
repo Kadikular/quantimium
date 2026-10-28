@@ -1014,6 +1014,7 @@
   "gui.quantimium.isolator_lens.modifiers": "Modifiers",
   "gui.quantimium.isolator_lens.power": "Power",
   "gui.quantimium.isolator_lens.redstone": "Redstone",
+  "gui.quantimium.isolator_lens.filter": "Lens filter",
   "gui.quantimium.isolator_lens.passes": "passes",
   "gui.quantimium.isolator_lens.stops": "stopped",
   "gui.quantimium.isolator_lens.allow": "Passes only the lenses listed",

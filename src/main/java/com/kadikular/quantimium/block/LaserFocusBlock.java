@@ -172,7 +172,7 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
             }
             return InteractionResult.SUCCESS;
         }
-        if (stack.is(ModTags.TOOLS_WRENCH)) return useWithoutItem(state, level, pos, player, hit);
+        if (stack.is(ModTags.TOOLS_WRENCH)) return use(level, pos, player, hit, true);
         if (stack.isEmpty()) return InteractionResult.TRY_WITH_EMPTY_HAND;
         // An emitter or receptacle opens as a chest does, whatever's in hand (sneak to place against it); a focus going
         // into an empty block, and a laser tool, do their own thing.
@@ -182,12 +182,28 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         return menu && !fills && !LaserTools.isOne(stack) ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
     }
 
-    /** On an emitter: opens it. Sneaking, takes off what it's pointed at, as a sneaking wrench does. */
+    /** On an emitter: opens it. Sneaking, takes off what it's pointed at, as a sneaking wrench does; an emitter's lens first. */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        return use(level, pos, player, hit, false);
+    }
+
+    private static InteractionResult use(Level level, BlockPos pos, Player player, BlockHitResult hit, boolean wrench) {
         if (!(level.getBlockEntity(pos) instanceof LaserFocusBlockEntity focus)) return InteractionResult.PASS;
         Direction face = partAt(focus, pos, hit);
-        if (player.isSecondaryUseActive()) return takeOff(focus, level, pos, player, face);
+        if (player.isSecondaryUseActive()) {
+            // By hand, an emitter holding a lens gives up the lens before itself.
+            if (!wrench && face != null && focus.hasEmitter(face) && !focus.lens(face).isEmpty()) {
+                if (!level.isClientSide()) {
+                    ItemStack was = focus.lens(face);
+                    focus.setLens(face, ItemStack.EMPTY);
+                    give(player, level, pos, List.of(was));
+                    level.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0f, 1.2f);
+                }
+                return InteractionResult.SUCCESS;
+            }
+            return takeOff(focus, level, pos, player, face);
+        }
         if (face != null && focus.receptacle(face) != null) return openReceptacle(focus, level, player, face);
         if (face == null || !focus.hasEmitter(face)) return InteractionResult.PASS;
         if (!level.isClientSide() && player instanceof ServerPlayer server) {
@@ -222,11 +238,17 @@ public class LaserFocusBlock extends BaseEntityBlock implements com.kadikular.qu
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         List<ItemStack> taken = face != null ? focus.takePart(face) : List.of(focus.takeCore());
         if (taken.isEmpty() || taken.getFirst().isEmpty()) return InteractionResult.PASS;
-        // What won't fit drops where it came off, not from the player; in creative, nothing.
-        if (!player.isCreative()) for (ItemStack stack : taken) if (!player.getInventory().add(stack)) Block.popResource(level, pos, stack);
+        give(player, level, pos, taken);
         level.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0f, face == null ? 0.8f : 1.0f);
         if (focus.empty()) level.removeBlock(pos, false);
         return InteractionResult.SUCCESS;
+    }
+
+    /** To the player; what won't fit drops where it came off, not from the player (in creative, it's let go). */
+    private static void give(Player player, Level level, BlockPos pos, List<ItemStack> stacks) {
+        for (ItemStack stack : stacks) {
+            if (!player.getInventory().add(stack) && !player.isCreative()) Block.popResource(level, pos, stack);
+        }
     }
 
     @Override
