@@ -441,3 +441,83 @@ fold_rail:
   category: "Multiblock part"
   obtained: "Crafted"
   works_with: "[[block:fold_core]]"
+superposition_pod:
+  category: "Multiblock controller"
+  obtained: "Crafted"
+  energy_buffer: "{{c:SuperpositionPodBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:SuperpositionPodBlockEntity.ENERGY_MAX_RECEIVE}} FE/t"
+  energy_use: "{{c:Superposition.FE_PER_BLOCK}} FE per block swapped"
+  works_with: "[[block:pod_cradle]], [[item:sophon]]"
+pod_cradle:
+  category: "Pod part"
+  obtained: "Crafted"
+  works_with: "[[block:superposition_pod]]"
+pod_plating:
+  category: "Pod part"
+  obtained: "Crafted"
+  works_with: "[[block:pod_cradle]]"
+pod_rescue_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "None"
+  works_with: "[[block:superposition_pod]]"
+pod_regeneration_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "{{c:SuperpositionPodBlockEntity.REGENERATION_FE_PER_TICK}} FE/t"
+  works_with: "[[block:superposition_pod]]"
+pod_hardening_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "{{c:SuperpositionPodBlockEntity.HARDENING_FE_PER_TICK}} FE/t"
+  works_with: "[[block:superposition_pod]]"
+pod_ward_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "{{c:SuperpositionPodBlockEntity.WARD_FE_PER_TICK}} FE/t"
+  works_with: "[[block:superposition_pod]]"
+pod_stash_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "None"
+  works_with: "[[block:superposition_pod]]"
+pod_charge_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "Up to {{c:SuperpositionPodBlockEntity.CHARGE_FE_PER_TICK}} FE/t"
+  works_with: "[[item:tether]]"
+pod_relay_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "What it sends"
+  works_with: "[[item:tesseract]], [[item:sophon]]"
+pod_recovery_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "What it brings"
+  works_with: "[[item:sophon]]"
+pod_logistics_module:
+  category: "Pod module"
+  obtained: "Crafted"
+  energy_use: "As the controller pays"
+  works_with: "[[block:logistics_terminal]]"
+unfolding_array:
+  category: "Multiblock controller"
+  tier: "High"
+  obtained: "Crafted"
+  energy_buffer: "{{c:UnfoldingArrayBlockEntity.ENERGY_CAPACITY}} FE"
+  energy_use: "{{c:UnfoldingArrayBlockEntity.FE_PER_TICK}} FE/t while unfolding"
+  works_with: "[[block:array_pylon]], [[item:semi_stable_tesseract]]"
+array_pylon:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:unfolding_array]]"
+sophon:
+  category: "Pod item"
+  obtained: "Unfolded at an Unfolding Array"
+  works_with: "[[block:superposition_pod]]"
+tether:
+  category: "Pod item"
+  obtained: "Crafted"
+  energy_buffer: "{{c:TetherItem.CAPACITY}} FE"
+  works_with: "[[block:superposition_pod]], [[block:pod_charge_module]]"
