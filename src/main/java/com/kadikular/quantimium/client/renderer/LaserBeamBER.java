@@ -141,7 +141,8 @@ public class LaserBeamBER<T extends BlockEntity & LaserBeamView> extends Submitt
             var last = beam.lastRay();
             boolean refused = level.getBlockEntity(beam.hit()) instanceof com.kadikular.quantimium.laser.LaserNode node
                     && !(last != null ? node.accepts(last) : node.accepts(beam.face()));
-            if (!refused && state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
+            // A Prism's link to a face ends on that face, not where the block draws light to.
+            if (!refused && !beam.toFace() && state.getBlock() instanceof com.kadikular.quantimium.laser.BeamAnchor anchor) end = anchor.beamPoint(state, beam.hit());
         }
         // Bent by mirrors: through the middle of each it bounces off.
         java.util.List<Vec3> points = beam.points();

@@ -627,6 +627,74 @@ public final class LaserTests {
         return prism;
     }
 
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinkGetsIntoALaserPortOnlyByItsBack(GameTestHelper helper) {
+        // Two Laser Ports facing east, each linked from a prism: one at an angle from behind (in by its back face), one
+        // from beside (in by its side face). Only the first passes the light on to the block in front of it.
+        emitter(helper, new BlockPos(1, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        prism(helper, new BlockPos(4, Y, 2), new BlockPos(10, Y, 4));
+        port(helper, new BlockPos(10, Y, 4));
+        FoldCoreBlockEntity behind = sink(helper, new BlockPos(13, Y, 4));
+        emitter(helper, new BlockPos(1, Y, 12), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        prism(helper, new BlockPos(4, Y, 12), new BlockPos(6, Y, 9));
+        port(helper, new BlockPos(6, Y, 9));
+        FoldCoreBlockEntity beside = sink(helper, new BlockPos(9, Y, 9));
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(behind.getEnergyStorage().getEnergyStored() > 0, "in by its back, at an angle");
+            helper.assertValueEqual(beside.getEnergyStorage().getEnergyStored(), 0, "not in by its side");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinksToALaserPortsBackFromAnywhereBehindIt(GameTestHelper helper) {
+        // Two Laser Ports facing east, each linked by its back face: from a prism off to the side but behind that face,
+        // which reaches it; and from one level with the face, whose light meets the port's side first and stops there.
+        emitter(helper, new BlockPos(1, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        prism(helper, new BlockPos(4, Y, 13)).toggleLink(helper.absolutePos(new BlockPos(6, Y, 9)), Direction.WEST);
+        port(helper, new BlockPos(6, Y, 9));
+        FoldCoreBlockEntity behind = sink(helper, new BlockPos(9, Y, 9));
+        emitter(helper, new BlockPos(9, Y, 1), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        prism(helper, new BlockPos(9, Y, 3)).toggleLink(helper.absolutePos(new BlockPos(9, Y, 6)), Direction.WEST);
+        port(helper, new BlockPos(9, Y, 6));
+        FoldCoreBlockEntity level = sink(helper, new BlockPos(12, Y, 6));
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(behind.getEnergyStorage().getEnergyStored() > 0, "behind its back face, at a steep angle");
+            helper.assertValueEqual(level.getEnergyStorage().getEnergyStored(), 0, "level with its back face");
+            var side = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(9, Y, 3))).stream()
+                    .filter(beam -> helper.absolutePos(new BlockPos(9, Y, 6)).equals(beam.hit())).findFirst().orElse(null);
+            helper.assertTrue(side != null && side.toFace() && side.face() == Direction.SOUTH, "on the side it meets: " + side);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinksToALensMountsBack(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos prismAt = new BlockPos(4, Y, 13);
+        BlockPos mountAt = new BlockPos(6, Y, 9);
+        prism(helper, prismAt).toggleLink(helper.absolutePos(mountAt), Direction.WEST);
+        helper.setBlock(mountAt, ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        FoldCoreBlockEntity front = sink(helper, new BlockPos(9, Y, 9));
+        helper.runAfterDelay(60, () -> {
+            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(prismAt));
+            var toMount = beams.stream().filter(beam -> helper.absolutePos(mountAt).equals(beam.hit())).findFirst().orElse(null);
+            helper.assertTrue(toMount != null && toMount.toFace() && toMount.face() == Direction.EAST, "to its back face: " + toMount);
+            helper.assertTrue(front.getEnergyStorage().getEnergyStored() > 0, "and through it");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    private static void port(GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
+    }
+
     // covers: laser.prism.split
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismSendsLightToEachBlockItsLinkedTo(GameTestHelper helper) {
@@ -646,19 +714,19 @@ public final class LaserTests {
     // covers: laser.prism
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismLinkedByAFaceSendsLightInByIt(GameTestHelper helper) {
-        // Linked by a machine's top, from beside and below: the light runs at its own angle to that face's middle and goes
+        // Linked by a machine's top, from beside and above: the light runs at its own angle to that face's middle and goes
         // in from above. Linked to a relay, it goes to its middle (its focus), whatever face was clicked.
-        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
-        helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.LASER_PRISM.get());
-        var prism = helper.getBlockEntity(new BlockPos(7, Y, 8), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
-        BlockPos core = new BlockPos(12, Y + 2, 11);
+        emitter(helper, new BlockPos(2, Y + 4, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        helper.setBlock(new BlockPos(7, Y + 4, 8), ModBlocks.LASER_PRISM.get());
+        var prism = helper.getBlockEntity(new BlockPos(7, Y + 4, 8), com.kadikular.quantimium.block.entity.LaserPrismBlockEntity.class);
+        BlockPos core = new BlockPos(12, Y + 1, 11);
         FoldCoreBlockEntity charged = sink(helper, core);
         prism.toggleLink(helper.absolutePos(core), Direction.UP);
         BlockPos relay = new BlockPos(7, Y + 4, 4);
         TestSupport.relay(helper, relay, Direction.DOWN, Direction.UP);
         prism.toggleLink(helper.absolutePos(relay), Direction.EAST);
         helper.succeedWhen(() -> {
-            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(7, Y, 8)));
+            var beams = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(7, Y + 4, 8)));
             var toCore = beams.stream().filter(beam -> helper.absolutePos(core).equals(beam.hit())).findFirst().orElse(null);
             helper.assertTrue(toCore != null && toCore.face() == Direction.DOWN && toCore.toFace() && toCore.ray() == null,
                     "in by the top, at its own angle: " + toCore);
@@ -1206,6 +1274,30 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 160)
+    public static void aFocusGoesDarkAndLightsUpAsItsLightIsBlockedAndFreed(GameTestHelper helper) {
+        // Light into a focus sending it on to a block that takes power. Stone in the way, then gone, each just after a
+        // settle: the focus's light is dark, then lit and bright, well before the next.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        var focus = TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.SOUTH);
+        sink(helper, new BlockPos(6, Y, 12));
+        BlockPos stone = new BlockPos(4, Y, 8);
+        long now = helper.getLevel().getGameTime();
+        int block = 40 + (int) Math.floorMod(1 - (now + 40), 20L);
+        helper.runAfterDelay(block - 2, () -> helper.assertTrue(focus.syncedBeams().stream().allMatch(beam -> beam.live() && beam.flow() > 0), "lit to begin with"));
+        helper.runAfterDelay(block, () -> helper.setBlock(stone, Blocks.STONE));
+        helper.runAfterDelay(block + 4, () -> helper.assertTrue(focus.syncedBeams().stream().noneMatch(com.kadikular.quantimium.laser.LaserBeam::live), "dark at once"));
+        helper.runAfterDelay(block + 40, () -> helper.setBlock(stone, Blocks.AIR));
+        helper.runAfterDelay(block + 44, () -> {
+            var beams = focus.syncedBeams();
+            helper.assertFalse(beams.isEmpty(), "light leaves it");
+            helper.assertTrue(beams.stream().allMatch(beam -> beam.live() && beam.flow() > 0), "lit and bright at once");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void anEmitterPutDownLightsUpAtOnce(GameTestHelper helper) {
         // The focus and what it charges first; the Emitter just after a settle, and both its light and the focus's lit
@@ -1269,6 +1361,63 @@ public final class LaserTests {
         helper.assertFalse(focus.hasEmitter(Direction.EAST), "sneaking took it off");
         helper.assertTrue(player.getInventory().contains(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FOCUS_EMITTER.get())), "into the hand");
         helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void aSneakingHandTakesAnEmittersLensBeforeTheEmitter(GameTestHelper helper) {
+        var focus = TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.EAST);
+        focus.setLens(Direction.EAST, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get()));
+        var player = TestSupport.player(helper, new BlockPos(9, Y, 8), net.minecraft.world.level.GameType.SURVIVAL);
+        player.setShiftKeyDown(true);
+        BlockPos at = helper.absolutePos(new BlockPos(6, Y, 8));
+        var onEmitter = new net.minecraft.world.phys.BlockHitResult(at.getCenter().add(0.45, 0, 0), Direction.EAST, at, false);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertTrue(focus.hasEmitter(Direction.EAST) && focus.lens(Direction.EAST).isEmpty(), "the lens came out, the emitter stayed");
+        helper.assertTrue(player.getInventory().contains(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.HARVEST_LENS.get())), "the lens into the hand");
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertFalse(focus.hasEmitter(Direction.EAST), "then the emitter");
+        helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
+    public static void inCreativeWhatComesOffIsGiven(GameTestHelper helper) {
+        var focus = TestSupport.relay(helper, new BlockPos(6, Y, 8), Direction.DOWN, Direction.EAST);
+        var player = TestSupport.player(helper, new BlockPos(9, Y, 8), net.minecraft.world.level.GameType.CREATIVE);
+        player.setShiftKeyDown(true);
+        BlockPos at = helper.absolutePos(new BlockPos(6, Y, 8));
+        var onEmitter = new net.minecraft.world.phys.BlockHitResult(at.getCenter().add(0.45, 0, 0), Direction.EAST, at, false);
+        helper.getLevel().getBlockState(at).useWithoutItem(helper.getLevel(), player, onEmitter);
+        helper.assertFalse(focus.hasEmitter(Direction.EAST), "it came off");
+        helper.assertTrue(player.getInventory().contains(new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.FOCUS_EMITTER.get())), "into a creative player's hand");
+        helper.succeed();
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void anAttachmentOnABlockWithNoFocusStopsLight(GameTestHelper helper) {
+        // Three rows into a block with no focus: an Emitter on the face light leaves by, one on the face it comes in by,
+        // and only a Stand underneath. Light gets past only the last.
+        BlockPos[] rows = {new BlockPos(0, 0, 3), new BlockPos(0, 0, 8), new BlockPos(0, 0, 13)};
+        Direction[] parts = {Direction.EAST, Direction.WEST, Direction.DOWN};
+        FoldCoreBlockEntity[] sinks = new FoldCoreBlockEntity[3];
+        for (int i = 0; i < 3; i++) {
+            int z = rows[i].getZ();
+            emitter(helper, new BlockPos(1, Y, z), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+            helper.setBlock(new BlockPos(5, Y, z), ModBlocks.LASER_FOCUS.get());
+            var bare = helper.getBlockEntity(new BlockPos(5, Y, z), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+            bare.setPart(parts[i], parts[i] == Direction.DOWN ? com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND
+                    : com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.EMITTER);
+            sinks[i] = sink(helper, new BlockPos(9, Y, z));
+        }
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(sinks[0].getEnergyStorage().getEnergyStored(), 0, "stopped by an Emitter on the way out");
+            helper.assertValueEqual(sinks[1].getEnergyStorage().getEnergyStored(), 0, "stopped by an Emitter on the way in");
+            helper.assertTrue(sinks[2].getEnergyStorage().getEnergyStored() > 0, "past bare faces");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
     }
 
     // covers: laser.focus

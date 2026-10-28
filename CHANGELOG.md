@@ -11,10 +11,19 @@
 - **Isolator Lens**: two new switches. It can stop power (nothing past it is charged, though what the light does
   is still paid for), and pass a Redstone Lens's signal, which it stops by default.
 - A Clear Laser Focus no longer passes light straight out through an Emitter on its far face.
+- A cut or other work paid for by several sources through a Focus Emitter no longer stalls just short of done (stuck
+  at 99%).
+- A sneaking click with an empty hand takes an Emitter's lens out before the Emitter. In creative, what comes off a
+  Laser Focus goes into your inventory.
+- Isolator Lens: the redstone switch is a redstone torch, lit while signals pass, and its filter is labelled.
+- Isolator Lens: Pickup's items go back up through it only if it passes logistics, and one in a Focus Emitter now stops
+  them too (it didn't).
+- A Laser Port takes light only straight in by its back, and a Lens Mount no longer takes light at an angle.
+- A Laser Focus block with no focus stops light at any attachment on the face it comes in or goes out by.
 - Beams notice a block placed or broken on them the next tick, instead of within half a second, and cost far less to keep
   watch over: only a change light can't pass, or one where a beam ends, is looked at.
-- Light lights up as soon as it's there: from an Emitter put down or switched on, and on through each Laser Focus it
-  reaches, not up to a second later.
+- Light lights up, at its full brightness, and goes dark as soon as it should: from an Emitter put down or switched
+  on, and through each Laser Focus it reaches or stops reaching, not up to a second later.
 - A Laser Focus that light meets on a Stand, Cover or Emitter shows no light leaving it.
 - **The Laser Focus replaces the Laser Relay.** Put a Laser Focus down, then put attachments on its faces: Focus
   Stands (as many as you like, or none and it floats), Focus Emitters (each with its lens and redstone setting) and
@@ -32,8 +41,9 @@
   Emitter facing back no longer closes a cavity: only a mirror does.
 - Straight light no longer gets into a Laser Focus by a face with an Emitter (diagonal light still does).
 - **A Prism links to the face you click**: its light runs at any angle to the middle of that face and goes in by it,
-  so you choose which side of a machine it charges. A laser block is still lit at its middle (its focus). Links made
-  before take the face facing the prism.
+  so you choose which side of a machine it charges, or a Laser Port's or Lens Mount's back. From a Prism that can't see
+  that face, the light meets the side it comes to first, as any light would. A Laser Focus, Mirror or Prism is still lit at its middle (its focus). Links made before take the
+  face facing the prism.
 - **Mirrors reflect like real ones.** A beam bounces off a Laser Mirror and goes on as the same beam, with its own
   light: beams crossing one mirror never mix. A plate faces one of 42 ways: flat to a face, or turned 22.5° or 45°
   towards a neighbouring one. Click a face's middle for flat, the ring round it for 22.5°, the outer ring for 45°

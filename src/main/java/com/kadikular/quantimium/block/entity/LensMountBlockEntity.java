@@ -114,6 +114,12 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         return travel == facing();
     }
 
+    /** Only straight light: light at an angle can't reach its back face square on. */
+    @Override
+    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
+        return ray.straight() && accepts(ray.face());
+    }
+
     /** Out of its output, if light comes in straight behind it (or none does: where light would go). */
     @Override
     public Set<Direction> outputsFor(Set<Direction> arriving) {

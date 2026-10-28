@@ -169,12 +169,12 @@ public final class CrafterTests {
         grid(furnace, new ItemStack(Items.RAW_IRON, 8), new ItemStack(Items.OAK_PLANKS, 8));
         QuantumCrafterBlockEntity table = crafter(helper, CRAFTER.east(2), Items.CRAFTING_TABLE);
         grid(table, new ItemStack(Items.RAW_IRON, 8), new ItemStack(Items.OAK_PLANKS, 8));
-        helper.runAfterDelay(5, () -> {
+        // Previews are background work: once both are in, whenever that is.
+        helper.succeedWhen(() -> {
             helper.assertTrue(craftOf(furnace, Items.IRON_INGOT) != null, "a furnace catalyst should smelt raw iron");
-            helper.assertTrue(craftOf(furnace, Items.STICK) == null, "a furnace catalyst should not craft sticks");
             helper.assertTrue(craftOf(table, Items.STICK) != null, "a crafting table catalyst should craft sticks");
+            helper.assertTrue(craftOf(furnace, Items.STICK) == null, "a furnace catalyst should not craft sticks");
             helper.assertTrue(craftOf(table, Items.IRON_INGOT) == null, "a crafting table should not smelt");
-            helper.succeed();
         });
     }
 

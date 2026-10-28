@@ -21,6 +21,8 @@ import java.util.function.Predicate;
 public class IsolatorLensScreen extends QuantumMachineScreen<IsolatorLensMenu> implements GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/laser_port_filter.png");
+    private static final Identifier TORCH_ON = Identifier.withDefaultNamespace("textures/block/redstone_torch.png");
+    private static final Identifier TORCH_OFF = Identifier.withDefaultNamespace("textures/block/redstone_torch_off.png");
 
     public IsolatorLensScreen(IsolatorLensMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -42,11 +44,19 @@ public class IsolatorLensScreen extends QuantumMachineScreen<IsolatorLensMenu> i
                 passes("actions", IsolatorLensMenu.BUTTON_ACTIONS, GuiIcon.ACTIONS, IsolatorSettings::actions),
                 passes("modifiers", IsolatorLensMenu.BUTTON_MODIFIERS, GuiIcon.MODIFIERS, IsolatorSettings::modifiers),
                 passes("power", IsolatorLensMenu.BUTTON_POWER, GuiIcon.ENERGY, IsolatorSettings::power),
-                passes("redstone", IsolatorLensMenu.BUTTON_REDSTONE, GuiIcon.REDSTONE, IsolatorSettings::redstone));
+                // A torch, lit while a Redstone Lens's signal passes.
+                passes("redstone", IsolatorLensMenu.BUTTON_REDSTONE, null, IsolatorSettings::redstone)
+                        .texture(() -> menu.settings().redstone() ? TORCH_ON : TORCH_OFF));
+    }
+
+    @Override
+    protected void renderMachineBg(net.minecraft.client.gui.GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
+        graphics.text(font, Component.translatable("gui.quantimium.isolator_lens.filter"), leftPos + IsolatorLensMenu.FILTER_X,
+                topPos + IsolatorLensMenu.FILTER_Y - 11, dimColour(), false);
     }
 
     /** A switch for what passes it: lit while it does. */
-    private Tab passes(String key, int button, GuiIcon icon, Predicate<IsolatorSettings> on) {
+    private Tab passes(String key, int button, @org.jetbrains.annotations.Nullable GuiIcon icon, Predicate<IsolatorSettings> on) {
         return Tab.glyph(() -> icon, () -> press(button),
                         () -> List.of(Component.translatable("gui.quantimium.isolator_lens." + key)
                                         .append(": ").append(Component.translatable(on.test(menu.settings()) ? "gui.quantimium.isolator_lens.passes" : "gui.quantimium.isolator_lens.stops")),

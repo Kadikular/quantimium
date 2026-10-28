@@ -294,6 +294,9 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
      */
     public static LaserBeam traceTo(Level level, BlockPos from, BlockPos target, @Nullable Direction inBy, int range, int marks) {
         Vec3 start = from.getCenter();
+        // A face reached only through the block (from level with it, or in front): the light meets the face it really
+        // comes to first, and is that face's, as any light would be.
+        if (inBy != null) inBy = entryFace(start, point(target, inBy), target);
         Vec3 delta = point(target, inBy).subtract(start);
         Direction face = inBy != null ? inBy.getOpposite() : Direction.getApproximateNearest(delta.x, delta.y, delta.z);
         boolean toFace = inBy != null;
@@ -330,6 +333,24 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         return new LaserBeam(from, face, target, range, null, End.OPEN, 0, false, Lens.NONE, null, toFace);
     }
 
+    /** The face of {@code box} a line from {@code start} to {@code end} goes in by first: the slab it's last to enter. */
+    private static Direction entryFace(Vec3 start, Vec3 end, BlockPos box) {
+        Vec3 d = end.subtract(start);
+        double best = Double.NEGATIVE_INFINITY;
+        Direction face = Direction.getApproximateNearest(-d.x, -d.y, -d.z);
+        for (Direction.Axis axis : Direction.Axis.values()) {
+            double step = d.get(axis);
+            if (Math.abs(step) < 1e-9) continue;
+            double near = step > 0 ? box.get(axis) : box.get(axis) + 1;
+            double t = (near - start.get(axis)) / step;
+            if (t > best) {
+                best = t;
+                face = Direction.fromAxisAndDirection(axis, step > 0 ? Direction.AxisDirection.NEGATIVE : Direction.AxisDirection.POSITIVE);
+            }
+        }
+        return face;
+    }
+
     /** This, as a free line (no ray), to the face or the middle of what it's aimed at. */
     private LaserBeam free(boolean toFace) {
         return new LaserBeam(from, face, aim, length, hit, end, flow, live, lenses, null, toFace);
@@ -345,9 +366,13 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         if (state.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) return new LaserBeam(from, face, aim, length, pos, End.MIRROR, 0, false, Lens.NONE);
         // Only a block with a block entity can be a laser block or take power: the rest are looked up no further.
         boolean entity = state.hasBlockEntity();
-        // A Laser Focus block with no focus in it: light passes its attachments by.
+        // A Laser Focus block with no focus in it: light passes it by bare faces, in and out; an attachment on either stops it.
         if (entity && level.getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus
-                && focus.core() == com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.NONE) return null;
+                && focus.core() == com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.NONE) {
+            var none = com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.NONE;
+            if (focus.part(face) == none && focus.part(face.getOpposite()) == none) return null;
+            return new LaserBeam(from, face, aim, length, pos, End.BLOCKED, 0, false, Lens.NONE);
+        }
         if (entity && level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
         if (passes(level, pos, state)) return null;
         // Anomalite is of the mirror: light in the real world goes through it as if it weren't there.

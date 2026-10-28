@@ -75,6 +75,27 @@ public final class LensTests {
     }
 
     // covers: laser.lens.harvest
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 200)
+    public static void aCutPaidByTwoSourcesThroughAFocusEmitterFinishes(GameTestHelper helper) {
+        // Two Emitters short of power (5 and 10 FE a tick) light a Laser Focus, whose Emitter (and its loss) sends the
+        // light on to a Harvest lens: the last FE of the cut, split between them, still arrives.
+        LaserEmitterBlockEntity one = emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, false);
+        LaserEmitterBlockEntity two = emitter(helper, new BlockPos(5, Y, 4), Direction.SOUTH, false);
+        helper.onEachTick(() -> {
+            one.getEnergyStorage().setEnergy(5);
+            two.getEnergyStorage().setEnergy(10);
+        });
+        TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get());
+        BlockPos stone = new BlockPos(10, Y, 8);
+        helper.setBlock(stone, Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, stone);
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.lens.harvest
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 60)
     public static void aHarvestLensNeedsALitBeam(GameTestHelper helper) {
         emitter(helper, new BlockPos(2, Y, 8), Direction.EAST, false);
@@ -1406,6 +1427,72 @@ public final class LensTests {
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
+    }
+
+    // covers: laser.isolator, laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void itemsPassBackUpAnIsolatorLensOnlyWithLogistics(GameTestHelper helper) {
+        // Two rows as above, the Isolator letting actions through: in one logistics passes too, and what's cut goes back
+        // up to the port; in the other it doesn't, and nothing does.
+        var actions = com.kadikular.quantimium.laser.IsolatorSettings.POWER_ONLY.withActions(true);
+        LaserPortBlockEntity without = isolatedRow(helper, 4, actions);
+        LaserPortBlockEntity with = isolatedRow(helper, 12, actions.withLogistics(true));
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(count(without, Items.COBBLESTONE), 0, "nothing back past it without logistics");
+            helper.assertTrue(count(with, Items.COBBLESTONE) > 0, "back past it with logistics");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 80)
+    public static void aLaserPortTakesLightOnlyByItsBack(GameTestHelper helper) {
+        // Two Laser Ports facing east, each with a block to charge in front: one lit from behind, one from the side.
+        emitter(helper, new BlockPos(1, Y, 4), Direction.EAST, true);
+        collector(helper, new BlockPos(4, Y, 4), Direction.EAST);
+        helper.setBlock(new BlockPos(7, Y, 4), ModBlocks.FOLD_CORE.get());
+        var behind = helper.getBlockEntity(new BlockPos(7, Y, 4), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        emitter(helper, new BlockPos(4, Y, 9), Direction.SOUTH, true);
+        collector(helper, new BlockPos(4, Y, 12), Direction.EAST);
+        helper.setBlock(new BlockPos(7, Y, 12), ModBlocks.FOLD_CORE.get());
+        var side = helper.getBlockEntity(new BlockPos(7, Y, 12), com.kadikular.quantimium.block.entity.FoldCoreBlockEntity.class);
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(behind.getEnergyStorage().getEnergyStored() > 0, "lit from behind, it passes the light on");
+            helper.assertValueEqual(side.getEnergyStorage().getEnergyStored(), 0, "lit from the side, it doesn't");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.isolator, laser.port.collect
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 100)
+    public static void anIsolatorLensInAFocusEmitterStopsItemsToo(GameTestHelper helper) {
+        // A Laser Port, then a Laser Focus whose Emitter holds an unset Isolator Lens, then Harvest with Pickup.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity port = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        focus.setLens(Direction.EAST, new ItemStack(ModItems.ISOLATOR_LENS.get()));
+        mount(helper, new BlockPos(7, Y, 8), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
+        helper.runAfterDelay(80, () -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(11, Y, 8));
+            helper.assertValueEqual(count(port, Items.COBBLESTONE), 0, "nothing back past the Emitter's Isolator");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    /** A Laser Port, a mount with an Isolator Lens set to {@code settings}, then Harvest with Pickup on stone, along z = {@code z}. */
+    private static LaserPortBlockEntity isolatedRow(GameTestHelper helper, int z, com.kadikular.quantimium.laser.IsolatorSettings settings) {
+        emitter(helper, new BlockPos(1, Y, z), Direction.EAST, true);
+        LaserPortBlockEntity port = collector(helper, new BlockPos(3, Y, z), Direction.EAST);
+        ItemStack isolator = new ItemStack(ModItems.ISOLATOR_LENS.get());
+        isolator.set(com.kadikular.quantimium.init.ModDataComponents.ISOLATOR.get(), settings);
+        mount(helper, new BlockPos(5, Y, z), Direction.EAST).getLensSlots().setStackInSlot(0, isolator);
+        mount(helper, new BlockPos(7, Y, z), Direction.EAST, ModItems.HARVEST_LENS.get(), ModItems.PICKUP_LENS.get());
+        helper.setBlock(new BlockPos(11, Y, z), Blocks.STONE);
+        return port;
     }
 
     // covers: laser.lens.filter
