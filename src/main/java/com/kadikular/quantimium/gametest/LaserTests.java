@@ -652,7 +652,7 @@ public final class LaserTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismLinksToALaserPortsBackFromAnywhereBehindIt(GameTestHelper helper) {
         // Two Laser Ports facing east, each linked by its back face: from a prism off to the side but behind that face,
-        // which reaches it; and from one level with the face, which would have to cross the port to, so doesn't.
+        // which reaches it; and from one level with the face, whose light meets the port's side first and stops there.
         emitter(helper, new BlockPos(1, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
         prism(helper, new BlockPos(4, Y, 13)).toggleLink(helper.absolutePos(new BlockPos(6, Y, 9)), Direction.WEST);
         port(helper, new BlockPos(6, Y, 9));
@@ -664,6 +664,28 @@ public final class LaserTests {
         helper.runAfterDelay(60, () -> {
             helper.assertTrue(behind.getEnergyStorage().getEnergyStored() > 0, "behind its back face, at a steep angle");
             helper.assertValueEqual(level.getEnergyStorage().getEnergyStored(), 0, "level with its back face");
+            var side = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(new BlockPos(9, Y, 3))).stream()
+                    .filter(beam -> helper.absolutePos(new BlockPos(9, Y, 6)).equals(beam.hit())).findFirst().orElse(null);
+            helper.assertTrue(side != null && side.toFace() && side.face() == Direction.SOUTH, "on the side it meets: " + side);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.prism.links
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void aPrismLinksToALensMountsBack(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 13), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos prismAt = new BlockPos(4, Y, 13);
+        BlockPos mountAt = new BlockPos(6, Y, 9);
+        prism(helper, prismAt).toggleLink(helper.absolutePos(mountAt), Direction.WEST);
+        helper.setBlock(mountAt, ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        FoldCoreBlockEntity front = sink(helper, new BlockPos(9, Y, 9));
+        helper.runAfterDelay(60, () -> {
+            var beams = LaserNetworks.of(helper.getLevel()).beamsOf(helper.absolutePos(prismAt));
+            var toMount = beams.stream().filter(beam -> helper.absolutePos(mountAt).equals(beam.hit())).findFirst().orElse(null);
+            helper.assertTrue(toMount != null && toMount.toFace() && toMount.face() == Direction.EAST, "to its back face: " + toMount);
+            helper.assertTrue(front.getEnergyStorage().getEnergyStored() > 0, "and through it");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

@@ -294,11 +294,12 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
      */
     public static LaserBeam traceTo(Level level, BlockPos from, BlockPos target, @Nullable Direction inBy, int range, int marks) {
         Vec3 start = from.getCenter();
+        // A face reached only through the block (from level with it, or in front): the light meets the face it really
+        // comes to first, and is that face's, as any light would be.
+        if (inBy != null) inBy = entryFace(start, point(target, inBy), target);
         Vec3 delta = point(target, inBy).subtract(start);
         Direction face = inBy != null ? inBy.getOpposite() : Direction.getApproximateNearest(delta.x, delta.y, delta.z);
         boolean toFace = inBy != null;
-        // A face is reached only from out beyond it: level with it, or in front, the light would cross the block first.
-        boolean facing = inBy == null || Vec3.atLowerCornerOf(inBy.getUnitVec3i()).dot(start.subtract(target.getCenter())) > 0.5;
         if (delta.length() > range) return new LaserBeam(from, face, target, range, null, End.OPEN, 0, false, Lens.NONE, null, toFace);
         // Every block the line passes through, in order (Amanatides and Woo's walk).
         int x = from.getX(), y = from.getY(), z = from.getZ();
@@ -323,7 +324,6 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             BlockPos pos = new BlockPos(x, y, z);
             int length = (int) Math.round(pos.getCenter().distanceTo(start)) - 1;
             if (pos.equals(target)) {
-                if (!facing) return new LaserBeam(from, face, target, length, pos, End.BLOCKED, 0, false, Lens.NONE).free(toFace);
                 LaserBeam ended = endsAt(level, from, face, target, length, pos, marks);
                 return (ended != null ? ended : new LaserBeam(from, face, target, length, pos, End.BLOCKED, 0, false, Lens.NONE)).free(toFace);
             }
@@ -331,6 +331,24 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
             if (ended != null) return ended.free(toFace);
         }
         return new LaserBeam(from, face, target, range, null, End.OPEN, 0, false, Lens.NONE, null, toFace);
+    }
+
+    /** The face of {@code box} a line from {@code start} to {@code end} goes in by first: the slab it's last to enter. */
+    private static Direction entryFace(Vec3 start, Vec3 end, BlockPos box) {
+        Vec3 d = end.subtract(start);
+        double best = Double.NEGATIVE_INFINITY;
+        Direction face = Direction.getApproximateNearest(-d.x, -d.y, -d.z);
+        for (Direction.Axis axis : Direction.Axis.values()) {
+            double step = d.get(axis);
+            if (Math.abs(step) < 1e-9) continue;
+            double near = step > 0 ? box.get(axis) : box.get(axis) + 1;
+            double t = (near - start.get(axis)) / step;
+            if (t > best) {
+                best = t;
+                face = Direction.fromAxisAndDirection(axis, step > 0 ? Direction.AxisDirection.NEGATIVE : Direction.AxisDirection.POSITIVE);
+            }
+        }
+        return face;
     }
 
     /** This, as a free line (no ray), to the face or the middle of what it's aimed at. */
