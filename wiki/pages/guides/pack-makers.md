@@ -170,7 +170,7 @@ build quests on them.
 
 ```text
 quantimium:root                              (granted on joining; opens the tab)
-└ not_what_you_expected                      Unrealised Matter
+└ not_what_you_expected                      Unrealized Matter
   └ observed                                 a Quantimium Trace
     ├ reading_the_field                      a Flux Meter
     │ ├ seeing_things                        a Mirror Lens
@@ -186,7 +186,7 @@ quantimium:root                              (granted on joining; opens the tab)
     │   └ a_watched_pot                      a Zeno Field Controller
     ├ what_is_this_place                     enter the mirror
     │ ├ these_locals_arent_friendly          take a hit from a Mirror Endermite
-    │ ├ a_way_to_come_and_go                 light a Stabilised Portal
+    │ ├ a_way_to_come_and_go                 light a Stabilized Portal
     │ └ stitching_the_sky                    a Decoherence Lance
     └ unfolded                               fold a Sophon
       ├ here_and_there                       swap into a double

@@ -15,7 +15,7 @@ public final class Config {
 
     static {
         BUILDER.push("anomaly");
-        BUILDER.comment("Ill effects scale with this chunk's anomaly, not flux and not a neighbour's peak.");
+        BUILDER.comment("Ill effects scale with this chunk's anomaly, not flux and not a neighbor's peak.");
     }
 
     public static final ModConfigSpec.BooleanValue CRAFT_SURCHARGE = BUILDER
@@ -130,7 +130,7 @@ public final class Config {
     }
 
     public static final ModConfigSpec.EnumValue<CollapseSource> COLLAPSE_SOURCE = BUILDER
-            .comment("What Unrealised Matter collapses into. PACK_ORES: every ore in the pack's #c:ores tags, by rarity (#quantimium:unrealised/common … /very_rare; an untagged ore counts as very rare). LOOT_TABLE: the hand-made loot table quantimium:gameplay/unrealised_matter instead.")
+            .comment("What Unrealized Matter collapses into. PACK_ORES: every ore in the pack's #c:ores tags, by rarity (#quantimium:unrealised/common … /very_rare; an untagged ore counts as very rare). LOOT_TABLE: the hand-made loot table quantimium:gameplay/unrealised_matter instead.")
             .defineEnum("collapseSource", CollapseSource.PACK_ORES);
     public static final ModConfigSpec.ConfigValue<List<? extends Integer>> RARITY_SHARES_LOW = raritySharesFor("low", List.of(100, 0, 0, 0));
     public static final ModConfigSpec.ConfigValue<List<? extends Integer>> RARITY_SHARES_MEDIUM = raritySharesFor("medium", List.of(70, 30, 0, 0));
@@ -146,10 +146,10 @@ public final class Config {
             .comment("Flux an Observation Chamber takes from its chunk for each collapse above Low, per band step: the price of the better odds. With too little flux, it rolls at Low's odds. Default 5: 5 at Medium, 20 at Singularity.")
             .defineInRange("chamberFluxPerBand", 5, 0, 10_000);
     public static final ModConfigSpec.IntValue MATERIALISER_PREMIUM = BUILDER
-            .comment("What choosing an ore at the Materialiser costs over rolling for it, in percent: the Trace price is this share of the ore's value over the average value of a roll in that band (common 1, uncommon 3, rare 10, very rare 30). Default 120.")
+            .comment("What choosing an ore at the Materializer costs over rolling for it, in percent: the Trace price is this share of the ore's value over the average value of a roll in that band (common 1, uncommon 3, rare 10, very rare 30). Default 120.")
             .defineInRange("materialiserPremiumPercent", 120, 1, 10_000);
     public static final ModConfigSpec.IntValue MATERIALISER_FLUX = BUILDER
-            .comment("Flux the Materialiser debits from its chunk for each Matter, per point of the ore's value. Default 25: 25 for a common, 250 for a rare.")
+            .comment("Flux the Materializer debits from its chunk for each Matter, per point of the ore's value. Default 25: 25 for a common, 250 for a rare.")
             .defineInRange("materialiserFluxPerValue", 25, 0, 100_000);
 
     public enum CollapseSource { PACK_ORES, LOOT_TABLE }
@@ -217,10 +217,10 @@ public final class Config {
             .comment("Seconds for a rift to grow one stage under High anomaly. Medium doubles it, Critical halves it, Singularity quarters it; Low and contained chunks freeze it.")
             .defineInRange("stageSecondsHigh", 600, 10, 86_400);
     public static final ModConfigSpec.DoubleValue FLUX_RIFT_LEAK = BUILDER
-            .comment("Anomaly an uncontained rift leaks into its 5×5 neighbourhood each second, per stage (split across the chunks). At 5, a stage 3–4 rift alone holds its surroundings near the Low/Medium boundary: enough to keep mites and tears around, not enough to feed its own growth.")
+            .comment("Anomaly an uncontained rift leaks into its 5×5 neighborhood each second, per stage (split across the chunks). At 5, a stage 3–4 rift alone holds its surroundings near the Low/Medium boundary: enough to keep mites and tears around, not enough to feed its own growth.")
             .defineInRange("anomalyLeakPerStage", 5.0, 0.0, 1000.0);
     public static final ModConfigSpec.IntValue FLUX_RIFT_COHERENCE = BUILDER
-            .comment("Coherence a rift holds per stage. The Decoherence Lance drains it; it regenerates once the beam stops.")
+            .comment("Coherence a rift holds per stage. The Decoherence Lance drains it; it regenerates once the laser stops.")
             .defineInRange("coherencePerStage", 400, 1, 100_000);
 
     static {
@@ -232,7 +232,7 @@ public final class Config {
             .comment("FE the Decoherence Lance burns per tick while channelling.")
             .defineInRange("fePerTick", 80, 0, 100_000);
     public static final ModConfigSpec.DoubleValue LANCE_DRAIN = BUILDER
-            .comment("Rift coherence drained per tick of beam contact.")
+            .comment("Rift coherence drained per tick of laser contact.")
             .defineInRange("drainPerTick", 5.0, 0.1, 10_000.0);
 
     static {
@@ -309,7 +309,7 @@ public final class Config {
     }
 
     public static final ModConfigSpec.BooleanValue MATERIALISER_PORT_ACCEPTS_ITEMS = BUILDER
-            .comment("Whether a Reactor's Materialiser Port also takes items in, as its Input Port does, which makes the Reactor full storage through one storage bus. Off keeps it extract-only.")
+            .comment("Whether a Reactor's Materializer Port also takes items in, as its Input Port does, which makes the Reactor full storage through one storage bus. Off keeps it extract-only.")
             .define("materialiserPortAcceptsItems", true);
 
     static {
@@ -330,11 +330,11 @@ public final class Config {
             .defineInRange("relayLoss", com.kadikular.quantimium.laser.LaserTuning.HOP_TAX, 0.0, 0.5);
 
     public static final ModConfigSpec.DoubleValue MIRROR_LOSS = BUILDER
-            .comment("Fraction of what a beam carries that each bounce off a Laser Mirror or Splitter takes, as flux where the beam starts.")
+            .comment("Fraction of what a laser carries that each bounce off a Laser Mirror or Splitter takes, as flux where the laser starts.")
             .defineInRange("mirrorLoss", com.kadikular.quantimium.laser.LaserTuning.MIRROR_LOSS, 0.0, 0.5);
 
     public static final ModConfigSpec.BooleanValue UNREALISING_LENS = BUILDER
-            .comment("Whether the Unrealising lens turns ore a Harvest beam cuts into Unrealised Matter. Off, ore comes away as it would anyway: for packs where Matter would duplicate ores.")
+            .comment("Whether the Unrealizing Lens turns ore a Harvest laser cuts into Unrealized Matter. Off, ore comes away as it would anyway: for packs where Matter would duplicate ores.")
             .define("unrealisingLens", true);
 
     public static final ModConfigSpec.BooleanValue DIAGONALS_PASS_CORNERS = BUILDER
@@ -342,7 +342,7 @@ public final class Config {
                     "to corner across its way stop it.")
             .define("diagonalsPassCorners", true);
     public static final ModConfigSpec.BooleanValue ACCELERATION = BUILDER
-            .comment("Whether the Acceleration Lens speeds up the machines its light ends on.")
+            .comment("Whether the Acceleration Lens speeds up the machines its laser ends on.")
             .define("acceleration", true);
     public static final ModConfigSpec.IntValue ACCELERATION_FE_PER_TICK = BUILDER
             .comment("FE an Acceleration Lens costs for each extra tick it gives a machine: at 2x, this a tick.")
@@ -359,7 +359,7 @@ public final class Config {
             .defineInRange("accelerationTotalBudgetMicros", 5000, 1, 1_000_000);
 
     public static final ModConfigSpec.IntValue PHANTOM_FE_PER_BLOCK = BUILDER
-            .comment("FE a Phantom lens's light costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on. On top of this, the actions it carries cost twice as much.")
+            .comment("FE a Phantom Lens's laser costs, each tick it's lit, for each block it passes through; and for each block between an Area Prism and what it works on. On top of this, the actions it carries cost twice as much.")
             .defineInRange("phantomFePerBlock", 20, 0, 100_000);
 
     public static final ModConfigSpec.IntValue LASER_IDLE_SECONDS = BUILDER
@@ -373,7 +373,7 @@ public final class Config {
                     "immersiveengineering:crusher", "actuallyadditions:crushing", "occultism:crushing"), () -> "", o -> o instanceof String);
 
     public static final ModConfigSpec.IntValue MAX_RANGE = BUILDER
-            .comment("The farthest one run of laser light reaches, in blocks, however many Range lenses it's been through.")
+            .comment("The farthest one run of a laser reaches, in blocks, however many Range lenses it's been through.")
             .defineInRange("maxRange", 64, 8, 256);
 
     static {
