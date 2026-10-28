@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:veil_thread" scale="2" />
 
-> *In game:* A strand of the Veiled itself, drawn out through the mirror while it is held
+> *In game:* Drawn from a Veiled held in a Containment Hall.
 
 A strand of the Veiled itself. Laser light in the mirror, with a Pickup lens, draws one out of a Veiled held
 in an [Anomaly Containment Hall](../multiblocks/containment-hall.md), through the hall's glass,

@@ -17,7 +17,7 @@ jumps when a field crosses from one to the next.
 | Singularity | 100,000 | +100% |
 
 [[mechanic:flux.bands]] Machines and meters read the field **where they stand**, blended between the
-chunks round them, so it changes smoothly as you walk and never jumps at a chunk line. Anything that
+chunks around them, so it changes smoothly as you walk and never jumps at a chunk line. Anything that
 switches on a band (a Foundry recipe, a [[block:flux_detector]]) switches into it at the band's start
 but only drops out below 85% of it, so a field hovering at an edge switches it once. The
 [[item:flux_meter]] shows the field where you stand on the action bar, and how full the containment
@@ -45,7 +45,7 @@ and that's the gamble. Pack makers can flatten any row (see [For pack makers](..
 
 [[mechanic:flux.emit]] Quantimium work emits flux: {{c:FieldModel.EMISSION_GAIN}} flux per
 {{c:QuantumFlux.FE_PER_FLUX}} FE spent.
-It lands on the 3×3 of chunks round the machine, a fifth on the machine's own and a tenth on each
+It lands on the 3×3 of chunks around the machine, a fifth on the machine's own and a tenth on each
 of the other eight. Non-electric crafts emit a small flat amount; idle machines and power arriving in
 buffers emit nothing. Work adds no anomaly of its own: flux drives it. The [[block:quantum_exciter]]
 raises flux on purpose.
@@ -54,9 +54,9 @@ raises flux on purpose.
   pool lets about a tenth of what it holds into the field every second
   ({{c:FieldModel.RELEASE_SECONDS}} s time constant). A burst of crafting reads as a hump, not a
   spike.
-- [[mechanic:field2.plateau]] **A source makes a plateau, a band for each tenfold.** The 3×3 round a
+- [[mechanic:field2.plateau]] **A source makes a plateau, a band for each tenfold.** The 3×3 around a
   source settles close to level, and each ×10 in FE lifts it a whole band: 1,000 FE/t of work holds
-  it at Medium, 10,000 at High, 100,000 at Critical, and 1,000,000 puts the centre and sides at
+  it at Medium, 10,000 at High, 100,000 at Critical, and 1,000,000 puts the center and sides at
   Singularity.
 
 ## How the field moves
@@ -67,7 +67,7 @@ The field updates once a second, for every chunk holding one.
   the value: 0.95% a second at 100, 2.1% at 1,000, 3.5% at 10,000, 5% at 100,000, never less than
   0.05. Every steady source has exactly one level to settle at.
 - [[mechanic:field2.shape]] **It spreads.** Each second a chunk shares a fraction
-  ({{c:FieldModel.DIFFUSION}}) of the difference with each loaded neighbour, so a plateau falls away
+  ({{c:FieldModel.DIFFUSION}}) of the difference with each loaded neighbor, so a plateau falls away
   at its edges: at 100,000 FE/t it's still High two chunks out and Medium at three and four. A chunk
   below {{c:FieldModel.SPREAD_FLOOR}} flux spreads no further, so a field ends a few chunks out.
   Nothing flows to or from an unloaded chunk: an unloaded chunk keeps its field, catching up only its
@@ -87,7 +87,7 @@ The field updates once a second, for every chunk holding one.
 
 ## Anomaly
 
-[[mechanic:anomaly.coupling]] Anomaly climbs towards a target each second, closing 4% of the gap. With
+[[mechanic:anomaly.coupling]] Anomaly climbs toward a target each second, closing 4% of the gap. With
 nothing containing it, the target is all the flux. Under containment, the target is the flux its
 capacity can't hold, plus a small leak (3%) of what it does hold. Anomaly decays
 on the same curve as flux at half the rate, so it settles nearer the flux, and with the chunk's warmth
@@ -123,7 +123,7 @@ several leaks their mix. Before a hall, you keep anomaly down by pulling it: a
 [[mechanic:containment.edge]] **Containment has an edge.** Its strength goes by straight-line distance
 from the machine: nearly full across its core (98% at the sides of a 3×3, 91% at the corners), half
 two chunks out, and next to nothing a chunk further. The field doesn't stop there, so past the edge a
-hot base's flux is uncontained, and the land round it turns dangerous, with the tears and mites that
+hot base's flux is uncontained, and the land around it turns dangerous, with the tears and mites that
 come with it. Plan where the edge goes, or build wider.
 
 [[mechanic:containment.leak]] **Contained anomaly is atmosphere only.** The leak keeps a contained hot
@@ -138,7 +138,7 @@ an overloaded chunk gets hurt.
 | [Containment Hall](../multiblocks/containment-hall.md) | Holds up to all of Singularity with enough arms, over the 3×3 or 5×5, and pulls anomaly (only anomaly) down. |
 | [Flux Maintainer, Anomaly Siphon, Field Regulator](../machines/field-control.md) | Hold the field at a floor, or anomaly under a settable ceiling. |
 | [[block:flux_detector]] | Turns a band into redstone, for automation. |
-| [[block:field_monitor]] | Watches the 9×9 chunks round it: a map, and an alarm (redstone and comparator) for overloaded containment or uncontained anomaly. |
+| [[block:field_monitor]] | Watches the 9×9 chunks around it: a map, and an alarm (redstone and comparator) for overloaded containment or uncontained anomaly. |
 
 ## Seeing the field
 
@@ -150,10 +150,10 @@ climb will end in.
 
 The [[item:flux_meter]] and [Jade](partner-mods.md#jade) both show it. Wear a [[item:mirror_lens]]
 (or be in the mirror) and the corner readout shows flux with its trend, anomaly and, under
-containment, its load. Press **N** for the field map: the chunks round you, north up, flux in
+containment, its load. Press **N** for the field map: the chunks around you, north up, flux in
 azure with anomaly washed violet over it, your chunk outlined, and chunks under containment marked in
 the corner, pale when held and amber when overloaded. With JourneyMap, the same
-colours are [on your world map](partner-mods.md#world-maps). `/quantimium field clear` empties the
+colors are [on your world map](partner-mods.md#world-maps). `/quantimium field clear` empties the
 field within 8 chunks.
 
 [[mechanic:field2.debug_emitter]] **A known source.** The **Debug Field Emitter** (creative tab, no

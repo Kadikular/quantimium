@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:focus_cover" scale="2" />
 
-Closes a face of a Laser Focus: no light gets in or out by it.
+Closes a face of a Laser Focus: no laser gets in or out.
 
 ## Recipes
 

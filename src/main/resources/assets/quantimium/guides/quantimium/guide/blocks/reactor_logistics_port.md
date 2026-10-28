@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:reactor_logistics_port" scale="2" />
 
-A Reactor port that makes the Reactor storage on a logistics network, and takes power from light.
+Puts the Reactor on a logistics network, and takes power from the laser.
 
 ## Recipes
 

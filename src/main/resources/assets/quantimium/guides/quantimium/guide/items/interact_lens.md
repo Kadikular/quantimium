@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:interact_lens" scale="2" />
 
-A lens: uses what a Laser Port sends, or an empty hand, on what the beam ends on.
+Uses a Laser Port's item, or an empty hand, on the laser's target.
 
 ## Recipes
 

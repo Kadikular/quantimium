@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_dust" scale="2" />
 
-What a crystal broken too early leaves, or Anomalite crushed. The Foundry turns it back into shards; a Materialiser is paid in it.
+Left by crystals broken early, or crushed Anomalite. The Foundry refines it into shards. Materializers accept it as payment.
 
 ## Recipes
 

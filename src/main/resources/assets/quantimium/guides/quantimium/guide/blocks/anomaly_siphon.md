@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomaly_siphon" scale="2" />
 
-Keeps anomaly at or below a ceiling you choose, across a wider area, and yields Anomaly Fragments.
+Keeps anomaly below a ceiling you choose over a wide area. Yields Anomaly Fragments.
 
 ## Recipes
 

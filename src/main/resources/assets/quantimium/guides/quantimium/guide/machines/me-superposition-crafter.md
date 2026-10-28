@@ -75,7 +75,7 @@ Superposition Crafter:
    chunk's anomaly surcharge. A smelt is 4,000 FE;
 2. puts the result into the network, where AE2 passes it to the job that asked;
 3. emits flux like any craft: 3 flux per 1,000 FE, each second,
-   into the 3×3 of chunks round it, a fifth to its own. A 64× smelt run (256,000 FE) adds about 154
+   into the 3×3 of chunks around it, a fifth to its own. A 64× smelt run (256,000 FE) adds about 154
    flux to its own chunk, easing in over the next few seconds.
 
 The energy bar's tooltip shows the anomaly surcharge in force.
@@ -166,4 +166,4 @@ Both lists keep every entry in its own slot through saves.
 ## Recipe
 
 A <ItemLink id="quantimium:quantum_crafter" /> with two AE2 Pattern Providers, two <ItemLink id="quantimium:tesseract" />s and four
-<ItemLink id="quantimium:anomalite_shard" />s round it.
+<ItemLink id="quantimium:anomalite_shard" />s around it.

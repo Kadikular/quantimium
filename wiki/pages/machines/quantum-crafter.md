@@ -155,7 +155,7 @@ stack, shift-right-click (or shift and the wheel down) for one, onto what you're
 shift-click sends a stack to your inventory. What's there comes out first and the rest is made; what a run makes
 past what you asked for (eight more nuggets) stays in its outputs. While shift is held the grid holds still.
 
-**Unrealised Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
+**Unrealized Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see [[item:unrealised_matter]]).
 
 ## Energy cost
@@ -197,13 +197,13 @@ which packs can add to (see *Recipe adapters* below).
 ## Flux
 
 [[mechanic:crafter.flux]] Each committed craft emits **{{c:FieldModel.EMISSION_GAIN}} flux per
-{{c:QuantumFlux.FE_PER_FLUX}} FE** it cost, into the 3×3 of chunks round the crafter: a fifth to its
+{{c:QuantumFlux.FE_PER_FLUX}} FE** it cost, into the 3×3 of chunks around the crafter: a fifth to its
 own, a tenth to each of the others. It adds no anomaly of its own; flux drives that. A craft that cost
 nothing still emits a flat {{c:QuantumFlux.NONELECTRIC_EMIT}} flux (times the same 3).
 
 **Example.** A stack of 64 raw iron smelted at Low anomaly costs 256,000 FE and emits **768 flux**,
-about 154 in the crafter's chunk and 77 in each of the eight round it. Do that every few minutes in one place and the chunk climbs
-towards Medium.
+about 154 in the crafter's chunk and 77 in each of the eight around it. Do that every few minutes in one place and the chunk climbs
+toward Medium.
 
 ## Automation
 
@@ -212,7 +212,7 @@ towards Medium.
 **Quantum Crafter.** The [side configuration](../concepts/side-configuration.md) (the Sides tab) sets each face to
 Off, In, Out or Both, and which grid slots and output slots it reaches. Every face starts
 as Both. With **auto input**, a face pulls from the block beside it once a second; with **auto
-output**, it commits and pushes a craft into it, sized to the room the neighbour has. Auto output
+output**, it commits and pushes a craft into it, sized to the room the neighbor has. Auto output
 uses the preferred recipe when it is available, otherwise the first one in the preview.
 
 **Basic Quantum Crafter.** Every face is both an input and an output, with no configuration and no

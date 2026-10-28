@@ -41,7 +41,7 @@ how far off the field is, so they settle rather than switching on and off.
 
 ## Holding flux up
 
-Set the floor with the **floor** tab on the left. It raises flux towards
+Set the floor with the **floor** tab on the left. It raises flux toward
 4 times the floor band's start, flat out at no flux and easing
 off as it gets there. It counts flux still easing into its chunk, so it doesn't overshoot. It settles a
 little under its target, inside the band: for Medium, round 300 of a 400 target. It shows **Raising**
@@ -58,11 +58,11 @@ ordinary work, so one holds High comfortably and Critical at the low end of the 
 ## Holding anomaly down
 
 Set the ceiling with the **ceiling** tab on the left: **Low**, **Medium**, **High** or **Clear**. It
-holds anomaly in **every chunk of the 3×3 round it** just under the top of that band, clear of the
+holds anomaly in **every chunk of the 3×3 around it** just under the top of that band, clear of the
 edge: 80 for Low, 800 for Medium, 8,000 for High. Clear holds it at nothing, as containment would,
 bar a trace drifting in each second from chunks outside its reach. It pulls **anomaly only**, like a
 [hall](../multiblocks/containment-hall.md), so the flux you built up stays: up to
-6,000 a second from the 3×3 round it, a fifth of that from
+6,000 a second from the 3×3 around it, a fifth of that from
 its own chunk, twelve times a Basic Siphon's pull for four times its power.
 
 **It lands on its mark and stays.** Each second it asks the field to take
@@ -70,7 +70,7 @@ only what each chunk has over its mark, and the field takes it in its own once-a
 the climb it answers. So a chunk comes down to the mark and sits there, with no swing past it and no
 saw-tooth within the second. It draws power in proportion to what it takes.
 
-Beside a 10,000 FE/t workshop, a Low Siphon holds every chunk round it
+Beside a 10,000 FE/t workshop, a Low Siphon holds every chunk around it
 at 80 and never switches off.
 
 What it pulls it turns into <ItemLink id="quantimium:anomaly_fragment" />s, one per 24,000,

@@ -18,9 +18,9 @@ never stop another's.
 [[mechanic:rift.seed_wild]] **Planting one.** A [[item:rift_seed]] used on the ground opens a wild
 stage 1 rift standing there, but only where there's anomaly for it to feed on: an uncontained chunk
 at **Medium anomaly or higher**. Anywhere else it fizzles, *nothing here for it to feed on*, and you
-keep the seed. Planted rifts count towards the same limit and spacing as the rest. No hot field? A
+keep the seed. Planted rifts count toward the same limit and spacing as the rest. No hot field? A
 [[block:quantum_exciter]] will make one. Used on a [[block:rift_anchor]] instead, a seed opens a held
-rift anywhere: see the [stabilised rift](../multiblocks/stabilised-rift.md).
+rift anywhere: see the [stabilized rift](../multiblocks/stabilised-rift.md).
 
 ## Growth
 
@@ -69,7 +69,7 @@ rift anywhere: see the [stabilised rift](../multiblocks/stabilised-rift.md).
 
 ## Closing it
 
-[[mechanic:rift.drain]] From the mirror, hold a Decoherence Lance beam on its centre. Each stage holds 400
+[[mechanic:rift.drain]] From the mirror, hold a Decoherence Lance beam on its center. Each stage holds 400
 coherence (configurable) and the Lance drains 5 a tick: 4 / 8 / 12 / 16 seconds of unbroken beam.
 Break contact for more than 2 seconds and it heals {{c:FluxRiftManager.REGEN_PER_TICK}} a tick, so it
 cannot be worn down across visits. It narrows as it weakens.
@@ -87,4 +87,4 @@ that letting it grow is a real temptation. Every mite it made pops back into the
 {{c:DecoherenceProjectorBlockEntity.RIFT_DRAIN_PER_TICK}} a tick, but from stage 3 the rift lashes it
 with lightning down the beam, burning out its whole charge.
 [[mechanic:projector.overload_burst]] The rift's own anomaly comes back with it: the Projector bursts out
-**{{c:DecoherenceProjectorBlockEntity.OVERLOAD_ANOMALY}} anomaly** into the 3×3 of chunks round it.
+**{{c:DecoherenceProjectorBlockEntity.OVERLOAD_ANOMALY}} anomaly** into the 3×3 of chunks around it.

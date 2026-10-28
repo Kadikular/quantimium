@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:entity_filter_lens" scale="2" />
 
-A lens: the actions it changes hit only the living things it lets through.
+Limits the actions it changes to the living things it lets through.
 
 ## Recipes
 

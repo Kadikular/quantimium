@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:creative_energy_void" scale="2" />
 
-Creative only. Takes all the power it's given and keeps none.
+Creative only. Voids all the power it is given.
 
 ## Recipes
 

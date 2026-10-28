@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:pickup_lens" scale="2" />
 
-A lens: items in the beam, and what it breaks, go back up it to a Laser Port.
+Returns items in the laser, and what it frees, to a Laser Port.
 
 ## Recipes
 

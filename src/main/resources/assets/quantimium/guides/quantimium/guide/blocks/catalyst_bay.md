@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-A window in the Reactor's floor holding up to four machines for it to make things with.
+A window in the Reactor's floor holding up to four machines as catalysts.
 
 ## Recipes
 

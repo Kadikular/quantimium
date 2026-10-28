@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_splitter" scale="2" />
 
-A half-silvered mirror: splits a beam in two, or joins two into one.
+A half-silvered mirror: splits a laser in two, or joins two into one.
 
 ## Recipes
 

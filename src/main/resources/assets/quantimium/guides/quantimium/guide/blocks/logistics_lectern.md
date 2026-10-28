@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_lectern" scale="2" />
 
-Logistics: the Logistics Terminal on a stand, its screen over a focus.
+The Logistics Terminal on a stand, with its screen over a focus.
 
 ## Recipes
 

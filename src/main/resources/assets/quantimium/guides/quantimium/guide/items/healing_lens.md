@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:healing_lens" scale="2" />
 
-A lens: heals what's living in the beam, and hurts the undead.
+Heals living things in the laser, and hurts the undead.
 
 ## Recipes
 

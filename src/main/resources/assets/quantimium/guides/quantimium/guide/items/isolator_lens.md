@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:isolator_lens" scale="2" />
 
-A lens: lets power through, and only what else it's set to pass.
+Lets power through, plus whatever else it is set to pass.
 
 ## Recipes
 

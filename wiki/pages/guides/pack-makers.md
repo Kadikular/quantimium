@@ -82,7 +82,7 @@ to be sure every value is picked up.
 | `fluxRift.maxInDimension` | 64 | A safety net on the whole dimension. |
 | `fluxRift.spacing` | 64 | Fewest blocks between rifts. |
 | `fluxRift.stageSecondsHigh` | 600 | Seconds to grow a stage at High; Medium doubles it, Critical halves it. |
-| `fluxRift.anomalyLeakPerStage` | 5 | Anomaly a rift leaks round it each second, per stage. |
+| `fluxRift.anomalyLeakPerStage` | 5 | Anomaly a rift leaks around it each second, per stage. |
 | `fluxRift.coherencePerStage` | 400 | How much Lance work a stage takes to close. |
 | `decoherenceLance.fePerTick` | 80 | What the Lance burns while firing. |
 | `decoherenceLance.drainPerTick` | 5 | Coherence it takes from a rift each tick. |
@@ -96,7 +96,7 @@ to be sure every value is picked up.
 | `stepHoldPercentByBand` | 50, 65, 80, 90, 95 | How likely each step of processed Matter's history holds when a Chamber observes it, in each band. |
 | `chamberFluxPerBand` | 5 | Flux a Chamber takes for each collapse above Low, per band step. |
 | `materialiserPremiumPercent` | 120 | What choosing costs over rolling, in percent. |
-| `materialiserFluxPerValue` | 25 | Flux the Materialiser takes per Matter, per point of the ore's value. |
+| `materialiserFluxPerValue` | 25 | Flux the Materializer takes per Matter, per point of the ore's value. |
 
 ### `[lasers]`: losses, diagonals and the Acceleration Lens
 
@@ -142,9 +142,9 @@ These only matter on a player's own install: a server's values don't reach them.
 | `#quantimium:superposition_crafter_catalysts` | Machines the [ME Superposition Crafter](../machines/me-superposition-crafter.md) can drive. |
 | `#quantimium:zeno_ignored` (block) | Blocks the [Zeno Field Controller](../machines/zeno-field-controller.md) never speeds up. Farmland by default. |
 | `#quantimium:zeno_slowed` (block) | Blocks it speeds up only sometimes (`slowedTickChance`). Grass and mycelium, so they don't carpet a field. |
-| `#quantimium:unrealised/common`, `/uncommon`, `/rare`, `/very_rare` (block) | The rarity of each of the pack's ores (`#c:ores/*`) for Unrealised Matter. An ore in none is very rare: tag your pack's ores here. |
+| `#quantimium:unrealised/common`, `/uncommon`, `/rare`, `/very_rare` (block) | The rarity of each of the pack's ores (`#c:ores/*`) for Unrealized Matter. An ore in none is very rare: tag your pack's ores here. |
 | `#quantimium:unrealised/excluded` (block) | Ores Matter never becomes. All the Mods' Allthemodium, Vibranium and Unobtainium are in it by default: they're its endgame. |
-| `#quantimium:unrealised_ore_facades/stone`, `/deepslate` (block) | The ores Unrealised Ore can look like. Add your pack's ores here. |
+| `#quantimium:unrealised_ore_facades/stone`, `/deepslate` (block) | The ores Unrealized Ore can look like. Add your pack's ores here. |
 | `#quantimium:mirror_flora`, `#quantimium:anomalite` (block) | The mirror's plants and the crystal. Mostly for other mods to refer to. |
 
 Add to a tag with `"replace": false` in your datapack's copy; replace it with `"replace": true`.
@@ -156,7 +156,7 @@ Add to a tag with `"replace": false` in your datapack's copy; replace it with `"
 - **Recipe adapters.** `data/<namespace>/recipe_adapters/*.json` teach the Crafter another mod's
   recipe types and what they cost. The built-in ones cover the AE2 Charger and Inscriber and
   Mekanism's machines; see the [Quantum Crafter](../machines/quantum-crafter.md) for the format.
-- **Unrealised Ore.** It generates through the biome modifier
+- **Unrealized Ore.** It generates through the biome modifier
   `data/quantimium/neoforge/biome_modifier/add_unrealised_ore.json`. Override it with an empty
   `neoforge:none` modifier to turn the ore off, or change its biomes; the vein itself is in
   `worldgen/configured_feature/unrealised_ore.json`.
@@ -170,7 +170,7 @@ build quests on them.
 
 ```text
 quantimium:root                              (granted on joining; opens the tab)
-└ not_what_you_expected                      Unrealised Matter
+└ not_what_you_expected                      Unrealized Matter
   └ observed                                 a Quantimium Trace
     ├ reading_the_field                      a Flux Meter
     │ ├ seeing_things                        a Mirror Lens
@@ -186,7 +186,7 @@ quantimium:root                              (granted on joining; opens the tab)
     │   └ a_watched_pot                      a Zeno Field Controller
     ├ what_is_this_place                     enter the mirror
     │ ├ these_locals_arent_friendly          take a hit from a Mirror Endermite
-    │ ├ a_way_to_come_and_go                 light a Stabilised Portal
+    │ ├ a_way_to_come_and_go                 light a Stabilized Portal
     │ └ stitching_the_sky                    a Decoherence Lance
     └ unfolded                               fold a Sophon
       ├ here_and_there                       swap into a double

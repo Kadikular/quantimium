@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:isolator" scale="2" />
 
-Lets power through, and nothing a beam did: actions and items stop at it.
+Lets power through, and nothing the laser did: actions and items stop at it.
 
 ## Recipes
 

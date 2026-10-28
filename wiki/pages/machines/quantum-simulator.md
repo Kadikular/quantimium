@@ -89,7 +89,7 @@ batch and it runs at the band's size until the field is hot enough; the tab's to
 runs at and what it needs.
 
 Every tick the machine runs once, on copies of what is in the grid. The Simulator measures what
-changed (ingredients used, output made, fuel burnt, energy drawn) and applies that change batch
+changed (ingredients used, output made, fuel burned, energy drawn) and applies that change batch
 times to the real items.
 
 - **Speed is the machine's own.** A furnace still takes 10 seconds a smelt; at 8× it smelts eight
@@ -143,7 +143,7 @@ has. See [Flux and anomaly](../concepts/flux-and-anomaly.md).
 ## Flux
 
 [[mechanic:simulator.flux]] The Simulator emits **{{c:FieldModel.EMISSION_GAIN}} flux per
-{{c:QuantumFlux.FE_PER_FLUX}} FE** it is charged, once a second, into the 3×3 of chunks round it, a fifth
+{{c:QuantumFlux.FE_PER_FLUX}} FE** it is charged, once a second, into the 3×3 of chunks around it, a fifth
 to its own. It adds no anomaly of its own. A furnace at 8× running all day emits about 11.5 flux a
 second. A Simulator running inside another emits nothing
 itself: the outer one is charged for everything the inner one draws, and emits for all of it.
@@ -162,7 +162,7 @@ Simulator.
 
 The Simulator doesn't know a machine's recipes, so it learns how the machine behaves:
 
-- **Initialising.** It first offers the machine a single copy of each ingredient, then more (up to
+- **Initializing.** It first offers the machine a single copy of each ingredient, then more (up to
   64) every second until the machine takes what it needs, and measures a first cycle before it
   scales up. The status reads **Calibrating**. A machine whose work is an effect rather than items,
   like a [Zeno Field Controller](zeno-field-controller.md), has no cycle to measure and reads

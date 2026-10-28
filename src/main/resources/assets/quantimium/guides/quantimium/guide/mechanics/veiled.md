@@ -46,7 +46,7 @@ it goes back to **Wander** after a cooldown.
 Once a second, every uncontained stage 4 rift whose chunk is at
 **Critical flux or higher** has a 1 in 300 chance of
 releasing one: on average once every 300 seconds. A
-contained or [stabilised](../multiblocks/stabilised-rift.md) rift never releases it.
+contained or [stabilized](../multiblocks/stabilised-rift.md) rift never releases it.
 
 Only one can exist per area. A rift will not release one if
 there is already a free Veiled within 256 blocks, or one held in a hall within
@@ -64,7 +64,7 @@ nobody else can see.
 While it wanders and is not on cooldown, each unphased player
 between 16 and 256 blocks of it may get a sighting. It is placed:
 
-- **ahead of them**, towards where it really is if that is within 60° of where they look, otherwise
+- **ahead of them**, toward where it really is if that is within 60° of where they look, otherwise
   35° to the side it really lies on;
 - **at a distance that tracks the real one**, clamped between 20 and
   64 blocks (±6), never closer than 16;
@@ -84,7 +84,7 @@ A sighting ends in one of four ways:
 The server also drops a sighting that is never reported after 120 s.
 
 **Every ended sighting moves its true body closer** to what it
-wants: up to 10 blocks towards its target, stopping short of arriving. Any
+wants: up to 10 blocks toward its target, stopping short of arriving. Any
 player's sighting counts, so a group draws it in faster. After a sighting ends, that player gets no
 new one for 45–120 seconds.
 
@@ -134,7 +134,7 @@ pod's crown freezes it before it gets to work.
 nearer for three seconds (a wall, a shut door, a sealed room) it does not look for a way round: it blinks
 in beside it. Never in beside someone in the mirror, though: it will
 not blink within its wary distance of anyone phased, only walk as near as it can. Building a double in
-behind stone is no defence; guarding it is.
+behind stone is no defense; guarding it is.
 
 ## Shadowing: following a player
 
@@ -147,12 +147,12 @@ machine within 32 blocks of them and switches to feeding on it if there is one.
 
 Within 8 blocks and **veiled** (outside a 70° cone around where
 the player is looking, or with a wall in between), it drains **40 FE/t**
-between all their charged items and armour, the Lance included. An <ItemLink id="quantimium:entangled_dock" /> keeps an item
+between all their charged items and armor, the Lance included. An <ItemLink id="quantimium:entangled_dock" /> keeps an item
 topped up from home while it follows you.
 
 While it follows them in the real world, the player now and then catches it at
 the **edge of their view**: every 15–30 seconds, 8–14 blocks away and 55–75° off where they look,
-with a quiet stare sound from the spot. A glimpse vanishes the instant they turn towards it, or after
+with a quiet stare sound from the spot. A glimpse vanishes the instant they turn toward it, or after
 2.5 s whatever they do. It does not move its true body.
 
 ## Through a Mirror Lens
@@ -171,7 +171,7 @@ A <ItemLink id="quantimium:mirror_lens" /> lets a slice of the mirror through, a
 Seen from the mirror it behaves like a wary cat.
 
 - **Curious.** Stare at it (crosshair within about 10°, within
-  48 blocks) and it notices you with a stare sound, then walks towards you,
+  48 blocks) and it notices you with a stare sound, then walks toward you,
   stopping about 10 blocks away. Its attention stays on you for
   12 s after you look away. Only while wandering or feeding.
 - **Wary.** Come within 8 blocks and it backs away.

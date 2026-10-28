@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:basic_decoherence_matrix" scale="2" />
 
-The heart of the Basic Quantum Crafter.
+Crafting component of the Basic Quantum Crafter.
 
 ## Recipes
 

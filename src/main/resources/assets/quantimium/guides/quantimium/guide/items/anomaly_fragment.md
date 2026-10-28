@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Anomaly Fragments
+  title: Anomaly Fragment
   parent: items/index.md
   position: 6
   icon: quantimium:anomaly_fragment
@@ -8,13 +8,13 @@ item_ids:
 - quantimium:anomaly_fragment
 ---
 
-# Anomaly Fragments
+# Anomaly Fragment
 
 <ItemImage id="quantimium:anomaly_fragment" scale="2" />
 
-Drawn off by Anomaly Siphons as they hold anomaly down. A common ingredient in mid-game machines.
+Produced by Anomaly Siphons. A common ingredient in mid-game machines.
 
-> *In game:* Drawn off by Anomaly Siphons as they hold anomaly down
+> *In game:* Produced by Anomaly Siphons.
 
 ## Recipes
 

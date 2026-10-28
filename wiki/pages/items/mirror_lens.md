@@ -4,7 +4,7 @@ thickens, rare plumes worth stopping for, and anomaly as a dark ink that pools, 
 whatever eats it. Through the lens it is toned down; inside the [mirror](../concepts/mirror-phase.md)
 you see all of it without one, far more intense.
 
-[[mechanic:lens.survey]] Once a second you see the field of the chunks round you, four chunks out,
+[[mechanic:lens.survey]] Once a second you see the field of the chunks around you, four chunks out,
 fading gently from two chunks away so nothing pops in at an edge.
 [[mechanic:lens.mirror_sources]] In the mirror the same view is always on, lens or not.
 
@@ -14,9 +14,9 @@ fading gently from two chunks away so nothing pops in at an edge.
   it and specks drifting through. Most of the sense that a chunk is heavy comes from this.
 - **Plumes.** Now and then the ground seam glows, then a column erupts: about 3 blocks tall at Medium,
   7 at High, 14 at Critical and 24 at Singularity, with a bright core, embers thrown off the hotter
-  ones, and a head that blooms and drifts away. Across the chunks round you, about one every ten
+  ones, and a head that blooms and drifts away. Across the chunks around you, about one every ten
   seconds at Medium, up to one a second at Singularity.
-- **Sparks.** From High, sparks wink into existence on the floors round you and fade, as if the ground
+- **Sparks.** From High, sparks wink into existence on the floors around you and fade, as if the ground
   itself were charged.
 - **Contained.** Under a [hall](../multiblocks/containment-hall.md)'s containment a plume gets three
   blocks up and meets the field: it flattens and spreads along a faint glowing membrane.
@@ -40,7 +40,7 @@ is azure; a general machine's quarter share of anomaly trails as ink, while pure
 These show what a rift and a crystal are; they add nothing to the field.
 
 Anything drawing the field out, a [[block:flux_suppressor]], a siphon, a hall, pulls the ink in from
-all round it along spirals, so you can see which one is working and how far it reaches.
+all around it along spirals, so you can see which one is working and how far it reaches.
 
 ## The readout
 
@@ -53,12 +53,12 @@ F1 and F3.
 
 ## Worn
 
-The goggles show on your head: a leather strap round it at eye level with a buckle at the back, and two
-rimmed violet lenses that catch a little light in the dark. Armour stands wear them too.
+The goggles show on your head: a leather strap around it at eye level with a buckle at the back, and two
+rimmed violet lenses that catch a little light in the dark. Armor stands wear them too.
 
 ![A player wearing a Mirror Lens](../assets/gui/world_mirror_lens_player.png)
 
-![An armour stand wearing a Mirror Lens](../assets/gui/world_mirror_lens.png)
+![An armor stand wearing a Mirror Lens](../assets/gui/world_mirror_lens.png)
 
 ## It notices
 

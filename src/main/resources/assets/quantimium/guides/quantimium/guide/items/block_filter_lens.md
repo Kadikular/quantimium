@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:block_filter_lens" scale="2" />
 
-A lens: a Harvest beam cuts only the blocks it lets through.
+Limits Harvest to the blocks it lets through.
 
 ## Recipes
 

@@ -1,18 +1,18 @@
 ---
 navigation:
-  title: Reactor Materialiser Port
+  title: Reactor Materializer Port
   parent: blocks/index.md
   position: 67
   icon: quantimium:reactor_materialiser_port
 ---
 
-# Reactor Materialiser Port
+# Reactor Materializer Port
 
 <ItemImage id="quantimium:reactor_materialiser_port" scale="2" />
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-Shows pipes and storage buses everything the Reactor holds or could make, and makes what they take.
+Exposes the Reactor's contents and recipes to pipes and storage buses. Makes what they take.
 
 ## Recipes
 

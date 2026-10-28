@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-The heart of the Quantimium Reactor, where its Singularity is seated.
+The core of the Quantimium Reactor, holding its Singularity.
 
 ## Recipes
 

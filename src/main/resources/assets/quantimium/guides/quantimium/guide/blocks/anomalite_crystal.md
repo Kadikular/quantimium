@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_crystal" scale="2" />
 
-Grows on machines in an uncontained anomalous field, draining their power. Only the mirror can see it.
+Grows on machines in an uncontained anomalous field, draining their power. Only visible in the mirror.
 
 ## Recipes
 

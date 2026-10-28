@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:photodetector" scale="2" />
 
-Light passes through it, and it gives a redstone signal for how much.
+Lets lasers pass and gives a redstone signal for how much.
 
 ## Recipes
 

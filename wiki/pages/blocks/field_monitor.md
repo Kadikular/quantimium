@@ -1,4 +1,4 @@
-Watches the field in the 9×9 chunks round it and raises the alarm. No power needed.
+Watches the field in the 9×9 chunks around it and raises the alarm. No power needed.
 
 [[mechanic:field.monitor]] Its screen shows a map of those chunks, north up, with its own outlined:
 flux in azure, anomaly washed violet over it, and chunks under containment marked in the corner, pale

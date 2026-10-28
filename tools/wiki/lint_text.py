@@ -63,10 +63,16 @@ def words(text: str) -> int:
     return len(re.findall(r"[A-Za-z0-9%$][\w'%/.\-]*", re.sub(r"%[0-9$]*[sd]", "N", text)))
 
 
+# Ids, code, links and constants keep their spelling: the mod's ids and class names are British.
+PROTECTED = re.compile(r"\[\[.*?\]\]|\{\{.*?\}\}|`[^`\n]*`|\]\([^)]*\)|(?:href|src|class)=\"[^\"]*\"|https?://\S+")
+
+
 def prose_findings(where: str, text: str, level_for_banned: str = "error") -> Iterator[Finding]:
+    shown = text
+    text = PROTECTED.sub(" ", text)
     for pattern, replacement in BRITISH.items():
         if re.search(pattern, text, re.I) and not any(re.search(k, text) for k in KEEP):
-            yield ("error", where, f"spelling: use American '{replacement}'", text)
+            yield ("error", where, f"spelling: use American '{replacement}'", shown)
     for pattern, why in BANNED.items():
         if re.search(pattern, text, re.I):
             yield (level_for_banned, where, f"banned word ({why})", text)

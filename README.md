@@ -2,7 +2,7 @@
 
 Quantimium is a NeoForge mod about **measuring things into existence** and living with the
 consequences. Its machines craft, simulate and grow by drawing on a local quantum field, and every
-craft stirs that field up. Push it far enough and the world starts to tear: into a grey **mirror** of
+craft stirs that field up. Push it far enough and the world starts to tear: into a gray **mirror** of
 itself, where things grow that should not, and something watches from the rifts.
 
 **[Read the wiki](https://kadikular.github.io/quantimium/)** for how it all works. The same pages are
@@ -20,8 +20,8 @@ installed.
 - **Machines that make other mods faster.** The Quantum Crafter crafts with any machine as its
   catalyst, instantly. The Quantum Simulator runs a machine in a field of its own at up to 32 times
   its speed. The ME Superposition Crafter offers every recipe of its catalyst to an AE2 network.
-- **Unrealised Matter.** Ore that hasn't decided what it is, collapsed into any ore of your pack.
-- **The mirror.** A grey copy of the world laid over it, with its own flora, mites, rifts and the
+- **Unrealized Matter.** Ore that hasn't decided what it is, collapsed into any ore of your pack.
+- **The mirror.** A gray copy of the world laid over it, with its own flora, mites, rifts and the
   Veiled.
 - **Multiblocks**: the Quantum Foundry, the Containment Hall, the Fold Chamber, which folds a whole
   multiblock into one item, and the **Quantimium Reactor**: a captive black hole that holds anything

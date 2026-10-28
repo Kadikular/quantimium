@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:uv_lens" scale="2" />
 
-A lens: the light can only be seen with a wrench in hand.
+The laser can only be seen with a wrench in hand.
 
 ## Recipes
 

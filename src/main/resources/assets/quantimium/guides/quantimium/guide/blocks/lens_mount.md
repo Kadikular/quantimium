@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:lens_mount" scale="2" />
 
-A holder for four lenses: light goes straight through it, through each in turn.
+Holds four lenses: the laser goes straight through, past each in turn.
 
 ## Recipes
 

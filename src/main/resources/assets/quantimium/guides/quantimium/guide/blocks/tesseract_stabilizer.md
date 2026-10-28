@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Tesseract Stabiliser
+  title: Tesseract Stabilizer
   parent: blocks/index.md
   position: 78
   icon: quantimium:tesseract_stabilizer
@@ -8,12 +8,12 @@ item_ids:
 - quantimium:tesseract_stabilizer
 ---
 
-# Tesseract Stabiliser
+# Tesseract Stabilizer
 
 <ItemImage id="quantimium:tesseract_stabilizer" scale="2" />
 
 Docks a bound <ItemLink id="quantimium:tesseract" /> and makes its faces act as the remote block's inventory and
-tanks. See the [Tesseract Stabiliser](../machines/tesseract-stabilizer.md) page.
+tanks. See the [Tesseract Stabilizer](../machines/tesseract-stabilizer.md) page.
 
 ## Recipes
 

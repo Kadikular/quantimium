@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:speed_lens" scale="2" />
 
-A lens: its actions work twice as fast.
+Its actions work twice as fast.
 
 ## Recipes
 

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:mirror_lens" scale="2" />
 
-> *In game:* Worn, it lets the mirror show through: the field, and what lives in it
+> *In game:* Worn: shows the field and what lives in it.
 
 Goggles that let a slice of the mirror into the real world. Wear them in the head slot and the
 [field](../concepts/flux-and-anomaly.md) around you shows, not as numbers but as weather: air that
@@ -20,7 +20,7 @@ thickens, rare plumes worth stopping for, and anomaly as a dark ink that pools, 
 whatever eats it. Through the lens it is toned down; inside the [mirror](../concepts/mirror-phase.md)
 you see all of it without one, far more intense.
 
-Once a second you see the field of the chunks round you, four chunks out,
+Once a second you see the field of the chunks around you, four chunks out,
 fading gently from two chunks away so nothing pops in at an edge.
 In the mirror the same view is always on, lens or not.
 
@@ -30,9 +30,9 @@ In the mirror the same view is always on, lens or not.
   it and specks drifting through. Most of the sense that a chunk is heavy comes from this.
 - **Plumes.** Now and then the ground seam glows, then a column erupts: about 3 blocks tall at Medium,
   7 at High, 14 at Critical and 24 at Singularity, with a bright core, embers thrown off the hotter
-  ones, and a head that blooms and drifts away. Across the chunks round you, about one every ten
+  ones, and a head that blooms and drifts away. Across the chunks around you, about one every ten
   seconds at Medium, up to one a second at Singularity.
-- **Sparks.** From High, sparks wink into existence on the floors round you and fade, as if the ground
+- **Sparks.** From High, sparks wink into existence on the floors around you and fade, as if the ground
   itself were charged.
 - **Contained.** Under a [hall](../multiblocks/containment-hall.md)'s containment a plume gets three
   blocks up and meets the field: it flattens and spreads along a faint glowing membrane.
@@ -56,7 +56,7 @@ Anomalite crystals brood in a pool of their own, bigger as they grow.
 These show what a rift and a crystal are; they add nothing to the field.
 
 Anything drawing the field out, a <ItemLink id="quantimium:flux_suppressor" />, a siphon, a hall, pulls the ink in from
-all round it along spirals, so you can see which one is working and how far it reaches.
+all around it along spirals, so you can see which one is working and how far it reaches.
 
 ## The readout
 
@@ -69,12 +69,12 @@ F1 and F3.
 
 ## Worn
 
-The goggles show on your head: a leather strap round it at eye level with a buckle at the back, and two
-rimmed violet lenses that catch a little light in the dark. Armour stands wear them too.
+The goggles show on your head: a leather strap around it at eye level with a buckle at the back, and two
+rimmed violet lenses that catch a little light in the dark. Armor stands wear them too.
 
 ![A player wearing a Mirror Lens](../assets/gui/world_mirror_lens_player.png)
 
-![An armour stand wearing a Mirror Lens](../assets/gui/world_mirror_lens.png)
+![An armor stand wearing a Mirror Lens](../assets/gui/world_mirror_lens.png)
 
 ## It notices
 

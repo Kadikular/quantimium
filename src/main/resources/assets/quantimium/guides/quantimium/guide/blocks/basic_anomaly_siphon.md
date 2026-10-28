@@ -13,7 +13,7 @@ item_ids:
 <ItemImage id="quantimium:basic_anomaly_siphon" scale="2" />
 
 The first answer to anomaly, and the first source of <ItemLink id="quantimium:anomaly_fragment" />s. It holds anomaly in
-every chunk of the 3×3 round it at the top of Low (80), pulling anomaly and only anomaly, so the flux
+every chunk of the 3×3 around it at the top of Low (80), pulling anomaly and only anomaly, so the flux
 you made stays. It's the early, fixed form of the [Anomaly Siphon](../machines/field-control.md):
 no setting to change, a twelfth of a Siphon's pull and a quarter of its power.
 

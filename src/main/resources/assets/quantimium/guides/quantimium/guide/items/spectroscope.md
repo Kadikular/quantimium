@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:spectroscope" scale="2" />
 
-Splits the light leaving a laser block into what it carries: reach, actions, who pays.
+Shows what a laser block's laser carries: reach, actions, who pays.
 
 ## Recipes
 

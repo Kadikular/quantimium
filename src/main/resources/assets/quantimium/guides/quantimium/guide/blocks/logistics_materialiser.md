@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Logistics Materialiser
+  title: Logistics Materializer
   parent: blocks/index.md
   position: 37
   icon: quantimium:logistics_materialiser
@@ -8,11 +8,11 @@ item_ids:
 - quantimium:logistics_materialiser
 ---
 
-# Logistics Materialiser
+# Logistics Materializer
 
 <ItemImage id="quantimium:logistics_materialiser" scale="2" />
 
-Logistics: offers a whole network to any mod's pipes and storage buses.
+Offers a whole logistics network to any mod's pipes and storage buses.
 
 ## Recipes
 

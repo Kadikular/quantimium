@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:crushing_lens" scale="2" />
 
-A lens: what the actions before it free or move is crushed; alone, it crushes what the beam ends on.
+Crushes what the actions before it free or move. Alone, it crushes what the laser ends on.
 
 ## Recipes
 

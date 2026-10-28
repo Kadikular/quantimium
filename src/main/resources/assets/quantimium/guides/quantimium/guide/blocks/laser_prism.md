@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_prism" scale="2" />
 
-Sends the light that reaches it to each block it's linked to, in a straight line at any angle: splits and joins beams.
+Sends its laser to each linked block in a straight line, at any angle. Splits and joins lasers.
 
 ## Recipes
 

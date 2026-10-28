@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:phantom_lens" scale="2" />
 
-A lens: the light passes through blocks, for a little power each.
+The laser passes through blocks, for a little power each.
 
 ## Recipes
 

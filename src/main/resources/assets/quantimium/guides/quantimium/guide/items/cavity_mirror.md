@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:cavity_mirror" scale="2" />
 
-A Laser Focus attachment: light out of it that comes back to it is held, a battery for a laser network.
+Focus attachment that stores returning lasers: a battery for a laser network.
 
 ## Recipes
 

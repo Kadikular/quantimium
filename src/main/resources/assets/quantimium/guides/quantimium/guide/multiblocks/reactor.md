@@ -51,7 +51,7 @@ holds something earns *Should you be holding that?*
 Fixed in size:
 
 - a disc of <ItemLink id="quantimium:reactor_plinth" /> 11 blocks across, its corners rounded off, with the
-  <ItemLink id="quantimium:horizon_core" /> on its centre. The plinth's circuit traces run on from block to block
+  <ItemLink id="quantimium:horizon_core" /> on its center. The plinth's circuit traces run on from block to block
   wherever it's built, and light up when the Reactor forms. While it's working (taking items in,
   handing them out, making something) signals run along them; idle, they glow still;
 - **Ring Emitters** on the plinth around the core, in facing pairs four blocks out: east and west,
@@ -61,7 +61,7 @@ Fixed in size:
   1,000 FE/t;
 - up to eight <ItemLink id="quantimium:catalyst_bay" />s in place of plinth, anywhere but under the core;
 - **ports** in place of plinth on the disc's rim, as many as you like: Input, Output, Energy and
-  Materialiser, each marked on every face by a socket in its colour.
+  Materializer, each marked on every face by a socket in its color.
 
 A Catalyst Bay is a window in the floor onto a pocket of void, and it holds
 up to 4 catalysts, one in each quarter of the window: machines,
@@ -83,7 +83,7 @@ taking up to 500,000 FE/t through Energy ports.
 
 ## What it holds and what it can make
 
-Items go in exactly as they are, data and all, through Input ports, the Materialiser Port, or both.
+Items go in exactly as they are, data and all, through Input ports, the Materializer Port, or both.
 Nothing merges or breaks down by itself: a hopper stays a hopper, and iron blocks, ingots and nuggets
 are three different things until a crafting table in a bay turns one into another.
 
@@ -128,18 +128,18 @@ A tool a recipe wears instead of using up, like AE2's cutting
 knives, works the same way, one durability a craft: worn ones on hand go first, and a new one is made
 only when they run out. Worn tools come back to the horizon as they are.
 
-### Unrealised Matter
+### Unrealized Matter
 
 <ItemLink id="quantimium:unrealised_matter" /> in the horizon is observed into whatever it
-could be, with no catalyst: everything a [Materialiser](../blocks/materialiser.md) could make of it,
+could be, with no catalyst: everything a [Materializer](../blocks/materialiser.md) could make of it,
 as its history would make it, from commons to rares, and never a very rare ore, whatever field the
-Reactor stands in. One Matter makes what one makes at a Materialiser and costs
+Reactor stands in. One Matter makes what one makes at a Materializer and costs
 4,000 FE, and no Trace or flux. So a horizon of Matter shows raw
 iron, dusts and the rest on its list, and a hopper asks for iron the Matter becomes on the way.
 
-## The Materialiser Port
+## The Materializer Port
 
-A pipe or a storage bus on a **Materialiser Port** sees
+A pipe or a storage bus on a **Materializer Port** sees
 everything in the core's list, with its counted amount, as if it were all there. Taking something
 makes it, exactly: the Reactor plans what was asked, gives as many as really can be made and paid for,
 and uses nothing until the transfer goes through. Pipes and storage buses can put items in through it
@@ -148,7 +148,7 @@ too, unless a pack turns that off (`reactor.materialiserPortAcceptsItems`).
 On an [AE2](../concepts/partner-mods.md) network, one
 storage bus on the port shows the whole list in the terminal as stock. Because the counts are
 estimates that share their sources, asking for 64 of something can bring fewer, and other counts drop
-as one is taken. A Materialiser Port only ever shows what the Reactor could make of what *it* holds,
+as one is taken. A Materializer Port only ever shows what the Reactor could make of what *it* holds,
 never of what a network linked through an ME Superposition Port holds.
 
 ## The ME Superposition Port
@@ -204,11 +204,11 @@ takes any knife that fits, not the one it was planned with.
 The Flux Meter or Jade on the port shows the mode and how many patterns it offers.
 
 What the network holds, the Reactor counts and uses as its own
-inputs on its own screen: logs in a drive count towards planks on the core's list, and a request
-there takes them from the network as it needs them. Unrealised Matter in the network is observed just as Matter held is. The
+inputs on its own screen: logs in a drive count toward planks on the core's list, and a request
+there takes them from the network as it needs them. Unrealized Matter in the network is observed just as Matter held is. The
 network's own items aren't listed again on the core's screen.
 
-A storage bus on one of the Reactor's own Materialiser Ports, on
+A storage bus on one of the Reactor's own Materializer Ports, on
 the same network, would show the network the Reactor twice, and let the Reactor count its own
 holdings back in as network stock. So that port goes dark while the ME port is linked: it shows that
 network nothing, its socket goes unlit, and the Flux Meter (or Jade) on it says so. The ME port shows everything the bus would have. And while the Reactor reads or takes

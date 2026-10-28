@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:precision_lens" scale="2" />
 
-A lens: Harvest cuts with Silk Touch.
+Harvest mines with Silk Touch.
 
 ## Recipes
 
