@@ -30,7 +30,7 @@ The three tabs down the left of its screen (right-click steps a value back):
 | Tab | Does |
 | --- | --- |
 | Hold / accelerate | Switches between **Hold** and **Accelerate** |
-| **4** | The radius: the field is every block within this many blocks of the controller, in each axis, 1 to 8, wrapping round. |
+| **4** | The radius: the field is every block within this many blocks of the controller, in each axis, 1 to 8, wrapping around at the ends. |
 | **8x** | Accelerate only: how many times the usual random tick rate: 2×, 4×, 8× or 16×. |
 
 The diagram on the right shows the field to scale: frosted while holding, ticking while

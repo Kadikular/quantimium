@@ -36,9 +36,8 @@ powered blocks near a hot rift, but they are mirror growth showing through, not 
 stabilizer under crystals still sees the rift. The crystals still drain its power, so an array left
 to crystallize can still fall short of three paying stabilizers.
 
-Each stabilizer's emitter is a small compound of two cubes, each one's
-corners poking through the other's faces, spinning a third of a block over its cap. It is murky while
-idle and burns bright while the stabilizer fires at the rift, so a pillar that isn't paying stands out.
+Each stabilizer's emitter spins over its cap, murky while idle and
+bright while it fires at the rift, so a pillar that isn't paying stands out.
 
 With at least **3** stabilizers powered and in sight, the
 rift is **held**. Stabilizers only draw power once enough of them can see it. Each costs

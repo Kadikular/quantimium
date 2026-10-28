@@ -185,9 +185,11 @@ are `flat_depth`, `flat_no_depth`, `additive`, `lines_depth`, `lines_no_depth`, 
 the field is on your map: every chunk holding one within 64 chunks of you, tinted as the
 [[item:mirror_lens]]'s map draws it, with flux in azure and anomaly washed violet over it. Hover over
 a chunk for its flux, anomaly and load. It's how you watch a big base's field, and see where its heat
-spills past the containment. The map is refreshed every 5 seconds; no lens is needed. Chunks
-that unload keep the field they last showed, as the map keeps the terrain you've explored: an
-unloaded chunk's field is frozen until it loads again, so it's still there.
+spills past the containment.
+
+- The map refreshes every 5 seconds. No lens is needed.
+- Chunks that unload keep the field they last showed, like the terrain you've explored. It stays
+  frozen until the chunk loads again.
 
 [[mechanic:map.rifts]] **Rifts are marked** on the map too, with their stage: *Rift · stage 2*, or
 *Held rift* for one on an anchor. The **Quantimium rifts** button on the fullscreen toolbar shows or

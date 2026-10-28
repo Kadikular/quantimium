@@ -41,7 +41,7 @@ the chest and bucket buttons at its left):
 | **Both** | Yes | Yes |
 
 The face tiles are colored by mode: dark for Off, green for In, orange for Out and blue for Both.
-Right-click a face to step its mode on, shift-right-click to step back.
+Right-click a face to step its mode on, shift-right-click to step back. Each change is saved as you make it.
 
 | Machine | Items start as | Fluids start as |
 | --- | --- | --- |
@@ -79,10 +79,6 @@ dots on a face tile show which of the two it has on.
 
 On a Quantum Crafter, Push **commits a craft** and pushes it, sized to the room the neighbor
 has; see [Automation](../machines/quantum-crafter.md#automation).
-
-## Saving
-
-Each change is saved as you make it.
 
 ## With a wrench
 
