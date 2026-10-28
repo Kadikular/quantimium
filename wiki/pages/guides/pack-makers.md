@@ -106,7 +106,7 @@ to be sure every value is picked up.
 | `mirrorLoss` | 0.0025 | What each bounce off a Laser Mirror or Splitter takes of what a laser carries. |
 | `diagonalsPassCorners` | `true` | Whether diagonal light slips between two blocks touching only at a corner. |
 | `acceleration` | `true` | Whether the Acceleration Lens speeds machines up at all. |
-| `accelerationFePerExtraTick` | 500 | FE for each extra tick it gives a machine: at 2x, this a tick. |
+| `accelerationFePerExtraTick` | 500 | FE for each extra tick it gives a machine: at 2×, that is 500 FE a tick. |
 | `accelerationMaxMultiplier` | 16 | The most it speeds a machine up. |
 | `accelerationBlockBudgetMicros` | 100 | The most time one machine's extra ticks may take each tick; one that takes longer is given fewer. |
 | `accelerationTotalBudgetMicros` | 5000 | The most all accelerated machines' extra ticks may take together each tick. |

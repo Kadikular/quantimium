@@ -54,10 +54,14 @@ quiet while the target's chunk is unloaded: a Tesseract doesn't load chunks.
 
 ## Placing it
 
-The Stabilizer points away from whatever you place it against. On a
-floor its open face is up, as it always was; placed on a machine's side it hangs off that side with its
-base against the machine and the open face pointing out; placed under a ceiling it hangs upside down.
-The open face is where the tesseract floats and the one face with no automation, so every other face,
+The Stabilizer points away from whatever you place it against.
+
+- On a floor, its open face is up.
+- On a machine's side, it hangs off that side with its base against the machine and the open face
+  pointing out.
+- Under a ceiling, it hangs upside down.
+
+The open face is where the Tesseract floats, and the one face with no automation. Every other face,
 including the top when it's on a wall, carries items and fluids.
 
 ## Docking
