@@ -42,12 +42,19 @@ public record RecipeAdapter(
         List<Identifier> catalysts,
         List<Identifier> catalystAlso,
         List<String> fluidInputFields,
-        List<String> fluidOutputFields
+        List<String> fluidOutputFields,
+        java.util.Map<String, Identifier> fluidAmountFields
 ) {
-    /** The fluids a recipe of its types takes and gives: from the fields it names, or found by their types. */
+    /**
+     * The fluids a recipe of its types takes and gives: from the fields it names, or found by their types; and as many
+     * mB of a fluid as each of {@code fluid_amount_fields} says (Energized Power's Stone Solidifier's water and lava).
+     */
     public com.kadikular.quantimium.recipe.FluidParts.Parts fluids(Object recipe) {
-        if (fluidInputFields.isEmpty() && fluidOutputFields.isEmpty()) return com.kadikular.quantimium.recipe.FluidParts.of(recipe);
-        return com.kadikular.quantimium.recipe.FluidParts.of(recipe, fluidInputFields, fluidOutputFields);
+        com.kadikular.quantimium.recipe.FluidParts.Parts parts = fluidInputFields.isEmpty() && fluidOutputFields.isEmpty()
+                ? com.kadikular.quantimium.recipe.FluidParts.of(recipe)
+                : com.kadikular.quantimium.recipe.FluidParts.of(recipe, fluidInputFields, fluidOutputFields);
+        if (fluidAmountFields.isEmpty()) return parts;
+        return com.kadikular.quantimium.recipe.FluidParts.withAmounts(recipe, parts, fluidAmountFields);
     }
 
     public enum InputMode {
@@ -94,12 +101,13 @@ public record RecipeAdapter(
                 inputFields.add(GsonHelper.convertToString(element, "input_fields"));
             }
         }
-        if (inputFields.isEmpty()) inputFields.add(inputField);
+        // Named as none (a recipe taking only fluids): none, not the default.
+        if (inputFields.isEmpty() && !json.has("input_fields")) inputFields.add(inputField);
         OutputMode outputMode = OutputMode.valueOf(
                 GsonHelper.getAsString(json, "output_mode", "result_item").toUpperCase());
         String outputField = GsonHelper.getAsString(json, "output_field", "result");
         List<String> outputFields = strings(json, "output_fields");
-        if (outputFields.isEmpty()) outputFields = List.of(outputField);
+        if (outputFields.isEmpty() && !json.has("output_fields")) outputFields = List.of(outputField);
         boolean skipEmpty = GsonHelper.getAsBoolean(json, "skip_empty_ingredients", true);
 
         List<TagKey<Item>> tags = new ArrayList<>();
@@ -135,7 +143,17 @@ public record RecipeAdapter(
         return new RecipeAdapter(id, List.copyOf(types), inputMode, inputField, List.copyOf(inputFields),
                 outputMode, outputField, List.copyOf(outputFields), skipEmpty, List.copyOf(tags), List.copyOf(items),
                 new EnergySpec(flat, energyField, scale), catalysts, also,
-                List.copyOf(strings(json, "fluid_input_fields")), List.copyOf(strings(json, "fluid_output_fields")));
+                List.copyOf(strings(json, "fluid_input_fields")), List.copyOf(strings(json, "fluid_output_fields")), amounts(json));
+    }
+
+    /** {@code fluid_amount_fields}: each field's name, and the fluid whose mB it holds. */
+    private static java.util.Map<String, Identifier> amounts(JsonObject json) {
+        java.util.Map<String, Identifier> amounts = new java.util.LinkedHashMap<>();
+        if (!json.has("fluid_amount_fields")) return amounts;
+        for (var entry : GsonHelper.getAsJsonObject(json, "fluid_amount_fields").entrySet()) {
+            amounts.put(entry.getKey(), Identifier.parse(GsonHelper.convertToString(entry.getValue(), entry.getKey())));
+        }
+        return java.util.Map.copyOf(amounts);
     }
 
     private static List<String> strings(JsonObject json, String key) {

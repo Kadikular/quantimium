@@ -242,7 +242,9 @@ The crafter has 3 input tanks, right of the catalyst, and
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
   bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
   as you fill from it.
-- Pipes on any face fill the input tanks and drain the output tanks. Click an input tank with a bucket to fill or empty it.
+- Pipes on any face fill the input tanks and drain the output tanks. A bucket used on the crafter
+  fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
+  bucket to fill or empty it.
 
 ## Tesseracts in the grid
 
@@ -340,6 +342,9 @@ The EnderIO Alloy Smelter's:
   own energy instead, times `energy.scale` (1 if left out), with the flat fee if it can't be read.
 - `non_consumed_tags` and `non_consumed_items` list ingredients that stay in the grid, like the
   Inscriber's presses.
+- `fluid_amount_fields` reads a number field as that many mB of a fluid, taken: Energized Power's Stone
+  Solidifier is `{"waterAmount": "minecraft:water", "lavaAmount": "minecraft:lava"}`. An empty
+  `input_fields` or `output_fields` list means the recipe takes or gives no items.
 - **Fluids are found by type.** Any field holding NeoForge's fluid ingredients or
   fluid stacks, or a mod's own fluid ingredient, is read, alone or in a list. A field named for inputs
   is taken, one named for outputs is given. Where that guesses wrong, `fluid_input_fields` and

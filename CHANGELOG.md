@@ -32,6 +32,8 @@
   a recipe makes fill its output tanks, and a bucket clicked on one fills from it. Recipes making only fluids are
   offered there too. Pipes fill the inputs and drain the outputs. A recipe taking a fluid is no longer offered as if
   it took items alone.
+- New Crafter catalysts: Energized Power's Fluid Transposer, Fluid Freezer, Stone Solidifier and Stone Liquefier, and
+  Productive Bees' Bottler. A bucket used on the Crafter fills or empties its tanks.
 - Fluid gauges are marked like a measuring jug.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors

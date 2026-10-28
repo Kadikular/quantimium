@@ -1,0 +1,17 @@
+{
+  "recipe_types": [
+    "energizedpower:stone_liquefier"
+  ],
+  "catalysts": [
+    "energizedpower:stone_liquefier"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [],
+  "energy": {
+    "flat": 1000
+  }
+}

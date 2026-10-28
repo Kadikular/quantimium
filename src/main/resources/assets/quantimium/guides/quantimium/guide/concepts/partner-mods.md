@@ -124,8 +124,10 @@ give anything isn't offered.
 | EnderIO | Slice'n'Splice | industrial |
 | Energized Power | Crusher, Pulverizer, Sawmill (sawdust too), Compressor, Alloy Furnace, Induction Smelter, Metal Press (the mold stays), Charger, Powered Furnace | advanced |
 | Energized Power | Assembling Machine, Elite Charger, Elite Powered Furnace | industrial |
+| Energized Power | Fluid Transposer, Fluid Freezer, Stone Solidifier, Stone Liquefier (fluids in the Crafter's tanks) | advanced |
 | Powah | Energizing Orb | advanced |
 | Productive Bees | Centrifuge, Powered and Heated Centrifuge (honey is left out) | advanced |
+| Productive Bees | Bottler (honey and other fluids from the Crafter's tanks) | advanced |
 | Mystical Agriculture | Seed Reprocessor | advanced |
 | Mystical Agriculture | Infusion Altar, Awakening Altar | industrial |
 | Iron Furnaces | the furnaces, copper to netherite | basic |

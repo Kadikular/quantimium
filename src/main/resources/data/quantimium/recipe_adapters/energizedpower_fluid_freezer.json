@@ -1,0 +1,17 @@
+{
+  "recipe_types": [
+    "energizedpower:fluid_freezer"
+  ],
+  "catalysts": [
+    "energizedpower:fluid_freezer"
+  ],
+  "input_mode": "field",
+  "input_fields": [],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 1000
+  }
+}

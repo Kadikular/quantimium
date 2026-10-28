@@ -1,0 +1,19 @@
+{
+  "recipe_types": [
+    "productivebees:bottler"
+  ],
+  "catalysts": [
+    "productivebees:bottler"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "itemInput"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "resultTemplate"
+  ],
+  "energy": {
+    "flat": 500
+  }
+}

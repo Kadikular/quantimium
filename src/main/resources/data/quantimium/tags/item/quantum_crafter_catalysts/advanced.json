@@ -327,6 +327,26 @@
     {
       "id": "ftbic:reprocessor",
       "required": false
+    },
+    {
+      "id": "energizedpower:fluid_transposer",
+      "required": false
+    },
+    {
+      "id": "energizedpower:fluid_freezer",
+      "required": false
+    },
+    {
+      "id": "energizedpower:stone_solidifier",
+      "required": false
+    },
+    {
+      "id": "energizedpower:stone_liquefier",
+      "required": false
+    },
+    {
+      "id": "productivebees:bottler",
+      "required": false
     }
   ]
 }

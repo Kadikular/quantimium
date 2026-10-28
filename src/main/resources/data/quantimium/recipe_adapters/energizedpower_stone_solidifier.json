@@ -1,0 +1,21 @@
+{
+  "recipe_types": [
+    "energizedpower:stone_solidifier"
+  ],
+  "catalysts": [
+    "energizedpower:stone_solidifier"
+  ],
+  "input_mode": "field",
+  "input_fields": [],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "fluid_amount_fields": {
+    "waterAmount": "minecraft:water",
+    "lavaAmount": "minecraft:lava"
+  },
+  "energy": {
+    "flat": 1000
+  }
+}

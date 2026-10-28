@@ -81,14 +81,65 @@ public final class FluidParts {
         List<Part> parts = FIELDS.computeIfAbsent(recipe.getClass(), FluidParts::find);
         if (parts.isEmpty()) return Parts.NONE;
         Collector into = new Collector();
+        Side mode = modeOf(recipe);
         for (Part part : parts) {
             try {
-                into.add(part.field().get(recipe), part.side(), 0);
+                into.add(part.field().get(recipe), part.side() == Side.EITHER ? mode : part.side(), 0);
             } catch (Throwable ignored) {
                 // A field that won't be read: as if it held nothing.
             }
         }
         return into.parts();
+    }
+
+    /**
+     * A field named {@code mode} saying which way the fluid goes, as Energized Power's Fluid Transposer's does: filling,
+     * its fluid is taken; emptying, given. Otherwise either, by type.
+     */
+    private static Side modeOf(Object recipe) {
+        Field field = MODES.computeIfAbsent(recipe.getClass(), FluidParts::modeField).orElse(null);
+        if (field == null) return Side.EITHER;
+        Object mode;
+        try {
+            mode = field.get(recipe);
+        } catch (Throwable t) {
+            return Side.EITHER;
+        }
+        if (!(mode instanceof Enum<?> value)) return Side.EITHER;
+        String name = value.name().toUpperCase(Locale.ROOT);
+        if (name.contains("FILL")) return Side.INPUT;
+        if (name.contains("EMPT") || name.contains("DRAIN")) return Side.OUTPUT;
+        return Side.EITHER;
+    }
+
+    /** Each recipe class's {@code mode} field, if it has one that's an enum. */
+    private static final Map<Class<?>, Optional<Field>> MODES = new ConcurrentHashMap<>();
+
+    private static Optional<Field> modeField(Class<?> type) {
+        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
+            try {
+                Field field = c.getDeclaredField("mode");
+                if (!field.getType().isEnum()) return Optional.empty();
+                field.setAccessible(true);
+                return Optional.of(field);
+            } catch (NoSuchFieldException e) {
+                // up to the superclass
+            } catch (Throwable t) {
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** {@code parts}, taking besides as many mB of each fluid as the number in its field says (none, if it's 0). */
+    public static Parts withAmounts(Object recipe, Parts parts, Map<String, net.minecraft.resources.Identifier> amounts) {
+        List<Input> inputs = new ArrayList<>(parts.inputs());
+        amounts.forEach((name, id) -> {
+            Fluid fluid = BuiltInRegistries.FLUID.getValue(id);
+            if (fluid == null || fluid == Fluids.EMPTY || !(read(recipe, name) instanceof Number number) || number.intValue() <= 0) return;
+            inputs.add(new Input(List.of(fluid), number.intValue(), each -> each.getFluid().isSame(fluid)));
+        });
+        return new Parts(inputs, parts.outputs());
     }
 
     /** As {@link #of(Object)}, from the named fields only (an adapter's). */
