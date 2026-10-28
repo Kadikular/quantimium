@@ -158,7 +158,7 @@ a face moves items and fluids to or from the block beside it once a second.
 The engaged machine itself isn't in the world, so pipes can't reach it. Everything goes through the
 Simulator.
 
-## How it decides to wait
+## How it learns a machine
 
 The Simulator doesn't know a machine's recipes, so it learns how the machine behaves:
 

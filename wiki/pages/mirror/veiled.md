@@ -113,33 +113,38 @@ gives up and wanders.
 ## Presence: taking a double
 
 [[mechanic:veiled.takes_double]] An **unguarded double** comes before any machine: a field double left
-by a Tether, or a double in a pod without a Ward module. It walks up to it, settles beside it, and violet
-pours off the body where everyone can see it. After {{c:Veiled.TAKE_TICKS|s}} the body is gone and it
-carries the double's Sophon away, circling its chest as a small azure cell (one for each it has); its owner
-is told. Watched from the mirror, it attends to the watcher and leaves the double be; shadowing someone who
-stared at it through a Lens, it goes back to a double once they have not looked at it for
-{{c:Veiled.SHADOW_FORGETS|s}}. Nothing reaches a taken Sophon, not even a Recovery
-module, until it lets go: **driven off** (the Lance or a Projector), **held** in a hall, or gone for want of
-anyone to haunt, it drops everything it carries where it is, as knocked-out Sophons, and Recovery pods
-bring them home if they can.
+by a Tether, or a double in a pod without a Ward module.
+
+- It walks up to the double and settles beside it. Violet pours off the body where everyone can see it.
+- After {{c:Veiled.TAKE_TICKS|s}} the body is gone. The Veiled carries the double's Sophon away,
+  circling its chest as a small azure cell (one for each it has), and the owner is told.
+- Watched from the mirror, it attends to the watcher and leaves the double be. If it is shadowing
+  someone who stared at it through a Lens, it goes back to a double once they have not looked at it
+  for {{c:Veiled.SHADOW_FORGETS|s}}.
+- Nothing reaches a taken Sophon, not even a Recovery module, until it lets go. If it is **driven off**
+  (the Lance or a Projector), **held** in a hall, or gone for want of anyone to haunt, it drops
+  everything it carries where it is, as knocked-out Sophons. Recovery pods bring them home if they can.
 
 [[mechanic:veiled.ward]] A pod's Ward module keeps it off, as it keeps off mobs; and a Projector on the
 pod's crown freezes it before it gets to work.
 
-[[mechanic:veiled.blink]] **Walls do not keep it out.** Walking to a double or a machine and getting no
-nearer for three seconds (a wall, a shut door, a sealed room) it does not look for a way round: it blinks
-in beside it. [[mechanic:veiled.blink_keeps_off]] Never in beside someone in the mirror, though: it will
-not blink within its wary distance of anyone phased, only walk as near as it can. Building a double in
-behind stone is no defense; guarding it is.
+[[mechanic:veiled.blink]] **Walls do not keep it out.** If it walks toward a double or a machine and gets no nearer for three
+seconds (a wall, a shut door, a sealed room), it blinks in beside it instead of looking for a way
+around. Building a double in behind stone is no defense; guarding it is.
+
+[[mechanic:veiled.blink_keeps_off]] It never blinks in beside someone in the mirror: it will not
+blink within its wary distance of anyone phased, only walk as near as it can.
 
 ## Shadowing: following a player
 
 [[mechanic:veiled.shadow]] Once within {{c:Veiled.ARRIVED}} blocks of a player with no base, it follows
-them, keeping about 6 blocks behind where they are looking. It only stalks players in the **real
-world**: if they step into the mirror, where it can be seen, it stops shadowing and is curious or wary
-instead. If it falls more than 24 blocks
-behind while they are not looking, it blinks back into place. Every 5 seconds it checks for a
-machine within {{c:Veiled.BASE_RADIUS}} blocks of them and switches to feeding on it if there is one.
+them, keeping about 6 blocks behind where they are looking.
+
+- It only stalks players in the **real world**. If they step into the mirror, where it can be seen,
+  it stops shadowing and is curious or wary instead.
+- If it falls more than 24 blocks behind while they are not looking, it blinks back into place.
+- Every 5 seconds it checks for a machine within {{c:Veiled.BASE_RADIUS}} blocks of them and
+  switches to feeding on it if there is one.
 
 [[mechanic:veiled.gear_drain]] Within 8 blocks and **veiled** (outside a 70° cone around where
 the player is looking, or with a wall in between), it drains **{{c:Veiled.GEAR_FE_PER_TICK}} FE/t**
@@ -235,8 +240,7 @@ On cooldown it sends no sightings, flickers no lights and does not advance.
 [[mechanic:veiled.projector]] A [[block:decoherence_projector]] in range freezes it and wears it
 down at the same rate as the Lance, **without aggravating it**: there is nobody for it to turn on.
 Past halfway, a hall in reach takes hold as usual, so a Projector beside a hall is a trap. It burns
-about one [[item:anomalite_cell]] a full pin. A full pin
-with no hall drives it off.
+about one [[item:anomalite_cell]] a full pin. A full pin with no hall drives it off.
 
 ## Another one, held nearby
 
@@ -249,8 +253,9 @@ back after a cooldown. See the [Containment Hall](../multiblocks/containment-hal
 
 [[mechanic:laser.rift]] A held Veiled can be made to give up [[item:veil_thread]]: laser light in the
 mirror, with a Pickup lens, through one wall of the hall's glass reaches it and draws a thread out of it
-every three minutes. See [Into the mirror](../lasers/networks.md#into-the-mirror). It costs the hall
-nothing for now.
+every {{c:MirrorHarvest.THREAD_TICKS|min}}, at {{c:MirrorHarvest.THREAD_FE_PER_TICK}} FE/t from the laser. The
+hall pays nothing. The steps are on the [[item:veil_thread]] page, and
+[Into the mirror](../lasers/networks.md#into-the-mirror) covers how a laser behaves there.
 
 ## After release from a hall
 
