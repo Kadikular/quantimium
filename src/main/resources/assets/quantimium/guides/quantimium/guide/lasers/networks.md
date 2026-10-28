@@ -2,7 +2,7 @@
 navigation:
   title: Networks and rules
   parent: lasers/index.md
-  position: 26
+  position: 31
 ---
 
 # Networks and rules
@@ -55,3 +55,32 @@ reaches: it's checking for somewhere to send power, and that's what its small re
 
 Emitters whose light reaches the same block share a network, so that block
 draws on all of them by what each has.
+
+## Reach, joining and payment
+
+**How far light reaches.** A run of light reaches as far as its source's:
+mirrors, relays, prisms and mounts refocus it to that, not to a range of their own. Light with an action reaches
+8 blocks a run instead, and the power it carries goes no farther. Each Range
+lens doubles a run, up to 64 blocks by default (`maxRange` in the `lasers` config). Where light joins, the farther reach wins.
+
+**Joining light.** Light from two sides joined at a relay or prism does
+everything either side did: Harvest light from one emitter and Damage light from another, joined, both
+work from there on. A modifier from before the join stays with its own side's actions; one after
+changes them all.
+
+**Who pays.** An action is paid for by the sources whose light reached
+the lens that gave it, and only for work done: a cut as it's made, a hit when it lands, an item as it's
+carried. Harvest light joined with plain light is still paid for by its own emitter alone; a Harvest
+lens after the join is paid for by both. Actions only work while their light is lit.
+
+## Reading a laser
+
+The <ItemLink id="quantimium:spectroscope" /> splits light into what it carries, as a real
+spectroscope's prism does. Use it on any laser block to read the light leaving it: how far a run
+reaches and from how many sources, each action with its modifiers, who pays and how many Laser Ports it
+can reach, and each beam's length, end and power.
+
+## Looking into a laser
+
+**Don't look into the beam.** Light carrying power blinds anything whose eyes
+are in it, for 15 s. The <ItemLink id="quantimium:mirror_lens" /> protects the wearer.

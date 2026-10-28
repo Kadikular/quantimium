@@ -63,6 +63,7 @@ plugins:
         multiblocks/stabilised-rift.md: mirror/stabilised-rift.md
         machines/field-control.md: field-control/overview.md
         machines/lasers.md: lasers/overview.md
+        lasers/lenses.md: lasers/lenses/overview.md
 
 nav:
   - Home: index.md
@@ -95,7 +96,13 @@ nav:
       - Prisms: lasers/prisms.md
       - Optical cavities: lasers/cavities.md
       - Photodetectors: lasers/photodetectors.md
-      - Lenses: lasers/lenses.md
+      - Laser Ports: lasers/ports.md
+      - Lenses:
+          - Overview: lasers/lenses/overview.md
+          - Action lenses: lasers/lenses/actions.md
+          - Modifier lenses: lasers/lenses/modifiers.md
+          - Lens energy: lasers/lenses/energy.md
+          - Examples: lasers/lenses/examples.md
       - Logistics: lasers/logistics.md
       - Networks and rules: lasers/networks.md
   - The mirror:

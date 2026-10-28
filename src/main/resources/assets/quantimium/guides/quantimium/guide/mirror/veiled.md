@@ -2,7 +2,7 @@
 navigation:
   title: The Veiled
   parent: mirror/index.md
-  position: 28
+  position: 33
 ---
 
 # The Veiled
