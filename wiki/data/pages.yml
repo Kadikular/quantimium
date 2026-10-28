@@ -1,0 +1,4 @@
+# Infobox rows for the generated block and item pages (everything without a hand-written infobox).
+# One entry per id; any of: category, tier, obtained, energy_buffer, max_input, energy_use,
+# emits_flux, automation, stack_size, works_with. Values may use {{c:Class.CONSTANT}} and [[item:id]].
+# An id with no entry keeps the plain box (ID and Type). The build fails on an unknown row or id.

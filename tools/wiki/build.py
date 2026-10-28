@@ -96,6 +96,30 @@ def content_rows() -> Dict[str, Tuple[str, str]]:
     return {name: (str(text).strip(), "") for name, text in data.items()}
 
 
+# Infobox rows, in the order they show. The keys are what wiki/data/pages.yml may use.
+INFOBOX_ROWS = [
+    ("category", "Category"), ("tier", "Tier"), ("obtained", "Obtained"),
+    ("energy_buffer", "Energy buffer"), ("max_input", "Max input"), ("energy_use", "Energy use"),
+    ("emits_flux", "Emits flux"), ("automation", "Automation"), ("stack_size", "Stack size"),
+    ("works_with", "Works with"),
+]
+
+
+def page_info() -> Dict[str, Dict[str, str]]:
+    """id → infobox rows from wiki/data/pages.yml. Optional: a page without an entry gets the plain box."""
+    path = os.path.join(ROOT, "wiki", "data", "pages.yml")
+    if not os.path.exists(path):
+        return {}
+    with open(path) as handle:
+        data = yaml.safe_load(handle) or {}
+    allowed = {key for key, _ in INFOBOX_ROWS}
+    for name, rows in data.items():
+        unknown = set(rows) - allowed
+        if unknown:
+            error(f"wiki/data/pages.yml: {name} has unknown rows {sorted(unknown)}; use {sorted(allowed)}")
+    return {name: {k: str(v) for k, v in rows.items()} for name, rows in data.items()}
+
+
 def recipes() -> List[dict]:
     out = []
     for path in sorted(glob.glob(os.path.join(DATA, "recipe", "*.json"))):
@@ -328,6 +352,10 @@ class Site:
         self.names = lang()
         self.blocks, self.items = catalogue_entries(self.names)
         self.rows = content_rows()
+        self.info = page_info()
+        unknown = [n for n in self.info if n not in self.blocks and n not in self.items]
+        if unknown:
+            error("wiki/data/pages.yml names no block or item: " + ", ".join(unknown))
         missing = [n for n in self.blocks + self.items if n not in self.rows]
         if missing:
             error("no description in wiki/data/descriptions.yml for: " + ", ".join(missing))
@@ -561,10 +589,17 @@ def catalogue_page(site: Site, kind: str, name: str) -> None:
     if icon:
         info.append(f'<img class="qinfo-icon" src="{rel(here, icon)}" alt="">')
     info.append('<table>')
-    info.append(f"<tr><th>ID</th><td><code>quantimium:{name}</code></td></tr>")
-    info.append(f"<tr><th>Type</th><td>{'Block' if kind == 'blocks' else 'Item'}</td></tr>")
+    rows = site.info.get(name)
+    if rows:
+        for key, label in INFOBOX_ROWS:
+            if key in rows:
+                cell = expand(site, rows[key], here).strip()
+                info.append(f"<tr><th>{label}</th><td>{cell}</td></tr>")
+    else:
+        info.append(f"<tr><th>Type</th><td>{'Block' if kind == 'blocks' else 'Item'}</td></tr>")
     if name in INTERNAL:
         info.append("<tr><th>Obtainable</th><td>No (placed by the game)</td></tr>")
+    info.append(f"<tr><th>ID</th><td><code>quantimium:{name}</code></td></tr>")
     info.append("</table></div>")
     lines.append("\n".join(info))
     lines.append("")
