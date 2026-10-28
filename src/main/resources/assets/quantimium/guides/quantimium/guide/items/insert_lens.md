@@ -45,7 +45,7 @@ Range, Phantom, UV and Isolator work on every action: see [Lenses](../lasers/len
 ## Examples
 
 - **Feed a machine.** A sending <ItemLink id="quantimium:laser_port" /> holding the input items, Insert, and the laser ending on the machine.
-- **Trash can.** Insert with a Void Lens set to Void all destroys whatever the laser ends on is sent.
+- **Trash can.** Insert with a Void Lens set to Void all destroys everything a sending Laser Port sends.
 
 ## Recipes
 

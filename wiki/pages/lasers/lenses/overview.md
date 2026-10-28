@@ -4,7 +4,7 @@
 
 A lens gives a laser a job or changes how it does one. Lenses sit in a [[block:lens_mount]] (four slots) or a Focus Emitter (one slot), and the laser passes through them in order.
 
-[[mechanic:laser.lens.mount]] A Lens Mount takes the laser straight in by its back, and sends it out of its front through its lenses, left to right. A laser from any other side, or at an angle, stops on it. Open it with an empty hand. Sneak-click or wrench a side to point it there. A button under each lens opens that lens's settings, lit when it has any. A lensed laser is tinted by what it does. The laser still carries power to whatever it ends on.
+[[mechanic:laser.lens.mount]] A Lens Mount takes the laser straight in by its back, and sends it out of its front through its lenses, left to right. A laser from any other side, or at an angle, stops on it. Open it with an empty hand. Sneak-click or wrench a side to point it there. Down each side, four slot panels show what is fitted: dark when empty, the lens's color when there is one. A button under each lens opens that lens's settings, lit when it has any. A lensed laser is tinted by what it does. The laser still carries power to whatever it ends on.
 
 ## Two kinds
 
