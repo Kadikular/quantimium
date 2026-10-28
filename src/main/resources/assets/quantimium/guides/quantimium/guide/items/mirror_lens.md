@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:mirror_lens" scale="2" />
 
-> *In game:* Worn, it lets the mirror show through: the field, and what lives in it
+> *In game:* Worn: shows the field and what lives in it.
 
 Goggles that let a slice of the mirror into the real world. Wear them in the head slot and the
 [field](../concepts/flux-and-anomaly.md) around you shows, not as numbers but as weather: air that

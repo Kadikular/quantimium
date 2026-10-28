@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:flux_meter" scale="2" />
 
-> *In game:* Reports the field where you stand
+> *In game:* Shows flux and anomaly where you stand.
 
 Reads the field. Use it in the air for the chunk you stand in, or on a block for that block's chunk:
 its [flux and anomaly](../concepts/flux-and-anomaly.md), each with its band, on the action bar.

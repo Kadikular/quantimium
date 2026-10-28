@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:stabilised_portal_frame" scale="2" />
 
-Built into a frame and lit with a Rift Seed, it opens a way into the mirror and back.
+Frame block for a Stabilized Portal. Light it with a Rift Seed to open a way into the mirror.
 
 ## Recipes
 

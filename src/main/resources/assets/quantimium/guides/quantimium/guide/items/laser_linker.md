@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_linker" scale="2" />
 
-Links a Laser Prism to the blocks its light should reach.
+Links a Laser Prism to the blocks its laser should reach.
 
 ## Recipes
 

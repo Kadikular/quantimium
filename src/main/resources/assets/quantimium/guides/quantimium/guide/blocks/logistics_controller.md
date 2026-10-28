@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_controller" scale="2" />
 
-Logistics: a relay whose light makes one network of everything it reaches; lenses past it put into and take from it.
+Starts a logistics network from the laser it receives. Lenses past it put items in and take them out.
 
 ## Recipes
 

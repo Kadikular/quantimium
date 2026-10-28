@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_emitter_1" scale="2" />
 
-Sends power as light, only as much as the blocks its beams reach ask for. Sneak-click a face to add a beam there.
+Sends power as a laser, as much as its targets ask for. Sneak-click a face to add another.
 
 ## Recipes
 

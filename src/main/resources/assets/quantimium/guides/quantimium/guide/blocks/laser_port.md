@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_port" scale="2" />
 
-Light passes through it; it catches what a Pickup lens brings back up the beam, sends what it holds down it, or both.
+Collects items from Pickup Lenses, or sends items down the laser, or both. Lasers pass through it.
 
 ## Recipes
 

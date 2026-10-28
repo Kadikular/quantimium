@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:smelting_lens" scale="2" />
 
-A lens: what the actions before it free or move is smelted; alone, it smelts what the beam ends on.
+Smelts what the actions before it free or move. Alone, it smelts what the laser ends on.
 
 ## Recipes
 

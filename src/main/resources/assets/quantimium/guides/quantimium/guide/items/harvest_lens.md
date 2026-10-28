@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:harvest_lens" scale="2" />
 
-A lens: the beam breaks the block it ends on.
+Breaks the block the laser ends on.
 
 ## Recipes
 

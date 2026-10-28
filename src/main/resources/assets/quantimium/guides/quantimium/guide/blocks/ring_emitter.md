@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-Stands on the Reactor's plinth in facing pairs. Each pair drives a ring, and each ring lets the horizon hold more.
+Stands on the Reactor's plinth in facing pairs. Each pair drives a ring that lets the horizon hold more.
 
 ## Recipes
 

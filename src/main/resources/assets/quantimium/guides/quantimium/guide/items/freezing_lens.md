@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:freezing_lens" scale="2" />
 
-A lens: freezes what the beam ends on: water to ice, snow on blocks, machines stopped, mobs held still, players chilled.
+Freezes what the laser ends on: water, machines, mobs and players.
 
 ## Recipes
 

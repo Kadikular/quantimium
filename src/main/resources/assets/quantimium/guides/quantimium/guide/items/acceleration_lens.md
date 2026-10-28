@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:acceleration_lens" scale="2" />
 
-A lens: speeds up the machine the beam ends on, 2x and doubled by each Speed lens, within a tick-time budget.
+Speeds up the machine the laser ends on, within a tick-time budget.
 
 ## Recipes
 

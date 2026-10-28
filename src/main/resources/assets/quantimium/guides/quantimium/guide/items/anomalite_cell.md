@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_cell" scale="2" />
 
-> *In game:* A prism of Anomalite shards, sealed in glass: it turns ordinary light into light that reaches the mirror, and cracks as it does. A Decoherence Projector burns it.
+> *In game:* Fuel for the Decoherence Projector.
 
 A prism of Anomalite shards sealed in glass: it turns ordinary light into light that reaches into
 the mirror, and cracks as it does. It's what a <ItemLink id="quantimium:decoherence_projector" /> burns to beam at the

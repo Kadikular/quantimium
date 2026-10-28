@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:focus_stand" scale="2" />
 
-Stands a Laser Focus on the block behind it. No light gets in or out by it.
+Stands a Laser Focus on the block behind it. No laser gets in or out by it.
 
 ## Recipes
 

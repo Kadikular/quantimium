@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:laser_focus" scale="2" />
 
-Light reaching it stops there and leaves by the Focus Emitters on its faces. Put it down, then put attachments on it.
+Stops lasers and sends them out of the Focus Emitters on its faces. Place it, then add attachments.
 
 ## Recipes
 

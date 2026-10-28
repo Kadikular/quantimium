@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:clear_laser_focus" scale="2" />
 
-A Laser Focus light also passes straight through, unless something on the far face stops it.
+A Laser Focus that also lets lasers pass straight through. Attachments on the far face can stop it.
 
 ## Recipes
 

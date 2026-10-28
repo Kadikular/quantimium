@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:rift_residue" scale="2" />
 
-> *In game:* What is left when a flux rift is forced to choose a world
+> *In game:* Left behind by closed rifts.
 
 Where it comes from: closing a [flux rift](../mechanics/flux-rifts.md) (nothing / 3 / 6 / 10 by
 stage), or steadily from a [stabilized rift](../multiblocks/stabilised-rift.md).

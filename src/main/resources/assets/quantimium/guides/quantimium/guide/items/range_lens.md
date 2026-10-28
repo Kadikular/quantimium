@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:range_lens" scale="2" />
 
-A lens: each run of the light reaches twice as far.
+Doubles how far each run of the laser reaches.
 
 ## Recipes
 

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:flash_emitter" scale="2" />
 
-The first laser emitter. Burns furnace fuel, or takes power, and sends it as light to whatever its beam reaches.
+The first laser emitter. Burns furnace fuel, or takes power, and sends it as a laser.
 
 ## Recipes
 

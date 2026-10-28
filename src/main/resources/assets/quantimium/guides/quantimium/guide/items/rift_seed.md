@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:rift_seed" scale="2" />
 
-> *In game:* A wound waiting to open. Plant it where anomaly runs Medium or higher, or on a Rift Anchor. Lights a Stabilized Portal.
+> *In game:* Opens a rift at Medium+ anomaly or on a Rift Anchor. Lights a Stabilized Portal.
 
 A wound waiting to open, and the way to a rift when the world won't give you one.
 

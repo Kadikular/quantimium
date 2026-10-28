@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:damage_lens" scale="2" />
 
-A lens: the beam hurts what stands in it.
+Hurts what stands in the laser.
 
 ## Recipes
 

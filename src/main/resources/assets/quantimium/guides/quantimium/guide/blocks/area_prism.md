@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:area_prism" scale="2" />
 
-Spreads the actions of light reaching it over an area, set with the Laser Linker.
+Spreads the actions of its laser over an area, set with the Laser Linker.
 
 ## Recipes
 

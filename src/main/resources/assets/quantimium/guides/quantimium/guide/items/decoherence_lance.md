@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:decoherence_lance" scale="2" />
 
-> *In game:* Hold to channel. Unmakes whatever is caught between realms; ordinary things have nothing to lose
+> *In game:* Hold to channel. Closes rifts; harms only what is caught between worlds.
 
 The one tool that reaches into the rift. Held from the [mirror](../concepts/mirror-phase.md), its beam
 [closes flux rifts](../mechanics/flux-rifts.md), unmakes mirror mites, and

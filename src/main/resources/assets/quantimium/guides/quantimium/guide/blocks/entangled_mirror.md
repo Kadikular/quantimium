@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:entangled_mirror" scale="2" />
 
-Sends on the light of the laser block its Tesseract is bound to, any distance away.
+Sends on the laser of its Tesseract's bound block, at any distance.
 
 ## Recipes
 

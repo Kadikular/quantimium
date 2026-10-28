@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:amplify_lens" scale="2" />
 
-A lens: harder cutting and harder hits, for more power.
+Harder cutting and harder hits, for more power.
 
 ## Recipes
 

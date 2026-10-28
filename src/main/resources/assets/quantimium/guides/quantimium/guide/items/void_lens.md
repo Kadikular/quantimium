@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:void_lens" scale="2" />
 
-A lens: what the actions free and no Laser Port takes is destroyed.
+Destroys what the actions free and no Laser Port takes.
 
 ## Recipes
 

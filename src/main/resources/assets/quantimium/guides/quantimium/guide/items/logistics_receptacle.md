@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_receptacle" scale="2" />
 
-A Laser Focus attachment: puts the inventory behind it on a controller's network, as storage, a provider or a requester.
+Focus attachment that adds the inventory behind it to a logistics network. Acts as storage, provider or requester.
 
 ## Recipes
 

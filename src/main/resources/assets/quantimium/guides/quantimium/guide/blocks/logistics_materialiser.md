@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_materialiser" scale="2" />
 
-Logistics: offers a whole network to any mod's pipes and storage buses.
+Offers a whole logistics network to any mod's pipes and storage buses.
 
 ## Recipes
 

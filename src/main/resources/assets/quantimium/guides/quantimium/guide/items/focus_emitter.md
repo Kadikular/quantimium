@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:focus_emitter" scale="2" />
 
-Light leaves a Laser Focus by it, through the one lens it holds, with its own redstone setting.
+Sends the laser out of a Laser Focus, through the one lens it holds. Has its own redstone setting.
 
 ## Recipes
 

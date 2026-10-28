@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:filter_lens" scale="2" />
 
-A lens: the actions it changes carry, place, put in or take out only the items it lets through.
+Limits the actions before it to the items it lets through.
 
 ## Recipes
 

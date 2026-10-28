@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-A pod module that keeps hostile mobs away from the double inside, which would otherwise knock it out.
+Pod module that keeps hostile mobs away from the double inside.
 
 ## Recipes
 

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:unrealising_lens" scale="2" />
 
-A lens: ore a Harvest beam cuts comes away as Unrealized Matter.
+Ore mined by Harvest comes away as Unrealized Matter.
 
 ## Recipes
 

@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:redstone_lens" scale="2" />
 
-A lens: gives what the beam ends on a redstone signal: always, by a count of an item up the light, or sent on from its own block.
+Gives what the laser ends on a redstone signal.
 
 ## Recipes
 

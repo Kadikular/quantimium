@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_emitter" scale="2" />
 
-> *In game:* A shard of Anomalite set in a mount. The light of a Decoherence Lance.
+> *In game:* Crafting ingredient: an Anomalite shard in a mount.
 
 A shard of Anomalite set in a mount: the light of a <ItemLink id="quantimium:decoherence_lance" />, built into it for
 good. Crafted from an Anomalite Lattice, shards, Traces and copper, so a Lance can close your first rift

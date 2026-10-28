@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Fold Chamber](../multiblocks/fold-chamber.md).
 
-The heart of a Fold Chamber, which folds a whole multiblock into a single item.
+The control block of a Fold Chamber, which folds a multiblock into one item.
 
 ## Recipes
 

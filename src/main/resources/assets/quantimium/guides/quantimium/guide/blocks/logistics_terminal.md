@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_terminal" scale="2" />
 
-Logistics: shows everything a network holds, to take or put away.
+Shows everything a logistics network holds, to take or put away.
 
 ## Recipes
 
