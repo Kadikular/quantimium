@@ -626,6 +626,8 @@ public final class OfferTable {
                     if (imported.origins().contains(at)) continue;
                     origins.addAll(imported.origins());
                     imported.real.forEach((item, amount) -> {
+                        // Fluids aren't carried between networks (yet).
+                        if (item.is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) return;
                         if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
                     });
                     if (member.offersCraftable()) {
@@ -649,6 +651,15 @@ public final class OfferTable {
                         }
                     });
                     continue;
+                }
+                // Fluids, as fluid entries counted in mB.
+                net.neoforged.neoforge.fluids.capability.IFluidHandler tanks = member.fluids();
+                if (tanks != null) {
+                    for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                        net.neoforged.neoforge.fluids.FluidStack there = tanks.getFluidInTank(tank);
+                        if (there.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(there)) continue;
+                        real.merge(ItemResource.of(com.kadikular.quantimium.recipe.FluidEntry.of(there)), (long) there.getAmount(), Long::sum);
+                    }
                 }
                 IItemHandler inventory = member.inventory();
                 if (inventory == null) continue;

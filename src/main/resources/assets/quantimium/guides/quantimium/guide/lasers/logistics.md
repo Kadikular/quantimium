@@ -63,6 +63,16 @@ A collecting <ItemLink id="quantimium:laser_port" /> on the network is a passive
 
 A laser from a controller is drawn a deeper blue, and always as if at work.
 
+### Fluids
+
+A network moves fluids as it moves items. A receptacle on a tank (a <ItemLink id="quantimium:laser_tank" />, or any mod's) puts the tank on the network in its role.
+
+- A receptacle's filter lists fluids too: right-click an entry with a bucket, or drag a fluid in from JEI. Fluid entries only match fluids. With no fluid listed, storage and providers take or give any fluid.
+- An active receptacle moves up to 2,000 mB a second, four times as much for each Speed Lens, at the same cost per move as items.
+- With **Keep stocked** on, a fluid entry's count is in buckets.
+- A collecting Laser Tank on the network is a passive provider, as a Laser Port is.
+- An Extract Lens past the controller pours into the network. Insert and Interact Lenses take fluid from it only through a Filter Lens that lists a fluid.
+
 ## Logistics Terminal
 
 A <ItemLink id="quantimium:logistics_terminal" /> where a controller's laser ends shows everything the network's storage holds and its providers offer, searchable and sorted by count or name, like an ME terminal. Sort and view are tabs on its left.
@@ -72,6 +82,7 @@ A <ItemLink id="quantimium:logistics_terminal" /> where a controller's laser end
 - Click the grid holding something to put it away into storage (right-click: one), or shift-click it in your inventory.
 - What is stored comes out first. If any is, that is all you get, and only when none is left does a machine make more.
 - Each take or put costs the controller as a move does.
+- Fluids show with their amounts. Click one holding a bucket (or any fluid container) to fill it. Right-click the grid with a filled one to pour it into storage.
 
 A <ItemLink id="quantimium:logistics_lectern" /> is the same terminal on a stand, its screen tilted over the focus the laser comes in to. Craft one from the other.
 

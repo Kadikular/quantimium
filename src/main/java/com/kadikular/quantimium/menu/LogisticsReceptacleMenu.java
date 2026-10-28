@@ -81,12 +81,12 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
         return receptacle;
     }
 
-    /** A filter entry takes what's on the cursor, or clears with an empty hand; shift-click steps it through its item's tags. */
+    /** A filter entry takes what's on the cursor (a right-click, the fluid in it), or clears with an empty hand; shift-click steps it through its item's tags. */
     @Override
     public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
         if (slotId >= FILTER_START && slotId < FILTER_END) {
             if (clickType == ContainerInput.QUICK_MOVE) receptacle.cycleFilterTag(slotId);
-            else if (clickType == ContainerInput.PICKUP) setGhost(slotId, getCarried());
+            else if (clickType == ContainerInput.PICKUP) setGhost(slotId, com.kadikular.quantimium.recipe.FluidEntry.fromClick(getCarried(), button));
             return;
         }
         super.clicked(slotId, button, clickType, player);

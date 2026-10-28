@@ -110,6 +110,11 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     }
 
     @Override
+    public boolean ghostFluids() {
+        return true;
+    }
+
+    @Override
     public int ghostOffset() {
         return 0;
     }
@@ -179,7 +184,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
             int y = topPos + LogisticsReceptacleMenu.FILTER_Y;
             if (FilterEntry.tagOf(entry).isPresent()) graphics.text(font, "#", x + 11, y - 1, QuantumUiColours.ACCENT, true);
             if (keeping()) {
-                String count = HorizonCoreScreen.slotCount(receptacle().keepCount(i));
+                String count = HorizonCoreScreen.slotCount(receptacle().keepCount(i)) + (com.kadikular.quantimium.recipe.FluidEntry.is(entry) ? "B" : "");
                 graphics.pose().pushMatrix();
                 graphics.pose().translate(x + 16, y + 11);
                 graphics.pose().scale(0.5f, 0.5f);
@@ -211,15 +216,18 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
         List<Component> lines = new ArrayList<>(super.getTooltipFromContainerItem(stack));
         int index = hoveredSlot == null ? -1 : menu.slots.indexOf(hoveredSlot);
         if (index < LogisticsReceptacleMenu.FILTER_START || index >= LogisticsReceptacleMenu.FILTER_END) return lines;
-        lines.add(FilterEntry.tagOf(stack)
+        boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(stack);
+        if (fluid) lines.add(Component.translatable("gui.quantimium.filter.entry.fluid").withStyle(ChatFormatting.AQUA));
+        else lines.add(FilterEntry.tagOf(stack)
                 .map(tag -> Component.translatable("gui.quantimium.me_superposition_crafter.entry.tag", "#" + tag.location()).withStyle(ChatFormatting.AQUA))
                 .orElse(Component.translatable("gui.quantimium.me_superposition_crafter.entry.item").withStyle(ChatFormatting.AQUA)));
         if (keeping()) {
-            lines.add(Component.translatable("gui.quantimium.logistics_receptacle.keep.count", receptacle().keepCount(index - LogisticsReceptacleMenu.FILTER_START))
+            lines.add(Component.translatable(fluid ? "gui.quantimium.logistics_receptacle.keep.count_fluid" : "gui.quantimium.logistics_receptacle.keep.count",
+                            receptacle().keepCount(index - LogisticsReceptacleMenu.FILTER_START))
                     .withStyle(ChatFormatting.GREEN));
             lines.add(Component.translatable("gui.quantimium.logistics_receptacle.keep.hint").withStyle(ChatFormatting.GRAY));
         }
-        lines.add(Component.translatable("gui.quantimium.me_superposition_crafter.entry.hint").withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable("gui.quantimium.filter.entry.hint_fluid").withStyle(ChatFormatting.GRAY));
         return lines;
     }
 }

@@ -402,6 +402,21 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         return com.kadikular.quantimium.laser.Logistics.insert(members(), stack, false);
     }
 
+    @Override
+    public int collectFluid(net.neoforged.neoforge.fluids.FluidStack fluid, boolean simulate) {
+        return com.kadikular.quantimium.laser.Logistics.insertFluid(members(), fluid, simulate, true);
+    }
+
+    @Override
+    public net.neoforged.neoforge.fluids.FluidStack sendFluid(java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> wants, int max, boolean simulate) {
+        return com.kadikular.quantimium.laser.Logistics.takeFluid(members(), wants, max, simulate);
+    }
+
+    @Override
+    public int takeBackFluid(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return com.kadikular.quantimium.laser.Logistics.insertFluid(members(), fluid, false, true);
+    }
+
     /** How its network stands, for a click or the Flux Meter. */
     public MutableComponent status() {
         if (clash) return Component.translatable("message.quantimium.logistics_controller.clash").withStyle(ChatFormatting.RED);

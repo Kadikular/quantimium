@@ -608,7 +608,7 @@ public class Quantimium {
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
                             && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
-                        menu.insertCarried(payload.one());
+                        menu.insertCarried(context.player(), payload.one());
                     }
                 })
         );

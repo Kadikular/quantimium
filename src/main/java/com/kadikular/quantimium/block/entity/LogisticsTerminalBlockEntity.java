@@ -212,6 +212,29 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         return Logistics.insert(members, stack, false, false);
     }
 
+    /** Takes up to {@code max} mB of {@code fluid} from the network, if the controller pays; what it got. */
+    public net.neoforged.neoforge.fluids.FluidStack takeFluid(net.neoforged.neoforge.fluids.FluidStack fluid, int max) {
+        LogisticsController controller = controller();
+        if (controller == null || max <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+        java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> same = each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, fluid);
+        List<LogisticsMember> members = controller.members();
+        if (Logistics.takeFluid(members, same, max, true).isEmpty() || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
+            return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+        }
+        controller.stockMoved();
+        return Logistics.takeFluid(members, same, max, false);
+    }
+
+    /** Pours {@code fluid} into the network's storage, if the controller pays; how much it took. */
+    public int insertFluid(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        LogisticsController controller = controller();
+        if (controller == null || fluid.isEmpty()) return 0;
+        List<LogisticsMember> members = controller.members();
+        if (Logistics.insertFluid(members, fluid, true, false) <= 0 || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return 0;
+        controller.stockMoved();
+        return Logistics.insertFluid(members, fluid, false, false);
+    }
+
     // ---- the network: light ends here ----
 
     @Override

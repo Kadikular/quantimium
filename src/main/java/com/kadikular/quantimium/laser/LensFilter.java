@@ -157,6 +157,12 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return !any || listed == itemsAllow;
     }
 
+    /** Whether it lists any fluid: only then does a lens take fluid from a logistics network. */
+    public boolean listsFluids() {
+        for (ItemStack entry : items) if (!fluidOf(entry).isEmpty()) return true;
+        return false;
+    }
+
     /** The fluid a filter entry stands for: a fluid entry's (a right-click with a bucket); empty for an item. */
     private static net.neoforged.neoforge.fluids.FluidStack fluidOf(ItemStack entry) {
         return com.kadikular.quantimium.recipe.FluidEntry.fluidOf(entry);

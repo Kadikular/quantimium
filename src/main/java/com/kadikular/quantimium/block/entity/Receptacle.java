@@ -13,6 +13,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -266,7 +269,8 @@ public final class Receptacle implements LogisticsMember {
         boolean any = false;
         for (int i = 0; i < FILTER_SLOTS; i++) {
             ItemStack entry = filter.getItem(i);
-            if (entry.isEmpty()) continue;
+            // Fluid entries are for fluids only.
+            if (entry.isEmpty() || com.kadikular.quantimium.recipe.FluidEntry.is(entry)) continue;
             any = true;
             if (FilterEntry.matches(entry, stack)) listed = true;
         }
@@ -294,6 +298,52 @@ public final class Receptacle implements LogisticsMember {
             short_ += Math.max(0, keepCount(i) - held);
         }
         return short_;
+    }
+
+    @Override
+    public boolean lets(FluidStack fluid) {
+        boolean listed = false;
+        boolean any = false;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (!com.kadikular.quantimium.recipe.FluidEntry.is(entry)) continue;
+            any = true;
+            if (com.kadikular.quantimium.recipe.FluidEntry.sameFluid(entry, fluid)) listed = true;
+        }
+        if (!any) return role != Role.REQUESTER || !allow;
+        return listed == allow;
+    }
+
+    /** Keeping counts, a fluid entry's count is in buckets: it takes only what it's short of. */
+    @Override
+    public int wants(FluidStack fluid) {
+        if (!keep || role != Role.REQUESTER || !allow) return Integer.MAX_VALUE;
+        IFluidHandler tanks = fluids();
+        long short_ = 0;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (!com.kadikular.quantimium.recipe.FluidEntry.sameFluid(entry, fluid)) continue;
+            long held = 0;
+            if (tanks != null) {
+                for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                    FluidStack there = tanks.getFluidInTank(tank);
+                    if (FluidStack.isSameFluidSameComponents(there, fluid)) held += there.getAmount();
+                }
+            }
+            short_ += Math.max(0, (long) keepCount(i) * FluidType.BUCKET_VOLUME - held);
+        }
+        return (int) Math.min(Integer.MAX_VALUE, short_);
+    }
+
+    @Override
+    @Nullable
+    public IFluidHandler fluids() {
+        Level level = getLevel();
+        if (level == null) return null;
+        BlockPos at = inventoryPos();
+        // A Laser Tank's tanks, whole, whatever its faces are set to.
+        if (level.getBlockEntity(at) instanceof LaserTankBlockEntity tank) return tank.networkTanks();
+        return com.kadikular.quantimium.util.LegacyFluids.legacy(level.getCapability(Capabilities.Fluid.BLOCK, at, face.getOpposite()));
     }
 
     @Override

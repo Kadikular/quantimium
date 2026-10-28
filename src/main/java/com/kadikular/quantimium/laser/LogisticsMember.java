@@ -45,6 +45,22 @@ public interface LogisticsMember {
     @Nullable
     IItemHandler inventory();
 
+    /** The fluid tanks it reaches, or null when there are none. */
+    @Nullable
+    default net.neoforged.neoforge.fluids.capability.IFluidHandler fluids() {
+        return null;
+    }
+
+    /** Whether its filter lets {@code fluid} through: only fluid entries count; with none listed, as with an empty filter. */
+    default boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return role() != Role.REQUESTER;
+    }
+
+    /** How many more mB of {@code fluid} it will take in (see {@link #wants(ItemStack)}). */
+    default int wants(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return Integer.MAX_VALUE;
+    }
+
     /** Where that inventory is, so nothing is moved from an inventory into itself. */
     BlockPos inventoryPos();
 

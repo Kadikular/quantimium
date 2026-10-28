@@ -252,4 +252,96 @@ public final class FluidTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // ---- on a logistics network ----
+
+    private static com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller(GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, ModBlocks.LOGISTICS_CONTROLLER.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.FACING, Direction.EAST)
+                .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.OUTPUTS.get(Direction.NORTH), false)
+                .setValue(com.kadikular.quantimium.block.LogisticsControllerBlock.OUTPUTS.get(Direction.EAST), true));
+        var controller = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.class);
+        controller.getEnergyStorage().setEnergy(com.kadikular.quantimium.laser.LaserTuning.LOGISTICS_CAPACITY);
+        return controller;
+    }
+
+    /** A Laser Tank under the light at {@code x}, holding {@code fluids}, and a receptacle on it set to {@code role}. */
+    private static LaserTankBlockEntity onTank(GameTestHelper helper, int x, com.kadikular.quantimium.laser.LogisticsMember.Role role, boolean active,
+                                               FluidStack... fluids) {
+        LaserTankBlockEntity tank = tank(helper, new BlockPos(x, Y - 1, 8), LaserPortBlockEntity.Mode.COLLECT, fluids);
+        BlockPos pos = new BlockPos(x, Y, 8);
+        TestSupport.receptacle(helper, pos, Direction.DOWN);
+        var receptacle = TestSupport.receptacleAt(helper, pos);
+        while (receptacle.role() != role) receptacle.cycleRole();
+        if (active) receptacle.toggleActive();
+        return tank;
+    }
+
+    // covers: laser.logistics.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
+    public static void anActiveProviderPushesFluidIntoStorage(GameTestHelper helper) {
+        var controller = controller(helper, new BlockPos(2, Y, 8));
+        LaserTankBlockEntity from = onTank(helper, 4, com.kadikular.quantimium.laser.LogisticsMember.Role.PROVIDER, true, new FluidStack(Fluids.WATER, 3_000));
+        LaserTankBlockEntity into = onTank(helper, 7, com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE, false);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(held(into, Fluids.WATER), 3_000, "water moved into storage");
+            helper.assertValueEqual(held(from, Fluids.WATER), 0, "and out of the provider");
+            var listed = com.kadikular.quantimium.laser.OfferTable.storedNow(controller, controller.getBlockPos(), controller.members());
+            helper.assertValueEqual(listed.get(net.neoforged.neoforge.transfer.item.ItemResource.of(
+                    com.kadikular.quantimium.recipe.FluidEntry.of(new FluidStack(Fluids.WATER, 1)))), 3_000L, "the network lists it in mB");
+        });
+    }
+
+    // covers: laser.logistics.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 140)
+    public static void aRequesterKeepingCountsPullsBucketsOfAFluid(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8));
+        LaserTankBlockEntity stored = onTank(helper, 4, com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE, false,
+                new FluidStack(Fluids.LAVA, 5_000), new FluidStack(Fluids.WATER, 5_000));
+        LaserTankBlockEntity wants = onTank(helper, 7, com.kadikular.quantimium.laser.LogisticsMember.Role.REQUESTER, true);
+        var requester = TestSupport.receptacleAt(helper, new BlockPos(7, Y, 8));
+        requester.toggleKeep();
+        requester.setFilterSlot(0, com.kadikular.quantimium.recipe.FluidEntry.of(new FluidStack(Fluids.LAVA, 1)).copyWithCount(2));
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(held(wants, Fluids.LAVA), 2_000, "two buckets kept");
+            helper.assertValueEqual(held(wants, Fluids.WATER), 0, "nothing it doesn't list");
+            helper.assertValueEqual(held(stored, Fluids.LAVA), 3_000, "the rest stays stored");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
+    public static void anExtractLaserOnALogisticsBeamStoresACauldronsWater(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8));
+        controller(helper, new BlockPos(3, Y, 8));
+        LaserTankBlockEntity into = onTank(helper, 5, com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE, false);
+        mount(helper, new BlockPos(7, Y, 8), lens(ModItems.EXTRACT_LENS.get()));
+        BlockPos cauldron = new BlockPos(9, Y, 8);
+        fullWaterCauldron(helper, cauldron);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.CAULDRON, cauldron);
+            helper.assertValueEqual(held(into, Fluids.WATER), 1_000, "the cauldron's water stored");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.logistics.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 60)
+    public static void anInsertLaserFilteringItemsLeavesTheNetworksFluidAlone(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8));
+        controller(helper, new BlockPos(3, Y, 8));
+        LaserTankBlockEntity stored = onTank(helper, 5, com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE, false, new FluidStack(Fluids.WATER, 3_000));
+        ItemStack filter = new ItemStack(ModItems.FILTER_LENS.get());
+        filter.set(com.kadikular.quantimium.init.ModDataComponents.LENS_FILTER.get(), com.kadikular.quantimium.laser.LensFilter.items(
+                java.util.List.of(new ItemStack(Items.COBBLESTONE)), true));
+        mount(helper, new BlockPos(7, Y, 8), lens(ModItems.INSERT_LENS.get()), filter);
+        BlockPos cauldron = new BlockPos(9, Y, 8);
+        helper.setBlock(cauldron, Blocks.CAULDRON);
+        helper.runAfterDelay(40, () -> {
+            helper.assertBlockPresent(Blocks.CAULDRON, cauldron);
+            helper.assertValueEqual(held(stored, Fluids.WATER), 3_000, "still stored");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
 }

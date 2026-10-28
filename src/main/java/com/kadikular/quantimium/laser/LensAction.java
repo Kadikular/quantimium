@@ -649,11 +649,22 @@ public final class LensAction {
     }
 
     /**
+     * The senders fluid may come from: a logistics network only through a Filter Lens listing a fluid, so a lens
+     * filtering items doesn't drain the network's tanks.
+     */
+    private List<BlockPos> fluidSenders(LaserNetworks networks) {
+        LensFilter filter = stream.filter();
+        if (filter != null && filter.listsFluids()) return senders;
+        return senders.stream().filter(pos -> networks.controllerAt(pos) == null).toList();
+    }
+
+    /**
      * Uses a bucket of the first fluid a sending Laser Tank holds a bucket's worth of (and has a bucket for), as a player
      * would: pours it into a cauldron, or out into the world. Only if the bucket was emptied is the fluid drained from the
      * tank; the bucket itself is only borrowed. Whether it was used.
      */
     private boolean useFluid(ServerLevel level, LaserNetworks networks, LaserHand hand) {
+        List<BlockPos> senders = fluidSenders(networks);
         if (senders.isEmpty()) return false;
         int bucket = net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
         net.neoforged.neoforge.fluids.FluidStack fluid = networks.takeFluid(senders, each -> each.getAmount() >= bucket && lets(each)
@@ -1051,6 +1062,7 @@ public final class LensAction {
     @SuppressWarnings("deprecation")
     private long pourInto(LaserNetworks networks, net.neoforged.neoforge.fluids.capability.IFluidHandler into) {
         int most = moveMostFluid();
+        List<BlockPos> senders = fluidSenders(networks);
         var simulate = net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
         net.neoforged.neoforge.fluids.FluidStack offered = networks.takeFluid(senders, fluid -> lets(fluid)
                 && (stream.voids(fluid) || into.fill(fluid.copyWithAmount(Math.min(most, fluid.getAmount())), simulate) > 0), most, true);

@@ -128,6 +128,61 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         return tanks.handler(hands);
     }
 
+    /** Its tanks, whole: what a Logistics Receptacle on it works with, whatever its faces are set to. */
+    public IFluidHandler networkTanks() {
+        return hands;
+    }
+
+    /** On a logistics network, what it's caught is offered: a passive provider, as a Laser Port is. */
+    private final com.kadikular.quantimium.laser.LogisticsMember asProvider = new com.kadikular.quantimium.laser.LogisticsMember() {
+        @Override
+        public Role role() {
+            return Role.PROVIDER;
+        }
+
+        @Override
+        public boolean active() {
+            return false;
+        }
+
+        @Override
+        public int priority() {
+            return 0;
+        }
+
+        @Override
+        public boolean lets(net.minecraft.world.item.ItemStack stack) {
+            return false;
+        }
+
+        @Override
+        public boolean lets(FluidStack fluid) {
+            return true;
+        }
+
+        @Override
+        @Nullable
+        public net.neoforged.neoforge.items.IItemHandler inventory() {
+            return null;
+        }
+
+        @Override
+        public IFluidHandler fluids() {
+            return hands;
+        }
+
+        @Override
+        public BlockPos inventoryPos() {
+            return worldPosition;
+        }
+    };
+
+    @Override
+    @Nullable
+    public com.kadikular.quantimium.laser.LogisticsMember logistics() {
+        return collects() ? asProvider : null;
+    }
+
     public net.minecraft.world.SimpleContainer getFilter() {
         return filter;
     }

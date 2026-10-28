@@ -328,7 +328,21 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 int x = leftPos + GRID_X + col * CELL;
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
-                graphics.item(cell.item().toStack(1), x, y);
+                ItemStack shownStack = cell.item().toStack(1);
+                net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(shownStack);
+                if (fluid.isEmpty()) graphics.item(shownStack, x, y);
+                else com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics, fluid, x, y);
+                if (!fluid.isEmpty()) {
+                    // A fluid's amount, in buckets or mB.
+                    String amount = cell.count() >= 1_000 ? HorizonCoreScreen.slotCount(cell.count() / 1_000) + "B" : cell.count() + "mB";
+                    graphics.nextStratum();
+                    graphics.pose().pushMatrix();
+                    graphics.pose().translate(x + 16, y + 11);
+                    graphics.pose().scale(0.5f, 0.5f);
+                    graphics.text(font, amount, -font.width(amount), 0, 0xFFFFFFFF, true);
+                    graphics.pose().popMatrix();
+                    continue;
+                }
                 // How many the view counts; there and craftable apart, with none there, that it can be made, as an ME terminal says "Craft".
                 boolean makeOnly = view == View.SPLIT && cell.count() == 0 && cell.craftable() > 0;
                 long shownCount = view.count(cell);
@@ -374,6 +388,12 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         if (cell == null) return;
         // The item's own tooltip, as in a chest (enchantments, a filter's settings, a mod's lines), then the counts.
         List<Component> lines = new ArrayList<>(getTooltipFromItem(minecraft, cell.item().toStack(1)));
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1))) {
+            lines.add(Component.translatable("gui.quantimium.logistics_terminal.fluid", String.format(Locale.ROOT, "%,d", cell.count())).withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable("gui.quantimium.logistics_terminal.fluid.tip").withStyle(ChatFormatting.DARK_GRAY));
+            graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
+            return;
+        }
         lines.add(Component.translatable("gui.quantimium.logistics_terminal.count", String.format(Locale.ROOT, "%,d", cell.count())).withStyle(ChatFormatting.GRAY));
         if (cell.craftable() > 0) {
             lines.add(Component.translatable("gui.quantimium.logistics_terminal.craftable", String.format(Locale.ROOT, "%,d", cell.craftable()))
@@ -399,6 +419,11 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             var pos = menu.pos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             ItemStack carried = menu.getCarried();
+            // A fluid: a click with something that holds fluids fills it; a right-click pours it in (below).
+            if (cell != null && event.button() == 0 && com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1))) {
+                if (!carried.isEmpty()) ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), 1, false));
+                return true;
+            }
             // Right-click: half a stack; with shift, one. On what's already in hand, that much more of it (made, if it must be).
             if (event.button() == 1 && cell != null && !carried.isEmpty()
                     && net.neoforged.neoforge.transfer.item.ItemResource.of(carried).equals(cell.item())) {
