@@ -25,10 +25,6 @@ need to understand their recipes: it runs the machine itself and watches what it
 
 [[render:simulator]]
 
-!!! info "Badges"
-    Badges like [[mechanic:simulator.engage]] show whether an in-game test backs the rule next to
-    them. See [Mechanics coverage](../reference/coverage.md).
-
 ## Engaging the field
 
 ![A Quantum Simulator running an engaged furnace at 4×](../assets/gui/quantum_simulator.png){ .qgui }

@@ -22,7 +22,7 @@ changing the wiki, rebuild it and commit what it writes:
 .venv-wiki/bin/python tools/wiki/guideme.py
 ```
 
-It fills in constants, drops the mechanic badges, turns item links into GuideME's, and makes the
+It fills in constants, drops the Tests tables, turns item links into GuideME's, and makes the
 admonitions quotes and the tabs headings. Block and item pages get GuideME's own recipe view. The
 reference section and this page are left out. The dev client asks GuideME to check every page once
 a world loads: look for `Compiling` and any errors after it in `run/logs/latest.log`.
@@ -48,7 +48,7 @@ To add written content to a generated page, create `wiki/pages/blocks/<id>.md` o
 | `[[render:foundry]]` | An isometric render (the scenes in `tools/block_preview.py`) |
 | `[[structure:reactor]]` | A multiblock in 3D that players can turn, in the in-game guide only. The structures in `wiki/structures` are built by `GuideStructures` and saved with `./gradlew runGameTestServer -PexportStructures`; rerun it when a multiblock changes. |
 | `[[recipes:quantimium:quantum_foundry]]` | Every recipe of a type, drawn |
-| `[[mechanic:hall.residue.burn]]` | Declares a mechanic, with its test status |
+| `[[mechanic:hall.residue.burn]]` | Declares a rule. Nothing shows inline; the page's collapsed **Tests** table at the bottom lists the rule and the test behind it |
 
 **Quote numbers with `{{c:…}}` whenever the code has them as a constant**, so a balance change
 cannot leave the wiki behind. Where a number lives in a method or a config file, write it out,
@@ -89,7 +89,7 @@ public static void hallBurnsResidue(GameTestHelper helper) { ... }
 
 The [coverage report](../reference/coverage.md) lists every documented mechanic and what tests it,
 so the untested rows are the test backlog. When you add a feature: write its page with mechanic ids,
-then write the tests that turn its badges green.
+then write the tests that fill its Tests table.
 
 ## Running the tests
 

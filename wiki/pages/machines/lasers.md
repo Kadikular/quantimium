@@ -11,10 +11,6 @@ something to do, and a logistics network moves items by it.
 
 *An Emitter II's light, split by a Laser Focus, powering a Quantum Crafter and a Quantum Simulator.*
 
-!!! info "Badges"
-    Badges like [[mechanic:laser.power]] show whether an in-game test backs the rule next to them. See
-    [Mechanics coverage](../reference/coverage.md).
-
 ## Emitters
 
 [[mechanic:laser.power]] An emitter takes power on any face and sends it out as light from its

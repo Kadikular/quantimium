@@ -45,12 +45,6 @@
 .qcard-name { font-weight: 600; font-size: 0.8rem; }
 .qcard-text { font-size: 0.65rem; color: var(--md-default-fg-color--light); line-height: 1.35; }
 
-/* Mechanic badges: every documented rule says whether a test backs it. */
-.qmech { font: 600 0.6rem/1 var(--md-code-font-family); padding: 2px 6px; border-radius: 3px;
-  vertical-align: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
-.qmech-tested { background: #1f5f3a; color: #bff3d2 !important; }
-.qmech-untested { background: #5a3a12; color: #ffd9a0 !important; }
-
 /* In-game GUI captures (tools/wiki_shots.sh), taken at GUI scale 2: keep the pixels crisp. */
 img.qgui {
   display: block;
