@@ -100,9 +100,9 @@ What anomaly does in a chunk that isn't contained, by band:
   and only two to a chunk at Medium, faster and up to 8 at High, 16 at Critical, without limit at Singularity. A machine that
   holds a charge but gives none up (many mods' are fill-only) feeds them without losing any.
   [[mechanic:anomalite.host_removed]] Break or move the machine and its crystals go with it.
-- **Tears and mites.** From Medium, the field tears into the [mirror](mirror-phase.md) on its own,
+- **Tears and mites.** From Medium, the field tears into the [mirror](../mirror/mirror-phase.md) on its own,
   and mirror mites hunt.
-- **Rifts.** At High, a tear can fail to close and leave a [flux rift](../mechanics/flux-rifts.md).
+- **Rifts.** At High, a tear can fail to close and leave a [flux rift](../mirror/flux-rifts.md).
 
 ## Containment
 
@@ -118,7 +118,7 @@ Lens readout and the containment's own screen all show the load.
 Containment is the [Containment Hall](../multiblocks/containment-hall.md)'s: it holds all of its rated
 band, High to Singularity, and leaks 3%. Capacity from several halls adds up, and a chunk under
 several leaks their mix. Before a hall, you keep anomaly down by pulling it: a
-[[block:basic_anomaly_siphon]] early, an [Anomaly Siphon](../machines/field-control.md) later.
+[[block:basic_anomaly_siphon]] early, an [Anomaly Siphon](../field-control/overview.md) later.
 
 [[mechanic:containment.edge]] **Containment has an edge.** Its strength goes by straight-line distance
 from the machine: nearly full across its core (98% at the sides of a 3×3, 91% at the corners), half
@@ -136,7 +136,7 @@ an overloaded chunk gets hurt.
 | [[block:basic_anomaly_siphon]] | Holds anomaly at the top of Low across the 3×3 of a small workshop, and turns what it pulls into Anomaly Fragments. |
 | [[block:flux_suppressor]] | Holds flux (only flux) under a ceiling across the 3×3: firebreaks, starving rifts, quiet zones. |
 | [Containment Hall](../multiblocks/containment-hall.md) | Holds up to all of Singularity with enough arms, over the 3×3 or 5×5, and pulls anomaly (only anomaly) down. |
-| [Flux Maintainer, Anomaly Siphon, Field Regulator](../machines/field-control.md) | Hold the field at a floor, or anomaly under a settable ceiling. |
+| [Flux Maintainer, Anomaly Siphon, Field Regulator](../field-control/overview.md) | Hold the field at a floor, or anomaly under a settable ceiling. |
 | [[block:flux_detector]] | Turns a band into redstone, for automation. |
 | [[block:field_monitor]] | Watches the 9×9 chunks around it: a map, and an alarm (redstone and comparator) for overloaded containment or uncontained anomaly. |
 

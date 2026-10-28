@@ -11,7 +11,7 @@ and the dock looks after it.
 it up from its own buffer: up to **{{c:EntangledDockBlockEntity.CHARGE_PER_TICK}} FE/t**, wherever you
 are, as long as the dock's chunk is loaded. Feed the dock ({{c:EntangledDockBlockEntity.ENERGY_CAPACITY}}
 FE buffer, up to {{c:EntangledDockBlockEntity.ENERGY_MAX_RECEIVE}} FE/t in) and your gear never runs dry,
-which is the answer to the [Veiled](../mechanics/veiled.md) draining it while it follows you.
+which is the answer to the [Veiled](../mirror/veiled.md) draining it while it follows you.
 
 Like any Quantimium machine it emits **1 flux per 1,000 FE** it passes on, at the dock.
 

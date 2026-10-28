@@ -43,7 +43,7 @@ jobs:
       - name: Build the wiki
         run: |
           python -m venv .venv-wiki
-          .venv-wiki/bin/pip install mkdocs-material pillow pyyaml
+          .venv-wiki/bin/pip install mkdocs-material mkdocs-redirects pillow pyyaml
           .venv-wiki/bin/python tools/wiki/build.py
 
       - name: Upload the site

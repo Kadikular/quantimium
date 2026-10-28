@@ -18,7 +18,7 @@ every craft stirs that field up. Push it far enough and the world starts to tear
   first crafter.
 - **[Flux and anomaly](concepts/flux-and-anomaly.md)**: the two meters every chunk carries, and why
   they matter.
-- **[The mirror phase](concepts/mirror-phase.md)**: the other side of the world, and how you get there.
+- **[The mirror phase](mirror/mirror-phase.md)**: the other side of the world, and how you get there.
 - **[Blocks](blocks/index.md)** and **[Items](items/index.md)**: everything in the mod, with recipes.
 
 ## The two forces
@@ -26,7 +26,7 @@ every craft stirs that field up. Push it far enough and the world starts to tear
 **Flux** is how active the world is: coherent, azure, engineered. It unlocks recipes, and every
 Quantimium machine adds to it. **Anomaly** is how aggressive it is: violet, organic, feeding. It
 follows flux up, and it is what costs you: power surcharges, leaking buffers, crystals growing on your
-machines, tears into the mirror, and eventually [rifts](mechanics/flux-rifts.md) and what comes
+machines, tears into the mirror, and eventually [rifts](mirror/flux-rifts.md) and what comes
 through them.
 
 The mod's art follows the same split: azure is anything built, violet is anything that grew. See

@@ -29,7 +29,8 @@ from build import CODE, INTERNAL, PAGES, ROOT, Site, format_constant
 
 OUT = os.path.join(ROOT, "src", "main", "resources", "assets", "quantimium", "guides", "quantimium", "guide")
 SKIPPED = ("reference/", "guides/writing-the-wiki.md", "blocks/", "items/")
-CATEGORIES = {"Concepts": "concepts", "Mechanics": "mechanics", "Machines": "machines", "Multiblocks": "multiblocks"}
+CATEGORIES = {"Concepts": "concepts", "Machines": "machines", "Field control": "field-control", "Multiblocks": "multiblocks",
+              "Lasers": "lasers", "The mirror": "mirror"}
 
 
 # Multiblock pages and their parts: the guide key over a part opens the multiblock's page, and the
@@ -38,7 +39,7 @@ MULTIBLOCK_PARTS = {
     "multiblocks/quantum-foundry.md": ["quantum_foundry_controller", "quantum_foundry_plinth", "quantum_foundry_pillar",
                                        "quantum_foundry_conduit", "quantum_foundry_attunement_tank"],
     "multiblocks/containment-hall.md": ["anomaly_containment_hall"],
-    "multiblocks/stabilised-rift.md": ["rift_anchor", "rift_stabiliser"],
+    "mirror/stabilised-rift.md": ["rift_anchor", "rift_stabiliser"],
     "multiblocks/fold-chamber.md": ["fold_core", "fold_pylon", "fold_rail"],
     "multiblocks/superposition-pod.md": ["superposition_pod", "pod_cradle", "pod_plating", "pod_charge_module",
                                          "pod_hardening_module", "pod_recovery_module", "pod_regeneration_module",
@@ -233,7 +234,8 @@ class Guide:
                                      f"quantimium:{icon.group(1)}" if icon else None, parts or None) + \
                 self.convert(text, path)
 
-        icons = {"concepts": "flux_meter", "mechanics": "rift_seed", "machines": "quantum_crafter",
+        icons = {"concepts": "flux_meter", "mirror": "rift_seed", "machines": "quantum_crafter",
+                 "field-control": "flux_detector", "lasers": "laser_emitter_2",
                  "multiblocks": "quantum_foundry_controller", "guides": "quantimium_trace"}
         for position, (title, folder) in enumerate([("Guides", "guides")] + list(CATEGORIES.items())):
             children = [p for p in written if p.startswith(folder + "/")]

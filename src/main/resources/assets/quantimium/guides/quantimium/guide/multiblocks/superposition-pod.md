@@ -2,7 +2,7 @@
 navigation:
   title: Superposition Pod
   parent: multiblocks/index.md
-  position: 21
+  position: 16
 item_ids:
 - quantimium:superposition_pod
 - quantimium:pod_cradle
@@ -226,7 +226,7 @@ lifted from the ground. Either takes 5 s to form, for what a swap that far costs
 ## The Veiled
 
 An unguarded double, in the field or in a pod without a Ward, is what the
-[Veiled](../mechanics/veiled.md) wants most. Left with one for a while it **takes** it: the body
+[Veiled](../mirror/veiled.md) wants most. Left with one for a while it **takes** it: the body
 is gone, and it carries the Sophon off, beyond the reach of Recovery, until it is driven off or held and
 lets go of it where it stands. The pod's screen shows the double as *Taken by the Veiled*.
 

@@ -22,7 +22,7 @@ climb by doing what the mod is about, not by mining more:
 | --- | --- | --- | --- |
 | Low | [[item:quantimium_trace]] | Observing [[item:unrealised_matter]] | Observation Chamber, Basic Quantum Crafter, Flux Meter and Detector, Field Monitor, Quantum Exciter, Basic Anomaly Siphon, Flux Suppressor |
 | Mid | [[item:anomaly_fragment]], Anomalite | Siphoning anomaly; crystals that grew on your machines | Rift Seed, Stabilized Portal, Quantum Crafter, Simulator, Tesseract Stabilizer, Flux Maintainer, Anomaly Siphon, Zeno Field Controller, Decoherence Lance and Projector, Entangled Dock, Rift Lens, Mirror Lens, Tether, the Pod's modules |
-| High | [[item:rift_residue]], Tesseracts | Closing [flux rifts](../mechanics/flux-rifts.md); the Foundry | Quantum Foundry, Containment Hall, Field Regulator, Rift Anchor and Stabilizer, Superposition Pod and Unfolding Array, ME Superposition Crafter |
+| High | [[item:rift_residue]], Tesseracts | Closing [flux rifts](../mirror/flux-rifts.md); the Foundry | Quantum Foundry, Containment Hall, Field Regulator, Rift Anchor and Stabilizer, Superposition Pod and Unfolding Array, ME Superposition Crafter |
 
 High starts with your first rift, found or planted with a [[item:rift_seed]]: Residue builds the Foundry, which makes Tesseracts, and the
 Containment Hall that lets a base run hot. The tier a machine looks (the stone above) and the tier

@@ -25,7 +25,7 @@ Once a second the dock finds its item on you, anywhere in your inventory, and to
 it up from its own buffer: up to **2,000 FE/t**, wherever you
 are, as long as the dock's chunk is loaded. Feed the dock (1,000,000
 FE buffer, up to 20,000 FE/t in) and your gear never runs dry,
-which is the answer to the [Veiled](../mechanics/veiled.md) draining it while it follows you.
+which is the answer to the [Veiled](../mirror/veiled.md) draining it while it follows you.
 
 Like any Quantimium machine it emits **1 flux per 1,000 FE** it passes on, at the dock.
 

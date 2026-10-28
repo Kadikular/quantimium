@@ -6,7 +6,7 @@ command, so a change to the mod shows up here the next time it is built.
 ## Building it
 
 ```bash
-python3 -m venv .venv-wiki && .venv-wiki/bin/pip install mkdocs-material pillow   # once
+python3 -m venv .venv-wiki && .venv-wiki/bin/pip install mkdocs-material mkdocs-redirects pillow pyyaml   # once
 .venv-wiki/bin/python tools/wiki/build.py            # build into wiki/build/site/
 .venv-wiki/bin/python tools/wiki/build.py --serve    # live preview at http://127.0.0.1:8000
 ```

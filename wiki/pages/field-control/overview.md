@@ -84,7 +84,7 @@ tabs for what it does.
 
 ## In a Quantum Simulator
 
-[[mechanic:field.simulator]] Taken into a [Quantum Simulator](quantum-simulator.md), each block holds the
+[[mechanic:field.simulator]] Taken into a [Quantum Simulator](../machines/quantum-simulator.md), each block holds the
 Simulator's chunk to the same setpoints, and every copy in the batch works: at 8× a Maintainer raises
 flux eight times as fast and a Siphon pulls eight times as much. The Simulator pays for every copy, plus
 its 20% overhead, and only while the block is raising or pulling; holding costs nothing.

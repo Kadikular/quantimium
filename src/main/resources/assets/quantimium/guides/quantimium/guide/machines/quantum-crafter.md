@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Crafter
   parent: machines/index.md
-  position: 9
+  position: 6
   icon: quantimium:quantum_crafter
 ---
 

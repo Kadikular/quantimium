@@ -96,7 +96,7 @@ providers can offer the same recipes alongside it.
 
 **Mind the flux.** Autocrafting at scale is the fastest way to heat a chunk. Anomaly raises every
 craft's cost by up to +100% and, left alone, brings rifts and the
-[Veiled](../mechanics/veiled.md). Big AE2 bases will want [containment](../multiblocks/containment-hall.md).
+[Veiled](../mirror/veiled.md). Big AE2 bases will want [containment](../multiblocks/containment-hall.md).
 
 ## Filters
 

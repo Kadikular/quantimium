@@ -1,8 +1,8 @@
 ---
 navigation:
   title: The Veiled
-  parent: mechanics/index.md
-  position: 7
+  parent: mirror/index.md
+  position: 28
 ---
 
 # The Veiled
@@ -23,7 +23,7 @@ it feeds on their machines, or on the charge in their gear when they have no bas
 killed. It can be driven off with a <ItemLink id="quantimium:decoherence_lance" />, and worn down near a powered
 [Anomaly Containment Hall](../multiblocks/containment-hall.md) it can be taken and held there.
 
-Its body exists only in the [mirror](../concepts/mirror-phase.md). Players in the real world never
+Its body exists only in the [mirror](mirror-phase.md). Players in the real world never
 see it directly, only **sightings**: a dark silhouette that appears on the landscape for one
 player at a time and fades when watched.
 
@@ -46,7 +46,7 @@ it goes back to **Wander** after a cooldown.
 Once a second, every uncontained stage 4 rift whose chunk is at
 **Critical flux or higher** has a 1 in 300 chance of
 releasing one: on average once every 300 seconds. A
-contained or [stabilized](../multiblocks/stabilised-rift.md) rift never releases it.
+contained or [stabilized](stabilised-rift.md) rift never releases it.
 
 Only one can exist per area. A rift will not release one if
 there is already a free Veiled within 256 blocks, or one held in a hall within
@@ -253,7 +253,7 @@ back after a cooldown. See the [Containment Hall](../multiblocks/containment-hal
 
 A held Veiled can be made to give up <ItemLink id="quantimium:veil_thread" />: laser light in the
 mirror, with a Pickup lens, through one wall of the hall's glass reaches it and draws a thread out of it
-every three minutes. See [Into the mirror](../machines/lasers.md). It costs the hall
+every three minutes. See [Into the mirror](../lasers/networks.md). It costs the hall
 nothing for now.
 
 ## After release from a hall

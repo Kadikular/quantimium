@@ -10,7 +10,6 @@ navigation:
 
 - [Quantum Foundry](quantum-foundry.md)
 - [Anomaly Containment Hall](containment-hall.md)
-- [Stabilized rift](stabilised-rift.md)
 - [Fold Chamber](fold-chamber.md)
 - [Superposition Pod](superposition-pod.md)
 - [Quantimium Reactor](reactor.md)

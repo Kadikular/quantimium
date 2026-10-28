@@ -53,35 +53,56 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
 
+plugins:
+  - search
+  - redirects:
+      redirect_maps:
+        mechanics/veiled.md: mirror/veiled.md
+        mechanics/flux-rifts.md: mirror/flux-rifts.md
+        concepts/mirror-phase.md: mirror/mirror-phase.md
+        multiblocks/stabilised-rift.md: mirror/stabilised-rift.md
+        machines/field-control.md: field-control/overview.md
+        machines/lasers.md: lasers/overview.md
+
 nav:
   - Home: index.md
   - Getting started: guides/getting-started.md
   - For pack makers: guides/pack-makers.md
   - Concepts:
       - Flux and anomaly: concepts/flux-and-anomaly.md
-      - The mirror phase: concepts/mirror-phase.md
       - Machine tiers: concepts/tiers.md
       - Side configuration: concepts/side-configuration.md
       - Partner mods: concepts/partner-mods.md
-  - Mechanics:
-      - The Veiled: mechanics/veiled.md
-      - Flux rifts: mechanics/flux-rifts.md
   - Machines:
       - Quantum Crafter: machines/quantum-crafter.md
       - Quantum Simulator: machines/quantum-simulator.md
       - Quantum Observation Chamber: machines/quantum-observation-chamber.md
-      - Field control: machines/field-control.md
       - Tesseract Stabilizer: machines/tesseract-stabilizer.md
       - Zeno Field Controller: machines/zeno-field-controller.md
       - ME Superposition Crafter: machines/me-superposition-crafter.md
-      - Lasers: machines/lasers.md
+  - Field control:
+      - Overview: field-control/overview.md
   - Multiblocks:
       - Quantum Foundry: multiblocks/quantum-foundry.md
       - Anomaly Containment Hall: multiblocks/containment-hall.md
-      - Stabilised rift: multiblocks/stabilised-rift.md
       - Fold Chamber: multiblocks/fold-chamber.md
       - Superposition Pod: multiblocks/superposition-pod.md
       - Quantimium Reactor: multiblocks/reactor.md
+  - Lasers:
+      - Overview: lasers/overview.md
+      - Emitters: lasers/emitters.md
+      - Mirrors and relays: lasers/mirrors.md
+      - Prisms: lasers/prisms.md
+      - Optical cavities: lasers/cavities.md
+      - Photodetectors: lasers/photodetectors.md
+      - Lenses: lasers/lenses.md
+      - Logistics: lasers/logistics.md
+      - Networks and rules: lasers/networks.md
+  - The mirror:
+      - The mirror phase: mirror/mirror-phase.md
+      - The Veiled: mirror/veiled.md
+      - Flux rifts: mirror/flux-rifts.md
+      - Stabilized rift: mirror/stabilised-rift.md
   - Blocks: blocks/index.md
   - Items: items/index.md
   - Reference:
