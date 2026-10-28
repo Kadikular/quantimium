@@ -345,9 +345,13 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         if (state.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock) return new LaserBeam(from, face, aim, length, pos, End.MIRROR, 0, false, Lens.NONE);
         // Only a block with a block entity can be a laser block or take power: the rest are looked up no further.
         boolean entity = state.hasBlockEntity();
-        // A Laser Focus block with no focus in it: light passes its attachments by.
+        // A Laser Focus block with no focus in it: light passes it by bare faces, in and out; an attachment on either stops it.
         if (entity && level.getBlockEntity(pos) instanceof com.kadikular.quantimium.block.entity.LaserFocusBlockEntity focus
-                && focus.core() == com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.NONE) return null;
+                && focus.core() == com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Core.NONE) {
+            var none = com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.NONE;
+            if (focus.part(face) == none && focus.part(face.getOpposite()) == none) return null;
+            return new LaserBeam(from, face, aim, length, pos, End.BLOCKED, 0, false, Lens.NONE);
+        }
         if (entity && level.getBlockEntity(pos) instanceof LaserNode) return new LaserBeam(from, face, aim, length, pos, End.NODE, 0, false, Lens.NONE);
         if (passes(level, pos, state)) return null;
         // Anomalite is of the mirror: light in the real world goes through it as if it weren't there.

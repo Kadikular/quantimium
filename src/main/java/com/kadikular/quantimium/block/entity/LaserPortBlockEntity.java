@@ -539,6 +539,17 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         return Set.of(facing());
     }
 
+    /** Light gets in only by its back, straight: travelling the way it faces. */
+    @Override
+    public boolean accepts(Direction travel) {
+        return travel == facing();
+    }
+
+    @Override
+    public boolean accepts(com.kadikular.quantimium.laser.Ray ray) {
+        return ray.straight() && accepts(ray.face());
+    }
+
     @Override
     public int range() {
         return LaserTuning.RELAY_RANGE;

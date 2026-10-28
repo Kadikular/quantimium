@@ -1327,6 +1327,32 @@ public final class LaserTests {
     }
 
     // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
+    public static void anAttachmentOnABlockWithNoFocusStopsLight(GameTestHelper helper) {
+        // Three rows into a block with no focus: an Emitter on the face light leaves by, one on the face it comes in by,
+        // and only a Stand underneath. Light gets past only the last.
+        BlockPos[] rows = {new BlockPos(0, 0, 3), new BlockPos(0, 0, 8), new BlockPos(0, 0, 13)};
+        Direction[] parts = {Direction.EAST, Direction.WEST, Direction.DOWN};
+        FoldCoreBlockEntity[] sinks = new FoldCoreBlockEntity[3];
+        for (int i = 0; i < 3; i++) {
+            int z = rows[i].getZ();
+            emitter(helper, new BlockPos(1, Y, z), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+            helper.setBlock(new BlockPos(5, Y, z), ModBlocks.LASER_FOCUS.get());
+            var bare = helper.getBlockEntity(new BlockPos(5, Y, z), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
+            bare.setPart(parts[i], parts[i] == Direction.DOWN ? com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND
+                    : com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.EMITTER);
+            sinks[i] = sink(helper, new BlockPos(9, Y, z));
+        }
+        helper.runAfterDelay(60, () -> {
+            helper.assertValueEqual(sinks[0].getEnergyStorage().getEnergyStored(), 0, "stopped by an Emitter on the way out");
+            helper.assertValueEqual(sinks[1].getEnergyStorage().getEnergyStored(), 0, "stopped by an Emitter on the way in");
+            helper.assertTrue(sinks[2].getEnergyStorage().getEnergyStored() > 0, "past bare faces");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 120)
     public static void lightPassesABlockWhoseFocusIsTakenOut(GameTestHelper helper) {
         // A Laser Focus with an Emitter south stops the light east and sends it south. Its focus taken out, the light

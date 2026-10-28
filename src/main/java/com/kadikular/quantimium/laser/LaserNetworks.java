@@ -995,10 +995,23 @@ public final class LaserNetworks {
             // Nothing passes back up through an Isolator, or past a source; a cavity, it does.
             if (((!node.relays() && !node.buffers()) || stopsItems(node)) && !at.equals(pos)) continue;
             for (BlockPos up : into.getOrDefault(at, List.of())) {
-                if (letsIn(up, node) && seen.add(up)) queue.add(up);
+                if (letsIn(up, node) && !leavesThroughIsolator(up, at) && seen.add(up)) queue.add(up);
             }
         }
         return found;
+    }
+
+    /** Whether every beam from {@code from} to {@code to} leaves by a face whose lenses stop items. */
+    private boolean leavesThroughIsolator(BlockPos from, BlockPos to) {
+        LaserNode node = nodes.get(from);
+        if (node == null) return false;
+        boolean any = false;
+        for (LaserBeam beam : beams.getOrDefault(from, List.of())) {
+            if (beam.end() != LaserBeam.End.NODE || !to.equals(beam.hit())) continue;
+            if (!stopsItemsLeaving(node, beam)) return false;
+            any = true;
+        }
+        return any;
     }
 
     /** Whether light from {@code from} gets into {@code node}: one of its beams ends there, travelling a way it accepts. */
@@ -1073,9 +1086,18 @@ public final class LaserNetworks {
      * pass actions (what the ports carry the yield of).
      */
     private static boolean stopsItems(LaserNode node) {
-        if (node.isolates()) return true;
-        for (LensUse use : node.lenses()) {
-            if (use.lens() == Lens.ISOLATE && (use.isolator() == null || !use.isolator().actions())) return true;
+        return node.isolates() || isolatorStopsItems(node.lenses());
+    }
+
+    /** Whether items can't pass the lenses on the face {@code node}'s light leaves by (a Focus Emitter's, say). */
+    private static boolean stopsItemsLeaving(LaserNode node, LaserBeam beam) {
+        return !beam.jumps() && isolatorStopsItems(node.lensesFor(beam.face()));
+    }
+
+    /** Items go back up through an Isolator Lens only as part of a logistics network it lets through. */
+    private static boolean isolatorStopsItems(List<LensUse> lenses) {
+        for (LensUse use : lenses) {
+            if (use.lens() == Lens.ISOLATE && (use.isolator() == null || !use.isolator().logistics())) return true;
         }
         return false;
     }
@@ -1090,7 +1112,10 @@ public final class LaserNetworks {
         while (!queue.isEmpty()) {
             BlockPos at = queue.poll();
             for (LaserBeam beam : beams.getOrDefault(at, List.of())) {
-                if (beam.end() != LaserBeam.End.NODE || !seen.add(beam.hit())) continue;
+                if (beam.end() != LaserBeam.End.NODE) continue;
+                LaserNode from = nodes.get(at);
+                if (from != null && stopsItemsLeaving(from, beam)) continue;
+                if (!seen.add(beam.hit())) continue;
                 LaserNode next = nodes.get(beam.hit());
                 if (next == null || !next.relays() || stopsItems(next) || !passes(next)) continue;
                 if (next.collects()) found.add(beam.hit());

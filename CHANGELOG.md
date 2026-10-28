@@ -16,6 +16,10 @@
 - A sneaking click with an empty hand takes an Emitter's lens out before the Emitter. In creative, what comes off a
   Laser Focus goes into your inventory.
 - Isolator Lens: the redstone switch is a redstone torch, lit while signals pass, and its filter is labelled.
+- Isolator Lens: Pickup's items go back up through it only if it passes logistics, and one in a Focus Emitter now stops
+  them too (it didn't).
+- A Laser Port takes light only straight in by its back, and a Lens Mount no longer takes light at an angle.
+- A Laser Focus block with no focus stops light at any attachment on the face it comes in or goes out by.
 - Beams notice a block placed or broken on them the next tick, instead of within half a second, and cost far less to keep
   watch over: only a change light can't pass, or one where a beam ends, is looked at.
 - Light lights up, at its full brightness, and goes dark as soon as it should: from an Emitter put down or switched

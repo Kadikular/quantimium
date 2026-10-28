@@ -101,7 +101,8 @@ opposite face, unless a Stand or Cover there stops it.
 
 As with a cable and its parts, an attachment can go on a block with no focus (used against any block, it puts down a
 Laser Focus block holding just it, or puts it onto the Laser Focus block already beside that face), and it does
-nothing until a focus is put in: light passes a block with no focus by. Sneak-click the focus (by hand or with a wrench) to take it out and leave the
+nothing until a focus is put in: light passes a block with no focus by, unless an attachment is on the face it comes in
+or goes out by. Sneak-click the focus (by hand or with a wrench) to take it out and leave the
 attachments, or an attachment to take just that off (by hand, an Emitter's lens comes out first); the block goes
 when it holds nothing. Click an Emitter to open it: it holds one lens, which only the light leaving by it goes through (a Harvest
 lens on one emitter cuts only there), and its tip takes the lens's colour; using a lens on it puts the lens in.
@@ -121,7 +122,7 @@ some other way. An emitter switched off by redstone gives out none.
 
 An <ItemLink id="quantimium:isolator" /> passes light on as a relay does, but lets only power
 through: light leaving it carries nothing it did (actions, Pickup, UV), and nothing comes back up through
-it, so Pickup's items stop short of it (an <ItemLink id="quantimium:isolator_lens" /> not set to pass actions stops them too). It's a plain block: sneak-click or wrench a face to add an output
+it, so Pickup's items stop short of it (an <ItemLink id="quantimium:isolator_lens" /> stops them too, in a Lens Mount or a Focus Emitter, unless set to pass logistics). It's a plain block: sneak-click or wrench a face to add an output
 there or take one away (one always stays), and use an empty hand to step through how it listens to
 redstone.
 
@@ -221,7 +222,7 @@ signal, and a comparator reading, for how much: 1 for a trickle, two more for ea
 A <ItemLink id="quantimium:lens_mount" /> holds four lenses in a row, and light goes straight
 through it: in by its back, where half a focus is set in a recess, and out of its front, where half an
 emitter is, refocused, through its lenses in order (its four slots, left to right). Light from any other
-side stops on it. Down each side, four slot panels show what's fitted: dark when empty, the lens's colour
+side, or at an angle, stops on it. Down each side, four slot panels show what's fitted: dark when empty, the lens's colour
 when there's one. The beam is still a beam: it carries power to whatever it ends on, as before, and does what its
 lenses say along the way. Open the mount with an empty hand; sneak-click or wrench a side to point it
 there. Under each lens is a button for that lens's own settings (a filter lens's, say), lit when it has
@@ -313,7 +314,7 @@ the lens that gave it, and only for work done: a cut as it's made, a hit when it
 carried. Harvest light joined with plain light is still paid for by its own emitter alone; a Harvest
 lens after the join is paid for by both. Actions only work while their light is lit.
 
-A <ItemLink id="quantimium:laser_port" /> passes light, out of its face, as a relay does,
+A <ItemLink id="quantimium:laser_port" /> passes light, in straight by its back and out of its face, as a relay does,
 and holds nine slots. It starts out **collecting**: it catches what a Pickup lens further along brings
 back, for pipes and hoppers to take from, or take from it yourself. Put it between the emitter and the
 mount: emitter, Laser Port, Lens Mount with Harvest and Pickup, then the blocks to break. What one port
