@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 
 ### Lasers
 
