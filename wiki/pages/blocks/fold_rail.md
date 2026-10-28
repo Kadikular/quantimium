@@ -1,0 +1,1 @@
+The Fold Rail is an edge of a [Fold Chamber](../multiblocks/fold-chamber.md)'s frame, between two [[block:fold_pylon]]s. A rail turns to its edge as you place it, and rails in a row read as one tube. The twelve edges are rails, except the middle of a bottom edge, which is the [[block:fold_core]].
