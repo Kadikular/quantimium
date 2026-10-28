@@ -56,6 +56,16 @@
   or into another Cavity Mirror: up to 16 blocks one way, each mirror counting as one. A splitter, or a mirror
   switched off, breaks it.
 - Mirrors no longer show where light would go while holding a wrench or the Linker.
+- An Interact Lens with nothing to do waits longer between tries, as Insert and Extract do (up to `laserIdleSeconds`),
+  instead of trying everything it's sent every tick. Busy, it keeps its pace.
+
+### Reactor
+
+- A storage bus reading a busy Reactor's Materialiser Port costs far less: an answer stands for a second while what it
+  uses is still there, however else the Reactor changes, and planning is held to about 1 ms a tick (a bus listing 1,450
+  slots every tick went from about 240 ms to under 2 ms). Things never asked about before can take a few seconds to show.
+- Plans look items up faster, and the ME Superposition Port plans its trees without copying the whole stock for each,
+  in at most about 1 ms a tick.
 
 ## 0.6.1-alpha: Healing, freezing, and a lens pass
 

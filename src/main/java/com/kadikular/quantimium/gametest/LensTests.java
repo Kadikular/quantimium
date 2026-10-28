@@ -1295,7 +1295,7 @@ public final class LensTests {
             helper.assertBlockPresent(Blocks.STONE, new BlockPos(8, Y, 8));
             String light = String.join(" ", com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
                     .describe(helper.absolutePos(new BlockPos(5, Y, 8))).stream().map(net.minecraft.network.chat.Component::getString).toList());
-            helper.assertTrue(light.contains("Plain light"), "plain light leaves it: " + light);
+            helper.assertTrue(light.contains("Plain laser"), "plain light leaves it: " + light);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });
@@ -1896,7 +1896,7 @@ public final class LensTests {
             helper.assertBlockPresent(Blocks.STONE, stone);
             String light = String.join(" ", com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel())
                     .describe(helper.absolutePos(new BlockPos(8, Y, 8))).stream().map(net.minecraft.network.chat.Component::getString).toList());
-            helper.assertTrue(light.contains("Plain light"), "plain light from the prism: " + light);
+            helper.assertTrue(light.contains("Plain laser"), "plain light from the prism: " + light);
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

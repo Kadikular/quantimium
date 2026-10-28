@@ -606,7 +606,11 @@ public final class LensAction {
             extras = List.copyOf(hand.getInventory().getNonEquipmentItems());
             hand.getInventory().clearContent();
         } while (!done && !sent.isEmpty() && !stream.hits() && tried.size() < LaserTuning.INTERACT_TRIES);
-        if (!done) return;
+        // Nothing took it: it looks again in a while, longer the longer it's idle. An area rests after a sweep instead.
+        if (!done) {
+            if (area == null) placeCooldown = nextWait(false);
+            return;
+        }
         ItemStack used = sent;
         boolean changed = !ItemStack.matches(after, used) || extras.stream().anyMatch(extra -> !extra.isEmpty());
         if (changed && !used.isEmpty()) networks.take(senders, stack -> ItemStack.isSameItemSameComponents(stack, used), 1, false);
@@ -617,6 +621,8 @@ public final class LensAction {
         networks.pay(this, LaserTuning.PLACE_FE);
         networks.workDone(this);
         placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
+        // Idle again, it starts waiting from its own pace.
+        wait = Math.max(1, placeCooldown);
         if (area == null) placed = beam.hit();
         lastWorked = now;
         // A door opened, a block changed: the beam may reach on, or not. An area's beams don't change.
@@ -844,11 +850,19 @@ public final class LensAction {
             lastWorked = now;
             return;
         }
-        BlockPos at = area == null ? inventoryAtEnd(level) : nextAreaInventory(level);
-        if (at == null) return;
-        net.minecraft.core.Direction side = area == null ? beam.arriving().getOpposite() : null;
-        net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(
-                level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
+        BlockPos at;
+        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> found;
+        if (area == null) {
+            // Looked up once: what the beam ends on, if it's an inventory.
+            if (beam == null || beam.hit() == null || beam.end() == LaserBeam.End.OPEN) return;
+            at = beam.hit();
+            found = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, beam.arriving().getOpposite());
+        } else {
+            at = nextAreaInventory(level);
+            if (at == null) return;
+            found = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, null);
+        }
+        net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(found);
         if (handler == null) return;
         // What crushing and smelting on the way cost, or -1 for nothing moved.
         // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
@@ -948,14 +962,6 @@ public final class LensAction {
 
     private boolean lets(ItemStack stack) {
         return stream.filter() == null || stream.filter().lets(stack);
-    }
-
-    /** The inventory a beam ends on, if it ends on one. */
-    @Nullable
-    private BlockPos inventoryAtEnd(ServerLevel level) {
-        if (beam == null || beam.hit() == null || beam.end() == LaserBeam.End.OPEN) return null;
-        return level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, beam.hit(), beam.arriving().getOpposite()) == null
-                ? null : beam.hit();
     }
 
     /** The next inventory in the area it can see, looking on from the last. */

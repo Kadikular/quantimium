@@ -28,6 +28,8 @@ import com.kadikular.quantimium.reactor.ReactorCounter;
 import com.kadikular.quantimium.reactor.ReactorNetwork;
 import com.kadikular.quantimium.reactor.ReactorPlanner;
 import com.kadikular.quantimium.reactor.ReactorRecipes;
+import com.kadikular.quantimium.reactor.StockIndex;
+import com.kadikular.quantimium.reactor.StockOverlay;
 import com.kadikular.quantimium.util.NbtCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -434,6 +436,8 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
 
     /** Things whose trees to plan next, a few a tick, and those already queued. */
     private static final int TREES_PER_TICK = 32;
+    /** Planning time a tick: past it, the rest wait. The first tree of a tick is always planned. */
+    private static final long TREE_NANOS_PER_TICK = 1_000_000;
     /** Ticks between planning one more tree again while nothing else is waiting. */
     private static final int ROLLING_TICKS = 10;
     private final java.util.ArrayDeque<ItemResource> toPlan = new java.util.ArrayDeque<>();
@@ -501,7 +505,10 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 if (rolling.hasNext()) queue(rolling.next(), false);
             }
             if (!toPlan.isEmpty() && stock == null) stock = horizon.stockWithNetworks(server);
+            StockIndex index = toPlan.isEmpty() ? null : StockIndex.of(stock);
+            long started = System.nanoTime();
             for (int i = 0; i < TREES_PER_TICK && !toPlan.isEmpty(); i++) {
+                if (i > 0 && System.nanoTime() - started >= TREE_NANOS_PER_TICK) break;
                 ItemResource item = toPlan.poll();
                 queued.remove(item);
                 if (!patternFilter.offers(item.toStack(1))) {
@@ -513,7 +520,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                     continue;
                 }
                 // A tree that can't be planned now keeps its last pattern: AE2 says what's missing.
-                ReactorTreePattern tree = planTree(horizon, stock, item);
+                ReactorTreePattern tree = planTree(horizon, stock, index, item);
                 if (tree == null) continue;
                 ReactorTreePattern old = trees.put(item, tree);
                 if (!tree.equals(old)) {
@@ -545,31 +552,51 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
     /**
      * One of {@code item}, planned from {@code stock} without any already made: the whole tree as one
      * pattern. A tool the tree keeps and doesn't make, such as a press, is that item, handed back; a tool
-     * it wears, such as a knife, is any that fits, handed back worn.
+     * it wears, such as a knife, is any that fits, handed back worn. {@code index} is where {@code stock}'s kinds are.
      */
     @Nullable
     private static ReactorTreePattern planTree(HorizonCoreBlockEntity horizon, Map<ItemResource, Long> stock,
-                                               ItemResource item) {
-        Map<ItemResource, Long> without = new HashMap<>(stock);
+                                               StockIndex index, ItemResource item) {
+        // Laid over the stock, not a copy of it: thousands of kinds, for every tree.
+        StockOverlay without = new StockOverlay(stock);
         without.remove(item);
+        List<ItemResource> lent = new ArrayList<>();
+        StockIndex withLent = new StockIndex() {
+            @Override
+            public List<ItemResource> kindsOf(net.minecraft.world.item.Item of) {
+                List<ItemResource> kinds = index.kindsOf(of);
+                if (lent.stream().noneMatch(kind -> kind.is(of))) return kinds;
+                List<ItemResource> all = new ArrayList<>(kinds);
+                for (ItemResource kind : lent) if (kind.is(of) && !all.contains(kind)) all.add(kind);
+                return all;
+            }
+
+            @Override
+            public long order(ItemResource kind) {
+                long at = index.order(kind);
+                return at != Long.MAX_VALUE ? at : Long.MAX_VALUE - lent.size() + lent.indexOf(kind);
+            }
+        };
         // A tool the tree would make for itself, it plans as if one were on hand: the pattern then asks
         // for one, which AE2 makes once and hands over run after run, instead of every run making its own.
         ReactorPlanner.Plan plan = null;
         for (int pass = 0; pass < 3; pass++) {
-            ReactorPlanner.Result result = horizon.plan(without, item, 1);
+            ReactorPlanner.Result result = horizon.plan(without, withLent, item, 1);
             if (!result.planned()) return null;
             plan = result.plan();
-            boolean lent = false;
+            boolean lentOne = false;
             for (ReactorPlanner.Step step : plan.steps()) {
                 for (net.minecraft.world.item.crafting.Ingredient tool : step.shape().tools()) {
-                    if (without.keySet().stream().anyMatch(have -> tool.test(have.toStack(1)))) continue;
+                    if (held(without, withLent, tool) != null) continue;
                     List<net.minecraft.world.item.ItemStack> options = com.kadikular.quantimium.recipe.RecipeCompat.stacks(tool);
                     if (options.isEmpty() || tool.test(item.toStack(1))) continue;
-                    without.put(ItemResource.of(options.getFirst()), 1L);
-                    lent = true;
+                    ItemResource tool_ = ItemResource.of(options.getFirst());
+                    without.put(tool_, 1L);
+                    lent.add(tool_);
+                    lentOne = true;
                 }
             }
-            if (!lent) break;
+            if (!lentOne) break;
         }
         List<ItemResource> kept = new ArrayList<>();
         List<ReactorTreePattern.Worn> worn = new ArrayList<>();
@@ -577,7 +604,7 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
             for (net.minecraft.world.item.crafting.Ingredient tool : step.shape().tools()) {
                 if (step.shape().wears().stream().anyMatch(wears -> wears == tool)) {
                     // Any knife, handed back worn; one the tree still had to make stays as planned.
-                    if (without.keySet().stream().noneMatch(have -> tool.test(have.toStack(1)))) continue;
+                    if (held(without, withLent, tool) == null) continue;
                     int uses = (int) Math.min(Integer.MAX_VALUE, step.runs());
                     int same = -1;
                     for (int i = 0; i < worn.size(); i++) if (worn.get(i).tool() == tool) same = i;
@@ -587,12 +614,27 @@ public class ReactorMePortBlockEntity extends ReactorPortBlockEntity
                 }
                 if (plan.leftovers().keySet().stream().anyMatch(left -> tool.test(left.toStack(1)))) continue; // made
                 if (kept.stream().anyMatch(have -> tool.test(have.toStack(1)))) continue;
-                ItemResource held = without.keySet().stream().filter(have -> tool.test(have.toStack(1))).findFirst().orElse(null);
+                ItemResource held = held(without, withLent, tool);
                 if (held == null) return null;
                 kept.add(held);
             }
         }
         return ReactorTreePattern.of(plan, HorizonCoreBlockEntity.feFor(plan), kept, worn);
+    }
+
+    /** A kind in {@code stock} that {@code tool} takes, looked up by the items it names; null for none. */
+    @Nullable
+    private static ItemResource held(Map<ItemResource, Long> stock, StockIndex index, net.minecraft.world.item.crafting.Ingredient tool) {
+        if (tool.isCustom()) {
+            for (ItemResource have : stock.keySet()) if (tool.test(have.toStack(1))) return have;
+            return null;
+        }
+        for (var holder : (Iterable<net.minecraft.core.Holder<net.minecraft.world.item.Item>>) tool.items()::iterator) {
+            for (ItemResource kind : index.kindsOf(holder.value())) {
+                if (stock.containsKey(kind) && tool.test(kind.toStack(1))) return kind;
+            }
+        }
+        return null;
     }
 
     /** The network has taken the inputs out of storage for this run: they're used up, and the Reactor pays. */

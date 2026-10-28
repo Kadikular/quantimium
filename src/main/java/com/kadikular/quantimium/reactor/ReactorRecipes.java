@@ -64,7 +64,7 @@ public final class ReactorRecipes {
                                      List<Producer> observed) {
         List<Producer> producers = new ArrayList<>(fromCatalysts);
         producers.addAll(observed);
-        Map<ItemResource, List<Producer>> byOutput = new LinkedHashMap<>();
+        Map<ItemResource, List<Producer>> byOutput = ItemKeys.linkedMap();
         for (Producer producer : producers) {
             for (ItemStack output : producer.shape().outputs()) {
                 if (output.isEmpty()) continue;

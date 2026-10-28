@@ -17,7 +17,7 @@ Insert Lens adds the Insert action to a laser. The laser puts what the sending L
 ## How it works
 
 - Moves up to 8 items every 0.5 s. Each <ItemLink id="quantimium:speed_lens" /> doubles that, up to 64.
-- It ramps up and down: each successful move halves its wait (from 4 s down to its own pace), and each look that finds nothing doubles it (up to 2 s).
+- It ramps up and down: each successful move halves its wait (from 4 s down to its own pace), and each look that finds nothing doubles it (up to 4 s, the `laserIdleSeconds` config option).
 - Through an <ItemLink id="quantimium:area_prism" />, each inventory in the area in turn.
 - It does nothing in the mirror.
 

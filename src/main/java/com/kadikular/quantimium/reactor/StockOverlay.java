@@ -14,7 +14,7 @@ import java.util.Map;
 public final class StockOverlay extends java.util.AbstractMap<ItemResource, Long> {
     private final Map<ItemResource, Long> base;
     /** What's changed; 0 for gone. */
-    private final Map<ItemResource, Long> changed = new java.util.HashMap<>();
+    private final Map<ItemResource, Long> changed = ItemKeys.map();
 
     public StockOverlay(Map<ItemResource, Long> base) {
         this.base = base;

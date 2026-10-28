@@ -298,6 +298,64 @@ public final class LaserTimingTests {
                 LaserNetworks.of(helper.getLevel()), () -> cut[0] + " blocks cut", () -> TestSupport.finishLasers(helper));
     }
 
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_insert", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void insertBusy(GameTestHelper helper) {
+        // One beam through a sending Laser Port (cobblestone, topped up each tick) and an Insert mount into a chest,
+        // emptied each tick: moving as fast as it can.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_2.get(), Direction.EAST);
+        var sender = port(helper, new BlockPos(3, Y, 8), true);
+        lensMount(helper, new BlockPos(5, Y, 8), com.kadikular.quantimium.init.ModItems.INSERT_LENS.get());
+        BlockPos chest = new BlockPos(9, Y, 8);
+        helper.setBlock(chest, net.minecraft.world.level.block.Blocks.CHEST);
+        var box = helper.getBlockEntity(chest, net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        int[] moved = {0};
+        helper.onEachTick(() -> {
+            sender.getItems().setStackInSlot(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE, 64));
+            for (int slot = 0; slot < box.getContainerSize(); slot++) {
+                moved[0] += box.getItem(slot).getCount();
+                box.setItem(slot, net.minecraft.world.item.ItemStack.EMPTY);
+            }
+        });
+        TickTiming.measure(helper, new Scenario("laser.insert_busy", "Laser networks",
+                        "One beam with Insert, filling a chest from a Laser Port as fast as it can", 30),
+                LaserNetworks.of(helper.getLevel()), () -> moved[0] + " moved", () -> TestSupport.finishLasers(helper));
+    }
+
+    @GameTest(template = TestSupport.FLOOR_17, batch = "timing_laser_interact_idle", timeoutTicks = TickTiming.TIMEOUT_TICKS)
+    public static void interactIdle(GameTestHelper helper) {
+        // One beam with Interact, sent carrots, wheat and seeds, on a pig that won't eat: waiting to breed again.
+        emitter(helper, new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_2.get(), Direction.EAST);
+        var sender = port(helper, new BlockPos(3, Y, 8), true);
+        sender.getItems().setStackInSlot(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CARROT, 16));
+        sender.getItems().setStackInSlot(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WHEAT, 16));
+        sender.getItems().setStackInSlot(2, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WHEAT_SEEDS, 16));
+        lensMount(helper, new BlockPos(5, Y, 8), com.kadikular.quantimium.init.ModItems.INTERACT_LENS.get());
+        var pig = helper.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.PIG, new BlockPos(8, Y, 8));
+        pig.setAge(6000);
+        helper.setBlock(new BlockPos(11, Y, 8), net.minecraft.world.level.block.Blocks.BEDROCK);
+        TickTiming.measure(helper, new Scenario("laser.interact_idle", "Laser networks",
+                        "One beam with Interact, sent three kinds of food, on a pig that won't eat any", 20),
+                LaserNetworks.of(helper.getLevel()), () -> "pig age " + pig.getAge(), () -> {
+                    TestSupport.finishLasers(helper);
+                    pig.discard();
+                });
+    }
+
+    private static com.kadikular.quantimium.block.entity.LaserPortBlockEntity port(GameTestHelper helper, BlockPos pos, boolean sends) {
+        helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
+        var port = helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
+        if (sends) port.cycleMode();
+        return port;
+    }
+
+    private static void lensMount(GameTestHelper helper, BlockPos pos, net.minecraft.world.item.Item lens) {
+        helper.setBlock(pos, ModBlocks.LENS_MOUNT.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LensMountBlock.FACING, Direction.EAST));
+        helper.getBlockEntity(pos, com.kadikular.quantimium.block.entity.LensMountBlockEntity.class)
+                .getLensSlots().setStackInSlot(0, new net.minecraft.world.item.ItemStack(lens));
+    }
+
     /** Crops mustn't grow while it's timed: random ticks off, put back after. */
     private static Runnable noRandomTicks(GameTestHelper helper) {
         var rules = helper.getLevel().getGameRules();
