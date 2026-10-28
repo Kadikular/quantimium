@@ -12,7 +12,13 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-Pod module that keeps hostile mobs away from the double inside.
+A <ItemLink id="quantimium:superposition_pod" /> module, set in one of the four edges of its <ItemLink id="quantimium:pod_cradle" />. It works while the pod holds one of your doubles.
+
+Keeps hostile mobs and the Veiled off the double. Without a Ward, an unguarded double is knocked out by a mob at the glass after 10 seconds.
+
+Draw: 50 FE/t.
+
+See the [Superposition Pod](../multiblocks/superposition-pod.md) page.
 
 ## Recipes
 

@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-Takes items into the Reactor from pipes and hoppers.
+Takes items into the [Reactor](../multiblocks/reactor.md) from pipes and hoppers. Items go in exactly as they are, data and all.
 
 ## Recipes
 

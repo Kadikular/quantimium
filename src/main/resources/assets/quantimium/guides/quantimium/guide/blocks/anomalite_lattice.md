@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:anomalite_lattice" scale="2" />
 
-Four Anomalite Shards packed together, for sturdier parts.
+The Anomalite Lattice is four <ItemLink id="quantimium:anomalite_shard" />s packed together, for sturdier parts. It crafts back into four shards. See [Anomalite](../mirror/anomalite.md).
 
 ## Recipes
 

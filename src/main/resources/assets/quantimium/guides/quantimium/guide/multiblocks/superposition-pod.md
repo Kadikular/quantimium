@@ -132,7 +132,7 @@ doubles, and the power ones draw from the pod's own buffer.
 | <ItemLink id="quantimium:pod_rescue_module" /> | Lets the pod be your Anchor (above) | – |
 | <ItemLink id="quantimium:pod_regeneration_module" /> | Regeneration I on you | 200 FE/t |
 | <ItemLink id="quantimium:pod_hardening_module" /> | Resistance I on you | 200 FE/t |
-| <ItemLink id="quantimium:pod_ward_module" /> | Keeps what prowls off the double, the Veiled too | 50 FE/t |
+| <ItemLink id="quantimium:pod_ward_module" /> | Keeps hostile mobs and the Veiled off the double | 50 FE/t |
 | <ItemLink id="quantimium:pod_stash_module" /> | Opens your stash from anywhere | – |
 | <ItemLink id="quantimium:pod_charge_module" /> | Charges what holds FE in your inventory | up to 2,000 FE/t |
 | <ItemLink id="quantimium:pod_relay_module" /> | Makes the pod a hub (below) | what it sends |
@@ -148,7 +148,7 @@ While you are online, the pods holding your doubles are kept loaded, so all of t
 away they are (`chunkLoadPods` in the `superposition` config section; off, a pod only works while
 something else keeps its chunk loaded).
 
-**An unguarded double draws what prowls.** Hostile mobs in this world (not mirror mites
+**An unguarded double draws hostile mobs.** Hostile mobs in this world (not mirror mites
 unless they have breached) within
 12 blocks of a pod holding one come for it, and one at the glass
 for 10 seconds knocks the double out: it lies on the floor

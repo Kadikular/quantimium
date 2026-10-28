@@ -12,7 +12,11 @@ item_ids:
 
 <ItemImage id="quantimium:clear_laser_focus" scale="2" />
 
-A Laser Focus that also lets lasers pass straight through. Attachments on the far face can stop it.
+The Clear Laser Focus is a Laser Focus that also lets lasers pass straight through, on out of the opposite face. A Stand or Cover on that face stops it.
+
+A row of machines along one laser can each have a <ItemLink id="quantimium:logistics_receptacle" /> on a Clear Laser Focus, and one laser joins them all.
+
+See [Laser Focus](../lasers/focus.md).
 
 ## Recipes
 

@@ -14,7 +14,7 @@ item_ids:
 
 > *In game:* Opens a rift at Medium+ anomaly or on a Rift Anchor. Lights a Stabilized Portal.
 
-A wound waiting to open, and the way to a rift when the world won't give you one.
+Opens a flux rift where the world won't give you one.
 
 - **On the ground**, it opens a wild stage 1 [flux rift](../mirror/flux-rifts.md), but only
   in an uncontained chunk at Medium anomaly or higher. Anywhere else it fizzles and you keep it.

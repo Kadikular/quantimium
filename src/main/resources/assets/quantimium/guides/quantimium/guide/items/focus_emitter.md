@@ -12,7 +12,13 @@ item_ids:
 
 <ItemImage id="quantimium:focus_emitter" scale="2" />
 
-Sends the laser out of a Laser Focus, through the one lens it holds. Has its own redstone setting.
+The Focus Emitter sends the laser out of a Laser Focus. It holds one lens, which only the laser leaving by it goes through, and its tip takes the lens's color.
+
+- A Harvest Lens on one emitter cuts only there.
+- Each emitter takes 0.5% of what leaves by it, as flux.
+- Each emitter listens to redstone on its own: ignore it, on with a signal, on without one, or pulse. A pulse emitter before a Harvest Lens breaks one block per pulse.
+
+See [Laser Focus](../lasers/focus.md).
 
 ## Recipes
 

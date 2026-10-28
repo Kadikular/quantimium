@@ -1,113 +1,83 @@
 ---
 navigation:
-  title: Flux Maintainer, Anomaly Siphon and Field Regulator
+  title: Field control
   parent: field-control/index.md
   position: 12
 ---
 
-# Flux Maintainer, Anomaly Siphon and Field Regulator
+# Field control
 
-Blocks that hold a chunk's [field](../concepts/flux-and-anomaly.md) where you set it, instead of
-leaving it to whatever your machines happen to do. The **Flux Maintainer** keeps flux up to a floor you
-choose, the **Anomaly Siphon** keeps anomaly down under a ceiling, and the **Field Regulator** does both.
-They are the step up from the <ItemLink id="quantimium:quantum_exciter" /> (which holds Medium, or High when clicked) and the
-<ItemLink id="quantimium:basic_anomaly_siphon" /> (which only ever holds the top of Low).
+*Why leave the field to chance?*
 
-Two early members of the family work the same way: the <ItemLink id="quantimium:basic_anomaly_siphon" />, a fixed, small
-Siphon and the first source of fragments, and the <ItemLink id="quantimium:flux_suppressor" />, which holds **flux** under
-a ceiling for firebreaks and starving rifts.
+Field control blocks hold a chunk's [field](../concepts/flux-and-anomaly.md) where you set it, instead of leaving it to whatever your machines happen to do.
 
-| Tier | Flux up | Flux down | Anomaly down (fragments) |
-| --- | --- | --- | --- |
-| Early | <ItemLink id="quantimium:quantum_exciter" /> | <ItemLink id="quantimium:flux_suppressor" /> | <ItemLink id="quantimium:basic_anomaly_siphon" /> |
-| Mid | Flux Maintainer | – | Anomaly Siphon |
-| Late | Field Regulator (both) | – | [Containment Hall](../multiblocks/containment-hall.md) |
+| Block | Does | Tier |
+| --- | --- | --- |
+| <ItemLink id="quantimium:quantum_exciter" /> | Raises flux to hold Medium (High when clicked) | Low |
+| <ItemLink id="quantimium:flux_suppressor" /> | Holds flux under a ceiling | Low |
+| <ItemLink id="quantimium:basic_anomaly_siphon" /> | Holds anomaly at the top of Low. Yields fragments | Low |
+| <ItemLink id="quantimium:flux_maintainer" /> | Holds flux at a floor you set | Mid |
+| <ItemLink id="quantimium:anomaly_siphon" /> | Holds anomaly under a ceiling you set. Yields fragments | Mid |
+| <ItemLink id="quantimium:field_regulator" /> | Both of the above, for less power | High |
+| [Containment Hall](../multiblocks/containment-hall.md) | Holds a rated band and pulls anomaly | High |
+| <ItemLink id="quantimium:flux_detector" /> | Turns a band into redstone | Low |
+| <ItemLink id="quantimium:field_monitor" /> | Maps nearby chunks and sounds an alarm | Low |
 
 ![The Flux Maintainer](../assets/gui/flux_maintainer.png)
 
+## Maintainer, Siphon and Regulator
+
 | | Flux Maintainer | Anomaly Siphon | Field Regulator |
 | --- | --- | --- | --- |
-| Tier | Mid | Mid | Late mid |
 | Holds flux at least | Medium, High or Critical | – | Medium, High or Critical |
 | Keeps anomaly at most | – | Low, Medium, High or Clear | Low, Medium, High or Clear |
 | Draw while raising | 10,000 FE/t | – | 80% of that |
 | Draw while pulling | – | 160 FE/t | 80% of that |
 | Anomaly Fragments | – | Yes | Yes |
 
-All three have a 2,000,000 FE buffer taking up to
-40,000 FE/t, read their own chunk twice a second, and say what
-they are doing: **Holding**, **Raising**, **Pulling**, both, or **No power**. They work in proportion to
-how far off the field is, so they settle rather than switching on and off.
+- All three have a 2,000,000 FE buffer taking up to 40,000 FE/t.
+- They read their own chunk twice a second and say what they are doing: **Holding**, **Raising**, **Pulling**, both, or **No power**.
+- They work in proportion to how far off the field is, so they settle rather than switching on and off.
 
-## Holding flux up
+### Holding flux up
 
-Set the floor with the **floor** tab on the left. It raises flux toward
-4 times the floor band's start, flat out at no flux and easing
-off as it gets there. It counts flux still easing into its chunk, so it doesn't overshoot. It settles a
-little under its target, inside the band: for Medium, round 300 of a 400 target. It shows **Raising**
-while the chunk is below the floor and **Holding** once it's in the band, even though it keeps topping
-it up.
+Set the floor with the **floor** tab on the left.
 
-It raises with **pure flux**, at the Exciter's 10× yield: no anomaly
-comes with it. Uncontained flux still couples into anomaly over time, as it always does, which is why the
-Siphon exists.
+- It raises flux toward 4 times the floor band's start, flat out at no flux and easing off as it gets there. It counts flux still easing into its chunk, so it doesn't overshoot.
+- It settles a little under its target, inside the band: for Medium, round 300 of a 400 target.
+- It shows **Raising** while the chunk is below the floor and **Holding** once it is in the band, even though it keeps topping it up.
+- It raises with **pure flux**, at the Exciter's 10× yield: no anomaly comes with it. Uncontained flux still couples into anomaly over time, which is why the Siphon exists.
+- **What it can hold.** Flat out, a Maintainer puts about as much flux into its chunk as 100,000 FE/t of ordinary work. One holds High comfortably and Critical at the low end of the band.
 
-**What it can hold.** Flat out, a Maintainer puts about as much flux into its chunk as 100,000 FE/t of
-ordinary work, so one holds High comfortably and Critical at the low end of the band.
+### Holding anomaly down
 
-## Holding anomaly down
+Set the ceiling with the **ceiling** tab on the left: **Low**, **Medium**, **High** or **Clear**.
 
-Set the ceiling with the **ceiling** tab on the left: **Low**, **Medium**, **High** or **Clear**. It
-holds anomaly in **every chunk of the 3×3 around it** just under the top of that band, clear of the
-edge: 80 for Low, 800 for Medium, 8,000 for High. Clear holds it at nothing, as containment would,
-bar a trace drifting in each second from chunks outside its reach. It pulls **anomaly only**, like a
-[hall](../multiblocks/containment-hall.md), so the flux you built up stays: up to
-6,000 a second from the 3×3 around it, a fifth of that from
-its own chunk, twelve times a Basic Siphon's pull for four times its power.
+- It holds anomaly in **every chunk of the 3×3 around it** just under the top of that band, clear of the edge: 80 for Low, 800 for Medium, 8,000 for High. Clear holds it at nothing, as containment would, bar a trace drifting in each second from chunks outside its reach.
+- It pulls **anomaly only**, like a [hall](../multiblocks/containment-hall.md), so the flux you built up stays.
+- It pulls up to 6,000 a second from the 3×3 around it, a fifth of that from its own chunk: twelve times a Basic Siphon's pull for four times its power.
+- **It lands on its mark and stays.** Each second it asks the field to take only what each chunk has over its mark, and the field takes it in its own once-a-second step, after the climb it answers. A chunk comes down to the mark and sits there, with no swing past it and no saw-tooth within the second. It draws power in proportion to what it takes.
+- Beside a 10,000 FE/t workshop, a Low Siphon holds every chunk around it at 80 and never switches off.
+- What it pulls becomes <ItemLink id="quantimium:anomaly_fragment" />s, one per 24,000, into a slot pipes and hoppers can take from. A full slot voids the surplus.
 
-**It lands on its mark and stays.** Each second it asks the field to take
-only what each chunk has over its mark, and the field takes it in its own once-a-second step, after
-the climb it answers. So a chunk comes down to the mark and sits there, with no swing past it and no
-saw-tooth within the second. It draws power in proportion to what it takes.
+### Both at once
 
-Beside a 10,000 FE/t workshop, a Low Siphon holds every chunk around it
-at 80 and never switches off.
+The Field Regulator is a Maintainer and a Siphon in one block, with both tabs, at **80%** of their FE. It is the natural partner of a high-flux base: flux held where your crafts need it, anomaly kept from building up behind it.
 
-What it pulls it turns into <ItemLink id="quantimium:anomaly_fragment" />s, one per 24,000,
-into a slot pipes and hoppers can take from. A full slot voids the surplus.
-
-## Both at once
-
-The Field Regulator is a Maintainer and a Siphon in one block, with both tabs,
-at **80%** of their FE. It is the natural partner of a high-flux base: flux held where your crafts need it,
-anomaly kept from building up behind it.
-
-Each tab steps through its bands and round again; each block has only the
-tabs for what it does.
-
-Short of power for what it has to do, a block says **No power** and does nothing.
+- Each tab steps through its bands and round again. Each block has only the tabs for what it does.
+- Short of power for what it has to do, a block says **No power** and does nothing.
 
 ![The Field Regulator](../assets/gui/field_regulator.png)
 
 ## In a Quantum Simulator
 
-Taken into a [Quantum Simulator](../machines/quantum-simulator.md), each block holds the
-Simulator's chunk to the same setpoints, and every copy in the batch works: at 8× a Maintainer raises
-flux eight times as fast and a Siphon pulls eight times as much. The Simulator pays for every copy, plus
-its 20% overhead, and only while the block is raising or pulling; holding costs nothing.
+Taken into a [Quantum Simulator](../machines/quantum-simulator.md), each block holds the Simulator's chunk to the same setpoints, and every copy in the batch works: at 8× a Maintainer raises flux eight times as fast and a Siphon pulls eight times as much. The Simulator pays for every copy, plus its 20% overhead, and only while the block is raising or pulling. Holding costs nothing.
 
-- The Simulator emits its own flux for what it is charged, on top of the Maintainer's pure flux, and that
-  brings a little anomaly with it. A simulated Siphon keeps the anomaly under its ceiling, but may rest a
-  little above where it stops pulling.
-- Fragments come out into the Simulator's outputs, one for every
-  24,000 pulled, as in the world. They arrive a batch at a time:
-  each copy makes one when its share of the pull comes to that much.
+- The Simulator emits its own flux for what it is charged, on top of the Maintainer's pure flux, and that brings a little anomaly with it. A simulated Siphon keeps the anomaly under its ceiling, but may rest a little above where it stops pulling.
+- Fragments come out into the Simulator's outputs, one for every 24,000 pulled, as in the world. They arrive a batch at a time: each copy makes one when its share of the pull comes to that much.
 
 ## Recipes
 
-- **Flux Maintainer:** a <ItemLink id="quantimium:quantum_exciter" /> in four glowstone, on polished deepslate with a block of
-  redstone.
-- **Anomaly Siphon:** a <ItemLink id="quantimium:basic_anomaly_siphon" /> in four <ItemLink id="quantimium:anomaly_fragment" />s, on polished
-  deepslate with a block of redstone.
-- **Field Regulator:** a Flux Maintainer and an Anomaly Siphon either side of a nether star, with two
-  <ItemLink id="quantimium:tesseract" />s and four Anomaly Fragments.
+- **Flux Maintainer:** a <ItemLink id="quantimium:quantum_exciter" /> in four glowstone, on polished deepslate with a block of redstone.
+- **Anomaly Siphon:** a <ItemLink id="quantimium:basic_anomaly_siphon" /> in four <ItemLink id="quantimium:anomaly_fragment" />s, on polished deepslate with a block of redstone.
+- **Field Regulator:** a Flux Maintainer and an Anomaly Siphon either side of a nether star, with two <ItemLink id="quantimium:tesseract" />s and four Anomaly Fragments.

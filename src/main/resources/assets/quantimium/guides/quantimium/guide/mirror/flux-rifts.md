@@ -2,7 +2,7 @@
 navigation:
   title: Flux rifts
   parent: mirror/index.md
-  position: 36
+  position: 37
 ---
 
 # Flux rifts

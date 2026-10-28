@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:basic_decoherence_matrix" scale="2" />
 
-Crafting component of the Basic Quantum Crafter.
+The Basic Decoherence Matrix is an ender eye held in four <ItemLink id="quantimium:quantimium_trace" />s. It is the core of the <ItemLink id="quantimium:basic_quantum_crafter" />, and goes into the <ItemLink id="quantimium:decoherence_lance" />.
 
 ## Recipes
 

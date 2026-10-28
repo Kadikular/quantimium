@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:creative_energy_void" scale="2" />
 
-Creative only. Voids all the power it is given.
+Creative only. The Creative Energy Void takes all the FE it is given, on any face, and keeps none. Use it to test generators.
 
 ## Recipes
 

@@ -1,6 +1,6 @@
 # Field control
 
-*Why leave the weather to chance?*
+*Why leave the field to chance?*
 
 Field control blocks hold a chunk's [field](../concepts/flux-and-anomaly.md) where you set it, instead of leaving it to whatever your machines happen to do.
 

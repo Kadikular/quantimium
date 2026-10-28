@@ -7,7 +7,7 @@ navigation:
 
 # Side configuration
 
-Quantimium's automated machines let you decide, face by face, what pipes, hoppers and neighboring
+Quantimium's automated machines let you set, face by face, what pipes, hoppers and neighboring
 machines can put in and take out. The same **Sides** page is used on every machine
 that has one, and a wrench can change it without opening anything.
 

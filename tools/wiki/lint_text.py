@@ -41,7 +41,7 @@ BRITISH = {
     r"initialis": "initializ", r"polaris": "polariz", r"finalis": "finaliz", r"recognis": "recogniz", r"colour": "color", r"\bgrey": "gray", r"centre": "center",
     r"neighbour": "neighbor", r"behaviour": "behavior", r"organis": "organiz", r"\bmetre": "meter",
     r"realis(?:e|ed|ing|ation)": "realiz", r"unrealis": "unrealiz", r"analys(?:e|ed)": "analyz",
-    r"favour": "favor", r"armour": "armor", r"\bwhilst\b": "while", r"\bround\b(?= (?:the|it|them|each|a|an|its|their|his|her|you)\b)": "around",
+    r"favour": "favor", r"centerd": "centered", r"armour": "armor", r"\bwhilst\b": "while", r"\bround\b(?= (?:the|it|them|each|a|an|its|their|his|her|you)\b)": "around",
 }
 # Names that are spelled the British way in the mod's own vocabulary and kept: none, today.
 KEEP: List[str] = []

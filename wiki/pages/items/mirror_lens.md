@@ -1,5 +1,5 @@
 Goggles that let a slice of the mirror into the real world. Wear them in the head slot and the
-[field](../concepts/flux-and-anomaly.md) around you shows, not as numbers but as weather: air that
+[field](../concepts/flux-and-anomaly.md) around you shows, not as numbers but as air that
 thickens, rare plumes worth stopping for, and anomaly as a dark ink that pools, leaks and is drawn into
 whatever eats it. Through the lens it is toned down; inside the [mirror](../mirror/mirror-phase.md)
 you see all of it without one, far more intense.

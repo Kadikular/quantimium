@@ -31,10 +31,15 @@ through them.
 The mod's art follows the same split: azure is anything built, violet is anything that grew. See
 [Machine tiers](concepts/tiers.md).
 
+## Sections
+
+- **[Concepts](concepts/flux-and-anomaly.md):** flux and anomaly, machine tiers, side configuration, partner mods.
+- **[Machines](machines/quantum-crafter.md)** and **[Field control](field-control/overview.md):** the single-block machines.
+- **[Multiblocks](multiblocks/quantum-foundry.md):** the Foundry, Containment Hall, Fold Chamber, Superposition Pod and Reactor.
+- **[Lasers](lasers/overview.md):** emitters, mirrors, prisms and the lenses that give a laser a job.
+- **[The mirror](mirror/mirror-phase.md):** the mirror phase, [Anomalite](mirror/anomalite.md), the Veiled, rifts.
+- **[Blocks](blocks/index.md)** and **[Items](items/index.md):** every block and item, with recipes.
+
 ## About this wiki
 
-Most of it is generated from the mod itself: every block and item page, every recipe, and every
-number quoted from the code. The written pages mark each rule they describe with a badge like
-<span class="qmech qmech-untested">untested</span> showing whether an in-game test backs it; the
-[coverage report](reference/coverage.md) lists them all. See
-[Writing the wiki](guides/writing-the-wiki.md) to add to it.
+Most of it is generated from the mod itself: every block and item page, every recipe, and every number quoted from the code. Each page that states rules ends with a collapsed **Tests** table showing which in-game test backs each rule. The [coverage report](reference/coverage.md) lists them all. See [Writing the wiki](guides/writing-the-wiki.md) to add to it.

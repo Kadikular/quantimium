@@ -8,4 +8,4 @@ navigation:
 
 # Field control
 
-- [Flux Maintainer, Anomaly Siphon and Field Regulator](overview.md)
+- [Field control](overview.md)
