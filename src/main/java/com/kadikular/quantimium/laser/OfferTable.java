@@ -640,18 +640,6 @@ public final class OfferTable {
                     }
                     continue;
                 }
-                Map<ItemResource, long[]> listing = member.listing();
-                if (listing != null) {
-                    // A Reactor's port: what it holds is real, what it could make is craftable, already worked out.
-                    listing.forEach((item, both) -> {
-                        if (both[0] > 0) real.merge(item, both[0], Long::sum);
-                        if (both[1] > 0 && member.offersCraftable()) {
-                            offer(craftable, item, pos, new Source(both[1], Set.of(), false));
-                            tiers.merge(item, 1, Math::min);
-                        }
-                    });
-                    continue;
-                }
                 // Fluids, as fluid entries counted in mB.
                 net.neoforged.neoforge.fluids.capability.IFluidHandler tanks = member.fluids();
                 if (tanks != null) {
@@ -660,6 +648,20 @@ public final class OfferTable {
                         if (there.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(there)) continue;
                         real.merge(ItemResource.of(com.kadikular.quantimium.recipe.FluidEntry.of(there)), (long) there.getAmount(), Long::sum);
                     }
+                }
+                Map<ItemResource, long[]> listing = member.listing();
+                if (listing != null) {
+                    // A Reactor's port: what it holds is real, what it could make is craftable, already worked out.
+                    listing.forEach((item, both) -> {
+                        // Fluids are read from its tanks, above.
+                        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) return;
+                        if (both[0] > 0) real.merge(item, both[0], Long::sum);
+                        if (both[1] > 0 && member.offersCraftable()) {
+                            offer(craftable, item, pos, new Source(both[1], Set.of(), false));
+                            tiers.merge(item, 1, Math::min);
+                        }
+                    });
+                    continue;
                 }
                 IItemHandler inventory = member.inventory();
                 if (inventory == null) continue;

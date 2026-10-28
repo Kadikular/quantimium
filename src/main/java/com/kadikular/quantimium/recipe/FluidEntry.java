@@ -24,6 +24,30 @@ public final class FluidEntry {
         return entry.is(ModItems.FLUID_ENTRY.get());
     }
 
+    /** Whether {@code key} stands for a fluid: how stock kept by item (a Reactor's) keeps fluids, counted in mB. */
+    public static boolean is(net.neoforged.neoforge.transfer.item.ItemResource key) {
+        return key.is(ModItems.FLUID_ENTRY.get());
+    }
+
+    /** The key stock kept by item keeps {@code fluid} under. */
+    public static net.neoforged.neoforge.transfer.item.ItemResource key(net.neoforged.neoforge.transfer.fluid.FluidResource fluid) {
+        return net.neoforged.neoforge.transfer.item.ItemResource.of(of(fluid.toStack(1)));
+    }
+
+    /** The fluid a key stands for; empty for an item's. */
+    public static net.neoforged.neoforge.transfer.fluid.FluidResource fluid(net.neoforged.neoforge.transfer.item.ItemResource key) {
+        if (!is(key)) return net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        var fluid = key.get(com.kadikular.quantimium.init.ModDataComponents.FLUID_ENTRY.get());
+        return fluid == null ? net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY : fluid;
+    }
+
+    /** What matches an entry of any of {@code fluids}: a fluid ingredient, for stock kept by item. */
+    public static net.minecraft.world.item.crafting.Ingredient ingredient(java.util.List<net.minecraft.world.level.material.Fluid> fluids) {
+        java.util.List<net.minecraft.world.item.crafting.Ingredient> each = new java.util.ArrayList<>(fluids.size());
+        for (var fluid : fluids) each.add(net.neoforged.neoforge.common.crafting.DataComponentIngredient.of(true, of(new FluidStack(fluid, 1))));
+        return each.size() == 1 ? each.getFirst() : net.neoforged.neoforge.common.crafting.CompoundIngredient.of(each.toArray(net.minecraft.world.item.crafting.Ingredient[]::new));
+    }
+
     /** The fluid an entry stands for, or empty for an item entry. */
     public static FluidStack fluidOf(ItemStack entry) {
         if (entry.isEmpty() || !is(entry)) return FluidStack.EMPTY;

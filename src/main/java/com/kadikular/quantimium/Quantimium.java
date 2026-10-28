@@ -253,6 +253,13 @@ public class Quantimium {
                 ModBlockEntities.REACTOR_PORT_BE.get(),
                 (be, context) -> be.energyHandler()
         );
+
+        // An Input port takes fluids into the horizon, a Materializer Port gives them out.
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.REACTOR_PORT_BE.get(),
+                (be, context) -> be.fluidHandler()
+        );
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,
                 ModBlockEntities.REACTOR_PORT_BE.get(),

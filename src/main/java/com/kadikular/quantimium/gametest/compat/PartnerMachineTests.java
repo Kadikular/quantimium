@@ -115,6 +115,27 @@ public final class PartnerMachineTests {
         });
     }
 
+    // covers: reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_reactor_fluids", timeoutTicks = 40)
+    public static void aReactorMakesFromHeldFluids(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        clear(helper);
+        HorizonCoreBlockEntity horizon = ReactorTests.buildReactor(helper, 1);
+        ReactorTests.bay(helper, ReactorTests.CORE.north(2), item("energizedpower:stone_solidifier"));
+        horizon.revalidate(helper.getLevel());
+        horizon.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        BlockPos core = helper.absolutePos(ReactorTests.CORE);
+        HorizonCoreBlockEntity.serverTick(helper.getLevel(), core, helper.getLevel().getBlockState(core), horizon);
+        var water = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.WATER));
+        var lava = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA));
+        horizon.take(water, 4_000);
+        horizon.take(lava, 4_000);
+        var result = horizon.request(ItemResource.of(net.minecraft.world.item.Items.ANDESITE), 1);
+        helper.assertTrue(result.planned(), "andesite from held water and lava: " + result.problem());
+        helper.assertTrue(horizon.getLedger().count(water) < 4_000 && horizon.getLedger().count(lava) < 4_000, "water and lava used");
+        helper.succeed();
+    }
+
     // covers: crafter.fluids
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_productivebees_bottler", timeoutTicks = 60)
     public static void theBottlerInTheCrafter(GameTestHelper helper) {

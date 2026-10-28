@@ -99,6 +99,95 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         return output;
     }
 
+    /** What the fluid capability offers, by kind: fluids into the horizon (Input), or out of it, made if need be (Materializer). */
+    @Nullable
+    public ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidHandler() {
+        return switch (kind()) {
+            case INPUT -> inputFluids;
+            case MATERIALISER -> materialiserFluids;
+            default -> null;
+        };
+    }
+
+    /** Fluids into the horizon: the Input port's handler, given each fluid as its entry. */
+    private final ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> inputFluids = new ResourceHandler<>() {
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            return net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            return 0;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return input.getCapacityAsLong(0, ItemResource.EMPTY) * net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return !resource.isEmpty() && input.isValid(0, com.kadikular.quantimium.recipe.FluidEntry.key(resource));
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            return resource.isEmpty() ? 0 : input.insert(0, com.kadikular.quantimium.recipe.FluidEntry.key(resource), amount, transaction);
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            return 0;
+        }
+    };
+
+    /** The horizon's fluids: the Materializer Port's handler, a tank each fluid held or makeable, given each as its entry. */
+    private final ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> materialiserFluids = new ResourceHandler<>() {
+        @Override
+        public int size() {
+            materialiser.size();
+            return materialiser.fluidSlots.size() + 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            var slots = materialiser.fluidSlots;
+            return index >= 0 && index < slots.size() ? com.kadikular.quantimium.recipe.FluidEntry.fluid(slots.get(index)) : net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            var amounts = materialiser.fluidAmounts;
+            return index >= 0 && index < amounts.size() ? amounts.get(index) : 0;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return !resource.isEmpty() && materialiser.isValid(0, com.kadikular.quantimium.recipe.FluidEntry.key(resource));
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            return resource.isEmpty() ? 0 : materialiser.insert(com.kadikular.quantimium.recipe.FluidEntry.key(resource), amount, transaction);
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            return resource.isEmpty() ? 0 : materialiser.extract(com.kadikular.quantimium.recipe.FluidEntry.key(resource), amount, transaction);
+        }
+    };
+
     /** What the item capability offers, by kind. */
     @Nullable
     public ResourceHandler<ItemResource> itemHandler() {
@@ -218,6 +307,12 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             return horizon == null ? 0 : Math.max(0, horizon.room() - pendingTotal());
         }
 
+        /** As much of {@code amount} of {@code resource} as there's room for, after what's pending. */
+        private int fitting(HorizonCoreBlockEntity horizon, ItemResource resource, int amount) {
+            long room = Math.max(0, horizon.room() - pendingTotal());
+            return (int) Math.min(amount, com.kadikular.quantimium.reactor.ReactorLedger.fits(resource, room));
+        }
+
         @Override
         public boolean isValid(int index, ItemResource resource) {
             HorizonCoreBlockEntity horizon = core();
@@ -229,7 +324,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             if (resource.isEmpty() || amount <= 0) return 0;
             HorizonCoreBlockEntity horizon = core();
             if (horizon == null || !horizon.accepts()) return 0;
-            int taken = (int) Math.min(amount, Math.max(0, horizon.room() - pendingTotal()));
+            int taken = fitting(horizon, resource, amount);
             if (taken <= 0) return 0;
             updateSnapshots(transaction);
             pending.add(new Pending(resource, taken));
@@ -243,7 +338,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
 
         private long pendingTotal() {
             long total = 0;
-            for (Pending entry : pending) total += entry.amount();
+            for (Pending entry : pending) total += com.kadikular.quantimium.reactor.ReactorLedger.weight(entry.item(), entry.amount());
             return total;
         }
 
@@ -302,6 +397,9 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         private com.kadikular.quantimium.reactor.ReactorCounter.Counts slotsFrom;
         private List<ItemResource> slots = List.of();
         private List<Long> amounts = List.of();
+        /** Its fluids, as their entries, shown through the fluid handler rather than as items. */
+        private List<ItemResource> fluidSlots = List.of();
+        private List<Long> fluidAmounts = List.of();
         private record AnswerKey(ItemResource item, int amount) {
             @Override
             public int hashCode() {
@@ -338,12 +436,17 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             slotsFrom = counts;
             List<ItemResource> items = new ArrayList<>(counts.counts().size());
             List<Long> values = new ArrayList<>(counts.counts().size());
+            List<ItemResource> fluids = new ArrayList<>();
+            List<Long> fluidValues = new ArrayList<>();
             counts.counts().forEach((item, amount) -> {
-                items.add(item);
-                values.add(amount);
+                boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(item);
+                (fluid ? fluids : items).add(item);
+                (fluid ? fluidValues : values).add(amount);
             });
             slots = items;
             amounts = values;
+            fluidSlots = fluids;
+            fluidAmounts = fluidValues;
         }
 
         @Override
@@ -389,9 +492,9 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             if (horizon == null || !horizon.accepts()) return 0;
             long pending = 0;
             for (Op op : ops) {
-                if (op.plan() == null) pending += op.amount();
+                if (op.plan() == null) pending += com.kadikular.quantimium.reactor.ReactorLedger.weight(op.item(), op.amount());
             }
-            int taken = (int) Math.min(amount, Math.max(0, horizon.room() - pending));
+            int taken = (int) Math.min(amount, com.kadikular.quantimium.reactor.ReactorLedger.fits(resource, Math.max(0, horizon.room() - pending)));
             if (taken <= 0) return 0;
             updateSnapshots(transaction);
             ops.add(new Op(resource, taken, null, 0));

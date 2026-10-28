@@ -51,6 +51,12 @@ Nothing it holds is ever at risk: a full horizon refuses more, and an unpowered 
 
 Items go in exactly as they are, data and all, through Input ports, the Materializer Port, or both. Nothing merges or breaks down by itself: a hopper stays a hopper, and iron blocks, ingots and nuggets are three different things until a crafting table in a bay turns one into another.
 
+[[mechanic:reactor.fluids]] **Fluids** go in through an Input port's fluid handler and come out through the Materializer Port's, counted in mB. Against what the horizon holds, a bucket's worth (1,000 mB) counts as one item.
+
+- Recipes that take or make fluids run as any others: andesite from water and lava in an Energized Power Stone Solidifier.
+- Buckets fill and empty with no catalyst: a recipe wanting a water bucket is met from water and an empty bucket, and a lava bucket held is lava on offer.
+- On a logistics network through a Reactor Logistics Port, its fluids show in the terminal, and with sharing on it makes from the network's fluids too.
+
 [[mechanic:reactor.counts.reachable]] The core's screen shows one list, like an ME terminal: everything it holds, and everything it could make from what it holds, with how many. Anything it can't make right now isn't listed. Sort it by count or by name and search it. The tooltip splits what is held from what could be made.
 
 [[mechanic:reactor.counts.live]] It recounts whenever what it holds or its catalysts change, at most once a second, off the server thread.
@@ -86,7 +92,7 @@ Items go in exactly as they are, data and all, through Input ports, the Material
 
 ## The Materializer Port
 
-[[mechanic:reactor.materialiser_port]] A pipe or a storage bus on a **Materializer Port** sees everything in the core's list, with its counted amount, as if it were all there. Taking something makes it, exactly: the Reactor plans what was asked, gives as many as really can be made and paid for, and uses nothing until the transfer goes through. Pipes and storage buses can put items in through it too, unless a pack turns that off (`reactor.materialiserPortAcceptsItems`).
+[[mechanic:reactor.materialiser_port]] A pipe or a storage bus on a **Materializer Port** sees everything in the core's list, with its counted amount, as if it were all there. Taking something makes it, exactly: the Reactor plans what was asked, gives as many as really can be made and paid for, and uses nothing until the transfer goes through. Pipes and storage buses can put items in through it too, unless a pack turns that off (`reactor.materialiserPortAcceptsItems`). Fluids go the same way through its fluid handler: one taken that isn't held is made, from a held bucket of it, say.
 
 [[mechanic:reactor.materialiser_port.ae2]] On an [AE2](../concepts/partner-mods.md) network, one storage bus on the port shows the whole list in the terminal as stock.
 

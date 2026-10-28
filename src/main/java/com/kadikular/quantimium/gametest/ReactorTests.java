@@ -410,6 +410,54 @@ public final class ReactorTests {
         });
     }
 
+    // covers: reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "reactor_fluids", timeoutTicks = 40)
+    public static void fluidsGoInAndOutAndFillBuckets(GameTestHelper helper) {
+        HorizonCoreBlockEntity core = buildReactor(helper, 1);
+        BlockPos portPos = CORE.below().east(5);
+        helper.setBlock(portPos, ModBlocks.REACTOR_MATERIALISER_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        var waterKey = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.WATER));
+        var lava = net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA);
+        helper.runAfterDelay(2, () -> {
+            var input = helper.getLevel().getCapability(Capabilities.Fluid.BLOCK, helper.absolutePos(INPUT), null);
+            helper.assertTrue(input != null, "the Input port takes fluids");
+            try (Transaction tx = Transaction.openRoot()) {
+                helper.assertValueEqual(input.insert(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.WATER), 2_500, tx),
+                        2_500, "water offered");
+                tx.commit();
+            }
+            helper.assertValueEqual(core.getLedger().count(waterKey), 2_500L, "2,500 mB of water held");
+            helper.assertValueEqual(core.getLedger().mass(), 3L, "weighing three items: a bucket's worth an item, rounded up");
+            core.take(ItemResource.of(Items.BUCKET), 2);
+            core.take(ItemResource.of(Items.LAVA_BUCKET), 1);
+        });
+        helper.runAfterDelay(4, () -> {
+            // Buckets fill from what's held, with no catalyst.
+            var filled = core.request(ItemResource.of(Items.WATER_BUCKET), 2);
+            helper.assertTrue(filled.planned(), "two water buckets filled: " + filled.problem());
+            helper.assertValueEqual(core.getLedger().count(waterKey), 500L, "2,000 mB used");
+            core.recountNow();
+            // The lava in a bucket is on offer as a fluid through the Materializer Port, emptied out when taken.
+            var port = helper.getLevel().getCapability(Capabilities.Fluid.BLOCK, helper.absolutePos(portPos), null);
+            helper.assertTrue(port != null, "the Materializer Port has a fluid handler");
+            int got;
+            try (Transaction tx = Transaction.openRoot()) {
+                got = port.extract(lava, 1_000, tx);
+                tx.commit();
+            }
+            helper.assertValueEqual(got, 1_000, "a bucket of lava taken");
+            helper.assertValueEqual(core.getLedger().count(ItemResource.of(Items.LAVA_BUCKET)), 0L, "emptied out of its bucket");
+            var items = helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(portPos), null);
+            for (int i = 0; i < items.size(); i++) {
+                helper.assertTrue(!com.kadikular.quantimium.recipe.FluidEntry.is(items.getResource(i)), "no fluid among its items");
+            }
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: reactor.counts.speed
     @GameTest(template = TestSupport.FLOOR_17, batch = "reactor_speed", timeoutTicks = 200)
     public static void aFullMaterialiserPortIsCheapToRead(GameTestHelper helper) {

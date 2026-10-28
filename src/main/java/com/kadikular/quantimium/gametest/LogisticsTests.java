@@ -747,6 +747,36 @@ public final class LogisticsTests {
         return net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(item));
     }
 
+    // covers: laser.logistics.reactor, reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor_fluids", timeoutTicks = 100)
+    public static void theReactorSharesFluidsWithTheNetwork(GameTestHelper helper) {
+        // Water in a Laser Tank on the network; lava and two empty buckets in the Reactor. It fills buckets with the
+        // network's water, and the network lists the Reactor's lava.
+        var core = ReactorTests.buildReactor(helper, 1);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        BlockPos tankAt = portAt.east(2).above();
+        helper.setBlock(tankAt, ModBlocks.LASER_TANK.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserTankBlock.FACING, Direction.EAST));
+        var tank = helper.getBlockEntity(tankAt, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        tank.tanks().set(0, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000));
+        TestSupport.receptacle(helper, portAt.east(2), net.minecraft.core.Direction.UP);
+        var controller = controller(helper, portAt.east(3), Direction.WEST, true);
+        var lava = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA));
+        core.take(lava, 3_000);
+        core.take(resource(Items.BUCKET), 2);
+        helper.runAfterDelay(30, () -> {
+            var filled = core.request(resource(Items.WATER_BUCKET), 2);
+            helper.assertTrue(filled.planned(), "water buckets from the network's water: " + filled.problem());
+            helper.assertValueEqual(tank.tanks().get(0).getAmount(), 2_000, "2,000 mB out of the network's tank");
+            var listed = com.kadikular.quantimium.laser.OfferTable.storedNow(controller, controller.getBlockPos(), controller.members());
+            helper.assertValueEqual(listed.get(lava), 3_000L, "the network lists the Reactor's lava");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.reactor
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 100)
     public static void theReactorMakesWithWhatTheNetworkShares(GameTestHelper helper) {

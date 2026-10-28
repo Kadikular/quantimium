@@ -36,6 +36,9 @@
   Productive Bees' Bottler. A bucket used on the Crafter fills or empties its tanks.
 - **The Logistics Materializer offers the network's fluids** through a fluid handler, so a Crafter's Tesseract bound to
   it makes from the network's fluids. Fluids are no longer shown to pipes as items.
+- **The Reactor holds fluids**, a bucket weighing as an item: in through an Input port, out through the Materializer
+  Port (made if need be), and to a logistics network through its Logistics Port, drawing on the network's fluids too.
+  Its recipes take and make fluids, and buckets fill and empty with no catalyst.
 - Fluid gauges are marked like a measuring jug.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
