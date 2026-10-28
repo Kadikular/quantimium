@@ -23,10 +23,6 @@ Its body exists only in the [mirror](../concepts/mirror-phase.md). Players in th
 see it directly, only **sightings**: a dark silhouette that appears on the landscape for one
 player at a time and fades when watched.
 
-!!! info "Every rule on this page is marked"
-    Badges like [[mechanic:veiled.release]] show whether an in-game test backs the rule next
-    to them. See [Mechanics coverage](../reference/coverage.md).
-
 ## At a glance
 
 | State | What it is doing | How it gets there |
