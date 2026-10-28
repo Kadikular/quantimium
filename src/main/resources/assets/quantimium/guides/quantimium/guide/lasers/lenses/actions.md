@@ -2,7 +2,7 @@
 navigation:
   title: Action lenses
   parent: lasers/index.md
-  position: 26
+  position: 28
 ---
 
 # Action lenses

@@ -166,7 +166,7 @@ GuideME, the recipe isn't there and nothing else changes.
 ## Shaders (Iris)
 
 With [Iris](https://modrinth.com/mod/iris) and a shader pack, Quantimium tells Iris how to draw its own
-effects, so the Reactor's horizon, Tesseract shells, beams and glows all show. Support is partial for
+effects, so the Reactor's horizon, Tesseract shells, lasers and glows all show. Support is partial for
 now:
 
 - glows and fades can show hard, triangular edges instead of fading out smoothly;

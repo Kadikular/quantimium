@@ -1,4 +1,4 @@
-The one tool that reaches into the rift. Held from the [mirror](../mirror/mirror-phase.md), its beam
+The one tool that reaches into the rift. Held from the [mirror](../mirror/mirror-phase.md), its laser
 [closes flux rifts](../mirror/flux-rifts.md#closing-it), unmakes mirror mites, and
 [wears down the Veiled](../mirror/veiled.md#the-lance-aggravating-it).
 

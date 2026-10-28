@@ -179,20 +179,20 @@ A **strike** deals 4 damage (its own damage type, so it reaches phased players) 
 
 ## The Lance: aggravating it
 
-[[mechanic:veiled.lance.aggravate]] The first touch of a [[item:decoherence_lance]] beam from a phased
+[[mechanic:veiled.lance.aggravate]] The first touch of a [[item:decoherence_lance]] laser from a phased
 player turns it on them, from any state. Every mite within 24 blocks that can see the lancer turns
 on them too.
 
-[[mechanic:veiled.lance.freeze]] While the beam holds, it is **frozen**. Each tick of contact
+[[mechanic:veiled.lance.freeze]] While the laser holds, it is **frozen**. Each tick of contact
 wears it down; it fades as it goes. Contact need not be unbroken: **{{c:Veiled.PIN_TICKS}} ticks
 ({{c:Veiled.PIN_TICKS|s}}) of total contact** ends the fight.
 
-[[mechanic:veiled.lance.charge]] When the beam breaks, it charges the lancer, strikes them from
+[[mechanic:veiled.lance.charge]] When the laser breaks, it charges the lancer, strikes them from
 2.5 blocks, and blinks 6–10 blocks off to come again. It can strike again after 1.5 seconds.
 
 [[mechanic:veiled.lance.lose_interest]] It loses interest and is driven off if the lancer leaves
 the mirror, gets more than {{c:Veiled.INTEREST_RANGE}} blocks away, or goes
-{{c:Veiled.LOSE_INTEREST|s}} without a beam on it.
+{{c:Veiled.LOSE_INTEREST|s}} without a laser on it.
 
 [[mechanic:veiled.recover]] Left alone and not fighting, it pulls itself back together: one tick
 of wear heals every 3 ticks, so a full pin heals in 24 seconds. Wear already done carries into
@@ -201,8 +201,8 @@ the next fight.
 ## Ending a fight
 
 [[mechanic:veiled.capture]] **Held.** Once it is worn **past halfway**, a Containment Hall
-in reach takes hold of it the moment the beam breaks (or at the end of a full pin). It freezes, a
-violet field beam joins it to the hall's cell, and it is drawn in:
+in reach takes hold of it the moment the laser breaks (or at the end of a full pin). It freezes, a
+violet field laser joins it to the hall's cell, and it is drawn in:
 
 | Hall arms | Reach | Time to draw it in |
 | --- | --- | --- |

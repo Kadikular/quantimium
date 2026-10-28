@@ -18,7 +18,7 @@ A rift held open on purpose, as a steady supply of [[item:rift_residue]] for you
      {{c:RiftAnchorBlockEntity.REACH_ABOVE}} above the anchor;
    - [[mechanic:stabilised.sight]] each with a clear line from its emitter to the rift. Other
      stabilizers and the anchor do not block it; walls do. A stabilizer that cannot see the rift is
-     simply not used, so it never takes a place from one that can;
+     not used, so it never takes a place from one that can;
    - [[mechanic:stabilised.limit]] the anchor uses the nearest {{c:RiftAnchorBlockEntity.MAX_STABILISERS}}
      that can see it. Any more stand idle and draw nothing.
 4. Power them.
@@ -30,7 +30,7 @@ to crystallize can still fall short of three paying stabilizers.
 
 [[mechanic:stabilised.beaming]] Each stabilizer's emitter is a small compound of two cubes, each one's
 corners poking through the other's faces, spinning a third of a block over its cap. It is murky while
-idle and burns bright while the stabilizer beams at the rift, so a pillar that isn't paying stands out.
+idle and burns bright while the stabilizer fires at the rift, so a pillar that isn't paying stands out.
 
 [[mechanic:stabilised.hold]] With at least **{{c:RiftAnchorBlockEntity.MIN_STABILISERS}}** stabilizers powered and in sight, the
 rift is **held**. Stabilizers only draw power once enough of them can see it. Each costs

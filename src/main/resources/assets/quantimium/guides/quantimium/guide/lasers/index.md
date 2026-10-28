@@ -10,7 +10,9 @@ navigation:
 
 - [Lasers](overview.md)
 - [Emitters](emitters.md)
-- [Mirrors and relays](mirrors.md)
+- [Mirrors and splitters](mirrors.md)
+- [Laser Focus](focus.md)
+- [Isolators](isolator.md)
 - [Prisms](prisms.md)
 - [Optical cavities](cavities.md)
 - [Photodetectors](photodetectors.md)

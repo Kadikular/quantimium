@@ -70,7 +70,7 @@ Click a row to step it on, right-click to step back; each change is saved as you
 first sorts a machine's slots by offering each a few common items (coal, raw iron, cobblestone,
 redstone). A machine that only takes its own items, like a Hostile Neural Networks chamber, refuses
 all of them, so none of its inputs is found this way. An **Auto** grid slot then asks the machine's
-other slots with the item actually in the grid, and learns the first slot that takes it as an input.
+other slots with the item in the grid, and learns the first slot that takes it as an input.
 Put things in the grid in the order the machine needs them: a data model before the matrices it
 unlocks.
 

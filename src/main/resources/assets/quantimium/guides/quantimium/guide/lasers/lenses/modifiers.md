@@ -2,7 +2,7 @@
 navigation:
   title: Modifier lenses
   parent: lasers/index.md
-  position: 27
+  position: 29
 ---
 
 # Modifier lenses

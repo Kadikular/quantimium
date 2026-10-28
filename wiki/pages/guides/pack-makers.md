@@ -103,7 +103,7 @@ to be sure every value is picked up.
 | Key | Default | What it does |
 | --- | --- | --- |
 | `relayLoss` | 0.005 | What each Focus Emitter (and Isolator) takes of what leaves by it, as flux where it stands. |
-| `mirrorLoss` | 0.0025 | What each bounce off a Laser Mirror or Splitter takes of what a beam carries. |
+| `mirrorLoss` | 0.0025 | What each bounce off a Laser Mirror or Splitter takes of what a laser carries. |
 | `diagonalsPassCorners` | `true` | Whether diagonal light slips between two blocks touching only at a corner. |
 | `acceleration` | `true` | Whether the Acceleration Lens speeds machines up at all. |
 | `accelerationFePerExtraTick` | 500 | FE for each extra tick it gives a machine: at 2x, this a tick. |
