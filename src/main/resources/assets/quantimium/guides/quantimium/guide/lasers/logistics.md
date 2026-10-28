@@ -82,7 +82,9 @@ A <ItemLink id="quantimium:logistics_terminal" /> where a controller's laser end
 - Click the grid holding something to put it away into storage (right-click: one), or shift-click it in your inventory.
 - What is stored comes out first. If any is, that is all you get, and only when none is left does a machine make more.
 - Each take or put costs the controller as a move does.
-- Fluids show with their amounts. Click one holding a bucket (or any fluid container) to fill it. Right-click the grid with a filled one to pour it into storage.
+- Fluids show with their amounts (mB under a bucket, then B, kB, MB), sorted as a bucket to an item.
+- Click a fluid with nothing in hand for a bucket of it, the bucket taken from the network (or made); shift-click puts it in your inventory. Click it holding a container to fill that.
+- Right-click the grid with a filled bucket to pour it into storage: a receptacle on a tank set to storage.
 
 A <ItemLink id="quantimium:logistics_lectern" /> is the same terminal on a stand, its screen tilted over the focus the laser comes in to. Craft one from the other.
 

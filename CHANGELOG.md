@@ -21,8 +21,9 @@
 - **Fluids on logistics networks**: a Logistics Receptacle on any tank puts it on the network as storage, a provider or
   a requester, moving fluids as it moves items (2,000 mB a second, quickened by Speed Lenses). Its filter lists
   fluids too, and keeping stock counts them in buckets. A collecting Laser Tank is a passive provider.
-- **The terminal lists fluids** with their amounts: click one holding a bucket to fill it, or right-click the grid with
-  a filled one to pour it into storage. An Extract Lens past the controller pours into the network; Insert and Interact
+- **The terminal lists fluids** with their amounts, sorted as a bucket to an item: click one for a bucket of it (the
+  bucket taken from the network, or made), click it holding a container to fill that, or right-click the grid with a
+  filled one to pour it into storage. An Extract Lens past the controller pours into the network; Insert and Interact
   take its fluids only through a Filter Lens listing a fluid.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors

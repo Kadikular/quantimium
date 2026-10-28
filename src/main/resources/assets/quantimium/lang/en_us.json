@@ -1369,7 +1369,7 @@
   "block.quantimium.logistics_terminal.tip": "Shows and hands out what its logistics network holds.",
   "gui.quantimium.logistics_terminal.count": "%s in the network",
   "gui.quantimium.logistics_terminal.fluid": "%s mB in the network",
-  "gui.quantimium.logistics_terminal.fluid.tip": "Click with a bucket: fill \u00b7 right-click with one: pour in",
+  "gui.quantimium.logistics_terminal.fluid.tip": "Click: a bucket of it \u00b7 right-click with a filled one: pour in",
   "gui.quantimium.logistics_terminal.take.tip": "Click: a stack \u00b7 right-click: half \u00b7 shift-right-click: one",
   "gui.quantimium.logistics_terminal.status": "%s kinds",
   "gui.quantimium.logistics_terminal.status.unconnected": "No network",

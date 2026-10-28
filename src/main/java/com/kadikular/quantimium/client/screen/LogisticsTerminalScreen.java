@@ -108,13 +108,14 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             };
         }
 
-        /** The number shown, and sorted on first. */
+        /** The number shown, and sorted on first: a fluid's in buckets, as a bucket is one item. */
         long count(LogisticsTerminalViewPayload.Entry entry) {
-            return switch (this) {
+            long count = switch (this) {
                 case ALL -> entry.count() + entry.craftable();
                 case SPLIT, REAL -> entry.count();
                 case CRAFT -> entry.craftable();
             };
+            return entry.item().is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get()) ? count / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : count;
         }
     }
 
@@ -419,9 +420,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             var pos = menu.pos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             ItemStack carried = menu.getCarried();
-            // A fluid: a click with something that holds fluids fills it; a right-click pours it in (below).
-            if (cell != null && event.button() == 0 && com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1))) {
-                if (!carried.isEmpty()) ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), 1, false));
+            // A fluid: a click fills what's in hand, or with nothing in hand gives a bucket of it (shift: into the
+            // inventory); a right-click holding a filled one pours it in (below).
+            if (cell != null && (event.button() == 0 || carried.isEmpty()) && com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1))) {
+                ClientPacketDistributor.sendToServer(new LogisticsTerminalTakePayload(pos, cell.item(), 1, carried.isEmpty() && event.hasShiftDown()));
                 return true;
             }
             // Right-click: half a stack; with shift, one. On what's already in hand, that much more of it (made, if it must be).

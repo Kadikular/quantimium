@@ -344,4 +344,36 @@ public final class FluidTests {
             helper.succeed();
         });
     }
+
+    // covers: laser.logistics.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids_terminal", timeoutTicks = 100)
+    public static void aTerminalPoursABucketInAndHandsOutABucketOfFluid(GameTestHelper helper) {
+        // Lava stored in a tank and an empty bucket in a chest. A right-click with a water bucket pours it in, the bucket
+        // staying in hand; a click on the lava with nothing in hand gives a lava bucket, made of the stored bucket.
+        controller(helper, new BlockPos(2, Y, 8));
+        LaserTankBlockEntity stored = onTank(helper, 4, com.kadikular.quantimium.laser.LogisticsMember.Role.STORAGE, false, new FluidStack(Fluids.LAVA, 2_000));
+        BlockPos chest = new BlockPos(6, Y - 1, 8);
+        helper.setBlock(chest, Blocks.CHEST);
+        var box = helper.getBlockEntity(chest, net.minecraft.world.level.block.entity.ChestBlockEntity.class);
+        box.setItem(0, new ItemStack(Items.BUCKET));
+        TestSupport.receptacle(helper, new BlockPos(6, Y, 8), Direction.DOWN);
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        helper.runAfterDelay(40, () -> {
+            var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+            var menu = new com.kadikular.quantimium.menu.LogisticsTerminalMenu(1, player.getInventory(), terminal, true);
+            menu.setCarried(new ItemStack(Items.WATER_BUCKET));
+            menu.insertCarried(player, true);
+            helper.assertValueEqual(held(stored, Fluids.WATER), 1_000, "the water poured into storage");
+            helper.assertTrue(menu.getCarried().is(Items.BUCKET), "the empty bucket still in hand");
+            menu.setCarried(ItemStack.EMPTY);
+            menu.take(player, net.neoforged.neoforge.transfer.item.ItemResource.of(
+                    com.kadikular.quantimium.recipe.FluidEntry.of(new FluidStack(Fluids.LAVA, 1))), 1, false);
+            helper.assertTrue(menu.getCarried().is(Items.LAVA_BUCKET), "a lava bucket in hand");
+            helper.assertValueEqual(held(stored, Fluids.LAVA), 1_000, "a bucket's worth out of storage");
+            helper.assertTrue(box.getItem(0).isEmpty(), "the stored bucket used");
+            helper.succeed();
+        });
+    }
 }

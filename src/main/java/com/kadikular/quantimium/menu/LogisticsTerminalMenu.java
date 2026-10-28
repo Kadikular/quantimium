@@ -507,7 +507,8 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         // A fluid only into what's on the cursor: a bucket, a tank.
         net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(item.toStack(1));
         if (!fluid.isEmpty()) {
-            if (!toInventory) fill(player, fluid);
+            if (toInventory || getCarried().isEmpty()) bucketOf(player, fluid, toInventory);
+            else fill(player, fluid);
             return;
         }
         int room = count;
@@ -531,6 +532,33 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
             carried.grow(got.getCount());
             setCarried(carried);
         }
+        refresh();
+    }
+
+    /**
+     * A bucket of {@code fluid} from the network, the bucket too (stored, or made): onto the empty cursor, or into the
+     * inventory. Nothing is taken unless there's a bucket's worth.
+     */
+    private void bucketOf(Player player, net.neoforged.neoforge.fluids.FluidStack fluid, boolean toInventory) {
+        int bucket = net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+        net.minecraft.world.item.Item filled = fluid.getFluid().getBucket();
+        if (filled == net.minecraft.world.item.Items.AIR) return;
+        var controller = terminal.controller();
+        if (controller == null || com.kadikular.quantimium.laser.Logistics.takeFluid(controller.members(),
+                each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, fluid), bucket, true).getAmount() < bucket) return;
+        ItemStack empty = terminal.take(ItemResource.of(net.minecraft.world.item.Items.BUCKET), 1);
+        if (empty.isEmpty()) return;
+        var got = terminal.takeFluid(fluid, bucket);
+        if (got.getAmount() < bucket) {
+            // Gone since it was looked at: all of it back.
+            if (!got.isEmpty()) terminal.insertFluid(got);
+            ItemStack back = terminal.insert(empty);
+            if (!back.isEmpty()) player.getInventory().placeItemBackInInventory(back);
+            return;
+        }
+        ItemStack made = new ItemStack(filled);
+        if (toInventory) player.getInventory().placeItemBackInInventory(made);
+        else setCarried(made);
         refresh();
     }
 
@@ -572,8 +600,10 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         if (terminal == null) return;
         ItemStack carried = getCarried();
         if (carried.isEmpty()) return;
+        // A right-click with a filled container pours it in; the container itself stays in hand.
         if (one && !com.kadikular.quantimium.recipe.FluidEntry.contained(carried).isEmpty()) {
-            if (pour(player)) return;
+            pour(player);
+            return;
         }
         if (one) {
             ItemStack left = terminal.insert(carried.copyWithCount(1));
