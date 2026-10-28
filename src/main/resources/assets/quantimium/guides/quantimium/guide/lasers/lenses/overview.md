@@ -2,7 +2,7 @@
 navigation:
   title: Lenses
   parent: lasers/index.md
-  position: 25
+  position: 27
 ---
 
 # Lenses

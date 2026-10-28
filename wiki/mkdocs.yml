@@ -92,7 +92,9 @@ nav:
   - Lasers:
       - Overview: lasers/overview.md
       - Emitters: lasers/emitters.md
-      - Mirrors and relays: lasers/mirrors.md
+      - Mirrors and splitters: lasers/mirrors.md
+      - Laser Focus: lasers/focus.md
+      - Isolators: lasers/isolator.md
       - Prisms: lasers/prisms.md
       - Optical cavities: lasers/cavities.md
       - Photodetectors: lasers/photodetectors.md

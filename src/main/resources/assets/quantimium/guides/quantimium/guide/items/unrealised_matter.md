@@ -111,7 +111,7 @@ as they take it, and what its faces set to push out push. With nothing exported,
 a logistics network, a player) gets its buffer first, then Matter made there and then, paid for as usual: as
 many as its Matter, dust, FE and the field go. A take of less than one Matter makes (two raw copper, when a Matter
 makes three) gets what it asked for, and the rest waits in the buffer. A provider
-<ItemLink id="quantimium:logistics_receptacle" /> on it offers every form to its logistics network as craftable, not just the export
+<ItemLink id="quantimium:logistics_receptacle" /> on it offers every form to its logistics network as craftable, not only the export
 form.
 
 **Through a Tesseract.** A bound <ItemLink id="quantimium:tesseract" /> in

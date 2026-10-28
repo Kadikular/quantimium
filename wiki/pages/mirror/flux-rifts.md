@@ -69,8 +69,8 @@ rift anywhere: see the [stabilized rift](stabilised-rift.md).
 
 ## Closing it
 
-[[mechanic:rift.drain]] From the mirror, hold a Decoherence Lance beam on its center. Each stage holds 400
-coherence (configurable) and the Lance drains 5 a tick: 4 / 8 / 12 / 16 seconds of unbroken beam.
+[[mechanic:rift.drain]] From the mirror, hold a Decoherence Lance laser on its center. Each stage holds 400
+coherence (configurable) and the Lance drains 5 a tick: 4 / 8 / 12 / 16 seconds of unbroken laser.
 Break contact for more than 2 seconds and it heals {{c:FluxRiftManager.REGEN_PER_TICK}} a tick, so it
 cannot be worn down across visits. It narrows as it weakens.
 
@@ -85,6 +85,6 @@ that letting it grow is a real temptation. Every mite it made pops back into the
 
 [[mechanic:rift.projector]] A [[block:decoherence_projector]] can drain a rift unattended at
 {{c:DecoherenceProjectorBlockEntity.RIFT_DRAIN_PER_TICK}} a tick, but from stage 3 the rift lashes it
-with lightning down the beam, burning out its whole charge.
+with lightning down the laser, burning out its whole charge.
 [[mechanic:projector.overload_burst]] The rift's own anomaly comes back with it: the Projector bursts out
 **{{c:DecoherenceProjectorBlockEntity.OVERLOAD_ANOMALY}} anomaly** into the 3×3 of chunks around it.

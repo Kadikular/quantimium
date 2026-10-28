@@ -2,7 +2,7 @@
 navigation:
   title: The Veiled
   parent: mirror/index.md
-  position: 33
+  position: 35
 ---
 
 # The Veiled
@@ -183,20 +183,20 @@ A **strike** deals 4 damage (its own damage type, so it reaches phased players) 
 
 ## The Lance: aggravating it
 
-The first touch of a <ItemLink id="quantimium:decoherence_lance" /> beam from a phased
+The first touch of a <ItemLink id="quantimium:decoherence_lance" /> laser from a phased
 player turns it on them, from any state. Every mite within 24 blocks that can see the lancer turns
 on them too.
 
-While the beam holds, it is **frozen**. Each tick of contact
+While the laser holds, it is **frozen**. Each tick of contact
 wears it down; it fades as it goes. Contact need not be unbroken: **160 ticks
 (8 s) of total contact** ends the fight.
 
-When the beam breaks, it charges the lancer, strikes them from
+When the laser breaks, it charges the lancer, strikes them from
 2.5 blocks, and blinks 6–10 blocks off to come again. It can strike again after 1.5 seconds.
 
 It loses interest and is driven off if the lancer leaves
 the mirror, gets more than 48 blocks away, or goes
-30 s without a beam on it.
+30 s without a laser on it.
 
 Left alone and not fighting, it pulls itself back together: one tick
 of wear heals every 3 ticks, so a full pin heals in 24 seconds. Wear already done carries into
@@ -205,8 +205,8 @@ the next fight.
 ## Ending a fight
 
 **Held.** Once it is worn **past halfway**, a Containment Hall
-in reach takes hold of it the moment the beam breaks (or at the end of a full pin). It freezes, a
-violet field beam joins it to the hall's cell, and it is drawn in:
+in reach takes hold of it the moment the laser breaks (or at the end of a full pin). It freezes, a
+violet field laser joins it to the hall's cell, and it is drawn in:
 
 | Hall arms | Reach | Time to draw it in |
 | --- | --- | --- |

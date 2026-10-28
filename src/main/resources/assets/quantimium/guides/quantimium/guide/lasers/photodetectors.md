@@ -2,12 +2,13 @@
 navigation:
   title: Photodetectors
   parent: lasers/index.md
-  position: 23
+  position: 25
 ---
 
 # Photodetectors
 
-A <ItemLink id="quantimium:photodetector" /> sits in a beam: light passes through it and
-out of its face, and it takes nothing for it. It doesn't refocus the light, so the light goes on only as
-far as it had left. It lights up while light passes, and gives a redstone
-signal, and a comparator reading, for how much: 1 for a trickle, two more for each tenfold, up to 15.
+A <ItemLink id="quantimium:photodetector" /> sits in a laser. The laser passes through it and out of its face, and it takes nothing for it.
+
+- It doesn't refocus the laser, so the laser goes on only as far as it had left.
+- It lights up while a laser passes.
+- It gives a redstone signal, and a comparator reading, for how much passes: 1 for a trickle, then two more for each tenfold, up to 15.

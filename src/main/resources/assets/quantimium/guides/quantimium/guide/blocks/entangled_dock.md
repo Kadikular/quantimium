@@ -40,7 +40,7 @@ item does the same for the first: a dock holds one entanglement, and an item fro
 its mark but is never charged again.
 
 The entanglement does not survive a **Critical** field: at that much anomaly in
-the dock's chunk it decoheres, the dock lets go, and the item simply stops being charged. Keep docks
+the dock's chunk it decoheres, the dock lets go, and the item stops being charged. Keep docks
 somewhere quiet, or contained.
 
 ## Recipe

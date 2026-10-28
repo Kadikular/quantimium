@@ -2,7 +2,7 @@
 navigation:
   title: Stabilized rift
   parent: mirror/index.md
-  position: 35
+  position: 37
 item_ids:
 - quantimium:rift_anchor
 - quantimium:rift_stabiliser
@@ -26,7 +26,7 @@ A rift held open on purpose, as a steady supply of <ItemLink id="quantimium:rift
      4 above the anchor;
    - each with a clear line from its emitter to the rift. Other
      stabilizers and the anchor do not block it; walls do. A stabilizer that cannot see the rift is
-     simply not used, so it never takes a place from one that can;
+     not used, so it never takes a place from one that can;
    - the anchor uses the nearest 6
      that can see it. Any more stand idle and draw nothing.
 4. Power them.
@@ -38,7 +38,7 @@ to crystallize can still fall short of three paying stabilizers.
 
 Each stabilizer's emitter is a small compound of two cubes, each one's
 corners poking through the other's faces, spinning a third of a block over its cap. It is murky while
-idle and burns bright while the stabilizer beams at the rift, so a pillar that isn't paying stands out.
+idle and burns bright while the stabilizer fires at the rift, so a pillar that isn't paying stands out.
 
 With at least **3** stabilizers powered and in sight, the
 rift is **held**. Stabilizers only draw power once enough of them can see it. Each costs

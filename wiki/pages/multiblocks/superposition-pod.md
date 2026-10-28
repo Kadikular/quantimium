@@ -204,7 +204,7 @@ is gone, and it carries the Sophon off, beyond the reach of Recovery, until it i
 lets go of it where it stands. The pod's screen shows the double as *Taken by the Veiled*.
 
 [[mechanic:pod.turret]] **A turret.** A [[block:decoherence_projector]] stood on a pod's crown runs off the
-pod's buffer, so a pod can guard its own double: the beam freezes the Veiled before it gets to work.
+pod's buffer, so a pod can guard its own double: the laser freezes the Veiled before it gets to work.
 
 ## Losing a Sophon
 
