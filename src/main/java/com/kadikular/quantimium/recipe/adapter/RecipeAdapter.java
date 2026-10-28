@@ -17,9 +17,10 @@ import java.util.List;
  * as item inputs/outputs for the Quantum Crafter. Loaded from datapacks and
  * {@code config/quantimium/recipe_adapters/*.json}.
  *
- * <p>This covers item-shaped machines. Outputs read from fields keep only what's guaranteed: a chance
- * below one, or a percentage roll that can miss, isn't counted ({@link GuaranteedOutputs}). Fluids,
- * gases and exotic energy units still need a code family (see {@code MiMachineFamily}).
+ * <p>Outputs read from fields keep only what's guaranteed: a chance below one, or a percentage roll that can
+ * miss, isn't counted ({@link GuaranteedOutputs}). Fluids are found by their fields' types, or read from
+ * {@code fluid_input_fields} and {@code fluid_output_fields} where named. Gases and exotic energy units still need a
+ * code family (see {@code MiMachineFamily}).
  *
  * @param catalysts      machines that run these recipe types, for machines whose names don't say so
  *                       (EnderIO's Alloy Smelter runs {@code enderio:alloy_smelting})
@@ -39,8 +40,16 @@ public record RecipeAdapter(
         List<Identifier> nonConsumedItems,
         EnergySpec energy,
         List<Identifier> catalysts,
-        List<Identifier> catalystAlso
+        List<Identifier> catalystAlso,
+        List<String> fluidInputFields,
+        List<String> fluidOutputFields
 ) {
+    /** The fluids a recipe of its types takes and gives: from the fields it names, or found by their types. */
+    public com.kadikular.quantimium.recipe.FluidParts.Parts fluids(Object recipe) {
+        if (fluidInputFields.isEmpty() && fluidOutputFields.isEmpty()) return com.kadikular.quantimium.recipe.FluidParts.of(recipe);
+        return com.kadikular.quantimium.recipe.FluidParts.of(recipe, fluidInputFields, fluidOutputFields);
+    }
+
     public enum InputMode {
         /** {@link net.minecraft.world.item.crafting.Recipe#getIngredients()}. */
         INGREDIENTS,
@@ -125,7 +134,8 @@ public record RecipeAdapter(
         List<Identifier> also = strings(json, "catalyst_also").stream().map(Identifier::parse).toList();
         return new RecipeAdapter(id, List.copyOf(types), inputMode, inputField, List.copyOf(inputFields),
                 outputMode, outputField, List.copyOf(outputFields), skipEmpty, List.copyOf(tags), List.copyOf(items),
-                new EnergySpec(flat, energyField, scale), catalysts, also);
+                new EnergySpec(flat, energyField, scale), catalysts, also,
+                List.copyOf(strings(json, "fluid_input_fields")), List.copyOf(strings(json, "fluid_output_fields")));
     }
 
     private static List<String> strings(JsonObject json, String key) {

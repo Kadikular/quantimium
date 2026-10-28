@@ -47,6 +47,8 @@ public final class GenericItemFamily {
         if (!supports(recipe) || pool.isEmpty()) return Optional.empty();
 
         try {
+            // The Crafter has no fluids to give: a recipe that takes some isn't made from items alone.
+            if (!FluidParts.of(recipe).inputs().isEmpty()) return Optional.empty();
             ItemStack result = RecipeCompat.result(recipe, registries);
             if (result == null || result.isEmpty()) return Optional.empty();
 
@@ -72,15 +74,17 @@ public final class GenericItemFamily {
                                                  int baseFe) {
         Recipe<?> recipe = holder.value();
         try {
+            FluidParts.Parts fluids = FluidParts.of(recipe);
             ItemStack result = RecipeCompat.result(recipe, registries);
-            if (result == null || result.isEmpty()) return Optional.empty();
+            List<ItemStack> outputs = result == null || result.isEmpty() ? List.of() : List.of(result);
+            if (outputs.isEmpty() && fluids.outputs().isEmpty()) return Optional.empty();
             List<RecipeShape.Input> inputs = new ArrayList<>();
             for (Ingredient ingredient : RecipeCompat.ingredients(recipe)) {
                 if (ingredient == null || ingredient.isEmpty()) continue;
                 inputs.add(new RecipeShape.Input(ingredient, 1));
             }
-            if (inputs.isEmpty()) return Optional.empty();
-            return Optional.of(new RecipeShape(holder.id().identifier(), inputs, List.of(result), baseFe));
+            if (inputs.isEmpty() && fluids.inputs().isEmpty()) return Optional.empty();
+            return Optional.of(new RecipeShape(holder.id().identifier(), inputs, outputs, baseFe).withFluids(fluids));
         } catch (Throwable t) {
             return Optional.empty();
         }

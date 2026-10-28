@@ -104,8 +104,8 @@ public final class MiMachineFamily {
     }
 
     /**
-     * The recipe in the abstract. Recipes with fluid inputs, or with inputs that are only sometimes
-     * used up (tools, catalysts), are left out: an ME pattern needs a fixed list of what goes in.
+     * The recipe in the abstract, fluids too. Recipes with inputs that are only sometimes used up (tools,
+     * catalysts) are left out: an ME pattern needs a fixed list of what goes in.
      */
     public static Optional<RecipeShape> describe(RecipeHolder<?> holder) {
         Recipe<?> recipe = holder.value();
@@ -114,11 +114,27 @@ public final class MiMachineFamily {
             List<?> itemInputs = (List<?>) field(recipe, "itemInputs");
             List<?> fluidInputs = (List<?>) field(recipe, "fluidInputs");
             List<?> itemOutputs = (List<?>) field(recipe, "itemOutputs");
-            if (fluidInputs != null && !fluidInputs.isEmpty()) return Optional.empty();
-            if (itemInputs == null || itemInputs.isEmpty()) return Optional.empty();
+            List<?> fluidOutputs = (List<?>) field(recipe, "fluidOutputs");
+            if ((itemInputs == null || itemInputs.isEmpty()) && (fluidInputs == null || fluidInputs.isEmpty())) return Optional.empty();
+
+            List<FluidParts.Input> fluidsIn = new ArrayList<>();
+            for (Object inputObj : fluidInputs == null ? List.of() : fluidInputs) {
+                if (((Number) call(inputObj, "probability")).floatValue() < 1.0f) return Optional.empty();
+                net.minecraft.world.level.material.Fluid fluid = (net.minecraft.world.level.material.Fluid) call(inputObj, "fluid");
+                int amount = (int) Math.min(Integer.MAX_VALUE, ((Number) call(inputObj, "amount")).longValue());
+                if (fluid == null || amount <= 0) return Optional.empty();
+                fluidsIn.add(new FluidParts.Input(List.of(fluid), amount, each -> each.getFluid().isSame(fluid)));
+            }
+            List<net.neoforged.neoforge.fluids.FluidStack> fluidsOut = new ArrayList<>();
+            for (Object outObj : fluidOutputs == null ? List.of() : fluidOutputs) {
+                if (((Number) call(outObj, "probability")).floatValue() < 1.0f) continue;
+                net.minecraft.world.level.material.Fluid fluid = (net.minecraft.world.level.material.Fluid) call(outObj, "fluid");
+                int amount = (int) Math.min(Integer.MAX_VALUE, ((Number) call(outObj, "amount")).longValue());
+                if (fluid != null && amount > 0) fluidsOut.add(new net.neoforged.neoforge.fluids.FluidStack(fluid, amount));
+            }
 
             List<RecipeShape.Input> inputs = new ArrayList<>();
-            for (Object inputObj : itemInputs) {
+            for (Object inputObj : itemInputs == null ? List.of() : itemInputs) {
                 float probability = ((Number) call(inputObj, "probability")).floatValue();
                 if (probability < 1.0f) return Optional.empty();
                 Ingredient ingredient = (Ingredient) call(inputObj, "ingredient");
@@ -135,8 +151,9 @@ public final class MiMachineFamily {
                     if (stack != null && !stack.isEmpty()) outputs.add(stack.copy());
                 }
             }
-            if (outputs.isEmpty()) return Optional.empty();
-            return Optional.of(new RecipeShape(holder.id().identifier(), inputs, outputs, cost(recipe)));
+            if (outputs.isEmpty() && fluidsOut.isEmpty()) return Optional.empty();
+            return Optional.of(new RecipeShape(holder.id().identifier(), inputs, outputs, cost(recipe))
+                    .withFluids(new FluidParts.Parts(fluidsIn, fluidsOut)));
         } catch (Throwable t) {
             return Optional.empty();
         }

@@ -320,6 +320,11 @@ The EnderIO Alloy Smelter's:
   own energy instead, times `energy.scale` (1 if left out), with the flat fee if it can't be read.
 - `non_consumed_tags` and `non_consumed_items` list ingredients that stay in the grid, like the
   Inscriber's presses.
+- [[mechanic:recipe.fluids]] **Fluids are found by type.** Any field holding NeoForge's fluid ingredients or
+  fluid stacks, or a mod's own fluid ingredient, is read, alone or in a list. A field named for inputs
+  is taken, one named for outputs is given. Where that guesses wrong, `fluid_input_fields` and
+  `fluid_output_fields` name the fields. The Crafter has no tanks yet: a recipe that takes a fluid
+  isn't offered, and one that also gives a fluid makes only its items.
 
 ## Tips
 

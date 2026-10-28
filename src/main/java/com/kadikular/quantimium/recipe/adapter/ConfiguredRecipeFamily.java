@@ -86,9 +86,11 @@ public final class ConfiguredRecipeFamily {
         Recipe<?> recipe = holder.value();
         for (RecipeAdapter adapter : RecipeAdapterRegistry.INSTANCE.adaptersFor(recipe.getType())) {
             try {
+                com.kadikular.quantimium.recipe.FluidParts.Parts fluids = adapter.fluids(recipe);
                 List<CountedIngredient> counted = resolveInputs(adapter, recipe);
                 List<ItemStack> outputs = resolveOutputs(adapter, recipe, registries);
-                if (counted.isEmpty() || outputs.isEmpty()) continue;
+                // Fluids count: a recipe may take only fluids, or make only fluids.
+                if (counted.isEmpty() && fluids.inputs().isEmpty() || outputs.isEmpty() && fluids.outputs().isEmpty()) continue;
                 List<RecipeShape.Input> inputs = new ArrayList<>();
                 List<Ingredient> tools = new ArrayList<>();
                 boolean unknown = false;
@@ -106,9 +108,9 @@ public final class ConfiguredRecipeFamily {
                     }
                     inputs.add(new RecipeShape.Input(ingredient, Math.max(1, input.count())));
                 }
-                if (unknown || inputs.isEmpty()) continue;
+                if (unknown || inputs.isEmpty() && fluids.inputs().isEmpty()) continue;
                 return Optional.of(new RecipeShape(holder.id().identifier(), inputs, outputs,
-                        CraftEnergy.flat(energy(adapter, recipe)), tools));
+                        CraftEnergy.flat(energy(adapter, recipe)), tools).withFluids(fluids));
             } catch (Throwable ignored) {
             }
         }
@@ -130,6 +132,8 @@ public final class ConfiguredRecipeFamily {
                                                      RecipeHolder<?> holder, IngredientPool pool) {
         try {
             Recipe<?> recipe = holder.value();
+            // The Crafter has no fluids to give: a recipe that takes some isn't made from items alone.
+            if (!adapter.fluids(recipe).inputs().isEmpty()) return Optional.empty();
             List<CountedIngredient> inputs = resolveInputs(adapter, recipe);
             if (inputs.isEmpty()) return Optional.empty();
 

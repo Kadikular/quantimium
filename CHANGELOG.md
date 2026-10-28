@@ -25,6 +25,9 @@
   bucket taken from the network, or made), click it holding a container to fill that, or right-click the grid with a
   filled one to pour it into storage. An Extract Lens past the controller pours into the network; Insert and Interact
   take its fluids only through a Filter Lens listing a fluid.
+- **Recipes with fluids are read**: the fluids a mod's recipe takes and gives are found by their fields' types (or
+  named in an adapter's `fluid_input_fields` and `fluid_output_fields`), for the Crafter and Reactor to come. Until
+  the Crafter has tanks, a recipe taking a fluid is no longer offered as if it took items alone.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 
