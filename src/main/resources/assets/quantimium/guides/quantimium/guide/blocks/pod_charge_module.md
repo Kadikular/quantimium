@@ -12,7 +12,13 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-A pod module that charges the items you carry.
+A <ItemLink id="quantimium:superposition_pod" /> module, set in one of the four edges of its <ItemLink id="quantimium:pod_cradle" />. It works while the pod holds one of your doubles.
+
+Charges what holds FE in your inventory (armor, tools, batteries) anywhere in the dimension, while the pod holds one of your doubles.
+
+Draw: up to 2,000 FE/t.
+
+See the [Superposition Pod](../multiblocks/superposition-pod.md) page.
 
 ## Recipes
 

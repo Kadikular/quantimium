@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-Takes power into the Reactor.
+Takes power into the [Reactor](../multiblocks/reactor.md). The core stores 20,000,000 FE, taking up to 500,000 FE/t through Energy ports.
 
 ## Recipes
 

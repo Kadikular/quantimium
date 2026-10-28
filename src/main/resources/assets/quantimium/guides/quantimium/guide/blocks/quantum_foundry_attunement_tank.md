@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantum Foundry](../multiblocks/quantum-foundry.md).
 
-Sits on an Attunement Pillar and holds what the arm has drawn.
+The Attunement Tank sits on an <ItemLink id="quantimium:quantum_foundry_pillar" /> and holds what the arm has drawn from the field for the [Foundry](../multiblocks/quantum-foundry.md).
 
 ## Recipes
 

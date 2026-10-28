@@ -1,6 +1,6 @@
 # Flux rifts
 
-A flux rift is a wound between the realms: a tear that failed to close and stayed. Unlike a tear,
+A flux rift is a tear between the realms that failed to close and stayed. Unlike a tear that opens and shuts,
 which is a door, a rift grows, leaks anomaly, throws lightning, and at its worst lets things through.
 It can only be closed from the [mirror](mirror-phase.md), with a
 [[item:decoherence_lance]].
@@ -55,7 +55,7 @@ rift anywhere: see the [stabilized rift](stabilised-rift.md).
 - [[mechanic:rift.swing]] **Swinging at it** does nothing to it: only a Lance closes it. One swing in
   {{c:FluxRiftHazard.SWING_THROW_ODDS}} throws you back and stings for 2.
 - [[mechanic:rift.lightning]] **Lightning.** Anything within 2 blocks of its surface at stage 1, up to 8 at
-  stage 4, draws lightning out of the wound: every 2.5 s at the edge of range down to every
+  stage 4, draws lightning out of the rift: every 2.5 s at the edge of range down to every
   {{c:FluxRiftHazard.MIN_INTERVAL|s}} point blank, for 3 / 3.5 / 4 / 4.5 damage by stage. Mirror mites
   are left alone.
 - [[mechanic:rift.door]] **A way in.** It keeps a real-world tear open 10–20 blocks away, the safer door

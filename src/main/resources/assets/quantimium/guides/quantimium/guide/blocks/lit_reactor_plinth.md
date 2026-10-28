@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:lit_reactor_plinth" scale="2" />
 
-Reactor Plinth with its circuits always lit, for building with. Crafts back into Reactor Plinth.
+The Lit Reactor Plinth is a Reactor Plinth with its circuits always lit, for building with. It is never part of a Reactor, and crafts back into a <ItemLink id="quantimium:reactor_plinth" />.
 
 ## Recipes
 

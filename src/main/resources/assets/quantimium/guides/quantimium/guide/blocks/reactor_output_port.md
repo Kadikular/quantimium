@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-Where the Reactor delivers what you take from it.
+Hands out what the [Reactor](../multiblocks/reactor.md) makes when you take something from the core's screen. Whatever the Output ports can't hold stays in the horizon.
 
 ## Recipes
 

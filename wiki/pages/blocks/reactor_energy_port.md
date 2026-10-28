@@ -1,0 +1,1 @@
+Takes power into the [Reactor](../multiblocks/reactor.md). The core stores {{c:HorizonCoreBlockEntity.ENERGY_CAPACITY}} FE, taking up to {{c:HorizonCoreBlockEntity.MAX_RECEIVE}} FE/t through Energy ports.

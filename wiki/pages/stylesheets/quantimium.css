@@ -18,11 +18,15 @@
 
 /* Infobox: floats beside the opening paragraph, like a real mod wiki. */
 .qinfo { float: right; margin: 0 0 1em 1.5em; padding: 12px; border: 1px solid var(--md-default-fg-color--lightest);
-  border-radius: 6px; background: var(--md-code-bg-color); max-width: 280px; }
+  border-radius: 6px; background: var(--md-code-bg-color); width: 320px; max-width: 48%; box-sizing: border-box; }
 .qinfo-icon { display: block; width: 128px; height: 128px; margin: 0 auto 8px; image-rendering: pixelated; }
-.qinfo table { font-size: 0.72rem; margin: 0 !important; }
-.qinfo th { white-space: nowrap; }
-@media (max-width: 700px) { .qinfo { float: none; margin: 0 0 1em; max-width: none; } }
+/* Material makes tables block-level and scrollable, which nests a second scrollbar in the box; keep it a plain table. */
+.qinfo .md-typeset__scrollwrap, .qinfo .md-typeset__table { overflow: visible !important; margin: 0 !important; padding: 0 !important; display: block; }
+.qinfo table { display: table !important; width: 100% !important; overflow: visible !important; font-size: 0.72rem; margin: 0 !important; table-layout: auto; }
+.qinfo th, .qinfo td { padding: 0.35em 0.5em !important; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
+.qinfo td a, .qinfo td code { white-space: normal; }
+.qinfo th { white-space: nowrap; text-align: left; width: 1%; }
+@media (max-width: 700px) { .qinfo { float: none; margin: 0 0 1em; width: auto; max-width: none; } }
 
 /* Recipes: inventory slots. */
 .qrecipe { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0.6em 0; }

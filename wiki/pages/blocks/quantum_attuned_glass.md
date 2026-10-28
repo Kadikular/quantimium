@@ -1,0 +1,1 @@
+Quantum Attuned Glass is glass tuned to the field. It walls in the [Anomaly Containment Hall](../multiblocks/containment-hall.md) around its cell, and glows faintly. Lasers pass through it, as through any glass.

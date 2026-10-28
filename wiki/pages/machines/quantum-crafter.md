@@ -13,13 +13,12 @@
 </table>
 </div>
 
-The Quantum Crafter does what another machine does, **instantly**, and bills you for skipping the
-wait. Put a machine in the catalyst slot (a furnace, a crafting table, a Modern Industrialization
-macerator) and ingredients in the grid. Every craft that machine could make from them appears in
-the output grid as a faint **preview**. Taking one makes it real.
+The Quantum Crafter does what another machine does, **instantly**, for extra energy. Put a machine
+in the catalyst slot (a furnace, a crafting table, a Modern Industrialization macerator) and
+ingredients in the grid. Every craft that machine could make from them shows in the output grid as a
+faint **preview**. Taking one makes it real.
 
-It never runs on its own schedule. Nothing is crafted until something takes an output: you, a
-hopper, a pipe, or its own auto-output.
+Nothing is crafted until something takes an output: you, a hopper, a pipe, or its own auto-output.
 
 [[render:crafters]]
 
@@ -146,14 +145,18 @@ or auto output, from making something else. When it can't be made, the full prev
 runs and a stack of ingots allows 64, but at 4,000 FE a smelt the energy allows only 25. The ghost
 shows **25 iron ingots**.
 
-Its screen works like a logistics terminal: one cell for each item in its outputs or its previews, in a
-scrolling grid with a search box over it, sorted by count or by name (a tab on its left). The small white number
-at a cell's top right is what's in its outputs; the violet one under it is that plus how many it **can make** in
-all, past one stack: 128 iron ingots, in the grid or behind a Tesseract (a logistics network counts every
-stack), show 14 iron blocks. The tooltip says what making more costs. Click for a stack, right-click for half a
-stack, shift-right-click (or shift and the wheel down) for one, onto what you're holding if it's the same;
-shift-click sends a stack to your inventory. What's there comes out first and the rest is made; what a run makes
-past what you asked for (eight more nuggets) stays in its outputs. While shift is held the grid holds still.
+Its screen works like a logistics terminal: a scrolling grid of cells, one per item in its outputs
+or previews, with a search box and a sort tab (count or name).
+
+- The small white number at a cell's top right is what's in the outputs. The violet one under it is
+  that plus how many it **can make** in all, past one stack: 128 iron ingots, in the grid or behind a
+  Tesseract (a logistics network counts every stack), show 14 iron blocks. The tooltip gives the cost
+  of making more.
+- Click for a stack, right-click for half a stack, shift-right-click (or shift and the wheel down)
+  for one, onto what you're holding if it's the same. Shift-click sends a stack to your inventory.
+- What's in the outputs comes out first and the rest is made. What a run makes past what you asked
+  for (eight more nuggets) stays in the outputs.
+- While shift is held the grid holds still.
 
 **Unrealized Matter** goes through a catalyst unobserved: it comes out as Matter that remembers the
 step (see [[item:unrealised_matter]]).
@@ -235,14 +238,17 @@ A Tesseract can be bound to **another crafter**. Its output ghosts then count as
 crafter can plan its craft from another's preview: plank → stick → torch in one take.
 
 **Crafting for the logistics network.** A Tesseract bound to a [[block:logistics_materialiser]] puts the
-network in the pool, and a provider Receptacle on a crafter offers what it can make to the network, as
-**craftable**, not as stock: cobblestone in storage and a furnace crafter, and stone shows in the terminal,
-made by that crafter and paid for there when it's taken. A crafter on the network makes things from what's
-**really stored**, one step: stone bricks from stored stone, not from stone a furnace would make first. Chains of
-crafts are a [Reactor's](../multiblocks/reactor.md) to plan. A craftable counts what the crafter **can make** of
-it, not one craft's worth. Crafters making the same thing from the network's items count once (the most any of
-them could make), since they'd all draw on the same items. Taking something makes it for real; one only asked
-about, or called off, undoes everything it made.
+network in the pool, and a provider Receptacle on a crafter offers what it can make to the network.
+
+- It shows as **craftable**, not as stock: with cobblestone in storage and a furnace crafter, stone
+  appears in the terminal, made by that crafter and paid for there when it's taken.
+- A crafter on the network works from what's **really stored**, one step: stone bricks from stored
+  stone, not from stone a furnace would make first. Chains of crafts are a
+  [Reactor's](../multiblocks/reactor.md) to plan.
+- A craftable counts what the crafter **can make** of it, not one craft's worth. Crafters making the
+  same thing from the network's items count once (the most any of them could make), since they'd all
+  draw on the same items.
+- Taking something makes it for real. One only asked about, or called off, undoes everything it made.
 
 [[mechanic:crafter.entangled_loop]] Crafters linked in a ring (A reads B, B reads A, or a longer
 chain back to itself, up to {{c:QuantumCrafterBlockEntity.MAX_CHAIN_DEPTH}} links deep) would try to

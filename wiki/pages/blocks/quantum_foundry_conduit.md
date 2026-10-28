@@ -1,0 +1,1 @@
+The Foundry Flux Conduit carries the field between the controller and an arm's pillar. Each attunement arm of a [Foundry](../multiblocks/quantum-foundry.md) or [Containment Hall](../multiblocks/containment-hall.md) starts with one, out of a side of the plinth ring.

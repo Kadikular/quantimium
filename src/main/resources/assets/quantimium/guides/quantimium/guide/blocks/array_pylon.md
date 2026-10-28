@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-One of the four pylons at the corners of an Unfolding Array.
+An Array Pylon stands on each diagonal corner of an <ItemLink id="quantimium:unfolding_array" />. The pylons reach into you while the Array unfolds your double.
 
 ## Recipes
 

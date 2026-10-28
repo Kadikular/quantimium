@@ -111,7 +111,7 @@ field is held: the accelerating controller skips it.
 ## In a Quantum Simulator
 
 [[mechanic:zeno.simulator]] A controller taken into a [Quantum Simulator](quantum-simulator.md)
-keeps working, centerd where it stood (now the Simulator's field block). Accelerating, every copy in
+keeps working, centered where it stood (now the Simulator's field block). Accelerating, every copy in
 the Simulator's batch adds its own extra ticks: an 8× controller in a Simulator at 4× batch gives the
 field four times the extra ticks. The Simulator pays for every copy, plus its 20% overhead: 4 × 630
 × 1.2 = 3,024 FE/t for the radius 4, 8× example above.

@@ -117,7 +117,15 @@ def page_info() -> Dict[str, Dict[str, str]]:
         unknown = set(rows) - allowed
         if unknown:
             error(f"wiki/data/pages.yml: {name} has unknown rows {sorted(unknown)}; use {sorted(allowed)}")
-    return {name: {k: str(v) for k, v in rows.items()} for name, rows in data.items()}
+    return {name: {k: _one_per_line(k, str(v)) for k, v in rows.items()} for name, rows in data.items()}
+
+
+def _one_per_line(key: str, value: str) -> str:
+    """A 'works with' list of links goes one to a line, not a comma run that wraps badly in the box."""
+    parts = [p.strip() for p in value.split(",")]
+    if key == "works_with" and len(parts) > 1 and all(re.fullmatch(r"\[\[(?:item|block):[a-z0-9_]+\]\]", p) for p in parts):
+        return "<br>".join(parts)
+    return value
 
 
 def recipes() -> List[dict]:

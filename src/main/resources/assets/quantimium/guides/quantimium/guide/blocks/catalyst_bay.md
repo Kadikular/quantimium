@@ -12,7 +12,11 @@ navigation:
 
 Part of the [Quantimium Reactor](../multiblocks/reactor.md).
 
-A window in the Reactor's floor holding up to four machines as catalysts.
+The Catalyst Bay is a window in the [Reactor](../multiblocks/reactor.md)'s floor onto a pocket of void, and holds up to 4 catalysts: machines, crafting tables, <ItemLink id="quantimium:folded_tesseract" />s.
+
+- Use it to open a 2×2 grid, one catalyst per quarter. A Reactor takes up to eight bays, in place of plinth and anywhere but under the core.
+- Each catalyst orbits the horizon as a moon, which flares when a craft uses it.
+- Each bay has a filter: an output list (which of its catalysts' recipes the Reactor may use) and an input list (which items they may use up). Each list has 27 entries, allow or deny.
 
 ## Recipes
 

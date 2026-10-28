@@ -105,7 +105,7 @@ doubles, and the power ones draw from the pod's own buffer.
 | [[block:pod_rescue_module]] | Lets the pod be your Anchor (above) | – |
 | [[block:pod_regeneration_module]] | Regeneration I on you | {{c:SuperpositionPodBlockEntity.REGENERATION_FE_PER_TICK}} FE/t |
 | [[block:pod_hardening_module]] | Resistance I on you | {{c:SuperpositionPodBlockEntity.HARDENING_FE_PER_TICK}} FE/t |
-| [[block:pod_ward_module]] | Keeps what prowls off the double, the Veiled too | {{c:SuperpositionPodBlockEntity.WARD_FE_PER_TICK}} FE/t |
+| [[block:pod_ward_module]] | Keeps hostile mobs and the Veiled off the double | {{c:SuperpositionPodBlockEntity.WARD_FE_PER_TICK}} FE/t |
 | [[block:pod_stash_module]] | Opens your stash from anywhere | – |
 | [[block:pod_charge_module]] | Charges what holds FE in your inventory | up to {{c:SuperpositionPodBlockEntity.CHARGE_FE_PER_TICK}} FE/t |
 | [[block:pod_relay_module]] | Makes the pod a hub (below) | what it sends |
@@ -121,7 +121,7 @@ While you are online, the pods holding your doubles are kept loaded, so all of t
 away they are (`chunkLoadPods` in the `superposition` config section; off, a pod only works while
 something else keeps its chunk loaded).
 
-[[mechanic:pod.ward]] **An unguarded double draws what prowls.** Hostile mobs in this world (not mirror mites
+[[mechanic:pod.ward]] **An unguarded double draws hostile mobs.** Hostile mobs in this world (not mirror mites
 unless they have breached) within
 {{c:SuperpositionPodBlockEntity.PROWL_RANGE}} blocks of a pod holding one come for it, and one at the glass
 for {{c:SuperpositionPodBlockEntity.KNOCK_OUT_STRIKES}} seconds knocks the double out: it lies on the floor

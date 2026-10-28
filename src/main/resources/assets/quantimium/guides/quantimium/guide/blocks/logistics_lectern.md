@@ -12,7 +12,9 @@ item_ids:
 
 <ItemImage id="quantimium:logistics_lectern" scale="2" />
 
-The Logistics Terminal on a stand, with its screen over a focus.
+The Logistics Lectern is the Logistics Terminal on a stand, its screen tilted over the focus the laser comes in to. It does everything the terminal does. Craft one from the other.
+
+See [Logistics](../lasers/logistics.md).
 
 ## Recipes
 

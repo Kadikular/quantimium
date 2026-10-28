@@ -12,7 +12,7 @@ navigation:
 
 Part of the [Superposition Pod](../multiblocks/superposition-pod.md).
 
-Fills an edge of a pod's cradle that has no module.
+Pod Plating fills an edge of a <ItemLink id="quantimium:pod_cradle" /> that has no module. Each module is built from Pod Plating.
 
 ## Recipes
 

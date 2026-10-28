@@ -12,7 +12,7 @@ item_ids:
 
 <ItemImage id="quantimium:quantum_attuned_glass" scale="2" />
 
-Glass tuned to the field. It walls in the Containment Hall and glows faintly.
+Quantum Attuned Glass is glass tuned to the field. It walls in the [Anomaly Containment Hall](../multiblocks/containment-hall.md) around its cell, and glows faintly. Lasers pass through it, as through any glass.
 
 ## Recipes
 
