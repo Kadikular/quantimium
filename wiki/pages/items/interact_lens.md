@@ -3,6 +3,7 @@
 ## How it works
 
 - Acts once every {{c:LaserTuning.PLACE_COOLDOWN|s}}.
+- With nothing to do, it waits twice as long each time it looks, up to 4 seconds (the `laserIdleSeconds` config option). After a use, it's back to its own pace.
 - It works with what the port holds where it lies, trying each kind of thing in turn (carrots, then wheat, then shears) until one is used. Nothing moves unless using it changes it.
 - What it used goes back where it belongs: the same thing (a worn sword) to the sending port, anything new (a filled bucket) up the laser to a collecting one.
 - Through an [[block:area_prism]] it works on the area: on living things first if it holds something for them, otherwise on blocks in turn, each from the side facing the prism.

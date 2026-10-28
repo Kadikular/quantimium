@@ -56,6 +56,8 @@
   or into another Cavity Mirror: up to 16 blocks one way, each mirror counting as one. A splitter, or a mirror
   switched off, breaks it.
 - Mirrors no longer show where light would go while holding a wrench or the Linker.
+- An Interact Lens with nothing to do waits longer between tries, as Insert and Extract do (up to `laserIdleSeconds`),
+  instead of trying everything it's sent every tick. Busy, it keeps its pace.
 
 ### Reactor
 

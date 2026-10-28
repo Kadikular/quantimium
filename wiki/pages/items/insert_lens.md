@@ -3,7 +3,7 @@
 ## How it works
 
 - Moves up to {{c:LaserTuning.MOVE_ITEMS}} items every {{c:LaserTuning.PLACE_COOLDOWN|s}}. Each [[item:speed_lens]] doubles that, up to 64.
-- It ramps up and down: each successful move halves its wait (from 4 s down to its own pace), and each look that finds nothing doubles it (up to 2 s).
+- It ramps up and down: each successful move halves its wait (from 4 s down to its own pace), and each look that finds nothing doubles it (up to 4 s, the `laserIdleSeconds` config option).
 - Through an [[block:area_prism]], each inventory in the area in turn.
 - It does nothing in the mirror.
 
