@@ -208,6 +208,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** Where the fluids recipes make go: shown among its outputs. */
     private final com.kadikular.quantimium.util.FluidTanks outputTanks =
             new com.kadikular.quantimium.util.FluidTanks(OUTPUT_TANKS, TANK_CAPACITY, this::fluidsChanged);
+    /**
+     * Its tanks as a craft draws on and fills them: inside whatever transaction is open (a pull that may be called
+     * off), so a craft undone puts its fluids back too.
+     */
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler inputsForCrafts = com.kadikular.quantimium.util.LegacyFluids.legacy(
+            inputTanks.handler(inputTanks.view(() -> true, () -> true)));
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler outputsForCrafts = com.kadikular.quantimium.util.LegacyFluids.legacy(
+            outputTanks.handler(outputTanks.view(() -> true, () -> true)));
     /** Pipes and buckets: they fill the input tanks and drain the output tanks, on every face. */
     private final net.neoforged.neoforge.fluids.capability.IFluidHandler fluidView = new net.neoforged.neoforge.fluids.capability.IFluidHandler() {
         @Override
@@ -1002,7 +1010,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         for (int slot = 0; slot < INPUT_SLOTS; slot++) {
             ItemStack stack = inventory.getStackInSlot(slot);
             if (!EntangledLinks.isLink(stack)) continue;
-            var tanks = EntangledLinks.resolveFluid(level, stack);
+            var tanks = EntangledLinks.resolveFluid(level, worldPosition, stack);
             if (tanks == null) continue;
             for (int tank = 0; tank < tanks.getTanks(); tank++) hash = hash * 31 + fluidKey(tanks.getFluidInTank(tank));
         }
@@ -1947,7 +1955,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 yield gather(withdrawal, need, simulate, hintSlot, remote.getSlots(),
                         remote::getStackInSlot, (slot, amount) -> remote.extractItem(slot, amount, simulate));
             }
-            case IngredientPool.Provenance.Tank ignored -> drained(inputTanks.drain(fluidOf(withdrawal).copyWithAmount(need), simulate));
+            case IngredientPool.Provenance.Tank ignored -> drained(inputsForCrafts.drain(fluidOf(withdrawal).copyWithAmount(need),
+                    simulate ? net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE
+                            : net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE));
             case IngredientPool.Provenance.LinkedTank(int linkSlot, int ignored) -> {
                 var tanks = linkedTanks(linkSlot);
                 yield tanks == null ? ItemStack.EMPTY : drained(tanks.drain(fluidOf(withdrawal).copyWithAmount(need),
@@ -1972,7 +1982,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     @Nullable
     private net.neoforged.neoforge.fluids.capability.IFluidHandler linkedTanks(int linkSlot) {
         if (linkSlot < 0 || linkSlot >= INPUT_SLOTS) return null;
-        return EntangledLinks.resolveFluid(level, inventory.getStackInSlot(linkSlot));
+        return EntangledLinks.resolveFluid(level, worldPosition, inventory.getStackInSlot(linkSlot));
     }
 
     private ItemStack localSlot(int slot) {
@@ -2040,7 +2050,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 var tanks = linkedTanks(linkSlot);
                 if (tanks != null) back = tanks.fill(fluid, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
             }
-            if (back < fluid.getAmount()) inputTanks.fill(fluid.copyWithAmount(fluid.getAmount() - back), false);
+            if (back < fluid.getAmount()) inputsForCrafts.fill(fluid.copyWithAmount(fluid.getAmount() - back), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
             return;
         }
         ItemStack leftover = stack;
@@ -2185,7 +2195,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             }
             insertIntoOutputs(outputs.get(i).copy(), false);
         }
-        for (net.neoforged.neoforge.fluids.FluidStack fluid : craft.fluidOutputs()) outputTanks.fill(fluid, false);
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : craft.fluidOutputs()) outputsForCrafts.fill(fluid, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
 
         if (tracing != null) tracing.accept(indent() + "made " + craft.recipeId() + " x" + craft.batchSize() + " at " + worldPosition.toShortString());
         // Continuous hopper craft must not rescan every MI recipe on each item. All of it from networks, nothing it

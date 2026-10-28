@@ -20,7 +20,8 @@ public final class StockHandler implements ResourceHandler<ItemResource> {
         items = new ArrayList<>(stock.size());
         amounts = new ArrayList<>(stock.size());
         stock.forEach((item, amount) -> {
-            if (amount <= 0 || item.isEmpty()) return;
+            // Fluids are a network's too, but not items: a machine draws them through a fluid handler.
+            if (amount <= 0 || item.isEmpty() || item.is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) return;
             items.add(item);
             amounts.add(amount);
         });

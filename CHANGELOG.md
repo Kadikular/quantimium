@@ -34,6 +34,8 @@
   it took items alone.
 - New Crafter catalysts: Energized Power's Fluid Transposer, Fluid Freezer, Stone Solidifier and Stone Liquefier, and
   Productive Bees' Bottler. A bucket used on the Crafter fills or empties its tanks.
+- **The Logistics Materializer offers the network's fluids** through a fluid handler, so a Crafter's Tesseract bound to
+  it makes from the network's fluids. Fluids are no longer shown to pipes as items.
 - Fluid gauges are marked like a measuring jug.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors

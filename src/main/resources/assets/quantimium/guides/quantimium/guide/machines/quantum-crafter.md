@@ -236,7 +236,8 @@ The crafter has 3 input tanks, right of the catalyst, and
 2 output tanks, shown among its outputs. Each holds 16,000 mB of one fluid.
 
 - A recipe that takes a fluid draws it from the input tanks, or from a tank a Tesseract in the grid is
-  bound to (a <ItemLink id="quantimium:laser_tank" />, or any mod's). It is offered only while there is enough.
+  bound to (a <ItemLink id="quantimium:laser_tank" />, any mod's tank, or a <ItemLink id="quantimium:logistics_materialiser" /> for a network's
+  fluids). A Semi-Stable Tesseract reaches tanks in its range. It is offered only while there is enough.
 - Fluids a recipe makes go to the output tanks. A batch is cut to what they have room for. With no
   room for even one run, it waits.
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a

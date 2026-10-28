@@ -154,6 +154,12 @@ public class Quantimium {
                 ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
                 (be, context) -> context == null ? be.viewerHandler() : be.itemHandler()
         );
+        // And its fluids, to pipes and to Crafters' Tesseracts.
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
+                (be, context) -> be.fluidHandler()
+        );
 
         // A Logistics Controller takes the power it pays to move things with on any face.
         event.registerBlockEntity(

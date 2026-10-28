@@ -130,7 +130,7 @@ public final class IngredientPool {
         for (int slot = 0; slot < inputSlots; slot++) {
             ItemStack stack = grid.getStackInSlot(slot);
             if (stack.isEmpty() || !EntangledLinks.isLink(stack)) continue;
-            IFluidHandler tanks = EntangledLinks.resolveFluid(level, stack);
+            IFluidHandler tanks = EntangledLinks.resolveFluid(level, source, stack);
             if (tanks == null) continue;
             for (int tank = 0; tank < tanks.getTanks(); tank++) {
                 FluidStack there = tanks.getFluidInTank(tank);

@@ -122,15 +122,26 @@ public final class EntangledLinks {
 
     @Nullable
     public static IFluidHandler resolveFluid(@Nullable Level level, ItemStack link) {
-        ResourceHandler<FluidResource> fluids = resolveFluids(level, link);
-        return fluids == null ? null : IFluidHandler.of(fluids);
+        return resolveFluid(level, null, link);
+    }
+
+    /** As {@link #resolveFluid(Level, ItemStack)}, from {@code source}: a Semi-Stable Tesseract reaches tanks in its range too. */
+    @Nullable
+    public static IFluidHandler resolveFluid(@Nullable Level level, @Nullable BlockPos source, ItemStack link) {
+        ResourceHandler<FluidResource> fluids = resolveFluids(level, source, link);
+        return com.kadikular.quantimium.util.LegacyFluids.legacy(fluids);
     }
 
     @Nullable
     public static ResourceHandler<FluidResource> resolveFluids(@Nullable Level level, ItemStack link) {
-        if (level == null || level.isClientSide() || !isBound(link) || isSemiStable(link)) return null;
+        return resolveFluids(level, null, link);
+    }
+
+    @Nullable
+    public static ResourceHandler<FluidResource> resolveFluids(@Nullable Level level, @Nullable BlockPos source, ItemStack link) {
+        if (level == null || level.isClientSide() || !isBound(link)) return null;
         GlobalPos bound = link.get(ModDataComponents.BOUND_POS.get());
-        if (bound == null) return null;
+        if (bound == null || !inRange(level, source, bound, link)) return null;
 
         ServerLevel target = resolveLevel(level, bound);
         if (target == null || !matchesBoundBlock(target, bound.pos(), link)) return null;
@@ -256,6 +267,17 @@ public final class EntangledLinks {
             ServerLevel targetLevel = level == null || pos == null ? null : resolveLevel(level, pos);
             BlockEntity target = targetLevel == null || !targetLevel.isLoaded(pos.pos())
                     ? null : targetLevel.getBlockEntity(pos.pos());
+            // Fluids in a bound tank (a network's, through its Materializer): which fluids, and a bucket's worth more or
+            // less (a dripping pipe isn't news).
+            IFluidHandler tanks = resolveFluid(level, source, stack);
+            if (tanks != null) {
+                for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                    var fluid = tanks.getFluidInTank(tank);
+                    if (fluid.isEmpty()) continue;
+                    typeHash = typeHash * 31 + BuiltInRegistries.FLUID.getId(fluid.getFluid());
+                    countTotal += fluid.getAmount() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+                }
+            }
             if (target instanceof QuantumCrafterBlockEntity crafter) {
                 // Enumerating virtual outputs recursively asks whether every downstream craft can
                 // commit; the crafter summarises its own catalog instead.
@@ -269,16 +291,6 @@ public final class EntangledLinks {
                 typeHash = typeHash * 31 + network.typeHash();
                 countTotal += network.countTotal();
                 continue;
-            }
-            // Fluids in a bound tank: which fluids, and a bucket's worth more or less (a dripping pipe isn't news).
-            IFluidHandler tanks = resolveFluid(level, stack);
-            if (tanks != null) {
-                for (int tank = 0; tank < tanks.getTanks(); tank++) {
-                    var fluid = tanks.getFluidInTank(tank);
-                    if (fluid.isEmpty()) continue;
-                    typeHash = typeHash * 31 + BuiltInRegistries.FLUID.getId(fluid.getFluid());
-                    countTotal += fluid.getAmount() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
-                }
             }
             IItemHandler handler = resolve(level, source, stack);
             if (handler == null) {

@@ -128,10 +128,17 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         return tanks.handler(hands);
     }
 
-    /** Its tanks, whole: what a Logistics Receptacle on it works with, whatever its faces are set to. */
+    /**
+     * Its tanks, whole: what a Logistics Receptacle on it works with, whatever its faces are set to. Inside whatever
+     * transaction is open (a Logistics Materializer's), so one called off puts it back.
+     */
     public IFluidHandler networkTanks() {
-        return hands;
+        if (network == null) network = com.kadikular.quantimium.util.LegacyFluids.legacy(tanks.handler(hands));
+        return network;
     }
+
+    @Nullable
+    private IFluidHandler network;
 
     /** On a logistics network, what it's caught is offered: a passive provider, as a Laser Port is. */
     private final com.kadikular.quantimium.laser.LogisticsMember asProvider = new com.kadikular.quantimium.laser.LogisticsMember() {
@@ -168,7 +175,7 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
 
         @Override
         public IFluidHandler fluids() {
-            return hands;
+            return networkTanks();
         }
 
         @Override

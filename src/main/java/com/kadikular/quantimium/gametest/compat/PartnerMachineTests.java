@@ -89,6 +89,33 @@ public final class PartnerMachineTests {
     }
 
     // covers: crafter.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_linked_fluids", timeoutTicks = 60)
+    public static void aStoneSolidifierDrawsOnLinkedTanks(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        BlockPos waterAt = new BlockPos(8, 2, 4), lavaAt = new BlockPos(10, 2, 4);
+        for (BlockPos at : new BlockPos[] {waterAt, lavaAt}) {
+            helper.setBlock(at, com.kadikular.quantimium.init.ModBlocks.LASER_TANK.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LaserTankBlock.FACING, net.minecraft.core.Direction.EAST));
+        }
+        var water = helper.getBlockEntity(waterAt, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        var lava = helper.getBlockEntity(lavaAt, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        water.tanks().set(0, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 8_000));
+        lava.tanks().set(0, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 8_000));
+        var crafter = fluidCrafter(helper, 2, "energizedpower:stone_solidifier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(crafter,
+                com.kadikular.quantimium.gametest.CrafterTests.link(helper, waterAt, com.kadikular.quantimium.init.ModBlocks.LASER_TANK.get()),
+                com.kadikular.quantimium.gametest.CrafterTests.link(helper, lavaAt, com.kadikular.quantimium.init.ModBlocks.LASER_TANK.get()));
+        helper.runAfterDelay(10, () -> {
+            helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(crafter, net.minecraft.world.item.Items.ANDESITE) != null,
+                    "andesite offered from the linked tanks");
+            ItemStack made = crafter.takeGhost(com.kadikular.quantimium.gametest.CrafterTests.ghostId(crafter, net.minecraft.world.item.Items.ANDESITE));
+            helper.assertTrue(made.is(net.minecraft.world.item.Items.ANDESITE), "andesite taken: " + made);
+            helper.assertTrue(water.tanks().get(0).getAmount() < 8_000 && lava.tanks().get(0).getAmount() < 8_000, "water and lava drawn from them");
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.fluids
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_productivebees_bottler", timeoutTicks = 60)
     public static void theBottlerInTheCrafter(GameTestHelper helper) {
         if (skip(helper, "productivebees")) return;

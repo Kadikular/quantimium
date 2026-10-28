@@ -112,6 +112,9 @@ A <ItemLink id="quantimium:logistics_materialiser" /> where a controller's laser
 - Click it to choose what it offers: stored and craftable items (the default), stored items, or craftable items.
 - A provider Receptacle on another network's Materializer brings that network's offers into its own, stored as stored and craftable as craftable.
 - A receptacle of the same network on its Materializer is ignored: it would read the network into itself.
+- Its fluids too, through a fluid handler on every face: pipes drain what storage and providers hold
+  and fill storage. A Tesseract in a <ItemLink id="quantimium:quantum_crafter" /> bound to it lets the crafter make from the network's
+  fluids, and what it then offers the network is made from them.
 
 ## Reactor Logistics Port
 

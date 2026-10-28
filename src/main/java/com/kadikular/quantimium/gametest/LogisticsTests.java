@@ -942,6 +942,47 @@ public final class LogisticsTests {
         }));
     }
 
+    // covers: laser.logistics.materialiser, crafter.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafter_fluids", timeoutTicks = 300)
+    public static void aNetworksCrafterMakesFromTheNetworksFluids(GameTestHelper helper) {
+        // Water and lava stored on the network; a Stone Solidifier Crafter drawing on it through the Materializer
+        // and offering what it makes. Andesite taken out of the network takes the network's water and lava.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        var water = fluidStorage(helper, 4, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 8_000));
+        var lava = fluidStorage(helper, 8, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 8_000));
+        crafterOn(helper, 6, net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
+                net.minecraft.resources.Identifier.parse("energizedpower:stone_solidifier")), true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(take(helper, Items.ANDESITE, 1, true), 1, "andesite made from the network's water and lava");
+            helper.assertTrue(water.tanks().get(0).getAmount() < 8_000, "the network's water used");
+            helper.assertTrue(lava.tanks().get(0).getAmount() < 8_000, "the network's lava used");
+            // Fluids aren't items to pipes: the Materializer shows them through its fluid handler.
+            var items = network(helper);
+            for (int i = 0; i < items.size(); i++) {
+                helper.assertTrue(!items.getResource(i).is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get()), "no fluid as an item");
+            }
+            var fluids = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, helper.absolutePos(MATERIALISER), Direction.UP);
+            helper.assertTrue(fluids != null && fluids.size() >= 2, "water and lava through its fluid handler");
+            helper.succeed();
+        });
+    }
+
+    /** A Laser Tank under the light at {@code x} holding {@code fluid}, a storage receptacle on it. */
+    private static com.kadikular.quantimium.block.entity.LaserTankBlockEntity fluidStorage(GameTestHelper helper, int x, net.neoforged.neoforge.fluids.FluidStack fluid) {
+        BlockPos at = new BlockPos(x, Y - 1, 8);
+        helper.setBlock(at, ModBlocks.LASER_TANK.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserTankBlock.FACING, Direction.EAST));
+        var tank = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        tank.tanks().set(0, fluid);
+        TestSupport.receptacle(helper, new BlockPos(x, Y, 8), Direction.DOWN);
+        return tank;
+    }
+
     /**
      * A Crafter at {@code x} under the controller's light, making with {@code catalyst}: drawing on the network (a
      * Tesseract bound to the Logistics Materialiser at {@link #MATERIALISER}) if {@code draws}, offering what it can

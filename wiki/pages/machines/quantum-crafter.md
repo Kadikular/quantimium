@@ -231,7 +231,8 @@ network sees each ghost as a slot after the outputs, on any face that lets somet
 {{c:QuantumCrafterBlockEntity.OUTPUT_TANKS}} output tanks, shown among its outputs. Each holds {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB of one fluid.
 
 - A recipe that takes a fluid draws it from the input tanks, or from a tank a Tesseract in the grid is
-  bound to (a [[block:laser_tank]], or any mod's). It is offered only while there is enough.
+  bound to (a [[block:laser_tank]], any mod's tank, or a [[block:logistics_materialiser]] for a network's
+  fluids). A Semi-Stable Tesseract reaches tanks in its range. It is offered only while there is enough.
 - Fluids a recipe makes go to the output tanks. A batch is cut to what they have room for. With no
   room for even one run, it waits.
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a

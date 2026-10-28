@@ -99,6 +99,107 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         return handler;
     }
 
+    /** The network's fluids, to pipes and Tesseracts: what its storage and providers hold, and room in its storage. */
+    public ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidHandler() {
+        return fluids;
+    }
+
+    private final NetworkFluids fluids = new NetworkFluids();
+
+    /**
+     * The network's fluids as a handler, a tank a fluid. As the item handler, a move happens at once inside the caller's
+     * transaction (the members' tanks join it), and the controller is paid a move each when the outermost commits.
+     */
+    private final class NetworkFluids extends SnapshotJournal<Integer> implements ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> {
+        private int moves;
+        @Nullable
+        private List<java.util.Map.Entry<net.neoforged.neoforge.transfer.fluid.FluidResource, Long>> listed;
+        private long listedAt = Long.MIN_VALUE;
+
+        /** The network's fluids, looked over at most once a tick. */
+        private List<java.util.Map.Entry<net.neoforged.neoforge.transfer.fluid.FluidResource, Long>> listed() {
+            long now = level == null ? 0 : level.getGameTime();
+            if (listed == null || listedAt != now) {
+                listed = offersReal() ? new ArrayList<>(Logistics.fluids(members()).entrySet()) : List.of();
+                listedAt = now;
+            }
+            return listed;
+        }
+
+        @Override
+        public int size() {
+            return controller() == null ? 0 : listed().size() + 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            var list = listed();
+            return index >= 0 && index < list.size() ? list.get(index).getKey() : net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            var list = listed();
+            return index >= 0 && index < list.size() ? list.get(index).getValue() : 0;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return controller() != null;
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            LogisticsController controller = controller();
+            if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
+            int put = Logistics.insertFluid(members(), resource.toStack(amount), false, false);
+            if (put > 0) moved(transaction);
+            return put;
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            LogisticsController controller = controller();
+            if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered() || !offersReal()) return 0;
+            var wanted = resource.toStack(1);
+            int got = Logistics.takeFluid(members(), each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, wanted), amount, false).getAmount();
+            if (got > 0) moved(transaction);
+            return got;
+        }
+
+        private void moved(TransactionContext transaction) {
+            updateSnapshots(transaction);
+            moves++;
+            listed = null;
+        }
+
+        @Override
+        protected Integer createSnapshot() {
+            return moves;
+        }
+
+        @Override
+        protected void revertToSnapshot(Integer snapshot) {
+            moves = snapshot;
+            listed = null;
+        }
+
+        @Override
+        protected void onRootCommit(Integer originalState) {
+            LogisticsController controller = controller();
+            if (controller != null) {
+                for (int i = 0; i < moves; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
+                if (moves > 0) controller.stockShifted();
+            }
+            moves = 0;
+        }
+    }
+
     /**
      * Asked with no face (other mods' screens, inventory viewers): the same, a stack at most to a slot, since
      * such screens turn each slot into an item stack, and one of thousands can't be sent to a client.
@@ -170,6 +271,8 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         if (offers == entriesFrom && mode == entriesMode) return entries;
         List<Entry> list = new ArrayList<>();
         for (var entry : offers.only(offersReal(), offersCraftable()).entries()) {
+            // Fluids go through its fluid handler, not as items.
+            if (entry.item().is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) continue;
             long amount = (offersReal() ? entry.real() : 0) + (offersCraftable() ? entry.craftable() : 0);
             if (amount > 0) list.add(new Entry(entry.item(), amount));
         }
