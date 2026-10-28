@@ -1,63 +1,71 @@
+---
+navigation:
+  title: Stabilized rift
+  parent: mirror/index.md
+  position: 30
+item_ids:
+- quantimium:rift_anchor
+- quantimium:rift_stabiliser
+---
+
 # Stabilized rift
 
-A rift held open on purpose, as a steady supply of [[item:rift_residue]] for your
-[Containment Halls](containment-hall.md).
-
-[[render:rift_array]]
+A rift held open on purpose, as a steady supply of <ItemLink id="quantimium:rift_residue" /> for your
+[Containment Halls](../multiblocks/containment-hall.md).
 
 ## Building one
 
-1. Place a [[block:rift_anchor]] with two blocks of air above it.
-2. Use a [[item:rift_seed]] on it to open a stage 1 rift. Or place the anchor under a natural rift:
+1. Place a <ItemLink id="quantimium:rift_anchor" /> with two blocks of air above it.
+2. Use a <ItemLink id="quantimium:rift_seed" /> on it to open a stage 1 rift. Or place the anchor under a natural rift:
    it takes over any rift whose footing is one or two blocks above it and at most one block to the
    side.
-3. Stand [[block:rift_stabiliser]]s around it:
-   - [[mechanic:stabilised.reach]] between {{c:RiftAnchorBlockEntity.MIN_REACH}} and
-     {{c:RiftAnchorBlockEntity.MAX_REACH}} blocks out horizontally (counted like a square, so the
-     diagonal corner at six out counts too), from {{c:RiftAnchorBlockEntity.REACH_BELOW}} below to
-     {{c:RiftAnchorBlockEntity.REACH_ABOVE}} above the anchor;
-   - [[mechanic:stabilised.sight]] each with a clear line from its emitter to the rift. Other
+3. Stand <ItemLink id="quantimium:rift_stabiliser" />s around it:
+   - between 2 and
+     6 blocks out horizontally (counted like a square, so the
+     diagonal corner at six out counts too), from 2 below to
+     4 above the anchor;
+   - each with a clear line from its emitter to the rift. Other
      stabilizers and the anchor do not block it; walls do. A stabilizer that cannot see the rift is
      simply not used, so it never takes a place from one that can;
-   - [[mechanic:stabilised.limit]] the anchor uses the nearest {{c:RiftAnchorBlockEntity.MAX_STABILISERS}}
+   - the anchor uses the nearest 6
      that can see it. Any more stand idle and draw nothing.
 4. Power them.
 
-[[mechanic:stabilised.sight_crystals]] **Anomalite crystals don't block sight.** They grow on the array's
+**Anomalite crystals don't block sight.** They grow on the array's
 powered blocks near a hot rift, but they are mirror growth showing through, not real matter: a
 stabilizer under crystals still sees the rift. The crystals still drain its power, so an array left
 to crystallize can still fall short of three paying stabilizers.
 
-[[mechanic:stabilised.beaming]] Each stabilizer's emitter is a small compound of two cubes, each one's
+Each stabilizer's emitter is a small compound of two cubes, each one's
 corners poking through the other's faces, spinning a third of a block over its cap. It is murky while
 idle and burns bright while the stabilizer beams at the rift, so a pillar that isn't paying stands out.
 
-[[mechanic:stabilised.hold]] With at least **{{c:RiftAnchorBlockEntity.MIN_STABILISERS}}** stabilizers powered and in sight, the
+With at least **3** stabilizers powered and in sight, the
 rift is **held**. Stabilizers only draw power once enough of them can see it. Each costs
 **60 + 40 × stage FE/t**: 100 at stage 1, 220 at stage 4.
 
-[[mechanic:stabilised.flux]] Stabilizers emit **1 flux per 1,000 FE** they spend, once a second, as a
+Stabilizers emit **1 flux per 1,000 FE** they spend, once a second, as a
 generator does: pure flux, no anomaly, so a held rift's field stays free of anomaly. Four at stage 4 (880 FE/t)
 put about 18 flux a second into the neighborhood.
 
 ## A held rift
 
-- [[mechanic:stabilised.growth]] It grows a stage every 10 minutes up to stage 4, whatever the flux, and even inside a hall's field.
-- [[mechanic:stabilised.safe]] It has no mites, no tears, no anomaly leak and no Veiled. It still burns and throws
+- It grows a stage every 10 minutes up to stage 4, whatever the flux, and even inside a hall's field.
+- It has no mites, no tears, no anomaly leak and no Veiled. It still burns and throws
   you on contact, but never through into the mirror, and its lightning only reaches
-  {{c:FluxRiftHazard.HELD_STRIKE_REACH}} blocks.
-- [[mechanic:stabilised.projector_ignores]] Decoherence Projectors ignore it; a Lance can still close it.
+  1.5 blocks.
+- Decoherence Projectors ignore it; a Lance can still close it.
 
 ## Residue
 
-[[mechanic:stabilised.output]] It makes residue at **stage × paying stabilizers**. At stage 4, four stabilizers make one
+It makes residue at **stage × paying stabilizers**. At stage 4, four stabilizers make one
 every 4 minutes (a small surplus over one hall's 5) and six make one every 2.7. The anchor stores up
-to {{c:RiftAnchorBlockEntity.OUTPUT_CAPACITY}}; take it from the anchor's screen, by hopper, or through a
+to 64; take it from the anchor's screen, by hopper, or through a
 bound Tesseract in a hall. Full, the rift stays held but makes nothing until some is taken.
 
 ## The anchor's screen
 
-[[mechanic:stabilised.gui]] Use the anchor (without a seed in hand) to open it:
+Use the anchor (without a seed in hand) to open it:
 
 - the rift's stage, out of 4;
 - how many stabilizers are paying, out of six, or how many more it needs;
@@ -75,5 +83,5 @@ bound Tesseract in a hall. Full, the rift stays held but makes nothing until som
 
 ## When it fails
 
-[[mechanic:stabilised.failure]] If fewer than three stabilizers are paying (power, a blocked line, a broken pillar) for
+If fewer than three stabilizers are paying (power, a blocked line, a broken pillar) for
 3 seconds, it becomes an **ordinary rift again**, at the stage it reached, hazards and all.

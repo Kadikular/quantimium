@@ -14,9 +14,9 @@ item_ids:
 
 The Lance's beam on a pedestal. Every half-second it picks the most pressing target within
 16 blocks in clear sight of its orb: the
-[Veiled](../mechanics/veiled.md) first, then mirror mites
+[Veiled](../mirror/veiled.md) first, then mirror mites
 (3 damage each half-second), then a
-[rift](../mechanics/flux-rifts.md) (2
+[rift](../mirror/flux-rifts.md) (2
 coherence a tick). Stabilized rifts are left alone.
 
 | | |

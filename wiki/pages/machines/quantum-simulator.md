@@ -40,7 +40,7 @@ the field button in its GUI.
 - Any block can be taken, but only one with item slots or fluid tanks does anything (see
   *Statuses*). The exceptions are machines whose work is on the world around them: the
   [Zeno Field Controller](zeno-field-controller.md), where every copy adds its own extra random ticks,
-  and the [field blocks](field-control.md), where every copy raises flux or pulls anomaly.
+  and the [field blocks](../field-control/overview.md), where every copy raises flux or pulls anomaly.
 
 [[mechanic:simulator.disengage]] Pressing the button again puts the machine back, contents and all.
 If it can't be put back, its items drop at the Simulator's feet rather than being lost.

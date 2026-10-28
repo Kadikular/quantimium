@@ -4,7 +4,7 @@ that throws flux away, and it's for the places you don't want any:
 - **Firebreaks.** Past its containment, a hot base's field spreads and turns the land around it
   dangerous. A Suppressor at the edge stops the spread before it reaches your house, a village or a
   farm.
-- **Starving rifts.** Flux sets how far a [rift](../mechanics/flux-rifts.md) can grow, and the Veiled
+- **Starving rifts.** Flux sets how far a [rift](../mirror/flux-rifts.md) can grow, and the Veiled
   only comes at Critical flux. Keep flux down near a rift and it stays small.
 - **Quiet zones.** A mirror entrance or a storeroom you'd like calm.
 

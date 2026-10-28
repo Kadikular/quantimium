@@ -2,7 +2,7 @@
 navigation:
   title: Zeno Field Controller
   parent: machines/index.md
-  position: 14
+  position: 10
   icon: quantimium:zeno_field_controller
 ---
 

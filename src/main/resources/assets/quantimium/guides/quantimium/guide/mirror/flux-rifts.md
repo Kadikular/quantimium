@@ -1,15 +1,15 @@
 ---
 navigation:
   title: Flux rifts
-  parent: mechanics/index.md
-  position: 8
+  parent: mirror/index.md
+  position: 29
 ---
 
 # Flux rifts
 
 A flux rift is a wound between the realms: a tear that failed to close and stayed. Unlike a tear,
 which is a door, a rift grows, leaks anomaly, throws lightning, and at its worst lets things through.
-It can only be closed from the [mirror](../concepts/mirror-phase.md), with a
+It can only be closed from the [mirror](mirror-phase.md), with a
 <ItemLink id="quantimium:decoherence_lance" />.
 
 ## Birth
@@ -25,7 +25,7 @@ stage 1 rift standing there, but only where there's anomaly for it to feed on: a
 at **Medium anomaly or higher**. Anywhere else it fizzles, *nothing here for it to feed on*, and you
 keep the seed. Planted rifts count toward the same limit and spacing as the rest. No hot field? A
 <ItemLink id="quantimium:quantum_exciter" /> will make one. Used on a <ItemLink id="quantimium:rift_anchor" /> instead, a seed opens a held
-rift anywhere: see the [stabilized rift](../multiblocks/stabilised-rift.md).
+rift anywhere: see the [stabilized rift](stabilised-rift.md).
 
 ## Growth
 

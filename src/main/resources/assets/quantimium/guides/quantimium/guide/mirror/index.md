@@ -1,12 +1,14 @@
 ---
 navigation:
-  title: Mechanics
+  title: The mirror
   parent: index.md
-  position: 3
+  position: 7
   icon: quantimium:rift_seed
 ---
 
-# Mechanics
+# The mirror
 
+- [The mirror phase](mirror-phase.md)
 - [The Veiled](veiled.md)
 - [Flux rifts](flux-rifts.md)
+- [Stabilized rift](stabilised-rift.md)

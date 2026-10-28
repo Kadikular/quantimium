@@ -2,7 +2,7 @@
 navigation:
   title: Side configuration
   parent: concepts/index.md
-  position: 5
+  position: 4
 ---
 
 # Side configuration

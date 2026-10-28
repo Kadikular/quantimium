@@ -57,7 +57,7 @@ The wiki is built from `wiki/pages` and from the mod's own source: every block a
 recipe and every number quoted from the code.
 
 ```bash
-python3 -m venv .venv-wiki && .venv-wiki/bin/pip install mkdocs-material pillow   # once
+python3 -m venv .venv-wiki && .venv-wiki/bin/pip install mkdocs-material mkdocs-redirects pillow pyyaml   # once
 ./gradlew createMinecraftArtifacts                                                  # once per Minecraft version
 .venv-wiki/bin/python tools/wiki/build.py --serve                                   # live preview
 ```

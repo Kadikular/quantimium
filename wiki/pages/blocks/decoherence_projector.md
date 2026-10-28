@@ -1,8 +1,8 @@
 The Lance's beam on a pedestal. Every half-second it picks the most pressing target within
 {{c:DecoherenceProjectorBlockEntity.RANGE}} blocks in clear sight of its orb: the
-[Veiled](../mechanics/veiled.md#the-decoherence-projector) first, then mirror mites
+[Veiled](../mirror/veiled.md#the-decoherence-projector) first, then mirror mites
 ({{c:DecoherenceProjectorBlockEntity.MITE_DAMAGE}} damage each half-second), then a
-[rift](../mechanics/flux-rifts.md#closing-it) ({{c:DecoherenceProjectorBlockEntity.RIFT_DRAIN_PER_TICK}}
+[rift](../mirror/flux-rifts.md#closing-it) ({{c:DecoherenceProjectorBlockEntity.RIFT_DRAIN_PER_TICK}}
 coherence a tick). Stabilized rifts are left alone.
 
 | | |

@@ -22,7 +22,7 @@ With [GuideME](https://modrinth.com/mod/guideme) installed, a Book and one Unrea
 
 An <ItemLink id="quantimium:observation_chamber" /> collapses Unrealized Matter into ordinary items. Now and then it
 leaves behind <ItemLink id="quantimium:quantimium_trace" />, the residue of measurement and the mod's first real
-material. Later, mites killed in the [mirror](../concepts/mirror-phase.md) leave Traces
+material. Later, mites killed in the [mirror](../mirror/mirror-phase.md) leave Traces
 too.
 
 ## 3. The first machines
@@ -46,6 +46,6 @@ down where you want none: a firebreak around a hot base, or near a rift.
 The <ItemLink id="quantimium:quantum_crafter" /> and <ItemLink id="quantimium:quantum_simulator" /> take over your crafting. Anomalite
 crystals start growing on your machines once anomaly runs Medium (a few; more at High), and they are both a hazard and a
 resource. Then come the [Quantum Foundry](../multiblocks/quantum-foundry.md), the
-[mirror](../concepts/mirror-phase.md), [rifts](../mechanics/flux-rifts.md), and
-[the Veiled](../mechanics/veiled.md). At the end of it all stands the
+[mirror](../mirror/mirror-phase.md), [rifts](../mirror/flux-rifts.md), and
+[the Veiled](../mirror/veiled.md). At the end of it all stands the
 [Quantimium Reactor](../multiblocks/reactor.md).

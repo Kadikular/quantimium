@@ -2,7 +2,7 @@
 navigation:
   title: Anomaly Containment Hall
   parent: multiblocks/index.md
-  position: 18
+  position: 14
 item_ids:
 - quantimium:anomaly_containment_hall
 ---
@@ -11,7 +11,7 @@ item_ids:
 
 The hall is the answer to a base too hot to work in. It holds its field up to all of Singularity and
 pulls anomaly down, and **only** anomaly, so a deliberately hot field keeps its flux. Its cell can also
-hold [the Veiled](../mechanics/veiled.md).
+hold [the Veiled](../mirror/veiled.md).
 
 <GameScene zoom="2.9" interactive={true}>
   <ImportStructure src="../assets/structures/hall.snbt" />
@@ -55,14 +55,14 @@ taking up to 4,000 FE/t.
 ## Holding the Veiled
 
 A formed, powered hall with room takes hold of a worn-down Veiled in its reach (see
-[Ending a fight](../mechanics/veiled.md)). Once held:
+[Ending a fight](../mirror/veiled.md)). Once held:
 
 - it burns **1 <ItemLink id="quantimium:rift_residue" /> every 5 min**
   while holding (and only then), whatever the arm count;
 - residue goes in by hand, or by hopper or pipe into **any claimed arm block**. The hall
   keeps up to 16, which is 80 minutes of holding;
 - a **bound Tesseract** in the residue slot draws residue from the linked
-  inventory instead. Point it at a [Rift Anchor](stabilised-rift.md) and the hall runs off a rift;
+  inventory instead. Point it at a [Rift Anchor](../mirror/stabilised-rift.md) and the hall runs off a rift;
 - a hall with no residue cannot take hold of anything.
 
 Its screen says what state its **cell** is in: *waiting* (it can take one),
@@ -90,6 +90,6 @@ lets it out at once.
 ## Veil Thread
 
 Laser light in the mirror, with a Pickup lens, can draw <ItemLink id="quantimium:veil_thread" /> out of the Veiled a hall
-holds, through the middle of any wall of glass (see [Into the mirror](../machines/lasers.md)).
+holds, through the middle of any wall of glass (see [Into the mirror](../lasers/networks.md)).
 A <ItemLink id="quantimium:rift_lens" /> right against the glass seats onto it with a studded collar. One draw to a hall at
 a time.

@@ -2,7 +2,7 @@
 navigation:
   title: Fold Chamber
   parent: multiblocks/index.md
-  position: 20
+  position: 15
 item_ids:
 - quantimium:fold_core
 - quantimium:fold_pylon

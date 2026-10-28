@@ -2,7 +2,7 @@
 
 The hall is the answer to a base too hot to work in. It holds its field up to all of Singularity and
 pulls anomaly down, and **only** anomaly, so a deliberately hot field keeps its flux. Its cell can also
-hold [the Veiled](../mechanics/veiled.md).
+hold [the Veiled](../mirror/veiled.md).
 
 [[render:hall]]
 
@@ -45,14 +45,14 @@ taking up to {{c:ContainmentHallBlockEntity.MAX_RECEIVE}} FE/t.
 ## Holding the Veiled
 
 A formed, powered hall with room takes hold of a worn-down Veiled in its reach (see
-[Ending a fight](../mechanics/veiled.md#ending-a-fight)). Once held:
+[Ending a fight](../mirror/veiled.md#ending-a-fight)). Once held:
 
 - [[mechanic:hall.residue.burn]] it burns **1 [[item:rift_residue]] every {{c:ContainmentHallBlockEntity.TICKS_PER_RESIDUE|min}}**
   while holding (and only then), whatever the arm count;
 - [[mechanic:hall.residue.input]] residue goes in by hand, or by hopper or pipe into **any claimed arm block**. The hall
   keeps up to {{c:ContainmentHallBlockEntity.RESIDUE_CAPACITY}}, which is 80 minutes of holding;
 - [[mechanic:hall.residue.tesseract]] a **bound Tesseract** in the residue slot draws residue from the linked
-  inventory instead. Point it at a [Rift Anchor](stabilised-rift.md) and the hall runs off a rift;
+  inventory instead. Point it at a [Rift Anchor](../mirror/stabilised-rift.md) and the hall runs off a rift;
 - [[mechanic:hall.capture_needs_residue]] a hall with no residue cannot take hold of anything.
 
 [[mechanic:hall.cell]] Its screen says what state its **cell** is in: *waiting* (it can take one),
@@ -80,6 +80,6 @@ lets it out at once.
 ## Veil Thread
 
 Laser light in the mirror, with a Pickup lens, can draw [[item:veil_thread]] out of the Veiled a hall
-holds, through the middle of any wall of glass (see [Into the mirror](../machines/lasers.md#into-the-mirror)).
+holds, through the middle of any wall of glass (see [Into the mirror](../lasers/networks.md#into-the-mirror)).
 A [[block:rift_lens]] right against the glass seats onto it with a studded collar. One draw to a hall at
 a time.

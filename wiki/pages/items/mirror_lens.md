@@ -1,7 +1,7 @@
 Goggles that let a slice of the mirror into the real world. Wear them in the head slot and the
 [field](../concepts/flux-and-anomaly.md) around you shows, not as numbers but as weather: air that
 thickens, rare plumes worth stopping for, and anomaly as a dark ink that pools, leaks and is drawn into
-whatever eats it. Through the lens it is toned down; inside the [mirror](../concepts/mirror-phase.md)
+whatever eats it. Through the lens it is toned down; inside the [mirror](../mirror/mirror-phase.md)
 you see all of it without one, far more intense.
 
 [[mechanic:lens.survey]] Once a second you see the field of the chunks around you, four chunks out,
@@ -62,7 +62,7 @@ rimmed violet lenses that catch a little light in the dark. Armor stands wear th
 
 ## It notices
 
-Through the lens the [Veiled](../mechanics/veiled.md#through-a-mirror-lens) shows where it
+Through the lens the [Veiled](../mirror/veiled.md#through-a-mirror-lens) shows where it
 really stands, faint. Stare at it and it becomes curious how you can see it, and follows you; while
 you wear the lens its sightings also come twice as often.
 

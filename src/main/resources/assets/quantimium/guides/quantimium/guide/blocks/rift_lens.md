@@ -13,7 +13,7 @@ item_ids:
 <ItemImage id="quantimium:rift_lens" scale="2" />
 
 A stone ring laser light passes through into the mirror (see
-[Into the mirror](../machines/lasers.md)). On its own it does nothing. With lit light going
+[Into the mirror](../lasers/networks.md)). On its own it does nothing. With lit light going
 through it along its axis, a small tear opens in its middle and the lens lights up. Everyone can see
 the tear, from either side of the mirror.
 

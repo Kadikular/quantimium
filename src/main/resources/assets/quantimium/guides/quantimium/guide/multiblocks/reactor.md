@@ -2,7 +2,7 @@
 navigation:
   title: Quantimium Reactor
   parent: multiblocks/index.md
-  position: 22
+  position: 17
 item_ids:
 - quantimium:horizon_core
 - quantimium:reactor_plinth
