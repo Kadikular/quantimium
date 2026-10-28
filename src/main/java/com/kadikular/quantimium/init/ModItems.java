@@ -276,6 +276,8 @@ public class ModItems {
             "logistics_materialiser", ModBlocks.LOGISTICS_MATERIALISER);
     public static final DeferredItem<BlockItem> LASER_PORT_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_port", ModBlocks.LASER_PORT);
+    public static final DeferredItem<BlockItem> LASER_TANK_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_tank", ModBlocks.LASER_TANK);
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARVEST_LENS = ITEMS.registerItem(
             "harvest_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.HARVEST));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> DAMAGE_LENS = ITEMS.registerItem(

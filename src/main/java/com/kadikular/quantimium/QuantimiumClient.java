@@ -54,6 +54,7 @@ public class QuantimiumClient {
         event.register(ModMenuTypes.LASER_EMITTER_MENU.get(), com.kadikular.quantimium.client.screen.LaserEmitterScreen::new);
         event.register(ModMenuTypes.LENS_MOUNT_MENU.get(), com.kadikular.quantimium.client.screen.LensMountScreen::new);
         event.register(ModMenuTypes.LASER_PORT_MENU.get(), com.kadikular.quantimium.client.screen.LaserPortScreen::new);
+        event.register(ModMenuTypes.LASER_TANK_MENU.get(), com.kadikular.quantimium.client.screen.LaserTankScreen::new);
         event.register(ModMenuTypes.LOGISTICS_RECEPTACLE_MENU.get(), com.kadikular.quantimium.client.screen.LogisticsReceptacleScreen::new);
         event.register(ModMenuTypes.LOGISTICS_TERMINAL_MENU.get(), com.kadikular.quantimium.client.screen.LogisticsTerminalScreen::new);
         event.register(ModMenuTypes.REACTOR_LOGISTICS_PORT_MENU.get(), com.kadikular.quantimium.client.screen.ReactorLogisticsPortScreen::new);

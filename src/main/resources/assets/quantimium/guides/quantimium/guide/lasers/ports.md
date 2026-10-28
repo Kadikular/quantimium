@@ -24,3 +24,11 @@ The mode tab steps through **collect**, **send** and **both**. In both, what com
 ## Sides
 
 Use the **Sides** tab to set, face by face, what pipes and hoppers may do there (hand things out, take them in; things only go in while it sends), and which faces push to, or pull from, what is beside them, once a second.
+
+## Laser Tanks
+
+A <ItemLink id="quantimium:laser_tank" /> is a Laser Port for fluids. It passes a laser the same way and holds 4 tanks of 16,000 mB, one fluid in each. Collecting, it catches what an Extract Lens drains.
+
+Sending, what it holds goes down the laser to an Insert Lens. Otherwise, once a second up to 4,000 mB go to the nearest collecting tank down the laser with room, not past an Isolator.
+
+Pipes drain it on any face, and fill it only while it sends. A bucket used on it fills or empties it in any mode.

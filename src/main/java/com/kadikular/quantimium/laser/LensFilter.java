@@ -138,10 +138,29 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return !stack.isEmpty() && entries.stream().anyMatch(entry -> FilterEntry.matches(entry, stack));
     }
 
-    /** Whether it lets an action carry, place, put in or take out this item. */
+    /** Whether it lets an action carry, place, put in or take out this item. Entries holding a fluid are for fluids only. */
     public boolean lets(ItemStack stack) {
-        if (!any(items)) return true;
-        return listed(items, stack) == itemsAllow;
+        if (items.stream().noneMatch(entry -> !entry.isEmpty() && fluidOf(entry).isEmpty())) return true;
+        return items.stream().anyMatch(entry -> fluidOf(entry).isEmpty() && FilterEntry.matches(entry, stack)) == itemsAllow;
+    }
+
+    /** Whether it lets Insert or Extract move this fluid: listed as a filled container (a water bucket), or no fluid listed. */
+    public boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        boolean any = false;
+        boolean listed = false;
+        for (ItemStack entry : items) {
+            net.neoforged.neoforge.fluids.FluidStack held = fluidOf(entry);
+            if (held.isEmpty()) continue;
+            any = true;
+            if (held.getFluid().isSame(fluid.getFluid())) listed = true;
+        }
+        return !any || listed == itemsAllow;
+    }
+
+    /** The fluid a filter entry stands for: what it holds, if it's a filled container. */
+    private static net.neoforged.neoforge.fluids.FluidStack fluidOf(ItemStack entry) {
+        if (entry.isEmpty()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+        return net.neoforged.neoforge.transfer.fluid.FluidUtil.getFirstStackContained(entry);
     }
 
     /** Whether it lets a Placement beam place this item: the item, and as a block, the block it places. */

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fluids
+
+- **Laser Tank**: the Laser Port for fluids. Four tanks of 16 buckets, one fluid each; collects, sends or both, and
+  takes light only by its back. A bucket fills or empties it; pipes drain it on any face and fill it while it sends.
+  Once a second a sending tank pours up to four buckets to the next collecting tank down the laser.
+- **Insert and Extract move fluids**: with no items to move, they fill or drain the fluid handler the laser ends on,
+  from or to the Laser Tanks up the laser, a bucket at a time (doubled for each Speed Lens).
+- **The Item Filter Lens lists fluids** as filled containers (a water bucket). Fluid entries apply only to fluids and
+  the rest only to items, so a list of items lets every fluid through. The **Void Lens** destroys fluids the same way.
+
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 
 ### Lasers

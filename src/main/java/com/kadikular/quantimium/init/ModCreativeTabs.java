@@ -84,6 +84,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.ISOLATOR_ITEM.get());
                         output.accept(ModItems.LENS_MOUNT_ITEM.get());
                         output.accept(ModItems.LASER_PORT_ITEM.get());
+                        output.accept(ModItems.LASER_TANK_ITEM.get());
                         output.accept(ModItems.LOGISTICS_CONTROLLER_ITEM.get());
                         output.accept(ModItems.LOGISTICS_RECEPTACLE_ITEM.get());
                         output.accept(ModItems.LOGISTICS_TERMINAL_ITEM.get());

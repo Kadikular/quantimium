@@ -217,6 +217,9 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserPortBlockEntity>> LASER_PORT_BE =
             BLOCK_ENTITIES.register("laser_port_be", () ->
                     new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserPortBlockEntity::new, ModBlocks.LASER_PORT.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.LaserTankBlockEntity>> LASER_TANK_BE =
+            BLOCK_ENTITIES.register("laser_tank_be", () ->
+                    new BlockEntityType<>(com.kadikular.quantimium.block.entity.LaserTankBlockEntity::new, ModBlocks.LASER_TANK.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.kadikular.quantimium.block.entity.SolarEmitterBlockEntity>> SOLAR_EMITTER_BE =
             BLOCK_ENTITIES.register("solar_emitter_be", () ->

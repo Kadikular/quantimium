@@ -772,6 +772,8 @@ public class ModBlocks {
             "logistics_materialiser", id -> new com.kadikular.quantimium.block.LogisticsMaterialiserBlock(laserBlock(id, MapColor.COLOR_BLUE)));
     public static final DeferredBlock<Block> LASER_PORT = BLOCKS.register(
             "laser_port", id -> new com.kadikular.quantimium.block.LaserPortBlock(laserBlock(id, MapColor.COLOR_GRAY)));
+    public static final DeferredBlock<Block> LASER_TANK = BLOCKS.register(
+            "laser_tank", id -> new com.kadikular.quantimium.block.LaserTankBlock(laserBlock(id, MapColor.COLOR_GRAY)));
 
     private static BlockBehaviour.Properties laserBlock(Identifier id, MapColor color) {
         return BlockBehaviour.Properties.of()

@@ -77,6 +77,9 @@ public final class LaserTuning {
     public static final int UNSEEN_KEPT = 20;
     /** Kinds of thing an Interact beam tries from its sending Laser Ports in one go, before it gives up till next time. */
     public static final int INTERACT_TRIES = 9;
+    /** mB a Laser Tank sends down the light at once (four buckets), and an Insert or Extract lens moves at a time (one; each Speed lens doubles it). */
+    public static final int SHIP_FLUID_MB = 4_000;
+    public static final int MOVE_FLUID_MB = 1_000;
     /** How long light carrying power blinds what looks into it: fifteen seconds. */
     public static final int BLIND_TICKS = 300;
     /** How near the beam's line an eye must be. */

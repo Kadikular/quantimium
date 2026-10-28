@@ -41,6 +41,7 @@ navigation:
 - <ItemLink id="quantimium:laser_port" />
 - <ItemLink id="quantimium:laser_prism" />
 - <ItemLink id="quantimium:laser_splitter" />
+- <ItemLink id="quantimium:laser_tank" />
 - <ItemLink id="quantimium:lens_mount" />
 - <ItemLink id="quantimium:lit_reactor_plinth" />
 - <ItemLink id="quantimium:logistics_controller" />

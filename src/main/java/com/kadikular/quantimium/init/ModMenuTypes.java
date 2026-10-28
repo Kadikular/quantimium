@@ -78,6 +78,9 @@ public class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LaserPortMenu>> LASER_PORT_MENU =
             MENUS.register("laser_port_menu", () ->
                     IMenuTypeExtension.create(com.kadikular.quantimium.menu.LaserPortMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.LaserTankMenu>> LASER_TANK_MENU =
+            MENUS.register("laser_tank_menu", () ->
+                    IMenuTypeExtension.create(com.kadikular.quantimium.menu.LaserTankMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<com.kadikular.quantimium.menu.RelayEmitterMenu>> RELAY_EMITTER_MENU =
             MENUS.register("relay_emitter_menu", () ->

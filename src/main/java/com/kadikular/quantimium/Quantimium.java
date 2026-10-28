@@ -162,6 +162,13 @@ public class Quantimium {
                 (be, context) -> be.getEnergyStorage()
         );
 
+        // A Laser Tank: pipes fill it while it sends, and drain it any time.
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.LASER_TANK_BE.get(),
+                (be, context) -> be.automation(context)
+        );
+
         // A Laser Port hands out what it caught and takes in what it sends, face by face as set.
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,

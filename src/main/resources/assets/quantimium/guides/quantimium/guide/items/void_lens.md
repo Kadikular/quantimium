@@ -21,6 +21,7 @@ Use the lens in the air (or its button in a mount) to set it.
 - **Void excess** (default): with Pickup, what the Laser Ports or network up the laser have room for goes to them and the rest is destroyed, so Harvest never waits for room. With no ports, or without Pickup, everything the actions free is destroyed.
 - **Void all**: everything the actions free or Pickup gathers is destroyed, ports or not (Harvest's drops, what Damage kills, items lying in the laser).
 - **List** (nine entries, allow or deny, as the Item Filter Lens): destroys only those (or all but those). The rest is carried, or waits for room, as if the lens weren't there. Seeds listed with Void excess: a wheat farm keeps its wheat and burns the seeds it has no room for.
+- Fluids too, with Insert and Extract: list them as filled containers (a lava bucket).
 
 ## What each setting does to items on the move
 

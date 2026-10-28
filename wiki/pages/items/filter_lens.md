@@ -4,6 +4,7 @@
 
 - Insert, Extract, Pickup and Placement read it.
 - Nine entries, set as allow or deny, with tags (shift-click an entry).
+- [[mechanic:laser.lens.filter_fluid]] A filled container (a water bucket) stands for its fluid, for Insert and Extract. Fluid entries apply only to fluids and the rest only to items: a list of items lets every fluid through.
 
 ## Settings
 

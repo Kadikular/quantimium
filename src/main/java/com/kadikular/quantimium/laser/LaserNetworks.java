@@ -1063,12 +1063,56 @@ public final class LaserNetworks {
             List<BlockPos> down = downFor(node.nodePos());
             if (down.isEmpty()) continue;
             ItemStack offered = node.send(stack -> roomFor(down, stack), 64, true);
-            if (offered.isEmpty() || !payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) continue;
-            int room = offered.getCount() - simulateCollect(down, offered).getCount();
-            ItemStack sent = node.send(stack -> ItemStack.isSameItemSameComponents(stack, offered), room, false);
-            ItemStack left = collect(down, sent);
-            if (!left.isEmpty()) node.takeBack(left);
+            if (!offered.isEmpty() && payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) {
+                int room = offered.getCount() - simulateCollect(down, offered).getCount();
+                ItemStack sent = node.send(stack -> ItemStack.isSameItemSameComponents(stack, offered), room, false);
+                ItemStack left = collect(down, sent);
+                if (!left.isEmpty()) node.takeBack(left);
+            }
+            // A Laser Tank's fluids go the same way, a few buckets at a time, paid as a stack.
+            net.neoforged.neoforge.fluids.FluidStack poured = node.sendFluid(fluid -> collectFluid(down, fluid, true) > 0,
+                    LaserTuning.SHIP_FLUID_MB, true);
+            if (poured.isEmpty() || !payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) continue;
+            int fits = collectFluid(down, poured, true);
+            net.neoforged.neoforge.fluids.FluidStack sent = node.sendFluid(fluid -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(fluid, poured),
+                    fits, false);
+            int took = collectFluid(down, sent, false);
+            if (took < sent.getAmount()) node.takeBackFluid(sent.copyWithAmount(sent.getAmount() - took));
         }
+    }
+
+    /** Gives {@code fluid} to the collecting Laser Tanks at {@code positions}, in order; how much they took between them. */
+    int collectFluid(List<BlockPos> positions, net.neoforged.neoforge.fluids.FluidStack fluid, boolean simulate) {
+        int took = 0;
+        for (BlockPos pos : positions) {
+            if (took >= fluid.getAmount()) break;
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.collects()) took += node.collectFluid(fluid.copyWithAmount(fluid.getAmount() - took), simulate);
+        }
+        return took;
+    }
+
+    /** Up to {@code max} mB of the first fluid {@code wants} accepts, from the sending Laser Tanks at {@code positions} in order. */
+    net.neoforged.neoforge.fluids.FluidStack takeFluid(List<BlockPos> positions, java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> wants,
+                                                       int max, boolean simulate) {
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            if (node == null || !node.sends()) continue;
+            net.neoforged.neoforge.fluids.FluidStack got = node.sendFluid(wants, max, simulate);
+            if (!got.isEmpty()) return got;
+        }
+        return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+    }
+
+    /** Puts back into the sending Laser Tanks at {@code positions} fluid one sent but couldn't be used; how much they took. */
+    int returnFluidTo(List<BlockPos> positions, net.neoforged.neoforge.fluids.FluidStack fluid) {
+        int took = 0;
+        for (BlockPos pos : positions) {
+            if (took >= fluid.getAmount()) break;
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.sends()) took += node.takeBackFluid(fluid.copyWithAmount(fluid.getAmount() - took));
+        }
+        return took;
     }
 
     /** What the collecting Laser Ports at {@code positions} wouldn't take of {@code stack}, between them. */

@@ -143,6 +143,11 @@ public record Light(int range, int boosts, List<Stream> streams, Set<BlockPos> f
             return has(Lens.VOID) && (voids == null || voids.lets(stack));
         }
 
+        /** Whether a Void lens on it destroys {@code fluid}, as {@link #voids(net.minecraft.world.item.ItemStack)}. */
+        public boolean voids(net.neoforged.neoforge.fluids.FluidStack fluid) {
+            return has(Lens.VOID) && (voids == null || voids.lets(fluid));
+        }
+
         public Stream(Lens action, int modifiers, Set<BlockPos> payers, int amps, @Nullable LensFilter filter, int speed, boolean hits, int fortune) {
             this(action, modifiers, payers, amps, filter, speed, hits ? 1 : 0, fortune, List.of(), false);
         }

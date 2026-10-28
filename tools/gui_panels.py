@@ -395,6 +395,18 @@ def laser_port_filter() -> Panel:
     return panel
 
 
+def laser_tank() -> Panel:
+    """A Laser Tank: four fluid gauges in a row, centred (LaserTankScreen.TANK_*)."""
+    panel = Panel(HIGH)
+    for i in range(4):
+        panel.gauge((LASER_TANK_X + i * LASER_TANK_STEP, LASER_TANK_Y, LASER_TANK_W, LASER_TANK_H), f"tank {i + 1}")
+    panel.player()
+    return panel
+
+
+LASER_TANK_X, LASER_TANK_Y, LASER_TANK_W, LASER_TANK_H, LASER_TANK_STEP = 50, 20, 16, 56, 20
+
+
 def area_prism() -> Panel:
     """An Area Prism: no slots; what its area is, written across the top, and a note under it (AreaPrismScreen)."""
     panel = Panel(HIGH)
@@ -556,6 +568,7 @@ PANELS = {
     "lens_mount": lens_mount,
     "laser_port": laser_port,
     "area_prism": area_prism,
+    "laser_tank": laser_tank,
     "laser_port_filter": laser_port_filter,
     # The same note and nine ghost entries as the Laser Port's filter view.
     "logistics_receptacle": laser_port_filter,

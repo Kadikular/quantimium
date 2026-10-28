@@ -131,6 +131,7 @@ logistics_materialiser: "Offers a whole logistics network to any mod's pipes and
 logistics_terminal: "Shows everything a logistics network holds, to take or put away."
 logistics_lectern: "The Logistics Terminal on a stand, with its screen over a focus."
 laser_port: "Collects items from Pickup Lenses, or sends items down the laser, or both. Lasers pass through it."
+laser_tank: "Collects fluids from Extract Lenses, or sends fluids down the laser, or both. Lasers pass through it."
 harvest_lens: "Breaks the block the laser ends on."
 damage_lens: "Hurts what stands in the laser."
 pickup_lens: "Returns items in the laser, and what it frees, to a Laser Port."

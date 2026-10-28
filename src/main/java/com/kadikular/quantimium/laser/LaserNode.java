@@ -256,6 +256,22 @@ public interface LaserNode {
         return stack;
     }
 
+    /** Takes what it can of {@code fluid}, a collecting Laser Tank (or with {@code simulate}, says what it would); how much. */
+    default int collectFluid(net.neoforged.neoforge.fluids.FluidStack fluid, boolean simulate) {
+        return 0;
+    }
+
+    /** Up to {@code max} mB of the first fluid {@code wants} accepts, from a sending Laser Tank (or with {@code simulate}, what it would). */
+    default net.neoforged.neoforge.fluids.FluidStack sendFluid(java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> wants,
+                                                               int max, boolean simulate) {
+        return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+    }
+
+    /** Puts back what a sending Laser Tank sent but couldn't be used; how much it took. */
+    default int takeBackFluid(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return 0;
+    }
+
     /** What it does on a logistics network (a Logistics Receptacle, a Laser Port), or null when it takes no part. */
     @org.jetbrains.annotations.Nullable
     default LogisticsMember logistics() {

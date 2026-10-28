@@ -2,7 +2,7 @@
 navigation:
   title: Lens Mount
   parent: blocks/index.md
-  position: 33
+  position: 34
   icon: quantimium:lens_mount
 item_ids:
 - quantimium:lens_mount

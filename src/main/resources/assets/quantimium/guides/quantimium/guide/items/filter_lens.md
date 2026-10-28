@@ -18,6 +18,7 @@ Item Filter Lens limits the item actions before it to the items it lets through.
 
 - Insert, Extract, Pickup and Placement read it.
 - Nine entries, set as allow or deny, with tags (shift-click an entry).
+- A filled container (a water bucket) stands for its fluid, for Insert and Extract. Fluid entries apply only to fluids and the rest only to items: a list of items lets every fluid through.
 
 ## Settings
 

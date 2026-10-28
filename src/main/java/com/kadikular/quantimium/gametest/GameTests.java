@@ -52,7 +52,7 @@ public final class GameTests {
                 RiftLensTests.class, MirrorLensTests.class, MirrorTests.class, ProjectorTests.class,
                 RiftTests.class, SimulatorTests.class, StabilizerTests.class, SuperpositionTests.class,
                 TickTimingTests.class, TierTests.class, UnrealisedTests.class, VeiledTests.class, ZenoTests.class,
-                LaserTests.class, LaserTimingTests.class, LensTests.class, RedstoneLensTests.class, LogisticsTests.class, WorkQueueTests.class));
+                LaserTests.class, LaserTimingTests.class, LensTests.class, FluidTests.class, RedstoneLensTests.class, LogisticsTests.class, WorkQueueTests.class));
         if (ModList.get().isLoaded("modern_industrialization")) {
             classes.add(MiCompatTests.class);
             classes.add(MiTickTimingTests.class);
