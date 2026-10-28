@@ -214,7 +214,7 @@ laser_tank:
   category: "Laser block"
   obtained: "Crafted"
   energy_use: "Free; the laser pays to carry fluids"
-  automation: "Fluids, any face"
+  automation: "Fluids, per-face"
   works_with: "[[item:insert_lens]], [[item:extract_lens]], [[block:lens_mount]]"
 logistics_controller:
   category: "Logistics"

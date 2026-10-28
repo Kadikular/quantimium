@@ -220,4 +220,36 @@ public final class FluidTests {
             TestSupport.finishLasers(helper);
         });
     }
+
+    // covers: laser.tank.sides
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
+    public static void aLaserTankFaceSetToPushFillsWhatsBesideIt(GameTestHelper helper) {
+        LaserTankBlockEntity from = tank(helper, new BlockPos(3, Y, 8), LaserPortBlockEntity.Mode.COLLECT, new FluidStack(Fluids.WATER, 6_000));
+        LaserTankBlockEntity into = tank(helper, new BlockPos(3, Y, 7), LaserPortBlockEntity.Mode.SEND);
+        java.util.List<com.kadikular.quantimium.block.entity.simulation.SideConfig> sides = new java.util.ArrayList<>(from.getSideConfigs());
+        int north = Direction.NORTH.get3DDataValue();
+        var config = sides.get(north);
+        sides.set(north, new com.kadikular.quantimium.block.entity.simulation.SideConfig(config.side(), config.itemMode(), config.itemInputMask(),
+                config.itemOutputMask(), false, false, config.fluidMode(), config.fluidInputMask(), config.fluidOutputMask(), false, true));
+        from.applySideConfigs(sides);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(held(into, Fluids.WATER), 6_000, "pushed north");
+            helper.assertValueEqual(held(from, Fluids.WATER), 0, "none left");
+        });
+    }
+
+    // covers: laser.lens.interact_fluid
+    @GameTest(template = TestSupport.FLOOR_17, batch = "fluids", timeoutTicks = 100)
+    public static void anInteractLaserPoursABucketFromALaserTank(GameTestHelper helper) {
+        emitter(helper, new BlockPos(1, Y, 8));
+        LaserTankBlockEntity tank = tank(helper, new BlockPos(3, Y, 8), LaserPortBlockEntity.Mode.SEND, new FluidStack(Fluids.LAVA, 2_500));
+        mount(helper, new BlockPos(5, Y, 8), lens(ModItems.INTERACT_LENS.get()));
+        BlockPos cauldron = new BlockPos(8, Y, 8);
+        helper.setBlock(cauldron, Blocks.CAULDRON);
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.LAVA_CAULDRON, cauldron);
+            helper.assertValueEqual(held(tank, Fluids.LAVA), 1_500, "a bucket's worth poured");
+            TestSupport.finishLasers(helper);
+        });
+    }
 }

@@ -115,6 +115,15 @@ public class LaserTankBlock extends BaseEntityBlock {
         return new LaserTankBlockEntity(pos, state);
     }
 
+    @Nullable
+    @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                                                    net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        return level.isClientSide() ? null : (lvl, pos, st, be) -> {
+            if (be instanceof LaserTankBlockEntity tank) LaserTankBlockEntity.serverTick(lvl, pos, st, tank);
+        };
+    }
+
     /** A Redstone Lens's light, ending on the block right beside it, gives that block its signal from here. */
     @Override
     protected int getSignal(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.BlockGetter level,

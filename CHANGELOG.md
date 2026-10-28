@@ -14,8 +14,10 @@
 - **The Item Filter Lens is now the Filter Lens** and lists fluids: right-click an entry with a bucket to list its fluid
   (drawn as that fluid), or drag a fluid in from JEI; a plain click lists the bucket itself. Fluid entries apply only
   to fluids, so a list of items lets every fluid through. The **Void Lens** destroys fluids the same way.
-- The Laser Tank has a filter like the Laser Port's, its tanks fill and empty with a bucket clicked on them, and screens
-  draw fluids with their own texture.
+- The Laser Tank has a filter and a Sides tab like the Laser Port's (faces push to and pull from what's beside them),
+  its tanks fill and empty with a bucket clicked on them, and screens draw fluids with their own texture.
+- **Interact pours from Laser Tanks**: when nothing a Laser Port sends is used, it uses a bucket of a sending tank's
+  fluid (filling a cauldron, or pouring it out), draining the tank only if the bucket was emptied.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 

@@ -40,11 +40,12 @@ import java.util.Set;
 /**
  * A Laser Tank: the Laser Port's twin for fluids. {@link #TANKS} tanks of {@link #CAPACITY} mB, one fluid in each.
  * Light passes through it and out of its face; it catches what an Extract lens sends back up the light, sends what it
- * holds down it to an Insert lens or another tank, or both. Pipes fill it while it sends, and drain it any time; a
+ * holds down it to an Insert lens or another tank, or both. Pipes fill it while it sends and drain it, face by face as
+ * set, and set faces push to or pull from what's beside them; a
  * player's bucket does either in any mode. Its filter lists fluids it catches (or lets go on up the light).
  */
 @SuppressWarnings("deprecation")
-public class LaserTankBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, MenuProvider {
+public class LaserTankBlockEntity extends BlockEntity implements LaserNode, FluxMeterReadout, LaserBeamView, MenuProvider, SideConfigurable {
 
     public static final int TANKS = 4;
     public static final int CAPACITY = 16_000;
@@ -52,7 +53,20 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
     public static final int FILTER_SLOTS = 9;
 
     private final FluidTanks tanks = new FluidTanks(TANKS, CAPACITY, this::changed);
-    private final IFluidHandler pipes = tanks.view(this::sends, () -> true);
+    /** Fluids only: its faces have no items to set. */
+    private static final com.kadikular.quantimium.block.entity.simulation.SideAutomationProfile PROFILE =
+            new com.kadikular.quantimium.block.entity.simulation.SideAutomationProfile(0,
+                    com.kadikular.quantimium.block.entity.simulation.SideAutomationProfile.ALL_SIDES);
+    private static final int AUTO_TRANSFER_INTERVAL = 20;
+    /** The quickest it moves fluid in and out of what's beside it while busy, in ticks. */
+    private static final int BUSIEST_INTERVAL = 2;
+    /** What it moves in or out of one neighbour at once. */
+    private static final int AUTO_TRANSFER_MB = 4_000;
+    /** What a pipe on each face sees, as that face is set: it fills only while the tank sends. */
+    private final IFluidHandler[] sided = new IFluidHandler[6];
+    private List<com.kadikular.quantimium.block.entity.simulation.SideConfig> sideConfigs;
+    private int transferIn = -1;
+    private int transferInterval = AUTO_TRANSFER_INTERVAL;
     /** What a player's bucket sees: it fills and drains in any mode. */
     private final IFluidHandler hands = tanks.view(() -> true, () -> true);
     /** Fluid entries: what it catches, or with a blacklist, what it lets go on up the light. */
@@ -69,6 +83,21 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
 
     public LaserTankBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LASER_TANK_BE.get(), pos, state);
+        sideConfigs = PROFILE.sanitize(com.kadikular.quantimium.block.entity.simulation.SideConfig.defaults().stream()
+                .map(config -> new com.kadikular.quantimium.block.entity.simulation.SideConfig(config.side(),
+                        com.kadikular.quantimium.block.entity.simulation.SideMode.DISABLED, 0, 0, false, false,
+                        com.kadikular.quantimium.block.entity.simulation.SideMode.BOTH,
+                        com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_FLUID_INPUTS,
+                        com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_FLUID_OUTPUTS, false, false))
+                .toList());
+        for (Direction side : Direction.values()) {
+            sided[side.get3DDataValue()] = tanks.view(() -> sends() && config(side).fluidMode().allowsInput(),
+                    () -> config(side).fluidMode().allowsOutput());
+        }
+    }
+
+    private com.kadikular.quantimium.block.entity.simulation.SideConfig config(Direction side) {
+        return sideConfigs.get(side.get3DDataValue());
     }
 
     private void changed() {
@@ -131,9 +160,103 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         return !any || listed == allow;
     }
 
-    /** What a pipe on any face sees. */
+    /** What a pipe on {@code side} sees, or null for a face that's off. With no side (Jade, say), every tank. */
+    @Nullable
     public ResourceHandler<FluidResource> automation(@Nullable Direction side) {
-        return tanks.handler(pipes);
+        if (side == null) return tanks.handler(sided[Direction.UP.get3DDataValue()]);
+        if (config(side).fluidMode() == com.kadikular.quantimium.block.entity.simulation.SideMode.DISABLED) return null;
+        return tanks.handler(sided[side.get3DDataValue()]);
+    }
+
+    // ---- automation ----
+
+    /** Staggered and paced as a Laser Port: quicker each time something moved, slower each time nothing did. */
+    public static void serverTick(net.minecraft.world.level.Level level, BlockPos pos, BlockState state, LaserTankBlockEntity tank) {
+        if (tank.transferIn < 0) tank.transferIn = Math.floorMod(pos.hashCode(), AUTO_TRANSFER_INTERVAL);
+        if (tank.transferIn-- > 0) return;
+        boolean moved = false;
+        for (Direction side : Direction.values()) {
+            var config = tank.config(side);
+            if (!config.autoFluidInput() && !config.autoFluidOutput()) continue;
+            IFluidHandler neighbour = tank.neighbour(side);
+            if (neighbour == null) continue;
+            if (config.autoFluidInput() && config.fluidMode().allowsInput() && tank.sends()) moved |= tank.pull(neighbour);
+            if (config.autoFluidOutput() && config.fluidMode().allowsOutput()) moved |= tank.push(neighbour);
+        }
+        tank.transferInterval = moved ? Math.max(BUSIEST_INTERVAL, tank.transferInterval / 2) : Math.min(AUTO_TRANSFER_INTERVAL, tank.transferInterval * 2);
+        tank.transferIn = tank.transferInterval - 1;
+    }
+
+    @Nullable
+    private IFluidHandler neighbour(Direction side) {
+        if (level == null) return null;
+        return com.kadikular.quantimium.util.LegacyFluids.legacy(level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK,
+                worldPosition.relative(side), side.getOpposite()));
+    }
+
+    /** Draws from {@code from} as far as its tanks take it; whether anything came. */
+    private boolean pull(IFluidHandler from) {
+        FluidStack offered = from.drain(AUTO_TRANSFER_MB, IFluidHandler.FluidAction.SIMULATE);
+        if (offered.isEmpty()) return false;
+        int room = tanks.fill(offered, true);
+        if (room <= 0) return false;
+        FluidStack drained = from.drain(offered.copyWithAmount(room), IFluidHandler.FluidAction.EXECUTE);
+        return tanks.fill(drained, false) > 0;
+    }
+
+    /** Pours what its tanks hold into {@code into}, every tank, as far as it takes them; whether anything went. */
+    private boolean push(IFluidHandler into) {
+        boolean moved = false;
+        for (int tank = 0; tank < TANKS; tank++) {
+            FluidStack there = tanks.get(tank);
+            if (there.isEmpty()) continue;
+            int filled = into.fill(there.copyWithAmount(Math.min(AUTO_TRANSFER_MB, there.getAmount())), IFluidHandler.FluidAction.EXECUTE);
+            if (filled > 0) {
+                tanks.drain(tank, filled, false);
+                moved = true;
+            }
+        }
+        return moved;
+    }
+
+    /**
+     * Pours {@code fluid} straight into what it exports to (its faces set to push out), so what comes up the light needn't
+     * wait in its tanks for the next push; how much went.
+     */
+    private int passOn(FluidStack fluid, boolean simulate) {
+        if (level == null || fluid.isEmpty()) return 0;
+        int went = 0;
+        for (Direction side : Direction.values()) {
+            var config = config(side);
+            if (!config.autoFluidOutput() || !config.fluidMode().allowsOutput()) continue;
+            IFluidHandler neighbour = neighbour(side);
+            if (neighbour == null) continue;
+            went += neighbour.fill(fluid.copyWithAmount(fluid.getAmount() - went),
+                    simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE);
+            if (went >= fluid.getAmount()) break;
+        }
+        if (!simulate && went > 0) {
+            transferInterval = BUSIEST_INTERVAL;
+            transferIn = Math.min(transferIn, BUSIEST_INTERVAL);
+        }
+        return went;
+    }
+
+    @Override
+    public List<com.kadikular.quantimium.block.entity.simulation.SideConfig> getSideConfigs() {
+        return List.copyOf(sideConfigs);
+    }
+
+    @Override
+    public void applySideConfigs(List<com.kadikular.quantimium.block.entity.simulation.SideConfig> configs) {
+        sideConfigs = PROFILE.sanitize(configs);
+        setChanged();
+        invalidateCapabilities();
+    }
+
+    @Override
+    public com.kadikular.quantimium.block.entity.simulation.SideAutomationProfile sideAutomationProfile() {
+        return PROFILE;
     }
 
     @Override
@@ -148,8 +271,10 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
 
     @Override
     public int collectFluid(FluidStack fluid, boolean simulate) {
-        // What it turns away goes on up the light, to the next.
-        return collects() && acceptsFluid(fluid) ? tanks.fill(fluid, simulate) : 0;
+        // What it turns away goes on up the light, to the next; what it catches goes on to what it exports to first.
+        if (!collects() || !acceptsFluid(fluid)) return 0;
+        int passed = passOn(fluid, simulate);
+        return passed + (passed < fluid.getAmount() ? tanks.fill(fluid.copyWithAmount(fluid.getAmount() - passed), simulate) : 0);
     }
 
     @Override
@@ -255,6 +380,9 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         for (int i = 0; i < FILTER_SLOTS; i++) entries.add(filter.getItem(i));
         out.store("Filter", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC.listOf(), entries);
         out.putBoolean("Allow", allow);
+        CompoundTag sides = new CompoundTag();
+        sides.put("List", com.kadikular.quantimium.block.entity.simulation.SideConfig.saveAll(sideConfigs));
+        out.store("SideConfigs", CompoundTag.CODEC, sides);
     }
 
     @Override
@@ -266,6 +394,8 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         List<net.minecraft.world.item.ItemStack> entries = in.read("Filter", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         for (int i = 0; i < FILTER_SLOTS; i++) filter.getItems().set(i, i < entries.size() ? entries.get(i) : net.minecraft.world.item.ItemStack.EMPTY);
         allow = in.getBooleanOr("Allow", true);
+        in.read("SideConfigs", CompoundTag.CODEC).ifPresent(tag -> sideConfigs = PROFILE.sanitize(
+                com.kadikular.quantimium.block.entity.simulation.SideConfig.loadAll(tag.getListOrEmpty("List"))));
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 

@@ -454,15 +454,13 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
         if (overlay != null) overlay.layout(width, height);
     }
 
-    /** Fluid filter entries are drawn as their fluid. */
-    private void renderFluidEntries(GuiGraphicsExtractor graphics) {
-        boolean any = false;
-        for (net.minecraft.world.inventory.Slot slot : menu.slots) {
-            if (!slot.isActive() || !com.kadikular.quantimium.recipe.FluidEntry.is(slot.getItem())) continue;
-            if (!any) graphics.nextStratum();
-            any = true;
-            com.kadikular.quantimium.client.screen.ui.FluidSprites.fill(graphics,
-                    com.kadikular.quantimium.recipe.FluidEntry.fluidOf(slot.getItem()), leftPos + slot.x, topPos + slot.y, 16, 16);
+    /** Fluid filter entries are drawn as their fluid, with the slots: under what the cursor holds. */
+    @Override
+    protected void extractSlot(GuiGraphicsExtractor graphics, net.minecraft.world.inventory.Slot slot, int mouseX, int mouseY) {
+        super.extractSlot(graphics, slot, mouseX, mouseY);
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(slot.getItem())) {
+            com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics,
+                    com.kadikular.quantimium.recipe.FluidEntry.fluidOf(slot.getItem()), slot.x, slot.y);
         }
     }
 
@@ -475,7 +473,6 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
             ItemStack icon = !tab.shown || tab.glyph != null || tab.texture != null ? ItemStack.EMPTY : tab.icon.get();
             if (!icon.isEmpty()) graphics.item(icon, tab.x + (tab.width - 16) / 2, tab.y + 3);
         }
-        renderFluidEntries(graphics);
         renderMachineForeground(graphics, mouseX, mouseY);
         if (open != null) {
             open.render(graphics, font, mouseX, mouseY, partialTick);

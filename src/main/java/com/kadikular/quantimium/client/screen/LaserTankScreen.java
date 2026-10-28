@@ -55,7 +55,8 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> impleme
                         .onRightClick(() -> {
                             press(LaserTankMenu.BUTTON_MODE);
                             press(LaserTankMenu.BUTTON_MODE);
-                        }));
+                        }),
+                sidesTab(tank().getBlockPos()));
     }
 
     private void press(int button) {
