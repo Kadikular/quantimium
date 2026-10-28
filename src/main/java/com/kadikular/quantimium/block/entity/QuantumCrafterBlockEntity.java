@@ -987,8 +987,31 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             grid = grid * 31 + (stack.isEmpty() ? 0 : stack.getItem().hashCode() * 31L + stack.getComponents().hashCode());
         }
         shape.add(grid);
+        shape.add(fluidShape());
         views.keySet().stream().sorted(java.util.Comparator.comparing(GlobalPos::toString)).forEach(shape::add);
         return shape;
+    }
+
+    /**
+     * Which fluids it can draw on (its input tanks, tanks its links are bound to), each with its amount to the nearest
+     * power of two: a new fluid, or a good deal more of one, can make a recipe possible, where a pipe's trickle can't.
+     */
+    private long fluidShape() {
+        long hash = 1;
+        for (int tank = 0; tank < INPUT_TANKS; tank++) hash = hash * 31 + fluidKey(inputTanks.get(tank));
+        for (int slot = 0; slot < INPUT_SLOTS; slot++) {
+            ItemStack stack = inventory.getStackInSlot(slot);
+            if (!EntangledLinks.isLink(stack)) continue;
+            var tanks = EntangledLinks.resolveFluid(level, stack);
+            if (tanks == null) continue;
+            for (int tank = 0; tank < tanks.getTanks(); tank++) hash = hash * 31 + fluidKey(tanks.getFluidInTank(tank));
+        }
+        return hash;
+    }
+
+    private static long fluidKey(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        if (fluid.isEmpty()) return 0;
+        return net.minecraft.core.registries.BuiltInRegistries.FLUID.getId(fluid.getFluid()) * 64L + (63 - Long.numberOfLeadingZeros(fluid.getAmount()));
     }
 
     /** Every item its views show, and how many. */

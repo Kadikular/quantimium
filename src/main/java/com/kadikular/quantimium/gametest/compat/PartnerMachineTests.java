@@ -64,17 +64,21 @@ public final class PartnerMachineTests {
     }
 
     // covers: crafter.fluids
-    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluids", timeoutTicks = 60)
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluids", timeoutTicks = 80)
     public static void energizedPowerFluidMachinesInTheCrafter(GameTestHelper helper) {
         if (skip(helper, "energizedpower")) return;
         var transposer = fluidCrafter(helper, 2, "energizedpower:fluid_transposer", new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000));
         com.kadikular.quantimium.gametest.CrafterTests.grid(transposer, new ItemStack(net.minecraft.world.item.Items.BLACK_CONCRETE_POWDER, 4));
         var freezer = fluidCrafter(helper, 5, "energizedpower:fluid_freezer", new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000));
-        var solidifier = fluidCrafter(helper, 8, "energizedpower:stone_solidifier", new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000),
-                new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 4_000));
+        // Its tanks filled after it's first looked, with nothing in its grid: it looks again.
+        var solidifier = fluidCrafter(helper, 8, "energizedpower:stone_solidifier");
         var liquefier = fluidCrafter(helper, 11, "energizedpower:stone_liquefier");
         com.kadikular.quantimium.gametest.CrafterTests.grid(liquefier, new ItemStack(net.minecraft.world.item.Items.ANDESITE, 4));
-        helper.runAfterDelay(10, () -> {
+        helper.runAfterDelay(5, () -> {
+            solidifier.inputTanks().fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000), false);
+            solidifier.inputTanks().fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 4_000), false);
+        });
+        helper.runAfterDelay(15, () -> {
             helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(transposer, net.minecraft.world.item.Items.BLACK_CONCRETE) != null, "concrete, filled with water");
             helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(freezer, net.minecraft.world.item.Items.ICE) != null, "ice, frozen from water alone");
             helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(solidifier, net.minecraft.world.item.Items.ANDESITE) != null, "andesite, from water and lava");
