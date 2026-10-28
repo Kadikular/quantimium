@@ -38,10 +38,22 @@ public final class FluidSprites {
         return (color & 0xFF000000) == 0 ? color | 0xFF000000 : color;
     }
 
-    /** A gauge filled from the bottom by {@code fluid}, {@code amount} of {@code capacity}. */
+    /** Graduation marks: a long one each quarter, a short one each eighth between. */
+    private static final int MAJOR = 0x90FFFFFF;
+    private static final int MINOR = 0x50FFFFFF;
+
+    /** A gauge filled from the bottom by {@code fluid}, {@code amount} of {@code capacity}, marked as a measuring jug is. */
     public static void gauge(GuiGraphicsExtractor graphics, FluidStack fluid, int capacity, int x, int y, int w, int h) {
-        if (fluid.isEmpty() || capacity <= 0) return;
-        int filled = Math.max(1, (int) Math.min(h, (long) h * fluid.getAmount() / capacity));
-        fill(graphics, fluid, x, y + h - filled, w, filled);
+        if (!fluid.isEmpty() && capacity > 0) {
+            int filled = Math.max(1, (int) Math.min(h, (long) h * fluid.getAmount() / capacity));
+            fill(graphics, fluid, x, y + h - filled, w, filled);
+        }
+        // Down the right side, over the fluid; not at the very top or bottom.
+        for (int eighth = 1; eighth < 8; eighth++) {
+            int at = y + h - Math.round(h * eighth / 8f);
+            boolean major = eighth % 2 == 0;
+            int length = Math.max(2, major ? w / 2 : w / 4);
+            graphics.fill(x + w - length, at, x + w, at + 1, major ? MAJOR : MINOR);
+        }
     }
 }

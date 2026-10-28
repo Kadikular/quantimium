@@ -168,8 +168,39 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
      */
     public static final int TAKE = 100_000, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
 
+    /** A bucket on the cursor clicked on an input tank (this + its index). */
+    public static final int BUTTON_TANK = 50_000;
+    /**
+     * A fluid in the grid clicked holding a container: this plus the preview making it ({@link QuantumCrafterBlockEntity#GHOST_BASE}
+     * on), or plus the output tank holding it.
+     */
+    public static final int BUTTON_FLUID = 60_000;
+
+    @org.jetbrains.annotations.Nullable
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> cursorFluids(Player player) {
+        if (getCarried().isEmpty()) return null;
+        return net.neoforged.neoforge.transfer.access.ItemAccess.forPlayerCursor(player, this).oneByOne()
+                .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM);
+    }
+
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (id >= BUTTON_TANK && id < BUTTON_TANK + QuantumCrafterBlockEntity.INPUT_TANKS) {
+            var held = cursorFluids(player);
+            if (held == null || !blockEntity.pour(held, id - BUTTON_TANK)) return false;
+            broadcastChanges();
+            return true;
+        }
+        if (id >= BUTTON_FLUID && id < TAKE) {
+            int at = id - BUTTON_FLUID;
+            net.neoforged.neoforge.fluids.FluidStack fluid = at >= QuantumCrafterBlockEntity.GHOST_BASE
+                    ? com.kadikular.quantimium.recipe.FluidEntry.fluidOf(blockEntity.getGhost(at))
+                    : blockEntity.outputTanks().get(at);
+            var held = cursorFluids(player);
+            if (fluid.isEmpty() || held == null || !blockEntity.fillFrom(held, fluid, at)) return false;
+            broadcastChanges();
+            return true;
+        }
         int mode = id / TAKE;
         int local = id % TAKE;
         if (mode < BATCH || mode > TO_INVENTORY) return false;
@@ -181,7 +212,8 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         } else {
             return false;
         }
-        if (shown.isEmpty()) return false;
+        // A fluid is taken in a bucket (BUTTON_FLUID), never as an item.
+        if (shown.isEmpty() || com.kadikular.quantimium.recipe.FluidEntry.is(shown)) return false;
         boolean toInventory = mode == TO_INVENTORY;
         ItemStack carried = getCarried();
         if (!toInventory && !carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, shown)) return false;

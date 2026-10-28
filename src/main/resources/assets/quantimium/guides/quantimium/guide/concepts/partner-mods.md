@@ -25,9 +25,10 @@ Running the tests.
   multiplier. Grinding raw iron (2 EU/t for 100 ticks) costs 200 EU × 10 × 2 = **4,000 FE**.
 - **Chance outputs are left out.** Only the guaranteed output is made: raw iron gives one iron dust,
   never the 50% second one.
-- **Recipes with fluid inputs are not offered.** The Crafter
-  has no tanks. A chemical reactor catalyst waxes copper (items only) but won't oxidise it (needs
-  oxygen).
+- **Recipes with fluids use the Crafter's tanks.** A recipe
+  taking a fluid is offered once its input tanks (or a tank a Tesseract in its grid is bound to) hold
+  enough. A chemical reactor catalyst waxes copper from items alone, and oxidizes it once there is
+  oxygen. Fluids it makes go to its output tanks.
 - **Multiblock controllers need their
   structure.** A controller in `#quantimium:multiblock_controllers` (MI's multiblocks by default) is
   refused as a catalyst: build the machine and fold it in a [Fold Chamber](../multiblocks/fold-chamber.md)

@@ -26,8 +26,13 @@
   filled one to pour it into storage. An Extract Lens past the controller pours into the network; Insert and Interact
   take its fluids only through a Filter Lens listing a fluid.
 - **Recipes with fluids are read**: the fluids a mod's recipe takes and gives are found by their fields' types (or
-  named in an adapter's `fluid_input_fields` and `fluid_output_fields`), for the Crafter and Reactor to come. Until
-  the Crafter has tanks, a recipe taking a fluid is no longer offered as if it took items alone.
+  named in an adapter's `fluid_input_fields` and `fluid_output_fields`).
+- **The Quantum Crafter has tanks**: three in, beside the catalyst, and two out, shown among its outputs as a terminal
+  shows fluids. A recipe taking a fluid draws it from them, or from a tank a Tesseract in its grid is bound to; fluids
+  a recipe makes fill its output tanks, and a bucket clicked on one fills from it. Recipes making only fluids are
+  offered there too. Pipes fill the inputs and drain the outputs. A recipe taking a fluid is no longer offered as if
+  it took items alone.
+- Fluid gauges are marked like a measuring jug.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 

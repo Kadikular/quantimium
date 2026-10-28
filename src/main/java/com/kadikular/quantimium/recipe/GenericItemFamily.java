@@ -47,10 +47,11 @@ public final class GenericItemFamily {
         if (!supports(recipe) || pool.isEmpty()) return Optional.empty();
 
         try {
-            // The Crafter has no fluids to give: a recipe that takes some isn't made from items alone.
-            if (!FluidParts.of(recipe).inputs().isEmpty()) return Optional.empty();
+            FluidParts.Parts fluids = FluidParts.of(recipe);
+            if (!fluids.inputs().isEmpty() && !pool.hasFluids()) return Optional.empty();
             ItemStack result = RecipeCompat.result(recipe, registries);
-            if (result == null || result.isEmpty()) return Optional.empty();
+            List<ItemStack> outputs = result == null || result.isEmpty() ? List.of() : List.of(result.copy());
+            if (outputs.isEmpty() && fluids.outputs().isEmpty()) return Optional.empty();
 
             IngredientPool.Allocator alloc = pool.allocator();
             List<IngredientPool.Withdrawal> withdrawals = new ArrayList<>();
@@ -61,9 +62,16 @@ public final class GenericItemFamily {
                 withdrawals.addAll(taken);
             }
             if (withdrawals.isEmpty()) return Optional.empty();
+            // Its fluids, from the Crafter's tanks or a linked one's.
+            for (FluidParts.Input fluid : fluids.inputs()) {
+                List<IngredientPool.Withdrawal> taken = alloc.takeFluid(fluid);
+                if (taken == null) return Optional.empty();
+                withdrawals.addAll(taken);
+            }
 
             int cost = energyCost(recipe);
-            return Optional.of(new ResolvedCraft(holder.id().identifier(), withdrawals, List.of(result.copy()), cost));
+            return Optional.of(new ResolvedCraft(holder.id().identifier(), withdrawals, outputs, cost)
+                    .withFluidOutputs(fluids.outputs()));
         } catch (Throwable t) {
             return Optional.empty();
         }

@@ -309,6 +309,12 @@ public class Quantimium {
         );
 
         event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.QUANTUM_CRAFTER_BE.get(),
+                (be, context) -> be.fluidAutomation()
+        );
+
+        event.registerBlockEntity(
                 Capabilities.Item.BLOCK,
                 ModBlockEntities.QUANTUM_FOUNDRY_BE.get(),
                 (be, context) -> be.isFormed() ? be.getAutomationItemHandler() : null

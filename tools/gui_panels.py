@@ -123,6 +123,12 @@ class Panel:
     def energy(self) -> None:
         self.gauge(ENERGY, "energy")
 
+    def arrow_left(self, x: int, y: int, length: int) -> None:
+        """An engraved arrow pointing left, its tail at x, centred on y."""
+        self.line([x - length + 1, y, x, y], self.p.deco)
+        for step in range(1, 4):
+            self.line([x - length + 1 + step, y - step, x - length + 1 + step, y + step], self.p.deco)
+
     def arrow(self, x: int, y: int, length: int) -> None:
         """An engraved arrow pointing right, centred on y."""
         self.line([x, y, x + length - 1, y], self.p.deco)
@@ -158,6 +164,11 @@ def crafter(palette: Palette, basic: bool) -> Panel:
     panel.grid(INPUT_ORIGIN, 3, 3, "inputs")
     panel.socket(*CENTRE_SLOT, "catalyst")
     panel.arrow(66, 44, 8)
+    # Input tanks right of the catalyst, an arrow from them into it as from the grid (QuantumCrafterScreen.TANK_*).
+    # The output tanks show among the outputs.
+    for i in range(CRAFTER_TANKS):
+        panel.gauge((CRAFTER_TANK_X + i * CRAFTER_TANK_STEP, CRAFTER_TANK_Y, CRAFTER_TANK_W, CRAFTER_TANK_H), f"tank {i + 1}")
+    panel.arrow_left(CRAFTER_TANK_X - 4, 44, 8)
     if basic:
         # Coherence reserve, a flat gauge under the catalyst (QuantumCrafterScreen.COHERENCE_*).
         panel.gauge((72, 60, 32, 4), "coherence")
@@ -174,6 +185,12 @@ def crafter(palette: Palette, basic: bool) -> Panel:
 
 CRAFTER_H = 232
 CRAFTER_PLAYER_Y = 152
+CRAFTER_TANKS = 3
+CRAFTER_TANK_X = 114
+CRAFTER_TANK_STEP = 18
+CRAFTER_TANK_Y = 18
+CRAFTER_TANK_W = 14
+CRAFTER_TANK_H = 50
 
 
 SIM_HEIGHT = 186

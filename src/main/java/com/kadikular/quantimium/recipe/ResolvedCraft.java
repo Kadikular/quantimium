@@ -26,7 +26,9 @@ public record ResolvedCraft(
         /** Whether stored energy, rather than ingredients, is what kept this batch small. */
         boolean energyCapped,
         /** Runs currently payable before the visible output is capped to one stack. */
-        int availableRuns) {
+        int availableRuns,
+        /** Fluids the whole batch makes, into the Crafter's output tanks. */
+        List<net.neoforged.neoforge.fluids.FluidStack> fluidOutputs) {
 
     public ResolvedCraft {
         withdrawals = withdrawals == null ? List.of() : IngredientPool.merge(withdrawals);
@@ -34,6 +36,26 @@ public record ResolvedCraft(
         feCost = Math.max(0, feCost);
         batchSize = Math.max(1, batchSize);
         availableRuns = Math.max(0, availableRuns);
+        fluidOutputs = fluidOutputs == null ? List.of() : fluidOutputs.stream().map(net.neoforged.neoforge.fluids.FluidStack::copy).toList();
+    }
+
+    public ResolvedCraft(Identifier recipeId, List<IngredientPool.Withdrawal> withdrawals, List<ItemStack> outputs, int feCost,
+                         int batchSize, boolean energyCapped, int availableRuns) {
+        this(recipeId, withdrawals, outputs, feCost, batchSize, energyCapped, availableRuns, List.of());
+    }
+
+    /** The same craft, making {@code fluids} too (one run's worth, for a craft of one run). */
+    public ResolvedCraft withFluidOutputs(List<net.neoforged.neoforge.fluids.FluidStack> fluids) {
+        return new ResolvedCraft(recipeId, withdrawals, outputs, feCost, batchSize, energyCapped, availableRuns, fluids);
+    }
+
+    /** {@code fluids} scaled from {@code from} runs to {@code to}. */
+    private static List<net.neoforged.neoforge.fluids.FluidStack> scaled(List<net.neoforged.neoforge.fluids.FluidStack> fluids, int from, int to) {
+        List<net.neoforged.neoforge.fluids.FluidStack> out = new ArrayList<>(fluids.size());
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : fluids) {
+            out.add(fluid.copyWithAmount((int) Math.min(Integer.MAX_VALUE, (long) fluid.getAmount() / from * to)));
+        }
+        return out;
     }
 
     public ResolvedCraft(Identifier recipeId, List<IngredientPool.Withdrawal> withdrawals,
@@ -115,7 +137,7 @@ public record ResolvedCraft(
         }
         long energy = (long) (feCost / batchSize) * copies;
         return new ResolvedCraft(recipeId, batched, batchedOutputs,
-                (int) Math.min(Integer.MAX_VALUE, energy), copies, energyCapped, available);
+                (int) Math.min(Integer.MAX_VALUE, energy), copies, energyCapped, available, scaled(fluidOutputs, batchSize, copies));
     }
 
     /**
@@ -143,7 +165,7 @@ public record ResolvedCraft(
         long energy = Math.ceilDiv((long) feCost * clamped, batchSize);
         return new ResolvedCraft(recipeId, scaled, scaledOutputs,
                 (int) Math.min(Integer.MAX_VALUE, energy), clamped, energyCapped,
-                Math.min(availableRuns, clamped));
+                Math.min(availableRuns, clamped), scaled(fluidOutputs, batchSize, clamped));
     }
 
     /** How much of one output a single run of the recipe yields. */

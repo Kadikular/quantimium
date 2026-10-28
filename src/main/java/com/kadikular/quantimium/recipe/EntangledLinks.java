@@ -270,9 +270,19 @@ public final class EntangledLinks {
                 countTotal += network.countTotal();
                 continue;
             }
+            // Fluids in a bound tank: which fluids, and a bucket's worth more or less (a dripping pipe isn't news).
+            IFluidHandler tanks = resolveFluid(level, stack);
+            if (tanks != null) {
+                for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                    var fluid = tanks.getFluidInTank(tank);
+                    if (fluid.isEmpty()) continue;
+                    typeHash = typeHash * 31 + BuiltInRegistries.FLUID.getId(fluid.getFluid());
+                    countTotal += fluid.getAmount() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+                }
+            }
             IItemHandler handler = resolve(level, source, stack);
             if (handler == null) {
-                typeHash = typeHash * 31 - 7;
+                if (tanks == null) typeHash = typeHash * 31 - 7;
                 continue;
             }
             // Items shuffling between slots (a busy hopper) must not read as a new item type.

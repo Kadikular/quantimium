@@ -37,6 +37,7 @@ Nothing is crafted until something takes an output: you, a hopper, a pipe, or it
 | Runs | 32 at a time, then it recovers | Unlimited |
 | Automation | Every face, no configuration | Per-face side configuration, auto input and output |
 | Tesseracts in the grid | Yes | Yes |
+| Fluid tanks | 3 in, 2 out | 3 in, 2 out |
 
 A Basic crafter's buffer takes about 8 minutes to fill from a 100 FE/t generator.
 
@@ -229,6 +230,20 @@ auto push or pull. Hoppers and pipes do the moving.
 Automation reaches the grid and the output slots only; the catalyst goes in by hand. A pipe or
 network sees each ghost as a slot after the outputs, on any face that lets something out.
 
+## Fluids
+
+The crafter has 3 input tanks, right of the catalyst, and
+2 output tanks, shown among its outputs. Each holds 16,000 mB of one fluid.
+
+- A recipe that takes a fluid draws it from the input tanks, or from a tank a Tesseract in the grid is
+  bound to (a <ItemLink id="quantimium:laser_tank" />, or any mod's). It is offered only while there is enough.
+- Fluids a recipe makes go to the output tanks. A batch is cut to what they have room for. With no
+  room for even one run, it waits.
+- Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
+  bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
+  as you fill from it.
+- Pipes on any face fill the input tanks and drain the output tanks. Click an input tank with a bucket to fill or empty it.
+
 ## Tesseracts in the grid
 
 A bound <ItemLink id="quantimium:tesseract" /> in a grid slot adds **the linked
@@ -328,8 +343,7 @@ The EnderIO Alloy Smelter's:
 - **Fluids are found by type.** Any field holding NeoForge's fluid ingredients or
   fluid stacks, or a mod's own fluid ingredient, is read, alone or in a list. A field named for inputs
   is taken, one named for outputs is given. Where that guesses wrong, `fluid_input_fields` and
-  `fluid_output_fields` name the fields. The Crafter has no tanks yet: a recipe that takes a fluid
-  isn't offered, and one that also gives a fluid makes only its items.
+  `fluid_output_fields` name the fields. See Fluids for how the crafter uses them.
 
 ## Tips
 

@@ -58,14 +58,14 @@ public final class MiMachineFamily {
             int eu = (Integer) field(recipe, "eu");
             int duration = (Integer) field(recipe, "duration");
 
-            // Fluids unsupported in v1 — skip fluid recipes.
-            if (fluidInputs != null && !fluidInputs.isEmpty()) return Optional.empty();
-            if (itemInputs == null || itemInputs.isEmpty()) return Optional.empty();
+            boolean takesFluids = fluidInputs != null && !fluidInputs.isEmpty();
+            if (takesFluids && !pool.hasFluids()) return Optional.empty();
+            if ((itemInputs == null || itemInputs.isEmpty()) && !takesFluids) return Optional.empty();
 
             IngredientPool.Allocator alloc = pool.allocator();
             List<IngredientPool.Withdrawal> withdrawals = new ArrayList<>();
 
-            for (Object inputObj : itemInputs) {
+            for (Object inputObj : itemInputs == null ? List.of() : itemInputs) {
                 float probability = ((Number) call(inputObj, "probability")).floatValue();
                 // Probabilistic inputs are optional; skip them for matching (don't require).
                 if (probability < 1.0f) continue;
@@ -90,14 +90,28 @@ public final class MiMachineFamily {
                     if (stack != null && !stack.isEmpty()) outputs.add(stack.copy());
                 }
             }
-            if (outputs.isEmpty()) return Optional.empty();
+            
+            // Its fluids, as describe reads them: from the Crafter's tanks, into its output tanks.
+            List<?> fluidOuts = (List<?>) field(recipe, "fluidOutputs");
+            RecipeShape shape = takesFluids || fluidOuts != null && !fluidOuts.isEmpty() ? describe(holder).orElse(null) : null;
+            if (takesFluids && shape == null) return Optional.empty();
+            List<net.neoforged.neoforge.fluids.FluidStack> fluidOutputs = shape == null ? List.of() : shape.fluids().outputs();
+            if (shape != null) {
+                for (FluidParts.Input fluid : shape.fluids().inputs()) {
+                    List<IngredientPool.Withdrawal> taken = alloc.takeFluid(fluid);
+                    if (taken == null) return Optional.empty();
+                    withdrawals.addAll(taken);
+                }
+            }
+
+            if (outputs.isEmpty() && fluidOutputs.isEmpty()) return Optional.empty();
 
             int ticks = Math.max(duration, 1);
             int cost = eu > 0
                     ? CraftEnergy.fromEu((long) eu * ticks)
                     : CraftEnergy.flat((long) ticks * UNPOWERED_FE_PER_TICK);
 
-            return Optional.of(new ResolvedCraft(holder.id().identifier(), withdrawals, outputs, cost));
+            return Optional.of(new ResolvedCraft(holder.id().identifier(), withdrawals, outputs, cost).withFluidOutputs(fluidOutputs));
         } catch (Throwable t) {
             return Optional.empty();
         }

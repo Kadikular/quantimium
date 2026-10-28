@@ -124,16 +124,23 @@ public final class MiCompatTests {
 
     // covers: compat.mi.crafter_fluids
     @GameTest(template = TestSupport.FLOOR_9, templateNamespace = NS, batch = "mi_crafter_fluids", timeoutTicks = 60)
-    public static void recipesWithFluidInputsAreLeftOut(GameTestHelper helper) {
+    public static void recipesWithFluidInputsNeedTheFluid(GameTestHelper helper) {
         QuantumCrafterBlockEntity crafter = CrafterTests.crafter(helper, AT, item("modern_industrialization:chemical_reactor"));
         CrafterTests.grid(crafter, new ItemStack(Items.COPPER_BLOCK, 4), new ItemStack(item("modern_industrialization:wax"), 4));
         helper.runAfterDelay(5, () -> {
             helper.assertTrue(CrafterTests.craftOf(crafter, Items.WAXED_COPPER_BLOCK) != null,
                     "waxing (items only) should be offered");
-            // Oxidising copper needs oxygen; the crafter has no tanks, so it cannot offer it.
+            // Oxidising copper needs oxygen: not offered till its input tanks hold some.
             helper.assertTrue(CrafterTests.craftOf(crafter, Items.EXPOSED_COPPER) == null,
-                    "oxidation (needs oxygen) should not be offered");
-            helper.succeed();
+                    "oxidation (needs oxygen) should not be offered without it");
+            var oxygen = net.minecraft.core.registries.BuiltInRegistries.FLUID.getValue(
+                    net.minecraft.resources.Identifier.parse("modern_industrialization:oxygen"));
+            crafter.inputTanks().fill(new net.neoforged.neoforge.fluids.FluidStack(oxygen, 16_000), false);
+            helper.runAfterDelay(10, () -> {
+                helper.assertTrue(CrafterTests.craftOf(crafter, Items.EXPOSED_COPPER) != null,
+                        "oxidation should be offered with oxygen in its tanks");
+                helper.succeed();
+            });
         });
     }
 

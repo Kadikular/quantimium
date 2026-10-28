@@ -69,7 +69,7 @@ public final class AnomalyEffects {
         int scaled = (int) Math.min(Integer.MAX_VALUE, Math.max(1L, Math.round(craft.feCost() * multiplier)));
         if (scaled == craft.feCost()) return craft;
         return new ResolvedCraft(craft.recipeId(), craft.withdrawals(), craft.outputs(), scaled,
-                craft.batchSize(), craft.energyCapped(), craft.availableRuns());
+                craft.batchSize(), craft.energyCapped(), craft.availableRuns(), craft.fluidOutputs());
     }
 
 }

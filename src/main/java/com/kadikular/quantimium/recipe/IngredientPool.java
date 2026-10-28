@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import com.kadikular.quantimium.util.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +31,12 @@ public final class IngredientPool {
         record Local(int crafterSlot) implements Provenance {}
 
         record Remote(int linkSlot, int remoteSlot) implements Provenance {}
+
+        /** One of the Crafter's own input tanks. */
+        record Tank(int tank) implements Provenance {}
+
+        /** A tank of the block a link in grid slot {@code linkSlot} is bound to. */
+        record LinkedTank(int linkSlot, int tank) implements Provenance {}
     }
 
     public record Offer(ItemStack stack, Provenance provenance) {
@@ -112,7 +120,37 @@ public final class IngredientPool {
             offers.add(new Offer(stack, new Provenance.Local(slot)));
         }
         offers.addAll(linked);
+        // Fluids, as fluid entries counted in mB: the Crafter's own tanks first, then those its links are bound to.
+        if (level != null && level.getBlockEntity(source) instanceof QuantumCrafterBlockEntity crafter) {
+            for (int tank = 0; tank < crafter.inputTanks().size(); tank++) {
+                FluidStack there = crafter.inputTanks().get(tank);
+                if (!there.isEmpty()) offers.add(new Offer(fluidOffer(there), new Provenance.Tank(tank)));
+            }
+        }
+        for (int slot = 0; slot < inputSlots; slot++) {
+            ItemStack stack = grid.getStackInSlot(slot);
+            if (stack.isEmpty() || !EntangledLinks.isLink(stack)) continue;
+            IFluidHandler tanks = EntangledLinks.resolveFluid(level, stack);
+            if (tanks == null) continue;
+            for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                FluidStack there = tanks.getFluidInTank(tank);
+                if (there.isEmpty()) continue;
+                // Only what a drain would hand over, as with items.
+                FluidStack takeable = tanks.drain(there.copy(), IFluidHandler.FluidAction.SIMULATE);
+                if (!takeable.isEmpty()) offers.add(new Offer(fluidOffer(takeable), new Provenance.LinkedTank(slot, tank)));
+            }
+        }
         return new IngredientPool(offers);
+    }
+
+    /** A fluid on offer: its entry, as many as there are mB. */
+    private static ItemStack fluidOffer(FluidStack fluid) {
+        return FluidEntry.of(fluid).copyWithCount(fluid.getAmount());
+    }
+
+    /** Whether there's any fluid on offer. */
+    public boolean hasFluids() {
+        return byItem().containsKey(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get());
     }
 
     public List<Offer> offers() {
@@ -157,6 +195,8 @@ public final class IngredientPool {
         return switch (provenance) {
             case Provenance.Local ignored -> -1;
             case Provenance.Remote(int linkSlot, int ignored) -> linkSlot;
+            case Provenance.Tank ignored -> -2;
+            case Provenance.LinkedTank(int linkSlot, int ignored) -> linkSlot;
         };
     }
 
@@ -246,8 +286,13 @@ public final class IngredientPool {
             if (index < 0 || index >= offers.size() || amount <= 0) return null;
             if (remaining(index) < amount) return null;
             taken.merge(index, amount, Integer::sum);
-            Offer offer = offers.get(index);
-            return new Withdrawal(offer.provenance(), amount, offer.stack().getItem());
+            return withdrawal(offers.get(index), amount);
+        }
+
+        /** {@code perRun} mB of a fluid {@code input} takes, from as many tanks as hold it; null if there isn't enough. */
+        @Nullable
+        public List<Withdrawal> takeFluid(FluidParts.Input input) {
+            return takeMatching(stack -> FluidEntry.is(stack) && input.matches(FluidEntry.fluidOf(stack)), input.amount());
         }
 
         /**
@@ -274,12 +319,17 @@ public final class IngredientPool {
         public List<Withdrawal> snapshot() {
             List<Withdrawal> out = new ArrayList<>();
             taken.forEach((i, count) -> {
-                if (count <= 0) return;
-                Offer offer = offers.get(i);
-                out.add(new Withdrawal(offer.provenance(), count, offer.stack().getItem()));
+                if (count > 0) out.add(withdrawal(offers.get(i), count));
             });
             return out;
         }
+    }
+
+    /** A pull of {@code count} from {@code offer}: a fluid's names the fluid too, as its entry's components. */
+    private static Withdrawal withdrawal(Offer offer, int count) {
+        ItemStack stack = offer.stack();
+        return FluidEntry.is(stack) ? new Withdrawal(offer.provenance(), count, stack.getItem(), stack.getComponentsPatch())
+                : new Withdrawal(offer.provenance(), count, stack.getItem());
     }
 
     public Allocator allocator() {
