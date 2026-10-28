@@ -3,133 +3,133 @@
 # emits_flux, automation, stack_size, works_with. Values may use {{c:Class.CONSTANT}} and [[item:id]].
 # An id with no entry keeps the plain box (ID and Type). The build fails on an unknown row or id.
 harvest_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "400 FE per point of hardness"
   works_with: "[[item:amplify_lens]], [[item:pickup_lens]], [[item:block_filter_lens]]"
 damage_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "1,000 FE per hit"
   works_with: "[[item:amplify_lens]], [[item:pickup_lens]], [[item:entity_filter_lens]]"
 healing_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "500 FE per sweep"
   works_with: "[[item:amplify_lens]], [[item:speed_lens]], [[item:entity_filter_lens]]"
 freezing_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "20 FE/t per machine; 25 FE per mob health point"
   works_with: "[[item:entity_filter_lens]], [[block:area_prism]]"
 redstone_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:laser_focus]], [[item:isolator_lens]]"
 interact_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "200 FE per use"
   works_with: "[[block:laser_port]], [[item:entity_filter_lens]]"
 acceleration_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "500 FE per extra tick"
   works_with: "[[item:speed_lens]], [[block:area_prism]]"
 place_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "200 FE per block"
   works_with: "[[block:laser_port]], [[item:filter_lens]]"
 insert_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "200 FE per stack"
   works_with: "[[item:speed_lens]], [[item:filter_lens]], [[item:void_lens]]"
 extract_lens:
-  category: Action lens
-  obtained: Crafted
+  category: "Action lens"
+  obtained: "Crafted"
   energy_use: "200 FE per stack"
   works_with: "[[item:speed_lens]], [[item:filter_lens]]"
 pickup_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "200 FE per stack"
   works_with: "[[item:harvest_lens]], [[block:laser_port]]"
 range_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "Every action"
 filter_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:insert_lens]], [[item:extract_lens]], [[item:place_lens]]"
 block_filter_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:harvest_lens]]"
 entity_filter_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:damage_lens]], [[item:healing_lens]], [[item:freezing_lens]]"
 uv_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "Every action"
 amplify_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free (raises Harvest, Damage and Healing costs)"
   works_with: "[[item:harvest_lens]], [[item:damage_lens]], [[item:healing_lens]]"
 speed_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free (raises spend per second)"
   works_with: "Most actions"
 phantom_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "20 FE/t per block passed; actions cost x2"
   works_with: "Every action"
 precision_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:harvest_lens]]"
 harmonic_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:harvest_lens]], [[item:damage_lens]]"
 unrealising_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:harvest_lens]]"
 smelting_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "25 FE per item"
   works_with: "[[item:pickup_lens]], [[item:insert_lens]], [[item:extract_lens]]"
 crushing_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "25 FE per item"
   works_with: "[[item:pickup_lens]], [[item:insert_lens]], [[item:extract_lens]]"
 void_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "[[item:pickup_lens]], [[item:insert_lens]]"
 isolator_lens:
-  category: Modifier lens
-  obtained: Crafted
+  category: "Modifier lens"
+  obtained: "Crafted"
   energy_use: "Free"
   works_with: "Every action"
 flash_emitter:
@@ -370,3 +370,74 @@ quantum_attuned_glass:
   tier: "High"
   obtained: "Crafted"
   works_with: "[[block:anomaly_containment_hall]]"
+horizon_core:
+  category: "Reactor part"
+  obtained: "Crafted"
+  energy_buffer: "{{c:HorizonCoreBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:HorizonCoreBlockEntity.MAX_RECEIVE}} FE/t"
+  works_with: "[[item:singularity]], [[block:ring_emitter]]"
+reactor_plinth:
+  category: "Reactor part"
+  obtained: "Crafted"
+  works_with: "[[block:horizon_core]]"
+lit_reactor_plinth:
+  category: "Reactor part"
+  obtained: "Crafted"
+  works_with: "[[block:reactor_plinth]]"
+ring_emitter:
+  category: "Reactor part"
+  obtained: "Crafted"
+  energy_use: "{{c:HorizonCoreBlockEntity.EMITTER_FE_PER_TICK}} FE/t each"
+  works_with: "[[block:horizon_core]]"
+catalyst_bay:
+  category: "Reactor part"
+  obtained: "Crafted"
+  works_with: "[[item:folded_tesseract]], [[block:horizon_core]]"
+reactor_input_port:
+  category: "Reactor port"
+  obtained: "Crafted"
+  automation: "Items in"
+  works_with: "[[block:horizon_core]]"
+reactor_output_port:
+  category: "Reactor port"
+  obtained: "Crafted"
+  automation: "Items out"
+  works_with: "[[block:horizon_core]]"
+reactor_energy_port:
+  category: "Reactor port"
+  obtained: "Crafted"
+  automation: "FE in"
+  works_with: "[[block:horizon_core]]"
+reactor_materialiser_port:
+  category: "Reactor port"
+  obtained: "Crafted"
+  automation: "Items in and out, every face"
+  works_with: "[[block:reactor_me_port]]"
+reactor_me_port:
+  category: "Reactor port"
+  obtained: "Crafted"
+  automation: "ME network (needs AE2)"
+  works_with: "[[block:reactor_materialiser_port]]"
+singularity:
+  category: "Reactor material"
+  obtained: "Collapsed in a Fold Chamber"
+  works_with: "[[block:horizon_core]]"
+folded_tesseract:
+  category: "Tesseract"
+  obtained: "Folded in a Fold Chamber"
+  energy_use: "{{c:Folding.FE_PER_BLOCK}} FE per block folded"
+  works_with: "[[block:fold_core]], [[block:quantum_crafter]]"
+fold_core:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  energy_buffer: "{{c:FoldCoreBlockEntity.ENERGY_CAPACITY}} FE"
+  max_input: "{{c:FoldCoreBlockEntity.MAX_RECEIVE}} FE/t"
+  works_with: "[[block:fold_pylon]], [[block:fold_rail]]"
+fold_pylon:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:fold_core]]"
+fold_rail:
+  category: "Multiblock part"
+  obtained: "Crafted"
+  works_with: "[[block:fold_core]]"
