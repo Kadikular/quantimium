@@ -278,7 +278,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
      *
      * <p>With nothing pending, an answer is kept a second while what it uses is still there, however else the
      * horizon changes: a storage bus asks about every slot each time it looks, and a running Reactor changes
-     * every tick. Planning afresh is held to {@link #PLAN_NANOS_PER_TICK} a tick, and planning again an answer that
+     * every tick. Past the first {@link #FREE_ASKS} asks of a tick, planning afresh is held to {@link #PLAN_NANOS_PER_TICK}, and planning again an answer that
      * still holds to {@link #REPLAN_NANOS_PER_TICK}; past those, older answers that still hold stand in, and asks
      * with none get nothing until a later tick.
      */
@@ -287,8 +287,9 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         private static final int MAX_PLANS = 7;
         /** How long a kept answer stands before it's planned again, if there's time. */
         private static final int ANSWER_TICKS = 20;
-        /** Planning time a tick for asks with nothing pending. The first plan of a tick always runs. */
+        /** Planning time a tick for asks with nothing pending, after the first {@link #FREE_ASKS}, which always plan in full. */
         private static final long PLAN_NANOS_PER_TICK = 1_000_000;
+        private static final int FREE_ASKS = 8;
         /** Of that, what may go on planning again asks whose kept answer still holds. */
         private static final long REPLAN_NANOS_PER_TICK = 250_000;
         private static final int MAX_ANSWERS = 8192;
@@ -315,6 +316,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
         /** The tick {@link #plannedNanos} is for. */
         private long planTick = Long.MIN_VALUE;
         private long plannedNanos;
+        private int plannedAsks;
         /** Whether the last plan stopped for time before it found how much can be made. */
         private boolean cutShort;
 
@@ -423,20 +425,23 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             if (tick != planTick) {
                 planTick = tick;
                 plannedNanos = 0;
+                plannedAsks = 0;
             }
             boolean clean = ops.isEmpty() && !horizon.hasReservations();
             AnswerKey askKey = new AnswerKey(item, amount);
             if (clean) {
                 Kept kept = answers.get(askKey);
+                boolean free = plannedAsks < FREE_ASKS;
                 if (kept != null && stillHolds(horizon, kept.op())) {
-                    if (tick - kept.tick() < ANSWER_TICKS || plannedNanos >= REPLAN_NANOS_PER_TICK) return kept.op();
-                } else if (plannedNanos >= PLAN_NANOS_PER_TICK) {
+                    if (tick - kept.tick() < ANSWER_TICKS || !free && plannedNanos >= REPLAN_NANOS_PER_TICK) return kept.op();
+                } else if (!free && plannedNanos >= PLAN_NANOS_PER_TICK) {
                     return null;
                 }
             }
             long start = System.nanoTime();
             Op best = plan(horizon, item, amount, clean, start);
             if (clean) {
+                plannedAsks++;
                 plannedNanos += Math.max(1, System.nanoTime() - start);
                 if (answers.size() >= MAX_ANSWERS) answers.clear();
                 // One cut short stands until there's time to plan it again, rather than costing the same again next tick.
@@ -479,7 +484,7 @@ public class ReactorPortBlockEntity extends BlockEntity implements com.kadikular
             cutShort = false;
             while (low <= high && plans < MAX_PLANS) {
                 // With nothing pending, out of time for this tick: as much as is found so far.
-                if (clean && plans > 0 && plannedNanos + (System.nanoTime() - started) >= PLAN_NANOS_PER_TICK) {
+                if (clean && plans > 0 && plannedAsks >= FREE_ASKS && plannedNanos + (System.nanoTime() - started) >= PLAN_NANOS_PER_TICK) {
                     cutShort = true;
                     break;
                 }
