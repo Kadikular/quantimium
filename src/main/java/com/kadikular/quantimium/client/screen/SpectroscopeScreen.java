@@ -33,11 +33,11 @@ public class SpectroscopeScreen extends Screen {
     private static final int SPECTRUM_W = 256;
     private static final int SPECTRUM_H = 64;
     /** The wavelengths across the spectrum, nm. */
-    private static final int NM_FROM = 340;
-    private static final int NM_TO = 870;
-    /** The bands: power (the plain laser's azure) and logistics (its deeper blue). */
-    private static final int POWER_FROM = 478, POWER_TO = 512;
-    private static final int LOGISTICS_FROM = 428, LOGISTICS_TO = 462;
+    private static final int NM_FROM = 325;
+    private static final int NM_TO = 755;
+    /** The bands, gaussian: power (the plain laser's azure) and logistics (its deeper blue), centre and width (sigma), nm. */
+    private static final int POWER_NM = 495, POWER_SIGMA = 9;
+    private static final int LOGISTICS_NM = 445, LOGISTICS_SIGMA = 9;
     private static final int CHIPS_Y = SPECTRUM_Y + SPECTRUM_H + 14;
     private static final int TABLE_Y = CHIPS_Y + 16;
     private static final int ROW = 18;
@@ -182,7 +182,9 @@ public class SpectroscopeScreen extends Screen {
         }
         // Dimmer at the ends, as an eye sees them.
         double fall = nm < 420 ? 0.3 + 0.7 * Math.max(0, nm - 380) / 40 : nm > 700 ? 0.3 + 0.7 * Math.max(0, 780 - nm) / 80 : 1.0;
-        if (nm < 380 || nm > 780) fall = 0.3;
+        // Into the ultraviolet, dimmer the shorter it is: Phantom's line deeper than UV's.
+        if (nm < 380) fall = 0.35 + 0.35 * Math.clamp((nm - 325) / 55.0, 0.0, 1.0);
+        if (nm > 780) fall = 0.3;
         return 0xFF000000 | (int) (r * fall * 255) << 16 | (int) (g * fall * 255) << 8 | (int) (b * fall * 255);
     }
 
@@ -195,18 +197,17 @@ public class SpectroscopeScreen extends Screen {
         int base = y0 + SPECTRUM_H - 5;
         // The axis: the wavelengths' own colours, dim, along the foot.
         for (int x = x0 + 2; x < x0 + SPECTRUM_W - 2; x++) graphics.fill(x, base + 1, x + 1, base + 4, dim(nmColour(xNm(x)), 0x70));
-        for (int nm = 400; nm <= 800; nm += 100) {
+        for (int nm = 400; nm <= 700; nm += 100) {
             int x = nmX(nm);
             graphics.fill(x, base - 2, x + 1, base + 1, FAINT);
             drawSmall(graphics, Integer.toString(nm), x, y0 + SPECTRUM_H + 2, DIM);
         }
-        drawSmall(graphics, "UV", nmX(358), y0 + SPECTRUM_H + 2, DIM);
-        drawSmall(graphics, "IR", nmX(842), y0 + SPECTRUM_H + 2, DIM);
+        drawSmall(graphics, "UV", nmX(352), y0 + SPECTRUM_H + 2, DIM);
         List<Component> tip = null;
 
         // Bands: power, while it carries any; logistics, while it's a network's. Low, in their wavelengths' colours.
-        if (!reading.unpowered() && reading.flow() >= 0) tip = band(graphics, POWER_FROM, POWER_TO, base, 16, "gui.quantimium.spectroscope.power", mouseX, mouseY, tip);
-        if (logistics()) tip = band(graphics, LOGISTICS_FROM, LOGISTICS_TO, base, 24, "gui.quantimium.spectroscope.logistics", mouseX, mouseY, tip);
+        if (reading.power()) tip = band(graphics, POWER_NM, POWER_SIGMA, base, 20, "gui.quantimium.spectroscope.power", mouseX, mouseY, tip);
+        if (logistics()) tip = band(graphics, LOGISTICS_NM, LOGISTICS_SIGMA, base, 28, "gui.quantimium.spectroscope.logistics", mouseX, mouseY, tip);
 
         // A line for each lens it carries, at its wavelength.
         Map<Lens, TreeSet<Integer>> lenses = lenses();
@@ -217,7 +218,8 @@ public class SpectroscopeScreen extends Screen {
         for (Map.Entry<Lens, TreeSet<Integer>> entry : lenses.entrySet()) {
             Lens lens = entry.getKey();
             int x = nmX(lens.wavelength());
-            int colour = lens.colour | 0xFF000000;
+            // In its wavelength's colour, as a spectrum shows it (its lens's own colour is in its tooltip).
+            int colour = nmColour(lens.wavelength());
             int height = lens.action ? SPECTRUM_H - 14 : SPECTRUM_H - 26;
             graphics.fill(x - 1, base - height, x + 2, base, dim(colour, 0x50));
             graphics.fill(x, base - height, x + 1, base, colour);
@@ -232,19 +234,18 @@ public class SpectroscopeScreen extends Screen {
         return tip;
     }
 
-    /** A band over {@code from}-{@code to} nm, {@code height} high; its tooltip if the mouse is over it. */
+    /** A gaussian band about {@code centre} nm, {@code height} high at its peak; its tooltip if the mouse is over it. */
     @Nullable
-    private List<Component> band(GuiGraphicsExtractor graphics, int from, int to, int base, int height, String key, int mouseX, int mouseY,
+    private List<Component> band(GuiGraphicsExtractor graphics, int centre, int sigma, int base, int height, String key, int mouseX, int mouseY,
                                  @Nullable List<Component> tip) {
-        int x1 = nmX(from), x2 = nmX(to);
+        int x1 = nmX(centre - 3 * sigma), x2 = nmX(centre + 3 * sigma);
         for (int x = x1; x <= x2; x++) {
-            // Softer towards its edges, as a band of light is.
-            double edge = Math.min(x - x1, x2 - x) / (double) Math.max(1, (x2 - x1) / 2);
-            int h = (int) Math.round(height * (0.45 + 0.55 * Math.sqrt(Math.max(0, edge))));
-            graphics.fill(x, base - h, x + 1, base, dim(nmColour(xNm(x)), 0xA0));
+            double off = (xNm(x) - centre) / sigma;
+            int h = (int) Math.round(height * Math.exp(-off * off / 2));
+            if (h > 0) graphics.fill(x, base - h, x + 1, base, dim(nmColour(xNm(x)), 0xB0));
         }
-        if (mouseX >= x1 && mouseX <= x2 && mouseY >= base - height && mouseY <= base) {
-            return List.of(Component.translatable(key), Component.translatable("gui.quantimium.spectroscope.nm_range", from, to).withStyle(ChatFormatting.GRAY));
+        if (mouseX >= nmX(centre - 2 * sigma) && mouseX <= nmX(centre + 2 * sigma) && mouseY >= base - height && mouseY <= base) {
+            return List.of(Component.translatable(key), Component.translatable("gui.quantimium.spectroscope.nm", centre).withStyle(ChatFormatting.GRAY));
         }
         return tip;
     }

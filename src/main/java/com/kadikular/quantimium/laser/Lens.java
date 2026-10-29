@@ -103,7 +103,7 @@ public enum Lens {
 
     /**
      * Where its line sits in a Spectroscope's spectrum, in nm: near its colour's wavelength, UV in the ultraviolet and
-     * Phantom (passing through blocks) in the infrared. Pinks and other colours no single wavelength makes sit in the
+     * Phantom (passing through blocks, as shorter waves do) deeper in it. Pinks and other colours no single wavelength makes sit in the
      * deep red.
      */
     public int wavelength() {
@@ -131,7 +131,7 @@ public enum Lens {
             case HEAL -> 692;
             case SPEED -> 712;
             case HARMONIC -> 732;
-            case PHANTOM -> 850;
+            case PHANTOM -> 340;
         };
     }
 

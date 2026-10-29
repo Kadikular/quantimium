@@ -24,9 +24,10 @@ import java.util.Optional;
  * @param lines   one per stream: an action on a channel
  * @param ports   the Laser Ports, Tanks and Controllers its actions use, up the laser
  * @param logistics the channels of the Logistics Controllers whose laser it is
+ * @param power   whether it carries power: from an emitter (a Logistics Controller's own laser carries none)
  */
 public record SpectroscopeReading(Component where, int reach, int sources, int marks, int boosts, long flow,
-                                  List<Line> lines, List<Port> ports, List<Integer> logistics) {
+                                  List<Line> lines, List<Port> ports, List<Integer> logistics, boolean power) {
 
     /** One action on one channel: its modifiers (bits of {@link Lens}), Amplify and Speed lenses met, what it's doing now. */
     public record Line(int action, int channel, int modifiers, int amps, int speed, int ports, Optional<Component> said) {
@@ -80,12 +81,13 @@ public record SpectroscopeReading(Component where, int reach, int sources, int m
                 LINE.apply(ByteBufCodecs.list(256)).encode(buf, reading.lines);
                 PORT.apply(ByteBufCodecs.list(256)).encode(buf, reading.ports);
                 ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)).encode(buf, reading.logistics);
+                buf.writeBoolean(reading.power);
             },
             buf -> new SpectroscopeReading(ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), buf.readVarInt(), buf.readVarInt(),
                     buf.readVarInt(), buf.readVarInt(), buf.readVarLong(),
                     new ArrayList<>(LINE.apply(ByteBufCodecs.list(256)).decode(buf)),
                     new ArrayList<>(PORT.apply(ByteBufCodecs.list(256)).decode(buf)),
-                    new ArrayList<>(ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)).decode(buf))));
+                    new ArrayList<>(ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)).decode(buf)), buf.readBoolean()));
 
     /** This and {@code other} as one laser: lasers met where a Spectroscope was aimed (joined, or laid one over another). */
     public SpectroscopeReading with(SpectroscopeReading other) {
@@ -100,7 +102,7 @@ public record SpectroscopeReading(Component where, int reach, int sources, int m
         List<Integer> logistics = new ArrayList<>(this.logistics);
         for (int channel : other.logistics) if (!logistics.contains(channel)) logistics.add(channel);
         return new SpectroscopeReading(where, Math.max(reach, other.reach), sources + other.sources, marks | other.marks,
-                Math.max(boosts, other.boosts), Math.max(flow, other.flow), new ArrayList<>(merged.values()), ports, logistics);
+                Math.max(boosts, other.boosts), Math.max(flow, other.flow), new ArrayList<>(merged.values()), ports, logistics, power || other.power);
     }
 
     public boolean uv() {

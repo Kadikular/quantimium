@@ -31,27 +31,46 @@ public class SpectroscopeItem extends Item {
         super(properties);
     }
 
-    /** On a laser block: the laser leaving it. */
+    /**
+     * On a block, before the block's own use: one of ours, the laser leaving it; else a laser in front of it, if the look
+     * meets one (the block's own use otherwise).
+     */
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        if (!(context.getLevel() instanceof ServerLevel level)) return InteractionResult.SUCCESS;
-        return show(level, context.getPlayer(), context.getClickedPos(), -1) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+        if (!(context.getLevel() instanceof ServerLevel level)) {
+            // A laser block, or a laser it draws in front of the block: the reading, not the block's own use.
+            if (context.getLevel().getBlockEntity(context.getClickedPos()) instanceof com.kadikular.quantimium.laser.LaserBeamView) return InteractionResult.SUCCESS;
+            Player looker = context.getPlayer();
+            return looker != null && com.kadikular.quantimium.client.ClientBeams.aimedAt(context.getLevel(), looker, REACH)
+                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
+        // As the client decides: a block that draws lasers is read; any other, only a laser in front of it.
+        if (level.getBlockEntity(context.getClickedPos()) instanceof com.kadikular.quantimium.laser.LaserBeamView
+                && show(level, context.getPlayer(), context.getClickedPos(), -1)) return InteractionResult.SUCCESS;
+        Player player = context.getPlayer();
+        if (player == null) return InteractionResult.PASS;
+        return aim(level, player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
     }
 
     /** In the air: the laser it's aimed at, within reach. */
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
-        var networks = LaserNetworks.of(server);
-        var aims = networks.aimedAt(server, player, player.getEyePosition(), player.getLookAngle(), REACH);
-        var reading = networks.read(server, aims);
-        if (reading == null) return InteractionResult.PASS;
-        send(server, player, aims.getFirst().pos(), reading);
-        return InteractionResult.SUCCESS;
+        return aim(server, player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
+
+    /** Reads the lasers the player's look meets first, if any; whether it did. */
+    private static boolean aim(ServerLevel level, Player player) {
+        var networks = LaserNetworks.of(level);
+        var aims = networks.aimedAt(level, player, player.getEyePosition(), player.getLookAngle(), REACH);
+        var reading = networks.read(level, aims);
+        if (reading == null) return false;
+        send(level, player, aims.getFirst().pos(), reading);
+        return true;
     }
 
     /** How far off a laser in the air can be read. */
-    private static final double REACH = 16.0;
+    private static final double REACH = 8.0;
 
     /** Reads the laser leaving {@code pos} (or its beam {@code beam}) and opens the reading on the player's screen. */
     private static boolean show(ServerLevel level, @org.jspecify.annotations.Nullable Player player, net.minecraft.core.BlockPos pos, int beam) {

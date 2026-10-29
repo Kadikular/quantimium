@@ -356,7 +356,7 @@ public final class LaserNetworks {
         Light light = one != null ? lightOf(pos, one) : lights.get(pos);
         net.minecraft.network.chat.MutableComponent where = level.getBlockState(pos).getBlock().getName().copy();
         long flow = one != null ? one.flow() : throughput(pos);
-        if (light == null) return new SpectroscopeReading(where, 0, 0, 0, 0, flow, List.of(), List.of(), List.of());
+        if (light == null) return new SpectroscopeReading(where, 0, 0, 0, 0, flow, List.of(), List.of(), List.of(), false);
         List<SpectroscopeReading.Line> lines = new ArrayList<>();
         Map<BlockPos, int[]> ports = new LinkedHashMap<>();
         Map<BlockPos, java.util.Set<Integer>> using = new HashMap<>();
@@ -388,8 +388,10 @@ public final class LaserNetworks {
             found.add(new SpectroscopeReading.Port(level.getBlockState(at).getBlock().asItem().getDefaultInstance(), at,
                     port == null ? 0 : port.channel(), role[0], List.copyOf(using.getOrDefault(at, java.util.Set.of()))));
         });
+        // Power comes from emitters (and cavities): a Logistics Controller's own laser carries none.
+        boolean power = !light.unpowered() && light.feeders().stream().anyMatch(feeder -> !(nodes.get(feeder) instanceof LogisticsController));
         return new SpectroscopeReading(where, light.reach(), light.feeders().size(), light.marks(), light.boosts(), flow, lines, found,
-                List.copyOf(light.logistics().values()));
+                List.copyOf(light.logistics().values()), power);
     }
 
     /**
