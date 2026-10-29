@@ -110,6 +110,49 @@ public final class ChannelTests {
         });
     }
 
+    // covers: laser.channels.streams
+    @GameTest(template = TestSupport.FLOOR_17, batch = "channels_world", timeoutTicks = 120)
+    public static void harvestWorksOnAnyChannel(GameTestHelper helper) {
+        // Harvest on channel 3 on one row and on All on another: both cut their stone.
+        for (int row = 0; row < 2; row++) {
+            int z = 4 + row * 6;
+            helper.setBlock(new BlockPos(1, Y, z), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.EAST));
+            helper.setBlock(new BlockPos(0, Y, z), ModBlocks.CREATIVE_ENERGY_CELL.get());
+            helper.setBlock(new BlockPos(3, Y, z), ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(LensMountBlock.FACING, Direction.EAST));
+            LensMountBlockEntity mount = helper.getBlockEntity(new BlockPos(3, Y, z), LensMountBlockEntity.class);
+            mount.getLensSlots().setStackInSlot(0, new ItemStack(ModItems.HARVEST_LENS.get()));
+            mount.setSlotChannel(0, row == 0 ? 3 : Channels.ALL);
+            helper.setBlock(new BlockPos(7, Y, z), Blocks.STONE);
+        }
+        helper.succeedWhen(() -> {
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(7, Y, 4));
+            helper.assertBlockPresent(Blocks.AIR, new BlockPos(7, Y, 10));
+            TestSupport.finishLasers(helper);
+        });
+    }
+
+    // covers: laser.channels.ports
+    @GameTest(template = TestSupport.FLOOR_17, batch = "channels_world_pickup", timeoutTicks = 120)
+    public static void pickupOnAChannelBringsItToItsPort(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(0, Y, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        LaserPortBlockEntity on0 = port(helper, new BlockPos(3, Y, 8));
+        LaserPortBlockEntity on3 = port(helper, new BlockPos(5, Y, 8));
+        on3.setChannel(3);
+        helper.setBlock(new BlockPos(7, Y, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(LensMountBlock.FACING, Direction.EAST));
+        LensMountBlockEntity mount = helper.getBlockEntity(new BlockPos(7, Y, 8), LensMountBlockEntity.class);
+        mount.getLensSlots().setStackInSlot(0, new ItemStack(ModItems.HARVEST_LENS.get()));
+        mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.PICKUP_LENS.get()));
+        mount.setSlotChannel(0, 3);
+        mount.setSlotChannel(1, 3);
+        helper.setBlock(new BlockPos(11, Y, 8), Blocks.STONE);
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(count(on3, Items.COBBLESTONE), 1, "the cobblestone went to the port on channel 3");
+            helper.assertValueEqual(count(on0, Items.COBBLESTONE), 0, "not the one on 0");
+            TestSupport.finishLasers(helper);
+        });
+    }
+
     private static LaserPortBlockEntity port(GameTestHelper helper, BlockPos pos) {
         helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(LaserPortBlock.FACING, Direction.EAST));
         return helper.getBlockEntity(pos, LaserPortBlockEntity.class);

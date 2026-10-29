@@ -1592,7 +1592,7 @@ public final class LaserNetworks {
             if (at != null && at.area() != null && here != null && !visit.path().isEmpty()) {
                 for (Light.Stream stream : here.acting()) {
                     if (!stream.payers().contains(source.nodePos())) continue;
-                    LensAction action = actions.get(new LensAction.Key(visit.node(), -1, stream.action()));
+                    LensAction action = actions.get(new LensAction.Key(visit.node(), -1, stream.action(), stream.channel()));
                     if (action != null) route(sinks, action.key(), null, Direction.UP, null, action, source.nodePos(), index, visit.path(), visit.efficiency());
                 }
             }
@@ -1614,7 +1614,7 @@ public final class LaserNetworks {
                     if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
                     for (Light.Stream stream : streams) {
                         if (!stream.payers().contains(source.nodePos())) continue;
-                        LensAction action = actions.get(new LensAction.Key(visit.node(), i, stream.action()));
+                        LensAction action = actions.get(new LensAction.Key(visit.node(), i, stream.action(), stream.channel()));
                         if (action != null) {
                             route(sinks, action.key(), beam.hit(), beam.arriving(), null, action, source.nodePos(), index, path, through.efficiency());
                         }
