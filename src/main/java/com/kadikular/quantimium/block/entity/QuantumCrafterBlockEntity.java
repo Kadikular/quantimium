@@ -231,6 +231,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private final SidedFluids[] sidedFluids = new SidedFluids[6];
     /** A face's tanks without its previews: what pushing out on its own moves. */
     private final SidedFluids[] sidedTanks = new SidedFluids[6];
+    private final SidedFluids[] networkFluids = new SidedFluids[6];
     private final SidedFluids viewerFluids = new SidedFluids(null, false);
     private final SidedFluids playerFluids = new SidedFluids(null, true);
 
@@ -305,6 +306,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             sidedItemHandlers[side.get3DDataValue()] = new SidedAutomationHandler(side);
             sidedFluids[side.get3DDataValue()] = new SidedFluids(side, true);
             sidedTanks[side.get3DDataValue()] = new SidedFluids(side, false);
+            // A Basic Crafter's faces aren't set: as with no face.
+            networkFluids[side.get3DDataValue()] = new SidedFluids(isBasic() ? null : side, false, false);
         }
     }
 
@@ -330,6 +333,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (isBasic()) return playerFluids;
         if (sideConfigs.get(side.get3DDataValue()).fluidMode() == SideMode.DISABLED) return null;
         return sidedFluids[side.get3DDataValue()];
+    }
+
+    /**
+     * What a logistics network on {@code side} sees: what it holds, filling its input tanks without counting them as
+     * stock. What it would make is {@link #fluidAutomation}'s. Null for a face with fluids off.
+     */
+    @Nullable
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> networkFluids(Direction side) {
+        if (!isBasic() && sideConfigs.get(side.get3DDataValue()).fluidMode() == SideMode.DISABLED) return null;
+        return networkFluids[side.get3DDataValue()];
     }
 
     /** What a bucket used on it sees: every tank, and what it previews made as the bucket fills. */
@@ -1278,6 +1291,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 if (lockedOut.contains(craft)) continue;
                 java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
                 for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) from.add(withdrawal.expected());
+                if (craft.outputs().stream().allMatch(ItemStack::isEmpty) && !craft.fluidOutputs().isEmpty()) {
+                    // Making only fluids: its first, in mB, taken through its fluid handler.
+                    var fluid = craft.fluidOutputs().getFirst();
+                    long perRun = craft.withRuns(1).fluidOutputs().getFirst().getAmount();
+                    made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(com.kadikular.quantimium.recipe.FluidEntry.key(
+                            net.neoforged.neoforge.transfer.fluid.FluidResource.of(fluid)), perRun * craft.availableRuns(), java.util.Set.copyOf(from), craft));
+                    continue;
+                }
                 List<ItemStack> outputs = craft.outputs();
                 for (int i = 0; i < outputs.size(); i++) {
                     ItemStack output = outputs.get(i);
@@ -2798,11 +2819,18 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         @Nullable
         private final Direction side;
         private final boolean previews;
+        /** How many input tanks it lists: none for a network, which fills them but doesn't count them as stock. */
+        private final int inputs;
         private final Journal journal = new Journal();
 
         private SidedFluids(@Nullable Direction side, boolean previews) {
+            this(side, previews, true);
+        }
+
+        private SidedFluids(@Nullable Direction side, boolean previews, boolean inputsListed) {
             this.side = side;
             this.previews = previews;
+            this.inputs = inputsListed ? INPUT_TANKS : 0;
         }
 
         private boolean fills(int tank) {
@@ -2854,16 +2882,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
 
         private net.neoforged.neoforge.fluids.FluidStack shown(int index) {
-            if (index < INPUT_TANKS) return inputTanks.get(index);
+            if (index < inputs) return inputTanks.get(index);
             List<Given> given = given();
-            int at = index - INPUT_TANKS;
+            int at = index - inputs;
             if (at >= given.size()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
             return given.get(at).fluid().copyWithAmount(given.get(at).amount());
         }
 
         @Override
         public int size() {
-            return INPUT_TANKS + given().size();
+            return inputs + given().size();
         }
 
         @Override
@@ -2878,12 +2906,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
         @Override
         public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
-            return index < INPUT_TANKS ? TANK_CAPACITY : shown(index).getAmount();
+            return index < inputs ? TANK_CAPACITY : shown(index).getAmount();
         }
 
         @Override
         public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
-            return index < INPUT_TANKS && fills(index);
+            return index < inputs && fills(index);
         }
 
         /** The input tank a fill of {@code resource} lands in: the one holding it, else the first empty one it may fill. */
@@ -2903,7 +2931,21 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         @Override
         public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
                           net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
-            if (resource.isEmpty() || amount <= 0 || index != fillTarget(resource)) return 0;
+            if (index >= inputs || index != fillTarget(resource)) return 0;
+            return fillTank(index, resource, amount, transaction);
+        }
+
+        /** Into the input tank it lands in, listed or not. */
+        @Override
+        public int insert(net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                          net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            int tank = fillTarget(resource);
+            return tank < 0 ? 0 : fillTank(tank, resource, amount, transaction);
+        }
+
+        private int fillTank(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                             net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (resource.isEmpty() || amount <= 0) return 0;
             var held = inputTanks.get(index);
             int room = Math.min(amount, TANK_CAPACITY - held.getAmount());
             if (room <= 0) return 0;
@@ -2915,9 +2957,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         @Override
         public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
                            net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
-            if (resource.isEmpty() || amount <= 0 || index < INPUT_TANKS) return 0;
+            if (resource.isEmpty() || amount <= 0 || index < inputs) return 0;
             List<Given> given = given();
-            int at = index - INPUT_TANKS;
+            int at = index - inputs;
             if (at >= given.size() || !resource.matches(given.get(at).fluid())) return 0;
             Given one = given.get(at);
             int wanted = Math.min(amount, one.amount());

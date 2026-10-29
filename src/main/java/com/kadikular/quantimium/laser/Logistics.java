@@ -280,6 +280,24 @@ public final class Logistics {
                 if (budget <= 0) return most;
             }
         }
+        // Then, if it may, what providers' machines make of only fluids, made as it's poured.
+        if (requester.requestsCraftable()) {
+            for (LogisticsMember source : highestFirst) {
+                if (budget <= 0) break;
+                if (source.role() != LogisticsMember.Role.PROVIDER || source.inventoryPos().equals(requester.inventoryPos())) continue;
+                IFluidHandler from = source.madeFluids();
+                if (from == null) continue;
+                for (int tank = 0; tank < from.getTanks() && budget > 0; tank++) {
+                    FluidStack there = from.getFluidInTank(tank).copy();
+                    if (there.isEmpty() || !requester.lets(there) || !source.lets(there)) continue;
+                    int room = Math.min(budget, requester.wants(there));
+                    if (room <= 0) continue;
+                    int moved = pour(controller, from, there, into, room);
+                    if (moved == UNPAID) return UNPAID;
+                    budget -= moved;
+                }
+            }
+        }
         return most - budget;
     }
 
@@ -341,6 +359,21 @@ public final class Logistics {
                     got = got.isEmpty() ? drained.copy() : got.copyWithAmount(got.getAmount() + drained.getAmount());
                 }
                 if (got.getAmount() >= max) return got;
+            }
+        }
+        // Then made: what a provider's machine makes of only fluids, made as it's drained.
+        for (LogisticsMember source : byPriority(members, true)) {
+            if (got.getAmount() >= max) break;
+            if (source.role() != LogisticsMember.Role.PROVIDER) continue;
+            IFluidHandler from = source.madeFluids();
+            if (from == null) continue;
+            for (int tank = 0; tank < from.getTanks() && got.getAmount() < max; tank++) {
+                FluidStack there = from.getFluidInTank(tank);
+                if (there.isEmpty() || !source.lets(there)) continue;
+                if (got.isEmpty() ? !wants.test(there) : !FluidStack.isSameFluidSameComponents(got, there)) continue;
+                FluidStack drained = from.drain(there.copyWithAmount(max - got.getAmount()), action);
+                if (drained.isEmpty()) continue;
+                got = got.isEmpty() ? drained.copy() : got.copyWithAmount(got.getAmount() + drained.getAmount());
             }
         }
         return got;

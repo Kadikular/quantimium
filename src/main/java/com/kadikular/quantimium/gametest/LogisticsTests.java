@@ -1003,6 +1003,37 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: crafter.fluid_network
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafter_made_fluids", timeoutTicks = 300)
+    public static void aNetworkTakesTheFluidsACrafterMakes(GameTestHelper helper) {
+        // A Stone Liquefier Crafter offering to the network: its lava is listed as craftable, not stored, and a terminal
+        // taking a bucket's worth makes it from the andesite.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
+                net.minecraft.resources.Identifier.parse("energizedpower:stone_liquefier")), false, true);
+        crafter.getInventory().setStackInSlot(1, new ItemStack(Items.ANDESITE, 64));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var lava = new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 1);
+        var key = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(lava));
+        helper.runAfterDelay(80, () -> {
+            long[] listed = settled(terminal::contents).get(key);
+            helper.assertTrue(listed != null && listed[0] == 0 && listed[1] > 0, "lava listed as craftable only: "
+                    + (listed == null ? "none" : listed[0] + "/" + listed[1]));
+            var got = terminal.takeFluid(lava, 1_000);
+            helper.assertTrue(got.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && got.getAmount() == 1_000, "a bucket of lava made: " + got);
+            helper.assertTrue(countIn(crafter, Items.ANDESITE) < 64, "out of the Crafter's andesite");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     /** A Laser Tank under the light at {@code x} holding {@code fluid}, a storage receptacle on it. */
     private static com.kadikular.quantimium.block.entity.LaserTankBlockEntity fluidStorage(GameTestHelper helper, int x, net.neoforged.neoforge.fluids.FluidStack fluid) {
         BlockPos at = new BlockPos(x, Y - 1, 8);

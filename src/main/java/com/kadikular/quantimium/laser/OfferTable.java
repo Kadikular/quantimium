@@ -705,7 +705,9 @@ public final class OfferTable {
                 if (one.count() <= 0) continue;
                 // The machine makes it whatever its Receptacle lets out to the network: its own screen shows it.
                 if (one.craft() != null) crafts.add(one.craft());
-                if (!member.lets(one.item().toStack(1))) continue;
+                ItemStack shown = one.item().toStack(1);
+                if (com.kadikular.quantimium.recipe.FluidEntry.is(shown) ? !member.lets(com.kadikular.quantimium.recipe.FluidEntry.fluidOf(shown).copyWithAmount(1))
+                        : !member.lets(shown)) continue;
                 Source source = new Source(one.count(), Set.copyOf(one.from()), true);
                 List<Source> sources = kept.computeIfAbsent(one.item(), k -> new ArrayList<>());
                 if (!sources.contains(source)) sources.add(source);

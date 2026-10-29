@@ -343,7 +343,20 @@ public final class Receptacle implements LogisticsMember {
         BlockPos at = inventoryPos();
         // A Laser Tank's tanks, whole, whatever its faces are set to.
         if (level.getBlockEntity(at) instanceof LaserTankBlockEntity tank) return tank.networkTanks();
+        // A Crafter's: what it holds, not what it would make (that's madeFluids), filling its input tanks.
+        if (level.getBlockEntity(at) instanceof QuantumCrafterBlockEntity crafter) {
+            return com.kadikular.quantimium.util.LegacyFluids.legacy(crafter.networkFluids(face.getOpposite()));
+        }
         return com.kadikular.quantimium.util.LegacyFluids.legacy(level.getCapability(Capabilities.Fluid.BLOCK, at, face.getOpposite()));
+    }
+
+    @Override
+    @Nullable
+    public IFluidHandler madeFluids() {
+        Level level = getLevel();
+        if (level == null || role != Role.PROVIDER || !offersCraftable()) return null;
+        return level.getBlockEntity(inventoryPos()) instanceof QuantumCrafterBlockEntity crafter
+                ? com.kadikular.quantimium.util.LegacyFluids.legacy(crafter.fluidAutomation(face.getOpposite())) : null;
     }
 
     @Override

@@ -253,6 +253,9 @@ network sees each ghost as a slot after the outputs, on any face that lets somet
   output tanks hold and what a recipe making only fluids shows, made as it's taken, with no tanks to
   pick. Auto input and output move up to {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB a second; locked, auto output
   gives only pinned fluids.
+- [[mechanic:crafter.fluid_network]] On a logistics network, through a provider Receptacle offering what it
+  makes, what its output tanks hold is stock, and what a recipe making only fluids shows is craftable: a terminal
+  taking it, or a requester that requests what can be made, makes it as it goes. A network fills its input tanks.
 - A bucket used on the crafter
   fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
   bucket to fill or empty it.

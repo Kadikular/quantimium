@@ -45,6 +45,8 @@
 - Fluid gauges are marked like a measuring jug.
 - **The Crafter's faces set fluids apart from items** in its Sides tab, with auto input and output. A face gives
   what its output tanks hold and what a recipe making only fluids shows, made as a pipe, bus or auto output takes it.
+- **A Crafter's fluids on a logistics network**: what its output tanks hold is stock, and what a recipe making only
+  fluids shows is craftable, made as a terminal or requester takes it.
 - The Horizon Core shows fluids with their texture, in mB and buckets, sorted as a bucket to an item.
 - A Reactor no longer counts empty buckets as water it could make: filling and emptying buckets made it show far more
   of every fluid than it had.

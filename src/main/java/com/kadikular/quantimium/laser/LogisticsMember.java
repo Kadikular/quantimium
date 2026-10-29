@@ -51,6 +51,15 @@ public interface LogisticsMember {
         return null;
     }
 
+    /**
+     * The fluids its machine makes to order (a Crafter's recipes making only fluids), made as they're drained; null for
+     * none. Its {@link #fluids} hold only what's really there.
+     */
+    @Nullable
+    default net.neoforged.neoforge.fluids.capability.IFluidHandler madeFluids() {
+        return null;
+    }
+
     /** Whether its filter lets {@code fluid} through: only fluid entries count; with none listed, as with an empty filter. */
     default boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
         return role() != Role.REQUESTER;

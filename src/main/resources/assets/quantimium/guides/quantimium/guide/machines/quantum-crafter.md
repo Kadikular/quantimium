@@ -258,6 +258,9 @@ The crafter has 3 input tanks, right of the catalyst, and
   output tanks hold and what a recipe making only fluids shows, made as it's taken, with no tanks to
   pick. Auto input and output move up to 16,000 mB a second; locked, auto output
   gives only pinned fluids.
+- On a logistics network, through a provider Receptacle offering what it
+  makes, what its output tanks hold is stock, and what a recipe making only fluids shows is craftable: a terminal
+  taking it, or a requester that requests what can be made, makes it as it goes. A network fills its input tanks.
 - A bucket used on the crafter
   fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
   bucket to fill or empty it.
