@@ -428,6 +428,21 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, LogisticsTerminalMenu.BUTTON_CLEAR);
             return true;
         }
+        if (activeOverlay() == null && onGrid(mouseX, mouseY) && event.button() == 2) {
+            // Middle-click: make some and keep it in storage, at most what can be made.
+            LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
+            if (cell != null && cell.craftable() > 0) {
+                boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1));
+                long most = fluid ? cell.craftable() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : cell.craftable();
+                if (most > 0) {
+                    var pos = menu.pos();
+                    var item = cell.item();
+                    openOverlay(new com.kadikular.quantimium.client.screen.ui.MakePage(this::panelArea, rail(), item.toStack(1), most, fluid,
+                            count -> ClientPacketDistributor.sendToServer(new com.kadikular.quantimium.network.LogisticsTerminalMakePayload(pos, item, count))));
+                }
+            }
+            return true;
+        }
         if (activeOverlay() == null && onGrid(mouseX, mouseY) && (event.button() == 0 || event.button() == 1)) {
             var pos = menu.pos();
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);

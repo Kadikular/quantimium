@@ -502,6 +502,17 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     }
 
     /** Takes {@code count} of {@code item}: onto the cursor (as much as it holds with what's there), or into the inventory. */
+    /** Makes {@code count} of {@code item} (mB for a fluid) into the network's storage, and says how it went. */
+    public void make(Player player, ItemResource item, long count) {
+        if (terminal == null || count <= 0) return;
+        long made = terminal.make(item, count);
+        boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(item);
+        String amount = String.format(java.util.Locale.ROOT, "%,d", made) + (fluid ? " mB" : "");
+        player.sendOverlayMessage(made > 0
+                ? net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_terminal.made", amount, item.toStack(1).getHoverName())
+                : net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_terminal.not_made"));
+    }
+
     public void take(Player player, ItemResource item, int count, boolean toInventory) {
         if (terminal == null) return;
         // A fluid only into what's on the cursor: a bucket, a tank.

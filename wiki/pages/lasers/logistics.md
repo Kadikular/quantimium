@@ -75,6 +75,7 @@ A laser from a controller is drawn a deeper blue, and always as if at work.
 - Fluids show with their amounts (mB under a bucket, then B, kB, MB), sorted as a bucket to an item.
 - Click a fluid with nothing in hand for a bucket of it, the bucket taken from the network (or made); shift-click puts it in your inventory. Click it holding a container to fill that.
 - Right-click the grid with a filled bucket to pour it into storage: a receptacle on a tank set to storage.
+- [[mechanic:laser.logistics.make]] **Middle-click** something that can be made to make some and keep it in storage, whether or not some is stored already. Pick how many, up to what can be made (fluids in buckets). It's made a stack (or a bucket) at a time, each only if storage has room for it.
 
 A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the laser comes in to. Craft one from the other.
 

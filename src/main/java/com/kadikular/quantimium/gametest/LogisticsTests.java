@@ -1003,7 +1003,38 @@ public final class LogisticsTests {
         });
     }
 
-    // covers: crafter.fluid_network
+    // covers: laser.logistics.make
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_make", timeoutTicks = 200)
+    public static void aTerminalMakesIntoStorage(GameTestHelper helper) {
+        // One furnace stored and four more can be made: asked for two, two are made and kept in storage; asked for ten,
+        // only what can be made.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.FURNACE, 1));
+        ChestBlockEntity chest = helper.getBlockEntity(new BlockPos(4, Y - 1, 8), ChestBlockEntity.class);
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, false, true);
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 32));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var furnace = resource(Items.FURNACE);
+        helper.runAfterDelay(80, () -> {
+            settled(terminal::contents);
+            helper.assertValueEqual(terminal.make(furnace, 2), 2L, "two made");
+            int furnaces = 0;
+            for (int slot = 0; slot < chest.getContainerSize(); slot++) if (chest.getItem(slot).is(Items.FURNACE)) furnaces += chest.getItem(slot).getCount();
+            helper.assertValueEqual(furnaces, 3, "kept in storage with the one there");
+            helper.assertValueEqual(countIn(crafter, Items.COBBLESTONE), 16, "two furnaces' cobblestone");
+        });
+        helper.runAfterDelay(140, () -> {
+            settled(terminal::contents);
+            helper.assertValueEqual(terminal.make(furnace, 10), 2L, "no more than can be made");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.fluid_network, laser.logistics.make
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafter_made_fluids", timeoutTicks = 300)
     public static void aNetworkTakesTheFluidsACrafterMakes(GameTestHelper helper) {
         // A Stone Liquefier Crafter offering to the network: its lava is listed as craftable, not stored, and a terminal
@@ -1017,6 +1048,7 @@ public final class LogisticsTests {
         QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
                 net.minecraft.resources.Identifier.parse("energizedpower:stone_liquefier")), false, true);
         crafter.getInventory().setStackInSlot(1, new ItemStack(Items.ANDESITE, 64));
+        var storage = fluidStorage(helper, 4, net.neoforged.neoforge.fluids.FluidStack.EMPTY);
         BlockPos at = new BlockPos(10, Y, 8);
         helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
         var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
@@ -1029,6 +1061,10 @@ public final class LogisticsTests {
             var got = terminal.takeFluid(lava, 1_000);
             helper.assertTrue(got.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && got.getAmount() == 1_000, "a bucket of lava made: " + got);
             helper.assertTrue(countIn(crafter, Items.ANDESITE) < 64, "out of the Crafter's andesite");
+            // Made into storage from the terminal's make page.
+            helper.assertValueEqual(terminal.make(key, 2_000), 2_000L, "2,000 mB made");
+            var kept = storage.tanks().get(0);
+            helper.assertTrue(kept.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && kept.getAmount() == 2_000, "and kept in storage: " + kept);
             TestSupport.clearField(helper);
             helper.succeed();
         });

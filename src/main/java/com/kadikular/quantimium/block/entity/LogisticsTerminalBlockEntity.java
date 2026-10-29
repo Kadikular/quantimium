@@ -183,6 +183,52 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         }
     }
 
+    /**
+     * Makes up to {@code count} of {@code item} (mB for a fluid), at most what the network says it can make, and keeps
+     * it in storage: a stack (a bucket's worth) at a time, each made only if storage has room for it. How many it made.
+     */
+    public long make(ItemResource item, long count) {
+        LogisticsController controller = controller();
+        if (controller == null || count <= 0) return 0;
+        count = Math.min(count, controller.offers().craftable(item));
+        List<LogisticsMember> members = controller.members();
+        net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(item.toStack(1));
+        long made = 0;
+        if (!fluid.isEmpty()) {
+            while (made < count) {
+                int chunk = (int) Math.min(count - made, net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME);
+                var wanted = fluid.copyWithAmount(chunk);
+                if (Logistics.insertFluid(members, wanted, true, false) < chunk || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) break;
+                var got = Logistics.makeFluid(members, wanted, chunk, false);
+                if (got.isEmpty()) break;
+                int stored = Logistics.insertFluid(members, got, false, false);
+                made += got.getAmount();
+                // Storage took less than it said: what's over goes back where it can.
+                if (stored < got.getAmount()) Logistics.insertFluid(members, got.copyWithAmount(got.getAmount() - stored), false, true);
+            }
+        } else {
+            int stack = item.toStack(1).getMaxStackSize();
+            var spots = controller.spots();
+            while (made < count) {
+                int chunk = (int) Math.min(count - made, stack);
+                if (!Logistics.insert(members, item.toStack(chunk), true, false).isEmpty() || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) break;
+                ItemStack got = Logistics.take(spots, item, chunk, false, false, true);
+                if (got.isEmpty()) {
+                    var again = controller.spotsAgain();
+                    if (again != null) got = Logistics.take(spots = again, item, chunk, false, false, true);
+                }
+                if (got.isEmpty()) break;
+                made += got.getCount();
+                ItemStack over = Logistics.insert(members, got, false, false);
+                if (!over.isEmpty()) over = Logistics.insert(members, over, false, true);
+                if (!over.isEmpty() && level != null) net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1, worldPosition.getZ() + 0.5, over);
+            }
+        }
+        if (made > 0) controller.stockMoved();
+        else makeReady(controller, item);
+        return made;
+    }
+
     /** Takes up to {@code count} of {@code item} from what the network stores, making nothing; what it got. */
     public ItemStack takeStored(ItemResource item, int count) {
         LogisticsController controller = controller();

@@ -361,7 +361,26 @@ public final class Logistics {
                 if (got.getAmount() >= max) return got;
             }
         }
-        // Then made: what a provider's machine makes of only fluids, made as it's drained.
+        if (got.getAmount() >= max) return got;
+        // Then made: what a provider's machine makes of only fluids.
+        FluidStack sofar = got;
+        return merge(got, makeFluid(members, sofar.isEmpty() ? wants : each -> FluidStack.isSameFluidSameComponents(each, sofar), max - got.getAmount(), simulate));
+    }
+
+    private static FluidStack merge(FluidStack got, FluidStack more) {
+        if (more.isEmpty()) return got;
+        return got.isEmpty() ? more : got.copyWithAmount(got.getAmount() + more.getAmount());
+    }
+
+    /** Makes up to {@code max} mB of {@code fluid}, by what providers' machines make of only fluids. */
+    public static FluidStack makeFluid(List<LogisticsMember> members, FluidStack fluid, int max, boolean simulate) {
+        return makeFluid(members, each -> FluidStack.isSameFluidSameComponents(each, fluid), max, simulate);
+    }
+
+    /** Makes up to {@code max} mB of the first fluid {@code wants} accepts, by what providers' machines make of only fluids, made as it's drained. */
+    public static FluidStack makeFluid(List<LogisticsMember> members, java.util.function.Predicate<FluidStack> wants, int max, boolean simulate) {
+        IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
+        FluidStack got = FluidStack.EMPTY;
         for (LogisticsMember source : byPriority(members, true)) {
             if (got.getAmount() >= max) break;
             if (source.role() != LogisticsMember.Role.PROVIDER) continue;

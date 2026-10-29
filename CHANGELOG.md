@@ -47,6 +47,9 @@
   what its output tanks hold and what a recipe making only fluids shows, made as a pipe, bus or auto output takes it.
 - **A Crafter's fluids on a logistics network**: what its output tanks hold is stock, and what a recipe making only
   fluids shows is craftable, made as a terminal or requester takes it.
+- **Make to storage**: middle-click something that can be made in a Logistics Terminal, pick how many (up to what can
+  be made), and it's made and kept in storage, items or fluids, if storage has room.
+- The terminal counts fluids that can be made, as it counts items.
 - The Horizon Core shows fluids with their texture, in mB and buckets, sorted as a bucket to an item.
 - A Reactor no longer counts empty buckets as water it could make: filling and emptying buckets made it show far more
   of every fluid than it had.
