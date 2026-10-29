@@ -129,6 +129,13 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
             return LogisticsControllerBlockEntity.this.pay(fe);
         }
 
+        /** The channel it serves: its controller's, or on All, the one it was made for. */
+        private int served;
+
+        public int channel() {
+            return served;
+        }
+
         /** The controller running it. */
         public LogisticsControllerBlockEntity owner() {
             return LogisticsControllerBlockEntity.this;
@@ -413,7 +420,11 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     public Network network(int channel) {
         if (this.channel != com.kadikular.quantimium.laser.Channels.ALL) return main;
-        return byChannel.computeIfAbsent(com.kadikular.quantimium.laser.Channels.of(channel), each -> new Network());
+        return byChannel.computeIfAbsent(com.kadikular.quantimium.laser.Channels.of(channel), each -> {
+            Network network = new Network();
+            network.served = each;
+            return network;
+        });
     }
 
     /** Every network it runs: its one, or on All, one for each channel with receptacles. */

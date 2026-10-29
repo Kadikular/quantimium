@@ -311,6 +311,20 @@ public final class LaserNetworks {
                 }
             }
         }
+        // What a block draws besides its beams (a cavity's held light, between its mirrors): read as the block's light.
+        for (LaserNode node : nodes.values()) {
+            if (!(node instanceof LaserBeamView view)) continue;
+            List<LaserBeam> own = beams.getOrDefault(node.nodePos(), List.of());
+            for (LaserBeam extra : view.syncedBeams()) {
+                if (own.contains(extra)) continue;
+                List<net.minecraft.world.phys.Vec3> points = extra.points();
+                for (int p = 0; p + 1 < points.size(); p++) {
+                    var a = points.get(p);
+                    var b = points.get(p + 1);
+                    if (box.intersects(new net.minecraft.world.phys.AABB(a, b).inflate(0.5))) near.add(new Object[] {new Aim(node.nodePos(), -1), a, b});
+                }
+            }
+        }
         if (near.isEmpty()) return List.of();
         net.minecraft.world.phys.Vec3 at = eye;
         for (double gone = 0; gone <= far; gone += 0.2, at = at.add(step)) {
@@ -390,8 +404,21 @@ public final class LaserNetworks {
         });
         // Power comes from emitters (and cavities): a Logistics Controller's own laser carries none.
         boolean power = !light.unpowered() && light.feeders().stream().anyMatch(feeder -> !(nodes.get(feeder) instanceof LogisticsController));
+        // The channels of the logistics networks it carries: a controller on All runs one for each channel its receptacles
+        // are on.
+        List<Integer> logistics = new ArrayList<>();
+        light.logistics().forEach((at, on) -> {
+            if (on == Channels.ALL && nodes.get(at) instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller) {
+                for (var network : controller.networks()) {
+                    int channel = network.channel();
+                    if (!network.members().isEmpty() && !logistics.contains(channel)) logistics.add(channel);
+                }
+            } else if (!logistics.contains(on)) {
+                logistics.add(on);
+            }
+        });
         return new SpectroscopeReading(where, light.reach(), light.feeders().size(), light.marks(), light.boosts(), flow, lines, found,
-                List.copyOf(light.logistics().values()), power);
+                logistics, power);
     }
 
     /**
