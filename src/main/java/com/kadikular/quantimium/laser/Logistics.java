@@ -54,47 +54,62 @@ public final class Logistics {
         for (BlockPos controller : controllers.keySet()) due |= Math.floorMod(controller.hashCode(), 20) == slice;
         // With none at all, receptacles are told they're on no network once a second.
         if (controllers.isEmpty() ? slice != 0 : !due) return;
-        // Whose light reaches each member; light from two controllers on one member stops both.
-        Map<LogisticsMember, BlockPos> owners = new HashMap<>();
+        // Whose network each member is on (a controller's, or on All the one for the member's channel); light from two
+        // on one member stops both.
+        Map<LogisticsMember, LogisticsController> owners = new HashMap<>();
         Map<LogisticsMember, Integer> speeds = new HashMap<>();
-        Set<BlockPos> clashing = new HashSet<>();
+        Set<LogisticsController> clashing = new HashSet<>();
         List<LogisticsMember> all = new ArrayList<>();
         for (LaserNode node : nodes) {
             for (LogisticsMember member : node.logisticsMembers()) {
             all.add(member);
             Light light = lights.get(node.nodePos());
             if (light == null) continue;
-            BlockPos owner = null;
+            LogisticsController owner = null;
             for (var feed : light.logistics().entrySet()) {
-                BlockPos feeder = feed.getKey();
-                // Only a controller on its channel (either on All).
-                if (!controllers.containsKey(feeder) || !Channels.serves(member.channel(), feed.getValue())) continue;
+                LogisticsController controller = controllers.get(feed.getKey());
+                // Only a controller on its channel, or on All.
+                if (controller == null || !Channels.serves(member.channel(), feed.getValue())) continue;
+                LogisticsController network = controller.network(member.channel());
                 speeds.merge(member, light.speeds(feed.getValue() == Channels.ALL ? member.channel() : feed.getValue()), Math::max);
                 if (owner == null) {
-                    owner = feeder;
-                } else {
+                    owner = network;
+                } else if (owner != network) {
                     clashing.add(owner);
-                    clashing.add(feeder);
+                    clashing.add(network);
                 }
             }
             if (owner != null) owners.put(member, owner);
             }
         }
-        Map<BlockPos, List<LogisticsMember>> networks = new HashMap<>();
+        Map<LogisticsController, List<LogisticsMember>> networks = new HashMap<>();
         for (LogisticsMember member : all) {
-            BlockPos owner = owners.get(member);
+            LogisticsController owner = owners.get(member);
             boolean joined = owner != null && !clashing.contains(owner);
             member.connected(joined);
-            member.networkPowered(joined && controllers.get(owner) != null && controllers.get(owner).powered());
+            member.networkPowered(joined && owner.powered());
             if (joined) networks.computeIfAbsent(owner, key -> new ArrayList<>()).add(member);
         }
         for (Map.Entry<BlockPos, LogisticsController> entry : controllers.entrySet()) {
             if (Math.floorMod(entry.getKey().hashCode(), 20) != slice) continue;
-            List<LogisticsMember> members = networks.getOrDefault(entry.getKey(), List.of());
-            boolean clash = clashing.contains(entry.getKey());
-            entry.getValue().report(members, clash);
-            if (!clash && !members.isEmpty()) runNetwork(level, entry.getValue(), members, speeds);
+            LogisticsController controller = entry.getValue();
+            // Each network it runs, and on All, any channel's newly found.
+            Set<LogisticsController> running = new java.util.LinkedHashSet<>(controller.networks());
+            for (LogisticsController network : networks.keySet()) if (isOf(controller, network)) running.add(network);
+            for (LogisticsController network : running) {
+                List<LogisticsMember> members = networks.getOrDefault(network, List.of());
+                boolean clash = clashing.contains(network);
+                network.report(members, clash);
+                if (!clash && !members.isEmpty()) runNetwork(level, network, members, speeds);
+            }
+            if (controller instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity block) block.dropEmpty();
         }
+    }
+
+    /** Whether {@code network} is one of those {@code controller} runs. */
+    private static boolean isOf(LogisticsController controller, LogisticsController network) {
+        return network == controller || network instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.Network sub
+                && sub.owner() == controller;
     }
 
     /** Items an active member may move in a pass: an Insert lens's second's worth, quickened by the Speed lenses it met. */

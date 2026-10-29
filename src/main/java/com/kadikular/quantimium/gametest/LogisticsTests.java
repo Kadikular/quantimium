@@ -270,6 +270,29 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.channels.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_all", timeoutTicks = 120)
+    public static void aControllerOnAllRunsANetworkForEachChannel(GameTestHelper helper) {
+        // A controller on All (as it starts): dirt on channel 0, cobblestone on channel 3. A terminal on each channel sees
+        // only its own.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT, 5));
+        onChest(helper, 6, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 7)).setChannel(3);
+        BlockPos at = new BlockPos(9, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var dirt = resource(Items.DIRT);
+        var cobble = resource(Items.COBBLESTONE);
+        helper.runAfterDelay(60, () -> {
+            var on0 = settled(terminal::contents);
+            helper.assertTrue(on0.containsKey(dirt) && !on0.containsKey(cobble), "on channel 0: the dirt only");
+            terminal.setChannel(3);
+            var on3 = settled(terminal::contents);
+            helper.assertTrue(on3.containsKey(cobble) && !on3.containsKey(dirt), "on channel 3: the cobblestone only");
+            helper.succeed();
+        });
+    }
+
     // covers: laser.channels.logistics, laser.logistics.materialiser
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_materialiser", timeoutTicks = 120)
     public static void aMaterialiserOffersEveryChannelsNetwork(GameTestHelper helper) {

@@ -12,6 +12,24 @@ public final class Channels {
 
     private Channels() {}
 
+    /** The channel of the lens acting now (0 between): what a Logistics Controller on All up its beam works with. */
+    private static int acting;
+
+    public static int acting() {
+        return acting;
+    }
+
+    /** Runs {@code act} as a lens on {@code channel} acting. */
+    static void actingOn(int channel, Runnable act) {
+        int was = acting;
+        acting = channel;
+        try {
+            act.run();
+        } finally {
+            acting = was;
+        }
+    }
+
     /** Whether {@code lens} changes the laser itself, whatever its channel: Range (its reach), UV, Phantom. */
     public static boolean wholeLaser(Lens lens) {
         return lens == Lens.RANGE || lens == Lens.UV || lens == Lens.PHANTOM;

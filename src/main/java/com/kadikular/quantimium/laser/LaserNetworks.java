@@ -1282,7 +1282,8 @@ public final class LaserNetworks {
         for (var feed : light.logistics().entrySet()) {
             if (!Channels.serves(channel, feed.getValue()) || !(networks.nodes.get(feed.getKey()) instanceof LogisticsController controller)) continue;
             if (found != null) return null;
-            found = controller;
+            // A controller on All runs a network for each channel: the one on this (channel 0's, asked on All).
+            found = controller.network(channel == Channels.ALL ? 0 : channel);
         }
         return found;
     }
@@ -1295,10 +1296,12 @@ public final class LaserNetworks {
         Light light = networks.lights.get(pos);
         if (light == null) return List.of();
         List<LogisticsController> found = new ArrayList<>();
-        for (BlockPos at : light.logistics().keySet()) {
-            if (networks.nodes.get(at) instanceof LogisticsController controller) found.add(controller);
+        List<BlockPos> at = new ArrayList<>(light.logistics().keySet());
+        at.sort(java.util.Comparator.comparingLong(BlockPos::asLong));
+        // Each controller's every network: on All, one for each channel with receptacles.
+        for (BlockPos pos2 : at) {
+            if (networks.nodes.get(pos2) instanceof LogisticsController controller) found.addAll(controller.networks());
         }
-        found.sort(java.util.Comparator.comparingLong(controller -> controller instanceof LaserNode node ? node.nodePos().asLong() : 0));
         return found;
     }
 

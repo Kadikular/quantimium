@@ -27,6 +27,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -50,9 +51,6 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     };
     private final Set<Direction> outputs = EnumSet.noneOf(Direction.class);
     private List<LaserBeam> shownBeams = List.of();
-    /** What the network found last time it ran: its members, and whether another controller's light joins this one's. */
-    private List<com.kadikular.quantimium.laser.LogisticsMember> members = List.of();
-    private boolean clash;
 
     public LogisticsControllerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LOGISTICS_CONTROLLER_BE.get(), pos, state);
@@ -112,268 +110,390 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         return true;
     }
 
-    @Override
-    public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
-        if (!this.members.equals(members)) {
-            offersStale = true;
-            spots = null;
+    /**
+     * One logistics network it runs: its members, and what they offer. A controller on a channel runs one; on All, one for
+     * each channel its receptacles are on, each worked out and moved apart, all paid from its store.
+     */
+    public final class Network implements LogisticsController {
+        /** What the network found last time it ran: its members, and whether another controller's light joins this one's. */
+        private List<com.kadikular.quantimium.laser.LogisticsMember> members = List.of();
+        private boolean clash;
+
+        @Override
+        public boolean powered() {
+            return LogisticsControllerBlockEntity.this.powered();
         }
-        this.members = List.copyOf(members);
-        boolean changed = this.clash != clash;
-        this.clash = clash;
-        if (changed) showLit();
-    }
 
-    /** The offers as last worked out, when, and whether something has moved since. */
-    private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.PENDING;
-    private long offersTick = Long.MIN_VALUE;
-    private boolean offersStale = true;
-    /** The fewest ticks between workings out of what the network offers, after a move a player made: none. */
-    private static final int OFFERS_SOONEST = 0;
-    /** The fewest ticks between workings out of what the network offers while someone's watching it change by itself. */
-    private static final int OFFERS_WATCHED = 4;
-    /** How long a network goes unlooked-at before a look counts as a player just opening a screen on it. */
-    private static final int WATCH_LAPSE = 40;
-    private boolean workingOut;
+        @Override
+        public boolean pay(long fe) {
+            return LogisticsControllerBlockEntity.this.pay(fe);
+        }
 
-    /**
-     * The offers as last worked out. They're worked out again at most once a second, sooner after a move it saw (but
-     * not more than every few ticks, however busy the network), a step at a time in the background (see
-     * {@link com.kadikular.quantimium.work.WorkQueue}): till that's done, what it had stands. Never read while being
-     * worked out (a network that reads another's offers which read this one back gets what this one last had).
-     */
-    @Override
-    public com.kadikular.quantimium.laser.OfferTable offers() {
-        if (level == null || level.isClientSide()) return offers;
-        startBuildIfDue();
-        if (workingOut) return offers;
-        return live();
-    }
+        /** The controller running it. */
+        public LogisticsControllerBlockEntity owner() {
+            return LogisticsControllerBlockEntity.this;
+        }
 
-    /**
-     * The offers with what's really there looked at now, at most once a tick: a deposit or a take shows at once,
-     * though what could be made from it waits for the offers to be worked out again.
-     */
-    private com.kadikular.quantimium.laser.OfferTable live() {
-        long now = level == null ? 0 : level.getGameTime();
-        // Read again while it's being looked at (a network reading another that reads this one back): what it had.
-        if (looking) return liveOffers != null ? liveOffers : offers;
-        if (liveOffers == null || liveTick != now || liveFrom != offers) {
-            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stored;
-            looking = true;
-            try {
-                stored = com.kadikular.quantimium.laser.OfferTable.storedNow(this, worldPosition, members());
-            } finally {
-                looking = false;
+        /** Whether another controller's light on its channel reaches its members: it doesn't work. */
+        public boolean clashes() {
+            return clash;
+        }
+
+        @Override
+        public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
+            if (!this.members.equals(members)) {
+                offersStale = true;
+                spots = null;
             }
-            // What's there has moved since the offers were worked out (a hopper, a pipe, a hand in a chest), in a way
-            // that could change what could be made.
-            drifted = matters(stored, offers.stored(), offers);
-            // Nothing moved since last tick: the same table, so what's read from it (a terminal's list) is kept too.
-            if (liveOffers == null || liveFrom != offers || !stored.equals(liveOffers.stored())) liveOffers = offers.withStored(stored);
-            liveTick = now;
-            liveFrom = offers;
+            this.members = List.copyOf(members);
+            boolean changed = this.clash != clash;
+            this.clash = clash;
+            if (changed) showLit();
         }
-        return liveOffers;
-    }
 
-    /**
-     * Whether what's there now ({@code now}) differs from what {@code table} was worked out from ({@code was}) in a way
-     * that could change what could be made: something new, or more or less of something that goes into what's made.
-     * A quarry filling the network with stone no machine on it uses changes only what's there, which shows at once
-     * anyway. Every few seconds any change counts: more of something could make a recipe possible.
-     */
-    private boolean matters(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> now,
-                            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> was,
-                            com.kadikular.quantimium.laser.OfferTable table) {
-        if (now.equals(was)) return false;
-        if (level == null || offersTick == Long.MIN_VALUE || level.getGameTime() - offersTick >= ANY_CHANGE_TICKS) return true;
-        java.util.Set<net.minecraft.world.item.Item> inputs = table.inputs();
-        for (var entry : now.entrySet()) {
-            Long before = was.get(entry.getKey());
-            if (before == null) return true;
-            if (!before.equals(entry.getValue()) && inputs.contains(entry.getKey().getItem())) return true;
+        /** The offers as last worked out, when, and whether something has moved since. */
+        private com.kadikular.quantimium.laser.OfferTable offers = com.kadikular.quantimium.laser.OfferTable.PENDING;
+        private long offersTick = Long.MIN_VALUE;
+        private boolean offersStale = true;
+        /** The fewest ticks between workings out of what the network offers, after a move a player made: none. */
+        private static final int OFFERS_SOONEST = 0;
+        /** The fewest ticks between workings out of what the network offers while someone's watching it change by itself. */
+        private static final int OFFERS_WATCHED = 4;
+        /** How long a network goes unlooked-at before a look counts as a player just opening a screen on it. */
+        private static final int WATCH_LAPSE = 40;
+        private boolean workingOut;
+
+        /**
+         * The offers as last worked out. They're worked out again at most once a second, sooner after a move it saw (but
+         * not more than every few ticks, however busy the network), a step at a time in the background (see
+         * {@link com.kadikular.quantimium.work.WorkQueue}): till that's done, what it had stands. Never read while being
+         * worked out (a network that reads another's offers which read this one back gets what this one last had).
+         */
+        @Override
+        public com.kadikular.quantimium.laser.OfferTable offers() {
+            if (level == null || level.isClientSide()) return offers;
+            startBuildIfDue();
+            if (workingOut) return offers;
+            return live();
         }
-        for (var item : was.keySet()) {
-            if (!now.containsKey(item) && inputs.contains(item.getItem())) return true;
+
+        /**
+         * The offers with what's really there looked at now, at most once a tick: a deposit or a take shows at once,
+         * though what could be made from it waits for the offers to be worked out again.
+         */
+        private com.kadikular.quantimium.laser.OfferTable live() {
+            long now = level == null ? 0 : level.getGameTime();
+            // Read again while it's being looked at (a network reading another that reads this one back): what it had.
+            if (looking) return liveOffers != null ? liveOffers : offers;
+            if (liveOffers == null || liveTick != now || liveFrom != offers) {
+                java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> stored;
+                looking = true;
+                try {
+                    stored = com.kadikular.quantimium.laser.OfferTable.storedNow(this, worldPosition, members());
+                } finally {
+                    looking = false;
+                }
+                // What's there has moved since the offers were worked out (a hopper, a pipe, a hand in a chest), in a way
+                // that could change what could be made.
+                drifted = matters(stored, offers.stored(), offers);
+                // Nothing moved since last tick: the same table, so what's read from it (a terminal's list) is kept too.
+                if (liveOffers == null || liveFrom != offers || !stored.equals(liveOffers.stored())) liveOffers = offers.withStored(stored);
+                liveTick = now;
+                liveFrom = offers;
+            }
+            return liveOffers;
         }
-        return false;
-    }
 
-    /** How long since the offers were last worked out before any change at all is worth working them out again for. */
-    private static final int ANY_CHANGE_TICKS = 100;
+        /**
+         * Whether what's there now ({@code now}) differs from what {@code table} was worked out from ({@code was}) in a way
+         * that could change what could be made: something new, or more or less of something that goes into what's made.
+         * A quarry filling the network with stone no machine on it uses changes only what's there, which shows at once
+         * anyway. Every few seconds any change counts: more of something could make a recipe possible.
+         */
+        private boolean matters(java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> now,
+                                java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> was,
+                                com.kadikular.quantimium.laser.OfferTable table) {
+            if (now.equals(was)) return false;
+            if (level == null || offersTick == Long.MIN_VALUE || level.getGameTime() - offersTick >= ANY_CHANGE_TICKS) return true;
+            java.util.Set<net.minecraft.world.item.Item> inputs = table.inputs();
+            for (var entry : now.entrySet()) {
+                Long before = was.get(entry.getKey());
+                if (before == null) return true;
+                if (!before.equals(entry.getValue()) && inputs.contains(entry.getKey().getItem())) return true;
+            }
+            for (var item : was.keySet()) {
+                if (!now.containsKey(item) && inputs.contains(item.getItem())) return true;
+            }
+            return false;
+        }
 
-    @org.jetbrains.annotations.Nullable
-    private com.kadikular.quantimium.laser.OfferTable liveOffers;
-    @org.jetbrains.annotations.Nullable
-    private com.kadikular.quantimium.laser.OfferTable liveFrom;
-    private long liveTick = Long.MIN_VALUE;
-    /** Whether what's really there differs from what the offers were worked out from. */
-    private boolean drifted;
-    /** Whether what's really there is being looked at now. */
-    private boolean looking;
+        /** How long since the offers were last worked out before any change at all is worth working them out again for. */
+        private static final int ANY_CHANGE_TICKS = 100;
 
-    /** Starts working the offers out again, in the background, if it's time. */
-    private void startBuildIfDue() {
-        if (level == null || workingOut || building != null) return;
-        long now = level.getGameTime();
-        // At once after a move a player made; soon after one anything made (a pipe, a hopper) while someone's watching,
-        // though not every tick on a busy network; else once a second.
-        int wait = offersStale ? OFFERS_SOONEST : drifted && watched ? OFFERS_WATCHED : 20;
-        if (offersTick != Long.MIN_VALUE && now - offersTick < wait) return;
-        offersTick = now;
-        offersStale = false;
-        drifted = false;
-        building = new com.kadikular.quantimium.laser.OfferTable.Builder(this, worldPosition, members());
-        com.kadikular.quantimium.work.WorkQueue.submit(this, urgent ? com.kadikular.quantimium.work.WorkQueue.URGENT
-                : com.kadikular.quantimium.work.WorkQueue.NORMAL, this::buildStep);
-        watched = false;
-        urgent = false;
-    }
+        @org.jetbrains.annotations.Nullable
+        private com.kadikular.quantimium.laser.OfferTable liveOffers;
+        @org.jetbrains.annotations.Nullable
+        private com.kadikular.quantimium.laser.OfferTable liveFrom;
+        private long liveTick = Long.MIN_VALUE;
+        /** Whether what's really there differs from what the offers were worked out from. */
+        private boolean drifted;
+        /** Whether what's really there is being looked at now. */
+        private boolean looking;
 
-    /** A step of working the offers out; whether they're done. */
-    private boolean buildStep() {
-        var builder = building;
-        if (builder == null || isRemoved()) {
+        /** Starts working the offers out again, in the background, if it's time. */
+        private void startBuildIfDue() {
+            if (level == null || workingOut || building != null) return;
+            long now = level.getGameTime();
+            // At once after a move a player made; soon after one anything made (a pipe, a hopper) while someone's watching,
+            // though not every tick on a busy network; else once a second.
+            int wait = offersStale ? OFFERS_SOONEST : drifted && watched ? OFFERS_WATCHED : 20;
+            if (offersTick != Long.MIN_VALUE && now - offersTick < wait) return;
+            offersTick = now;
+            offersStale = false;
+            drifted = false;
+            building = new com.kadikular.quantimium.laser.OfferTable.Builder(this, worldPosition, members());
+            com.kadikular.quantimium.work.WorkQueue.submit(this, urgent ? com.kadikular.quantimium.work.WorkQueue.URGENT
+                    : com.kadikular.quantimium.work.WorkQueue.NORMAL, this::buildStep);
+            watched = false;
+            urgent = false;
+        }
+
+        /** A step of working the offers out; whether they're done. */
+        private boolean buildStep() {
+            var builder = building;
+            if (builder == null || isRemoved()) {
+                building = null;
+                return true;
+            }
+            workingOut = true;
+            try {
+                if (!builder.step()) return false;
+            } catch (RuntimeException failed) {
+                // Let go, so it's worked out afresh next time rather than waiting on a build that's been dropped.
+                building = null;
+                throw failed;
+            } finally {
+                workingOut = false;
+            }
+            offers = builder.result();
             building = null;
+            // Compared afresh with what's there now, next time it's read: not with the offers this replaced.
+            drifted = false;
+            liveOffers = null;
+            // It read another network before that one had worked its offers out: soon again, to catch them.
+            if (builder.early()) offersStale = true;
+            // Its Crafters show what it now says they make.
+            builder.handOut();
+            // A Crafter changed what it could make while this was worked out: again, whether or not anything's reading.
+            if (offersStale) startBuildIfDue();
             return true;
         }
-        workingOut = true;
-        try {
-            if (!builder.step()) return false;
-        } catch (RuntimeException failed) {
-            // Let go, so it's worked out afresh next time rather than waiting on a build that's been dropped.
-            building = null;
-            throw failed;
-        } finally {
-            workingOut = false;
+
+        /** The offers being worked out, a step at a time; null when they're not. */
+        @org.jetbrains.annotations.Nullable
+        private com.kadikular.quantimium.laser.OfferTable.Builder building;
+        /** Whether a player is looking at what it offers (a terminal open): it's worked out again sooner as it changes. */
+        private boolean watched;
+        /**
+         * Whether a player is waiting on the next working out (they just opened a screen on it, or moved something): that
+         * one goes first, with more of the tick. Only that one: a screen left open on a busy network doesn't keep the
+         * server working out its offers flat out.
+         */
+        private boolean urgent;
+        private long watchedTick = Long.MIN_VALUE;
+
+        @Override
+        public void watched() {
+            long now = level == null ? 0 : level.getGameTime();
+            if (watchedTick == Long.MIN_VALUE || now - watchedTick > WATCH_LAPSE) hurry();
+            watchedTick = now;
+            watched = true;
         }
-        offers = builder.result();
-        building = null;
-        // Compared afresh with what's there now, next time it's read: not with the offers this replaced.
-        drifted = false;
-        liveOffers = null;
-        // It read another network before that one had worked its offers out: soon again, to catch them.
-        if (builder.early()) offersStale = true;
-        // Its Crafters show what it now says they make.
-        builder.handOut();
-        // A Crafter changed what it could make while this was worked out: again, whether or not anything's reading.
-        if (offersStale) startBuildIfDue();
-        return true;
+
+        /** The next working out, or the one under way, goes first. */
+        private void hurry() {
+            urgent = true;
+            com.kadikular.quantimium.work.WorkQueue.hurry(this, com.kadikular.quantimium.work.WorkQueue.URGENT);
+        }
+
+        @Override
+        public void stockMoved() {
+            offersStale = true;
+            shifted = true;
+            // Where things are stands for the tick: each take checks the slot still holds it, and looks again if short.
+            liveOffers = null;
+            watched = true;
+            // A player moved it: what can be made from what's left comes first. Not every click of one taking over and over,
+            // though: what's stored shows at once anyway, and the server isn't held at the most it'll spend for them.
+            long now = level == null ? 0 : level.getGameTime();
+            if (hurriedTick == Long.MIN_VALUE || now - hurriedTick >= HURRY_EVERY) {
+                hurriedTick = now;
+                hurry();
+            }
+        }
+
+        /** The fewest ticks between a player's moves making the network's working out urgent. */
+        private static final int HURRY_EVERY = 10;
+        private long hurriedTick = Long.MIN_VALUE;
+
+        private long pokedTick = Long.MIN_VALUE;
+
+        @Override
+        public void poke() {
+            long now = level == null ? 0 : level.getGameTime();
+            if (pokedTick != Long.MIN_VALUE && now - pokedTick < 20) return;
+            pokedTick = now;
+            offers();
+        }
+
+        @Override
+        public void makerChanged() {
+            offersStale = true;
+            // Whether or not anything reads its offers soon: the Crafter shows what they say it makes.
+            startBuildIfDue();
+        }
+
+        @Override
+        public void movedQuietly() {
+            liveOffers = null;
+        }
+
+        /** Where each thing on the network is, and the tick it was looked over. */
+        @org.jetbrains.annotations.Nullable
+        private java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots;
+        private long spotsTick = Long.MIN_VALUE;
+
+        @Override
+        public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots() {
+            long now = level == null ? 0 : level.getGameTime();
+            // Where things are doesn't depend on who's asking (a Crafter's previews are what it shows, whoever asks; whether
+            // one could make it now is asked of the slot when it's taken): kept for the tick, mid-craft too.
+            if (spots == null || spotsTick != now) {
+                spots = com.kadikular.quantimium.laser.Logistics.locate(members());
+                spotsTick = now;
+            }
+            return spots;
+        }
+
+        /** The tick spots were last looked over again because a take came up short, and whether things have moved since. */
+        private long relocatedTick = Long.MIN_VALUE;
+        private boolean shifted;
+
+        @Override
+        public void stockShifted() {
+            shifted = true;
+        }
+
+        @Override
+        public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spotsAgain() {
+            long now = level == null ? 0 : level.getGameTime();
+            // Once a tick at most, unless something's been put somewhere new since: what's been put in is found.
+            if (relocatedTick == now && !shifted) return null;
+            relocatedTick = now;
+            shifted = false;
+            spots = com.kadikular.quantimium.laser.Logistics.locate(members());
+            spotsTick = now;
+            return spots;
+        }
+
+        /** The members still standing, or none while another controller's light stops the network. */
+        @Override
+        public List<com.kadikular.quantimium.laser.LogisticsMember> members() {
+            if (clash) return List.of();
+            return members.stream().filter(member -> !(member instanceof BlockEntity entity) || !entity.isRemoved()).toList();
+        }
     }
 
-    /** The offers being worked out, a step at a time; null when they're not. */
-    @org.jetbrains.annotations.Nullable
-    private com.kadikular.quantimium.laser.OfferTable.Builder building;
-    /** Whether a player is looking at what it offers (a terminal open): it's worked out again sooner as it changes. */
-    private boolean watched;
-    /**
-     * Whether a player is waiting on the next working out (they just opened a screen on it, or moved something): that
-     * one goes first, with more of the tick. Only that one: a screen left open on a busy network doesn't keep the
-     * server working out its offers flat out.
-     */
-    private boolean urgent;
-    private long watchedTick = Long.MIN_VALUE;
+    /** The network on its own channel; on All, unused (each channel has its own). */
+    private final Network main = new Network();
+    /** On All: a network for each channel its receptacles are on (or a terminal asked after). */
+    private final java.util.Map<Integer, Network> byChannel = new java.util.TreeMap<>();
+
+    /** The network that serves {@code channel}: its one, or on All, that channel's. */
+    @Override
+    public Network network(int channel) {
+        if (this.channel != com.kadikular.quantimium.laser.Channels.ALL) return main;
+        return byChannel.computeIfAbsent(com.kadikular.quantimium.laser.Channels.of(channel), each -> new Network());
+    }
+
+    /** Every network it runs: its one, or on All, one for each channel with receptacles. */
+    @Override
+    public List<Network> networks() {
+        return channel != com.kadikular.quantimium.laser.Channels.ALL ? List.of(main) : List.copyOf(byChannel.values());
+    }
+
+    /** On All, a network that's found no members is let go: a channel with receptacles gets one again. */
+    public void dropEmpty() {
+        byChannel.values().removeIf(network -> network.members.isEmpty() && !network.clash);
+    }
+
+    /** What the lens acting now works with: the network on its channel. */
+    private Network acting() {
+        return network(com.kadikular.quantimium.laser.Channels.acting());
+    }
+
+    // As one network, to whatever reads it so (a lens up the beam, a test): the one on the acting lens's channel.
+
+    @Override
+    public void report(List<com.kadikular.quantimium.laser.LogisticsMember> members, boolean clash) {
+        main.report(members, clash);
+    }
+
+    @Override
+    public com.kadikular.quantimium.laser.OfferTable offers() {
+        return acting().offers();
+    }
 
     @Override
     public void watched() {
-        long now = level == null ? 0 : level.getGameTime();
-        if (watchedTick == Long.MIN_VALUE || now - watchedTick > WATCH_LAPSE) hurry();
-        watchedTick = now;
-        watched = true;
-    }
-
-    /** The next working out, or the one under way, goes first. */
-    private void hurry() {
-        urgent = true;
-        com.kadikular.quantimium.work.WorkQueue.hurry(this, com.kadikular.quantimium.work.WorkQueue.URGENT);
+        acting().watched();
     }
 
     @Override
     public void stockMoved() {
-        offersStale = true;
-        shifted = true;
-        // Where things are stands for the tick: each take checks the slot still holds it, and looks again if short.
-        liveOffers = null;
-        watched = true;
-        // A player moved it: what can be made from what's left comes first. Not every click of one taking over and over,
-        // though: what's stored shows at once anyway, and the server isn't held at the most it'll spend for them.
-        long now = level == null ? 0 : level.getGameTime();
-        if (hurriedTick == Long.MIN_VALUE || now - hurriedTick >= HURRY_EVERY) {
-            hurriedTick = now;
-            hurry();
-        }
+        acting().stockMoved();
     }
-
-    /** The fewest ticks between a player's moves making the network's working out urgent. */
-    private static final int HURRY_EVERY = 10;
-    private long hurriedTick = Long.MIN_VALUE;
-
-    private long pokedTick = Long.MIN_VALUE;
 
     @Override
     public void poke() {
-        long now = level == null ? 0 : level.getGameTime();
-        if (pokedTick != Long.MIN_VALUE && now - pokedTick < 20) return;
-        pokedTick = now;
-        offers();
+        acting().poke();
     }
 
     @Override
     public void makerChanged() {
-        offersStale = true;
-        // Whether or not anything reads its offers soon: the Crafter shows what they say it makes.
-        startBuildIfDue();
+        for (Network network : networks()) network.makerChanged();
     }
 
     @Override
     public void movedQuietly() {
-        liveOffers = null;
+        acting().movedQuietly();
     }
-
-    /** Where each thing on the network is, and the tick it was looked over. */
-    @org.jetbrains.annotations.Nullable
-    private java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots;
-    private long spotsTick = Long.MIN_VALUE;
 
     @Override
     public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spots() {
-        long now = level == null ? 0 : level.getGameTime();
-        // Where things are doesn't depend on who's asking (a Crafter's previews are what it shows, whoever asks; whether
-        // one could make it now is asked of the slot when it's taken): kept for the tick, mid-craft too.
-        if (spots == null || spotsTick != now) {
-            spots = com.kadikular.quantimium.laser.Logistics.locate(members());
-            spotsTick = now;
-        }
-        return spots;
+        return acting().spots();
     }
-
-    /** The tick spots were last looked over again because a take came up short, and whether things have moved since. */
-    private long relocatedTick = Long.MIN_VALUE;
-    private boolean shifted;
 
     @Override
     public void stockShifted() {
-        shifted = true;
+        acting().stockShifted();
     }
 
     @Override
     public java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, java.util.List<com.kadikular.quantimium.laser.Logistics.Spot>> spotsAgain() {
-        long now = level == null ? 0 : level.getGameTime();
-        // Once a tick at most, unless something's been put somewhere new since: what's been put in is found.
-        if (relocatedTick == now && !shifted) return null;
-        relocatedTick = now;
-        shifted = false;
-        spots = com.kadikular.quantimium.laser.Logistics.locate(members());
-        spotsTick = now;
-        return spots;
+        return acting().spotsAgain();
     }
 
-    /** The members still standing, or none while another controller's light stops the network. */
     @Override
     public List<com.kadikular.quantimium.laser.LogisticsMember> members() {
-        if (clash) return List.of();
-        return members.stream().filter(member -> !(member instanceof BlockEntity entity) || !entity.isRemoved()).toList();
+        return acting().members();
+    }
+
+    /** Every network's members, for its screen. */
+    public List<com.kadikular.quantimium.laser.LogisticsMember> allMembers() {
+        List<com.kadikular.quantimium.laser.LogisticsMember> all = new ArrayList<>();
+        for (Network network : networks()) all.addAll(network.members());
+        return all;
     }
 
     // ---- up the beam from a lens, it is the network ----
@@ -421,7 +541,8 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     /** How its network stands, for a click or the Flux Meter. */
     /** Whether another controller's light joins its own: neither network works. */
     public boolean clashes() {
-        return clash;
+        for (Network network : networks()) if (network.clash) return true;
+        return false;
     }
 
     @Override
@@ -436,9 +557,10 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     }
 
     public MutableComponent status() {
-        if (clash) return Component.translatable("message.quantimium.logistics_controller.clash").withStyle(ChatFormatting.RED);
-        if (!powered()) return Component.translatable("message.quantimium.logistics_controller.unpowered", members.size()).withStyle(ChatFormatting.GOLD);
-        MutableComponent line = Component.translatable("message.quantimium.logistics_controller.status", members.size(),
+        if (clashes()) return Component.translatable("message.quantimium.logistics_controller.clash").withStyle(ChatFormatting.RED);
+        int members = allMembers().size();
+        if (!powered()) return Component.translatable("message.quantimium.logistics_controller.unpowered", members).withStyle(ChatFormatting.GOLD);
+        MutableComponent line = Component.translatable("message.quantimium.logistics_controller.status", members,
                 String.format(java.util.Locale.ROOT, "%,d", energy.getEnergyStored())).withStyle(ChatFormatting.DARK_AQUA);
         // Its channel, once set: set from a Logistics Terminal on its network.
         if (channel != 0) line.append(Component.literal(" · ").append(Component.translatable("gui.quantimium.channel",
@@ -508,7 +630,7 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
 
     /** Lit while its light is: dark while another controller's light stops its network. */
     private void showLit() {
-        boolean lit = !clash && shownBeams.stream().anyMatch(LaserBeam::live);
+        boolean lit = !clashes() && shownBeams.stream().anyMatch(LaserBeam::live);
         BlockState state = getBlockState();
         if (level != null && !level.isClientSide() && state.hasProperty(LogisticsControllerBlock.LIT) && state.getValue(LogisticsControllerBlock.LIT) != lit) {
             level.setBlock(worldPosition, state.setValue(LogisticsControllerBlock.LIT, lit), Block.UPDATE_CLIENTS);
@@ -547,8 +669,8 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
         if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
-    /** The channel it serves ({@link com.kadikular.quantimium.laser.Channels}): 0 unless set. */
-    private int channel;
+    /** The channel it serves ({@link com.kadikular.quantimium.laser.Channels}): All unless set: on All, a network for each channel its receptacles are on. */
+    private int channel = com.kadikular.quantimium.laser.Channels.ALL;
 
     @Override
     public int channel() {
@@ -558,6 +680,9 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     /** Sets its channel: the network works itself out again. */
     public void setChannel(int channel) {
         this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        // Its networks are found afresh on the new channel.
+        byChannel.clear();
+        main.report(List.of(), false);
         setChanged();
         if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
@@ -578,7 +703,8 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
-        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
+        // On All unless set: a network for each channel its receptacles are on.
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", com.kadikular.quantimium.laser.Channels.ALL));
         energy.setEnergy(in.getIntOr("Energy", 0));
         int mask = in.getIntOr("Outputs", 0);
         if (mask != 0) {

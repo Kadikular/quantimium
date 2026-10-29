@@ -214,6 +214,11 @@ public final class LensAction {
 
     /** Once a tick, before blocks are charged: work done at once pays first, and a cut asks for its next share. */
     void act(ServerLevel level, LaserNetworks networks) {
+        // A Logistics Controller on All up the beam works with the network on this action's channel.
+        Channels.actingOn(key.channel(), () -> actOnChannel(level, networks));
+    }
+
+    private void actOnChannel(ServerLevel level, LaserNetworks networks) {
         sightLevel = level;
         now = level.getGameTime();
         keepCursor(level);

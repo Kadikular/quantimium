@@ -64,7 +64,7 @@ public class LogisticsControllerMenu extends AbstractContainerMenu implements Ch
 
     private int count(LogisticsMember.Role role) {
         int count = 0;
-        for (LogisticsMember member : controller.members()) if (member.role() == role) count++;
+        for (LogisticsMember member : controller.allMembers()) if (member.role() == role) count++;
         return count;
     }
 

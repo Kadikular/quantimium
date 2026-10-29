@@ -59,7 +59,9 @@
 - **Channels**: 0 to 15, and All. Each lens in a Lens Mount has a channel (the number above it): an action works on its
   channel, and a modifier changes only the actions on its own (on All, every one). Laser Ports, Tanks, Receptacles and
   Logistics Controllers have one too, so several networks share a laser path. An Isolator stops only its channel.
-  Everything starts on 0, so nothing changes until a channel is set.
+  Everything starts on 0, so nothing changes until a channel is set. A Logistics Controller starts on All: a network
+  for each channel its receptacles are on. A Terminal shows its channel's network; a Materializer offers every channel's.
+- **The Logistics Controller has a screen**: its receptacles, its power, and its channel.
 
 ### Quantum Crafter
 

@@ -28,7 +28,11 @@ screen. Insert, Extract, Pickup and the rest use only the ports and tanks on the
 **All** serves every channel.
 
 [[mechanic:laser.channels.logistics]] A Logistics Receptacle joins a Logistics Controller only on the same channel, or a
-controller on **All**. A receptacle belongs to one network, so it can't be on All itself. Two controllers on different channels can share mirrors and Focuses, each with its own
+controller on **All**. A receptacle belongs to one network, so it can't be on All itself.
+
+A controller starts on **All**: it runs a separate network for each channel its receptacles are on, each with its own
+stock and moves, all paid from its store. Receptacles all on channel 0 are one network, as before channels. Set to a
+channel, it runs only that one. Two controllers on different channels can share mirrors and Focuses, each with its own
 receptacles. Set a Receptacle's channel on its screen, and a controller's on its own screen.
 
 - A [[block:logistics_terminal]] shows the network on its channel, set on a tab of its screen.
