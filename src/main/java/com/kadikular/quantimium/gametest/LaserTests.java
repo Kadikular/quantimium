@@ -1545,8 +1545,13 @@ public final class LaserTests {
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers_one_way", timeoutTicks = 120)
     public static void aOneWaySplittersBackOnlyLetsLightThrough(GameTestHelper helper) {
         // A splitter facing north-east, a laser in from the west onto its back: two-way, it turns south off the back as
-        // well as going on east; one-way, only east.
+        // well as going on east; one-way, only east. And one in from the north onto its front: two-way, east and on south;
+        // one-way, only east.
         emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        emitter(helper, new BlockPos(8, Y, 2), ModBlocks.LASER_EMITTER_1.get(), Direction.SOUTH, true);
+        java.util.function.Predicate<com.kadikular.quantimium.laser.Ray> front = ray -> LaserNetworks.of(helper.getLevel())
+                .beamsOf(helper.absolutePos(new BlockPos(8, Y, 2))).stream()
+                .anyMatch(beam -> beam.legs().stream().anyMatch(leg -> leg.ray() == ray));
         BlockPos at = new BlockPos(8, Y, 8);
         helper.setBlock(at, ModBlocks.LASER_SPLITTER.get().defaultBlockState()
                 .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
@@ -1558,12 +1563,15 @@ public final class LaserTests {
         helper.runAfterDelay(30, () -> {
             helper.assertTrue(leaves.test(com.kadikular.quantimium.laser.Ray.SOUTH), "two-way: turned south off the back");
             helper.assertTrue(leaves.test(com.kadikular.quantimium.laser.Ray.EAST), "and on east");
+            helper.assertTrue(front.test(com.kadikular.quantimium.laser.Ray.SOUTH), "two-way: the front's light on through south");
             helper.setBlock(at, helper.getBlockState(at).setValue(com.kadikular.quantimium.block.LaserSplitterBlock.ONE_WAY, true));
             LaserNetworks.changed(helper.getLevel());
         });
         helper.runAfterDelay(80, () -> {
             helper.assertFalse(leaves.test(com.kadikular.quantimium.laser.Ray.SOUTH), "one-way: not turned off the back");
             helper.assertTrue(leaves.test(com.kadikular.quantimium.laser.Ray.EAST), "but still on east");
+            helper.assertFalse(front.test(com.kadikular.quantimium.laser.Ray.SOUTH), "one-way: the front's light not through to the back");
+            helper.assertTrue(front.test(com.kadikular.quantimium.laser.Ray.EAST), "but turned east");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

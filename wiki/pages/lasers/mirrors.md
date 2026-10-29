@@ -39,9 +39,9 @@ A laser travels in 26 directions: the 6 straight, the 12 flat diagonals (45° in
 - A laser never leaves a mirror or splitter through its stand. Straight into the stand, it stops.
 - A splitter closes no [cavity](cavities.md).
 - It refocuses and taxes the laser as a mirror does.
-- [[mechanic:laser.splitter.one_way]] **One-way.** Sneak and use a wrench on a splitter to make it one-way: its plate's
-  back is steel, with the window through it. Light from the front turns and goes straight on as before; light from
-  behind only goes straight through. Use it to combine two lasers without one spilling off the back of the plate.
+- [[mechanic:laser.splitter.one_way]] **One-way.** Sneak and use a wrench on a splitter, or sneak-click its base with an
+  empty hand, to make it a one-way mirror: its plate's back is steel, with the window through it. Light on the front
+  only turns; light from behind only goes straight through. Use it to combine two lasers without either spilling.
 
 ## Entangled Mirror
 

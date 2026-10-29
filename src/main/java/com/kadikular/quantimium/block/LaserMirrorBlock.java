@@ -216,17 +216,27 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
         // A wrench, sneaking, on a splitter: two-way or one-way.
-        if (player.isSecondaryUseActive() && state.hasProperty(LaserSplitterBlock.ONE_WAY)) {
-            if (level.isClientSide()) return InteractionResult.SUCCESS;
-            boolean oneWay = !state.getValue(LaserSplitterBlock.ONE_WAY);
-            level.setBlock(pos, state.setValue(LaserSplitterBlock.ONE_WAY, oneWay), Block.UPDATE_ALL);
-            LaserNetworks.changed(level);
-            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, oneWay ? 0.7f : 1.2f);
-            player.sendOverlayMessage(Component.translatable(oneWay ? "message.quantimium.laser_splitter.one_way" : "message.quantimium.laser_splitter.two_way")
-                    .withStyle(ChatFormatting.AQUA));
-            return InteractionResult.SUCCESS;
-        }
+        if (player.isSecondaryUseActive() && state.hasProperty(LaserSplitterBlock.ONE_WAY)) return switchWay(state, level, pos, player);
         return set(state, level, pos, player, hit);
+    }
+
+    /** Switches a splitter between two-way and one-way. */
+    private static InteractionResult switchWay(BlockState state, Level level, BlockPos pos, Player player) {
+        if (level.isClientSide()) return InteractionResult.SUCCESS;
+        boolean oneWay = !state.getValue(LaserSplitterBlock.ONE_WAY);
+        level.setBlock(pos, state.setValue(LaserSplitterBlock.ONE_WAY, oneWay), Block.UPDATE_ALL);
+        LaserNetworks.changed(level);
+        level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, oneWay ? 0.7f : 1.2f);
+        player.sendOverlayMessage(Component.translatable(oneWay ? "message.quantimium.laser_splitter.one_way" : "message.quantimium.laser_splitter.two_way")
+                .withStyle(ChatFormatting.AQUA));
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Whether {@code hit} is on the base the mirror stands on (its top or sides; not the face it stands against). */
+    private static boolean onBase(BlockPos pos, BlockHitResult hit, Direction mount) {
+        if (hit.getDirection() == mount) return false;
+        double towards = hit.getLocation().subtract(pos.getCenter()).dot(net.minecraft.world.phys.Vec3.atLowerCornerOf(mount.getUnitVec3i()));
+        return towards >= 0.5 - 2.2 / 16;
     }
 
     @Override
@@ -240,6 +250,10 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
      */
     private static InteractionResult set(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         Direction mount = state.getValue(MOUNT);
+        // Sneaking, on a splitter's base: two-way or one-way.
+        if (player.isSecondaryUseActive() && state.hasProperty(LaserSplitterBlock.ONE_WAY) && onBase(pos, hit, mount)) {
+            return switchWay(state, level, pos, player);
+        }
         if (!onGrid(pos, hit, mount)) return InteractionResult.PASS;
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         Zone zone = zone(pos, hit);

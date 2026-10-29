@@ -155,11 +155,12 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         List<Ray> ways = new ArrayList<>(2);
         if (legs.size() < MAX_BOUNCES && state.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock block
                 && !state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.POWERED)) {
-            // A splitter's plate turns light off both sides; one-way, only off its front (the back lets it straight through).
-            Ray turned = com.kadikular.quantimium.block.LaserMirrorBlock.plate(state).reflect(travel, block.splits() && !block.oneWay(state));
+            // A splitter's plate turns light off both sides, and lets it straight on as well. One-way, a one-way mirror: its
+            // front only turns light, its back only lets it through.
+            boolean oneWay = block.oneWay(state);
+            Ray turned = com.kadikular.quantimium.block.LaserMirrorBlock.plate(state).reflect(travel, block.splits() && !oneWay);
             if (turned != null) ways.add(turned);
-            // Half-silvered: straight on as well.
-            if (block.splits()) ways.add(Ray.nearest(travel));
+            if (block.splits() && (!oneWay || turned == null)) ways.add(Ray.nearest(travel));
             // Straight into its stand, light stops there.
             Ray stand = Ray.of(state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT));
             ways.removeIf(way -> way == stand);
