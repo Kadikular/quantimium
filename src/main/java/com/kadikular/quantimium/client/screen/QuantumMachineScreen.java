@@ -347,6 +347,19 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
                 .onScroll(step -> clamped.accept(value.getAsInt() + step * (Minecraft.getInstance().hasShiftDown() ? 10 : 1)));
     }
 
+    /** The shared channel tab: its number (or All); click steps on, right-click or scroll down back. */
+    protected final Tab channelTab(com.kadikular.quantimium.menu.ChannelMenu channels) {
+        java.util.function.IntConsumer step = by -> {
+            int next = com.kadikular.quantimium.laser.Channels.cycle(channels.channel(), by < 0);
+            ClientPacketDistributor.sendToServer(new com.kadikular.quantimium.network.SetChannelPayload(menu.containerId, next));
+        };
+        return Tab.of(() -> com.kadikular.quantimium.laser.Channels.label(channels.channel()), () -> step.accept(1),
+                        () -> List.of(Component.translatable("gui.quantimium.channel", com.kadikular.quantimium.laser.Channels.label(channels.channel())),
+                                hint("gui.quantimium.channel.tab")))
+                .onRightClick(() -> step.accept(-1))
+                .onScroll(by -> step.accept(by));
+    }
+
     /** The shared redstone tab: the item shows the setting; click steps on, right-click back. */
     protected final Tab redstoneTab(Supplier<RedstoneMode> mode, Runnable next) {
         return Tab.of(Component::empty, next, () -> List.of(mode.get().label(), hint("gui.quantimium.tab.cycle")))

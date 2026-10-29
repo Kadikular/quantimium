@@ -38,6 +38,7 @@ public class LaserPortScreen extends QuantumMachineScreen<LaserPortMenu> impleme
     @Override
     protected List<Tab> createTabs() {
         return List.of(
+                channelTab(menu),
                 filterTab(menu::isFilterView, menu::setFilterView, Component.translatable("gui.quantimium.laser_port.filter"),
                         "gui.quantimium.laser_port.filter.tip"),
                 Tab.glyph(() -> port().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LaserPortMenu.BUTTON_MODE),

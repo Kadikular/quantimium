@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
  * A Laser Port: what it holds in a 3x3 grid, as a dispenser's, or its filter's nine ghost entries,
  * one view at a time, and the player's inventory. Layout: tools/gui_panels.py laser_port.
  */
-public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterMenu, ChannelMenu {
 
     public static final int BUTTON_MODE = 0;
     /** Collect, send or both. */
@@ -42,6 +42,7 @@ public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterM
     public LaserPortMenu(int containerId, Inventory playerInv, LaserPortBlockEntity port) {
         super(ModMenuTypes.LASER_PORT_MENU.get(), containerId);
         this.port = port;
+        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(port.getLevel() != null && port.getLevel().isClientSide() ? null : port::channel));
         for (int i = 0; i < LaserPortBlockEntity.SLOTS; i++) {
             addSlot(new SlotItemHandler(port.getItems(), i, GRID_X + (i % 3) * 18, GRID_Y + (i / 3) * 18) {
                 @Override
@@ -145,5 +146,17 @@ public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterM
     @Override
     public boolean stillValid(Player player) {
         return stillValid(ContainerLevelAccess.create(port.getLevel(), port.getBlockPos()), player, port.getBlockState().getBlock());
+    }
+
+    private ChannelMenu.ChannelSlot channelSlot;
+
+    @Override
+    public int channel() {
+        return channelSlot.shown();
+    }
+
+    @Override
+    public void setChannel(int channel) {
+        port.setChannel(channel);
     }
 }

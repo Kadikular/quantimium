@@ -106,6 +106,7 @@ nav:
           - Lens energy: lasers/lenses/energy.md
           - Examples: lasers/lenses/examples.md
       - Logistics: lasers/logistics.md
+      - Channels: lasers/channels.md
       - Networks and rules: lasers/networks.md
   - The mirror:
       - The mirror phase: mirror/mirror-phase.md

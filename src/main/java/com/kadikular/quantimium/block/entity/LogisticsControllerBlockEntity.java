@@ -421,8 +421,12 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     public MutableComponent status() {
         if (clash) return Component.translatable("message.quantimium.logistics_controller.clash").withStyle(ChatFormatting.RED);
         if (!powered()) return Component.translatable("message.quantimium.logistics_controller.unpowered", members.size()).withStyle(ChatFormatting.GOLD);
-        return Component.translatable("message.quantimium.logistics_controller.status", members.size(), String.format(java.util.Locale.ROOT, "%,d", energy.getEnergyStored()))
-                .withStyle(ChatFormatting.DARK_AQUA);
+        MutableComponent line = Component.translatable("message.quantimium.logistics_controller.status", members.size(),
+                String.format(java.util.Locale.ROOT, "%,d", energy.getEnergyStored())).withStyle(ChatFormatting.DARK_AQUA);
+        // Its channel, once set: set from a Logistics Terminal on its network.
+        if (channel != 0) line.append(Component.literal(" · ").append(Component.translatable("gui.quantimium.channel",
+                com.kadikular.quantimium.laser.Channels.label(channel))));
+        return line;
     }
 
     @Override

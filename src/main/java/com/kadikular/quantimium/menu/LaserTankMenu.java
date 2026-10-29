@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
  * A Laser Tank: its four tanks (drawn by the screen from the block entity), or its filter's nine fluid entries, one view
  * at a time, and the player's inventory. A bucket clicked on a tank fills or empties it.
  */
-public class LaserTankMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class LaserTankMenu extends AbstractContainerMenu implements GhostFilterMenu, ChannelMenu {
 
     /** Collect, send or both. */
     public static final int BUTTON_MODE = 0;
@@ -39,6 +39,7 @@ public class LaserTankMenu extends AbstractContainerMenu implements GhostFilterM
     public LaserTankMenu(int containerId, Inventory playerInv, LaserTankBlockEntity tank) {
         super(ModMenuTypes.LASER_TANK_MENU.get(), containerId);
         this.tank = tank;
+        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(tank.getLevel() != null && tank.getLevel().isClientSide() ? null : tank::channel));
         for (int i = 0; i < LaserTankBlockEntity.FILTER_SLOTS; i++) {
             addSlot(new GhostSlot(tank.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
         }
@@ -135,5 +136,17 @@ public class LaserTankMenu extends AbstractContainerMenu implements GhostFilterM
     @Override
     public boolean stillValid(Player player) {
         return tank != null && stillValid(ContainerLevelAccess.create(tank.getLevel(), tank.getBlockPos()), player, tank.getBlockState().getBlock());
+    }
+
+    private ChannelMenu.ChannelSlot channelSlot;
+
+    @Override
+    public int channel() {
+        return channelSlot.shown();
+    }
+
+    @Override
+    public void setChannel(int channel) {
+        tank.setChannel(channel);
     }
 }

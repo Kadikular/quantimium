@@ -460,6 +460,19 @@ public class Quantimium {
         );
 
         registrar.playToServer(
+            com.kadikular.quantimium.network.SetChannelPayload.TYPE,
+            com.kadikular.quantimium.network.SetChannelPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                if (context.player() instanceof ServerPlayer player
+                        && player.containerMenu.containerId == payload.containerId()
+                        && player.containerMenu instanceof com.kadikular.quantimium.menu.ChannelMenu menu
+                        && player.containerMenu.stillValid(player)) {
+                    menu.setChannel(payload.channel());
+                }
+            })
+        );
+
+        registrar.playToServer(
             SetGhostFilterPayload.TYPE,
             SetGhostFilterPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {

@@ -43,6 +43,7 @@ public class LogisticsReceptacleScreen extends QuantumMachineScreen<LogisticsRec
     @Override
     protected List<Tab> createTabs() {
         return List.of(
+                channelTab(menu),
                 priorityTab(() -> receptacle().priority(), value -> press(PriorityButton.encode(value)), PriorityButton.MAX),
                 Tab.glyph(() -> switch (receptacle().role()) {
                                     case STORAGE -> GuiIcon.STORAGE;

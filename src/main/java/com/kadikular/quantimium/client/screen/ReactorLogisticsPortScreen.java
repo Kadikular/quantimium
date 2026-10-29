@@ -38,6 +38,7 @@ public class ReactorLogisticsPortScreen extends QuantumMachineScreen<ReactorLogi
     @Override
     protected List<Tab> createTabs() {
         return List.of(
+                channelTab(menu),
                 priorityTab(() -> port().priorityValue(), value -> press(PriorityButton.encode(value)), PriorityButton.MAX),
                 Tab.glyph(() -> GuiIcon.STORAGE, () -> press(ReactorLogisticsPortMenu.BUTTON_STORING),
                                 () -> List.of(Component.translatable("gui.quantimium.reactor_logistics_port.storing." + port().storing()),

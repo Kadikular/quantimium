@@ -25,7 +25,7 @@ import java.util.Map;
  * network. Under the item grid, shown by a tab, a crafting grid that the network refills after each craft. Layout:
  * tools/gui_panels.py logistics_terminal and logistics_terminal_crafting.
  */
-public class LogisticsTerminalMenu extends AbstractContainerMenu {
+public class LogisticsTerminalMenu extends AbstractContainerMenu implements ChannelMenu {
 
     public static final int PLAYER_Y = 158;
     /** The crafting grid and its result, under the item grid when shown (tools/gui_panels.py logistics_terminal_crafting). */
@@ -97,6 +97,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
                                   boolean remote) {
         super(ModMenuTypes.LOGISTICS_TERMINAL_MENU.get(), containerId);
         this.terminal = terminal;
+        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(terminal == null || terminal.getLevel() == null || terminal.getLevel().isClientSide() ? null : () -> terminal.controller() instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller ? controller.channel() : 0));
         this.pos = pos;
         this.remote = remote;
         this.player = playerInv.player;
@@ -661,5 +662,17 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         if (terminal == null) return true;
         if (remote) return !terminal.isRemoved();
         return stillValid(ContainerLevelAccess.create(terminal.getLevel(), terminal.getBlockPos()), player, terminal.getBlockState().getBlock());
+    }
+
+    private ChannelMenu.ChannelSlot channelSlot;
+
+    @Override
+    public int channel() {
+        return channelSlot.shown();
+    }
+
+    @Override
+    public void setChannel(int channel) {
+        if (terminal != null && terminal.controller() instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller) controller.setChannel(channel);
     }
 }

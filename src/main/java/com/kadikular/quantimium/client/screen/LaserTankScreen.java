@@ -38,6 +38,7 @@ public class LaserTankScreen extends QuantumMachineScreen<LaserTankMenu> impleme
     @Override
     protected List<Tab> createTabs() {
         return List.of(
+                channelTab(menu),
                 filterTab(menu::isFilterView, menu::setFilterView, Component.translatable("gui.quantimium.laser_port.filter"),
                         "gui.quantimium.laser_tank.filter.tip"),
                 Tab.glyph(() -> tank().allows() ? GuiIcon.ALLOW : GuiIcon.DENY, () -> press(LaserTankMenu.BUTTON_ALLOW),

@@ -259,6 +259,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
     @Override
     protected List<Tab> createTabs() {
         return List.of(
+                channelTab(menu),
                 Tab.glyph(() -> byName ? GuiIcon.SORT_NAME : GuiIcon.SORT_COUNT, () -> {
                                     byName = !byName;
                                     remember();
