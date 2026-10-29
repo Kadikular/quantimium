@@ -102,7 +102,8 @@ public class LaserEmitterBlockEntity extends BlockEntity implements LaserNode, M
         this.energy = new QuantumEnergyStorage(tier.capacity, tier.rate * 4, 0) {
             @Override
             protected void onReceived() {
-                setChanged();
+                // Saved, without telling neighbours' comparators every tick it's charged (none reads it).
+                if (level != null) level.blockEntityChanged(worldPosition);
             }
         };
         if (state.hasProperty(LaserEmitterBlock.FACING)) outputs.add(state.getValue(LaserEmitterBlock.FACING));

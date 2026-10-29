@@ -294,7 +294,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         this.energyStorage = new QuantumEnergyStorage(capacity, maxReceive, 0) {
             @Override
             protected void onReceived() {
-                    setChanged();
+                    // Saved, without telling neighbours' comparators every tick it's charged (none reads it).
+                    if (level != null) level.blockEntityChanged(worldPosition);
                     automationViewRevision = Long.MIN_VALUE;
                 
             }
