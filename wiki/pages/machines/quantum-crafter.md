@@ -134,8 +134,11 @@ The last recipe you took is listed first.
 order you pinned them, and stay shown with a 0 when none can be made. Middle-click one again to unpin
 it. Up to {{c:QuantumCrafterBlockEntity.MAX_PINS}} can be pinned.
 
-With the **lock** on (the padlock tab), the crafter makes only what's pinned: its preview, pipes, networks
-and auto output all see the pinned outputs alone. That stops a shared grid from making something else.
+Drag an item or fluid from JEI onto the output grid to pin it too.
+
+With the **lock** on (the padlock tab), the crafter makes only what's pinned. Everything else is still
+shown, dimmed, but can't be taken, and pipes, networks and auto output see only the pinned outputs. That
+stops a shared grid from making something else.
 
 ## Batch size
 
@@ -240,7 +243,8 @@ network sees each ghost as a slot after the outputs, on any face that lets somet
   bound to (a [[block:laser_tank]], any mod's tank, or a [[block:logistics_materialiser]] for a network's
   fluids). A Semi-Stable Tesseract reaches tanks in its range. It is offered only while there is enough.
 - Fluids a recipe makes go to the output tanks. A batch is cut to what they have room for. With no
-  room for even one run, it waits.
+  room for even one run, it waits, and when nothing can be made for that, it says *Output blocked*
+  until they're emptied.
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
   bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
   as you fill from it.

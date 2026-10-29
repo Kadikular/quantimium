@@ -365,10 +365,10 @@ public final class CrafterTests {
                     SideMode.DISABLED, SideConfig.ALL_FLUID_INPUTS, SideConfig.ALL_FLUID_OUTPUTS, false, false)));
         });
         helper.runAfterDelay(15, () -> {
-            for (ResolvedCraft craft : crafter.getPreview()) {
-                helper.assertTrue(craft.primaryOutput().is(Items.STICK) || craft.primaryOutput().is(Items.OAK_SLAB),
-                        "locked, only what's pinned should be shown, found " + craft.primaryOutput());
-            }
+            // Locked, the rest is still shown, but not made.
+            helper.assertTrue(craftOf(crafter, Items.CRAFTING_TABLE) != null, "a crafting table still shown");
+            helper.assertTrue(crafter.pullHandler().extractItem(ghostSlot(crafter, Items.CRAFTING_TABLE), 1, false).isEmpty(),
+                    "but not made: it isn't pinned");
         });
         helper.runAfterDelay(110, () -> {
             int sticks = 0, slabs = 0, other = 0;

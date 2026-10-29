@@ -51,9 +51,11 @@
 
 ### Quantum Crafter
 
-- **Pins**: middle-click an output to pin it. Pinned outputs come first and stay shown, with a 0, when none can be
-  made. **Locked**, the Crafter makes only what's pinned, and auto output makes each in turn. A Crafter locked to a
-  recipe before keeps it, pinned.
+- **Pins**: middle-click an output, or drag one from JEI onto the grid, to pin it. Pinned outputs come first, outlined
+  in gold, and stay shown, with a 0, when none can be made. **Locked**, the Crafter makes only what's pinned (the rest
+  shown dimmed), and auto output makes each in turn. A Crafter locked to a recipe before keeps it, pinned.
+- Four output tanks for what recipes make besides items; when they're too full for anything to be made, it says
+  *Output blocked*.
 
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 

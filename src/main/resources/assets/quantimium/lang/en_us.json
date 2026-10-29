@@ -1313,6 +1313,7 @@
   "gui.quantimium.quantum_crafter.lock.on": "Makes: pinned only",
   "gui.quantimium.quantum_crafter.lock.off": "Makes: anything",
   "gui.quantimium.quantum_crafter.pinned": "Pinned",
+  "gui.quantimium.quantum_crafter.not_pinned": "Locked: pin it to make it",
   "gui.quantimium.quantum_simulator.slots": "Slots",
   "gui.quantimium.quantum_simulator.slots.tip": "Bind input slots to the machine's",
   "gui.quantimium.quantum_simulator.slots.disengaged": "Needs an engaged field",

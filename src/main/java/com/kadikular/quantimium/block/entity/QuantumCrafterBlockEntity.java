@@ -211,7 +211,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** Its tanks, and what each holds. */
     public static final int INPUT_TANKS = 3;
-    public static final int OUTPUT_TANKS = 2;
+    public static final int OUTPUT_TANKS = 4;
     public static final int TANK_CAPACITY = 16_000;
     /** What recipes take fluids from (with any tank its links are bound to). */
     private final com.kadikular.quantimium.util.FluidTanks inputTanks =
@@ -523,6 +523,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     public void setRecipeLocked(boolean locked) {
         this.recipeLocked = locked;
         localDirty = true;
+        contentRevision++;
+        automationViewRevision = Long.MIN_VALUE;
+        commitCheckRevision = Long.MIN_VALUE;
         setChanged();
     }
 
@@ -538,9 +541,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             if (pins.size() >= MAX_PINS) return;
             pins.add(item);
         }
-        // Locked, what it makes changes.
+        // Locked, what it makes changes, and what a network is offered.
         localDirty = true;
         contentRevision++;
+        automationViewRevision = Long.MIN_VALUE;
+        commitCheckRevision = Long.MIN_VALUE;
         if (recipeLocked) queueRefresh(true);
         sync();
     }
@@ -1265,10 +1270,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 }
             }
             if (isBasic()) crafts = limitToCoherence(crafts);
-            if (pinnedOnly()) crafts = crafts.stream().filter(QuantumCrafterBlockEntity.this::makesPinned).toList();
             resolved = crafts;
+            // Locked, a network is offered only what's pinned; the rest is still shown, not made.
+            lockedOut = pinnedOnly() ? crafts.stream().filter(craft -> !makesPinned(craft)).toList() : List.of();
             List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
             for (ResolvedCraft craft : crafts) {
+                if (lockedOut.contains(craft)) continue;
                 java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
                 for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) from.add(withdrawal.expected());
                 List<ItemStack> outputs = craft.outputs();
@@ -1296,6 +1303,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** The crafts last handed it and shown; null once anything else has been shown since. */
     @Nullable
     private List<Object> fed;
+    /** Locked, what it last found it could make that isn't pinned: shown with what a network hands back, never offered. */
+    private List<ResolvedCraft> lockedOut = List.of();
 
     /**
      * Its network has worked out what it offers, this Crafter's crafts among them: those are its preview, at once.
@@ -1313,6 +1322,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         for (Object craft : crafts) {
             if (craft instanceof ResolvedCraft resolved && seen.add(resolved.recipeId())) shown.add(resolved);
         }
+        if (pinnedOnly()) for (ResolvedCraft craft : lockedOut) if (seen.add(craft.recipeId())) shown.add(craft);
         // A rebuild of its own already queued (its grid changed since the network asked) still runs, and is newer.
         show(CrafterPreview.cap(shown, CrafterPreview.MAX_OUTPUTS));
         fed = crafts;
@@ -1526,9 +1536,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 break;
             }
         }
-        if (pinnedOnly()) {
-            crafts = crafts.stream().filter(this::makesPinned).toList();
-        } else if (preferredRecipeId != null) {
+        if (preferredRecipeId != null) {
             // Prefer last-selected recipe first in the ghost list.
             crafts = new ArrayList<>(crafts);
             crafts.sort((a, b) -> {
@@ -1664,6 +1672,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             statusCode = STATUS_NO_POWER;
         } else if (!hasGhost()) {
             // Results are backed up in every output slot, so nothing can be previewed or taken.
+            statusCode = STATUS_OUTPUT_FULL;
+        } else if (preview.stream().noneMatch(craft -> fluidsFit(craft.withRuns(1)))) {
+            // What it makes besides items has no room in its output tanks: they want emptying.
             statusCode = STATUS_OUTPUT_FULL;
         } else {
             statusCode = STATUS_READY;
@@ -1847,6 +1858,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     public boolean canCommit(ResolvedCraft craft) {
         if (craft == null || level == null || linkLoopDetected) return false;
+        // Locked: shown, but only what's pinned is made.
+        if (pinnedOnly() && !makesPinned(craft)) return false;
         if (energyStorage.getEnergyStored() < craft.feCost()) return false;
         if (isBasic() && coherenceReserve < craft.batchSize()) return false;
         // A run's fluids must fit: a bigger batch is cut to what does when it's made.

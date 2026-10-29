@@ -34,7 +34,7 @@ import java.util.Locale;
  * for a stack into the inventory;
  * while shift is held the grid holds still. Layout: tools/gui_panels.py crafter.
  */
-public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMenu> {
+public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMenu> implements GhostFilterScreen {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
             Quantimium.MODID, "textures/gui/container/quantum_crafter.png");
@@ -385,6 +385,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                     boolean makes = cell.craftable() > 0;
                     if (makes && cell.stored() > 0) smallCount(graphics, HorizonCoreScreen.fluidCount(cell.stored()), x, y, 0, 0xFFFFFFFF);
                     smallCount(graphics, HorizonCoreScreen.fluidCount(cell.count()), x, y, 11, makes ? 0xFFB49CFF : 0xFFFFFFFF);
+                    if (lockedOut(cell)) lockedOverlay(graphics, x, y);
                     continue;
                 }
                 graphics.item(cell.stack().copyWithCount(1), x, y);
@@ -394,8 +395,15 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                 if (makes || cell.stored() > 1) {
                     smallCount(graphics, HorizonCoreScreen.slotCount(cell.count()), x, y, 11, makes ? 0xFFB49CFF : 0xFFFFFFFF);
                 }
+                if (lockedOut(cell)) lockedOverlay(graphics, x, y);
             }
         }
+    }
+
+    /** Dimmed, as a Materializer dims what it may not make. */
+    private void lockedOverlay(GuiGraphicsExtractor graphics, int x, int y) {
+        graphics.nextStratum();
+        graphics.fill(x, y, x + 16, y + 16, 0xA0101018);
     }
 
     /** A small number against a cell's right edge, {@code dy} down from its top. */
@@ -437,6 +445,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         if (cell == null) return;
         List<Component> lines = new ArrayList<>(getTooltipFromContainerItem(cell.stack()));
         if (cell.pinned()) lines.add(Component.translatable("gui.quantimium.quantum_crafter.pinned").withStyle(ChatFormatting.AQUA));
+        if (lockedOut(cell)) lines.add(Component.translatable("gui.quantimium.quantum_crafter.not_pinned").withStyle(ChatFormatting.RED));
         if (com.kadikular.quantimium.recipe.FluidEntry.is(cell.stack())) {
             if (cell.stored() > 0) {
                 lines.add(Component.translatable("gui.quantimium.quantum_crafter.stored_fluid", String.format(Locale.ROOT, "%,d", cell.stored()))
@@ -541,6 +550,33 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    /** The output grid, where an item or fluid dropped from a recipe viewer is pinned. */
+    @Override
+    public List<net.minecraft.client.renderer.Rect2i> ghostTargets() {
+        if (menu.isBasic() || activeOverlay() != null) return List.of();
+        return List.of(new net.minecraft.client.renderer.Rect2i(leftPos + GRID_X, topPos + GRID_Y, COLUMNS * CELL, ROWS * CELL));
+    }
+
+    @Override
+    public int ghostOffset() {
+        return 0;
+    }
+
+    @Override
+    public int ghostContainerId() {
+        return menu.containerId;
+    }
+
+    @Override
+    public boolean ghostFluids() {
+        return true;
+    }
+
+    /** Locked with pins: what isn't pinned is shown but not made. */
+    private boolean lockedOut(Cell cell) {
+        return !cell.pinned() && cell.craftable() > 0 && menu.isRecipeLocked() && !menu.getBlockEntity().pins().isEmpty();
     }
 
     private int indexOfPin(ItemStack stack) {

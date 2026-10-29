@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
-public class QuantumCrafterMenu extends AbstractContainerMenu {
+public class QuantumCrafterMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
     private static final int DATA_COUNT = 18;
     private static final int MENU_CATALYST_SLOT = 9;
@@ -187,6 +187,14 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         if (getCarried().isEmpty()) return null;
         return net.neoforged.neoforge.transfer.access.ItemAccess.forPlayerCursor(player, this).oneByOne()
                 .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM);
+    }
+
+    /** Dropped from a recipe viewer on its output grid: pins it, if it isn't already. */
+    @Override
+    public void setGhost(int index, ItemStack stack) {
+        if (stack.isEmpty() || blockEntity.isBasic()) return;
+        var pin = net.neoforged.neoforge.transfer.item.ItemResource.of(stack);
+        if (!blockEntity.pins().contains(pin)) blockEntity.togglePin(pin);
     }
 
     @Override

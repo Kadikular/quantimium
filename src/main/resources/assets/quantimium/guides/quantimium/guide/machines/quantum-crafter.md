@@ -37,7 +37,7 @@ Nothing is crafted until something takes an output: you, a hopper, a pipe, or it
 | Runs | 32 at a time, then it recovers | Unlimited |
 | Automation | Every face, no configuration | Per-face side configuration, auto input and output |
 | Tesseracts in the grid | Yes | Yes |
-| Fluid tanks | 3 in, 2 out | 3 in, 2 out |
+| Fluid tanks | 3 in, 4 out | 3 in, 4 out |
 
 A Basic crafter's buffer takes about 8 minutes to fill from a 100 FE/t generator.
 
@@ -139,8 +139,11 @@ The last recipe you took is listed first.
 order you pinned them, and stay shown with a 0 when none can be made. Middle-click one again to unpin
 it. Up to 27 can be pinned.
 
-With the **lock** on (the padlock tab), the crafter makes only what's pinned: its preview, pipes, networks
-and auto output all see the pinned outputs alone. That stops a shared grid from making something else.
+Drag an item or fluid from JEI onto the output grid to pin it too.
+
+With the **lock** on (the padlock tab), the crafter makes only what's pinned. Everything else is still
+shown, dimmed, but can't be taken, and pipes, networks and auto output see only the pinned outputs. That
+stops a shared grid from making something else.
 
 ## Batch size
 
@@ -239,13 +242,14 @@ network sees each ghost as a slot after the outputs, on any face that lets somet
 ## Fluids
 
 The crafter has 3 input tanks, right of the catalyst, and
-2 output tanks, shown among its outputs. Each holds 16,000 mB of one fluid.
+4 output tanks, shown among its outputs. Each holds 16,000 mB of one fluid.
 
 - A recipe that takes a fluid draws it from the input tanks, or from a tank a Tesseract in the grid is
   bound to (a <ItemLink id="quantimium:laser_tank" />, any mod's tank, or a <ItemLink id="quantimium:logistics_materialiser" /> for a network's
   fluids). A Semi-Stable Tesseract reaches tanks in its range. It is offered only while there is enough.
 - Fluids a recipe makes go to the output tanks. A batch is cut to what they have room for. With no
-  room for even one run, it waits.
+  room for even one run, it waits, and when nothing can be made for that, it says *Output blocked*
+  until they're emptied.
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
   bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
   as you fill from it.
