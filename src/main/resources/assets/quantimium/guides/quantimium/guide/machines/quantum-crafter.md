@@ -135,7 +135,7 @@ taken, the ghost becomes the real items, and the preview is worked out again fro
 
 The last recipe you took is listed first.
 
-**Middle-click** an output to **pin** it. Pinned outputs come first, in the
+**Middle-click** an output to **pin** it. Pinned outputs come first, outlined in gold, in the
 order you pinned them, and stay shown with a 0 when none can be made. Middle-click one again to unpin
 it. Up to 27 can be pinned.
 
