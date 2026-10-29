@@ -73,6 +73,22 @@ public final class ReactorCountTests {
         helper.succeed();
     }
 
+    // covers: reactor.counts.loops
+    @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
+    public static void aBucketFilledAndEmptiedAgainMakesNoWater(GameTestHelper helper) {
+        // 51 buckets' worth of water and 355 empty buckets, filled and emptied: 51 water buckets, and no more water.
+        Item water = DUST;
+        ReactorRecipes recipes = ReactorRecipes.of(List.of(), List.of(
+                shape(List.of(input(water, 1_000), input(Items.BUCKET, 1)), Items.WATER_BUCKET, 1),
+                new ReactorRecipes.Producer(new RecipeShape(id(), List.of(input(Items.WATER_BUCKET, 1)),
+                        List.of(new ItemStack(water, 1_000), new ItemStack(Items.BUCKET)), 100), 0)));
+        ReactorCounter.Counts counts = count(recipes, Map.of(water, 51_000L, Items.BUCKET, 355L));
+        helper.assertValueEqual(counts.count(of(water)), 51_000L, "the water there is");
+        helper.assertValueEqual(counts.count(of(Items.WATER_BUCKET)), 51L, "a bucket for each 1,000");
+        helper.assertValueEqual(counts.count(of(Items.BUCKET)), 355L, "the empty buckets");
+        helper.succeed();
+    }
+
     // covers: reactor.counts.shared
     @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
     public static void ingredientsFromOneSourceShareIt(GameTestHelper helper) {
