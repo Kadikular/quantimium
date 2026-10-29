@@ -136,13 +136,29 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
         return true;
     }
 
+    /** Each slot's channel ({@link com.kadikular.quantimium.laser.Channels}): what its lens works on. 0 unless set. */
+    private final int[] channels = new int[SLOTS];
+
+    public int slotChannel(int slot) {
+        return slot >= 0 && slot < SLOTS ? channels[slot] : 0;
+    }
+
+    /** Sets slot {@code slot}'s channel: the network works itself out again. */
+    public void setSlotChannel(int slot, int channel) {
+        if (slot < 0 || slot >= SLOTS) return;
+        channels[slot] = com.kadikular.quantimium.laser.Channels.of(channel);
+        setChanged();
+        sync();
+        if (level != null && !level.isClientSide()) LaserNetworks.changed(level);
+    }
+
     @Override
     public List<com.kadikular.quantimium.laser.LensUse> lenses() {
         List<com.kadikular.quantimium.laser.LensUse> lenses = new ArrayList<>(SLOTS);
         for (int slot = 0; slot < SLOTS; slot++) {
             ItemStack stack = lensSlots.getStackInSlot(slot);
             if (stack.getItem() instanceof LensItem lens) {
-                lenses.add(com.kadikular.quantimium.laser.LensUse.of(stack, lens.lens()));
+                lenses.add(com.kadikular.quantimium.laser.LensUse.of(stack, lens.lens()).onChannel(channels[slot]));
             }
         }
         return lenses;
@@ -207,12 +223,15 @@ public class LensMountBlockEntity extends BlockEntity implements LaserNode, Menu
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         lensSlots.serialize(out.child("Lenses"));
+        out.putIntArray("Channels", channels.clone());
     }
 
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         in.child("Lenses").ifPresent(lensSlots::deserialize);
+        int[] saved = in.getIntArray("Channels").orElse(new int[0]);
+        for (int slot = 0; slot < SLOTS; slot++) channels[slot] = slot < saved.length ? com.kadikular.quantimium.laser.Channels.of(saved[slot]) : 0;
         in.read("Beams", CompoundTag.CODEC).ifPresent(tag -> shownBeams = LaserBeamView.load(worldPosition, tag));
     }
 

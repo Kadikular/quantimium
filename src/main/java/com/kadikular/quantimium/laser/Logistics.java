@@ -64,10 +64,12 @@ public final class Logistics {
             all.add(member);
             Light light = lights.get(node.nodePos());
             if (light == null) continue;
-            speeds.put(member, light.speeds());
             BlockPos owner = null;
-            for (BlockPos feeder : light.logistics()) {
-                if (!controllers.containsKey(feeder)) continue;
+            for (var feed : light.logistics().entrySet()) {
+                BlockPos feeder = feed.getKey();
+                // Only a controller on its channel (either on All).
+                if (!controllers.containsKey(feeder) || !Channels.serves(member.channel(), feed.getValue())) continue;
+                speeds.merge(member, light.speeds(feed.getValue() == Channels.ALL ? member.channel() : feed.getValue()), Math::max);
                 if (owner == null) {
                     owner = feeder;
                 } else {

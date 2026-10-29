@@ -195,6 +195,19 @@ public final class Receptacle implements LogisticsMember {
         changed();
     }
 
+    /** The channel it's on ({@link com.kadikular.quantimium.laser.Channels}): it joins a Logistics Controller on it. */
+    private int channel;
+
+    @Override
+    public int channel() {
+        return channel;
+    }
+
+    public void setChannel(int channel) {
+        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        changed();
+    }
+
     public void addPriority(int by) {
         priority = Math.clamp((long) priority + by, -MAX_PRIORITY, MAX_PRIORITY);
         changed();
@@ -441,6 +454,7 @@ public final class Receptacle implements LogisticsMember {
         out.putInt("Crafts", crafts.ordinal());
         out.putBoolean("RequestsMade", requestsMade);
         out.putInt("Priority", priority);
+        out.putInt("Channel", channel);
         out.putBoolean("Allow", allow);
         out.putBoolean("Keep", keep);
         out.putIntArray("KeepCounts", keepCounts);
@@ -461,6 +475,7 @@ public final class Receptacle implements LogisticsMember {
         crafts = in.getIntOr("Crafts", in.getBooleanOr("OffersMade", true) ? 0 : 2) == 2 ? Crafts.NOTHING : Crafts.STORED;
         requestsMade = in.getBooleanOr("RequestsMade", true);
         priority = in.getIntOr("Priority", 0);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
         allow = in.getBooleanOr("Allow", true);
         keep = in.getBooleanOr("Keep", false);
         int[] counts = in.getIntArray("KeepCounts").orElse(new int[0]);

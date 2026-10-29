@@ -905,8 +905,9 @@ public final class LaserNetworks {
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
             if (core != null) {
                 // The Laser Ports up each stream's light: the same for every beam it's on.
-                Map<Set<BlockPos>, List<BlockPos>> collectors = new HashMap<>();
-                Map<Set<BlockPos>, List<BlockPos>> senders = new HashMap<>();
+                // By the stream's sources and channel: a port serves only its own channel (either on All).
+                Map<List<Object>, List<BlockPos>> collectors = new HashMap<>();
+                Map<List<Object>, List<BlockPos>> senders = new HashMap<>();
                 List<LaserBeam> lensed = new ArrayList<>(list.size());
                 // Each beam takes the look, and the actions, of its own light: a face with lenses of its own differs.
                 for (int i = 0; i < list.size(); i++) {
@@ -915,14 +916,14 @@ public final class LaserNetworks {
                     lensed.add(light == null || light.packed() == Lens.NONE ? beam : beam.withLenses(light.packed()));
                     if (light == null || light.packed() == Lens.NONE) continue;
                     for (Light.Stream stream : streamsOf(light)) {
-                        LensAction.Key key = new LensAction.Key(pos, i, stream.action());
+                        LensAction.Key key = new LensAction.Key(pos, i, stream.action(), stream.channel());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
                         int solids = stream.action() == Lens.PHANTOM ? beam.solidsThrough(level) : 0;
-                        action.update(beam, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
-                                sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
+                        action.update(beam, stream, collectors.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), collectsOn(stream.channel()))),
+                                sendersFor(stream, senders.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), sendsOn(stream.channel())))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
-                        action.logistics(light.logistics());
+                        action.logistics(light.logistics().keySet());
                         actions.put(key, action);
                     }
                 }
@@ -931,10 +932,10 @@ public final class LaserNetworks {
                 // An area prism's light works on its area: one action each, as beam -1.
                 if (node.area() != null && core.packed() != Lens.NONE) {
                     for (Light.Stream stream : core.acting()) {
-                        LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
+                        LensAction.Key key = new LensAction.Key(pos, -1, stream.action(), stream.channel());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(null, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
-                                sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
+                        action.update(null, stream, collectors.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), collectsOn(stream.channel()))),
+                                sendersFor(stream, senders.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), sendsOn(stream.channel())))),
                                 node.area(), core.reach(), core.marks(), 0);
                         action.within(node::inArea);
                         actions.put(key, action);
@@ -943,6 +944,16 @@ public final class LaserNetworks {
             }
             node.showBeams(shown(pos, list));
         }
+    }
+
+    /** A collecting port (or controller) serving {@code channel}. */
+    private static java.util.function.Predicate<LaserNode> collectsOn(int channel) {
+        return node -> node.collects() && Channels.serves(node.channel(), channel);
+    }
+
+    /** A sending port (or controller) serving {@code channel}. */
+    private static java.util.function.Predicate<LaserNode> sendsOn(int channel) {
+        return node -> node.sends() && Channels.serves(node.channel(), channel);
     }
 
     /**
@@ -1257,7 +1268,7 @@ public final class LaserNetworks {
         if (networks == null) return null;
         Light light = networks.lights.get(pos);
         if (light == null || light.logistics().size() != 1) return null;
-        return networks.nodes.get(light.logistics().iterator().next()) instanceof LogisticsController controller ? controller : null;
+        return networks.nodes.get(light.logistics().keySet().iterator().next()) instanceof LogisticsController controller ? controller : null;
     }
 
     /** Pays {@code fe} from what the sources at {@code feeders} have left this tick, by what each has; nothing if they haven't enough. */

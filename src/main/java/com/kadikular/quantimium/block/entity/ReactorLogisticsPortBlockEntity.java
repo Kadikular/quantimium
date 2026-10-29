@@ -739,10 +739,29 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         return new com.kadikular.quantimium.menu.ReactorLogisticsPortMenu(containerId, inventory, this);
     }
 
+    /** The channel it serves ({@link com.kadikular.quantimium.laser.Channels}): 0 unless set. */
+    private int channel;
+
+    @Override
+    public int channel() {
+        return channel;
+    }
+
+    /** Sets its channel: the network works itself out again. */
+    public void setChannel(int channel) {
+        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        setChanged();
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            com.kadikular.quantimium.laser.LaserNetworks.changed(level);
+        }
+    }
+
     @Override
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         out.putInt("Priority", priority);
+        out.putInt("Channel", channel);
         out.putBoolean("Storing", storing);
         out.putBoolean("Sharing", sharing);
         out.putBoolean("Allow", allow);
@@ -755,6 +774,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         priority = in.getIntOr("Priority", 0);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
         storing = in.getBooleanOr("Storing", true);
         sharing = in.getBooleanOr("Sharing", true);
         allow = in.getBooleanOr("Allow", true);

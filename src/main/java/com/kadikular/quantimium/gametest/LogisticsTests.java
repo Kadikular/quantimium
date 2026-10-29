@@ -232,6 +232,22 @@ public final class LogisticsTests {
         helper.succeedWhen(() -> helper.assertValueEqual(count(helper, 7, Items.IRON_INGOT), 12, "the ingots came from the provider"));
     }
 
+    // covers: laser.channels.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels", timeoutTicks = 100)
+    public static void aReceptacleJoinsAControllerOnItsChannel(GameTestHelper helper) {
+        // A controller on channel 3: the receptacle on 3 and the one on All join it; the one on 0 doesn't.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true).setChannel(3);
+        Receptacle on0 = onChest(helper, 4, LogisticsMember.Role.STORAGE, false);
+        Receptacle on3 = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
+        Receptacle onAll = onChest(helper, 8, LogisticsMember.Role.STORAGE, false);
+        on3.setChannel(3);
+        onAll.setChannel(com.kadikular.quantimium.laser.Channels.ALL);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(on3.isConnected() && onAll.isConnected(), "on channel 3 and on All: on the network");
+            helper.assertFalse(on0.isConnected(), "on channel 0: not");
+        });
+    }
+
     // covers: laser.logistics.network
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void anIsolatorCutsTheNetwork(GameTestHelper helper) {

@@ -223,6 +223,11 @@ public interface LaserNode {
         return false;
     }
 
+    /** The channel it serves ({@link Channels}): a Laser Port, Tank or Logistics Controller works only with actions on it. */
+    default int channel() {
+        return 0;
+    }
+
     /** Whether this sends items down the beam, from its slots: a sending Laser Port. */
     default boolean sends() {
         return false;

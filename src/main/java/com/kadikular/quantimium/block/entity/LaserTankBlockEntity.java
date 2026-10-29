@@ -433,9 +433,28 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
         if (level != null) LaserNetworks.remove(level, this);
     }
 
+    /** The channel it serves ({@link com.kadikular.quantimium.laser.Channels}): 0 unless set. */
+    private int channel;
+
+    @Override
+    public int channel() {
+        return channel;
+    }
+
+    /** Sets its channel: the network works itself out again. */
+    public void setChannel(int channel) {
+        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        setChanged();
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            com.kadikular.quantimium.laser.LaserNetworks.changed(level);
+        }
+    }
+
     @Override
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
+        out.putInt("Channel", channel);
         out.store("Tanks", FluidStack.OPTIONAL_CODEC.listOf(), tanks.contents());
         out.putInt("RelayMode", mode.ordinal());
         List<net.minecraft.world.item.ItemStack> entries = new java.util.ArrayList<>();
@@ -450,6 +469,7 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
     @Override
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
         tanks.load(in.read("Tanks", FluidStack.OPTIONAL_CODEC.listOf()).orElse(List.of()));
         LaserPortBlockEntity.Mode[] modes = LaserPortBlockEntity.Mode.values();
         mode = modes[Math.floorMod(in.getIntOr("RelayMode", 0), modes.length)];

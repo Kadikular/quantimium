@@ -32,7 +32,12 @@ import java.util.List;
 public final class LensAction {
 
     /** Which: its node, which of the node's beams, and which action. */
-    public record Key(BlockPos node, int beam, Lens action) {}
+    /** One action on one beam (-1: a prism's area), on its channel. */
+    public record Key(BlockPos node, int beam, Lens action, int channel) {
+        public Key(BlockPos node, int beam, Lens action) {
+            this(node, beam, action, 0);
+        }
+    }
 
     private final Key key;
     private LaserBeam beam;

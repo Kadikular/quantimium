@@ -38,6 +38,11 @@ public interface LogisticsMember {
     /** Higher goes first: storage is filled from the highest and emptied from the lowest. */
     int priority();
 
+    /** The channel it's on ({@link Channels}): it joins only a Logistics Controller on it (either on All). */
+    default int channel() {
+        return 0;
+    }
+
     /** Whether its filter lets {@code stack} through. */
     boolean lets(ItemStack stack);
 
