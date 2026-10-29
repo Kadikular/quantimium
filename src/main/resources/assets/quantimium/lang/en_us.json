@@ -1389,6 +1389,7 @@
   "gui.quantimium.reactor_logistics_port.status.tip": "Storage on the network: what the Reactor holds and makes",
   "gui.quantimium.logistics_terminal.craft": "Craft",
   "gui.quantimium.logistics_terminal.craftable": "~%s more can be made",
+  "gui.quantimium.logistics_terminal.craftable_fluid": "~%s mB more can be made",
   "block.quantimium.logistics_materialiser": "Logistics Materializer",
   "block.quantimium.logistics_materialiser.tip": "Lets pipes and storage buses reach the logistics network.",
   "gui.quantimium.logistics_terminal.sort.count": "Sort: by count",

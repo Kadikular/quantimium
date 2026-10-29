@@ -334,13 +334,21 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 if (fluid.isEmpty()) graphics.item(shownStack, x, y);
                 else com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics, fluid, x, y);
                 if (!fluid.isEmpty()) {
-                    // A fluid's amount, in buckets or mB.
-                    String amount = HorizonCoreScreen.fluidCount(cell.count());
+                    // A fluid's amount, in buckets or mB, as the view counts it: what can be made too, in violet.
+                    boolean makeOnly = view == View.SPLIT && cell.count() == 0 && cell.craftable() > 0;
+                    long mb = switch (view) {
+                        case ALL -> cell.count() + cell.craftable();
+                        case SPLIT, REAL -> cell.count();
+                        case CRAFT -> cell.craftable();
+                    };
+                    String amount = makeOnly ? Component.translatable("gui.quantimium.logistics_terminal.craft").getString()
+                            : HorizonCoreScreen.fluidCount(mb);
+                    boolean purple = makeOnly || view == View.CRAFT || view == View.ALL && cell.count() == 0;
                     graphics.nextStratum();
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(x + 16, y + 11);
                     graphics.pose().scale(0.5f, 0.5f);
-                    graphics.text(font, amount, -font.width(amount), 0, 0xFFFFFFFF, true);
+                    graphics.text(font, amount, -font.width(amount), 0, purple ? 0xFFB49CFF : 0xFFFFFFFF, true);
                     graphics.pose().popMatrix();
                     continue;
                 }
@@ -391,6 +399,10 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
         List<Component> lines = new ArrayList<>(getTooltipFromItem(minecraft, cell.item().toStack(1)));
         if (com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1))) {
             lines.add(Component.translatable("gui.quantimium.logistics_terminal.fluid", String.format(Locale.ROOT, "%,d", cell.count())).withStyle(ChatFormatting.GRAY));
+            if (cell.craftable() > 0) {
+                lines.add(Component.translatable("gui.quantimium.logistics_terminal.craftable_fluid", String.format(Locale.ROOT, "%,d", cell.craftable()))
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
+            }
             lines.add(Component.translatable("gui.quantimium.logistics_terminal.fluid.tip").withStyle(ChatFormatting.DARK_GRAY));
             graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
             return;
