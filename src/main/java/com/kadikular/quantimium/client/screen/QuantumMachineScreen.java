@@ -382,7 +382,12 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     }
 
     public final void openSideConfig(OpenSideConfigPayload payload) {
-        openOverlay(new SidesPage(this::panelArea, rail(), payload.pos(), payload.configs(), payload.profile(), sideSlotMasks()));
+        openOverlay(new SidesPage(this::panelArea, rail(), payload.pos(), payload.configs(), payload.profile(), sideSlotMasks(), sideFluidOutputTanks()));
+    }
+
+    /** Whether its fluids leave from tanks a face picks among; false when a face just gives them or doesn't. */
+    protected boolean sideFluidOutputTanks() {
+        return true;
     }
 
     /** Whether each face also picks which of the machine's input slots it may fill or empty. */

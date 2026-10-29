@@ -52,6 +52,8 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private static final int TANK_CELL = 90_000;
     /** A grid cell for pin {@code i} with none there or to be made: this plus i. */
     private static final int PIN_CELL = 95_000;
+    /** A pinned cell's outline: a Materializer's export colour. */
+    private static final int PINNED = 0xFFE8B030;
     private static final int COHERENCE_X = 72;
     private static final int COHERENCE_Y = 60;
     private static final int COHERENCE_WIDTH = 32;
@@ -144,6 +146,12 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     @Override
     protected boolean sideSlotMasks() {
         return true;
+    }
+
+    /** What it gives of fluids isn't in tanks a face picks: its output tanks only hold what's made besides items. */
+    @Override
+    protected boolean sideFluidOutputTanks() {
+        return false;
     }
 
     @Override
@@ -357,9 +365,9 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                 int x = leftPos + GRID_X + col * CELL;
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
-                // Pinned: a mark in the top left corner; with none there or to be made, a 0.
+                // Pinned: outlined, as a Materializer's exports are; with none there or to be made, a 0.
                 if (cell.pinned()) {
-                    graphics.fill(x - 1, y - 1, x + 2, y + 2, QuantumUiColours.ACCENT);
+                    graphics.outline(x - 1, y - 1, CELL, CELL, PINNED);
                     if (cell.count() == 0) {
                         net.neoforged.neoforge.fluids.FluidStack none = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(cell.stack());
                         if (none.isEmpty()) graphics.item(cell.stack(), x, y);

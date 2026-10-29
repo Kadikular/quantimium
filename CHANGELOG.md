@@ -43,8 +43,8 @@
   Port shows the Reactor's fluids as AE2 fluids, takes them in and out, and lets the Reactor make from the network's
   fluids; its patterns ask for and give fluids as fluids.
 - Fluid gauges are marked like a measuring jug.
-- **The Crafter's faces set fluids apart from items** in its Sides tab, with auto input and output. A pipe or bus
-  takes what a recipe making only fluids shows, made as it takes it.
+- **The Crafter's faces set fluids apart from items** in its Sides tab, with auto input and output. A face gives
+  what its output tanks hold and what a recipe making only fluids shows, made as a pipe, bus or auto output takes it.
 - The Horizon Core shows fluids with their texture, in mB and buckets, sorted as a bucket to an item.
 - A Reactor no longer counts empty buckets as water it could make: filling and emptying buckets made it show far more
   of every fluid than it had.

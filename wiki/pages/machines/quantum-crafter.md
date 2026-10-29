@@ -245,9 +245,10 @@ network sees each ghost as a slot after the outputs, on any face that lets somet
   bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
   as you fill from it.
 - [[mechanic:crafter.fluid_sides]] Each face has its own fluid mode in the Sides tab, every face Both to
-  start. Pipes fill the input tanks and drain the output tanks, and take what a recipe making only
-  fluids shows, made as they take it. Auto input and output move up to {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB
-  a second; locked, auto output makes pinned fluids too.
+  start. Pipes fill the input tanks, and a face picks which of them. A face giving fluids gives what the
+  output tanks hold and what a recipe making only fluids shows, made as it's taken, with no tanks to
+  pick. Auto input and output move up to {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB a second; locked, auto output
+  gives only pinned fluids.
 - A bucket used on the crafter
   fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
   bucket to fill or empty it.

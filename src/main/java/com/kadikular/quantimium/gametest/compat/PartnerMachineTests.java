@@ -127,6 +127,31 @@ public final class PartnerMachineTests {
         });
     }
 
+    // covers: crafter.fluid_sides
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluid_auto", timeoutTicks = 80)
+    public static void autoOutputPushesTheFluidsItMakes(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        // A recipe making only lava, auto output on for items and fluids: the lava goes out as lava, into the tanks of a
+        // Crafter beside it (and nothing breaks looking for an item it makes).
+        var liquefier = fluidCrafter(helper, 2, "energizedpower:stone_liquefier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(liquefier, new ItemStack(net.minecraft.world.item.Items.ANDESITE, 8));
+        var beside = fluidCrafter(helper, 3, "energizedpower:stone_solidifier");
+        var east = net.minecraft.core.Direction.EAST;
+        var configs = new java.util.ArrayList<>(liquefier.getSideConfigs());
+        configs.set(east.get3DDataValue(), new com.kadikular.quantimium.block.entity.simulation.SideConfig(east,
+                com.kadikular.quantimium.block.entity.simulation.SideMode.BOTH, com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_ITEM_INPUTS,
+                com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_ITEM_OUTPUTS, false, true,
+                com.kadikular.quantimium.block.entity.simulation.SideMode.BOTH, com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_FLUID_INPUTS,
+                com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_FLUID_OUTPUTS, false, true));
+        liquefier.applySideConfigs(configs);
+        helper.runAfterDelay(70, () -> {
+            var got = beside.inputTanks().get(0);
+            helper.assertTrue(got.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && got.getAmount() > 0, "lava pushed into the next Crafter: " + got);
+            helper.assertTrue(andesite(liquefier) < 8, "andesite melted for it");
+            helper.succeed();
+        });
+    }
+
     private static int andesite(com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity crafter) {
         int count = 0;
         for (int slot = 0; slot < com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.INPUT_SLOTS; slot++) {
