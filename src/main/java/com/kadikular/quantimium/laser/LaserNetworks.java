@@ -1267,12 +1267,39 @@ public final class LaserNetworks {
      */
     @Nullable
     public static LogisticsController logisticsAt(Level level, BlockPos pos) {
+        return logisticsAt(level, pos, Channels.ALL);
+    }
+
+    /** As {@link #logisticsAt(Level, BlockPos)}, of the controllers on {@code channel} (either on All). */
+    @Nullable
+    public static LogisticsController logisticsAt(Level level, BlockPos pos, int channel) {
         if (!(level instanceof ServerLevel server)) return null;
         LaserNetworks networks = LEVELS.get(server);
         if (networks == null) return null;
         Light light = networks.lights.get(pos);
-        if (light == null || light.logistics().size() != 1) return null;
-        return networks.nodes.get(light.logistics().keySet().iterator().next()) instanceof LogisticsController controller ? controller : null;
+        if (light == null) return null;
+        LogisticsController found = null;
+        for (var feed : light.logistics().entrySet()) {
+            if (!Channels.serves(channel, feed.getValue()) || !(networks.nodes.get(feed.getKey()) instanceof LogisticsController controller)) continue;
+            if (found != null) return null;
+            found = controller;
+        }
+        return found;
+    }
+
+    /** Every Logistics Controller whose light reaches the node at {@code pos}, on any channel. */
+    public static List<LogisticsController> logisticsAllAt(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return List.of();
+        LaserNetworks networks = LEVELS.get(server);
+        if (networks == null) return List.of();
+        Light light = networks.lights.get(pos);
+        if (light == null) return List.of();
+        List<LogisticsController> found = new ArrayList<>();
+        for (BlockPos at : light.logistics().keySet()) {
+            if (networks.nodes.get(at) instanceof LogisticsController controller) found.add(controller);
+        }
+        found.sort(java.util.Comparator.comparingLong(controller -> controller instanceof LaserNode node ? node.nodePos().asLong() : 0));
+        return found;
     }
 
     /** Pays {@code fe} from what the sources at {@code feeders} have left this tick, by what each has; nothing if they haven't enough. */

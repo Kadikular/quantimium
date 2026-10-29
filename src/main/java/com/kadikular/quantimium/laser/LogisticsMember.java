@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.laser;
 
+import java.util.List;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -140,9 +142,9 @@ public interface LogisticsMember {
         return maker != null && maker.makesOnDemand(slot);
     }
 
-    /** Another network's offers, when it sits on that network's Logistics Materialiser; null otherwise. */
+    /** Other networks' offers, when it sits on a Logistics Materialiser (every network reaching it); null otherwise. */
     @Nullable
-    default OfferTable imports() {
+    default List<OfferTable> imports() {
         return null;
     }
 

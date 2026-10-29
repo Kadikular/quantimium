@@ -97,7 +97,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu implements Chan
                                   boolean remote) {
         super(ModMenuTypes.LOGISTICS_TERMINAL_MENU.get(), containerId);
         this.terminal = terminal;
-        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(terminal == null || terminal.getLevel() == null || terminal.getLevel().isClientSide() ? null : () -> terminal.controller() instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller ? controller.channel() : 0));
+        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(terminal == null || terminal.getLevel() == null || terminal.getLevel().isClientSide() ? null : terminal::channel));
         this.pos = pos;
         this.remote = remote;
         this.player = playerInv.player;
@@ -673,6 +673,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu implements Chan
 
     @Override
     public void setChannel(int channel) {
-        if (terminal != null && terminal.controller() instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller) controller.setChannel(channel);
+        // Which network it shows: the controller on that channel.
+        if (terminal != null) terminal.setChannel(channel);
     }
 }

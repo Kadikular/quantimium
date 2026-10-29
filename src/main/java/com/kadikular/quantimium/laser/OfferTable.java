@@ -618,24 +618,26 @@ public final class OfferTable {
             for (LogisticsMember member : sorted) {
                 if (member.role() == LogisticsMember.Role.REQUESTER) continue;
                 BlockPos pos = member.inventoryPos();
-                OfferTable imported = member.imports();
-                if (imported != null) {
-                    // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
-                    // offered here too, real as real and craftable as craftable.
-                    if (imported.pending) early = true;
-                    if (imported.origins().contains(at)) continue;
-                    origins.addAll(imported.origins());
-                    imported.real.forEach((item, amount) -> {
-                        // Fluids aren't carried between networks (yet).
-                        if (item.is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) return;
-                        if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
-                    });
-                    if (member.offersCraftable()) {
-                        for (Entry entry : imported.entries()) {
-                            if (entry.craftable() <= 0) continue;
-                            if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
-                            offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of(), false));
-                            tiers.merge(entry.item(), entry.tier(), Math::min);
+                List<OfferTable> importing = member.imports();
+                if (importing != null) {
+                    for (OfferTable imported : importing) {
+                        // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
+                        // offered here too, real as real and craftable as craftable.
+                        if (imported.pending) early = true;
+                        if (imported.origins().contains(at)) continue;
+                        origins.addAll(imported.origins());
+                        imported.real.forEach((item, amount) -> {
+                            // Fluids aren't carried between networks (yet).
+                            if (item.is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) return;
+                            if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
+                        });
+                        if (member.offersCraftable()) {
+                            for (Entry entry : imported.entries()) {
+                                if (entry.craftable() <= 0) continue;
+                                if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
+                                offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of(), false));
+                                tiers.merge(entry.item(), entry.tier(), Math::min);
+                            }
                         }
                     }
                     continue;

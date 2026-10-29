@@ -78,6 +78,7 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
         super.saveAdditional(out);
+        out.putInt("Channel", channel);
         out.store("CraftGrid", ItemStack.OPTIONAL_CODEC.listOf(), List.copyOf(craftItems));
         out.store("CraftGhosts", ItemStack.OPTIONAL_CODEC.listOf(), List.of(craftGhosts));
     }
@@ -85,6 +86,7 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
     @Override
     protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
         super.loadAdditional(in);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
         List<ItemStack> grid = in.read("CraftGrid", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         List<ItemStack> ghosts = in.read("CraftGhosts", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         for (int i = 0; i < 9; i++) {
@@ -99,10 +101,22 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         if (level != null) net.minecraft.world.Containers.dropContents(level, pos, craftItems);
     }
 
-    /** The controller whose light reaches it, or null. Server side. */
+    /** Which network it shows: the controller on this channel whose light reaches it. 0 unless set. */
+    private int channel;
+
+    public int channel() {
+        return channel;
+    }
+
+    public void setChannel(int channel) {
+        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        setChanged();
+    }
+
+    /** The controller on its channel whose light reaches it, or null. Server side. */
     @Nullable
     public LogisticsController controller() {
-        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);
+        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition, channel);
     }
 
     private List<LogisticsMember> members() {

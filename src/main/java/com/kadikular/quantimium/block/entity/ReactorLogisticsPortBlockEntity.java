@@ -603,7 +603,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
 
     @Nullable
     private LogisticsController controller() {
-        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);
+        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition, channel);
     }
 
     /** The network's members, never a Reactor Logistics Port: the Reactor is never shown itself. */

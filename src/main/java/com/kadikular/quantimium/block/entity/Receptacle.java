@@ -175,14 +175,15 @@ public final class Receptacle implements LogisticsMember {
         return level.getBlockEntity(inventoryPos()) instanceof com.kadikular.quantimium.laser.OfferMaker maker ? maker : null;
     }
 
-    /** On another network's Logistics Materialiser: that network's offers, as its mode lets them out. */
+    /** On a Logistics Materialiser: the offers of every network reaching it, as its mode lets them out. */
     @Override
     @Nullable
-    public com.kadikular.quantimium.laser.OfferTable imports() {
+    public List<com.kadikular.quantimium.laser.OfferTable> imports() {
         Level level = getLevel();
         if (level == null || !(level.getBlockEntity(inventoryPos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) return null;
-        com.kadikular.quantimium.laser.LogisticsController theirs = materialiser.controller();
-        return theirs == null ? null : materialiser.offersFor(theirs);
+        List<com.kadikular.quantimium.laser.OfferTable> tables = new ArrayList<>();
+        for (var theirs : materialiser.controllers()) tables.add(materialiser.offersFor(theirs));
+        return tables;
     }
 
     public void toggleActive() {

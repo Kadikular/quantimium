@@ -248,6 +248,45 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: laser.channels.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_terminal", timeoutTicks = 100)
+    public static void aTerminalShowsTheNetworkOnItsChannel(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true).setChannel(3);
+        BlockPos at = new BlockPos(6, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(terminal.controller() == null, "on channel 0: not the controller on 3");
+            terminal.setChannel(3);
+            helper.assertTrue(terminal.controller() != null, "on channel 3: it");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.channels.logistics, laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_materialiser", timeoutTicks = 120)
+    public static void aMaterialiserOffersEveryChannelsNetwork(GameTestHelper helper) {
+        // Two controllers on channels 0 and 3, their lasers both ending on one Materializer: it offers both networks' items.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 5, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT, 5));
+        controller(helper, new BlockPos(12, Y, 2), Direction.SOUTH, true).setChannel(3);
+        helper.setBlock(new BlockPos(12, Y - 1, 5), Blocks.CHEST);
+        helper.getBlockEntity(new BlockPos(12, Y - 1, 5), ChestBlockEntity.class).setItem(0, new ItemStack(Items.COBBLESTONE, 7));
+        TestSupport.receptacle(helper, new BlockPos(12, Y, 5), Direction.DOWN).setChannel(3);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.succeedWhen(() -> {
+            var handler = network(helper);
+            helper.assertTrue(handler != null, "the Materializer on a network");
+            long dirt = 0, cobble = 0;
+            for (int i = 0; i < handler.size(); i++) {
+                if (handler.getResource(i).is(Items.DIRT)) dirt += handler.getAmountAsLong(i);
+                if (handler.getResource(i).is(Items.COBBLESTONE)) cobble += handler.getAmountAsLong(i);
+            }
+            helper.assertValueEqual(dirt, 5L, "channel 0's dirt");
+            helper.assertValueEqual(cobble, 7L, "channel 3's cobblestone");
+        });
+    }
+
     // covers: laser.logistics.network
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void anIsolatorCutsTheNetwork(GameTestHelper helper) {

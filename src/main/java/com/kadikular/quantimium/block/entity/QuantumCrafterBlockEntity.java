@@ -864,12 +864,23 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 continue;
             }
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
-            com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
-            if (controller == null) continue;
-            views.put(bound, network != null && controller == network && stock != null
-                    ? handlerFor(stock)
-                    // What's stored only: a Crafter draws nothing made through a Materialiser (a chain is a Reactor's).
-                    : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), false));
+            List<com.kadikular.quantimium.laser.LogisticsController> controllers = materialiser.controllers();
+            if (controllers.isEmpty()) continue;
+            List<com.kadikular.quantimium.laser.StockHandler> each = new ArrayList<>(controllers.size());
+            for (var controller : controllers) {
+                each.add(network != null && controller == network && stock != null
+                        ? handlerFor(stock)
+                        // What's stored only: a Crafter draws nothing made through a Materialiser (a chain is a Reactor's).
+                        : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), false));
+            }
+            if (each.size() == 1) {
+                views.put(bound, each.getFirst());
+                continue;
+            }
+            // Every network reaching it (one on each channel), as one.
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> all = new java.util.LinkedHashMap<>();
+            for (var handler : each) handler.amounts().forEach((item, n) -> all.merge(item, n, Long::sum));
+            views.put(bound, new com.kadikular.quantimium.laser.StockHandler(all));
         }
         return views;
     }
@@ -920,8 +931,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
             if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
-            var controller = materialiser.controller();
-            if (controller != null && !networks.contains(controller)) networks.add(controller);
+            for (var controller : materialiser.controllers()) if (!networks.contains(controller)) networks.add(controller);
         }
         return networks;
     }
