@@ -64,7 +64,7 @@
 - **The Logistics Controller has a screen**: its receptacles, its power, and its channel.
 - **The Spectroscope has a screen**: the laser split into its spectrum, a line for each action (shaped by its
   modifiers) and a band for logistics, a channel picker, and a table of its actions and the ports they use. Aim it at a
-  laser in the air to read that beam.
+  laser in the air to read it.
 
 ### Quantum Crafter
 

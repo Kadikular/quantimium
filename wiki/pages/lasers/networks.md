@@ -31,7 +31,7 @@ Use the Flux Meter, or look with Jade, at an emitter, mirror or relay to see wha
 ## Reading a laser
 
 [[mechanic:laser.spectroscope]] The [[item:spectroscope]] splits a laser into its lines. Use it on any laser block to read the
-laser leaving it, or aim it at a laser in the air (up to 16 blocks off) to read that beam.
+laser leaving it, or aim it at a laser in the air (up to 16 blocks off) to read that laser.
 
 - **The spectrum.** Each action is a line at its own place, ordered by its lens's color from red to violet. Amplify
   makes a line taller and Speed wider; a Filter cuts a notch in it, Pickup puts a dot over it, Harmonic adds a line

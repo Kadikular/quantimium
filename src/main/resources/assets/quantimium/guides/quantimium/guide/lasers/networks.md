@@ -38,7 +38,7 @@ A run of laser reaches as far as its source's range. Mirrors, relays, prisms and
 ## Reading a laser
 
 The <ItemLink id="quantimium:spectroscope" /> splits a laser into its lines. Use it on any laser block to read the
-laser leaving it, or aim it at a laser in the air (up to 16 blocks off) to read that beam.
+laser leaving it, or aim it at a laser in the air (up to 16 blocks off) to read that laser.
 
 - **The spectrum.** Each action is a line at its own place, ordered by its lens's color from red to violet. Amplify
   makes a line taller and Speed wider; a Filter cuts a notch in it, Pickup puts a dot over it, Harmonic adds a line
