@@ -301,7 +301,7 @@ public final class Logistics {
         if (requester.requestsCraftable()) {
             for (LogisticsMember source : highestFirst) {
                 if (budget <= 0) break;
-                if (source.role() != LogisticsMember.Role.PROVIDER || source.inventoryPos().equals(requester.inventoryPos())) continue;
+                if (source.role() == LogisticsMember.Role.REQUESTER || source.inventoryPos().equals(requester.inventoryPos())) continue;
                 IFluidHandler from = source.madeFluids();
                 if (from == null) continue;
                 for (int tank = 0; tank < from.getTanks() && budget > 0; tank++) {
@@ -394,13 +394,13 @@ public final class Logistics {
         return makeFluid(members, each -> FluidStack.isSameFluidSameComponents(each, fluid), max, simulate);
     }
 
-    /** Makes up to {@code max} mB of the first fluid {@code wants} accepts, by what providers' machines make of only fluids, made as it's drained. */
+    /** Makes up to {@code max} mB of the first fluid {@code wants} accepts, by what members make of fluids (a provider on a Crafter, a Reactor), made as it's drained. */
     public static FluidStack makeFluid(List<LogisticsMember> members, java.util.function.Predicate<FluidStack> wants, int max, boolean simulate) {
         IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
         FluidStack got = FluidStack.EMPTY;
         for (LogisticsMember source : byPriority(members, true)) {
             if (got.getAmount() >= max) break;
-            if (source.role() != LogisticsMember.Role.PROVIDER) continue;
+            if (source.role() == LogisticsMember.Role.REQUESTER) continue;
             IFluidHandler from = source.madeFluids();
             if (from == null) continue;
             for (int tank = 0; tank < from.getTanks() && got.getAmount() < max; tank++) {

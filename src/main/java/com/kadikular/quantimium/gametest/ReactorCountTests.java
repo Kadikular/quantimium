@@ -162,6 +162,23 @@ public final class ReactorCountTests {
         helper.succeed();
     }
 
+    // covers: reactor.planning.choice
+    @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
+    public static void aRecipeWithItsIngredientsOnHandComesFirst(GameTestHelper helper) {
+        // Lava from cobblestone, or more of it from andesite that would first be made of cobblestone and quartz: with
+        // cobblestone held, it's melted as it is.
+        Item lava = DUST;
+        ReactorRecipes recipes = ReactorRecipes.of(List.of(), List.of(
+                recipe(Items.COBBLESTONE, 1, lava, 1),
+                recipe(Items.ANDESITE, 1, lava, 4),
+                shape(List.of(input(Items.COBBLESTONE, 1), input(Items.QUARTZ, 1)), Items.ANDESITE, 1)));
+        ReactorPlanner.Result result = ReactorPlanner.plan(recipes, resources(Map.of(Items.COBBLESTONE, 10L, Items.QUARTZ, 10L)), of(lava), 1);
+        helper.assertTrue(result.planned(), "lava: " + result.problem());
+        helper.assertValueEqual(result.plan().steps().size(), 1, "one step: melting the cobblestone, " + result.plan().steps());
+        helper.assertTrue(result.plan().consumed().get(of(Items.QUARTZ)) == null, "no quartz used");
+        helper.succeed();
+    }
+
     // covers: reactor.planning.tools
     @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
     public static void aPressIsNeededButNeverUsedUp(GameTestHelper helper) {

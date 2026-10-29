@@ -573,6 +573,72 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         }
     };
 
+    /** The fluids the Reactor would make, to a network taking them: made as they're drained. */
+    @Override
+    @Nullable
+    public net.neoforged.neoforge.fluids.capability.IFluidHandler madeFluids() {
+        return core() == null || !offersCraftable() ? null : madeView;
+    }
+
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler madeView = new net.neoforged.neoforge.fluids.capability.IFluidHandler() {
+        /** Its offers of fluids it could make, in order: all of each, held, passed on, and made. */
+        private List<Offer> made() {
+            List<Offer> out = new ArrayList<>();
+            for (Offer offer : offers()) if (com.kadikular.quantimium.recipe.FluidEntry.is(offer.item()) && offer.craftable() > 0) out.add(offer);
+            return out;
+        }
+
+        private static long all(Offer offer) {
+            return offer.held() + offer.passed() + offer.craftable();
+        }
+
+        @Override
+        public int getTanks() {
+            return made().size();
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack getFluidInTank(int tank) {
+            List<Offer> list = made();
+            if (tank < 0 || tank >= list.size()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            return com.kadikular.quantimium.recipe.FluidEntry.fluid(list.get(tank).item()).toStack((int) Math.min(Integer.MAX_VALUE, all(list.get(tank))));
+        }
+
+        @Override
+        public int getTankCapacity(int tank) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isFluidValid(int tank, net.neoforged.neoforge.fluids.FluidStack stack) {
+            return false;
+        }
+
+        @Override
+        public int fill(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+            return 0;
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack drain(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+            if (resource.isEmpty() || !catchUp()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            Offer offer = offerMap.get(com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(resource)));
+            if (offer == null) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            int most = (int) Math.min(resource.getAmount(), all(offer));
+            if (most <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            ItemStack got = action.execute() && Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
+                    ? promises.out(offer, most) : give(offer, most, action.simulate());
+            return got.isEmpty() ? net.neoforged.neoforge.fluids.FluidStack.EMPTY : resource.copyWithAmount(got.getCount());
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack drain(int maxDrain, FluidAction action) {
+            List<Offer> list = made();
+            if (list.isEmpty() || maxDrain <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            return drain(com.kadikular.quantimium.recipe.FluidEntry.fluid(list.getFirst().item()).toStack(maxDrain), action);
+        }
+    };
+
     @Override
     public BlockPos inventoryPos() {
         return worldPosition;

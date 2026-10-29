@@ -120,9 +120,14 @@ public final class ReactorPlanner {
 
         List<ReactorRecipes.Producer> producers = new ArrayList<>(recipes.producersOf(item));
         if (producers.isEmpty()) return shortOf(item, n);
-        // The recipe that uses least per item first, so six stone never go into four stairs when a
-        // stonecutter makes one from each; energy only breaks ties.
-        producers.sort(Comparator.<ReactorRecipes.Producer>comparingDouble(p -> materialPerItem(p, item))
+        // A recipe whose ingredients are all on hand first: lava from the cobblestone there, not from andesite it would
+        // have to make. Then the one that uses least per item, so six stone never go into four stairs when a stonecutter
+        // makes one from each; energy only breaks ties.
+        long wanted = n;
+        Map<ReactorRecipes.Producer, Boolean> onHand = new java.util.IdentityHashMap<>();
+        for (ReactorRecipes.Producer producer : producers) onHand.put(producer, onHand(producer, item, wanted));
+        producers.sort(Comparator.<ReactorRecipes.Producer, Boolean>comparing(p -> !onHand.get(p))
+                .thenComparingDouble(p -> materialPerItem(p, item))
                 .thenComparingDouble(p -> (double) p.shape().baseFe() / Math.max(1, p.yieldOf(item))));
         for (ReactorRecipes.Producer producer : producers) {
             long per = producer.yieldOf(item);
@@ -260,6 +265,23 @@ public final class ReactorPlanner {
             add(made, ItemResource.of(worn), 1);
         }
         return uses - used;
+    }
+
+    /** Whether everything {@code producer} takes to make {@code n} of {@code item} is on hand: held, or made already. */
+    private boolean onHand(ReactorRecipes.Producer producer, ItemResource item, long n) {
+        long per = producer.yieldOf(item);
+        if (per <= 0) return false;
+        long runs = (n + per - 1) / per;
+        for (RecipeShape.Input input : producer.shape().inputs()) {
+            long have = 0;
+            for (Map<ItemResource, Long> pool : List.of(made, stock)) {
+                for (ItemResource each : matching(pool, input.ingredient())) {
+                    if (input.ingredient().test(each.toStack(1))) have += pool.getOrDefault(each, 0L);
+                }
+            }
+            if (have < input.count() * runs) return false;
+        }
+        return true;
     }
 
     /** Items a recipe takes for each one of {@code item} it makes: how wasteful it is. */

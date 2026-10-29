@@ -50,6 +50,10 @@
 - **Make to storage**: middle-click something that can be made in a Logistics Terminal, pick how many (up to what can
   be made), and it's made and kept in storage, items or fluids, if storage has room.
 - The terminal counts fluids that can be made, as it counts items.
+- **The Reactor's fluids it could make are on its network**: listed as craftable, and made as a terminal or a requester
+  that requests what can be made takes them.
+- A Reactor making something uses a recipe whose ingredients it has on hand first: lava from the cobblestone held, not
+  from andesite it would first have to make.
 - The Horizon Core shows fluids with their texture, in mB and buckets, sorted as a bucket to an item.
 - A Reactor no longer counts empty buckets as water it could make: filling and emptying buckets made it show far more
   of every fluid than it had.

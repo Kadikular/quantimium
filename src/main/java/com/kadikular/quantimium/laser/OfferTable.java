@@ -655,8 +655,14 @@ public final class OfferTable {
                 if (listing != null) {
                     // A Reactor's port: what it holds is real, what it could make is craftable, already worked out.
                     listing.forEach((item, both) -> {
-                        // Fluids are read from its tanks, above.
-                        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) return;
+                        // Fluids it holds are read from its tanks, above; what it could make of them is craftable here.
+                        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) {
+                            if (both[1] > 0 && member.offersCraftable()) {
+                                offer(craftable, item, pos, new Source(both[1], Set.of(), false));
+                                tiers.merge(item, 1, Math::min);
+                            }
+                            return;
+                        }
                         if (both[0] > 0) real.merge(item, both[0], Long::sum);
                         if (both[1] > 0 && member.offersCraftable()) {
                             offer(craftable, item, pos, new Source(both[1], Set.of(), false));

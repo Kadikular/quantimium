@@ -862,6 +862,31 @@ public final class LogisticsTests {
         });
     }
 
+    // covers: reactor.fluids, crafter.fluid_network
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor_made_fluids", timeoutTicks = 120)
+    public static void aNetworkTakesTheFluidsTheReactorMakes(GameTestHelper helper) {
+        // Two lava buckets in the Reactor and no lava: the network lists lava it could make (emptying the buckets), and a
+        // take of a bucket's worth makes it.
+        var core = ReactorTests.buildReactor(helper, 1);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        var controller = controller(helper, portAt.east(3), Direction.WEST, true);
+        core.take(resource(Items.LAVA_BUCKET), 2);
+        var lava = new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 1);
+        var key = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(lava));
+        helper.runAfterDelay(60, () -> {
+            long craftable = settled(() -> controller.offers().craftable(key));
+            helper.assertTrue(craftable >= 1_000, "lava listed as craftable: " + craftable);
+            var got = com.kadikular.quantimium.laser.Logistics.takeFluid(controller.members(),
+                    each -> each.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA), 1_000, false);
+            helper.assertValueEqual(got.getAmount(), 1_000, "a bucket's worth made");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.reactor
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 100)
     public static void theReactorMakesWithWhatTheNetworkShares(GameTestHelper helper) {
