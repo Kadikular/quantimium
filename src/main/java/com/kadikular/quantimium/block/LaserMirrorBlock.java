@@ -205,11 +205,27 @@ public class LaserMirrorBlock extends BaseEntityBlock implements BeamAnchor, com
                 .setValue(OUTPUT, mirror.mirror(state.getValue(OUTPUT)));
     }
 
+    /** Whether the plate's back only lets light through: a one-way splitter's. */
+    public boolean oneWay(BlockState state) {
+        return false;
+    }
+
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
         // Anything else in hand (the Linker, the Spectroscope) does its own thing; an empty hand uses the block.
         if (!stack.is(ModTags.TOOLS_WRENCH)) return stack.isEmpty() ? InteractionResult.TRY_WITH_EMPTY_HAND : InteractionResult.PASS;
+        // A wrench, sneaking, on a splitter: two-way or one-way.
+        if (player.isSecondaryUseActive() && state.hasProperty(LaserSplitterBlock.ONE_WAY)) {
+            if (level.isClientSide()) return InteractionResult.SUCCESS;
+            boolean oneWay = !state.getValue(LaserSplitterBlock.ONE_WAY);
+            level.setBlock(pos, state.setValue(LaserSplitterBlock.ONE_WAY, oneWay), Block.UPDATE_ALL);
+            LaserNetworks.changed(level);
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 1.0f, oneWay ? 0.7f : 1.2f);
+            player.sendOverlayMessage(Component.translatable(oneWay ? "message.quantimium.laser_splitter.one_way" : "message.quantimium.laser_splitter.two_way")
+                    .withStyle(ChatFormatting.AQUA));
+            return InteractionResult.SUCCESS;
+        }
         return set(state, level, pos, player, hit);
     }
 

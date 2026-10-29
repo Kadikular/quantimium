@@ -924,6 +924,8 @@
   "block.quantimium.laser_splitter.tip": "Half-silvered mirror: lets lasers through and reflects them. Set like a Laser Mirror.",
   "block.quantimium.laser_mirror": "Laser Mirror",
   "block.quantimium.laser_mirror.tip": "Reflects lasers. Click a face to set the angle. Sneak-click to move its stand.",
+  "message.quantimium.laser_splitter.one_way": "One-way: its back lets light through without turning it",
+  "message.quantimium.laser_splitter.two_way": "Two-way: both sides turn light",
   "message.quantimium.laser_mirror.mount": "A plate can't face toward its stand",
   "message.quantimium.laser_mirror.facing": "Facing %s",
   "message.quantimium.laser_mirror.tilted": "Facing %s, 22.5° toward %s",

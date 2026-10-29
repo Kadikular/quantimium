@@ -98,6 +98,15 @@ def splitter_plate() -> Image.Image:
     return img
 
 
+def splitter_back() -> Image.Image:
+    """A one-way Laser Splitter's plate from behind: steel, as a Mirror's back, with the plate's 2x2 window through it."""
+    img = steel(31)
+    for x in range(7, 9):
+        for y in range(7, 9):
+            img.putpixel((x, y), (0, 0, 0, 0))
+    return img
+
+
 def laser_focus() -> Image.Image:
     """The focus, where light gathers: white, edged in the beam's light blue. Its 4x4 face is the middle of the texture."""
     img = Image.new("RGBA", (16, 16), hx("f4f8ff", 200))
@@ -362,8 +371,10 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
          "particle": "quantimium:block/laser_mirror_steel"}
     if splits:
         t["focus"] = "quantimium:block/laser_focus"
-    # A half-silvered plate is silver both sides.
-    back = "#plate" if splits else "#steel"
+        # A half-silvered plate is silver both sides; one-way, the back is steel, with the plate's window through it.
+        t["back"] = t["plate"]
+        splitter_back().save(os.path.join(TEX, f"{name}_back.png"))
+    back = "#back" if splits else "#steel"
     opposite = {"up": "down", "down": "up", "north": "south", "south": "north", "east": "west", "west": "east"}
 
     def faced(element, face):
@@ -489,12 +500,15 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
         return parts
 
     def write(model, elements):
-        with open(os.path.join(MODELS, f"{model}.json"), "w") as handle:
-            body = {"parent": "minecraft:block/block", "textures": t, "elements": elements}
-            # A splitter's focus is see-through.
-            if splits:
-                body["render_type"] = "minecraft:translucent"
-            json.dump(body, handle, indent=2)
+        # A splitter's one-way twin: the same, its back steel.
+        twin = splits and not model.endswith("_item")
+        for suffix, textures in [("", t)] + ([("_one_way", dict(t, back=f"quantimium:block/{name}_back"))] if twin else []):
+            with open(os.path.join(MODELS, f"{model}{suffix}.json"), "w") as handle:
+                body = {"parent": "minecraft:block/block", "textures": textures, "elements": elements}
+                # A splitter's focus is see-through.
+                if splits:
+                    body["render_type"] = "minecraft:translucent"
+                json.dump(body, handle, indent=2)
 
     # The ways a floor mirror's plate can face: flat, to up or a side; tilted, up and a side; upright, two sides.
     floor_normals = {}
@@ -532,6 +546,8 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
                 return name
         raise AssertionError(direction)
 
+    # A splitter is two-way or one-way (its back steel); a mirror has no such setting.
+    ways = [({"one_way": "false"}, ""), ({"one_way": "true"}, "_one_way")] if splits else [({}, "")]
     parts = []
     for mount, (rx, ry) in mounts.items():
         for a in DIRS:
@@ -540,8 +556,9 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
                     continue
                 key = "_".join(sorted({back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)}))
                 assert key in floor_normals, (mount, a, b, key)
-                parts.append({"when": {"mount": mount, "input": a, "output": b, "half": "false"},
-                              "apply": dict({"model": f"quantimium:block/{name}_{key}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
+                for way, suffix in ways:
+                    parts.append({"when": dict({"mount": mount, "input": a, "output": b, "half": "false"}, **way),
+                                  "apply": dict({"model": f"quantimium:block/{name}_{key}{suffix}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
         # Turned 22.5 degrees from {a} towards {b}: never from or towards what it stands on.
         for a in DIRS:
             for b in DIRS:
@@ -549,8 +566,9 @@ def laser_mirror(name: str = "laser_mirror", splits: bool = False) -> None:
                     continue
                 fa, fb = back_to_floor(a, rx, ry), back_to_floor(b, rx, ry)
                 assert (fa, fb) in half_turns, (mount, a, b, fa, fb)
-                parts.append({"when": {"mount": mount, "input": a, "output": b, "half": "true"},
-                              "apply": dict({"model": f"quantimium:block/{name}_{fa}_{fb}_half"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
+                for way, suffix in ways:
+                    parts.append({"when": dict({"mount": mount, "input": a, "output": b, "half": "true"}, **way),
+                                  "apply": dict({"model": f"quantimium:block/{name}_{fa}_{fb}_half{suffix}"}, **{k: v for k, v in (("x", rx), ("y", ry)) if v})})
     with open(os.path.join(STATES, f"{name}.json"), "w") as handle:
         json.dump({"multipart": parts}, handle, indent=1)
     with open(os.path.join(ITEMS, f"{name}.json"), "w") as handle:

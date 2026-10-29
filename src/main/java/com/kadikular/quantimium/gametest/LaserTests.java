@@ -1541,6 +1541,34 @@ public final class LaserTests {
         });
     }
 
+    // covers: laser.splitter.one_way
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers_one_way", timeoutTicks = 120)
+    public static void aOneWaySplittersBackOnlyLetsLightThrough(GameTestHelper helper) {
+        // A splitter facing north-east, a laser in from the west onto its back: two-way, it turns south off the back as
+        // well as going on east; one-way, only east.
+        emitter(helper, new BlockPos(2, Y, 8), ModBlocks.LASER_EMITTER_1.get(), Direction.EAST, true);
+        BlockPos at = new BlockPos(8, Y, 8);
+        helper.setBlock(at, ModBlocks.LASER_SPLITTER.get().defaultBlockState()
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.MOUNT, Direction.DOWN)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.INPUT, Direction.NORTH)
+                .setValue(com.kadikular.quantimium.block.LaserMirrorBlock.OUTPUT, Direction.EAST));
+        java.util.function.Predicate<com.kadikular.quantimium.laser.Ray> leaves = ray -> LaserNetworks.of(helper.getLevel())
+                .beamsOf(helper.absolutePos(new BlockPos(2, Y, 8))).stream()
+                .anyMatch(beam -> beam.legs().stream().anyMatch(leg -> leg.ray() == ray));
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(leaves.test(com.kadikular.quantimium.laser.Ray.SOUTH), "two-way: turned south off the back");
+            helper.assertTrue(leaves.test(com.kadikular.quantimium.laser.Ray.EAST), "and on east");
+            helper.setBlock(at, helper.getBlockState(at).setValue(com.kadikular.quantimium.block.LaserSplitterBlock.ONE_WAY, true));
+            LaserNetworks.changed(helper.getLevel());
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertFalse(leaves.test(com.kadikular.quantimium.laser.Ray.SOUTH), "one-way: not turned off the back");
+            helper.assertTrue(leaves.test(com.kadikular.quantimium.laser.Ray.EAST), "but still on east");
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.mirror
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aFlatMirrorSendsLightBack(GameTestHelper helper) {

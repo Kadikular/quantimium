@@ -155,7 +155,8 @@ public record LaserBeam(BlockPos from, Direction face, @Nullable BlockPos aim, i
         List<Ray> ways = new ArrayList<>(2);
         if (legs.size() < MAX_BOUNCES && state.getBlock() instanceof com.kadikular.quantimium.block.LaserMirrorBlock block
                 && !state.getValue(com.kadikular.quantimium.block.LaserMirrorBlock.POWERED)) {
-            Ray turned = com.kadikular.quantimium.block.LaserMirrorBlock.plate(state).reflect(travel, block.splits());
+            // A splitter's plate turns light off both sides; one-way, only off its front (the back lets it straight through).
+            Ray turned = com.kadikular.quantimium.block.LaserMirrorBlock.plate(state).reflect(travel, block.splits() && !block.oneWay(state));
             if (turned != null) ways.add(turned);
             // Half-silvered: straight on as well.
             if (block.splits()) ways.add(Ray.nearest(travel));

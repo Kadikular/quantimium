@@ -62,6 +62,8 @@
   Everything starts on 0, so nothing changes until a channel is set. A Logistics Controller starts on All: a network
   for each channel its receptacles are on. A Terminal shows its channel's network; a Materializer offers every channel's.
 - **The Logistics Controller has a screen**: its receptacles, its power, and its channel.
+- **One-way Laser Splitters**: sneak with a wrench to switch a splitter's plate back to steel. Light from behind then only
+  goes straight through, so two lasers combine without spilling.
 - **The Spectroscope has a screen**: the laser split into its spectrum, a line for each action (shaped by its
   modifiers) and a band for logistics, a channel picker, and a table of its actions and the ports they use. Aim it at a
   laser in the air to read it.

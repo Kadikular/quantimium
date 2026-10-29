@@ -4,7 +4,8 @@
     "steel": "quantimium:block/laser_mirror_steel",
     "plate": "quantimium:block/laser_splitter_plate",
     "particle": "quantimium:block/laser_mirror_steel",
-    "focus": "quantimium:block/laser_focus"
+    "focus": "quantimium:block/laser_focus",
+    "back": "quantimium:block/laser_splitter_plate"
   },
   "elements": [
     {
@@ -320,7 +321,7 @@
           ]
         },
         "west": {
-          "texture": "#plate",
+          "texture": "#back",
           "uv": [
             3,
             3,

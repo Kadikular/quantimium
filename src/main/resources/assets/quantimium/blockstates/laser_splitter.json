@@ -5,7 +5,8 @@
     "mount": "down",
     "input": "up",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up"
@@ -15,8 +16,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up"
@@ -26,8 +40,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up"
@@ -37,8 +64,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west"
@@ -48,8 +88,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up"
@@ -58,9 +111,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "up",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "north",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up"
@@ -70,8 +136,21 @@
    "when": {
     "mount": "down",
     "input": "north",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "north",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north"
@@ -81,8 +160,21 @@
    "when": {
     "mount": "down",
     "input": "north",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "north",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west"
@@ -92,8 +184,21 @@
    "when": {
     "mount": "down",
     "input": "north",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "north",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north"
@@ -102,9 +207,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "north",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "south",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up"
@@ -114,8 +232,21 @@
    "when": {
     "mount": "down",
     "input": "south",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "south",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south"
@@ -125,8 +256,21 @@
    "when": {
     "mount": "down",
     "input": "south",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "south",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west"
@@ -136,8 +280,21 @@
    "when": {
     "mount": "down",
     "input": "south",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "south",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south"
@@ -146,9 +303,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "south",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "west",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west"
@@ -158,8 +328,21 @@
    "when": {
     "mount": "down",
     "input": "west",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "west",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west"
@@ -169,8 +352,21 @@
    "when": {
     "mount": "down",
     "input": "west",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "west",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west"
@@ -180,8 +376,21 @@
    "when": {
     "mount": "down",
     "input": "west",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "west",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west"
@@ -190,9 +399,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "west",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "east",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up"
@@ -202,8 +424,21 @@
    "when": {
     "mount": "down",
     "input": "east",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "east",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north"
@@ -213,8 +448,21 @@
    "when": {
     "mount": "down",
     "input": "east",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "east",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south"
@@ -224,8 +472,21 @@
    "when": {
     "mount": "down",
     "input": "east",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "east",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east"
@@ -234,9 +495,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "east",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "up",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_north_half"
@@ -246,8 +520,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_north_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_south_half"
@@ -257,8 +544,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_south_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west_half"
@@ -268,8 +568,21 @@
    "when": {
     "mount": "down",
     "input": "up",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "up",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_east_half"
@@ -278,9 +591,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "up",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_east_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "north",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up_half"
@@ -290,8 +616,21 @@
    "when": {
     "mount": "down",
     "input": "north",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "north",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west_half"
@@ -301,8 +640,21 @@
    "when": {
     "mount": "down",
     "input": "north",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "north",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_east_half"
@@ -311,9 +663,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "north",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_east_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "south",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up_half"
@@ -323,8 +688,21 @@
    "when": {
     "mount": "down",
     "input": "south",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "south",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west_half"
@@ -334,8 +712,21 @@
    "when": {
     "mount": "down",
     "input": "south",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "south",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_east_half"
@@ -344,9 +735,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "south",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_east_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "west",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_up_half"
@@ -356,8 +760,21 @@
    "when": {
     "mount": "down",
     "input": "west",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_up_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "west",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_north_half"
@@ -367,8 +784,21 @@
    "when": {
     "mount": "down",
     "input": "west",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_north_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "west",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_south_half"
@@ -377,9 +807,22 @@
   {
    "when": {
     "mount": "down",
+    "input": "west",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_south_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
     "input": "east",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up_half"
@@ -389,8 +832,21 @@
    "when": {
     "mount": "down",
     "input": "east",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "east",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north_half"
@@ -400,8 +856,21 @@
    "when": {
     "mount": "down",
     "input": "east",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_half_one_way"
+   }
+  },
+  {
+   "when": {
+    "mount": "down",
+    "input": "east",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south_half"
@@ -409,10 +878,23 @@
   },
   {
    "when": {
+    "mount": "down",
+    "input": "east",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_half_one_way"
+   }
+  },
+  {
+   "when": {
     "mount": "up",
     "input": "down",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up",
@@ -423,8 +905,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -435,8 +931,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -447,8 +957,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -459,8 +983,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -470,9 +1008,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "down",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "north",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -483,8 +1035,22 @@
    "when": {
     "mount": "up",
     "input": "north",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "north",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south",
@@ -495,8 +1061,22 @@
    "when": {
     "mount": "up",
     "input": "north",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "north",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -507,8 +1087,22 @@
    "when": {
     "mount": "up",
     "input": "north",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "north",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -518,9 +1112,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "north",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "south",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -531,8 +1139,22 @@
    "when": {
     "mount": "up",
     "input": "south",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "south",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north",
@@ -543,8 +1165,22 @@
    "when": {
     "mount": "up",
     "input": "south",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "south",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -555,8 +1191,22 @@
    "when": {
     "mount": "up",
     "input": "south",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "south",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -566,9 +1216,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "south",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "west",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -579,8 +1243,22 @@
    "when": {
     "mount": "up",
     "input": "west",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "west",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -591,8 +1269,22 @@
    "when": {
     "mount": "up",
     "input": "west",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "west",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -603,8 +1295,22 @@
    "when": {
     "mount": "up",
     "input": "west",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "west",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west",
@@ -614,9 +1320,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "west",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "east",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -627,8 +1347,22 @@
    "when": {
     "mount": "up",
     "input": "east",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "east",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -639,8 +1373,22 @@
    "when": {
     "mount": "up",
     "input": "east",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "east",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -651,8 +1399,22 @@
    "when": {
     "mount": "up",
     "input": "east",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "east",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east",
@@ -662,9 +1424,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "east",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "down",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_south_half",
@@ -675,8 +1451,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_south_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_north_half",
@@ -687,8 +1477,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_north_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west_half",
@@ -699,8 +1503,22 @@
    "when": {
     "mount": "up",
     "input": "down",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "down",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_east_half",
@@ -710,9 +1528,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "down",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_east_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "north",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up_half",
@@ -723,8 +1555,22 @@
    "when": {
     "mount": "up",
     "input": "north",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "north",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west_half",
@@ -735,8 +1581,22 @@
    "when": {
     "mount": "up",
     "input": "north",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "north",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_east_half",
@@ -746,9 +1606,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "north",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_east_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "south",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up_half",
@@ -759,8 +1633,22 @@
    "when": {
     "mount": "up",
     "input": "south",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "south",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west_half",
@@ -771,8 +1659,22 @@
    "when": {
     "mount": "up",
     "input": "south",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "south",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_east_half",
@@ -782,9 +1684,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "south",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_east_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "west",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_up_half",
@@ -795,8 +1711,22 @@
    "when": {
     "mount": "up",
     "input": "west",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_up_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "west",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_south_half",
@@ -807,8 +1737,22 @@
    "when": {
     "mount": "up",
     "input": "west",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_south_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "west",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_north_half",
@@ -818,9 +1762,23 @@
   {
    "when": {
     "mount": "up",
+    "input": "west",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_north_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
     "input": "east",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up_half",
@@ -831,8 +1789,22 @@
    "when": {
     "mount": "up",
     "input": "east",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "east",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south_half",
@@ -843,8 +1815,22 @@
    "when": {
     "mount": "up",
     "input": "east",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "up",
+    "input": "east",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north_half",
@@ -853,10 +1839,24 @@
   },
   {
    "when": {
+    "mount": "up",
+    "input": "east",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_half_one_way",
+    "x": 180
+   }
+  },
+  {
+   "when": {
     "mount": "south",
     "input": "down",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north",
@@ -867,8 +1867,22 @@
    "when": {
     "mount": "south",
     "input": "down",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "down",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -879,8 +1893,22 @@
    "when": {
     "mount": "south",
     "input": "down",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "down",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -891,8 +1919,22 @@
    "when": {
     "mount": "south",
     "input": "down",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "down",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -902,9 +1944,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "down",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "up",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south",
@@ -915,8 +1971,22 @@
    "when": {
     "mount": "south",
     "input": "up",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "up",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -927,8 +1997,22 @@
    "when": {
     "mount": "south",
     "input": "up",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "up",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -939,8 +2023,22 @@
    "when": {
     "mount": "south",
     "input": "up",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "up",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -950,9 +2048,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "up",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "north",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -963,8 +2075,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -975,8 +2101,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up",
@@ -987,8 +2127,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -999,8 +2153,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -1010,9 +2178,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "north",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "west",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -1023,8 +2205,22 @@
    "when": {
     "mount": "south",
     "input": "west",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "west",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -1035,8 +2231,22 @@
    "when": {
     "mount": "south",
     "input": "west",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "west",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -1047,8 +2257,22 @@
    "when": {
     "mount": "south",
     "input": "west",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "west",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west",
@@ -1058,9 +2282,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "west",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "east",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -1071,8 +2309,22 @@
    "when": {
     "mount": "south",
     "input": "east",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "east",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -1083,8 +2335,22 @@
    "when": {
     "mount": "south",
     "input": "east",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "east",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -1095,8 +2361,22 @@
    "when": {
     "mount": "south",
     "input": "east",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "east",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east",
@@ -1106,9 +2386,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "east",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "down",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up_half",
@@ -1119,8 +2413,22 @@
    "when": {
     "mount": "south",
     "input": "down",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "down",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west_half",
@@ -1131,8 +2439,22 @@
    "when": {
     "mount": "south",
     "input": "down",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "down",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_east_half",
@@ -1142,9 +2464,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "down",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_east_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "up",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up_half",
@@ -1155,8 +2491,22 @@
    "when": {
     "mount": "south",
     "input": "up",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "up",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west_half",
@@ -1167,8 +2517,22 @@
    "when": {
     "mount": "south",
     "input": "up",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "up",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_east_half",
@@ -1178,9 +2542,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "up",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_east_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "north",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_north_half",
@@ -1191,8 +2569,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_north_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_south_half",
@@ -1203,8 +2595,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_south_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west_half",
@@ -1215,8 +2621,22 @@
    "when": {
     "mount": "south",
     "input": "north",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "north",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_east_half",
@@ -1226,9 +2646,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "north",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_east_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "west",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_north_half",
@@ -1239,8 +2673,22 @@
    "when": {
     "mount": "south",
     "input": "west",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_north_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "west",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_south_half",
@@ -1251,8 +2699,22 @@
    "when": {
     "mount": "south",
     "input": "west",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_south_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "west",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_up_half",
@@ -1262,9 +2724,23 @@
   {
    "when": {
     "mount": "south",
+    "input": "west",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_up_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
     "input": "east",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north_half",
@@ -1275,8 +2751,22 @@
    "when": {
     "mount": "south",
     "input": "east",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "east",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south_half",
@@ -1287,8 +2777,22 @@
    "when": {
     "mount": "south",
     "input": "east",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "south",
+    "input": "east",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up_half",
@@ -1297,10 +2801,24 @@
   },
   {
    "when": {
+    "mount": "south",
+    "input": "east",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_half_one_way",
+    "x": 90
+   }
+  },
+  {
+   "when": {
     "mount": "west",
     "input": "down",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north",
@@ -1312,8 +2830,23 @@
    "when": {
     "mount": "west",
     "input": "down",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "down",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -1325,8 +2858,23 @@
    "when": {
     "mount": "west",
     "input": "down",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "down",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -1338,8 +2886,23 @@
    "when": {
     "mount": "west",
     "input": "down",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "down",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -1350,9 +2913,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "down",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "up",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south",
@@ -1364,8 +2942,23 @@
    "when": {
     "mount": "west",
     "input": "up",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "up",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -1377,8 +2970,23 @@
    "when": {
     "mount": "west",
     "input": "up",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "up",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -1390,8 +2998,23 @@
    "when": {
     "mount": "west",
     "input": "up",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "up",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -1402,9 +3025,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "up",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "north",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -1416,8 +3054,23 @@
    "when": {
     "mount": "west",
     "input": "north",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "north",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -1429,8 +3082,23 @@
    "when": {
     "mount": "west",
     "input": "north",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "north",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west",
@@ -1442,8 +3110,23 @@
    "when": {
     "mount": "west",
     "input": "north",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "north",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -1454,9 +3137,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "north",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "south",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -1468,8 +3166,23 @@
    "when": {
     "mount": "west",
     "input": "south",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "south",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -1481,8 +3194,23 @@
    "when": {
     "mount": "west",
     "input": "south",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "south",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east",
@@ -1494,8 +3222,23 @@
    "when": {
     "mount": "west",
     "input": "south",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "south",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -1506,9 +3249,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "south",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "east",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -1520,8 +3278,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -1533,8 +3306,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -1546,8 +3334,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -1559,8 +3362,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up",
@@ -1571,9 +3389,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "east",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "down",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west_half",
@@ -1585,8 +3418,23 @@
    "when": {
     "mount": "west",
     "input": "down",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "down",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_east_half",
@@ -1598,8 +3446,23 @@
    "when": {
     "mount": "west",
     "input": "down",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_east_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "down",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up_half",
@@ -1610,9 +3473,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "down",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "up",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west_half",
@@ -1624,8 +3502,23 @@
    "when": {
     "mount": "west",
     "input": "up",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "up",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_east_half",
@@ -1637,8 +3530,23 @@
    "when": {
     "mount": "west",
     "input": "up",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_east_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "up",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up_half",
@@ -1649,9 +3557,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "up",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "north",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_north_half",
@@ -1663,8 +3586,23 @@
    "when": {
     "mount": "west",
     "input": "north",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_north_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "north",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_south_half",
@@ -1676,8 +3614,23 @@
    "when": {
     "mount": "west",
     "input": "north",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_south_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "north",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_up_half",
@@ -1688,9 +3641,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "north",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_up_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "south",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north_half",
@@ -1702,8 +3670,23 @@
    "when": {
     "mount": "west",
     "input": "south",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "south",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south_half",
@@ -1715,8 +3698,23 @@
    "when": {
     "mount": "west",
     "input": "south",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "south",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up_half",
@@ -1727,9 +3725,24 @@
   {
    "when": {
     "mount": "west",
+    "input": "south",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
     "input": "east",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_north_half",
@@ -1741,8 +3754,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_north_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_south_half",
@@ -1754,8 +3782,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_south_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west_half",
@@ -1767,8 +3810,23 @@
    "when": {
     "mount": "west",
     "input": "east",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "mount": "west",
+    "input": "east",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_east_half",
@@ -1778,10 +3836,25 @@
   },
   {
    "when": {
+    "mount": "west",
+    "input": "east",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_east_half_one_way",
+    "x": 90,
+    "y": 90
+   }
+  },
+  {
+   "when": {
     "mount": "north",
     "input": "down",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north",
@@ -1793,8 +3866,23 @@
    "when": {
     "mount": "north",
     "input": "down",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "down",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -1806,8 +3894,23 @@
    "when": {
     "mount": "north",
     "input": "down",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "down",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -1819,8 +3922,23 @@
    "when": {
     "mount": "north",
     "input": "down",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "down",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -1831,9 +3949,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "down",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "up",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south",
@@ -1845,8 +3978,23 @@
    "when": {
     "mount": "north",
     "input": "up",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "up",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -1858,8 +4006,23 @@
    "when": {
     "mount": "north",
     "input": "up",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "up",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -1871,8 +4034,23 @@
    "when": {
     "mount": "north",
     "input": "up",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "up",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -1883,9 +4061,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "up",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "south",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -1897,8 +4090,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -1910,8 +4118,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up",
@@ -1923,8 +4146,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -1936,8 +4174,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -1948,9 +4201,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "south",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "west",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -1962,8 +4230,23 @@
    "when": {
     "mount": "north",
     "input": "west",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "west",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -1975,8 +4258,23 @@
    "when": {
     "mount": "north",
     "input": "west",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "west",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -1988,8 +4286,23 @@
    "when": {
     "mount": "north",
     "input": "west",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "west",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east",
@@ -2000,9 +4313,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "west",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "east",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -2014,8 +4342,23 @@
    "when": {
     "mount": "north",
     "input": "east",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "east",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -2027,8 +4370,23 @@
    "when": {
     "mount": "north",
     "input": "east",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "east",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -2040,8 +4398,23 @@
    "when": {
     "mount": "north",
     "input": "east",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "east",
     "output": "east",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west",
@@ -2052,9 +4425,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "east",
+    "output": "east",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "down",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up_half",
@@ -2066,8 +4454,23 @@
    "when": {
     "mount": "north",
     "input": "down",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "down",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_east_half",
@@ -2079,8 +4482,23 @@
    "when": {
     "mount": "north",
     "input": "down",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_east_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "down",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west_half",
@@ -2091,9 +4509,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "down",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "up",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up_half",
@@ -2105,8 +4538,23 @@
    "when": {
     "mount": "north",
     "input": "up",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "up",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_east_half",
@@ -2118,8 +4566,23 @@
    "when": {
     "mount": "north",
     "input": "up",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_east_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "up",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west_half",
@@ -2130,9 +4593,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "up",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "south",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_north_half",
@@ -2144,8 +4622,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_north_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_south_half",
@@ -2157,8 +4650,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_south_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_east_half",
@@ -2170,8 +4678,23 @@
    "when": {
     "mount": "north",
     "input": "south",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_east_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "south",
     "output": "east",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west_half",
@@ -2182,9 +4705,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "south",
+    "output": "east",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "west",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north_half",
@@ -2196,8 +4734,23 @@
    "when": {
     "mount": "north",
     "input": "west",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "west",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south_half",
@@ -2209,8 +4762,23 @@
    "when": {
     "mount": "north",
     "input": "west",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "west",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up_half",
@@ -2221,9 +4789,24 @@
   {
    "when": {
     "mount": "north",
+    "input": "west",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
     "input": "east",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_north_half",
@@ -2235,8 +4818,23 @@
    "when": {
     "mount": "north",
     "input": "east",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_north_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "east",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_south_half",
@@ -2248,8 +4846,23 @@
    "when": {
     "mount": "north",
     "input": "east",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_south_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "mount": "north",
+    "input": "east",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_up_half",
@@ -2259,10 +4872,25 @@
   },
   {
    "when": {
+    "mount": "north",
+    "input": "east",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_up_half_one_way",
+    "x": 90,
+    "y": 180
+   }
+  },
+  {
+   "when": {
     "mount": "east",
     "input": "down",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north",
@@ -2274,8 +4902,23 @@
    "when": {
     "mount": "east",
     "input": "down",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "down",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -2287,8 +4930,23 @@
    "when": {
     "mount": "east",
     "input": "down",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "down",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -2300,8 +4958,23 @@
    "when": {
     "mount": "east",
     "input": "down",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "down",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -2312,9 +4985,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "down",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "up",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south",
@@ -2326,8 +5014,23 @@
    "when": {
     "mount": "east",
     "input": "up",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "up",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -2339,8 +5042,23 @@
    "when": {
     "mount": "east",
     "input": "up",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "up",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -2352,8 +5070,23 @@
    "when": {
     "mount": "east",
     "input": "up",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "up",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -2364,9 +5097,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "up",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "north",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north",
@@ -2378,8 +5126,23 @@
    "when": {
     "mount": "east",
     "input": "north",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "north",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south",
@@ -2391,8 +5154,23 @@
    "when": {
     "mount": "east",
     "input": "north",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "north",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east",
@@ -2404,8 +5182,23 @@
    "when": {
     "mount": "east",
     "input": "north",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "north",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -2416,9 +5209,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "north",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "south",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west",
@@ -2430,8 +5238,23 @@
    "when": {
     "mount": "east",
     "input": "south",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "south",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west",
@@ -2443,8 +5266,23 @@
    "when": {
     "mount": "east",
     "input": "south",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "south",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west",
@@ -2456,8 +5294,23 @@
    "when": {
     "mount": "east",
     "input": "south",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "south",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -2468,9 +5321,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "south",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "west",
     "output": "down",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up",
@@ -2482,8 +5350,23 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "down",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "up",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up",
@@ -2495,8 +5378,23 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "up",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "north",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up",
@@ -2508,8 +5406,23 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "north",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "south",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west",
@@ -2521,8 +5434,23 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "south",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "west",
-    "half": "false"
+    "half": "false",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up",
@@ -2533,9 +5461,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "west",
+    "output": "west",
+    "half": "false",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "down",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_east_half",
@@ -2547,8 +5490,23 @@
    "when": {
     "mount": "east",
     "input": "down",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_east_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "down",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_west_half",
@@ -2560,8 +5518,23 @@
    "when": {
     "mount": "east",
     "input": "down",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_west_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "down",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_north_up_half",
@@ -2572,9 +5545,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "down",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_north_up_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "up",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_east_half",
@@ -2586,8 +5574,23 @@
    "when": {
     "mount": "east",
     "input": "up",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_east_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "up",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_west_half",
@@ -2599,8 +5602,23 @@
    "when": {
     "mount": "east",
     "input": "up",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_west_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "up",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_south_up_half",
@@ -2611,9 +5629,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "up",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_south_up_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "north",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_north_half",
@@ -2625,8 +5658,23 @@
    "when": {
     "mount": "east",
     "input": "north",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_north_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "north",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_south_half",
@@ -2638,8 +5686,23 @@
    "when": {
     "mount": "east",
     "input": "north",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_south_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "north",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_east_up_half",
@@ -2650,9 +5713,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "north",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_east_up_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "south",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_north_half",
@@ -2664,8 +5742,23 @@
    "when": {
     "mount": "east",
     "input": "south",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_north_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "south",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_south_half",
@@ -2677,8 +5770,23 @@
    "when": {
     "mount": "east",
     "input": "south",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_south_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "south",
     "output": "west",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_west_up_half",
@@ -2689,9 +5797,24 @@
   {
    "when": {
     "mount": "east",
+    "input": "south",
+    "output": "west",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_west_up_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
     "input": "west",
     "output": "down",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_north_half",
@@ -2703,8 +5826,23 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "down",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_north_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "up",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_south_half",
@@ -2716,8 +5854,23 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "up",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_south_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "north",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_east_half",
@@ -2729,11 +5882,40 @@
    "when": {
     "mount": "east",
     "input": "west",
+    "output": "north",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_east_half_one_way",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
     "output": "south",
-    "half": "true"
+    "half": "true",
+    "one_way": "false"
    },
    "apply": {
     "model": "quantimium:block/laser_splitter_up_west_half",
+    "x": 90,
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "mount": "east",
+    "input": "west",
+    "output": "south",
+    "half": "true",
+    "one_way": "true"
+   },
+   "apply": {
+    "model": "quantimium:block/laser_splitter_up_west_half_one_way",
     "x": 90,
     "y": 270
    }
