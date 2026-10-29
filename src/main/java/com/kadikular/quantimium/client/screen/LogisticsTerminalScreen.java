@@ -335,7 +335,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
                 else com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics, fluid, x, y);
                 if (!fluid.isEmpty()) {
                     // A fluid's amount, in buckets or mB.
-                    String amount = cell.count() >= 1_000 ? HorizonCoreScreen.slotCount(cell.count() / 1_000) + "B" : cell.count() + "mB";
+                    String amount = HorizonCoreScreen.fluidCount(cell.count());
                     graphics.nextStratum();
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(x + 16, y + 11);
