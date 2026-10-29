@@ -84,8 +84,9 @@ public class LogisticsControllerBlock extends BaseEntityBlock implements com.kad
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player.isSecondaryUseActive()) return toggle(level, pos, player, hit.getDirection());
+        // Its screen: what's on its network, and its channel.
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof LogisticsControllerBlockEntity controller) {
-            player.sendOverlayMessage(controller.status());
+            player.openMenu(controller, pos);
         }
         return InteractionResult.SUCCESS;
     }

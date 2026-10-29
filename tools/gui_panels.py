@@ -397,6 +397,15 @@ def lens_mount() -> Panel:
     return panel
 
 
+def logistics_controller() -> Panel:
+    """A Logistics Controller: lines of what's on its network, drawn by LogisticsControllerScreen; the inventory below."""
+    panel = Panel(HIGH)
+    panel.well(7, 19, 162, 58)
+    panel.region("info", (7, 19, 162, 58))
+    panel.player()
+    return panel
+
+
 def laser_port() -> Panel:
     """A Laser Port: what it holds in a dispenser's 3x3 grid, centred (LaserPortMenu.GRID_*)."""
     panel = Panel(HIGH)
@@ -586,6 +595,7 @@ PANELS = {
     "flash_emitter": lambda: laser_emitter(True),
     "lens_mount": lens_mount,
     "laser_port": laser_port,
+    "logistics_controller": logistics_controller,
     "area_prism": area_prism,
     "laser_tank": laser_tank,
     "laser_port_filter": laser_port_filter,

@@ -39,7 +39,8 @@ import java.util.Set;
  * for by the light's other sources, as ever. Up the beam from a lens, it is the network: Pickup and Extract put into it, Insert, Placement and
  * Interact take from it. See {@code Logistics}.
  */
-public class LogisticsControllerBlockEntity extends BlockEntity implements LaserNode, LogisticsController, FluxMeterReadout, LaserBeamView {
+public class LogisticsControllerBlockEntity extends BlockEntity implements LaserNode, LogisticsController, FluxMeterReadout, LaserBeamView,
+        net.minecraft.world.MenuProvider {
 
     private final QuantumEnergyStorage energy = new QuantumEnergyStorage(LaserTuning.LOGISTICS_CAPACITY, LaserTuning.LOGISTICS_RECEIVE, 0) {
         @Override
@@ -418,6 +419,22 @@ public class LogisticsControllerBlockEntity extends BlockEntity implements Laser
     }
 
     /** How its network stands, for a click or the Flux Meter. */
+    /** Whether another controller's light joins its own: neither network works. */
+    public boolean clashes() {
+        return clash;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.quantimium.logistics_controller");
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory inventory,
+                                                                         net.minecraft.world.entity.player.Player player) {
+        return new com.kadikular.quantimium.menu.LogisticsControllerMenu(containerId, inventory, this);
+    }
+
     public MutableComponent status() {
         if (clash) return Component.translatable("message.quantimium.logistics_controller.clash").withStyle(ChatFormatting.RED);
         if (!powered()) return Component.translatable("message.quantimium.logistics_controller.unpowered", members.size()).withStyle(ChatFormatting.GOLD);

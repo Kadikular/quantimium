@@ -13,13 +13,14 @@ Channels let several setups share one laser path without getting in each other's
 ## Lenses
 
 Each slot of a <ItemLink id="quantimium:lens_mount" /> has a channel, shown above its lens. Click it
-for the next, right-click for the one before.
+for the next, right-click for the one before. An emitter on a Laser Focus or Relay has its lens's channel on a tab of its
+screen.
 
 - An action lens gives the laser its action on that channel. Harvest on 0 and Harvest on 3 are two separate actions.
 - A modifier lens changes only the actions on its channel: a Filter on 3 filters channel 3's Harvest, not channel 0's.
   On **All**, it changes every action, as before channels.
 - An action on **All** belongs to every channel, and only modifiers on All change it.
-- Range, UV and Phantom change the laser itself, whatever their channel.
+- Range, UV and Phantom change the laser itself: their slot shows All, grayed out.
 - Where lasers join, the same action on the same channel becomes one, paid for by both. On different channels they stay
   apart.
 - A Cavity Mirror keeps each action's channel.
@@ -35,7 +36,7 @@ screen. Insert, Extract, Pickup and the rest use only the ports and tanks on the
 
 A Logistics Receptacle joins a Logistics Controller only on the same channel (or
 either on **All**). Two controllers on different channels can share mirrors and Focuses, each with its own
-receptacles. Set a Receptacle's channel on its screen, and a controller's from a <ItemLink id="quantimium:logistics_terminal" /> on its
-network. Speed lenses quicken only the receptacles on their channel.
+receptacles. Set a Receptacle's channel on its screen, and a controller's on its own screen (or from a
+<ItemLink id="quantimium:logistics_terminal" /> on its network). Speed lenses quicken only the receptacles on their channel.
 
 Power is shared: channels don't divide it.
