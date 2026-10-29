@@ -124,6 +124,25 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     private final Map<Direction, ItemStack> lenses = new EnumMap<>(Direction.class);
     /** How each emitter that's been set listens to redstone; the rest follow {@link #mode}. */
     private final Map<Direction, RelayMode> modes = new EnumMap<>(Direction.class);
+    /** Each emitter's lens's channel; 0 unless set. */
+    private final Map<Direction, Integer> channels = new EnumMap<>(Direction.class);
+
+    @Override
+    public int channelOf(Direction face) {
+        return channels.getOrDefault(face, 0);
+    }
+
+    @Override
+    public void setChannel(Direction face, int channel) {
+        int to = com.kadikular.quantimium.laser.Channels.of(channel);
+        if (to == 0) channels.remove(face);
+        else channels.put(face, to);
+        setChanged();
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            LaserNetworks.changed(level);
+        }
+    }
     /** For emitters on a pulse: since when each is letting light through. */
     private final Map<Direction, Long> pulses = new EnumMap<>(Direction.class);
     /** The faces light passed straight through and out of, last worked out (a Clear Laser Focus). */
@@ -204,6 +223,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         ItemStack lens = lenses.remove(face);
         if (lens != null && !lens.isEmpty()) out.add(lens);
         modes.remove(face);
+        channels.remove(face);
         pulses.remove(face);
         receptacles.remove(face);
         // A cavity taken off lets all it held go, as flux.
@@ -344,7 +364,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
     public List<LensUse> lensesFor(Direction face) {
         ItemStack stack = lens(face);
         if (!(stack.getItem() instanceof LensItem lens)) return List.of();
-        return List.of(LensUse.of(stack, lens.lens()));
+        return List.of(LensUse.of(stack, lens.lens()).onChannel(channelOf(face)));
     }
 
     // ---- redstone ----
@@ -717,6 +737,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             if (!lens.isEmpty()) out.store("Lens_" + face.getSerializedName(), ItemStack.CODEC, lens);
             RelayMode own = modes.get(face);
             if (own != null) out.putInt("Mode_" + face.getSerializedName(), own.ordinal());
+            if (channels.containsKey(face)) out.putInt("Channel_" + face.getSerializedName(), channels.get(face));
             Receptacle receptacle = receptacles.get(face);
             if (receptacle != null) receptacle.save(out.child("Receptacle_" + face.getSerializedName()));
             CavityPlate cavity = cavities.get(face);
@@ -735,6 +756,7 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
         parts.clear();
         lenses.clear();
         modes.clear();
+        channels.clear();
         mode = RelayMode.byOrdinal(in.getIntOr("Mode", 0));
         for (Direction face : Direction.values()) {
             Part part = Part.byOrdinal(in.getIntOr("Part_" + face.getSerializedName(), 0));
@@ -742,6 +764,8 @@ public class LaserFocusBlockEntity extends BlockEntity implements LaserNode, Flu
             in.read("Lens_" + face.getSerializedName(), ItemStack.CODEC).ifPresent(stack -> lenses.put(face, stack));
             int own = in.getIntOr("Mode_" + face.getSerializedName(), -1);
             if (own >= 0) modes.put(face, RelayMode.byOrdinal(own));
+            int channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel_" + face.getSerializedName(), 0));
+            if (channel != 0) channels.put(face, channel);
             // Kept, not made again, so an open screen goes on showing the one there.
             if (part == Part.RECEPTACLE) {
                 Receptacle receptacle = receptacles.computeIfAbsent(face, side -> new Receptacle(this, side));

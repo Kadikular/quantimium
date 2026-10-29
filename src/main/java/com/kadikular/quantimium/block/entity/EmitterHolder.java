@@ -25,6 +25,12 @@ public interface EmitterHolder {
     /** Steps the emitter on {@code face} on to its next way of listening to redstone. */
     void cycleMode(Direction face);
 
+    /** The channel the lens on {@code face} works on ({@link com.kadikular.quantimium.laser.Channels}). */
+    int channelOf(Direction face);
+
+    /** Sets the channel the lens on {@code face} works on. */
+    void setChannel(Direction face, int channel);
+
     BlockPos getBlockPos();
 
     boolean isRemoved();

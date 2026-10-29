@@ -434,7 +434,7 @@ public class LogisticsTerminalScreen extends QuantumMachineScreen<LogisticsTermi
             LogisticsTerminalViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             if (cell != null && cell.craftable() > 0) {
                 boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(cell.item().toStack(1));
-                long most = fluid ? cell.craftable() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : cell.craftable();
+                long most = cell.craftable();
                 if (most > 0) {
                     var pos = menu.pos();
                     var item = cell.item();

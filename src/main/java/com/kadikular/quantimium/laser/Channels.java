@@ -12,6 +12,11 @@ public final class Channels {
 
     private Channels() {}
 
+    /** Whether {@code lens} changes the laser itself, whatever its channel: Range (its reach), UV, Phantom. */
+    public static boolean wholeLaser(Lens lens) {
+        return lens == Lens.RANGE || lens == Lens.UV || lens == Lens.PHANTOM;
+    }
+
     /** A saved or sent channel, kept in range. */
     public static int of(int channel) {
         return channel < 0 || channel > ALL ? 0 : channel;
