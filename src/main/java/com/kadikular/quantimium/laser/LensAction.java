@@ -2010,4 +2010,8 @@ public final class LensAction {
     List<BlockPos> collectors() {
         return collectors;
     }
+
+    List<BlockPos> senders() {
+        return senders;
+    }
 }

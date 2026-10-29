@@ -277,6 +277,95 @@ public final class LaserNetworks {
         return beams.getOrDefault(pos, List.of());
     }
 
+    /** A beam a Spectroscope is aimed at: the block it leaves, and which of its beams. */
+    public record Aim(BlockPos pos, int beam) {}
+
+    /**
+     * The beam the look from {@code eye} to {@code to} passes nearest (within half a block), nearest the eye: what a
+     * Spectroscope used in mid-air reads. Null for none.
+     */
+    @Nullable
+    public Aim aimedAt(net.minecraft.world.phys.Vec3 eye, net.minecraft.world.phys.Vec3 to) {
+        Aim best = null;
+        double nearest = Double.MAX_VALUE;
+        for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
+            List<LaserBeam> list = entry.getValue();
+            for (int i = 0; i < list.size(); i++) {
+                List<net.minecraft.world.phys.Vec3> points = list.get(i).points();
+                for (int p = 0; p + 1 < points.size(); p++) {
+                    double[] along = closest(eye, to, points.get(p), points.get(p + 1));
+                    if (along == null || along[1] > 0.25 || along[0] >= nearest) continue;
+                    nearest = along[0];
+                    best = new Aim(entry.getKey(), i);
+                }
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Where the look segment {@code a}-{@code b} passes closest to the beam segment {@code c}-{@code d}: how far along the
+     * look, and the squared distance between them there. Null if they're parallel.
+     */
+    @Nullable
+    private static double[] closest(net.minecraft.world.phys.Vec3 a, net.minecraft.world.phys.Vec3 b,
+                                    net.minecraft.world.phys.Vec3 c, net.minecraft.world.phys.Vec3 d) {
+        net.minecraft.world.phys.Vec3 u = b.subtract(a), v = d.subtract(c), w = a.subtract(c);
+        double uu = u.dot(u), uv = u.dot(v), vv = v.dot(v), uw = u.dot(w), vw = v.dot(w);
+        double denom = uu * vv - uv * uv;
+        if (denom < 1.0E-9) return null;
+        double s = Math.clamp((uv * vw - vv * uw) / denom, 0.0, 1.0);
+        double t = Math.clamp((uu * vw - uv * uw) / denom, 0.0, 1.0);
+        net.minecraft.world.phys.Vec3 gap = w.add(u.scale(s)).subtract(v.scale(t));
+        return new double[] {s * Math.sqrt(uu), gap.dot(gap)};
+    }
+
+    /**
+     * For the Spectroscope: the laser leaving {@code pos} ({@code beam} -1), or its beam {@code beam}, split into its lines.
+     * Null if nothing there is a laser block.
+     */
+    @Nullable
+    public SpectroscopeReading read(net.minecraft.world.level.Level level, BlockPos pos, int beam) {
+        LaserNode node = nodes.get(pos);
+        if (node == null) return null;
+        List<LaserBeam> out = beamsOf(pos);
+        LaserBeam one = beam >= 0 && beam < out.size() ? out.get(beam) : null;
+        Light light = one != null ? lightOf(pos, one) : lights.get(pos);
+        net.minecraft.network.chat.MutableComponent where = level.getBlockState(pos).getBlock().getName().copy();
+        if (one != null) where.append(" · ").append(net.minecraft.network.chat.Component.translatable("gui.quantimium.spectroscope.face." + one.face().getSerializedName()));
+        long flow = one != null ? one.flow() : throughput(pos);
+        if (light == null) return new SpectroscopeReading(where, 0, 0, 0, 0, flow, List.of(), List.of(), List.of());
+        List<SpectroscopeReading.Line> lines = new ArrayList<>();
+        Map<BlockPos, int[]> ports = new LinkedHashMap<>();
+        for (Light.Stream stream : light.acting()) {
+            Set<BlockPos> used = new HashSet<>();
+            java.util.Optional<net.minecraft.network.chat.Component> said = java.util.Optional.empty();
+            for (LensAction action : actions.values()) {
+                LensAction.Key key = action.key();
+                if (!key.node().equals(pos) || key.action() != stream.action() || key.channel() != stream.channel()) continue;
+                if (one != null && key.beam() != beam) continue;
+                for (BlockPos at : action.collectors()) {
+                    used.add(at);
+                    ports.computeIfAbsent(at, k -> new int[1])[0] |= 1;
+                }
+                for (BlockPos at : action.senders()) {
+                    used.add(at);
+                    ports.computeIfAbsent(at, k -> new int[1])[0] |= 2;
+                }
+                if (said.isEmpty() && action.said() != null) said = java.util.Optional.of(action.said());
+            }
+            lines.add(new SpectroscopeReading.Line(stream.action().ordinal(), stream.channel(), stream.modifiers(), stream.amps(), stream.speed(),
+                    used.size(), said));
+        }
+        List<SpectroscopeReading.Port> found = new ArrayList<>();
+        ports.forEach((at, role) -> {
+            LaserNode port = nodes.get(at);
+            found.add(new SpectroscopeReading.Port(level.getBlockState(at).getBlock().getName(), at, port == null ? 0 : port.channel(), role[0]));
+        });
+        return new SpectroscopeReading(where, light.reach(), light.feeders().size(), light.marks(), light.boosts(), flow, lines, found,
+                List.copyOf(light.logistics().values()));
+    }
+
     /**
      * For the Spectroscope: what the light leaving {@code pos} carries, line by line. Empty if nothing
      * there is a laser block.

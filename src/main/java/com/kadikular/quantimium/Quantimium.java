@@ -685,6 +685,11 @@ public class Quantimium {
                 })
         );
         registrar.playToClient(
+                com.kadikular.quantimium.network.SpectroscopePayload.TYPE,
+                com.kadikular.quantimium.network.SpectroscopePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleSpectroscope(payload))
+        );
+        registrar.playToClient(
                 HorizonViewPayload.TYPE,
                 HorizonViewPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleHorizonView(payload))

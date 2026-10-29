@@ -153,6 +153,37 @@ public final class ChannelTests {
         });
     }
 
+    // covers: laser.spectroscope
+    @GameTest(template = TestSupport.FLOOR_17, batch = "channels_spectroscope", timeoutTicks = 100)
+    public static void theSpectroscopeSplitsALaserIntoItsLines(GameTestHelper helper) {
+        // Harvest and Pickup on channel 3 into a port on 3: read off the mount, and off its beam in mid-air.
+        helper.setBlock(new BlockPos(1, Y, 8), ModBlocks.LASER_EMITTER_1.get().defaultBlockState().setValue(LaserEmitterBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(0, Y, 8), ModBlocks.CREATIVE_ENERGY_CELL.get());
+        port(helper, new BlockPos(3, Y, 8)).setChannel(3);
+        helper.setBlock(new BlockPos(5, Y, 8), ModBlocks.LENS_MOUNT.get().defaultBlockState().setValue(LensMountBlock.FACING, Direction.EAST));
+        LensMountBlockEntity mount = helper.getBlockEntity(new BlockPos(5, Y, 8), LensMountBlockEntity.class);
+        mount.getLensSlots().setStackInSlot(0, new ItemStack(ModItems.HARVEST_LENS.get()));
+        mount.getLensSlots().setStackInSlot(1, new ItemStack(ModItems.PICKUP_LENS.get()));
+        mount.setSlotChannel(0, 3);
+        mount.setSlotChannel(1, 3);
+        helper.setBlock(new BlockPos(12, Y, 8), Blocks.OBSIDIAN);
+        helper.runAfterDelay(40, () -> {
+            var networks = com.kadikular.quantimium.laser.LaserNetworks.of(helper.getLevel());
+            BlockPos at = helper.absolutePos(new BlockPos(5, Y, 8));
+            var reading = networks.read(helper.getLevel(), at, -1);
+            helper.assertTrue(reading != null, "a reading off the mount");
+            var line = reading.lines().stream().filter(l -> l.lens() == Lens.HARVEST).findFirst().orElse(null);
+            helper.assertTrue(line != null && line.channel() == 3 && line.has(Lens.PICKUP), "Harvest on channel 3, with Pickup: " + reading.lines());
+            helper.assertTrue(reading.ports().stream().anyMatch(p -> p.channel() == 3 && (p.role() & 1) != 0), "the port on 3, collecting");
+            // Looking across the beam, a block past the mount, from the side.
+            var over = helper.absolutePos(new BlockPos(8, Y, 8)).getCenter();
+            var aim = networks.aimedAt(over.add(0, 0, -3), over.add(0, 0, 3));
+            helper.assertTrue(aim != null && aim.pos().equals(at), "aimed across its beam, the mount's: " + aim);
+            TestSupport.finishLasers(helper);
+            helper.succeed();
+        });
+    }
+
     private static LaserPortBlockEntity port(GameTestHelper helper, BlockPos pos) {
         helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(LaserPortBlock.FACING, Direction.EAST));
         return helper.getBlockEntity(pos, LaserPortBlockEntity.class);

@@ -37,7 +37,19 @@ A run of laser reaches as far as its source's range. Mirrors, relays, prisms and
 
 ## Reading a laser
 
-The <ItemLink id="quantimium:spectroscope" /> splits a laser into what it carries. Use it on any laser block to read the laser leaving it: how far a run reaches and from how many sources, each action with its modifiers, who pays and how many Laser Ports it can reach, and each laser's length, end and power.
+The <ItemLink id="quantimium:spectroscope" /> splits a laser into its lines. Use it on any laser block to read the
+laser leaving it, or aim it at a laser in the air (up to 16 blocks off) to read that beam.
+
+- **The spectrum.** Each action is a line at its own place, ordered by its lens's color from red to violet. Amplify
+  makes a line taller and Speed wider; a Filter cuts a notch in it, Pickup puts a dot over it, Harmonic adds a line
+  each side, Void darkens its core, and each Range lens adds a faint line beside it. Logistics is a band at the end,
+  with a tick for each port the laser's actions use.
+- **Channels.** Pick All, or one channel the laser carries, to see only what's on it. On All, each line shows its
+  channel over it.
+- **The table.** Each action with its modifiers and channel, then each Laser Port, Tank or Controller its actions use,
+  whether it collects or sends, and its channel. Hover over a line or row for more; scroll for the rest.
+- At the bottom: how far a run reaches, from how many sources, the power it carries, and whether it's UV, Phantom,
+  in the mirror or unpowered.
 
 ## Looking into a laser
 

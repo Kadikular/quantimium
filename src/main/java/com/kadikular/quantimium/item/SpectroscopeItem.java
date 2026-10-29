@@ -6,7 +6,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -29,17 +31,35 @@ public class SpectroscopeItem extends Item {
         super(properties);
     }
 
+    /** On a laser block: the laser leaving it. */
     @Override
     public InteractionResult useOn(UseOnContext context) {
         if (!(context.getLevel() instanceof ServerLevel level)) return InteractionResult.SUCCESS;
-        Player player = context.getPlayer();
-        List<Component> lines = LaserNetworks.of(level).describe(context.getClickedPos());
-        if (lines.isEmpty()) return InteractionResult.PASS;
-        if (player != null) {
-            for (Component line : lines) player.sendSystemMessage(line);
+        return show(level, context.getPlayer(), context.getClickedPos(), -1) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
+
+    /** In the air: the laser it's aimed at, within reach. */
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
+        var eye = player.getEyePosition();
+        var aim = LaserNetworks.of(server).aimedAt(eye, eye.add(player.getLookAngle().scale(REACH)));
+        if (aim == null) return InteractionResult.PASS;
+        return show(server, player, aim.pos(), aim.beam()) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
+
+    /** How far off a laser in the air can be read. */
+    private static final double REACH = 16.0;
+
+    /** Reads the laser leaving {@code pos} (or its beam {@code beam}) and opens the reading on the player's screen. */
+    private static boolean show(ServerLevel level, @org.jspecify.annotations.Nullable Player player, net.minecraft.core.BlockPos pos, int beam) {
+        var reading = LaserNetworks.of(level).read(level, pos, beam);
+        if (reading == null) return false;
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(server, new com.kadikular.quantimium.network.SpectroscopePayload(reading));
         }
-        level.playSound(null, context.getClickedPos(), SoundEvents.SPYGLASS_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
-        return InteractionResult.SUCCESS;
+        level.playSound(null, pos, SoundEvents.SPYGLASS_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
+        return true;
     }
 
     @Override
