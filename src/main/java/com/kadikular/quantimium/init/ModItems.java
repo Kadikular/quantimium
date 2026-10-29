@@ -276,6 +276,8 @@ public class ModItems {
             "logistics_materialiser", ModBlocks.LOGISTICS_MATERIALISER);
     public static final DeferredItem<BlockItem> LASER_PORT_ITEM = ITEMS.registerSimpleBlockItem(
             "laser_port", ModBlocks.LASER_PORT);
+    public static final DeferredItem<BlockItem> LASER_TANK_ITEM = ITEMS.registerSimpleBlockItem(
+            "laser_tank", ModBlocks.LASER_TANK);
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> HARVEST_LENS = ITEMS.registerItem(
             "harvest_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.HARVEST));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> DAMAGE_LENS = ITEMS.registerItem(
@@ -317,6 +319,9 @@ public class ModItems {
             "smelting_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.SMELT));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> CRUSHING_LENS = ITEMS.registerItem(
             "crushing_lens", props -> new com.kadikular.quantimium.item.LensItem(props.stacksTo(16), com.kadikular.quantimium.laser.Lens.CRUSH));
+    /** Never held: a filter entry for a fluid (see FluidEntry). Hidden from the creative tabs and JEI. */
+    public static final DeferredItem<Item> FLUID_ENTRY = ITEMS.registerItem(
+            "fluid_entry", props -> new com.kadikular.quantimium.item.FluidEntryItem(props.stacksTo(1)));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INTERACT_LENS = ITEMS.registerItem(
             "interact_lens", props -> new com.kadikular.quantimium.item.InteractLensItem(props.stacksTo(1)));
     public static final DeferredItem<com.kadikular.quantimium.item.LensItem> INSERT_LENS = ITEMS.registerItem(

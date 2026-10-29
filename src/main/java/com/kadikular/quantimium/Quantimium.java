@@ -154,12 +154,25 @@ public class Quantimium {
                 ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
                 (be, context) -> context == null ? be.viewerHandler() : be.itemHandler()
         );
+        // And its fluids, to pipes and to Crafters' Tesseracts.
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.LOGISTICS_MATERIALISER_BE.get(),
+                (be, context) -> be.fluidHandler()
+        );
 
         // A Logistics Controller takes the power it pays to move things with on any face.
         event.registerBlockEntity(
                 Capabilities.Energy.BLOCK,
                 ModBlockEntities.LOGISTICS_CONTROLLER_BE.get(),
                 (be, context) -> be.getEnergyStorage()
+        );
+
+        // A Laser Tank: pipes fill it while it sends, and drain it any time.
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.LASER_TANK_BE.get(),
+                (be, context) -> be.automation(context)
         );
 
         // A Laser Port hands out what it caught and takes in what it sends, face by face as set.
@@ -240,6 +253,13 @@ public class Quantimium {
                 ModBlockEntities.REACTOR_PORT_BE.get(),
                 (be, context) -> be.energyHandler()
         );
+
+        // An Input port takes fluids into the horizon, a Materializer Port gives them out.
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.REACTOR_PORT_BE.get(),
+                (be, context) -> be.fluidHandler()
+        );
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,
                 ModBlockEntities.REACTOR_PORT_BE.get(),
@@ -299,6 +319,12 @@ public class Quantimium {
                 Capabilities.Energy.BLOCK,
                 ModBlockEntities.QUANTUM_CRAFTER_BE.get(),
                 (be, context) -> be.getEnergyStorage()
+        );
+
+        event.registerBlockEntity(
+                Capabilities.Fluid.BLOCK,
+                ModBlockEntities.QUANTUM_CRAFTER_BE.get(),
+                (be, context) -> be.fluidAutomation(context)
         );
 
         event.registerBlockEntity(
@@ -429,6 +455,19 @@ public class Quantimium {
                         && be.isUsableBy(context.player())) {
                     be.setRecipeLocked(payload.locked());
                     be.refreshSoon();
+                }
+            })
+        );
+
+        registrar.playToServer(
+            com.kadikular.quantimium.network.SetChannelPayload.TYPE,
+            com.kadikular.quantimium.network.SetChannelPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                if (context.player() instanceof ServerPlayer player
+                        && player.containerMenu.containerId == payload.containerId()
+                        && player.containerMenu instanceof com.kadikular.quantimium.menu.ChannelMenu menu
+                        && player.containerMenu.stillValid(player)) {
+                    menu.setChannel(payload.channel());
                 }
             })
         );
@@ -596,12 +635,22 @@ public class Quantimium {
                 })
         );
         registrar.playToServer(
+                com.kadikular.quantimium.network.LogisticsTerminalMakePayload.TYPE,
+                com.kadikular.quantimium.network.LogisticsTerminalMakePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
+                            && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
+                        menu.make(context.player(), payload.item(), payload.count());
+                    }
+                })
+        );
+        registrar.playToServer(
                 com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.TYPE,
                 com.kadikular.quantimium.network.LogisticsTerminalInsertPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player().containerMenu instanceof com.kadikular.quantimium.menu.LogisticsTerminalMenu menu
                             && menu.pos().equals(payload.pos()) && menu.stillValid(context.player())) {
-                        menu.insertCarried(payload.one());
+                        menu.insertCarried(context.player(), payload.one());
                     }
                 })
         );
@@ -634,6 +683,11 @@ public class Quantimium {
                         menu.setGhosts(payload.ghosts());
                     }
                 })
+        );
+        registrar.playToClient(
+                com.kadikular.quantimium.network.SpectroscopePayload.TYPE,
+                com.kadikular.quantimium.network.SpectroscopePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> ClientPayloadHandler.handleSpectroscope(payload))
         );
         registrar.playToClient(
                 HorizonViewPayload.TYPE,

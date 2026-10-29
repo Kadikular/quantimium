@@ -4,6 +4,8 @@
 
 - Moves up to {{c:LaserTuning.MOVE_ITEMS}} items every {{c:LaserTuning.PLACE_COOLDOWN|s}}, as many as the ports have room for. Each [[item:speed_lens]] doubles that, up to 64.
 - Through an [[block:area_prism]], from each inventory in the area in turn.
+- [[mechanic:laser.lens.extract_fluid]] Fluids too. With no items to take, it drains the fluid handler it ends on into the collecting [[block:laser_tank]]s up the laser. It moves {{c:LaserTuning.MOVE_FLUID_MB}} mB at a time, doubled for each Speed Lens.
+- [[mechanic:laser.lens.pump]] With nothing to take from, it pumps: the first fluid source on its way (the laser runs on through water) goes up to the collecting Laser Tanks, a bucket at a time, if they have room for it.
 - It does nothing in the mirror.
 
 ## Energy

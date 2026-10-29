@@ -69,8 +69,7 @@ import net.minecraft.network.chat.MutableComponent;
  */
 public class QuantumCrafterBlockEntity extends BlockEntity
         implements MenuProvider, SideConfigurable, QuantumEnergyHost, FluxMeterReadout, com.kadikular.quantimium.laser.OfferMaker {
-    private static final SideAutomationProfile SIDE_AUTOMATION_PROFILE =
-            new SideAutomationProfile(SideAutomationProfile.ALL_SIDES, 0);
+    private static final SideAutomationProfile SIDE_AUTOMATION_PROFILE = SideAutomationProfile.ITEMS_AND_FLUIDS;
 
     public static final int INPUT_SLOTS = 9;
     public static final int OUTPUT_START = 9;
@@ -110,11 +109,23 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private final CrafterPreview previewEngine = new CrafterPreview();
     private List<ResolvedCraft> preview = List.of();
-    private List<SideConfig> sideConfigs = SideConfig.defaults();
+    private List<SideConfig> sideConfigs = defaultSides();
+
+    /** Items and fluids in and out on every face. */
+    private static List<SideConfig> defaultSides() {
+        return SideConfig.defaults().stream().map(config -> config.withFluidMode(SideMode.BOTH)).toList();
+    }
 
     @Nullable
     private Identifier preferredRecipeId;
     private boolean recipeLocked;
+    /** What it shows first, even when it can't make any; locked, all it makes. */
+    private final List<net.neoforged.neoforge.transfer.item.ItemResource> pins = new ArrayList<>();
+    public static final int MAX_PINS = 27;
+    /** Saved locked to one recipe, before pins: what that recipe makes is pinned once it's seen. */
+    private boolean pinPreferred;
+    /** Which pin auto-export makes next: each in turn. */
+    private int nextPin;
 
     private int statusCode = STATUS_IDLE;
     /** The flux band here: which catalyst families work, and how much the instant-craft tax is. */
@@ -198,6 +209,32 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
     };
 
+    /** Its tanks, and what each holds. */
+    public static final int INPUT_TANKS = 3;
+    public static final int OUTPUT_TANKS = 4;
+    public static final int TANK_CAPACITY = 16_000;
+    /** What recipes take fluids from (with any tank its links are bound to). */
+    private final com.kadikular.quantimium.util.FluidTanks inputTanks =
+            new com.kadikular.quantimium.util.FluidTanks(INPUT_TANKS, TANK_CAPACITY, this::fluidsChanged);
+    /** Where the fluids recipes make go: shown among its outputs. */
+    private final com.kadikular.quantimium.util.FluidTanks outputTanks =
+            new com.kadikular.quantimium.util.FluidTanks(OUTPUT_TANKS, TANK_CAPACITY, this::fluidsChanged);
+    /**
+     * Its tanks as a craft draws on and fills them: inside whatever transaction is open (a pull that may be called
+     * off), so a craft undone puts its fluids back too.
+     */
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler inputsForCrafts = com.kadikular.quantimium.util.LegacyFluids.legacy(
+            inputTanks.handler(inputTanks.view(() -> true, () -> true)));
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler outputsForCrafts = com.kadikular.quantimium.util.LegacyFluids.legacy(
+            outputTanks.handler(outputTanks.view(() -> true, () -> true)));
+    /** Pipes on each face, and asked with no face (only what's really there), and a player's bucket (all of it). */
+    private final SidedFluids[] sidedFluids = new SidedFluids[6];
+    /** A face's tanks without its previews: what pushing out on its own moves. */
+    private final SidedFluids[] sidedTanks = new SidedFluids[6];
+    private final SidedFluids[] networkFluids = new SidedFluids[6];
+    private final SidedFluids viewerFluids = new SidedFluids(null, false);
+    private final SidedFluids playerFluids = new SidedFluids(null, true);
+
     private final IItemHandler[] sidedItemHandlers = new IItemHandler[6];
     private final IItemHandler unsidedItemHandler = new SidedAutomationHandler(null);
     /** Asked with no face (viewers, other mods' screens): only what's really there, no crafting on a pull. */
@@ -257,7 +294,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         this.energyStorage = new QuantumEnergyStorage(capacity, maxReceive, 0) {
             @Override
             protected void onReceived() {
-                    setChanged();
+                    // Saved, without telling neighbours' comparators every tick it's charged (none reads it).
+                    if (level != null) level.blockEntityChanged(worldPosition);
                     automationViewRevision = Long.MIN_VALUE;
                 
             }
@@ -267,11 +305,104 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
         for (Direction side : Direction.values()) {
             sidedItemHandlers[side.get3DDataValue()] = new SidedAutomationHandler(side);
+            sidedFluids[side.get3DDataValue()] = new SidedFluids(side, true);
+            sidedTanks[side.get3DDataValue()] = new SidedFluids(side, false);
+            // A Basic Crafter's faces aren't set: as with no face.
+            networkFluids[side.get3DDataValue()] = new SidedFluids(isBasic() ? null : side, false, false);
         }
     }
 
     public boolean isBasic() {
         return getBlockState().is(ModBlocks.BASIC_QUANTUM_CRAFTER.get());
+    }
+
+    public com.kadikular.quantimium.util.FluidTanks inputTanks() {
+        return inputTanks;
+    }
+
+    public com.kadikular.quantimium.util.FluidTanks outputTanks() {
+        return outputTanks;
+    }
+
+    /**
+     * What pipes on {@code side} see, by its fluid mode: they fill the input tanks and drain the output tanks, and take
+     * what a recipe making only fluids previews, made as they take it. Null for a face with fluids off.
+     */
+    @Nullable
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidAutomation(@Nullable Direction side) {
+        if (side == null) return viewerFluids;
+        if (isBasic()) return playerFluids;
+        if (sideConfigs.get(side.get3DDataValue()).fluidMode() == SideMode.DISABLED) return null;
+        return sidedFluids[side.get3DDataValue()];
+    }
+
+    /**
+     * What a logistics network on {@code side} sees: what it holds, filling its input tanks without counting them as
+     * stock. What it would make is {@link #fluidAutomation}'s. Null for a face with fluids off.
+     */
+    @Nullable
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> networkFluids(Direction side) {
+        if (!isBasic() && sideConfigs.get(side.get3DDataValue()).fluidMode() == SideMode.DISABLED) return null;
+        return networkFluids[side.get3DDataValue()];
+    }
+
+    /** What a bucket used on it sees: every tank, and what it previews made as the bucket fills. */
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> playerFluids() {
+        return playerFluids;
+    }
+
+    /** A tank's contents moved: what it could make may have too, and the screen shows it. */
+    private void fluidsChanged() {
+        setChanged();
+        if (level == null || level.isClientSide()) return;
+        contentRevision++;
+        automationViewRevision = Long.MIN_VALUE;
+        if (suppressInventoryNotify) return;
+        ghostLayout = null;
+        localDirty = true;
+        clientSyncDirty = true;
+    }
+
+    /** A bucket (or any fluid container) on the cursor clicked on an input tank: fills the tank from it, or itself from the tank. */
+    public boolean pour(net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> held, int tank) {
+        var into = inputTanks.tank(tank);
+        if (net.neoforged.neoforge.transfer.ResourceHandlerUtil.moveFirst(held, into, fluid -> true, Integer.MAX_VALUE, null) != null) return true;
+        return net.neoforged.neoforge.transfer.ResourceHandlerUtil.moveFirst(into, held, fluid -> true, Integer.MAX_VALUE, null) != null;
+    }
+
+    /**
+     * Fills what's on the cursor with {@code fluid}: from the output tanks, and if it still has room and
+     * {@code ghostSlot} previews a recipe making it, from that recipe, made just enough times. Whether any went in.
+     */
+    public boolean fillFrom(net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> held,
+                            net.neoforged.neoforge.fluids.FluidStack fluid, int ghostSlot) {
+        var cursor = net.neoforged.neoforge.fluids.capability.IFluidHandler.of(held);
+        var simulate = net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
+        int room = cursor.fill(fluid.copyWithAmount(Integer.MAX_VALUE), simulate);
+        if (room <= 0) return false;
+        // What's there first; made only if that isn't enough to fill it.
+        topUp(ghostSlot, fluid.copyWithAmount(room));
+        var offered = outputTanks.drain(fluid.copyWithAmount(room), true);
+        if (offered.isEmpty()) return false;
+        int filled = cursor.fill(offered, simulate);
+        if (filled <= 0) return false;
+        cursor.fill(outputTanks.drain(fluid.copyWithAmount(filled), false), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        return true;
+    }
+
+    /** Whether the output tanks have room for every fluid {@code craft} makes. */
+    private boolean fluidsFit(ResolvedCraft craft) {
+        if (craft.fluidOutputs().isEmpty()) return true;
+        net.neoforged.neoforge.fluids.FluidStack[] before = outputTanks.snapshot();
+        boolean fits = true;
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : craft.fluidOutputs()) {
+            if (outputTanks.fill(fluid, false) < fluid.getAmount()) {
+                fits = false;
+                break;
+            }
+        }
+        outputTanks.restore(before);
+        return fits;
     }
 
     public int getCoherenceReserve() {
@@ -346,10 +477,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         for (int craftIndex = 0; craftIndex < preview.size(); craftIndex++) {
             ResolvedCraft craft = preview.get(craftIndex);
             List<ItemStack> outputs = craft.outputs();
+            boolean items = false;
             for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
                 if (outputs.get(outputIndex).isEmpty()) continue;
+                items = true;
                 layout.add(new GhostSlot(craftIndex, outputIndex, craft.feCost(),
                         craft.batchSize(), craft.energyCapped(), craft.availableOutputCount(outputIndex)));
+            }
+            // A recipe making only fluids: one preview (output -1) of its first fluid, made as a bucket's taken.
+            if (!items && !craft.fluidOutputs().isEmpty()) {
+                long perRun = craft.withRuns(1).fluidOutputs().getFirst().getAmount();
+                layout.add(new GhostSlot(craftIndex, -1, craft.feCost(), craft.batchSize(), craft.energyCapped(), perRun * craft.availableRuns()));
             }
         }
         ghostLayout = layout.toArray(GhostSlot[]::new);
@@ -375,7 +513,14 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     public ItemStack getGhost(int ghostSlot) {
         GhostSlot ghost = ghostAt(ghostSlot);
         if (ghost == null) return ItemStack.EMPTY;
-        List<ItemStack> outputs = preview.get(ghost.craftIndex()).outputs();
+        ResolvedCraft craft = preview.get(ghost.craftIndex());
+        // A recipe making only fluids shows its first, as a fluid entry counting the mB of a batch.
+        if (ghost.outputIndex() < 0) {
+            if (craft.fluidOutputs().isEmpty()) return ItemStack.EMPTY;
+            var fluid = craft.fluidOutputs().getFirst();
+            return com.kadikular.quantimium.recipe.FluidEntry.of(fluid).copyWithCount(fluid.getAmount());
+        }
+        List<ItemStack> outputs = craft.outputs();
         return ghost.outputIndex() < outputs.size() ? outputs.get(ghost.outputIndex()).copy() : ItemStack.EMPTY;
     }
 
@@ -392,7 +537,47 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     public void setRecipeLocked(boolean locked) {
         this.recipeLocked = locked;
         localDirty = true;
+        contentRevision++;
+        automationViewRevision = Long.MIN_VALUE;
+        commitCheckRevision = Long.MIN_VALUE;
         setChanged();
+    }
+
+    /** What it shows first, in order. */
+    public List<net.neoforged.neoforge.transfer.item.ItemResource> pins() {
+        return pins;
+    }
+
+    /** Pins {@code item}, or unpins it if it's pinned. */
+    public void togglePin(net.neoforged.neoforge.transfer.item.ItemResource item) {
+        if (item.isEmpty()) return;
+        if (!pins.remove(item)) {
+            if (pins.size() >= MAX_PINS) return;
+            pins.add(item);
+        }
+        // Locked, what it makes changes, and what a network is offered.
+        localDirty = true;
+        contentRevision++;
+        automationViewRevision = Long.MIN_VALUE;
+        commitCheckRevision = Long.MIN_VALUE;
+        if (recipeLocked) queueRefresh(true);
+        sync();
+    }
+
+    /** Whether {@code craft} makes something pinned. */
+    private boolean makesPinned(ResolvedCraft craft) {
+        for (ItemStack output : craft.outputs()) {
+            if (!output.isEmpty() && pins.contains(net.neoforged.neoforge.transfer.item.ItemResource.of(output))) return true;
+        }
+        for (var fluid : craft.fluidOutputs()) {
+            if (pins.contains(com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(fluid)))) return true;
+        }
+        return false;
+    }
+
+    /** Locked with something pinned: it makes only what's pinned. */
+    private boolean pinnedOnly() {
+        return recipeLocked && !pins.isEmpty();
     }
 
     /** Every slot as a pipe on any face sees it, outputs crafting on a pull: what our own automation (and tests) use. */
@@ -431,6 +616,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         contentRevision++;
         setChanged();
         if (level != null) {
+            // A face turned off or on: pipes holding on to what it offered ask again.
+            level.invalidateCapabilities(worldPosition);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -678,12 +865,23 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 continue;
             }
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
-            com.kadikular.quantimium.laser.LogisticsController controller = materialiser.controller();
-            if (controller == null) continue;
-            views.put(bound, network != null && controller == network && stock != null
-                    ? handlerFor(stock)
-                    // What's stored only: a Crafter draws nothing made through a Materialiser (a chain is a Reactor's).
-                    : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), false));
+            List<com.kadikular.quantimium.laser.LogisticsController> controllers = materialiser.controllers();
+            if (controllers.isEmpty()) continue;
+            List<com.kadikular.quantimium.laser.StockHandler> each = new ArrayList<>(controllers.size());
+            for (var controller : controllers) {
+                each.add(network != null && controller == network && stock != null
+                        ? handlerFor(stock)
+                        // What's stored only: a Crafter draws nothing made through a Materialiser (a chain is a Reactor's).
+                        : controller.offers().view(withOwn ? null : worldPosition, materialiser.offersReal(), false));
+            }
+            if (each.size() == 1) {
+                views.put(bound, each.getFirst());
+                continue;
+            }
+            // Every network reaching it (one on each channel), as one.
+            java.util.Map<net.neoforged.neoforge.transfer.item.ItemResource, Long> all = new java.util.LinkedHashMap<>();
+            for (var handler : each) handler.amounts().forEach((item, n) -> all.merge(item, n, Long::sum));
+            views.put(bound, new com.kadikular.quantimium.laser.StockHandler(all));
         }
         return views;
     }
@@ -734,8 +932,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             GlobalPos bound = link.get(com.kadikular.quantimium.init.ModDataComponents.BOUND_POS.get());
             if (bound == null || !bound.dimension().equals(level.dimension()) || !level.isLoaded(bound.pos())) continue;
             if (!(level.getBlockEntity(bound.pos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) continue;
-            var controller = materialiser.controller();
-            if (controller != null && !networks.contains(controller)) networks.add(controller);
+            for (var controller : materialiser.controllers()) if (!networks.contains(controller)) networks.add(controller);
         }
         return networks;
     }
@@ -824,14 +1021,38 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         shape.add(Math.round(multiplier * 1000));
         shape.add(recipeLocked);
         shape.add(String.valueOf(preferredRecipeId));
+        shape.add(List.copyOf(pins));
         long grid = 1;
         for (int i = 0; i < INPUT_SLOTS; i++) {
             ItemStack stack = inventory.getStackInSlot(i);
             grid = grid * 31 + (stack.isEmpty() ? 0 : stack.getItem().hashCode() * 31L + stack.getComponents().hashCode());
         }
         shape.add(grid);
+        shape.add(fluidShape());
         views.keySet().stream().sorted(java.util.Comparator.comparing(GlobalPos::toString)).forEach(shape::add);
         return shape;
+    }
+
+    /**
+     * Which fluids it can draw on (its input tanks, tanks its links are bound to), each with its amount to the nearest
+     * power of two: a new fluid, or a good deal more of one, can make a recipe possible, where a pipe's trickle can't.
+     */
+    private long fluidShape() {
+        long hash = 1;
+        for (int tank = 0; tank < INPUT_TANKS; tank++) hash = hash * 31 + fluidKey(inputTanks.get(tank));
+        for (int slot = 0; slot < INPUT_SLOTS; slot++) {
+            ItemStack stack = inventory.getStackInSlot(slot);
+            if (!EntangledLinks.isLink(stack)) continue;
+            var tanks = EntangledLinks.resolveFluid(level, worldPosition, stack);
+            if (tanks == null) continue;
+            for (int tank = 0; tank < tanks.getTanks(); tank++) hash = hash * 31 + fluidKey(tanks.getFluidInTank(tank));
+        }
+        return hash;
+    }
+
+    private static long fluidKey(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        if (fluid.isEmpty()) return 0;
+        return net.minecraft.core.registries.BuiltInRegistries.FLUID.getId(fluid.getFluid()) * 64L + (63 - Long.numberOfLeadingZeros(fluid.getAmount()));
     }
 
     /** Every item its views show, and how many. */
@@ -1073,12 +1294,22 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 }
             }
             if (isBasic()) crafts = limitToCoherence(crafts);
-            if (recipeLocked && preferredRecipeId != null) crafts = crafts.stream().filter(c -> c.recipeId().equals(preferredRecipeId)).toList();
             resolved = crafts;
+            // Locked, a network is offered only what's pinned; the rest is still shown, not made.
+            lockedOut = pinnedOnly() ? crafts.stream().filter(craft -> !makesPinned(craft)).toList() : List.of();
             List<com.kadikular.quantimium.laser.OfferMaker.Made> made = new ArrayList<>();
             for (ResolvedCraft craft : crafts) {
+                if (lockedOut.contains(craft)) continue;
                 java.util.Set<net.minecraft.world.item.Item> from = new java.util.HashSet<>();
                 for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) if (withdrawal.expected() != null) from.add(withdrawal.expected());
+                if (craft.outputs().stream().allMatch(ItemStack::isEmpty) && !craft.fluidOutputs().isEmpty()) {
+                    // Making only fluids: its first, in mB, taken through its fluid handler.
+                    var fluid = craft.fluidOutputs().getFirst();
+                    long perRun = craft.withRuns(1).fluidOutputs().getFirst().getAmount();
+                    made.add(new com.kadikular.quantimium.laser.OfferMaker.Made(com.kadikular.quantimium.recipe.FluidEntry.key(
+                            net.neoforged.neoforge.transfer.fluid.FluidResource.of(fluid)), perRun * craft.availableRuns(), java.util.Set.copyOf(from), craft));
+                    continue;
+                }
                 List<ItemStack> outputs = craft.outputs();
                 for (int i = 0; i < outputs.size(); i++) {
                     ItemStack output = outputs.get(i);
@@ -1104,6 +1335,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** The crafts last handed it and shown; null once anything else has been shown since. */
     @Nullable
     private List<Object> fed;
+    /** Locked, what it last found it could make that isn't pinned: shown with what a network hands back, never offered. */
+    private List<ResolvedCraft> lockedOut = List.of();
 
     /**
      * Its network has worked out what it offers, this Crafter's crafts among them: those are its preview, at once.
@@ -1121,6 +1354,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         for (Object craft : crafts) {
             if (craft instanceof ResolvedCraft resolved && seen.add(resolved.recipeId())) shown.add(resolved);
         }
+        if (pinnedOnly()) for (ResolvedCraft craft : lockedOut) if (seen.add(craft.recipeId())) shown.add(craft);
         // A rebuild of its own already queued (its grid changed since the network asked) still runs, and is newer.
         show(CrafterPreview.cap(shown, CrafterPreview.MAX_OUTPUTS));
         fed = crafts;
@@ -1208,7 +1442,10 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     @Override
     public ItemStack peekOnDemand(int slot) {
-        return slot > OUTPUT_END ? getGhost(GHOST_BASE + slot - OUTPUT_END - 1) : ItemStack.EMPTY;
+        if (slot <= OUTPUT_END) return ItemStack.EMPTY;
+        ItemStack shown = getGhost(GHOST_BASE + slot - OUTPUT_END - 1);
+        // Fluids aren't offered to the network as made things (yet).
+        return com.kadikular.quantimium.recipe.FluidEntry.is(shown) ? ItemStack.EMPTY : shown;
     }
 
     /** Its outputs: its grid and links are what it makes things from. */
@@ -1319,13 +1556,19 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         // Whatever the network hands it next is shown, even the same crafts as before this.
         fed = null;
         if (isBasic()) crafts = limitToCoherence(crafts);
-        if (recipeLocked && preferredRecipeId != null) {
-            List<ResolvedCraft> locked = new ArrayList<>();
+        if (pinPreferred && preferredRecipeId != null) {
+            // Locked to one recipe before there were pins: what it makes is pinned.
             for (ResolvedCraft craft : crafts) {
-                if (craft.recipeId().equals(preferredRecipeId)) locked.add(craft);
+                if (!craft.recipeId().equals(preferredRecipeId)) continue;
+                ItemStack primary = craft.primaryOutput();
+                if (!primary.isEmpty()) pins.add(net.neoforged.neoforge.transfer.item.ItemResource.of(primary));
+                else if (!craft.fluidOutputs().isEmpty()) pins.add(com.kadikular.quantimium.recipe.FluidEntry.key(
+                        net.neoforged.neoforge.transfer.fluid.FluidResource.of(craft.fluidOutputs().getFirst())));
+                pinPreferred = false;
+                break;
             }
-            if (!locked.isEmpty()) crafts = locked;
-        } else if (preferredRecipeId != null) {
+        }
+        if (preferredRecipeId != null) {
             // Prefer last-selected recipe first in the ghost list.
             crafts = new ArrayList<>(crafts);
             crafts.sort((a, b) -> {
@@ -1381,19 +1624,6 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             // Cached recipes are spent; discover whatever else the grid can still make.
             queueRefresh(true);
             return;
-        }
-        if (recipeLocked && preferredRecipeId != null) {
-            boolean stillHasPreferred = false;
-            for (ResolvedCraft craft : next) {
-                if (craft.recipeId().equals(preferredRecipeId)) {
-                    stillHasPreferred = true;
-                    break;
-                }
-            }
-            if (!stillHasPreferred) {
-                queueRefresh(true);
-                return;
-            }
         }
 
         if (samePreviewBatches(preview, next)) {
@@ -1474,6 +1704,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             statusCode = STATUS_NO_POWER;
         } else if (!hasGhost()) {
             // Results are backed up in every output slot, so nothing can be previewed or taken.
+            statusCode = STATUS_OUTPUT_FULL;
+        } else if (preview.stream().noneMatch(craft -> fluidsFit(craft.withRuns(1)))) {
+            // What it makes besides items has no room in its output tanks: they want emptying.
             statusCode = STATUS_OUTPUT_FULL;
         } else {
             statusCode = STATUS_READY;
@@ -1556,10 +1789,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
         ItemStack catalyst = inventory.getStackInSlot(CATALYST_SLOT);
         hash = hash * 31 + (catalyst.isEmpty() ? 0 : catalyst.getItem().hashCode());
+        // Which fluids its input tanks hold: a new one may make a new recipe.
+        for (int tank = 0; tank < INPUT_TANKS; tank++) {
+            var fluid = inputTanks.get(tank);
+            hash = hash * 31 + (fluid.isEmpty() ? 0 : net.minecraft.core.registries.BuiltInRegistries.FLUID.getId(fluid.getFluid()));
+        }
         // Energy is checked by updateStatusFromPreview / rescale; including the exact FE value here
         // made every hopper craft invalidate the recipe cache.
         hash = hash * 31 + (recipeLocked ? 1 : 0);
         hash = hash * 31 + (preferredRecipeId == null ? 0 : preferredRecipeId.hashCode());
+        hash = hash * 31 + pins.hashCode();
         hash = hash * 31 + (linkLoopDetected ? 0x51C1E : 0);
         hash = hash * 31 + remote.typeHash();
         return hash;
@@ -1571,6 +1810,8 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         for (int i = 0; i < INPUT_SLOTS; i++) {
             total += inventory.getStackInSlot(i).getCount();
         }
+        // Its fluids by the bucket, so a full tank resizes batches as a stack would.
+        for (int tank = 0; tank < INPUT_TANKS; tank++) total += inputTanks.get(tank).getAmount() / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
         return total;
     }
 
@@ -1649,8 +1890,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     public boolean canCommit(ResolvedCraft craft) {
         if (craft == null || level == null || linkLoopDetected) return false;
+        // Locked: shown, but only what's pinned is made.
+        if (pinnedOnly() && !makesPinned(craft)) return false;
         if (energyStorage.getEnergyStored() < craft.feCost()) return false;
         if (isBasic() && coherenceReserve < craft.batchSize()) return false;
+        // A run's fluids must fit: a bigger batch is cut to what does when it's made.
+        if (!fluidsFit(craft.withRuns(1))) return false;
         return withdrawalsAvailable(craft);
     }
 
@@ -1755,7 +2000,34 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 yield gather(withdrawal, need, simulate, hintSlot, remote.getSlots(),
                         remote::getStackInSlot, (slot, amount) -> remote.extractItem(slot, amount, simulate));
             }
+            case IngredientPool.Provenance.Tank ignored -> drained(inputsForCrafts.drain(fluidOf(withdrawal).copyWithAmount(need),
+                    simulate ? net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE
+                            : net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE));
+            case IngredientPool.Provenance.LinkedTank(int linkSlot, int ignored) -> {
+                var tanks = linkedTanks(linkSlot);
+                yield tanks == null ? ItemStack.EMPTY : drained(tanks.drain(fluidOf(withdrawal).copyWithAmount(need),
+                        simulate ? net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE
+                                : net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE));
+            }
         };
+    }
+
+    /** The fluid a withdrawal of a fluid names (its entry's), a mB of it. */
+    private static net.neoforged.neoforge.fluids.FluidStack fluidOf(IngredientPool.Withdrawal withdrawal) {
+        ItemStack entry = new ItemStack(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get());
+        if (withdrawal.components() != null) entry.applyComponents(withdrawal.components());
+        return com.kadikular.quantimium.recipe.FluidEntry.fluidOf(entry).copyWithAmount(1);
+    }
+
+    /** What was drained, as its entry counted in mB: how a withdrawal hands a fluid over. */
+    private static ItemStack drained(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return fluid.isEmpty() ? ItemStack.EMPTY : com.kadikular.quantimium.recipe.FluidEntry.of(fluid).copyWithCount(fluid.getAmount());
+    }
+
+    @Nullable
+    private net.neoforged.neoforge.fluids.capability.IFluidHandler linkedTanks(int linkSlot) {
+        if (linkSlot < 0 || linkSlot >= INPUT_SLOTS) return null;
+        return EntangledLinks.resolveFluid(level, worldPosition, inventory.getStackInSlot(linkSlot));
     }
 
     private ItemStack localSlot(int slot) {
@@ -1815,6 +2087,17 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     private void refundWithdrawal(IngredientPool.Withdrawal withdrawal, ItemStack stack) {
         if (stack.isEmpty()) return;
+        // A fluid goes back to its tank, or failing that, the Crafter's own.
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(stack)) {
+            net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(stack).copyWithAmount(stack.getCount());
+            int back = 0;
+            if (withdrawal.provenance() instanceof IngredientPool.Provenance.LinkedTank(int linkSlot, int ignored)) {
+                var tanks = linkedTanks(linkSlot);
+                if (tanks != null) back = tanks.fill(fluid, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            }
+            if (back < fluid.getAmount()) inputsForCrafts.fill(fluid.copyWithAmount(fluid.getAmount() - back), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            return;
+        }
         ItemStack leftover = stack;
         if (withdrawal.provenance() instanceof IngredientPool.Provenance.Local(int crafterSlot)) {
             leftover = inventory.insertItem(crafterSlot, leftover, false);
@@ -1887,6 +2170,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     /** As {@link #commitWithdrawnCraft(ResolvedCraft, int)}; coming up short, it tries fewer runs up to {@code tries} more times. */
     private ItemStack commitWithdrawnCraft(ResolvedCraft craft, int handedOutIndex, int tries) {
+        if (!fluidsFit(craft)) {
+            // As many runs as the output tanks have room for the fluids of.
+            int runs = craft.batchSize();
+            while (runs > 1 && !fluidsFit(craft.withRuns(runs))) runs = runs * 3 / 4;
+            if (runs >= 1 && runs < craft.batchSize() && fluidsFit(craft.withRuns(runs))) return commitWithdrawnCraft(craft.withRuns(runs), handedOutIndex, tries);
+            return refused("commit: no room in the output tanks");
+        }
         // Ingredients first, and all or nothing: a remote source can refuse mid-craft (another
         // machine emptied it, or its own craft failed), and a partial pull would mint items.
         List<IngredientPool.Withdrawal> taken = new ArrayList<>();
@@ -1950,6 +2240,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             }
             insertIntoOutputs(outputs.get(i).copy(), false);
         }
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : craft.fluidOutputs()) outputsForCrafts.fill(fluid, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
 
         if (tracing != null) tracing.accept(indent() + "made " + craft.recipeId() + " x" + craft.batchSize() + " at " + worldPosition.toShortString());
         // Continuous hopper craft must not rescan every MI recipe on each item. All of it from networks, nothing it
@@ -2036,7 +2327,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     /** Take from a ghost output slot: commit the craft and return the output that slot was showing. */
     public ItemStack takeGhost(int absoluteOutputSlot) {
         GhostSlot ghost = ghostAt(absoluteOutputSlot);
-        if (ghost == null) return ItemStack.EMPTY;
+        if (ghost == null || ghost.outputIndex() < 0) return ItemStack.EMPTY;
         return commitCraft(preview.get(ghost.craftIndex()), ghost.outputIndex());
     }
 
@@ -2062,7 +2353,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
      */
     public ItemStack takeGhost(int absoluteOutputSlot, int wanted) {
         GhostSlot ghost = ghostAt(absoluteOutputSlot);
-        if (ghost == null || wanted <= 0) return ItemStack.EMPTY;
+        if (ghost == null || ghost.outputIndex() < 0 || wanted <= 0) return ItemStack.EMPTY;
         return commitCraft(runsFor(preview.get(ghost.craftIndex()), ghost.outputIndex(), wanted), ghost.outputIndex());
     }
 
@@ -2114,8 +2405,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 else if (!canCommitMaking(craft, ghost.craftIndex())) refused("view: can't commit");
                 else {
                     List<ItemStack> outputs = craft.outputs();
-                    if (ghost.outputIndex() < outputs.size()) {
+                    if (ghost.outputIndex() >= 0 && ghost.outputIndex() < outputs.size()) {
                         shown = outputs.get(ghost.outputIndex()).copy();
+                    } else if (ghost.outputIndex() < 0 && !craft.fluidOutputs().isEmpty()) {
+                        // A fluid preview, for pipes taking fluids: its first fluid, counted in mB.
+                        var fluid = craft.fluidOutputs().getFirst();
+                        shown = com.kadikular.quantimium.recipe.FluidEntry.of(fluid).copyWithCount(fluid.getAmount());
                     }
                 }
             }
@@ -2136,7 +2431,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
     private ItemStack extractForAutomation(int slot, int amount, boolean simulate) {
         if (amount <= 0) return ItemStack.EMPTY;
         ItemStack shown = automationView(slot);
-        if (shown.isEmpty()) return ItemStack.EMPTY;
+        if (shown.isEmpty() || com.kadikular.quantimium.recipe.FluidEntry.is(shown)) return ItemStack.EMPTY;
         int handOver = Math.min(amount, shown.getCount());
         if (simulate) return shown.copyWithCount(handOver);
 
@@ -2249,6 +2544,22 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private void runAutoTransfers(Level level) {
         for (Direction side : Direction.values()) {
+            SideConfig config = sideConfigs.get(side.get3DDataValue());
+            if (config.fluidMode() == SideMode.DISABLED || (!config.autoFluidInput() && !config.autoFluidOutput())) continue;
+            var neighbor = level.getCapability(Capabilities.Fluid.BLOCK, worldPosition.relative(side), side.getOpposite());
+            if (neighbor == null) continue;
+            if (config.autoFluidInput() && config.fluidMode().allowsInput()) {
+                net.neoforged.neoforge.transfer.ResourceHandlerUtil.moveFirst(neighbor, sidedTanks[side.get3DDataValue()], fluid -> true, TANK_CAPACITY, null);
+            }
+            if (config.autoFluidOutput() && config.fluidMode().allowsOutput()) {
+                // What it holds, and what it makes of only fluids, made as it goes: locked, only what's pinned of that.
+                boolean pinned = pinnedOnly();
+                net.neoforged.neoforge.transfer.ResourceHandlerUtil.move(sidedTanks[side.get3DDataValue()], neighbor, fluid -> true, TANK_CAPACITY, null);
+                net.neoforged.neoforge.transfer.ResourceHandlerUtil.move(sidedFluids[side.get3DDataValue()], neighbor,
+                        fluid -> !pinned || pins.contains(com.kadikular.quantimium.recipe.FluidEntry.key(fluid)), TANK_CAPACITY, null);
+            }
+        }
+        for (Direction side : Direction.values()) {
             if (!SIDE_AUTOMATION_PROFILE.supportsItems(side)) continue;
             SideConfig config = sideConfigs.get(side.get3DDataValue());
             if (!config.autoItemInput() && !config.autoItemOutput()) continue;
@@ -2271,6 +2582,22 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private boolean tryAutoCommitAndPush(IItemHandler neighbor, SideConfig config) {
         if (preview.isEmpty()) return false;
+        if (pinnedOnly()) {
+            // Locked: what's pinned, each in turn.
+            if (!config.allowsOutputs()) return false;
+            for (int i = 0; i < pins.size(); i++) {
+                int at = (nextPin + i) % pins.size();
+                var pin = pins.get(at);
+                if (com.kadikular.quantimium.recipe.FluidEntry.is(pin)) continue;
+                GhostSlot ghost = ghostAt(bestGhostFor(pin.toStack(1)));
+                if (ghost == null || ghost.outputIndex() < 0) continue;
+                if (commitAndPush(neighbor, config, ghost.craftIndex(), ghost.outputIndex())) {
+                    nextPin = (at + 1) % pins.size();
+                    return true;
+                }
+            }
+            return false;
+        }
 
         ResolvedCraft craft = null;
         int selectedIndex = -1;
@@ -2293,26 +2620,33 @@ public class QuantumCrafterBlockEntity extends BlockEntity
             }
         }
         if (craft == null || selectedIndex < 0) return false;
-        if (!canCommitCached(selectedIndex)) {
+        return commitAndPush(neighbor, config, selectedIndex, 0);
+    }
+
+    /** Makes what preview {@code craftIndex} shows as output {@code outputIndex}, as much as {@code neighbor} has room for, and hands it over. */
+    private boolean commitAndPush(IItemHandler neighbor, SideConfig config, int craftIndex, int outputIndex) {
+        ResolvedCraft craft = preview.get(craftIndex);
+        if (outputIndex < 0 || outputIndex >= craft.outputs().size() || craft.outputs().get(outputIndex).isEmpty()) return false;
+        if (!canCommitCached(craftIndex)) {
             if (energyStorage.getEnergyStored() < craft.feCost()) statusCode = STATUS_NO_POWER;
             return false;
         }
 
         // Craft for the room the neighbor actually has rather than insisting the whole batch fits.
-        ItemStack primary = craft.primaryOutput();
+        ItemStack primary = craft.outputs().get(outputIndex);
         ItemStack leftover = ItemHandlerHelper.insertItem(neighbor, primary.copy(), true);
         int accepted = primary.getCount() - leftover.getCount();
         if (accepted <= 0) {
             statusCode = STATUS_OUTPUT_FULL;
             return false;
         }
-        craft = runsFor(craft, 0, accepted);
-        if (!hasRoomForRemainder(craft, 0, accepted)) {
+        craft = runsFor(craft, outputIndex, accepted);
+        if (!hasRoomForRemainder(craft, outputIndex, accepted)) {
             statusCode = STATUS_OUTPUT_FULL;
             return false;
         }
 
-        ItemStack produced = commitCraft(craft, 0);
+        ItemStack produced = commitCraft(craft, outputIndex);
         if (produced.isEmpty()) return false;
         ItemStack remaining = ItemHandlerHelper.insertItem(neighbor, produced, false);
         if (!remaining.isEmpty()) {
@@ -2324,8 +2658,9 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         return true;
     }
 
+    /** Whether auto output may make preview {@code craftIndex} through this face: one making items (fluids go as fluids). */
     private boolean primaryAllowedOn(int craftIndex, SideConfig config) {
-        return config.allowsOutputs();
+        return config.allowsOutputs() && !preview.get(craftIndex).outputs().isEmpty() && !preview.get(craftIndex).outputs().getFirst().isEmpty();
     }
 
     private void pullOneItem(IItemHandler neighbor, SideConfig config) {
@@ -2400,7 +2735,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         @Override
         public ItemStack getStackInSlot(int slot) {
             int ghost = ghostOf(slot);
-            if (ghost >= 0) return config().allowsOutputs() ? automationView(ghost) : ItemStack.EMPTY;
+            if (ghost >= 0) {
+                // A fluid preview is for pipes taking fluids.
+                ItemStack shown = config().allowsOutputs() ? automationView(ghost) : ItemStack.EMPTY;
+                return com.kadikular.quantimium.recipe.FluidEntry.is(shown) ? ItemStack.EMPTY : shown;
+            }
             if (slot >= OUTPUT_START && slot <= OUTPUT_END) {
                 return config().allowsOutputSlot(slot) ? inventory.getStackInSlot(slot) : ItemStack.EMPTY;
             }
@@ -2482,6 +2821,214 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         }
     }
 
+    /**
+     * The tanks as one face sees them: its input tanks, then its output tanks, then one for each recipe it previews that
+     * makes only fluids (when {@code previews}), which a take makes just enough runs of. A take is made inside the
+     * transaction, with the Crafter's tanks, grid and state put back if it aborts.
+     */
+    private final class SidedFluids implements net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> {
+        @Nullable
+        private final Direction side;
+        private final boolean previews;
+        /** How many input tanks it lists: none for a network, which fills them but doesn't count them as stock. */
+        private final int inputs;
+        private final Journal journal = new Journal();
+
+        private SidedFluids(@Nullable Direction side, boolean previews) {
+            this(side, previews, true);
+        }
+
+        private SidedFluids(@Nullable Direction side, boolean previews, boolean inputsListed) {
+            this.side = side;
+            this.previews = previews;
+            this.inputs = inputsListed ? INPUT_TANKS : 0;
+        }
+
+        private boolean fills(int tank) {
+            return side == null || sideConfigs.get(side.get3DDataValue()).allowsFluidInputTank(tank);
+        }
+
+        /** Whether fluids leave by this face: its mode, whatever tanks it names (what it gives isn't in tanks of its own). */
+        private boolean gives() {
+            return side == null || sideConfigs.get(side.get3DDataValue()).fluidMode().allowsOutput();
+        }
+
+        /** One fluid it gives: how much it holds of it, and the preview making more (-1 for none) with how much. */
+        private record Given(net.neoforged.neoforge.fluids.FluidStack fluid, int held, int ghostSlot, int makes) {
+            int amount() {
+                return (int) Math.min(Integer.MAX_VALUE, (long) held + makes);
+            }
+        }
+
+        /** What it gives, a fluid at a time: what its output tanks hold, joined by what its previews of only fluids would make. */
+        private List<Given> given() {
+            List<Given> given = new ArrayList<>();
+            if (!gives()) return given;
+            for (int tank = 0; tank < OUTPUT_TANKS; tank++) {
+                var held = outputTanks.get(tank);
+                if (held.isEmpty()) continue;
+                int at = indexOf(given, held);
+                if (at < 0) given.add(new Given(held.copyWithAmount(1), held.getAmount(), -1, 0));
+                else given.set(at, new Given(given.get(at).fluid(), given.get(at).held() + held.getAmount(), -1, 0));
+            }
+            if (!previews) return given;
+            GhostSlot[] layout = ghostLayout();
+            for (int local = 0; local < layout.length; local++) {
+                if (layout[local].outputIndex() >= 0) continue;
+                ItemStack view = automationView(GHOST_BASE + local);
+                if (!com.kadikular.quantimium.recipe.FluidEntry.is(view)) continue;
+                var fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(view).copyWithAmount(1);
+                int at = indexOf(given, fluid);
+                if (at < 0) given.add(new Given(fluid, 0, GHOST_BASE + local, view.getCount()));
+                else if (view.getCount() > given.get(at).makes()) given.set(at, new Given(fluid, given.get(at).held(), GHOST_BASE + local, view.getCount()));
+            }
+            return given;
+        }
+
+        private static int indexOf(List<Given> given, net.neoforged.neoforge.fluids.FluidStack fluid) {
+            for (int i = 0; i < given.size(); i++) {
+                if (net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(given.get(i).fluid(), fluid)) return i;
+            }
+            return -1;
+        }
+
+        private net.neoforged.neoforge.fluids.FluidStack shown(int index) {
+            if (index < inputs) return inputTanks.get(index);
+            List<Given> given = given();
+            int at = index - inputs;
+            if (at >= given.size()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            return given.get(at).fluid().copyWithAmount(given.get(at).amount());
+        }
+
+        @Override
+        public int size() {
+            return inputs + given().size();
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            return net.neoforged.neoforge.transfer.fluid.FluidResource.of(shown(index));
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            return shown(index).getAmount();
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return index < inputs ? TANK_CAPACITY : shown(index).getAmount();
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return index < inputs && fills(index);
+        }
+
+        /** The input tank a fill of {@code resource} lands in: the one holding it, else the first empty one it may fill. */
+        private int fillTarget(net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            int empty = -1;
+            for (int tank = 0; tank < INPUT_TANKS; tank++) {
+                var held = inputTanks.get(tank);
+                if (held.isEmpty()) {
+                    if (empty < 0 && fills(tank)) empty = tank;
+                } else if (resource.matches(held)) {
+                    return fills(tank) ? tank : -1;
+                }
+            }
+            return empty;
+        }
+
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                          net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (index >= inputs || index != fillTarget(resource)) return 0;
+            return fillTank(index, resource, amount, transaction);
+        }
+
+        /** Into the input tank it lands in, listed or not. */
+        @Override
+        public int insert(net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                          net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            int tank = fillTarget(resource);
+            return tank < 0 ? 0 : fillTank(tank, resource, amount, transaction);
+        }
+
+        private int fillTank(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                             net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (resource.isEmpty() || amount <= 0) return 0;
+            var held = inputTanks.get(index);
+            int room = Math.min(amount, TANK_CAPACITY - held.getAmount());
+            if (room <= 0) return 0;
+            journal.updateSnapshots(transaction);
+            inputTanks.set(index, resource.toStack(held.getAmount() + room));
+            return room;
+        }
+
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount,
+                           net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            if (resource.isEmpty() || amount <= 0 || index < inputs) return 0;
+            List<Given> given = given();
+            int at = index - inputs;
+            if (at >= given.size() || !resource.matches(given.get(at).fluid())) return 0;
+            Given one = given.get(at);
+            int wanted = Math.min(amount, one.amount());
+            if (wanted <= 0) return 0;
+            journal.updateSnapshots(transaction);
+            // What it holds first; the rest made.
+            var fluid = one.fluid().copyWithAmount(wanted);
+            if (one.ghostSlot() >= 0) topUp(one.ghostSlot(), fluid);
+            return outputTanks.drain(fluid, false).getAmount();
+        }
+
+        private record Snapshot(net.minecraft.core.NonNullList<ItemStack> grid, net.neoforged.neoforge.fluids.FluidStack[] in,
+                                net.neoforged.neoforge.fluids.FluidStack[] out, @Nullable Object state) {}
+
+        private final class Journal extends net.neoforged.neoforge.transfer.transaction.SnapshotJournal<Snapshot> {
+            @Override
+            protected Snapshot createSnapshot() {
+                return new Snapshot(inventory.snapshotStacks(), inputTanks.snapshot(), outputTanks.snapshot(),
+                        ((OnDemandSlots) unsidedItemHandler).saveState());
+            }
+
+            @Override
+            protected void revertToSnapshot(Snapshot snapshot) {
+                OnDemandSlots onDemand = (OnDemandSlots) unsidedItemHandler;
+                onDemand.restoring(true);
+                try {
+                    inventory.restoreStacks(snapshot.grid());
+                    inputTanks.restore(snapshot.in());
+                    outputTanks.restore(snapshot.out());
+                    onDemand.restoreState(snapshot.state());
+                    setChanged();
+                } finally {
+                    onDemand.restoring(false);
+                    com.kadikular.quantimium.recipe.CraftChain.settled();
+                }
+            }
+
+            @Override
+            protected void onRootCommit(Snapshot original) {
+                ((OnDemandSlots) unsidedItemHandler).committed();
+                com.kadikular.quantimium.recipe.CraftChain.settled();
+            }
+        }
+    }
+
+    /** Runs the preview numbered {@code ghostSlot} just enough times that the output tanks hold {@code fluid}, if it makes it. */
+    private void topUp(int ghostSlot, net.neoforged.neoforge.fluids.FluidStack fluid) {
+        int short_ = fluid.getAmount() - outputTanks.drain(fluid, true).getAmount();
+        GhostSlot ghost = ghostAt(ghostSlot);
+        if (short_ <= 0 || ghost == null || ghost.outputIndex() >= 0) return;
+        ResolvedCraft craft = preview.get(ghost.craftIndex());
+        int perRun = 0;
+        for (var made : craft.withRuns(1).fluidOutputs()) {
+            if (net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(made, fluid)) perRun += made.getAmount();
+        }
+        if (perRun > 0) commitCraft(craft.withRuns(Math.ceilDiv(short_, perRun)), -1);
+    }
+
     @Override
     public Component getDisplayName() {
         return Component.translatable(isBasic()
@@ -2523,7 +3070,31 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         if (preferredRecipeId != null) {
             tag.putString("PreferredRecipe", preferredRecipeId.toString());
         }
+        ListTag pinned = new ListTag();
+        for (var pin : pins) pinned.add(NbtCompat.saveWith(net.neoforged.neoforge.transfer.item.ItemResource.CODEC, registries, pin));
+        tag.put("Pins", pinned);
         tag.put("SideConfigs", SideConfig.saveAll(sideConfigs));
+        tag.putBoolean("FluidSides", true);
+        tag.put("InputTanks", saveTanks(registries, inputTanks));
+        tag.put("OutputTanks", saveTanks(registries, outputTanks));
+    }
+
+    private static ListTag saveTanks(HolderLookup.Provider registries, com.kadikular.quantimium.util.FluidTanks tanks) {
+        ListTag list = new ListTag();
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : tanks.contents()) {
+            list.add(fluid.isEmpty() ? new CompoundTag() : NbtCompat.saveWith(net.neoforged.neoforge.fluids.FluidStack.CODEC, registries, fluid));
+        }
+        return list;
+    }
+
+    private static void loadTanks(HolderLookup.Provider registries, ListTag list, com.kadikular.quantimium.util.FluidTanks tanks) {
+        List<net.neoforged.neoforge.fluids.FluidStack> saved = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag entry = list.getCompoundOrEmpty(i);
+            saved.add(entry.isEmpty() ? net.neoforged.neoforge.fluids.FluidStack.EMPTY
+                    : NbtCompat.parseWith(net.neoforged.neoforge.fluids.FluidStack.CODEC, registries, entry).orElse(net.neoforged.neoforge.fluids.FluidStack.EMPTY));
+        }
+        tanks.load(saved);
     }
 
     @Override
@@ -2561,10 +3132,19 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         preferredRecipeId = tag.contains("PreferredRecipe")
                 ? Identifier.tryParse(tag.getStringOr("PreferredRecipe", ""))
                 : null;
-        sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(
-                tag.contains("SideConfigs")
-                        ? SideConfig.loadAll(tag.getListOrEmpty("SideConfigs"))
-                        : SideConfig.defaults());
+        pins.clear();
+        ListTag pinned = tag.getListOrEmpty("Pins");
+        for (int i = 0; i < pinned.size(); i++) {
+            NbtCompat.parseWith(net.neoforged.neoforge.transfer.item.ItemResource.CODEC, registries, pinned.getCompoundOrEmpty(i))
+                    .filter(pin -> !pin.isEmpty()).ifPresent(pins::add);
+        }
+        pinPreferred = !tag.contains("Pins") && recipeLocked && preferredRecipeId != null;
+        List<SideConfig> loaded = tag.contains("SideConfigs") ? SideConfig.loadAll(tag.getListOrEmpty("SideConfigs")) : defaultSides();
+        // Saved before its faces had fluid modes: fluids went in and out on every face.
+        if (!tag.getBooleanOr("FluidSides", false)) loaded = loaded.stream().map(config -> config.withFluidMode(SideMode.BOTH)).toList();
+        sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(loaded);
+        if (tag.contains("InputTanks")) loadTanks(registries, tag.getListOrEmpty("InputTanks"), inputTanks);
+        if (tag.contains("OutputTanks")) loadTanks(registries, tag.getListOrEmpty("OutputTanks"), outputTanks);
         structureSignature = Long.MIN_VALUE;
         localCountSignature = Long.MIN_VALUE;
         remoteCountSignature = Long.MIN_VALUE;
@@ -2589,6 +3169,11 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 outputs.add(NbtCompat.saveStack(registries, output));
             }
             entry.put("Outs", outputs);
+            ListTag fluidOutputs = new ListTag();
+            for (net.neoforged.neoforge.fluids.FluidStack fluid : craft.fluidOutputs()) {
+                if (!fluid.isEmpty()) fluidOutputs.add(NbtCompat.saveWith(net.neoforged.neoforge.fluids.FluidStack.CODEC, registries, fluid));
+            }
+            entry.put("FluidOuts", fluidOutputs);
             ListTag withdrawals = new ListTag();
             for (IngredientPool.Withdrawal withdrawal : craft.withdrawals()) {
                 CompoundTag w = new CompoundTag();
@@ -2601,6 +3186,15 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         w.putByte("T", (byte) 1);
                         w.putInt("S", linkSlot);
                         w.putInt("R", remoteSlot);
+                    }
+                    case IngredientPool.Provenance.Tank(int tank) -> {
+                        w.putByte("T", (byte) 2);
+                        w.putInt("S", tank);
+                    }
+                    case IngredientPool.Provenance.LinkedTank(int linkSlot, int tank) -> {
+                        w.putByte("T", (byte) 3);
+                        w.putInt("S", linkSlot);
+                        w.putInt("R", tank);
                     }
                 }
                 w.putInt("A", withdrawal.count());
@@ -2656,10 +3250,16 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         CompoundTag wt = withdrawalTag.getCompoundOrEmpty(w);
                         int amount = wt.getIntOr("A", 0);
                         if (amount <= 0) continue;
-                        if (wt.getByteOr("T", (byte) 0) == 1) {
+                        byte type = wt.getByteOr("T", (byte) 0);
+                        if (type == 1) {
                             withdrawals.add(new IngredientPool.Withdrawal(
                                     new IngredientPool.Provenance.Remote(wt.getIntOr("S", 0), wt.getIntOr("R", 0)),
                                     amount));
+                        } else if (type == 2) {
+                            withdrawals.add(new IngredientPool.Withdrawal(new IngredientPool.Provenance.Tank(wt.getIntOr("S", 0)), amount));
+                        } else if (type == 3) {
+                            withdrawals.add(new IngredientPool.Withdrawal(
+                                    new IngredientPool.Provenance.LinkedTank(wt.getIntOr("S", 0), wt.getIntOr("R", 0)), amount));
                         } else {
                             withdrawals.add(new IngredientPool.Withdrawal(
                                     new IngredientPool.Provenance.Local(wt.getIntOr("S", 0)), amount));
@@ -2676,8 +3276,13 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                         }
                     }
                 }
+                List<net.neoforged.neoforge.fluids.FluidStack> fluidOutputs = new ArrayList<>();
+                ListTag fluidTag = entry.getListOrEmpty("FluidOuts");
+                for (int f = 0; f < fluidTag.size(); f++) {
+                    NbtCompat.parseWith(net.neoforged.neoforge.fluids.FluidStack.CODEC, registries, fluidTag.getCompoundOrEmpty(f)).ifPresent(fluidOutputs::add);
+                }
                 crafts.add(new ResolvedCraft(id, withdrawals, outputs, entry.getIntOr("Fe", 0),
-                        entry.getIntOr("Batch", 0), entry.getBooleanOr("Cap", false)));
+                        entry.getIntOr("Batch", 0), entry.getBooleanOr("Cap", false)).withFluidOutputs(fluidOutputs));
             }
             preview = Collections.unmodifiableList(crafts);
             ghostLayout = null;
@@ -2689,7 +3294,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 CompoundTag entry = slots.getCompoundOrEmpty(local);
                 int craftIndex = entry.getIntOr("C", 0);
                 int outputIndex = entry.getIntOr("O", 0);
-                if (craftIndex < 0 || outputIndex < 0) continue;
+                if (craftIndex < 0) continue;
                 layout[local] = new GhostSlot(craftIndex, outputIndex,
                         entry.getIntOr("Fe", 0), entry.getIntOr("Batch", 0), entry.getBooleanOr("Cap", false),
                         entry.getLongOr("Avail", 0L));

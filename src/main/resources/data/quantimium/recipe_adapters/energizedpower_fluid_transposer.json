@@ -1,0 +1,19 @@
+{
+  "recipe_types": [
+    "energizedpower:fluid_transposer"
+  ],
+  "catalysts": [
+    "energizedpower:fluid_transposer"
+  ],
+  "input_mode": "field",
+  "input_fields": [
+    "input"
+  ],
+  "output_mode": "field",
+  "output_fields": [
+    "output"
+  ],
+  "energy": {
+    "flat": 1000
+  }
+}

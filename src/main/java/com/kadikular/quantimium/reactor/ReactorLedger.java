@@ -31,7 +31,19 @@ public final class ReactorLedger implements StockIndex {
 
     private final Map<ItemResource, Long> counts = ItemKeys.linkedMap();
     private final Map<ItemResource, Long> readOnly = Collections.unmodifiableMap(counts);
+    /** Items held, and fluids held in mB: {@link #mass} weighs a bucket as an item. */
     private long mass;
+    private long fluidMb;
+
+    /** How much {@code amount} of {@code item} weighs against capacity: an item each, a bucket (1,000 mB) of fluid one. */
+    public static long weight(ItemResource item, long amount) {
+        return com.kadikular.quantimium.recipe.FluidEntry.is(item) ? Math.ceilDiv(amount, net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME) : amount;
+    }
+
+    /** How much of {@code item} weighs {@code weight}: the most that fits in that much room. */
+    public static long fits(ItemResource item, long weight) {
+        return com.kadikular.quantimium.recipe.FluidEntry.is(item) ? weight * net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : weight;
+    }
     /** Its kinds by item, and when each came in: for plans (see {@link StockIndex}). */
     private final Map<net.minecraft.world.item.Item, List<ItemResource>> byItem = new java.util.HashMap<>();
     private final Map<ItemResource, Long> since = ItemKeys.map();
@@ -81,8 +93,9 @@ public final class ReactorLedger implements StockIndex {
         return since.getOrDefault(kind, Long.MAX_VALUE);
     }
 
+    /** What it holds, against capacity: items, and fluids by the bucket. */
     public long mass() {
-        return mass;
+        return mass + Math.ceilDiv(fluidMb, net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME);
     }
 
     public long count(ItemResource item) {
@@ -105,7 +118,8 @@ public final class ReactorLedger implements StockIndex {
             byItem.computeIfAbsent(item.getItem(), k -> new ArrayList<>(1)).add(item);
             since.put(item, arrivals++);
         }
-        mass += amount;
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) fluidMb += amount;
+        else mass += amount;
     }
 
     /** Takes up to {@code amount}; returns how many it took. */
@@ -125,7 +139,8 @@ public final class ReactorLedger implements StockIndex {
         } else {
             counts.put(item, have - taken);
         }
-        mass -= taken;
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) fluidMb -= taken;
+        else mass -= taken;
         return taken;
     }
 
@@ -142,6 +157,7 @@ public final class ReactorLedger implements StockIndex {
         byItem.clear();
         since.clear();
         mass = 0;
+        fluidMb = 0;
         for (Entry entry : entries) add(entry.item(), entry.count());
     }
 

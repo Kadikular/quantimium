@@ -58,14 +58,14 @@ public final class MiMachineFamily {
             int eu = (Integer) field(recipe, "eu");
             int duration = (Integer) field(recipe, "duration");
 
-            // Fluids unsupported in v1 — skip fluid recipes.
-            if (fluidInputs != null && !fluidInputs.isEmpty()) return Optional.empty();
-            if (itemInputs == null || itemInputs.isEmpty()) return Optional.empty();
+            boolean takesFluids = fluidInputs != null && !fluidInputs.isEmpty();
+            if (takesFluids && !pool.hasFluids()) return Optional.empty();
+            if ((itemInputs == null || itemInputs.isEmpty()) && !takesFluids) return Optional.empty();
 
             IngredientPool.Allocator alloc = pool.allocator();
             List<IngredientPool.Withdrawal> withdrawals = new ArrayList<>();
 
-            for (Object inputObj : itemInputs) {
+            for (Object inputObj : itemInputs == null ? List.of() : itemInputs) {
                 float probability = ((Number) call(inputObj, "probability")).floatValue();
                 // Probabilistic inputs are optional; skip them for matching (don't require).
                 if (probability < 1.0f) continue;
@@ -90,22 +90,36 @@ public final class MiMachineFamily {
                     if (stack != null && !stack.isEmpty()) outputs.add(stack.copy());
                 }
             }
-            if (outputs.isEmpty()) return Optional.empty();
+            
+            // Its fluids, as describe reads them: from the Crafter's tanks, into its output tanks.
+            List<?> fluidOuts = (List<?>) field(recipe, "fluidOutputs");
+            RecipeShape shape = takesFluids || fluidOuts != null && !fluidOuts.isEmpty() ? describe(holder).orElse(null) : null;
+            if (takesFluids && shape == null) return Optional.empty();
+            List<net.neoforged.neoforge.fluids.FluidStack> fluidOutputs = shape == null ? List.of() : shape.fluids().outputs();
+            if (shape != null) {
+                for (FluidParts.Input fluid : shape.fluids().inputs()) {
+                    List<IngredientPool.Withdrawal> taken = alloc.takeFluid(fluid);
+                    if (taken == null) return Optional.empty();
+                    withdrawals.addAll(taken);
+                }
+            }
+
+            if (outputs.isEmpty() && fluidOutputs.isEmpty()) return Optional.empty();
 
             int ticks = Math.max(duration, 1);
             int cost = eu > 0
                     ? CraftEnergy.fromEu((long) eu * ticks)
                     : CraftEnergy.flat((long) ticks * UNPOWERED_FE_PER_TICK);
 
-            return Optional.of(new ResolvedCraft(holder.id().identifier(), withdrawals, outputs, cost));
+            return Optional.of(new ResolvedCraft(holder.id().identifier(), withdrawals, outputs, cost).withFluidOutputs(fluidOutputs));
         } catch (Throwable t) {
             return Optional.empty();
         }
     }
 
     /**
-     * The recipe in the abstract. Recipes with fluid inputs, or with inputs that are only sometimes
-     * used up (tools, catalysts), are left out: an ME pattern needs a fixed list of what goes in.
+     * The recipe in the abstract, fluids too. Recipes with inputs that are only sometimes used up (tools,
+     * catalysts) are left out: an ME pattern needs a fixed list of what goes in.
      */
     public static Optional<RecipeShape> describe(RecipeHolder<?> holder) {
         Recipe<?> recipe = holder.value();
@@ -114,11 +128,27 @@ public final class MiMachineFamily {
             List<?> itemInputs = (List<?>) field(recipe, "itemInputs");
             List<?> fluidInputs = (List<?>) field(recipe, "fluidInputs");
             List<?> itemOutputs = (List<?>) field(recipe, "itemOutputs");
-            if (fluidInputs != null && !fluidInputs.isEmpty()) return Optional.empty();
-            if (itemInputs == null || itemInputs.isEmpty()) return Optional.empty();
+            List<?> fluidOutputs = (List<?>) field(recipe, "fluidOutputs");
+            if ((itemInputs == null || itemInputs.isEmpty()) && (fluidInputs == null || fluidInputs.isEmpty())) return Optional.empty();
+
+            List<FluidParts.Input> fluidsIn = new ArrayList<>();
+            for (Object inputObj : fluidInputs == null ? List.of() : fluidInputs) {
+                if (((Number) call(inputObj, "probability")).floatValue() < 1.0f) return Optional.empty();
+                net.minecraft.world.level.material.Fluid fluid = (net.minecraft.world.level.material.Fluid) call(inputObj, "fluid");
+                int amount = (int) Math.min(Integer.MAX_VALUE, ((Number) call(inputObj, "amount")).longValue());
+                if (fluid == null || amount <= 0) return Optional.empty();
+                fluidsIn.add(new FluidParts.Input(List.of(fluid), amount, each -> each.getFluid().isSame(fluid)));
+            }
+            List<net.neoforged.neoforge.fluids.FluidStack> fluidsOut = new ArrayList<>();
+            for (Object outObj : fluidOutputs == null ? List.of() : fluidOutputs) {
+                if (((Number) call(outObj, "probability")).floatValue() < 1.0f) continue;
+                net.minecraft.world.level.material.Fluid fluid = (net.minecraft.world.level.material.Fluid) call(outObj, "fluid");
+                int amount = (int) Math.min(Integer.MAX_VALUE, ((Number) call(outObj, "amount")).longValue());
+                if (fluid != null && amount > 0) fluidsOut.add(new net.neoforged.neoforge.fluids.FluidStack(fluid, amount));
+            }
 
             List<RecipeShape.Input> inputs = new ArrayList<>();
-            for (Object inputObj : itemInputs) {
+            for (Object inputObj : itemInputs == null ? List.of() : itemInputs) {
                 float probability = ((Number) call(inputObj, "probability")).floatValue();
                 if (probability < 1.0f) return Optional.empty();
                 Ingredient ingredient = (Ingredient) call(inputObj, "ingredient");
@@ -135,8 +165,9 @@ public final class MiMachineFamily {
                     if (stack != null && !stack.isEmpty()) outputs.add(stack.copy());
                 }
             }
-            if (outputs.isEmpty()) return Optional.empty();
-            return Optional.of(new RecipeShape(holder.id().identifier(), inputs, outputs, cost(recipe)));
+            if (outputs.isEmpty() && fluidsOut.isEmpty()) return Optional.empty();
+            return Optional.of(new RecipeShape(holder.id().identifier(), inputs, outputs, cost(recipe))
+                    .withFluids(new FluidParts.Parts(fluidsIn, fluidsOut)));
         } catch (Throwable t) {
             return Optional.empty();
         }

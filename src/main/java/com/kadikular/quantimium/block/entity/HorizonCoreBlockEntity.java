@@ -69,7 +69,8 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     private final QuantumEnergyStorage energy = new QuantumEnergyStorage(ENERGY_CAPACITY, MAX_RECEIVE, 0) {
         @Override
         protected void onReceived() {
-            setChanged();
+            // Saved, without telling neighbours' comparators every tick it's charged (none reads it).
+            if (level != null) level.blockEntityChanged(worldPosition);
         }
     };
 
@@ -255,7 +256,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
 
     /** Takes {@code amount} of {@code item} into the horizon, as far as there's room. How many it took. */
     public long store(ItemResource item, long amount) {
-        long fits = Math.min(amount, room());
+        long fits = Math.min(amount, com.kadikular.quantimium.reactor.ReactorLedger.fits(item, room()));
         if (fits <= 0) return 0;
         ledger.add(item, fits);
         ledgerVersion++;
@@ -815,15 +816,16 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
         long deliverable = 0;
         ItemStack sample = target.toStack(1);
         for (ReactorPortBlockEntity port : outputs) deliverable += port.roomFor(sample);
-        long kept = Math.max(0, count - deliverable);
+        // Weighed as the ledger weighs them: a bucket of fluid as an item.
+        long kept = com.kadikular.quantimium.reactor.ReactorLedger.weight(target, Math.max(0, count - deliverable));
         long consumed = 0;
         long pulled = 0;
         for (var entry : plan.consumed().entrySet()) {
-            consumed += entry.getValue();
-            pulled += Math.max(0, entry.getValue() - ledger.count(entry.getKey()));
+            consumed += com.kadikular.quantimium.reactor.ReactorLedger.weight(entry.getKey(), entry.getValue());
+            pulled += com.kadikular.quantimium.reactor.ReactorLedger.weight(entry.getKey(), Math.max(0, entry.getValue() - ledger.count(entry.getKey())));
         }
         long left = 0;
-        for (long amount : plan.leftovers().values()) left += amount;
+        for (var entry : plan.leftovers().entrySet()) left += com.kadikular.quantimium.reactor.ReactorLedger.weight(entry.getKey(), entry.getValue());
         if (ledger.mass() + pulled - consumed + left + kept > capacity()) return refused("message.quantimium.reactor.full");
         // Whatever it uses from a network comes into the horizon first; if the network has changed since
         // the plan, what did come stays held and nothing is made.

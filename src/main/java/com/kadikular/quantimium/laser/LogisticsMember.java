@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.laser;
 
+import java.util.List;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -38,12 +40,42 @@ public interface LogisticsMember {
     /** Higher goes first: storage is filled from the highest and emptied from the lowest. */
     int priority();
 
+    /** The channel it's on ({@link Channels}): it joins only a Logistics Controller on it (either on All). */
+    default int channel() {
+        return 0;
+    }
+
     /** Whether its filter lets {@code stack} through. */
     boolean lets(ItemStack stack);
 
     /** The inventory it reaches, or null when there's none. */
     @Nullable
     IItemHandler inventory();
+
+    /** The fluid tanks it reaches, or null when there are none. */
+    @Nullable
+    default net.neoforged.neoforge.fluids.capability.IFluidHandler fluids() {
+        return null;
+    }
+
+    /**
+     * The fluids its machine makes to order (a Crafter's recipes making only fluids), made as they're drained; null for
+     * none. Its {@link #fluids} hold only what's really there.
+     */
+    @Nullable
+    default net.neoforged.neoforge.fluids.capability.IFluidHandler madeFluids() {
+        return null;
+    }
+
+    /** Whether its filter lets {@code fluid} through: only fluid entries count; with none listed, as with an empty filter. */
+    default boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return role() != Role.REQUESTER;
+    }
+
+    /** How many more mB of {@code fluid} it will take in (see {@link #wants(ItemStack)}). */
+    default int wants(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return Integer.MAX_VALUE;
+    }
 
     /** Where that inventory is, so nothing is moved from an inventory into itself. */
     BlockPos inventoryPos();
@@ -110,9 +142,9 @@ public interface LogisticsMember {
         return maker != null && maker.makesOnDemand(slot);
     }
 
-    /** Another network's offers, when it sits on that network's Logistics Materialiser; null otherwise. */
+    /** Other networks' offers, when it sits on a Logistics Materialiser (every network reaching it); null otherwise. */
     @Nullable
-    default OfferTable imports() {
+    default List<OfferTable> imports() {
         return null;
     }
 

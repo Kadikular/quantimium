@@ -189,6 +189,8 @@ public final class CrafterPreview {
             for (ItemStack output : craft.outputs()) {
                 if (!output.isEmpty()) outputs++;
             }
+            // Making only fluids, it's one preview.
+            if (outputs == 0 && !craft.fluidOutputs().isEmpty()) outputs = 1;
             if (outputs == 0 || outputs > maxOutputs) continue;
             // Keep multi-output recipes atomic rather than cutting their byproducts off at the cap.
             if (usedOutputs + outputs > maxOutputs) continue;

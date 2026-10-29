@@ -23,4 +23,5 @@ navigation:
 - [Lens energy](lenses/energy.md)
 - [Lens examples](lenses/examples.md)
 - [Logistics](logistics.md)
+- [Channels](channels.md)
 - [Networks and rules](networks.md)

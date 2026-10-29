@@ -458,6 +458,8 @@ public final class ReactorCounter {
             if (made == null) continue;
             for (int[] producer : made) {
                 ReactorGraph.Recipe recipe = graph.recipes.get(producer[0]);
+                // Made of more than one thing: not one member becoming another (a bucket isn't water), counted after.
+                if (consumed(recipe) > 1) continue;
                 double yield = recipe.yields()[producer[1]];
                 for (int i = 0; i < recipe.ingredients().length; i++) {
                     if (recipe.counts()[i] == 0) continue;
@@ -493,7 +495,23 @@ public final class ReactorCounter {
             }
             avail[members[b]] = total;
         }
+        // Made of several things, members among them: as many as the scarcest allows of what the group counts. A
+        // water bucket from water and empty buckets is limited by the water, and adds no water of its own.
+        for (int b = 0; b < k; b++) {
+            List<int[]> made = producers.get(members[b]);
+            if (made == null) continue;
+            List<int[]> several = new ArrayList<>();
+            for (int[] producer : made) if (consumed(graph.recipes.get(producer[0])) > 1) several.add(producer);
+            if (!several.isEmpty()) avail[members[b]] = Math.max(avail[members[b]], bestMade(several, comp, -1, avail));
+        }
         return base;
+    }
+
+    /** How many of a recipe's ingredients it uses up (a tool, only needing to be there, isn't). */
+    private static int consumed(ReactorGraph.Recipe recipe) {
+        int used = 0;
+        for (long count : recipe.counts()) if (count > 0) used++;
+        return used;
     }
 
     private static boolean selfLoop(int x, IntArrayList[] edges) {

@@ -64,8 +64,8 @@ public final class ReactorTreePattern implements IPatternDetails {
         List<String> shape = new ArrayList<>();
         for (Map.Entry<ItemResource, Long> entry : plan.consumed().entrySet()) {
             if (entry.getValue() <= 0 || wornTool.test(entry.getKey())) continue;
-            in.add(new Exact(AEItemKey.of(entry.getKey()), entry.getValue(), false));
-            shape.add(AEItemKey.of(entry.getKey()) + "x" + entry.getValue());
+            in.add(new Exact(Ae2Keys.of(entry.getKey()), entry.getValue(), false));
+            shape.add(Ae2Keys.of(entry.getKey()) + "x" + entry.getValue());
         }
         if (in.isEmpty()) return null;
         for (ItemResource tool : kept) {
@@ -78,10 +78,10 @@ public final class ReactorTreePattern implements IPatternDetails {
         }
         List<GenericStack> out = new ArrayList<>();
         long made = plan.count() + plan.leftovers().getOrDefault(plan.target(), 0L);
-        out.add(new GenericStack(AEItemKey.of(plan.target()), made));
+        out.add(new GenericStack(Ae2Keys.of(plan.target()), made));
         plan.leftovers().forEach((item, amount) -> {
             if (!item.equals(plan.target()) && amount > 0 && !wornTool.test(item)) {
-                out.add(new GenericStack(AEItemKey.of(item), amount));
+                out.add(new GenericStack(Ae2Keys.of(item), amount));
             }
         });
         // In a fixed order, so the same tree planned again is the same pattern.
@@ -93,7 +93,7 @@ public final class ReactorTreePattern implements IPatternDetails {
     /** Whether all it asks for, but the tools it keeps or wears, are somewhere in {@code stock}. */
     public boolean findsItsInputsIn(Map<ItemResource, Long> stock) {
         for (IInput input : inputs) {
-            if (input instanceof Exact exact && !exact.kept() && stock.getOrDefault(exact.key().toResource(), 0L) <= 0) {
+            if (input instanceof Exact exact && !exact.kept() && stock.getOrDefault(Ae2Keys.resourceOf(exact.key()), 0L) <= 0) {
                 return false;
             }
         }
@@ -135,7 +135,7 @@ public final class ReactorTreePattern implements IPatternDetails {
     }
 
     /** Exactly this item, data and all, {@code count} of it per run; a tool ({@code kept}) comes back. */
-    private record Exact(AEItemKey key, long count, boolean kept) implements IInput {
+    private record Exact(AEKey key, long count, boolean kept) implements IInput {
         @Override
         public GenericStack[] getPossibleInputs() {
             return new GenericStack[] {new GenericStack(key, 1)};

@@ -13,6 +13,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,14 +175,15 @@ public final class Receptacle implements LogisticsMember {
         return level.getBlockEntity(inventoryPos()) instanceof com.kadikular.quantimium.laser.OfferMaker maker ? maker : null;
     }
 
-    /** On another network's Logistics Materialiser: that network's offers, as its mode lets them out. */
+    /** On a Logistics Materialiser: the offers of every network reaching it, as its mode lets them out. */
     @Override
     @Nullable
-    public com.kadikular.quantimium.laser.OfferTable imports() {
+    public List<com.kadikular.quantimium.laser.OfferTable> imports() {
         Level level = getLevel();
         if (level == null || !(level.getBlockEntity(inventoryPos()) instanceof LogisticsMaterialiserBlockEntity materialiser)) return null;
-        com.kadikular.quantimium.laser.LogisticsController theirs = materialiser.controller();
-        return theirs == null ? null : materialiser.offersFor(theirs);
+        List<com.kadikular.quantimium.laser.OfferTable> tables = new ArrayList<>();
+        for (var theirs : materialiser.controllers()) tables.add(materialiser.offersFor(theirs));
+        return tables;
     }
 
     public void toggleActive() {
@@ -189,6 +193,21 @@ public final class Receptacle implements LogisticsMember {
 
     public void toggleAllow() {
         allow = !allow;
+        changed();
+    }
+
+    /** The channel it's on ({@link com.kadikular.quantimium.laser.Channels}): it joins a Logistics Controller on it. */
+    private int channel;
+
+    @Override
+    public int channel() {
+        return channel;
+    }
+
+    public void setChannel(int channel) {
+        // One network's: not on All.
+        int to = com.kadikular.quantimium.laser.Channels.of(channel);
+        this.channel = to == com.kadikular.quantimium.laser.Channels.ALL ? 0 : to;
         changed();
     }
 
@@ -266,7 +285,8 @@ public final class Receptacle implements LogisticsMember {
         boolean any = false;
         for (int i = 0; i < FILTER_SLOTS; i++) {
             ItemStack entry = filter.getItem(i);
-            if (entry.isEmpty()) continue;
+            // Fluid entries are for fluids only.
+            if (entry.isEmpty() || com.kadikular.quantimium.recipe.FluidEntry.is(entry)) continue;
             any = true;
             if (FilterEntry.matches(entry, stack)) listed = true;
         }
@@ -294,6 +314,65 @@ public final class Receptacle implements LogisticsMember {
             short_ += Math.max(0, keepCount(i) - held);
         }
         return short_;
+    }
+
+    @Override
+    public boolean lets(FluidStack fluid) {
+        boolean listed = false;
+        boolean any = false;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (!com.kadikular.quantimium.recipe.FluidEntry.is(entry)) continue;
+            any = true;
+            if (com.kadikular.quantimium.recipe.FluidEntry.sameFluid(entry, fluid)) listed = true;
+        }
+        if (!any) return role != Role.REQUESTER || !allow;
+        return listed == allow;
+    }
+
+    /** Keeping counts, a fluid entry's count is in buckets: it takes only what it's short of. */
+    @Override
+    public int wants(FluidStack fluid) {
+        if (!keep || role != Role.REQUESTER || !allow) return Integer.MAX_VALUE;
+        IFluidHandler tanks = fluids();
+        long short_ = 0;
+        for (int i = 0; i < FILTER_SLOTS; i++) {
+            ItemStack entry = filter.getItem(i);
+            if (!com.kadikular.quantimium.recipe.FluidEntry.sameFluid(entry, fluid)) continue;
+            long held = 0;
+            if (tanks != null) {
+                for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                    FluidStack there = tanks.getFluidInTank(tank);
+                    if (FluidStack.isSameFluidSameComponents(there, fluid)) held += there.getAmount();
+                }
+            }
+            short_ += Math.max(0, (long) keepCount(i) * FluidType.BUCKET_VOLUME - held);
+        }
+        return (int) Math.min(Integer.MAX_VALUE, short_);
+    }
+
+    @Override
+    @Nullable
+    public IFluidHandler fluids() {
+        Level level = getLevel();
+        if (level == null) return null;
+        BlockPos at = inventoryPos();
+        // A Laser Tank's tanks, whole, whatever its faces are set to.
+        if (level.getBlockEntity(at) instanceof LaserTankBlockEntity tank) return tank.networkTanks();
+        // A Crafter's: what it holds, not what it would make (that's madeFluids), filling its input tanks.
+        if (level.getBlockEntity(at) instanceof QuantumCrafterBlockEntity crafter) {
+            return com.kadikular.quantimium.util.LegacyFluids.legacy(crafter.networkFluids(face.getOpposite()));
+        }
+        return com.kadikular.quantimium.util.LegacyFluids.legacy(level.getCapability(Capabilities.Fluid.BLOCK, at, face.getOpposite()));
+    }
+
+    @Override
+    @Nullable
+    public IFluidHandler madeFluids() {
+        Level level = getLevel();
+        if (level == null || role != Role.PROVIDER || !offersCraftable()) return null;
+        return level.getBlockEntity(inventoryPos()) instanceof QuantumCrafterBlockEntity crafter
+                ? com.kadikular.quantimium.util.LegacyFluids.legacy(crafter.fluidAutomation(face.getOpposite())) : null;
     }
 
     @Override
@@ -378,6 +457,7 @@ public final class Receptacle implements LogisticsMember {
         out.putInt("Crafts", crafts.ordinal());
         out.putBoolean("RequestsMade", requestsMade);
         out.putInt("Priority", priority);
+        out.putInt("Channel", channel);
         out.putBoolean("Allow", allow);
         out.putBoolean("Keep", keep);
         out.putIntArray("KeepCounts", keepCounts);
@@ -398,6 +478,8 @@ public final class Receptacle implements LogisticsMember {
         crafts = in.getIntOr("Crafts", in.getBooleanOr("OffersMade", true) ? 0 : 2) == 2 ? Crafts.NOTHING : Crafts.STORED;
         requestsMade = in.getBooleanOr("RequestsMade", true);
         priority = in.getIntOr("Priority", 0);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
+        if (channel == com.kadikular.quantimium.laser.Channels.ALL) channel = 0;
         allow = in.getBooleanOr("Allow", true);
         keep = in.getBooleanOr("Keep", false);
         int[] counts = in.getIntArray("KeepCounts").orElse(new int[0]);

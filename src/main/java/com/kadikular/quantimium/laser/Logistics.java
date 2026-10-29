@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.transfer.item.ItemResource;
@@ -52,50 +54,72 @@ public final class Logistics {
         for (BlockPos controller : controllers.keySet()) due |= Math.floorMod(controller.hashCode(), 20) == slice;
         // With none at all, receptacles are told they're on no network once a second.
         if (controllers.isEmpty() ? slice != 0 : !due) return;
-        // Whose light reaches each member; light from two controllers on one member stops both.
-        Map<LogisticsMember, BlockPos> owners = new HashMap<>();
+        // Whose network each member is on (a controller's, or on All the one for the member's channel); light from two
+        // on one member stops both.
+        Map<LogisticsMember, LogisticsController> owners = new HashMap<>();
         Map<LogisticsMember, Integer> speeds = new HashMap<>();
-        Set<BlockPos> clashing = new HashSet<>();
+        Set<LogisticsController> clashing = new HashSet<>();
         List<LogisticsMember> all = new ArrayList<>();
         for (LaserNode node : nodes) {
             for (LogisticsMember member : node.logisticsMembers()) {
             all.add(member);
             Light light = lights.get(node.nodePos());
             if (light == null) continue;
-            speeds.put(member, light.speeds());
-            BlockPos owner = null;
-            for (BlockPos feeder : light.logistics()) {
-                if (!controllers.containsKey(feeder)) continue;
+            LogisticsController owner = null;
+            for (var feed : light.logistics().entrySet()) {
+                LogisticsController controller = controllers.get(feed.getKey());
+                // Only a controller on its channel, or on All.
+                if (controller == null || !Channels.serves(member.channel(), feed.getValue())) continue;
+                LogisticsController network = controller.network(member.channel());
+                speeds.merge(member, light.speeds(feed.getValue() == Channels.ALL ? member.channel() : feed.getValue()), Math::max);
                 if (owner == null) {
-                    owner = feeder;
-                } else {
+                    owner = network;
+                } else if (owner != network) {
                     clashing.add(owner);
-                    clashing.add(feeder);
+                    clashing.add(network);
                 }
             }
             if (owner != null) owners.put(member, owner);
             }
         }
-        Map<BlockPos, List<LogisticsMember>> networks = new HashMap<>();
+        Map<LogisticsController, List<LogisticsMember>> networks = new HashMap<>();
         for (LogisticsMember member : all) {
-            BlockPos owner = owners.get(member);
+            LogisticsController owner = owners.get(member);
             boolean joined = owner != null && !clashing.contains(owner);
             member.connected(joined);
-            member.networkPowered(joined && controllers.get(owner) != null && controllers.get(owner).powered());
+            member.networkPowered(joined && owner.powered());
             if (joined) networks.computeIfAbsent(owner, key -> new ArrayList<>()).add(member);
         }
         for (Map.Entry<BlockPos, LogisticsController> entry : controllers.entrySet()) {
             if (Math.floorMod(entry.getKey().hashCode(), 20) != slice) continue;
-            List<LogisticsMember> members = networks.getOrDefault(entry.getKey(), List.of());
-            boolean clash = clashing.contains(entry.getKey());
-            entry.getValue().report(members, clash);
-            if (!clash && !members.isEmpty()) runNetwork(level, entry.getValue(), members, speeds);
+            LogisticsController controller = entry.getValue();
+            // Each network it runs, and on All, any channel's newly found.
+            Set<LogisticsController> running = new java.util.LinkedHashSet<>(controller.networks());
+            for (LogisticsController network : networks.keySet()) if (isOf(controller, network)) running.add(network);
+            for (LogisticsController network : running) {
+                List<LogisticsMember> members = networks.getOrDefault(network, List.of());
+                boolean clash = clashing.contains(network);
+                network.report(members, clash);
+                if (!clash && !members.isEmpty()) runNetwork(level, network, members, speeds);
+            }
+            if (controller instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity block) block.dropEmpty();
         }
+    }
+
+    /** Whether {@code network} is one of those {@code controller} runs. */
+    private static boolean isOf(LogisticsController controller, LogisticsController network) {
+        return network == controller || network instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity.Network sub
+                && sub.owner() == controller;
     }
 
     /** Items an active member may move in a pass: an Insert lens's second's worth, quickened by the Speed lenses it met. */
     static int budget(int speeds) {
         return LaserTuning.MOVE_ITEMS * (20 / LaserTuning.PLACE_COOLDOWN) << 2 * speeds;
+    }
+
+    /** mB an active member may move in a pass: an Insert lens's second's worth of fluid, quickened as items are. */
+    static int fluidBudget(int speeds) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) LaserTuning.MOVE_FLUID_MB * (20 / LaserTuning.PLACE_COOLDOWN) << Math.min(40, 2 * speeds));
     }
 
     private static void runNetwork(Level level, LogisticsController controller, List<LogisticsMember> members, Map<LogisticsMember, Integer> speeds) {
@@ -109,11 +133,15 @@ public final class Logistics {
                 if (member.role() != role || !member.active()) continue;
                 int[] pace = member.pace();
                 if (pace != null && --pace[0] > 0) continue;
-                int budget = budget(speeds.getOrDefault(member, 0));
-                int moved = role == LogisticsMember.Role.PROVIDER ? push(level, controller, member, highestFirst, budget)
-                        : pull(level, controller, member, highestFirst, lowestFirst, budget);
-                if (moved > 0) controller.movedQuietly();
+                int speed = speeds.getOrDefault(member, 0);
+                int moved = role == LogisticsMember.Role.PROVIDER ? push(level, controller, member, highestFirst, budget(speed))
+                        : pull(level, controller, member, highestFirst, lowestFirst, budget(speed));
                 if (moved == UNPAID) return;
+                int poured = role == LogisticsMember.Role.PROVIDER ? pushFluid(controller, member, highestFirst, fluidBudget(speed))
+                        : pullFluid(controller, member, highestFirst, lowestFirst, fluidBudget(speed));
+                if (moved > 0 || poured > 0) controller.movedQuietly();
+                if (poured == UNPAID) return;
+                moved += Math.max(0, poured);
                 if (pace != null) {
                     // Busy, it looks again next second; idle, it waits twice as long as last time, up to the most.
                     int most = Math.max(1, com.kadikular.quantimium.Config.laserIdleTicks() / 20);
@@ -219,6 +247,188 @@ public final class Logistics {
             }
         }
         return most - budget;
+    }
+
+    // ---- fluids: tank to tank, as items go slot to slot ----
+
+    /** An active provider pushes the fluids it lets go: to requesters listing them, then storage. How much it moved (mB), or {@link #UNPAID}. */
+    private static int pushFluid(LogisticsController controller, LogisticsMember provider, List<LogisticsMember> highestFirst, int most) {
+        IFluidHandler from = provider.fluids();
+        if (from == null) return 0;
+        int budget = most;
+        for (int tank = 0; tank < from.getTanks() && budget > 0; tank++) {
+            FluidStack there = from.getFluidInTank(tank).copy();
+            if (there.isEmpty() || !provider.lets(there)) continue;
+            for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}) {
+                for (LogisticsMember to : highestFirst) {
+                    if (budget <= 0) break;
+                    if (to.role() != role || to.inventoryPos().equals(provider.inventoryPos()) || !to.lets(there)) continue;
+                    int room = Math.min(budget, to.wants(there));
+                    if (room <= 0) continue;
+                    int moved = pour(controller, from, there, to.fluids(), room);
+                    if (moved == UNPAID) return UNPAID;
+                    budget -= moved;
+                }
+            }
+        }
+        return most - budget;
+    }
+
+    /** An active requester pulls the fluids it lists: from providers, then storage, lowest priority first. How much (mB), or {@link #UNPAID}. */
+    private static int pullFluid(LogisticsController controller, LogisticsMember requester, List<LogisticsMember> highestFirst,
+                                 List<LogisticsMember> lowestFirst, int most) {
+        IFluidHandler into = requester.fluids();
+        if (into == null) return 0;
+        int budget = most;
+        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
+            for (LogisticsMember source : role == LogisticsMember.Role.PROVIDER ? highestFirst : lowestFirst) {
+                if (source.role() != role || source.inventoryPos().equals(requester.inventoryPos())) continue;
+                IFluidHandler from = source.fluids();
+                if (from == null) continue;
+                for (int tank = 0; tank < from.getTanks() && budget > 0; tank++) {
+                    FluidStack there = from.getFluidInTank(tank).copy();
+                    if (there.isEmpty() || !requester.lets(there) || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
+                    int room = Math.min(budget, requester.wants(there));
+                    if (room <= 0) continue;
+                    int moved = pour(controller, from, there, into, room);
+                    if (moved == UNPAID) return UNPAID;
+                    budget -= moved;
+                }
+                if (budget <= 0) return most;
+            }
+        }
+        // Then, if it may, what providers' machines make of only fluids, made as it's poured.
+        if (requester.requestsCraftable()) {
+            for (LogisticsMember source : highestFirst) {
+                if (budget <= 0) break;
+                if (source.role() == LogisticsMember.Role.REQUESTER || source.inventoryPos().equals(requester.inventoryPos())) continue;
+                IFluidHandler from = source.madeFluids();
+                if (from == null) continue;
+                for (int tank = 0; tank < from.getTanks() && budget > 0; tank++) {
+                    FluidStack there = from.getFluidInTank(tank).copy();
+                    if (there.isEmpty() || !requester.lets(there) || !source.lets(there)) continue;
+                    int room = Math.min(budget, requester.wants(there));
+                    if (room <= 0) continue;
+                    int moved = pour(controller, from, there, into, room);
+                    if (moved == UNPAID) return UNPAID;
+                    budget -= moved;
+                }
+            }
+        }
+        return most - budget;
+    }
+
+    /** Pours up to {@code max} mB of {@code fluid} from one handler into another, as far as it fits, if the controller pays. */
+    private static int pour(LogisticsController controller, IFluidHandler from, FluidStack fluid, @org.jetbrains.annotations.Nullable IFluidHandler into, int max) {
+        if (into == null || into == from) return 0;
+        FluidStack offered = from.drain(fluid.copyWithAmount(max), IFluidHandler.FluidAction.SIMULATE);
+        if (offered.isEmpty()) return 0;
+        int fits = into.fill(offered, IFluidHandler.FluidAction.SIMULATE);
+        if (fits <= 0) return 0;
+        if (!controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return UNPAID;
+        FluidStack taken = from.drain(offered.copyWithAmount(fits), IFluidHandler.FluidAction.EXECUTE);
+        int filled = into.fill(taken, IFluidHandler.FluidAction.EXECUTE);
+        // It took less than it said it would: back where it came from (a fluid can't be dropped).
+        if (filled < taken.getAmount()) from.fill(taken.copyWithAmount(taken.getAmount() - filled), IFluidHandler.FluidAction.EXECUTE);
+        return filled;
+    }
+
+    /**
+     * Puts {@code fluid} into a network (an Extract lens's catch, a bucket emptied at a terminal): to requesters listing
+     * it first (unless not {@code requesters}), then storage, highest priority first. How much it took.
+     */
+    public static int insertFluid(List<LogisticsMember> members, FluidStack fluid, boolean simulate, boolean requesters) {
+        int took = 0;
+        LogisticsMember.Role[] roles = requesters ? new LogisticsMember.Role[] {LogisticsMember.Role.REQUESTER, LogisticsMember.Role.STORAGE}
+                : new LogisticsMember.Role[] {LogisticsMember.Role.STORAGE};
+        for (LogisticsMember.Role role : roles) {
+            for (LogisticsMember to : byPriority(members, true)) {
+                if (took >= fluid.getAmount()) return took;
+                if (to.role() != role || !to.lets(fluid)) continue;
+                IFluidHandler into = to.fluids();
+                if (into == null) continue;
+                int room = Math.min(fluid.getAmount() - took, to.wants(fluid));
+                if (room > 0) took += into.fill(fluid.copyWithAmount(room), simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE);
+            }
+        }
+        return took;
+    }
+
+    /**
+     * Up to {@code max} mB of the first fluid {@code wants} accepts (for an Insert or Interact lens, a terminal's
+     * bucket): from providers first, as their filters let go, then storage, lowest priority first. Gathered from
+     * as many as hold it.
+     */
+    public static FluidStack takeFluid(List<LogisticsMember> members, java.util.function.Predicate<FluidStack> wants, int max, boolean simulate) {
+        FluidStack got = FluidStack.EMPTY;
+        IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
+        for (LogisticsMember.Role role : new LogisticsMember.Role[] {LogisticsMember.Role.PROVIDER, LogisticsMember.Role.STORAGE}) {
+            for (LogisticsMember source : byPriority(members, role == LogisticsMember.Role.PROVIDER)) {
+                if (source.role() != role) continue;
+                IFluidHandler from = source.fluids();
+                if (from == null) continue;
+                for (int tank = 0; tank < from.getTanks() && got.getAmount() < max; tank++) {
+                    FluidStack there = from.getFluidInTank(tank);
+                    if (there.isEmpty() || role == LogisticsMember.Role.PROVIDER && !source.lets(there)) continue;
+                    if (got.isEmpty() ? !wants.test(there) : !FluidStack.isSameFluidSameComponents(got, there)) continue;
+                    FluidStack drained = from.drain(there.copyWithAmount(max - got.getAmount()), action);
+                    if (drained.isEmpty()) continue;
+                    got = got.isEmpty() ? drained.copy() : got.copyWithAmount(got.getAmount() + drained.getAmount());
+                }
+                if (got.getAmount() >= max) return got;
+            }
+        }
+        if (got.getAmount() >= max) return got;
+        // Then made: what a provider's machine makes of only fluids.
+        FluidStack sofar = got;
+        return merge(got, makeFluid(members, sofar.isEmpty() ? wants : each -> FluidStack.isSameFluidSameComponents(each, sofar), max - got.getAmount(), simulate));
+    }
+
+    private static FluidStack merge(FluidStack got, FluidStack more) {
+        if (more.isEmpty()) return got;
+        return got.isEmpty() ? more : got.copyWithAmount(got.getAmount() + more.getAmount());
+    }
+
+    /** Makes up to {@code max} mB of {@code fluid}, by what providers' machines make of only fluids. */
+    public static FluidStack makeFluid(List<LogisticsMember> members, FluidStack fluid, int max, boolean simulate) {
+        return makeFluid(members, each -> FluidStack.isSameFluidSameComponents(each, fluid), max, simulate);
+    }
+
+    /** Makes up to {@code max} mB of the first fluid {@code wants} accepts, by what members make of fluids (a provider on a Crafter, a Reactor), made as it's drained. */
+    public static FluidStack makeFluid(List<LogisticsMember> members, java.util.function.Predicate<FluidStack> wants, int max, boolean simulate) {
+        IFluidHandler.FluidAction action = simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE;
+        FluidStack got = FluidStack.EMPTY;
+        for (LogisticsMember source : byPriority(members, true)) {
+            if (got.getAmount() >= max) break;
+            if (source.role() == LogisticsMember.Role.REQUESTER) continue;
+            IFluidHandler from = source.madeFluids();
+            if (from == null) continue;
+            for (int tank = 0; tank < from.getTanks() && got.getAmount() < max; tank++) {
+                FluidStack there = from.getFluidInTank(tank);
+                if (there.isEmpty() || !source.lets(there)) continue;
+                if (got.isEmpty() ? !wants.test(there) : !FluidStack.isSameFluidSameComponents(got, there)) continue;
+                FluidStack drained = from.drain(there.copyWithAmount(max - got.getAmount()), action);
+                if (drained.isEmpty()) continue;
+                got = got.isEmpty() ? drained.copy() : got.copyWithAmount(got.getAmount() + drained.getAmount());
+            }
+        }
+        return got;
+    }
+
+    /** How much of each fluid a network holds, as its storage and providers let go: for a terminal, a Redstone lens. */
+    public static Map<net.neoforged.neoforge.transfer.fluid.FluidResource, Long> fluids(List<LogisticsMember> members) {
+        Map<net.neoforged.neoforge.transfer.fluid.FluidResource, Long> held = new java.util.LinkedHashMap<>();
+        for (LogisticsMember member : members) {
+            if (member.role() == LogisticsMember.Role.REQUESTER) continue;
+            IFluidHandler from = member.fluids();
+            if (from == null) continue;
+            for (int tank = 0; tank < from.getTanks(); tank++) {
+                FluidStack there = from.getFluidInTank(tank);
+                if (there.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(there)) continue;
+                held.merge(net.neoforged.neoforge.transfer.fluid.FluidResource.of(there), (long) there.getAmount(), Long::sum);
+            }
+        }
+        return held;
     }
 
     /**

@@ -17,3 +17,15 @@
 ## Sides
 
 Use the **Sides** tab to set, face by face, what pipes and hoppers may do there (hand things out, take them in; things only go in while it sends), and which faces push to, or pull from, what is beside them, once a second.
+
+## Laser Tanks
+
+[[mechanic:laser.tank.collect]] A [[block:laser_tank]] is a Laser Port for fluids. It passes a laser the same way and holds {{c:LaserTankBlockEntity.TANKS}} tanks of {{c:LaserTankBlockEntity.CAPACITY}} mB, one fluid in each. Collecting, it catches what an Extract Lens drains.
+
+[[mechanic:laser.tank.send]] Sending, what it holds goes down the laser to an Insert Lens. Otherwise, once a second up to {{c:LaserTuning.SHIP_FLUID_MB}} mB go to the nearest collecting tank down the laser with room, not past an Isolator.
+
+[[mechanic:laser.tank.pipes]] Pipes drain it, and fill it only while it sends. A bucket used on it, or clicked on a tank in its screen, fills or empties it in any mode.
+
+[[mechanic:laser.tank.filter]] Its filter lists fluids it catches: nine entries, as a whitelist or a blacklist. Click an entry with a bucket, or drag a fluid in from JEI. What it turns away goes on up the laser.
+
+[[mechanic:laser.tank.sides]] Its **Sides** tab works as a Laser Port's, for fluids: face by face, what pipes may do there, and which faces push to or pull from what is beside them. Fluid it catches goes straight on to the faces that push out.

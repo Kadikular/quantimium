@@ -68,6 +68,23 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
 
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
+        // Each lens's channel, above it. A lens that changes the whole laser (Range, UV, Phantom) is on every channel:
+        // All, greyed, and not set.
+        for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
+            int x = leftPos + LensMountMenu.SLOT_X[slot] - 1;
+            int y = topPos + LensMountMenu.CHANNEL_Y;
+            boolean whole = wholeLaser(slot);
+            int channel = whole ? com.kadikular.quantimium.laser.Channels.ALL : menu.getBlockEntity().slotChannel(slot);
+            boolean over = com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(mouseX, mouseY, x, y, LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H);
+            if (over && !whole) graphics.fill(x, y, x + LensMountMenu.BUTTON_W - 1, y + LensMountMenu.BUTTON_H - 1, 0x30FFFFFF);
+            String label = com.kadikular.quantimium.laser.Channels.label(channel).getString();
+            graphics.text(font, label, x + (LensMountMenu.BUTTON_W - 1 - font.width(label)) / 2 + 1, y + 1, whole ? 0xFF6A6E8A : 0xFFE4DCFF, false);
+            if (over) {
+                graphics.setComponentTooltipForNextFrame(font, whole ? List.of(Component.translatable("gui.quantimium.channel.whole"))
+                        : List.of(Component.translatable("gui.quantimium.channel", com.kadikular.quantimium.laser.Channels.label(channel)),
+                                Component.translatable("gui.quantimium.channel.tip").withStyle(net.minecraft.ChatFormatting.DARK_GRAY)), mouseX, mouseY);
+            }
+        }
         // Each lens's settings button: three dots, lit when it has settings to open, and brighter under the pointer.
         for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
             int x = leftPos + LensMountMenu.SLOT_X[slot] - 1;
@@ -89,6 +106,33 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
         }
     }
 
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (activeOverlay() == null && scrollY != 0) {
+            for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
+                if (com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(mouseX, mouseY, leftPos + LensMountMenu.SLOT_X[slot] - 1,
+                        topPos + LensMountMenu.CHANNEL_Y, LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H)) {
+                    if (!wholeLaser(slot)) channelButton(LensMountMenu.BUTTON_CHANNEL + slot * 2 + (scrollY < 0 ? 1 : 0));
+                    return true;
+                }
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    private void channelButton(int id) {
+        if (minecraft == null || minecraft.gameMode == null) return;
+        minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
+        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
+    }
+
+    /** Whether the lens in {@code slot} changes the whole laser, whatever its channel: Range, UV, Phantom. */
+    private boolean wholeLaser(int slot) {
+        return menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem() instanceof com.kadikular.quantimium.item.LensItem lens
+                && com.kadikular.quantimium.laser.Channels.wholeLaser(lens.lens());
+    }
+
     /** Whether the lens in {@code slot} has settings of its own: a Filter lens, an Interact lens. */
     private boolean hasSettings(int slot) {
         var item = menu.getBlockEntity().getLensSlots().getStackInSlot(slot).getItem();
@@ -97,6 +141,15 @@ public class LensMountScreen extends QuantumMachineScreen<LensMountMenu> {
 
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (activeOverlay() == null && (event.button() == 0 || event.button() == 1)) {
+            for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
+                if (com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(event.x(), event.y(), leftPos + LensMountMenu.SLOT_X[slot] - 1,
+                        topPos + LensMountMenu.CHANNEL_Y, LensMountMenu.BUTTON_W, LensMountMenu.BUTTON_H)) {
+                    if (!wholeLaser(slot)) channelButton(LensMountMenu.BUTTON_CHANNEL + slot * 2 + (event.button() == 1 ? 1 : 0));
+                    return true;
+                }
+            }
+        }
         if (activeOverlay() == null && event.button() == 0) {
             for (int slot = 0; slot < LensMountMenu.SLOT_X.length; slot++) {
                 if (hasSettings(slot) && com.kadikular.quantimium.client.screen.ui.QuantumWidgets.hit(event.x(), event.y(),

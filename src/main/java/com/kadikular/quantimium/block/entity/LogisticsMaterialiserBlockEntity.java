@@ -40,7 +40,7 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     /** The list last made, and the offers (and mode) it was made from: a pipe reads it slot by slot. */
     private List<Entry> entries = List.of();
     @Nullable
-    private com.kadikular.quantimium.laser.OfferTable entriesFrom;
+    private List<com.kadikular.quantimium.laser.OfferTable> entriesFrom;
     private Mode entriesMode;
 
     private final NetworkHandler handler = new NetworkHandler();
@@ -99,6 +99,118 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         return handler;
     }
 
+    /** The network's fluids, to pipes and Tesseracts: what its storage and providers hold, and room in its storage. */
+    public ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> fluidHandler() {
+        return fluids;
+    }
+
+    private final NetworkFluids fluids = new NetworkFluids();
+
+    /**
+     * The network's fluids as a handler, a tank a fluid. As the item handler, a move happens at once inside the caller's
+     * transaction (the members' tanks join it), and the controller is paid a move each when the outermost commits.
+     */
+    private final class NetworkFluids extends SnapshotJournal<java.util.Map<LogisticsController, Integer>> implements ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> {
+        /** Moves made in open transactions, by the network they were made on, paid for when the outermost commits. */
+        private java.util.Map<LogisticsController, Integer> moves = new java.util.HashMap<>();
+        @Nullable
+        private List<java.util.Map.Entry<net.neoforged.neoforge.transfer.fluid.FluidResource, Long>> listed;
+        private long listedAt = Long.MIN_VALUE;
+
+        /** The network's fluids, looked over at most once a tick. */
+        private List<java.util.Map.Entry<net.neoforged.neoforge.transfer.fluid.FluidResource, Long>> listed() {
+            long now = level == null ? 0 : level.getGameTime();
+            if (listed == null || listedAt != now) {
+                listed = offersReal() ? new ArrayList<>(Logistics.fluids(members()).entrySet()) : List.of();
+                listedAt = now;
+            }
+            return listed;
+        }
+
+        @Override
+        public int size() {
+            return controllers().isEmpty() ? 0 : listed().size() + 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.transfer.fluid.FluidResource getResource(int index) {
+            var list = listed();
+            return index >= 0 && index < list.size() ? list.get(index).getKey() : net.neoforged.neoforge.transfer.fluid.FluidResource.EMPTY;
+        }
+
+        @Override
+        public long getAmountAsLong(int index) {
+            var list = listed();
+            return index >= 0 && index < list.size() ? list.get(index).getValue() : 0;
+        }
+
+        @Override
+        public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+            return !controllers().isEmpty();
+        }
+
+        /** Into each network's storage in turn, those with the power for it. */
+        @Override
+        public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            if (resource.isEmpty() || amount <= 0) return 0;
+            int put = 0;
+            for (LogisticsController controller : controllers()) {
+                if (put >= amount || !controller.powered()) continue;
+                int more = Logistics.insertFluid(membersOf(controller), resource.toStack(amount - put), false, false);
+                if (more > 0) moved(controller, transaction);
+                put += more;
+            }
+            return put;
+        }
+
+        /** From each network in turn. */
+        @Override
+        public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, TransactionContext transaction) {
+            if (resource.isEmpty() || amount <= 0 || !offersReal()) return 0;
+            var wanted = resource.toStack(1);
+            int got = 0;
+            for (LogisticsController controller : controllers()) {
+                if (got >= amount || !controller.powered()) continue;
+                int more = Logistics.takeFluid(membersOf(controller), each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, wanted),
+                        amount - got, false).getAmount();
+                if (more > 0) moved(controller, transaction);
+                got += more;
+            }
+            return got;
+        }
+
+        private void moved(LogisticsController controller, TransactionContext transaction) {
+            updateSnapshots(transaction);
+            moves.merge(controller, 1, Integer::sum);
+            listed = null;
+        }
+
+        @Override
+        protected java.util.Map<LogisticsController, Integer> createSnapshot() {
+            return new java.util.HashMap<>(moves);
+        }
+
+        @Override
+        protected void revertToSnapshot(java.util.Map<LogisticsController, Integer> snapshot) {
+            moves = snapshot;
+            listed = null;
+        }
+
+        @Override
+        protected void onRootCommit(java.util.Map<LogisticsController, Integer> originalState) {
+            moves.forEach((controller, made) -> {
+                for (int i = 0; i < made; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
+                if (made > 0) controller.stockShifted();
+            });
+            moves = new java.util.HashMap<>();
+        }
+    }
+
     /**
      * Asked with no face (other mods' screens, inventory viewers): the same, a stack at most to a slot, since
      * such screens turn each slot into an item stack, and one of thousands can't be sent to a client.
@@ -145,37 +257,65 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
         }
     };
 
-    @Nullable
-    public LogisticsController controller() {
-        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);
+    /** Every Logistics Controller whose light reaches it, on any channel: it offers all their networks. */
+    public List<LogisticsController> controllers() {
+        return level == null ? List.of() : LaserNetworks.logisticsAllAt(level, worldPosition);
     }
 
-    /** The network's members, never a receptacle on a Logistics Materialiser: that one would read the network into itself. */
+    /** The first of {@link #controllers}, or null for none. */
+    @Nullable
+    public LogisticsController controller() {
+        List<LogisticsController> all = controllers();
+        return all.isEmpty() ? null : all.getFirst();
+    }
+
+    /** Every network's members it offers, never a receptacle on a Logistics Materialiser of the same network. */
     private List<LogisticsMember> members() {
-        LogisticsController controller = controller();
-        if (controller == null || level == null) return List.of();
-        // Not a member on one of this network's own Materialisers (this one among them): it would read the network
-        // into itself. Another network's is fine: that's another network's stock.
+        List<LogisticsMember> all = new ArrayList<>();
+        for (LogisticsController controller : controllers()) all.addAll(membersOf(controller));
+        return all;
+    }
+
+    /**
+     * {@code controller}'s members, but one on a Materialiser of its own network (this one among them): that would read
+     * the network into itself. Another network's is fine: that's another network's stock.
+     */
+    private List<LogisticsMember> membersOf(LogisticsController controller) {
+        if (level == null) return List.of();
         return controller.members().stream()
                 .filter(member -> !(level.getBlockEntity(member.inventoryPos()) instanceof LogisticsMaterialiserBlockEntity other)
-                        || other.controller() != controller)
+                        || !other.controllers().contains(controller))
                 .toList();
     }
 
-    /** What it shows pipes and buses: the network's offers, as its mode lets them out, a slot an item. */
+    /** What it shows pipes and buses: every network's offers, as its mode lets them out, a slot an item. */
     private List<Entry> entries() {
-        LogisticsController controller = controller();
-        if (level == null || controller == null) return List.of();
-        com.kadikular.quantimium.laser.OfferTable offers = controller.offers();
-        if (offers == entriesFrom && mode == entriesMode) return entries;
-        List<Entry> list = new ArrayList<>();
-        for (var entry : offers.only(offersReal(), offersCraftable()).entries()) {
-            long amount = (offersReal() ? entry.real() : 0) + (offersCraftable() ? entry.craftable() : 0);
-            if (amount > 0) list.add(new Entry(entry.item(), amount));
+        List<LogisticsController> controllers = controllers();
+        if (level == null || controllers.isEmpty()) return List.of();
+        List<com.kadikular.quantimium.laser.OfferTable> offers = new ArrayList<>(controllers.size());
+        for (LogisticsController controller : controllers) offers.add(controller.offers());
+        if (sameTables(offers, entriesFrom) && mode == entriesMode) return entries;
+        java.util.Map<ItemResource, Long> merged = new java.util.LinkedHashMap<>();
+        for (var table : offers) {
+            for (var entry : table.only(offersReal(), offersCraftable()).entries()) {
+                // Fluids go through its fluid handler, not as items.
+                if (entry.item().is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) continue;
+                long amount = (offersReal() ? entry.real() : 0) + (offersCraftable() ? entry.craftable() : 0);
+                if (amount > 0) merged.merge(entry.item(), amount, Long::sum);
+            }
         }
+        List<Entry> list = new ArrayList<>();
+        merged.forEach((item, amount) -> list.add(new Entry(item, amount)));
         entriesFrom = offers;
         entriesMode = mode;
         return entries = list;
+    }
+
+    /** Whether two lists hold the same tables, table for table. */
+    private static boolean sameTables(List<com.kadikular.quantimium.laser.OfferTable> a, @Nullable List<com.kadikular.quantimium.laser.OfferTable> b) {
+        if (b == null || a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) if (a.get(i) != b.get(i)) return false;
+        return true;
     }
 
     /** Everything it shows pipes and buses, and how many of each. */
@@ -233,13 +373,13 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
      * puts everything back. What it says it moved, it moved. The controller is paid a move each when the
      * outermost transaction commits.
      */
-    private final class NetworkHandler extends SnapshotJournal<Integer> implements ResourceHandler<ItemResource> {
-        /** Moves made in open transactions, paid for when the outermost commits. */
-        private int moves;
+    private final class NetworkHandler extends SnapshotJournal<java.util.Map<LogisticsController, Integer>> implements ResourceHandler<ItemResource> {
+        /** Moves made in open transactions, by the network they were made on, paid for when the outermost commits. */
+        private java.util.Map<LogisticsController, Integer> moves = new java.util.HashMap<>();
 
         @Override
         public int size() {
-            return controller() == null ? 0 : entries().size() + 1;
+            return controllers().isEmpty() ? 0 : entries().size() + 1;
         }
 
         @Override
@@ -261,30 +401,44 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
 
         @Override
         public boolean isValid(int index, ItemResource resource) {
-            return controller() != null;
+            return !controllers().isEmpty();
         }
 
+        /** Into each network's storage in turn, those with the power for it. */
         @Override
         public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
-            LogisticsController controller = controller();
-            if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
-            ItemStack left = Logistics.insert(members(), resource.toStack(amount), false, false);
-            int put = amount - left.getCount();
-            if (put > 0) {
-                moved(transaction);
-                controller.stockShifted();
+            if (resource.isEmpty() || amount <= 0) return 0;
+            int put = 0;
+            for (LogisticsController controller : controllers()) {
+                if (put >= amount || !controller.powered()) continue;
+                ItemStack left = Logistics.insert(membersOf(controller), resource.toStack(amount - put), false, false);
+                int more = amount - put - left.getCount();
+                if (more > 0) {
+                    moved(controller, transaction);
+                    controller.stockShifted();
+                }
+                put += more;
             }
             return put;
         }
 
+        /** From each network in turn. */
         @Override
         public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
-            LogisticsController controller = controller();
-            if (resource.isEmpty() || amount <= 0 || controller == null || !controller.powered()) return 0;
+            if (resource.isEmpty() || amount <= 0) return 0;
+            int got = 0;
+            for (LogisticsController controller : controllers()) {
+                if (got < amount && controller.powered()) got += extractFrom(controller, resource, amount - got, transaction);
+            }
+            return got;
+        }
+
+        /** Up to {@code amount} of {@code resource} from {@code controller}'s network. */
+        private int extractFrom(LogisticsController controller, ItemResource resource, int amount, TransactionContext transaction) {
             int got = 0;
             // Only where the network last saw it: a storage bus asking about every item each time it looks would
             // otherwise look over every slot of the network for each.
-            java.util.Set<LogisticsMember> members = new java.util.HashSet<>(members());
+            java.util.Set<LogisticsMember> members = new java.util.HashSet<>(membersOf(controller));
             var spots = controller.spots();
             // A Crafter making something draws on what's stored only: a craft of a craft is a Reactor's to plan.
             boolean made = offersCraftable() && com.kadikular.quantimium.recipe.CraftChain.depth() == 0;
@@ -302,33 +456,32 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
                 }
                 got += more.getCount();
             }
-            if (got > 0) moved(transaction);
+            if (got > 0) moved(controller, transaction);
             return got;
         }
 
-        private void moved(TransactionContext transaction) {
+        private void moved(LogisticsController controller, TransactionContext transaction) {
             updateSnapshots(transaction);
-            moves++;
+            moves.merge(controller, 1, Integer::sum);
         }
 
         @Override
-        protected Integer createSnapshot() {
-            return moves;
+        protected java.util.Map<LogisticsController, Integer> createSnapshot() {
+            return new java.util.HashMap<>(moves);
         }
 
         @Override
-        protected void revertToSnapshot(Integer snapshot) {
+        protected void revertToSnapshot(java.util.Map<LogisticsController, Integer> snapshot) {
             moves = snapshot;
         }
 
         @Override
-        protected void onRootCommit(Integer originalState) {
-            LogisticsController controller = controller();
-            if (controller != null) {
-                for (int i = 0; i < moves; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
-                if (moves > 0) controller.movedQuietly();
-            }
-            moves = 0;
+        protected void onRootCommit(java.util.Map<LogisticsController, Integer> originalState) {
+            moves.forEach((controller, made) -> {
+                for (int i = 0; i < made; i++) controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE);
+                if (made > 0) controller.movedQuietly();
+            });
+            moves = new java.util.HashMap<>();
         }
     }
 

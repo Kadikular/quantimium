@@ -27,7 +27,7 @@ public class RelayEmitterScreen extends QuantumMachineScreen<RelayEmitterMenu> {
 
     @Override
     protected List<Tab> createTabs() {
-        return List.of(Tab.of(Component::empty, () -> press(RelayEmitterMenu.BUTTON_MODE),
+        return List.of(channelTab(menu), Tab.of(Component::empty, () -> press(RelayEmitterMenu.BUTTON_MODE),
                         () -> List.of(mode().label(), hint("gui.quantimium.tab.cycle")))
                 .texture(() -> Identifier.withDefaultNamespace("textures/" + switch (mode()) {
                     case IGNORED -> "item/gunpowder";

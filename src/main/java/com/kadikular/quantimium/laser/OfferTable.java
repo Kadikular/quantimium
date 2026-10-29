@@ -618,30 +618,51 @@ public final class OfferTable {
             for (LogisticsMember member : sorted) {
                 if (member.role() == LogisticsMember.Role.REQUESTER) continue;
                 BlockPos pos = member.inventoryPos();
-                OfferTable imported = member.imports();
-                if (imported != null) {
-                    // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
-                    // offered here too, real as real and craftable as craftable.
-                    if (imported.pending) early = true;
-                    if (imported.origins().contains(at)) continue;
-                    origins.addAll(imported.origins());
-                    imported.real.forEach((item, amount) -> {
-                        if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
-                    });
-                    if (member.offersCraftable()) {
-                        for (Entry entry : imported.entries()) {
-                            if (entry.craftable() <= 0) continue;
-                            if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
-                            offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of(), false));
-                            tiers.merge(entry.item(), entry.tier(), Math::min);
+                List<OfferTable> importing = member.imports();
+                if (importing != null) {
+                    for (OfferTable imported : importing) {
+                        // Another network, through its Logistics Materialiser: unless it draws on this one, what it has is
+                        // offered here too, real as real and craftable as craftable.
+                        if (imported.pending) early = true;
+                        if (imported.origins().contains(at)) continue;
+                        origins.addAll(imported.origins());
+                        imported.real.forEach((item, amount) -> {
+                            // Fluids aren't carried between networks (yet).
+                            if (item.is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get())) return;
+                            if (member.role() != LogisticsMember.Role.PROVIDER || member.lets(item.toStack(1))) real.merge(item, amount, Long::sum);
+                        });
+                        if (member.offersCraftable()) {
+                            for (Entry entry : imported.entries()) {
+                                if (entry.craftable() <= 0) continue;
+                                if (member.role() == LogisticsMember.Role.PROVIDER && !member.lets(entry.item().toStack(1))) continue;
+                                offer(craftable, entry.item(), pos, new Source(entry.craftable(), Set.of(), false));
+                                tiers.merge(entry.item(), entry.tier(), Math::min);
+                            }
                         }
                     }
                     continue;
+                }
+                // Fluids, as fluid entries counted in mB.
+                net.neoforged.neoforge.fluids.capability.IFluidHandler tanks = member.fluids();
+                if (tanks != null) {
+                    for (int tank = 0; tank < tanks.getTanks(); tank++) {
+                        net.neoforged.neoforge.fluids.FluidStack there = tanks.getFluidInTank(tank);
+                        if (there.isEmpty() || member.role() == LogisticsMember.Role.PROVIDER && !member.lets(there)) continue;
+                        real.merge(ItemResource.of(com.kadikular.quantimium.recipe.FluidEntry.of(there)), (long) there.getAmount(), Long::sum);
+                    }
                 }
                 Map<ItemResource, long[]> listing = member.listing();
                 if (listing != null) {
                     // A Reactor's port: what it holds is real, what it could make is craftable, already worked out.
                     listing.forEach((item, both) -> {
+                        // Fluids it holds are read from its tanks, above; what it could make of them is craftable here.
+                        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) {
+                            if (both[1] > 0 && member.offersCraftable()) {
+                                offer(craftable, item, pos, new Source(both[1], Set.of(), false));
+                                tiers.merge(item, 1, Math::min);
+                            }
+                            return;
+                        }
                         if (both[0] > 0) real.merge(item, both[0], Long::sum);
                         if (both[1] > 0 && member.offersCraftable()) {
                             offer(craftable, item, pos, new Source(both[1], Set.of(), false));
@@ -692,7 +713,9 @@ public final class OfferTable {
                 if (one.count() <= 0) continue;
                 // The machine makes it whatever its Receptacle lets out to the network: its own screen shows it.
                 if (one.craft() != null) crafts.add(one.craft());
-                if (!member.lets(one.item().toStack(1))) continue;
+                ItemStack shown = one.item().toStack(1);
+                if (com.kadikular.quantimium.recipe.FluidEntry.is(shown) ? !member.lets(com.kadikular.quantimium.recipe.FluidEntry.fluidOf(shown).copyWithAmount(1))
+                        : !member.lets(shown)) continue;
                 Source source = new Source(one.count(), Set.copyOf(one.from()), true);
                 List<Source> sources = kept.computeIfAbsent(one.item(), k -> new ArrayList<>());
                 if (!sources.contains(source)) sources.add(source);

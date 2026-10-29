@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
  * One of a Laser Relay's emitters: the lens in it (only the light leaving by it goes through it), and how it
  * listens to the redstone reaching the block. Layout: tools/gui_panels.py relay_emitter.
  */
-public class RelayEmitterMenu extends AbstractContainerMenu {
+public class RelayEmitterMenu extends AbstractContainerMenu implements ChannelMenu {
 
     public static final int BUTTON_MODE = 0;
     /** The settings of the lens in it: an Interact lens's switches in place, a filter lens's open. */
@@ -39,6 +39,7 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
         super(ModMenuTypes.RELAY_EMITTER_MENU.get(), containerId);
         this.relay = relay;
         this.face = face;
+        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(relay == null || playerInv.player.level().isClientSide() ? null : () -> relay.channelOf(face)));
         addSlot(new Slot(new LensHolder(relay, face), 0, LENS_X, LENS_Y) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -159,5 +160,17 @@ public class RelayEmitterMenu extends AbstractContainerMenu {
         public void clearContent() {
             relay.setLens(face, ItemStack.EMPTY);
         }
+    }
+
+    private ChannelMenu.ChannelSlot channelSlot;
+
+    @Override
+    public int channel() {
+        return channelSlot.shown();
+    }
+
+    @Override
+    public void setChannel(int channel) {
+        if (relay != null) relay.setChannel(face, channel);
     }
 }

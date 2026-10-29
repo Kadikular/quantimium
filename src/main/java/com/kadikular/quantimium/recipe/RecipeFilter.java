@@ -69,7 +69,7 @@ public record RecipeFilter(List<ItemStack> outputs, boolean outputsAllow, List<I
                 changed = true;
             }
         }
-        return changed ? new RecipeShape(shape.id(), kept, shape.outputs(), shape.baseFe(), shape.tools()) : shape;
+        return changed ? new RecipeShape(shape.id(), kept, shape.outputs(), shape.baseFe(), shape.tools(), List.of(), shape.fluids()) : shape;
     }
 
     /** Whether {@code other} filters exactly as this does: same entries, tags and modes. */

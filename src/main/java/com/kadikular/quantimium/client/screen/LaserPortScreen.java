@@ -56,6 +56,8 @@ public class LaserPortScreen extends QuantumMachineScreen<LaserPortMenu> impleme
                             press(LaserPortMenu.BUTTON_RELAY);
                             press(LaserPortMenu.BUTTON_RELAY);
                         }),
+                // Under the mode it's set to.
+                channelTab(menu),
                 sidesTab(port().getBlockPos()));
     }
 

@@ -77,7 +77,8 @@ public class HorizonCoreMenu extends AbstractContainerMenu {
     public void request(ItemResource item, int count) {
         ReactorPlanner.Result result = blockEntity.request(item, Math.max(1, count));
         pendingMessage = result.planned()
-                ? Component.translatable("message.quantimium.reactor.made", count, item.toStack(1).getHoverName())
+                ? Component.translatable("message.quantimium.reactor.made",
+                        com.kadikular.quantimium.recipe.FluidEntry.is(item) ? count + " mB" : String.valueOf(count), item.toStack(1).getHoverName())
                 : result.problem();
         sinceView = 0;
     }

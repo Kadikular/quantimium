@@ -2,7 +2,7 @@
 navigation:
   title: Reactor Plinth
   parent: blocks/index.md
-  position: 70
+  position: 71
   icon: quantimium:reactor_plinth
 ---
 

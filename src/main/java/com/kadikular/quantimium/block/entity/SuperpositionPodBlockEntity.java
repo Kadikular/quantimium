@@ -92,7 +92,8 @@ public class SuperpositionPodBlockEntity extends BlockEntity implements QuantumE
     private final QuantumEnergyStorage energyStorage = new QuantumEnergyStorage(ENERGY_CAPACITY, ENERGY_MAX_RECEIVE, 0) {
         @Override
         protected void onReceived() {
-                setChanged();
+                // Saved, without telling neighbours' comparators every tick it's charged (none reads it).
+                if (level != null) level.blockEntityChanged(worldPosition);
                 if (!powered) sync();
             
         }

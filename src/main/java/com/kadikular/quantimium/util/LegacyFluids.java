@@ -9,6 +9,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
@@ -22,10 +23,86 @@ public final class LegacyFluids {
 
     private LegacyFluids() {}
 
-    /** The fill/drain contract over a neighbour's {@link ResourceHandler}, for code written against it. */
+    /**
+     * The fill/drain contract over a neighbour's {@link ResourceHandler}, for code written against it. Each call
+     * joins the transaction that's open (a pull that may yet be called off) or opens a root of its own, as
+     * {@link LegacyItems#legacy} does: NeoForge's own adapter always opens a root, which throws inside one.
+     */
     @Nullable
     public static IFluidHandler legacy(@Nullable ResourceHandler<FluidResource> handler) {
-        return handler == null ? null : IFluidHandler.of(handler);
+        return handler == null ? null : new Nesting(handler);
+    }
+
+    /** A transaction for one call: inside the open one, or a root of its own; none while one is closing. */
+    @Nullable
+    private static Transaction open() {
+        try {
+            return Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
+                    ? Transaction.open(Transaction.getCurrentOpenedTransaction())
+                    : Transaction.openRoot();
+        } catch (IllegalStateException closing) {
+            // A transaction's close callbacks are running: nothing may move now.
+            return null;
+        }
+    }
+
+    private record Nesting(ResourceHandler<FluidResource> handler) implements IFluidHandler {
+        @Override
+        public int getTanks() {
+            return handler.size();
+        }
+
+        @Override
+        public FluidStack getFluidInTank(int tank) {
+            FluidResource resource = handler.getResource(tank);
+            return resource.isEmpty() ? FluidStack.EMPTY : resource.toStack(handler.getAmountAsInt(tank));
+        }
+
+        @Override
+        public int getTankCapacity(int tank) {
+            return handler.getCapacityAsInt(tank, FluidResource.EMPTY);
+        }
+
+        @Override
+        public boolean isFluidValid(int tank, FluidStack stack) {
+            return handler.isValid(tank, FluidResource.of(stack));
+        }
+
+        @Override
+        public int fill(FluidStack resource, FluidAction action) {
+            if (resource.isEmpty()) return 0;
+            var opened = open();
+            if (opened == null) return 0;
+            try (var transaction = opened) {
+                int in = handler.insert(FluidResource.of(resource), resource.getAmount(), transaction);
+                if (action.execute()) transaction.commit();
+                return in;
+            }
+        }
+
+        @Override
+        public FluidStack drain(FluidStack resource, FluidAction action) {
+            if (resource.isEmpty()) return FluidStack.EMPTY;
+            var opened = open();
+            if (opened == null) return FluidStack.EMPTY;
+            try (var transaction = opened) {
+                int out = handler.extract(FluidResource.of(resource), resource.getAmount(), transaction);
+                if (action.execute()) transaction.commit();
+                return out <= 0 ? FluidStack.EMPTY : resource.copyWithAmount(out);
+            }
+        }
+
+        @Override
+        public FluidStack drain(int maxDrain, FluidAction action) {
+            if (maxDrain <= 0) return FluidStack.EMPTY;
+            var opened = open();
+            if (opened == null) return FluidStack.EMPTY;
+            try (var transaction = opened) {
+                var got = net.neoforged.neoforge.transfer.ResourceHandlerUtil.extractFirst(handler, fluid -> true, maxDrain, transaction);
+                if (action.execute()) transaction.commit();
+                return got == null || got.isEmpty() ? FluidStack.EMPTY : got.resource().toStack(got.amount());
+            }
+        }
     }
 
     /**

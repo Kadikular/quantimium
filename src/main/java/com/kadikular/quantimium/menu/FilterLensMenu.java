@@ -128,7 +128,9 @@ public class FilterLensMenu extends AbstractContainerMenu implements GhostFilter
         if (slotId >= 0 && slotId < FILTER_END) {
             // Spawn eggs have no tags to step through.
             if (clickType == ContainerInput.QUICK_MOVE && part() != LensFilter.ENTITIES) set(filter().cycledTag(part(), slotId));
-            else if (clickType == ContainerInput.PICKUP) setGhost(slotId, getCarried());
+            // An item list takes a fluid on a right-click.
+            else if (clickType == ContainerInput.PICKUP) setGhost(slotId, part() == LensFilter.ITEMS
+                    ? com.kadikular.quantimium.recipe.FluidEntry.fromClick(getCarried(), button) : getCarried());
             return;
         }
         super.clicked(slotId, button, clickType, who);

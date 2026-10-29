@@ -25,7 +25,7 @@ import java.util.Map;
  * network. Under the item grid, shown by a tab, a crafting grid that the network refills after each craft. Layout:
  * tools/gui_panels.py logistics_terminal and logistics_terminal_crafting.
  */
-public class LogisticsTerminalMenu extends AbstractContainerMenu {
+public class LogisticsTerminalMenu extends AbstractContainerMenu implements ChannelMenu {
 
     public static final int PLAYER_Y = 158;
     /** The crafting grid and its result, under the item grid when shown (tools/gui_panels.py logistics_terminal_crafting). */
@@ -97,6 +97,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
                                   boolean remote) {
         super(ModMenuTypes.LOGISTICS_TERMINAL_MENU.get(), containerId);
         this.terminal = terminal;
+        addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(terminal == null || terminal.getLevel() == null || terminal.getLevel().isClientSide() ? null : terminal::channel));
         this.pos = pos;
         this.remote = remote;
         this.player = playerInv.player;
@@ -502,8 +503,26 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
     }
 
     /** Takes {@code count} of {@code item}: onto the cursor (as much as it holds with what's there), or into the inventory. */
+    /** Makes {@code count} of {@code item} (mB for a fluid) into the network's storage, and says how it went. */
+    public void make(Player player, ItemResource item, long count) {
+        if (terminal == null || count <= 0) return;
+        long made = terminal.make(item, count);
+        boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(item);
+        String amount = String.format(java.util.Locale.ROOT, "%,d", made) + (fluid ? " mB" : "");
+        player.sendOverlayMessage(made > 0
+                ? net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_terminal.made", amount, item.toStack(1).getHoverName())
+                : net.minecraft.network.chat.Component.translatable("message.quantimium.logistics_terminal.not_made"));
+    }
+
     public void take(Player player, ItemResource item, int count, boolean toInventory) {
         if (terminal == null) return;
+        // A fluid only into what's on the cursor: a bucket, a tank.
+        net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(item.toStack(1));
+        if (!fluid.isEmpty()) {
+            if (toInventory || getCarried().isEmpty()) bucketOf(player, fluid, toInventory);
+            else fill(player, fluid);
+            return;
+        }
         int room = count;
         ItemStack carried = getCarried();
         if (!toInventory) {
@@ -528,11 +547,76 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         refresh();
     }
 
-    /** Puts what's on the cursor (or one of it) into the network. */
-    public void insertCarried(boolean one) {
+    /**
+     * A bucket of {@code fluid} from the network, the bucket too (stored, or made): onto the empty cursor, or into the
+     * inventory. Nothing is taken unless there's a bucket's worth.
+     */
+    private void bucketOf(Player player, net.neoforged.neoforge.fluids.FluidStack fluid, boolean toInventory) {
+        int bucket = net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+        net.minecraft.world.item.Item filled = fluid.getFluid().getBucket();
+        if (filled == net.minecraft.world.item.Items.AIR) return;
+        var controller = terminal.controller();
+        if (controller == null || com.kadikular.quantimium.laser.Logistics.takeFluid(controller.members(),
+                each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, fluid), bucket, true).getAmount() < bucket) return;
+        ItemStack empty = terminal.take(ItemResource.of(net.minecraft.world.item.Items.BUCKET), 1);
+        if (empty.isEmpty()) return;
+        var got = terminal.takeFluid(fluid, bucket);
+        if (got.getAmount() < bucket) {
+            // Gone since it was looked at: all of it back.
+            if (!got.isEmpty()) terminal.insertFluid(got);
+            ItemStack back = terminal.insert(empty);
+            if (!back.isEmpty()) player.getInventory().placeItemBackInInventory(back);
+            return;
+        }
+        ItemStack made = new ItemStack(filled);
+        if (toInventory) player.getInventory().placeItemBackInInventory(made);
+        else setCarried(made);
+        refresh();
+    }
+
+    /** Fills what's on the cursor with {@code fluid} from the network, as much as it holds. */
+    private void fill(Player player, net.neoforged.neoforge.fluids.FluidStack fluid) {
+        var held = com.kadikular.quantimium.util.LegacyFluids.legacy(cursorFluids(player));
+        if (held == null) return;
+        int room = held.fill(fluid.copyWithAmount(Integer.MAX_VALUE), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+        if (room <= 0) return;
+        var got = terminal.takeFluid(fluid, room);
+        if (got.isEmpty()) return;
+        int filled = held.fill(got, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        if (filled < got.getAmount()) terminal.insertFluid(got.copyWithAmount(got.getAmount() - filled));
+        refresh();
+    }
+
+    /** Empties what's on the cursor (a bucket, a tank) into the network; whether any went in. */
+    private boolean pour(Player player) {
+        var held = com.kadikular.quantimium.util.LegacyFluids.legacy(cursorFluids(player));
+        if (held == null) return false;
+        var offered = held.drain(Integer.MAX_VALUE, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+        if (offered.isEmpty()) return false;
+        int took = terminal.insertFluid(offered);
+        if (took <= 0) return false;
+        held.drain(offered.copyWithAmount(took), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        refresh();
+        return true;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> cursorFluids(Player player) {
+        if (getCarried().isEmpty()) return null;
+        return net.neoforged.neoforge.transfer.access.ItemAccess.forPlayerCursor(player, this).oneByOne()
+                .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM);
+    }
+
+    /** Puts what's on the cursor (or one of it) into the network; a right-click with a filled bucket pours it in. */
+    public void insertCarried(Player player, boolean one) {
         if (terminal == null) return;
         ItemStack carried = getCarried();
         if (carried.isEmpty()) return;
+        // A right-click with a filled container pours it in; the container itself stays in hand.
+        if (one && !com.kadikular.quantimium.recipe.FluidEntry.contained(carried).isEmpty()) {
+            pour(player);
+            return;
+        }
         if (one) {
             ItemStack left = terminal.insert(carried.copyWithCount(1));
             if (left.isEmpty()) carried.shrink(1);
@@ -578,5 +662,21 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu {
         if (terminal == null) return true;
         if (remote) return !terminal.isRemoved();
         return stillValid(ContainerLevelAccess.create(terminal.getLevel(), terminal.getBlockPos()), player, terminal.getBlockState().getBlock());
+    }
+
+    private ChannelMenu.ChannelSlot channelSlot;
+
+    @Override
+    public int channel() {
+        return channelSlot.shown();
+    }
+
+    @Override
+    public void setChannel(int channel) {
+        // Which network it shows: the controller on that channel, shown at once (its offers worked out first in line).
+        if (terminal == null) return;
+        terminal.setChannel(channel);
+        if (terminal.controller() != null) terminal.controller().watched();
+        refresh();
     }
 }

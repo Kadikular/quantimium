@@ -232,6 +232,91 @@ public final class LogisticsTests {
         helper.succeedWhen(() -> helper.assertValueEqual(count(helper, 7, Items.IRON_INGOT), 12, "the ingots came from the provider"));
     }
 
+    // covers: laser.channels.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels", timeoutTicks = 120)
+    public static void aReceptacleJoinsAControllerOnItsChannel(GameTestHelper helper) {
+        // A controller on channel 3: the receptacle on 3 joins it, the one on 0 doesn't. A receptacle can't be on All (it
+        // belongs to one network); set so, it stays on 0. On All, the controller takes in both.
+        var controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        controller.setChannel(3);
+        Receptacle on0 = onChest(helper, 4, LogisticsMember.Role.STORAGE, false);
+        Receptacle on3 = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
+        on3.setChannel(3);
+        on0.setChannel(com.kadikular.quantimium.laser.Channels.ALL);
+        helper.assertValueEqual(on0.channel(), 0, "a receptacle isn't put on All");
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(on3.isConnected(), "on channel 3: on the network");
+            helper.assertFalse(on0.isConnected(), "on channel 0: not");
+            controller.setChannel(com.kadikular.quantimium.laser.Channels.ALL);
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(on0.isConnected() && on3.isConnected(), "a controller on All takes in both");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.channels.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_terminal", timeoutTicks = 100)
+    public static void aTerminalShowsTheNetworkOnItsChannel(GameTestHelper helper) {
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true).setChannel(3);
+        BlockPos at = new BlockPos(6, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(terminal.controller() == null, "on channel 0: not the controller on 3");
+            terminal.setChannel(3);
+            helper.assertTrue(terminal.controller() != null, "on channel 3: it");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.channels.logistics
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_all", timeoutTicks = 120)
+    public static void aControllerOnAllRunsANetworkForEachChannel(GameTestHelper helper) {
+        // A controller on All (as it starts): dirt on channel 0, cobblestone on channel 3. A terminal on each channel sees
+        // only its own.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT, 5));
+        onChest(helper, 6, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.COBBLESTONE, 7)).setChannel(3);
+        BlockPos at = new BlockPos(9, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var dirt = resource(Items.DIRT);
+        var cobble = resource(Items.COBBLESTONE);
+        helper.runAfterDelay(60, () -> {
+            var on0 = settled(terminal::contents);
+            helper.assertTrue(on0.containsKey(dirt) && !on0.containsKey(cobble), "on channel 0: the dirt only");
+            terminal.setChannel(3);
+            var on3 = settled(terminal::contents);
+            helper.assertTrue(on3.containsKey(cobble) && !on3.containsKey(dirt), "on channel 3: the cobblestone only");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.channels.logistics, laser.logistics.materialiser
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels_materialiser", timeoutTicks = 120)
+    public static void aMaterialiserOffersEveryChannelsNetwork(GameTestHelper helper) {
+        // Two controllers on channels 0 and 3, their lasers both ending on one Materializer: it offers both networks' items.
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 5, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.DIRT, 5));
+        controller(helper, new BlockPos(12, Y, 2), Direction.SOUTH, true).setChannel(3);
+        helper.setBlock(new BlockPos(12, Y - 1, 5), Blocks.CHEST);
+        helper.getBlockEntity(new BlockPos(12, Y - 1, 5), ChestBlockEntity.class).setItem(0, new ItemStack(Items.COBBLESTONE, 7));
+        TestSupport.receptacle(helper, new BlockPos(12, Y, 5), Direction.DOWN).setChannel(3);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.succeedWhen(() -> {
+            var handler = network(helper);
+            helper.assertTrue(handler != null, "the Materializer on a network");
+            long dirt = 0, cobble = 0;
+            for (int i = 0; i < handler.size(); i++) {
+                if (handler.getResource(i).is(Items.DIRT)) dirt += handler.getAmountAsLong(i);
+                if (handler.getResource(i).is(Items.COBBLESTONE)) cobble += handler.getAmountAsLong(i);
+            }
+            helper.assertValueEqual(dirt, 5L, "channel 0's dirt");
+            helper.assertValueEqual(cobble, 7L, "channel 3's cobblestone");
+        });
+    }
+
     // covers: laser.logistics.network
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics", timeoutTicks = 100)
     public static void anIsolatorCutsTheNetwork(GameTestHelper helper) {
@@ -747,6 +832,61 @@ public final class LogisticsTests {
         return net.neoforged.neoforge.transfer.item.ItemResource.of(new ItemStack(item));
     }
 
+    // covers: laser.logistics.reactor, reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor_fluids", timeoutTicks = 100)
+    public static void theReactorSharesFluidsWithTheNetwork(GameTestHelper helper) {
+        // Water in a Laser Tank on the network; lava and two empty buckets in the Reactor. It fills buckets with the
+        // network's water, and the network lists the Reactor's lava.
+        var core = ReactorTests.buildReactor(helper, 1);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        BlockPos tankAt = portAt.east(2).above();
+        helper.setBlock(tankAt, ModBlocks.LASER_TANK.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserTankBlock.FACING, Direction.EAST));
+        var tank = helper.getBlockEntity(tankAt, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        tank.tanks().set(0, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000));
+        TestSupport.receptacle(helper, portAt.east(2), net.minecraft.core.Direction.UP);
+        var controller = controller(helper, portAt.east(3), Direction.WEST, true);
+        var lava = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA));
+        core.take(lava, 3_000);
+        core.take(resource(Items.BUCKET), 2);
+        helper.runAfterDelay(30, () -> {
+            var filled = core.request(resource(Items.WATER_BUCKET), 2);
+            helper.assertTrue(filled.planned(), "water buckets from the network's water: " + filled.problem());
+            helper.assertValueEqual(tank.tanks().get(0).getAmount(), 2_000, "2,000 mB out of the network's tank");
+            var listed = com.kadikular.quantimium.laser.OfferTable.storedNow(controller, controller.getBlockPos(), controller.members());
+            helper.assertValueEqual(listed.get(lava), 3_000L, "the network lists the Reactor's lava");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: reactor.fluids, crafter.fluid_network
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor_made_fluids", timeoutTicks = 120)
+    public static void aNetworkTakesTheFluidsTheReactorMakes(GameTestHelper helper) {
+        // Two lava buckets in the Reactor and no lava: the network lists lava it could make (emptying the buckets), and a
+        // take of a bucket's worth makes it.
+        var core = ReactorTests.buildReactor(helper, 1);
+        BlockPos portAt = ReactorTests.CORE.below().east(5);
+        helper.setBlock(portAt, ModBlocks.REACTOR_LOGISTICS_PORT.get());
+        core.revalidate(helper.getLevel());
+        core.getEnergyStorage().setEnergy(com.kadikular.quantimium.block.entity.HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        var controller = controller(helper, portAt.east(3), Direction.WEST, true);
+        core.take(resource(Items.LAVA_BUCKET), 2);
+        var lava = new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 1);
+        var key = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(lava));
+        helper.runAfterDelay(60, () -> {
+            long craftable = settled(() -> controller.offers().craftable(key));
+            helper.assertTrue(craftable >= 1_000, "lava listed as craftable: " + craftable);
+            var got = com.kadikular.quantimium.laser.Logistics.takeFluid(controller.members(),
+                    each -> each.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA), 1_000, false);
+            helper.assertValueEqual(got.getAmount(), 1_000, "a bucket's worth made");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
     // covers: laser.logistics.reactor
     @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_reactor", timeoutTicks = 100)
     public static void theReactorMakesWithWhatTheNetworkShares(GameTestHelper helper) {
@@ -940,6 +1080,114 @@ public final class LogisticsTests {
             helper.assertValueEqual(makes.getAsLong(), 128L, "two stacks left");
             helper.assertValueEqual(take(helper, Items.IRON_INGOT, 300, false), 128, "and the network offers that");
         }));
+    }
+
+    // covers: laser.logistics.materialiser, crafter.fluids
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafter_fluids", timeoutTicks = 300)
+    public static void aNetworksCrafterMakesFromTheNetworksFluids(GameTestHelper helper) {
+        // Water and lava stored on the network; a Stone Solidifier Crafter drawing on it through the Materializer
+        // and offering what it makes. Andesite taken out of the network takes the network's water and lava.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        var water = fluidStorage(helper, 4, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 8_000));
+        var lava = fluidStorage(helper, 8, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 8_000));
+        crafterOn(helper, 6, net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
+                net.minecraft.resources.Identifier.parse("energizedpower:stone_solidifier")), true, true);
+        helper.setBlock(MATERIALISER, ModBlocks.LOGISTICS_MATERIALISER.get());
+        helper.runAfterDelay(80, () -> {
+            helper.assertValueEqual(take(helper, Items.ANDESITE, 1, true), 1, "andesite made from the network's water and lava");
+            helper.assertTrue(water.tanks().get(0).getAmount() < 8_000, "the network's water used");
+            helper.assertTrue(lava.tanks().get(0).getAmount() < 8_000, "the network's lava used");
+            // Fluids aren't items to pipes: the Materializer shows them through its fluid handler.
+            var items = network(helper);
+            for (int i = 0; i < items.size(); i++) {
+                helper.assertTrue(!items.getResource(i).is(com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get()), "no fluid as an item");
+            }
+            var fluids = helper.getLevel().getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, helper.absolutePos(MATERIALISER), Direction.UP);
+            helper.assertTrue(fluids != null && fluids.size() >= 2, "water and lava through its fluid handler");
+            helper.succeed();
+        });
+    }
+
+    // covers: laser.logistics.make
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_make", timeoutTicks = 200)
+    public static void aTerminalMakesIntoStorage(GameTestHelper helper) {
+        // One furnace stored and four more can be made: asked for two, two are made and kept in storage; asked for ten,
+        // only what can be made.
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        onChest(helper, 4, LogisticsMember.Role.STORAGE, false, new ItemStack(Items.FURNACE, 1));
+        ChestBlockEntity chest = helper.getBlockEntity(new BlockPos(4, Y - 1, 8), ChestBlockEntity.class);
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, Items.CRAFTING_TABLE, false, true);
+        crafter.getInventory().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 32));
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var furnace = resource(Items.FURNACE);
+        helper.runAfterDelay(80, () -> {
+            settled(terminal::contents);
+            helper.assertValueEqual(terminal.make(furnace, 2), 2L, "two made");
+            int furnaces = 0;
+            for (int slot = 0; slot < chest.getContainerSize(); slot++) if (chest.getItem(slot).is(Items.FURNACE)) furnaces += chest.getItem(slot).getCount();
+            helper.assertValueEqual(furnaces, 3, "kept in storage with the one there");
+            helper.assertValueEqual(countIn(crafter, Items.COBBLESTONE), 16, "two furnaces' cobblestone");
+        });
+        helper.runAfterDelay(140, () -> {
+            settled(terminal::contents);
+            helper.assertValueEqual(terminal.make(furnace, 10), 2L, "no more than can be made");
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.fluid_network, laser.logistics.make
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_crafter_made_fluids", timeoutTicks = 300)
+    public static void aNetworkTakesTheFluidsACrafterMakes(GameTestHelper helper) {
+        // A Stone Liquefier Crafter offering to the network: its lava is listed as craftable, not stored, and a terminal
+        // taking a bucket's worth makes it from the andesite.
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        TestSupport.clearField(helper);
+        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        QuantumCrafterBlockEntity crafter = crafterOn(helper, 6, net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
+                net.minecraft.resources.Identifier.parse("energizedpower:stone_liquefier")), false, true);
+        crafter.getInventory().setStackInSlot(1, new ItemStack(Items.ANDESITE, 64));
+        var storage = fluidStorage(helper, 4, net.neoforged.neoforge.fluids.FluidStack.EMPTY);
+        BlockPos at = new BlockPos(10, Y, 8);
+        helper.setBlock(at, ModBlocks.LOGISTICS_TERMINAL.get());
+        var terminal = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LogisticsTerminalBlockEntity.class);
+        var lava = new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 1);
+        var key = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(lava));
+        helper.runAfterDelay(80, () -> {
+            long[] listed = settled(terminal::contents).get(key);
+            helper.assertTrue(listed != null && listed[0] == 0 && listed[1] > 0, "lava listed as craftable only: "
+                    + (listed == null ? "none" : listed[0] + "/" + listed[1]));
+            var got = terminal.takeFluid(lava, 1_000);
+            helper.assertTrue(got.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && got.getAmount() == 1_000, "a bucket of lava made: " + got);
+            helper.assertTrue(countIn(crafter, Items.ANDESITE) < 64, "out of the Crafter's andesite");
+            // Made into storage from the terminal's make page.
+            helper.assertValueEqual(terminal.make(key, 2_000), 2_000L, "2,000 mB made");
+            var kept = storage.tanks().get(0);
+            helper.assertTrue(kept.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && kept.getAmount() == 2_000, "and kept in storage: " + kept);
+            TestSupport.clearField(helper);
+            helper.succeed();
+        });
+    }
+
+    /** A Laser Tank under the light at {@code x} holding {@code fluid}, a storage receptacle on it. */
+    private static com.kadikular.quantimium.block.entity.LaserTankBlockEntity fluidStorage(GameTestHelper helper, int x, net.neoforged.neoforge.fluids.FluidStack fluid) {
+        BlockPos at = new BlockPos(x, Y - 1, 8);
+        helper.setBlock(at, ModBlocks.LASER_TANK.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserTankBlock.FACING, Direction.EAST));
+        var tank = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        tank.tanks().set(0, fluid);
+        TestSupport.receptacle(helper, new BlockPos(x, Y, 8), Direction.DOWN);
+        return tank;
     }
 
     /**

@@ -8,7 +8,7 @@
 <tr><th>Energy buffer</th><td>{{c:QuantumCrafterBlockEntity.ENERGY_CAPACITY}} FE</td></tr>
 <tr><th>Max input</th><td>{{c:QuantumCrafterBlockEntity.ENERGY_MAX_RECEIVE}} FE/t</td></tr>
 <tr><th>Slots</th><td>{{c:QuantumCrafterBlockEntity.INPUT_SLOTS}} input, {{c:QuantumCrafterBlockEntity.OUTPUT_SLOTS}} output, 1 catalyst</td></tr>
-<tr><th>Automation</th><td>Items, all six faces</td></tr>
+<tr><th>Automation</th><td>Items and fluids, all six faces</td></tr>
 <tr><th>Emits</th><td>1 flux per {{c:QuantumFlux.FE_PER_FLUX}} FE spent</td></tr>
 </table>
 </div>
@@ -32,6 +32,7 @@ Nothing is crafted until something takes an output: you, a hopper, a pipe, or it
 | Runs | 32 at a time, then it recovers | Unlimited |
 | Automation | Every face, no configuration | Per-face side configuration, auto input and output |
 | Tesseracts in the grid | Yes | Yes |
+| Fluid tanks | {{c:QuantumCrafterBlockEntity.INPUT_TANKS}} in, {{c:QuantumCrafterBlockEntity.OUTPUT_TANKS}} out | {{c:QuantumCrafterBlockEntity.INPUT_TANKS}} in, {{c:QuantumCrafterBlockEntity.OUTPUT_TANKS}} out |
 
 A Basic crafter's buffer takes about 8 minutes to fill from a 100 FE/t generator.
 
@@ -127,9 +128,17 @@ taken, the ghost becomes the real items, and the preview is worked out again fro
   product of a two-output craft, or the rest of a run when a hopper takes less than one run makes.
   If the grid has no room for it, the take is refused.
 
-[[mechanic:crafter.preferred]] The last recipe you took becomes the **preferred** recipe and is listed
-first. The **recipe lock** shows only that recipe whenever it can be made, which stops a shared grid,
-or auto output, from making something else. When it can't be made, the full preview comes back.
+The last recipe you took is listed first.
+
+[[mechanic:crafter.pins]] **Middle-click** an output to **pin** it. Pinned outputs come first, outlined in gold, in the
+order you pinned them, and stay shown with a 0 when none can be made. Middle-click one again to unpin
+it. Up to {{c:QuantumCrafterBlockEntity.MAX_PINS}} can be pinned.
+
+Drag an item or fluid from JEI onto the output grid to pin it too.
+
+With the **lock** on (the padlock tab), the crafter makes only what's pinned. Everything else is still
+shown, dimmed, but can't be taken, and pipes, networks and auto output see only the pinned outputs. That
+stops a shared grid from making something else.
 
 ## Batch size
 
@@ -210,19 +219,46 @@ toward Medium.
 
 ## Automation
 
-[[mechanic:crafter.automation]] Items only; the crafter has no fluid ports.
+[[mechanic:crafter.automation]] Faces move items and fluids, each set apart.
 
 **Quantum Crafter.** The [side configuration](../concepts/side-configuration.md) (the Sides tab) sets each face to
 Off, In, Out or Both, and which grid slots and output slots it reaches. Every face starts
 as Both. With **auto input**, a face pulls from the block beside it once a second; with **auto
 output**, it commits and pushes a craft into it, sized to the room the neighbor has. Auto output
-uses the preferred recipe when it is available, otherwise the first one in the preview.
+uses the last recipe taken when it is available, otherwise the first one in the preview. Locked, it makes
+each pinned output in turn.
 
 **Basic Quantum Crafter.** Every face is both an input and an output, with no configuration and no
 auto push or pull. Hoppers and pipes do the moving.
 
 Automation reaches the grid and the output slots only; the catalyst goes in by hand. A pipe or
 network sees each ghost as a slot after the outputs, on any face that lets something out.
+
+## Fluids
+
+[[mechanic:crafter.fluids]] The crafter has {{c:QuantumCrafterBlockEntity.INPUT_TANKS}} input tanks, right of the catalyst, and
+{{c:QuantumCrafterBlockEntity.OUTPUT_TANKS}} output tanks, shown among its outputs. Each holds {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB of one fluid.
+
+- A recipe that takes a fluid draws it from the input tanks, or from a tank a Tesseract in the grid is
+  bound to (a [[block:laser_tank]], any mod's tank, or a [[block:logistics_materialiser]] for a network's
+  fluids). A Semi-Stable Tesseract reaches tanks in its range. It is offered only while there is enough.
+- Fluids a recipe makes go to the output tanks. A batch is cut to what they have room for. With no
+  room for even one run, it waits, and when nothing can be made for that, it says *Output blocked*
+  until they're emptied.
+- Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
+  bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
+  as you fill from it.
+- [[mechanic:crafter.fluid_sides]] Each face has its own fluid mode in the Sides tab, every face Both to
+  start. Pipes fill the input tanks, and a face picks which of them. A face giving fluids gives what the
+  output tanks hold and what a recipe making only fluids shows, made as it's taken, with no tanks to
+  pick. Auto input and output move up to {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB a second; locked, auto output
+  gives only pinned fluids.
+- [[mechanic:crafter.fluid_network]] On a logistics network, through a provider Receptacle offering what it
+  makes, what its output tanks hold is stock, and what a recipe making only fluids shows is craftable: a terminal
+  taking it, or a requester that requests what can be made, makes it as it goes. A network fills its input tanks.
+- A bucket used on the crafter
+  fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
+  bucket to fill or empty it.
 
 ## Tesseracts in the grid
 
@@ -320,6 +356,13 @@ The EnderIO Alloy Smelter's:
   own energy instead, times `energy.scale` (1 if left out), with the flat fee if it can't be read.
 - `non_consumed_tags` and `non_consumed_items` list ingredients that stay in the grid, like the
   Inscriber's presses.
+- `fluid_amount_fields` reads a number field as that many mB of a fluid, taken: Energized Power's Stone
+  Solidifier is `{"waterAmount": "minecraft:water", "lavaAmount": "minecraft:lava"}`. An empty
+  `input_fields` or `output_fields` list means the recipe takes or gives no items.
+- [[mechanic:recipe.fluids]] **Fluids are found by type.** Any field holding NeoForge's fluid ingredients or
+  fluid stacks, or a mod's own fluid ingredient, is read, alone or in a list. A field named for inputs
+  is taken, one named for outputs is given. Where that guesses wrong, `fluid_input_fields` and
+  `fluid_output_fields` name the fields. See [Fluids](#fluids) for how the crafter uses them.
 
 ## Tips
 

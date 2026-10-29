@@ -6,7 +6,7 @@ that has one, and a wrench can change it without opening anything.
 
 | Machine | Items | Fluids | Faces |
 | --- | --- | --- | --- |
-| [Quantum Crafter](../machines/quantum-crafter.md) | Yes | No | All six |
+| [Quantum Crafter](../machines/quantum-crafter.md) | Yes | No (every face fills its input tanks and drains its output tanks) | All six |
 | [Quantum Simulator](../machines/quantum-simulator.md) | Yes | Yes | All but the top (the field) |
 | [Tesseract Stabilizer](../machines/tesseract-stabilizer.md) | Yes | Yes | All but the top |
 
@@ -45,7 +45,7 @@ Right-click a face to step its mode on, shift-right-click to step back. Each cha
 
 | Machine | Items start as | Fluids start as |
 | --- | --- | --- |
-| Quantum Crafter | Both | (no fluids) |
+| Quantum Crafter | Both | (always both) |
 | Quantum Simulator | Both | Off |
 | Tesseract Stabilizer | Both | Both |
 

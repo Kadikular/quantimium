@@ -3,6 +3,16 @@ package com.kadikular.quantimium.laser;
 /** A Logistics Controller: everything its light reaches is one logistics network, which it pays to run. */
 public interface LogisticsController {
 
+    /** The network that serves {@code channel}: itself, unless it runs one for each (a controller on All). */
+    default LogisticsController network(int channel) {
+        return this;
+    }
+
+    /** Every network it runs: itself, unless it runs one for each channel. */
+    default java.util.List<? extends LogisticsController> networks() {
+        return java.util.List.of(this);
+    }
+
     /** Whether it has the power to move a stack. */
     boolean powered();
 

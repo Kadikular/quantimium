@@ -1,6 +1,6 @@
 ---
 navigation:
-  title: Item Filter Lens
+  title: Filter Lens
   parent: items/index.md
   position: 16
   icon: quantimium:filter_lens
@@ -8,16 +8,18 @@ item_ids:
 - quantimium:filter_lens
 ---
 
-# Item Filter Lens
+# Filter Lens
 
 <ItemImage id="quantimium:filter_lens" scale="2" />
 
-Item Filter Lens limits the item actions before it to the items it lets through.
+Filter Lens limits the item and fluid actions before it to the items and fluids it lets through.
 
 ## How it works
 
 - Insert, Extract, Pickup and Placement read it.
 - Nine entries, set as allow or deny, with tags (shift-click an entry).
+- Click an entry with a bucket to list the bucket; right-click to list the fluid in it, drawn as that fluid. A fluid can also be dragged in from JEI.
+- Fluid entries apply only to fluids (for Insert and Extract) and the rest only to items, so a list of items lets every fluid through.
 
 ## Settings
 
@@ -33,10 +35,10 @@ The three filter lenses split the work: this one for items, <ItemLink id="quanti
 
 | Action | Filter that applies |
 | --- | --- |
-| <ItemLink id="quantimium:place_lens" /> | Item Filter Lens: places only the listed items. |
-| <ItemLink id="quantimium:insert_lens" /> | Item Filter Lens: moves only the listed items. |
-| <ItemLink id="quantimium:extract_lens" /> | Item Filter Lens: takes only the listed items. |
-| <ItemLink id="quantimium:pickup_lens" /> | Item Filter Lens: carries only the listed items. |
+| <ItemLink id="quantimium:place_lens" /> | Filter Lens: places only the listed items. |
+| <ItemLink id="quantimium:insert_lens" /> | Filter Lens: moves only the listed items. |
+| <ItemLink id="quantimium:extract_lens" /> | Filter Lens: takes only the listed items. |
+| <ItemLink id="quantimium:pickup_lens" /> | Filter Lens: carries only the listed items. |
 
 ## Recipes
 

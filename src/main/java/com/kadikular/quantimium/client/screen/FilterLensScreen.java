@@ -132,6 +132,12 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
         return menu.containerId;
     }
 
+    /** An item list (Filter or Void) lists fluids too. */
+    @Override
+    public boolean ghostFluids() {
+        return menu.part() == com.kadikular.quantimium.laser.LensFilter.ITEMS;
+    }
+
     @Override
     protected Identifier panelTexture() {
         return TEXTURE;
@@ -188,10 +194,29 @@ public class FilterLensScreen extends QuantumMachineScreen<FilterLensMenu> imple
         List<Component> lines = new ArrayList<>(super.getTooltipFromContainerItem(stack));
         int index = hoveredSlot == null ? -1 : menu.slots.indexOf(hoveredSlot);
         if (index < 0 || index >= FilterLensMenu.FILTER_END) return lines;
-        lines.add(FilterEntry.tagOf(stack)
-                .map(tag -> Component.translatable("gui.quantimium.me_superposition_crafter.entry.tag", "#" + tag.location()).withStyle(ChatFormatting.AQUA))
-                .orElse(Component.translatable("gui.quantimium.me_superposition_crafter.entry.item").withStyle(ChatFormatting.AQUA)));
-        lines.add(Component.translatable("gui.quantimium.me_superposition_crafter.entry.hint").withStyle(ChatFormatting.GRAY));
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(stack)) {
+            lines.add(Component.translatable("gui.quantimium.filter.entry.fluid").withStyle(ChatFormatting.AQUA));
+        } else {
+            lines.add(FilterEntry.tagOf(stack)
+                    .map(tag -> Component.translatable("gui.quantimium.me_superposition_crafter.entry.tag", "#" + tag.location()).withStyle(ChatFormatting.AQUA))
+                    .orElse(Component.translatable("gui.quantimium.me_superposition_crafter.entry.item").withStyle(ChatFormatting.AQUA)));
+        }
+        lines.add(hint().withStyle(ChatFormatting.GRAY));
         return lines;
+    }
+
+    /** How to set an entry: an item list takes a fluid on a right-click. */
+    private net.minecraft.network.chat.MutableComponent hint() {
+        return Component.translatable(ghostFluids() ? "gui.quantimium.filter.entry.hint_fluid" : "gui.quantimium.me_superposition_crafter.entry.hint");
+    }
+
+    /** An empty entry says how to set it. */
+    @Override
+    protected void renderMachineTooltips(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        super.renderMachineTooltips(graphics, mouseX, mouseY);
+        if (hoveredSlot == null || hoveredSlot.hasItem() || !menu.getCarried().isEmpty()) return;
+        int index = menu.slots.indexOf(hoveredSlot);
+        if (index < 0 || index >= FilterLensMenu.FILTER_END) return;
+        graphics.setComponentTooltipForNextFrame(font, List.of(hint().withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
     }
 }

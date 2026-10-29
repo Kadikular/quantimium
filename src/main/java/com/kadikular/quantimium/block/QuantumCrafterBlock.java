@@ -82,6 +82,12 @@ public class QuantumCrafterBlock extends BaseEntityBlock {
         if (!(be instanceof QuantumCrafterBlockEntity crafter)) {
             return InteractionResult.TRY_WITH_EMPTY_HAND;
         }
+        // A bucket, or anything else that holds fluid, fills its input tanks, or empty, fills from its output tanks.
+        if (net.neoforged.neoforge.transfer.access.ItemAccess.forPlayerInteraction(player, hand)
+                .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM) != null) {
+            if (!level.isClientSide()) net.neoforged.neoforge.transfer.fluid.FluidUtil.interactWithFluidHandler(player, hand, pos, crafter.playerFluids(), null);
+            return InteractionResult.SUCCESS;
+        }
         return SideConfigWrench.handleUseItemOn(crafter, stack, level, player, hitResult);
     }
 

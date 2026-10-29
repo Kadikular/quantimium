@@ -115,7 +115,8 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
             if (matches(entry.item(), query)) cells.add(entry);
         }
         Comparator<HorizonViewPayload.Entry> name = Comparator.comparing(e -> e.item().toStack(1).getHoverName().getString());
-        cells.sort(byName ? name : Comparator.comparingLong(HorizonViewPayload.Entry::total).reversed().thenComparing(name));
+        // A fluid sorts by the bucket, as a bucket is one item.
+        cells.sort(byName ? name : Comparator.comparingLong((HorizonViewPayload.Entry e) -> sortCount(e.item(), e.total())).reversed().thenComparing(name));
         shownFor = entries;
         shownQuery = query;
         shownByName = byName;
@@ -162,10 +163,12 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
                 ItemStack stack = cell.item().toStack(1);
-                graphics.item(stack, x, y);
-                if (cell.total() > 1) {
+                net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(stack);
+                if (fluid.isEmpty()) graphics.item(stack, x, y);
+                else com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics, fluid, x, y);
+                if (cell.total() > 1 || !fluid.isEmpty()) {
                     // Half size in the slot's corner, as an ME terminal draws its counts.
-                    String count = slotCount(cell.total());
+                    String count = fluid.isEmpty() ? slotCount(cell.total()) : fluidCount(cell.total());
                     graphics.nextStratum();
                     graphics.pose().pushMatrix();
                     graphics.pose().translate(x + 16, y + 11);
@@ -208,11 +211,26 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
         return number + units[unit];
     }
 
+    /** A fluid's amount: mB under a bucket, then B, kB, MB. */
+    static String fluidCount(long mb) {
+        return mb >= 1_000 ? slotCount(mb / 1_000) + "B" : mb + "mB";
+    }
+
+    /** What sorts by count goes by: a fluid's in buckets. */
+    static long sortCount(ItemResource item, long count) {
+        return com.kadikular.quantimium.recipe.FluidEntry.is(item) ? count / net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : count;
+    }
+
     /** 1,234 up to 99,999, then 120k, 3.4M. */
     private static String compact(long value) {
         if (value < 100_000) return String.format(Locale.ROOT, "%,d", value);
         if (value < 10_000_000) return (value / 1000) + "k";
         return String.format(Locale.ROOT, "%.1fM", value / 1_000_000.0);
+    }
+
+    /** A count with its separators, a fluid's in mB. */
+    private static String amount(long count, boolean fluid) {
+        return String.format(Locale.ROOT, "%,d", count) + (fluid ? " mB" : "");
     }
 
     @Override
@@ -221,13 +239,13 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
         if (cell != null) {
             List<Component> lines = new ArrayList<>();
             lines.add(cell.item().toStack(1).getHoverName());
+            boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(cell.item());
             if (cell.held() > 0) {
-                lines.add(Component.translatable("gui.quantimium.horizon_core.held",
-                        String.format(Locale.ROOT, "%,d", cell.held())).withStyle(ChatFormatting.GRAY));
+                lines.add(Component.translatable("gui.quantimium.horizon_core.held", amount(cell.held(), fluid)).withStyle(ChatFormatting.GRAY));
             }
             if (cell.total() > cell.held()) {
-                lines.add(Component.translatable("gui.quantimium.horizon_core.makeable",
-                        String.format(Locale.ROOT, "%,d", cell.total() - cell.held())).withStyle(ChatFormatting.LIGHT_PURPLE));
+                lines.add(Component.translatable("gui.quantimium.horizon_core.makeable", amount(cell.total() - cell.held(), fluid))
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
             }
             lines.add(Component.translatable("gui.quantimium.horizon_core.take.tip").withStyle(ChatFormatting.DARK_GRAY));
             graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
@@ -246,7 +264,10 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
         if (activeOverlay() == null && event.button() == 0) {
             HorizonViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             if (cell != null) {
-                int count = event.hasShiftDown() ? cell.item().toStack(1).getMaxStackSize() : 1;
+                // A fluid by the bucket: one, or sixteen with shift.
+                boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(cell.item());
+                int stack = fluid ? 16 : cell.item().toStack(1).getMaxStackSize();
+                int count = (event.hasShiftDown() ? stack : 1) * (fluid ? net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : 1);
                 ClientPacketDistributor.sendToServer(new HorizonRequestPayload(menu.getBlockEntity().getBlockPos(),
                         cell.item(), count));
                 click();

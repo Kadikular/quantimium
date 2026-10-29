@@ -1,5 +1,86 @@
 # Changelog
 
+## 0.8.0-alpha: Fluids and channels
+
+### Fluids
+
+- **Laser Tank**: the Laser Port for fluids. Four tanks of 16 buckets, one fluid each; collects, sends or both, and
+  takes light only by its back. A bucket fills or empties it; pipes drain it on any face and fill it while it sends.
+  Once a second a sending tank pours up to four buckets to the next collecting tank down the laser.
+- **Insert and Extract move fluids**: with no items to move, they fill or drain the fluid handler the laser ends on,
+  from or to the Laser Tanks up the laser, a bucket at a time (doubled for each Speed Lens).
+- **Extract pumps**: with nothing to take from, it takes the first fluid source on its way (the laser runs on through
+  water) up to the collecting Laser Tanks, a bucket at a time.
+- **The Item Filter Lens is now the Filter Lens** and lists fluids: right-click an entry with a bucket to list its fluid
+  (drawn as that fluid), or drag a fluid in from JEI; a plain click lists the bucket itself. Fluid entries apply only
+  to fluids, so a list of items lets every fluid through. The **Void Lens** destroys fluids the same way.
+- The Laser Tank has a filter and a Sides tab like the Laser Port's (faces push to and pull from what's beside them),
+  its tanks fill and empty with a bucket clicked on them, and screens draw fluids with their own texture.
+- **Interact pours from Laser Tanks**: when nothing a Laser Port sends is used, it uses a bucket of a sending tank's
+  fluid (filling a cauldron, or pouring it out), draining the tank only if the bucket was emptied.
+- **Fluids on logistics networks**: a Logistics Receptacle on any tank puts it on the network as storage, a provider or
+  a requester, moving fluids as it moves items (2,000 mB a second, quickened by Speed Lenses). Its filter lists
+  fluids too, and keeping stock counts them in buckets. A collecting Laser Tank is a passive provider.
+- **The terminal lists fluids** with their amounts, sorted as a bucket to an item: click one for a bucket of it (the
+  bucket taken from the network, or made), click it holding a container to fill that, or right-click the grid with a
+  filled one to pour it into storage. An Extract Lens past the controller pours into the network; Insert and Interact
+  take its fluids only through a Filter Lens listing a fluid.
+- **Recipes with fluids are read**: the fluids a mod's recipe takes and gives are found by their fields' types (or
+  named in an adapter's `fluid_input_fields` and `fluid_output_fields`).
+- **The Quantum Crafter has tanks**: three in, beside the catalyst, and two out, shown among its outputs as a terminal
+  shows fluids. A recipe taking a fluid draws it from them, or from a tank a Tesseract in its grid is bound to; fluids
+  a recipe makes fill its output tanks, and a bucket clicked on one fills from it. Recipes making only fluids are
+  offered there too. Pipes fill the inputs and drain the outputs. A recipe taking a fluid is no longer offered as if
+  it took items alone.
+- New Crafter catalysts: Energized Power's Fluid Transposer, Fluid Freezer, Stone Solidifier and Stone Liquefier, and
+  Productive Bees' Bottler. A bucket used on the Crafter fills or empties its tanks.
+- **The Logistics Materializer offers the network's fluids** through a fluid handler, so a Crafter's Tesseract bound to
+  it makes from the network's fluids. Fluids are no longer shown to pipes as items.
+- **The Reactor holds fluids**, a bucket weighing as an item: in through an Input port, out through the Materializer
+  Port (made if need be), and to a logistics network through its Logistics Port, drawing on the network's fluids too.
+  Its recipes take and make fluids, and buckets fill and empty with no catalyst.
+- **AE2**: the ME Superposition Crafter offers recipes with fluids, taking and giving AE2 fluids. The ME Superposition
+  Port shows the Reactor's fluids as AE2 fluids, takes them in and out, and lets the Reactor make from the network's
+  fluids; its patterns ask for and give fluids as fluids.
+- Fluid gauges are marked like a measuring jug.
+- **The Crafter's faces set fluids apart from items** in its Sides tab, with auto input and output. A face gives
+  what its output tanks hold and what a recipe making only fluids shows, made as a pipe, bus or auto output takes it.
+- **A Crafter's fluids on a logistics network**: what its output tanks hold is stock, and what a recipe making only
+  fluids shows is craftable, made as a terminal or requester takes it.
+- **Make to storage**: middle-click something that can be made in a Logistics Terminal, pick how many (up to what can
+  be made), and it's made and kept in storage, items or fluids, if storage has room.
+- The terminal counts fluids that can be made, as it counts items.
+- **The Reactor's fluids it could make are on its network**: listed as craftable, and made as a terminal or a requester
+  that requests what can be made takes them.
+- A Reactor making something uses a recipe whose ingredients it has on hand first: lava from the cobblestone held, not
+  from andesite it would first have to make.
+- The Horizon Core shows fluids with their texture, in mB and buckets, sorted as a bucket to an item.
+- A Reactor no longer counts empty buckets as water it could make: filling and emptying buckets made it show far more
+  of every fluid than it had.
+
+### Lasers
+
+- **Channels**: 0 to 15, and All. Each lens in a Lens Mount has a channel (the number above it): an action works on its
+  channel, and a modifier changes only the actions on its own (on All, every one). Laser Ports, Tanks, Receptacles and
+  Logistics Controllers have one too, so several networks share a laser path. An Isolator stops only its channel.
+  Everything starts on 0, so nothing changes until a channel is set. A Logistics Controller starts on All: a network
+  for each channel its receptacles are on. A Terminal shows its channel's network; a Materializer offers every channel's.
+- **The Logistics Controller has a screen**: its receptacles, its power, and its channel.
+- **One-way Laser Splitters**: sneak with a wrench, or sneak-click the base with an empty hand, to make a splitter a
+  one-way mirror (its plate's back steel): light on the front only turns, light from behind only goes through, so two
+  lasers combine without spilling.
+- **The Spectroscope has a screen**: the laser split into its spectrum, a line for each action (shaped by its
+  modifiers) and a band for logistics, a channel picker, and a table of its actions and the ports they use. Aim it at a
+  laser in the air to read it.
+
+### Quantum Crafter
+
+- **Pins**: middle-click an output, or drag one from JEI onto the grid, to pin it. Pinned outputs come first, outlined
+  in gold, and stay shown, with a 0, when none can be made. **Locked**, the Crafter makes only what's pinned (the rest
+  shown dimmed), and auto output makes each in turn. A Crafter locked to a recipe before keeps it, pinned.
+- Four output tanks for what recipes make besides items; when they're too full for anything to be made, it says
+  *Output blocked*.
+
 ## 0.7.0-alpha: The Laser Focus, the Redstone Lens and true mirrors
 
 ### Lasers

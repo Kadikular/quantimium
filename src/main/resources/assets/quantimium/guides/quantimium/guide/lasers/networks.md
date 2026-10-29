@@ -2,7 +2,7 @@
 navigation:
   title: Networks and rules
   parent: lasers/index.md
-  position: 33
+  position: 34
 ---
 
 # Networks and rules
@@ -37,7 +37,19 @@ A run of laser reaches as far as its source's range. Mirrors, relays, prisms and
 
 ## Reading a laser
 
-The <ItemLink id="quantimium:spectroscope" /> splits a laser into what it carries. Use it on any laser block to read the laser leaving it: how far a run reaches and from how many sources, each action with its modifiers, who pays and how many Laser Ports it can reach, and each laser's length, end and power.
+The <ItemLink id="quantimium:spectroscope" /> splits a laser into its lines. Use it on any laser block to read the
+laser leaving it, or aim it at a laser (up to 8 blocks off, not through walls) to read that laser, even with a block
+behind it. Lasers laid over each other where you aim, like two joined at a Laser Splitter, are read together.
+
+- **The spectrum.** Each lens the laser carries is a line at its own wavelength, in that wavelength's color, shortest
+  on the left: the Phantom Lens deep in the ultraviolet (shorter waves pass through more), the UV Lens beside it, then
+  the visible colors to deep red. Power and a logistics network's laser are soft bands around their own wavelengths; a
+  Logistics Controller's own laser carries no power. Hover over a line for its lens, wavelength and channels.
+- **Channels.** Pick All, or one channel the laser carries, to see only what's on it.
+- **Below**, what's going on: each action's lens, then the lenses changing it (×2 for two), and its channel; then each
+  Laser Port, Tank or Controller the actions use, with the actions using it. Hover over an icon for its name.
+- At the bottom: how far a run reaches, from how many sources, the power it carries, and whether it's in the mirror
+  or unpowered.
 
 ## Looking into a laser
 

@@ -58,7 +58,18 @@ public final class SuperpositionPattern implements IPatternDetails {
 
         List<IInput> list = new ArrayList<>();
         for (RecipeShape.Input input : shape.inputs()) {
+            // A Reactor's recipe keeps a fluid as its entry: to AE2 it's that fluid.
+            List<net.minecraft.world.level.material.Fluid> fluids = fluidsOf(input.ingredient());
+            if (!fluids.isEmpty()) {
+                list.add(new FluidInput(new com.kadikular.quantimium.recipe.FluidParts.Input(fluids, input.count(),
+                        each -> input.ingredient().test(com.kadikular.quantimium.recipe.FluidEntry.of(each))), (long) input.count() * this.batch));
+                continue;
+            }
             list.add(new Input(input.ingredient(), input.count() * this.batch, Input.possibleOf(input.ingredient()), tools));
+        }
+        // Fluids, as AE2 keeps them: any of the fluids each takes, so many mB a run.
+        for (com.kadikular.quantimium.recipe.FluidParts.Input fluid : shape.fluids().inputs()) {
+            list.add(new FluidInput(fluid, (long) fluid.amount() * this.batch));
         }
         if (tools) {
             for (Ingredient tool : shape.tools()) {
@@ -70,10 +81,54 @@ public final class SuperpositionPattern implements IPatternDetails {
 
         List<GenericStack> out = new ArrayList<>();
         for (ItemStack stack : shape.outputs()) {
+            if (com.kadikular.quantimium.recipe.FluidEntry.is(stack)) {
+                out.add(new GenericStack(appeng.api.stacks.AEFluidKey.of(com.kadikular.quantimium.recipe.FluidEntry.fluidOf(stack)), (long) stack.getCount() * this.batch));
+                continue;
+            }
             GenericStack generic = GenericStack.fromItemStack(stack);
             if (generic != null) out.add(new GenericStack(generic.what(), generic.amount() * this.batch));
         }
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : shape.fluids().outputs()) {
+            out.add(new GenericStack(appeng.api.stacks.AEFluidKey.of(fluid), (long) fluid.getAmount() * this.batch));
+        }
         this.outputs = List.copyOf(out);
+    }
+
+    /** The fluids an ingredient matching only fluid entries stands for; none for any other ingredient. */
+    private static List<net.minecraft.world.level.material.Fluid> fluidsOf(Ingredient ingredient) {
+        List<net.minecraft.world.level.material.Fluid> fluids = new ArrayList<>();
+        for (ItemStack stack : RecipeCompat.stacks(ingredient)) {
+            if (!com.kadikular.quantimium.recipe.FluidEntry.is(stack)) return List.of();
+            var fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(stack);
+            if (!fluid.isEmpty()) fluids.add(fluid.getFluid());
+        }
+        return fluids;
+    }
+
+    /** A fluid a run takes: any of those it accepts, {@code amount} mB. */
+    private record FluidInput(com.kadikular.quantimium.recipe.FluidParts.Input fluid, long amount) implements IInput {
+        @Override
+        public GenericStack[] getPossibleInputs() {
+            List<GenericStack> stacks = new ArrayList<>();
+            for (net.minecraft.world.level.material.Fluid each : fluid.fluids()) stacks.add(new GenericStack(appeng.api.stacks.AEFluidKey.of(each), 1));
+            return stacks.toArray(GenericStack[]::new);
+        }
+
+        @Override
+        public long getMultiplier() {
+            return amount;
+        }
+
+        @Override
+        public boolean isValid(AEKey input, Level level) {
+            return input instanceof appeng.api.stacks.AEFluidKey key && fluid.matches(key.toStack(1));
+        }
+
+        @Nullable
+        @Override
+        public AEKey getRemainingKey(AEKey template) {
+            return null;
+        }
     }
 
     public RecipeShape shape() {

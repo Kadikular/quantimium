@@ -79,6 +79,7 @@
     "quantimium:area_prism",
     "quantimium:isolator",
     "quantimium:laser_port",
+    "quantimium:laser_tank",
     "quantimium:logistics_controller",
     "quantimium:logistics_receptacle",
     "quantimium:logistics_terminal",

@@ -2,7 +2,7 @@
 navigation:
   title: Lit Reactor Plinth
   parent: blocks/index.md
-  position: 34
+  position: 35
   icon: quantimium:lit_reactor_plinth
 item_ids:
 - quantimium:lit_reactor_plinth

@@ -7,7 +7,18 @@ import org.jetbrains.annotations.Nullable;
  * an Interact lens its settings packed in {@code interact}: {@link #HITS}, and what it works on, two bits above; for a
  * Redstone Lens, its settings.
  */
-public record LensUse(Lens lens, @Nullable LensFilter filter, int interact, @Nullable IsolatorSettings isolator, @Nullable RedstoneSettings redstone) {
+public record LensUse(Lens lens, @Nullable LensFilter filter, int interact, @Nullable IsolatorSettings isolator, @Nullable RedstoneSettings redstone,
+                      int channel) {
+    /** {@code channel}: the channel its slot is set to ({@link Channels}); 0 unless set. */
+    public LensUse(Lens lens, @Nullable LensFilter filter, int interact, @Nullable IsolatorSettings isolator, @Nullable RedstoneSettings redstone) {
+        this(lens, filter, interact, isolator, redstone, 0);
+    }
+
+    /** The same lens, in a slot set to {@code channel}. */
+    public LensUse onChannel(int channel) {
+        return new LensUse(lens, filter, interact, isolator, redstone, Channels.of(channel));
+    }
+
     /** An Interact lens set to hit (a left click). */
     public static final int HITS = 1;
     /** A Void lens set to void everything, not only what nothing has room for: carried on the streams it changes. */

@@ -73,6 +73,22 @@ public final class ReactorCountTests {
         helper.succeed();
     }
 
+    // covers: reactor.counts.loops
+    @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
+    public static void aBucketFilledAndEmptiedAgainMakesNoWater(GameTestHelper helper) {
+        // 51 buckets' worth of water and 355 empty buckets, filled and emptied: 51 water buckets, and no more water.
+        Item water = DUST;
+        ReactorRecipes recipes = ReactorRecipes.of(List.of(), List.of(
+                shape(List.of(input(water, 1_000), input(Items.BUCKET, 1)), Items.WATER_BUCKET, 1),
+                new ReactorRecipes.Producer(new RecipeShape(id(), List.of(input(Items.WATER_BUCKET, 1)),
+                        List.of(new ItemStack(water, 1_000), new ItemStack(Items.BUCKET)), 100), 0)));
+        ReactorCounter.Counts counts = count(recipes, Map.of(water, 51_000L, Items.BUCKET, 355L));
+        helper.assertValueEqual(counts.count(of(water)), 51_000L, "the water there is");
+        helper.assertValueEqual(counts.count(of(Items.WATER_BUCKET)), 51L, "a bucket for each 1,000");
+        helper.assertValueEqual(counts.count(of(Items.BUCKET)), 355L, "the empty buckets");
+        helper.succeed();
+    }
+
     // covers: reactor.counts.shared
     @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
     public static void ingredientsFromOneSourceShareIt(GameTestHelper helper) {
@@ -143,6 +159,23 @@ public final class ReactorCountTests {
         helper.assertValueEqual(result.plan().steps().getFirst().bay(), 1, "the stonecutter's bay");
         helper.assertValueEqual(result.plan().consumed().get(of(Items.STONE)), 4L, "four stone, not six");
         helper.assertValueEqual(count(recipes, Map.of(Items.STONE, 6L)).count(of(Items.STONE_STAIRS)), 6L, "six on the list");
+        helper.succeed();
+    }
+
+    // covers: reactor.planning.choice
+    @GameTest(template = TestSupport.FLOOR_9, batch = "reactor_counts", timeoutTicks = 20)
+    public static void aRecipeWithItsIngredientsOnHandComesFirst(GameTestHelper helper) {
+        // Lava from cobblestone, or more of it from andesite that would first be made of cobblestone and quartz: with
+        // cobblestone held, it's melted as it is.
+        Item lava = DUST;
+        ReactorRecipes recipes = ReactorRecipes.of(List.of(), List.of(
+                recipe(Items.COBBLESTONE, 1, lava, 1),
+                recipe(Items.ANDESITE, 1, lava, 4),
+                shape(List.of(input(Items.COBBLESTONE, 1), input(Items.QUARTZ, 1)), Items.ANDESITE, 1)));
+        ReactorPlanner.Result result = ReactorPlanner.plan(recipes, resources(Map.of(Items.COBBLESTONE, 10L, Items.QUARTZ, 10L)), of(lava), 1);
+        helper.assertTrue(result.planned(), "lava: " + result.problem());
+        helper.assertValueEqual(result.plan().steps().size(), 1, "one step: melting the cobblestone, " + result.plan().steps());
+        helper.assertTrue(result.plan().consumed().get(of(Items.QUARTZ)) == null, "no quartz used");
         helper.succeed();
     }
 

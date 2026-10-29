@@ -90,6 +90,62 @@ public final class Ae2ReactorPortTests {
         });
     }
 
+    // covers: reactor.me_port.storage, reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_fluids", timeoutTicks = 300)
+    public static void theReactorsFluidsAreFluidsOnTheNetwork(GameTestHelper helper) {
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        var waterKey = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.WATER));
+        var lavaKey = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA));
+        horizon.take(waterKey, 3_000);
+        horizon.recountNow();
+        // It stores what the network puts in.
+        helper.getBlockEntity(PORT, ReactorMePortBlockEntity.class).toggleAcceptsItems();
+        var water = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER);
+        var lava = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.LAVA);
+        boolean[] moved = {false};
+        helper.succeedWhen(() -> {
+            var storage = grid(helper).getStorageService();
+            if (!moved[0]) {
+                helper.assertValueEqual(storage.getCachedInventory().get(water), 3_000L, "3,000 mB of water on the network");
+                helper.assertValueEqual(storage.getInventory().extract(water, 1_000, Actionable.MODULATE, IActionSource.empty()), 1_000L, "a bucket's worth taken");
+                helper.assertValueEqual(storage.getInventory().insert(lava, 500, Actionable.MODULATE, IActionSource.empty()), 500L, "lava put in");
+                moved[0] = true;
+            }
+            helper.assertValueEqual(horizon.getLedger().count(waterKey), 2_000L, "2,000 mB of water left in the horizon");
+            helper.assertValueEqual(horizon.getLedger().count(lavaKey), 500L, "the lava in the horizon");
+            helper.assertTrue(storage.getCachedInventory().keySet().stream().noneMatch(key -> key instanceof AEItemKey item
+                    && item.getItem() == com.kadikular.quantimium.init.ModItems.FLUID_ENTRY.get()), "no fluid as an item");
+        });
+    }
+
+    // covers: reactor.me_port.inputs, reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_fluid_inputs", timeoutTicks = 300)
+    public static void theReactorMakesFromTheNetworksFluids(GameTestHelper helper) {
+        if (!net.neoforged.fml.ModList.get().isLoaded("energizedpower")) {
+            helper.succeed();
+            return;
+        }
+        HorizonCoreBlockEntity horizon = reactorOnANetwork(helper);
+        ReactorTests.bay(helper, CORE.below().south(2), item("energizedpower:stone_solidifier"));
+        horizon.revalidate(helper.getLevel());
+        var drive = LegacyItems.legacy(helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(DRIVE), null));
+        drive.insertItem(1, new ItemStack(item("ae2:fluid_storage_cell_1k")), false);
+        var water = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER);
+        var lava = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.LAVA);
+        boolean[] stocked = {false};
+        helper.succeedWhen(() -> {
+            var storage = grid(helper).getStorageService().getInventory();
+            if (!stocked[0]) {
+                helper.assertValueEqual(storage.insert(water, 4_000, Actionable.MODULATE, IActionSource.empty()), 4_000L, "water into the cell");
+                helper.assertValueEqual(storage.insert(lava, 4_000, Actionable.MODULATE, IActionSource.empty()), 4_000L, "lava into the cell");
+                stocked[0] = true;
+            }
+            var made = horizon.request(ItemResource.of(Items.ANDESITE), 1);
+            helper.assertTrue(made.planned(), "andesite from the network's water and lava: " + made.problem());
+            helper.assertTrue(storage.extract(water, 4_000, Actionable.SIMULATE, IActionSource.empty()) < 4_000, "the network's water used");
+        });
+    }
+
     // covers: reactor.me_port.inputs
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "ae2_me_port_inputs", timeoutTicks = 300)
     public static void theReactorMakesThingsFromTheNetworksStock(GameTestHelper helper) {

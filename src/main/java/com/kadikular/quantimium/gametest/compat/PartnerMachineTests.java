@@ -63,6 +63,173 @@ public final class PartnerMachineTests {
         helper.succeed();
     }
 
+    // covers: crafter.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluids", timeoutTicks = 80)
+    public static void energizedPowerFluidMachinesInTheCrafter(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        var transposer = fluidCrafter(helper, 2, "energizedpower:fluid_transposer", new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000));
+        com.kadikular.quantimium.gametest.CrafterTests.grid(transposer, new ItemStack(net.minecraft.world.item.Items.BLACK_CONCRETE_POWDER, 4));
+        var freezer = fluidCrafter(helper, 5, "energizedpower:fluid_freezer", new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000));
+        // Its tanks filled after it's first looked, with nothing in its grid: it looks again.
+        var solidifier = fluidCrafter(helper, 8, "energizedpower:stone_solidifier");
+        var liquefier = fluidCrafter(helper, 11, "energizedpower:stone_liquefier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(liquefier, new ItemStack(net.minecraft.world.item.Items.ANDESITE, 4));
+        helper.runAfterDelay(5, () -> {
+            solidifier.inputTanks().fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 4_000), false);
+            solidifier.inputTanks().fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 4_000), false);
+        });
+        helper.runAfterDelay(15, () -> {
+            helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(transposer, net.minecraft.world.item.Items.BLACK_CONCRETE) != null, "concrete, filled with water");
+            helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(freezer, net.minecraft.world.item.Items.ICE) != null, "ice, frozen from water alone");
+            helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(solidifier, net.minecraft.world.item.Items.ANDESITE) != null, "andesite, from water and lava");
+            helper.assertTrue(liquefier.getPreview().stream().anyMatch(craft -> craft.outputs().isEmpty()
+                    && craft.fluidOutputs().stream().anyMatch(fluid -> fluid.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA))), "lava, from andesite");
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.fluid_sides
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluid_pulls", timeoutTicks = 60)
+    public static void aPipeTakesTheFluidAPreviewMakes(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        var liquefier = fluidCrafter(helper, 2, "energizedpower:stone_liquefier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(liquefier, new ItemStack(net.minecraft.world.item.Items.ANDESITE, 4));
+        helper.runAfterDelay(10, () -> {
+            var level = helper.getLevel();
+            var down = net.minecraft.core.Direction.DOWN;
+            var pipe = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, liquefier.getBlockPos(), down);
+            var lava = net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA);
+            helper.assertTrue(pipe != null && net.neoforged.neoforge.transfer.ResourceHandlerUtil.contains(pipe, lava), "the lava it would make shows on its face");
+            // Asked and called off: nothing made.
+            try (var asked = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertTrue(pipe.extract(lava, 100, asked) == 100, "100 mB would come out");
+            }
+            helper.assertValueEqual(andesite(liquefier), 4, "no andesite used by asking");
+            try (var taken = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertValueEqual(pipe.extract(lava, 100, taken), 100, "100 mB taken");
+                taken.commit();
+            }
+            helper.assertTrue(andesite(liquefier) < 4, "andesite melted for it");
+
+            // A face set to take in only gives nothing out; a face with fluids off has no tanks.
+            var configs = new java.util.ArrayList<>(liquefier.getSideConfigs());
+            configs.set(down.get3DDataValue(), configs.get(down.get3DDataValue()).withFluidMode(com.kadikular.quantimium.block.entity.simulation.SideMode.INPUT));
+            liquefier.applySideConfigs(configs);
+            var input = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, liquefier.getBlockPos(), down);
+            try (var none = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertValueEqual(input.extract(lava, 100, none), 0, "nothing out of an input face");
+            }
+            configs.set(down.get3DDataValue(), configs.get(down.get3DDataValue()).withFluidMode(com.kadikular.quantimium.block.entity.simulation.SideMode.DISABLED));
+            liquefier.applySideConfigs(configs);
+            helper.assertTrue(level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, liquefier.getBlockPos(), down) == null,
+                    "no tanks on a face with fluids off");
+            helper.succeed();
+        });
+    }
+
+    // covers: crafter.fluid_sides
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluid_auto", timeoutTicks = 80)
+    public static void autoOutputPushesTheFluidsItMakes(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        // A recipe making only lava, auto output on for items and fluids: the lava goes out as lava, into the tanks of a
+        // Crafter beside it (and nothing breaks looking for an item it makes).
+        var liquefier = fluidCrafter(helper, 2, "energizedpower:stone_liquefier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(liquefier, new ItemStack(net.minecraft.world.item.Items.ANDESITE, 8));
+        var beside = fluidCrafter(helper, 3, "energizedpower:stone_solidifier");
+        var east = net.minecraft.core.Direction.EAST;
+        var configs = new java.util.ArrayList<>(liquefier.getSideConfigs());
+        configs.set(east.get3DDataValue(), new com.kadikular.quantimium.block.entity.simulation.SideConfig(east,
+                com.kadikular.quantimium.block.entity.simulation.SideMode.BOTH, com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_ITEM_INPUTS,
+                com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_ITEM_OUTPUTS, false, true,
+                com.kadikular.quantimium.block.entity.simulation.SideMode.BOTH, com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_FLUID_INPUTS,
+                com.kadikular.quantimium.block.entity.simulation.SideConfig.ALL_FLUID_OUTPUTS, false, true));
+        liquefier.applySideConfigs(configs);
+        helper.runAfterDelay(70, () -> {
+            var got = beside.inputTanks().get(0);
+            helper.assertTrue(got.getFluid().isSame(net.minecraft.world.level.material.Fluids.LAVA) && got.getAmount() > 0, "lava pushed into the next Crafter: " + got);
+            helper.assertTrue(andesite(liquefier) < 8, "andesite melted for it");
+            helper.succeed();
+        });
+    }
+
+    private static int andesite(com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity crafter) {
+        int count = 0;
+        for (int slot = 0; slot < com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.INPUT_SLOTS; slot++) {
+            ItemStack stack = crafter.getInventory().getStackInSlot(slot);
+            if (stack.is(net.minecraft.world.item.Items.ANDESITE)) count += stack.getCount();
+        }
+        return count;
+    }
+
+    // covers: crafter.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_linked_fluids", timeoutTicks = 60)
+    public static void aStoneSolidifierDrawsOnLinkedTanks(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        BlockPos waterAt = new BlockPos(8, 2, 4), lavaAt = new BlockPos(10, 2, 4);
+        for (BlockPos at : new BlockPos[] {waterAt, lavaAt}) {
+            helper.setBlock(at, com.kadikular.quantimium.init.ModBlocks.LASER_TANK.get().defaultBlockState()
+                    .setValue(com.kadikular.quantimium.block.LaserTankBlock.FACING, net.minecraft.core.Direction.EAST));
+        }
+        var water = helper.getBlockEntity(waterAt, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        var lava = helper.getBlockEntity(lavaAt, com.kadikular.quantimium.block.entity.LaserTankBlockEntity.class);
+        water.tanks().set(0, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.WATER, 8_000));
+        lava.tanks().set(0, new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.world.level.material.Fluids.LAVA, 8_000));
+        var crafter = fluidCrafter(helper, 2, "energizedpower:stone_solidifier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(crafter,
+                com.kadikular.quantimium.gametest.CrafterTests.link(helper, waterAt, com.kadikular.quantimium.init.ModBlocks.LASER_TANK.get()),
+                com.kadikular.quantimium.gametest.CrafterTests.link(helper, lavaAt, com.kadikular.quantimium.init.ModBlocks.LASER_TANK.get()));
+        helper.runAfterDelay(10, () -> {
+            helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(crafter, net.minecraft.world.item.Items.ANDESITE) != null,
+                    "andesite offered from the linked tanks");
+            ItemStack made = crafter.takeGhost(com.kadikular.quantimium.gametest.CrafterTests.ghostId(crafter, net.minecraft.world.item.Items.ANDESITE));
+            helper.assertTrue(made.is(net.minecraft.world.item.Items.ANDESITE), "andesite taken: " + made);
+            helper.assertTrue(water.tanks().get(0).getAmount() < 8_000 && lava.tanks().get(0).getAmount() < 8_000, "water and lava drawn from them");
+            helper.succeed();
+        });
+    }
+
+    // covers: reactor.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_reactor_fluids", timeoutTicks = 40)
+    public static void aReactorMakesFromHeldFluids(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        clear(helper);
+        HorizonCoreBlockEntity horizon = ReactorTests.buildReactor(helper, 1);
+        ReactorTests.bay(helper, ReactorTests.CORE.north(2), item("energizedpower:stone_solidifier"));
+        horizon.revalidate(helper.getLevel());
+        horizon.getEnergyStorage().setEnergy(HorizonCoreBlockEntity.ENERGY_CAPACITY);
+        BlockPos core = helper.absolutePos(ReactorTests.CORE);
+        HorizonCoreBlockEntity.serverTick(helper.getLevel(), core, helper.getLevel().getBlockState(core), horizon);
+        var water = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.WATER));
+        var lava = com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA));
+        horizon.take(water, 4_000);
+        horizon.take(lava, 4_000);
+        var result = horizon.request(ItemResource.of(net.minecraft.world.item.Items.ANDESITE), 1);
+        helper.assertTrue(result.planned(), "andesite from held water and lava: " + result.problem());
+        helper.assertTrue(horizon.getLedger().count(water) < 4_000 && horizon.getLedger().count(lava) < 4_000, "water and lava used");
+        helper.succeed();
+    }
+
+    // covers: crafter.fluids
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_productivebees_bottler", timeoutTicks = 60)
+    public static void theBottlerInTheCrafter(GameTestHelper helper) {
+        if (skip(helper, "productivebees")) return;
+        var honey = BuiltInRegistries.FLUID.getValue(Identifier.parse("productivebees:honey"));
+        var bottler = fluidCrafter(helper, 2, "productivebees:bottler", new net.neoforged.neoforge.fluids.FluidStack(honey, 4_000));
+        com.kadikular.quantimium.gametest.CrafterTests.grid(bottler, new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE, 4));
+        helper.runAfterDelay(10, () -> {
+            helper.assertTrue(com.kadikular.quantimium.gametest.CrafterTests.craftOf(bottler, net.minecraft.world.item.Items.HONEY_BOTTLE) != null, "honey bottled");
+            helper.succeed();
+        });
+    }
+
+    /** A Quantum Crafter at {@code x} with {@code catalyst}, its input tanks holding {@code fluids}. */
+    private static com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity fluidCrafter(GameTestHelper helper, int x, String catalyst,
+                                                                                                  net.neoforged.neoforge.fluids.FluidStack... fluids) {
+        var crafter = com.kadikular.quantimium.gametest.CrafterTests.crafter(helper, new BlockPos(x, 2, 4), item(catalyst));
+        for (var fluid : fluids) crafter.inputTanks().fill(fluid, false);
+        return crafter;
+    }
+
     // covers: compat.partner_machines
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_ftbic", timeoutTicks = 40)
     public static void ftbIndustrialContraptionsMachines(GameTestHelper helper) {

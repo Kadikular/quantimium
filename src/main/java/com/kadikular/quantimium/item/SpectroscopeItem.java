@@ -6,7 +6,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -29,17 +31,61 @@ public class SpectroscopeItem extends Item {
         super(properties);
     }
 
+    /**
+     * On a block, before the block's own use: one of ours, the laser leaving it; else a laser in front of it, if the look
+     * meets one (the block's own use otherwise).
+     */
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        if (!(context.getLevel() instanceof ServerLevel level)) return InteractionResult.SUCCESS;
-        Player player = context.getPlayer();
-        List<Component> lines = LaserNetworks.of(level).describe(context.getClickedPos());
-        if (lines.isEmpty()) return InteractionResult.PASS;
-        if (player != null) {
-            for (Component line : lines) player.sendSystemMessage(line);
+    public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
+        if (!(context.getLevel() instanceof ServerLevel level)) {
+            // A laser block, or a laser it draws in front of the block: the reading, not the block's own use.
+            if (context.getLevel().getBlockEntity(context.getClickedPos()) instanceof com.kadikular.quantimium.laser.LaserBeamView) return InteractionResult.SUCCESS;
+            Player looker = context.getPlayer();
+            return looker != null && com.kadikular.quantimium.client.ClientBeams.aimedAt(context.getLevel(), looker, REACH)
+                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
-        level.playSound(null, context.getClickedPos(), SoundEvents.SPYGLASS_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
-        return InteractionResult.SUCCESS;
+        // As the client decides: a block that draws lasers is read; any other, only a laser in front of it.
+        if (level.getBlockEntity(context.getClickedPos()) instanceof com.kadikular.quantimium.laser.LaserBeamView
+                && show(level, context.getPlayer(), context.getClickedPos(), -1)) return InteractionResult.SUCCESS;
+        Player player = context.getPlayer();
+        if (player == null) return InteractionResult.PASS;
+        return aim(level, player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
+
+    /** In the air: the laser it's aimed at, within reach. */
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
+        return aim(server, player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
+
+    /** Reads the lasers the player's look meets first, if any; whether it did. */
+    private static boolean aim(ServerLevel level, Player player) {
+        var networks = LaserNetworks.of(level);
+        var aims = networks.aimedAt(level, player, player.getEyePosition(), player.getLookAngle(), REACH);
+        var reading = networks.read(level, aims);
+        if (reading == null) return false;
+        send(level, player, aims.getFirst().pos(), reading);
+        return true;
+    }
+
+    /** How far off a laser in the air can be read. */
+    private static final double REACH = 8.0;
+
+    /** Reads the laser leaving {@code pos} (or its beam {@code beam}) and opens the reading on the player's screen. */
+    private static boolean show(ServerLevel level, @org.jspecify.annotations.Nullable Player player, net.minecraft.core.BlockPos pos, int beam) {
+        var reading = LaserNetworks.of(level).read(level, pos, beam);
+        if (reading == null) return false;
+        send(level, player, pos, reading);
+        return true;
+    }
+
+    private static void send(ServerLevel level, @org.jspecify.annotations.Nullable Player player, net.minecraft.core.BlockPos pos,
+                             com.kadikular.quantimium.laser.SpectroscopeReading reading) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer server) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(server, new com.kadikular.quantimium.network.SpectroscopePayload(reading));
+        }
+        level.playSound(null, pos, SoundEvents.SPYGLASS_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
     }
 
     @Override

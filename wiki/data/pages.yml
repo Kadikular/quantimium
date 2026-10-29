@@ -210,6 +210,12 @@ laser_port:
   energy_use: "Free; the laser pays to carry items"
   automation: "Items, per-face"
   works_with: "[[item:pickup_lens]], [[item:insert_lens]], [[block:lens_mount]]"
+laser_tank:
+  category: "Laser block"
+  obtained: "Crafted"
+  energy_use: "Free; the laser pays to carry fluids"
+  automation: "Fluids, per-face"
+  works_with: "[[item:insert_lens]], [[item:extract_lens]], [[block:lens_mount]]"
 logistics_controller:
   category: "Logistics"
   obtained: "Crafted"

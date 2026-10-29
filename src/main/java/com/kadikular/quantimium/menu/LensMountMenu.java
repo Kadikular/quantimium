@@ -17,6 +17,10 @@ public class LensMountMenu extends AbstractContainerMenu {
     /** Each lens's slot, spaced along the line of light; its settings button under it. */
     public static final int[] SLOT_X = {32, 64, 96, 128};
     public static final int LENS_Y = 34;
+    /** Each lens's channel, above it. */
+    public static final int CHANNEL_Y = 21;
+    /** Menu buttons cycling slot i's channel: this + 2i, or + 2i + 1 back. */
+    public static final int BUTTON_CHANNEL = 100;
     public static final int BUTTON_Y = 55;
     public static final int BUTTON_W = 18;
     public static final int BUTTON_H = 10;
@@ -50,6 +54,11 @@ public class LensMountMenu extends AbstractContainerMenu {
     /** Button {@code id} (0 to 3) opens the settings of the lens in that slot, if it has any. */
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (id >= BUTTON_CHANNEL && id < BUTTON_CHANNEL + 2 * LensMountBlockEntity.SLOTS) {
+            int slot = (id - BUTTON_CHANNEL) / 2;
+            mount.setSlotChannel(slot, com.kadikular.quantimium.laser.Channels.cycle(mount.slotChannel(slot), (id - BUTTON_CHANNEL) % 2 == 1));
+            return true;
+        }
         if (id < 0 || id >= LensMountBlockEntity.SLOTS) return false;
         ItemStack lens = mount.getLensSlots().getStackInSlot(id);
         if (!(lens.getItem() instanceof com.kadikular.quantimium.item.LensWithSettings)) return false;

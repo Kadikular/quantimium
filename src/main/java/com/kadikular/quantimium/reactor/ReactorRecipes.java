@@ -132,16 +132,37 @@ public final class ReactorRecipes {
         for (int bay = 0; bay < catalysts.size(); bay++) {
             ItemStack catalyst = catalysts.get(bay);
             if (catalyst.isEmpty()) continue;
-            for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst)) {
+            for (RecipeShape shape : RecipeShapes.forCatalyst(level, catalyst, true)) {
                 RecipeShape allowed = filters.get(bay).apply(shape);
-                if (allowed != null) producers.add(new Producer(allowed, bay));
+                if (allowed != null) producers.add(new Producer(itemised(allowed), bay));
             }
         }
+        // Filling and emptying buckets, needing no catalyst: a recipe wanting a water bucket met from stored water.
+        for (RecipeShape shape : RecipeShapes.containers()) producers.add(new Producer(itemised(shape), NO_BAY));
         return of(catalysts, filters, producers, java.util.Set.of(), List.of());
+    }
+
+    /**
+     * {@code shape} as a Reactor keeps stock, by item: each fluid it takes an input of that fluid's entry, so many mB,
+     * and each it makes an output of so many mB of its entry.
+     */
+    static RecipeShape itemised(RecipeShape shape) {
+        if (!shape.hasFluids()) return shape;
+        List<RecipeShape.Input> inputs = new ArrayList<>(shape.inputs());
+        for (com.kadikular.quantimium.recipe.FluidParts.Input fluid : shape.fluids().inputs()) {
+            inputs.add(new RecipeShape.Input(com.kadikular.quantimium.recipe.FluidEntry.ingredient(fluid.fluids()), fluid.amount()));
+        }
+        List<ItemStack> outputs = new ArrayList<>(shape.outputs());
+        for (net.neoforged.neoforge.fluids.FluidStack fluid : shape.fluids().outputs()) {
+            outputs.add(com.kadikular.quantimium.recipe.FluidEntry.of(fluid).copyWithCount(fluid.getAmount()));
+        }
+        return new RecipeShape(shape.id(), inputs, outputs, shape.baseFe(), shape.tools(), shape.wears());
     }
 
     /** Whether these were built from exactly {@code catalysts}, components and all, through the same filters. */
     public boolean builtFrom(List<ItemStack> catalysts, List<RecipeFilter> filters) {
+        // Never built at all: even with no catalysts there are buckets to fill and empty.
+        if (this == NONE) return false;
         if (catalysts.size() != this.catalysts.size() || filters.size() != this.filters.size()) return false;
         for (int i = 0; i < catalysts.size(); i++) {
             if (!ItemStack.isSameItemSameComponents(catalysts.get(i), this.catalysts.get(i))) return false;

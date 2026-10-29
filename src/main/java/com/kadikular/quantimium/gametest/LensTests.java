@@ -620,6 +620,25 @@ public final class LensTests {
         });
     }
 
+    // covers: laser.lens.extract
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 110)
+    public static void anExtractLaserLongPointedAtStoneTakesFromAChestAtOnce(GameTestHelper helper) {
+        // Ending on stone for a while is not being idle: a chest put there is emptied within the lens's own pace.
+        emitter(helper, new BlockPos(1, Y, 8), Direction.EAST, true);
+        LaserPortBlockEntity collector = collector(helper, new BlockPos(3, Y, 8), Direction.EAST);
+        mount(helper, new BlockPos(5, Y, 8), Direction.EAST, ModItems.EXTRACT_LENS.get());
+        BlockPos at = new BlockPos(9, Y, 8);
+        helper.setBlock(at, Blocks.STONE);
+        helper.runAfterDelay(80, () -> {
+            helper.setBlock(at, Blocks.CHEST);
+            helper.getBlockEntity(at, net.minecraft.world.level.block.entity.ChestBlockEntity.class).setItem(0, new ItemStack(Items.DIRT, 8));
+            helper.succeedWhen(() -> {
+                helper.assertValueEqual(count(collector, Items.DIRT), 8, "taken");
+                TestSupport.finishLasers(helper);
+            });
+        });
+    }
+
     // covers: laser.lens.void
     @GameTest(template = TestSupport.FLOOR_17, batch = "lenses", timeoutTicks = 300)
     public static void aVoidLensBeforeTheHarvestStillVoids(GameTestHelper helper) {

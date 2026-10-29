@@ -277,6 +277,150 @@ public final class LaserNetworks {
         return beams.getOrDefault(pos, List.of());
     }
 
+    /** A beam a Spectroscope is aimed at: the block it leaves, and which of its beams. */
+    public record Aim(BlockPos pos, int beam) {}
+
+    /**
+     * The lasers a look from {@code eye} along {@code look} meets first, within {@code reach} and short of the first solid
+     * block: every one passing within half a block of the first point along it that any does (lasers joined, or one laid
+     * over another, are read together). Empty for none.
+     */
+    public List<Aim> aimedAt(net.minecraft.world.level.Level level, @Nullable net.minecraft.world.entity.Entity looker,
+                             net.minecraft.world.phys.Vec3 eye, net.minecraft.world.phys.Vec3 look, double reach) {
+        net.minecraft.world.phys.Vec3 end = eye.add(look.normalize().scale(reach));
+        // Not through walls: only as far as the look goes before a block stops it.
+        var hit = level.clip(looker != null
+                ? new net.minecraft.world.level.ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE, looker)
+                : new net.minecraft.world.level.ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE, net.minecraft.world.phys.shapes.CollisionContext.empty()));
+        double far = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? reach : hit.getLocation().distanceTo(eye) + 0.3;
+        net.minecraft.world.phys.Vec3 step = look.normalize().scale(0.2);
+        // The beams' segments near the look, found once.
+        List<Object[]> near = new ArrayList<>();
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(eye, eye.add(look.normalize().scale(far))).inflate(1.0);
+        for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
+            List<LaserBeam> list = entry.getValue();
+            for (int i = 0; i < list.size(); i++) {
+                List<net.minecraft.world.phys.Vec3> points = list.get(i).points();
+                for (int p = 0; p + 1 < points.size(); p++) {
+                    var a = points.get(p);
+                    var b = points.get(p + 1);
+                    if (!box.intersects(new net.minecraft.world.phys.AABB(a, b).inflate(0.5))) continue;
+                    near.add(new Object[] {new Aim(entry.getKey(), i), a, b});
+                }
+            }
+        }
+        // What a block draws besides its beams (a cavity's held light, between its mirrors): read as the block's light.
+        for (LaserNode node : nodes.values()) {
+            if (!(node instanceof LaserBeamView view)) continue;
+            List<LaserBeam> own = beams.getOrDefault(node.nodePos(), List.of());
+            for (LaserBeam extra : view.syncedBeams()) {
+                if (own.contains(extra)) continue;
+                List<net.minecraft.world.phys.Vec3> points = extra.points();
+                for (int p = 0; p + 1 < points.size(); p++) {
+                    var a = points.get(p);
+                    var b = points.get(p + 1);
+                    if (box.intersects(new net.minecraft.world.phys.AABB(a, b).inflate(0.5))) near.add(new Object[] {new Aim(node.nodePos(), -1), a, b});
+                }
+            }
+        }
+        if (near.isEmpty()) return List.of();
+        net.minecraft.world.phys.Vec3 at = eye;
+        for (double gone = 0; gone <= far; gone += 0.2, at = at.add(step)) {
+            List<Aim> found = new ArrayList<>();
+            for (Object[] segment : near) {
+                Aim aim = (Aim) segment[0];
+                if (!found.contains(aim) && distanceSqr(at, (net.minecraft.world.phys.Vec3) segment[1], (net.minecraft.world.phys.Vec3) segment[2]) <= 0.25) found.add(aim);
+            }
+            if (!found.isEmpty()) return found;
+        }
+        return List.of();
+    }
+
+    /** The squared distance from {@code p} to the segment {@code a}-{@code b}. */
+    private static double distanceSqr(net.minecraft.world.phys.Vec3 p, net.minecraft.world.phys.Vec3 a, net.minecraft.world.phys.Vec3 b) {
+        net.minecraft.world.phys.Vec3 ab = b.subtract(a);
+        double length = ab.dot(ab);
+        double t = length == 0 ? 0 : Math.clamp(p.subtract(a).dot(ab) / length, 0.0, 1.0);
+        return p.distanceToSqr(a.add(ab.scale(t)));
+    }
+
+    /** For the Spectroscope: the lasers at {@code aims}, read as one (null if none reads). */
+    @Nullable
+    public SpectroscopeReading read(net.minecraft.world.level.Level level, List<Aim> aims) {
+        SpectroscopeReading merged = null;
+        for (Aim aim : aims) {
+            SpectroscopeReading one = read(level, aim.pos(), aim.beam());
+            merged = merged == null ? one : one == null ? merged : merged.with(one);
+        }
+        return merged;
+    }
+
+    /**
+     * For the Spectroscope: the laser leaving {@code pos} ({@code beam} -1), or its beam {@code beam}, split into its lines.
+     * Null if nothing there is a laser block.
+     */
+    @Nullable
+    public SpectroscopeReading read(net.minecraft.world.level.Level level, BlockPos pos, int beam) {
+        LaserNode node = nodes.get(pos);
+        if (node == null) return null;
+        List<LaserBeam> out = beamsOf(pos);
+        LaserBeam one = beam >= 0 && beam < out.size() ? out.get(beam) : null;
+        Light light = one != null ? lightOf(pos, one) : lights.get(pos);
+        net.minecraft.network.chat.MutableComponent where = level.getBlockState(pos).getBlock().getName().copy();
+        long flow = one != null ? one.flow() : throughput(pos);
+        if (light == null) return new SpectroscopeReading(where, 0, 0, 0, 0, flow, List.of(), List.of(), List.of(), false);
+        List<SpectroscopeReading.Line> lines = new ArrayList<>();
+        Map<BlockPos, int[]> ports = new LinkedHashMap<>();
+        Map<BlockPos, java.util.Set<Integer>> using = new HashMap<>();
+        for (Light.Stream stream : light.acting()) {
+            Set<BlockPos> used = new HashSet<>();
+            java.util.Optional<net.minecraft.network.chat.Component> said = java.util.Optional.empty();
+            for (LensAction action : actions.values()) {
+                LensAction.Key key = action.key();
+                if (!key.node().equals(pos) || key.action() != stream.action() || key.channel() != stream.channel()) continue;
+                if (one != null && key.beam() != beam) continue;
+                for (BlockPos at : action.collectors()) {
+                    used.add(at);
+                    ports.computeIfAbsent(at, k -> new int[1])[0] |= 1;
+                    using.computeIfAbsent(at, k -> new java.util.LinkedHashSet<>()).add(stream.action().ordinal());
+                }
+                for (BlockPos at : action.senders()) {
+                    used.add(at);
+                    ports.computeIfAbsent(at, k -> new int[1])[0] |= 2;
+                    using.computeIfAbsent(at, k -> new java.util.LinkedHashSet<>()).add(stream.action().ordinal());
+                }
+                if (said.isEmpty() && action.said() != null) said = java.util.Optional.of(action.said());
+            }
+            lines.add(new SpectroscopeReading.Line(stream.action().ordinal(), stream.channel(), stream.modifiers(), stream.amps(), stream.speed(),
+                    used.size(), said));
+        }
+        List<SpectroscopeReading.Port> found = new ArrayList<>();
+        ports.forEach((at, role) -> {
+            LaserNode port = nodes.get(at);
+            found.add(new SpectroscopeReading.Port(level.getBlockState(at).getBlock().asItem().getDefaultInstance(), at,
+                    port == null ? 0 : port.channel(), role[0], List.copyOf(using.getOrDefault(at, java.util.Set.of()))));
+        });
+        // Power comes from emitters (and cavities): a Logistics Controller's own laser carries none.
+        boolean power = !light.unpowered() && light.feeders().stream().anyMatch(feeder -> !(nodes.get(feeder) instanceof LogisticsController));
+        // The channels of the logistics networks it carries: a controller on All runs one for each channel its receptacles
+        // are on.
+        List<Integer> logistics = new ArrayList<>();
+        light.logistics().forEach((at, on) -> {
+            if (on == Channels.ALL && nodes.get(at) instanceof com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity controller) {
+                for (var network : controller.networks()) {
+                    int channel = network.channel();
+                    if (!network.members().isEmpty() && !logistics.contains(channel)) logistics.add(channel);
+                }
+            } else if (!logistics.contains(on)) {
+                logistics.add(on);
+            }
+        });
+        return new SpectroscopeReading(where, light.reach(), light.feeders().size(), light.marks(), light.boosts(), flow, lines, found,
+                logistics, power);
+    }
+
     /**
      * For the Spectroscope: what the light leaving {@code pos} carries, line by line. Empty if nothing
      * there is a laser block.
@@ -307,13 +451,17 @@ public final class LaserNetworks {
             int collectors = 0;
             List<net.minecraft.network.chat.Component> said = new ArrayList<>();
             for (LensAction action : actions.values()) {
-                if (!action.key().node().equals(pos) || action.key().action() != stream.action()) continue;
+                if (!action.key().node().equals(pos) || action.key().action() != stream.action() || action.key().channel() != stream.channel()) continue;
                 collectors = action.collectors().size();
                 if (action.said() != null) said.add(action.said().copy().withStyle(body));
             }
-            lines.add(net.minecraft.network.chat.Component.translatable("message.quantimium.spectroscope.stream",
+            net.minecraft.network.chat.MutableComponent line = net.minecraft.network.chat.Component.translatable("message.quantimium.spectroscope.stream",
                     net.minecraft.network.chat.Component.translatable(stream.action().itemKey()),
-                    modifiers, stream.payers().size(), collectors).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+                    modifiers, stream.payers().size(), collectors).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE);
+            // Its channel, once any is set.
+            if (stream.channel() != 0) line.append(net.minecraft.network.chat.Component.literal(" · ").append(
+                    net.minecraft.network.chat.Component.translatable("gui.quantimium.channel", Channels.label(stream.channel()))));
+            lines.add(line);
             lines.addAll(said);
         }
         for (LaserBeam beam : beamsOf(pos)) {
@@ -905,8 +1053,9 @@ public final class LaserNetworks {
             List<LaserBeam> list = beams.getOrDefault(pos, List.of());
             if (core != null) {
                 // The Laser Ports up each stream's light: the same for every beam it's on.
-                Map<Set<BlockPos>, List<BlockPos>> collectors = new HashMap<>();
-                Map<Set<BlockPos>, List<BlockPos>> senders = new HashMap<>();
+                // By the stream's sources and channel: a port serves only its own channel (either on All).
+                Map<List<Object>, List<BlockPos>> collectors = new HashMap<>();
+                Map<List<Object>, List<BlockPos>> senders = new HashMap<>();
                 List<LaserBeam> lensed = new ArrayList<>(list.size());
                 // Each beam takes the look, and the actions, of its own light: a face with lenses of its own differs.
                 for (int i = 0; i < list.size(); i++) {
@@ -915,14 +1064,14 @@ public final class LaserNetworks {
                     lensed.add(light == null || light.packed() == Lens.NONE ? beam : beam.withLenses(light.packed()));
                     if (light == null || light.packed() == Lens.NONE) continue;
                     for (Light.Stream stream : streamsOf(light)) {
-                        LensAction.Key key = new LensAction.Key(pos, i, stream.action());
+                        LensAction.Key key = new LensAction.Key(pos, i, stream.action(), stream.channel());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
                         int solids = stream.action() == Lens.PHANTOM ? beam.solidsThrough(level) : 0;
-                        action.update(beam, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
-                                sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
+                        action.update(beam, stream, collectors.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), collectsOn(stream.channel()))),
+                                sendersFor(stream, senders.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), sendsOn(stream.channel())))),
                                 null, light.reach(), light.marks(), solids);
                         action.worldSteps(worldSteps(light));
-                        action.logistics(light.logistics());
+                        action.logistics(light.logistics().keySet());
                         actions.put(key, action);
                     }
                 }
@@ -931,10 +1080,10 @@ public final class LaserNetworks {
                 // An area prism's light works on its area: one action each, as beam -1.
                 if (node.area() != null && core.packed() != Lens.NONE) {
                     for (Light.Stream stream : core.acting()) {
-                        LensAction.Key key = new LensAction.Key(pos, -1, stream.action());
+                        LensAction.Key key = new LensAction.Key(pos, -1, stream.action(), stream.channel());
                         LensAction action = was.getOrDefault(key, new LensAction(key));
-                        action.update(null, stream, collectors.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::collects)),
-                                sendersFor(stream, senders.computeIfAbsent(stream.payers(), payers -> upFor(pos, payers, LaserNode::sends))),
+                        action.update(null, stream, collectors.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), collectsOn(stream.channel()))),
+                                sendersFor(stream, senders.computeIfAbsent(List.of(stream.payers(), stream.channel()), k -> upFor(pos, stream.payers(), sendsOn(stream.channel())))),
                                 node.area(), core.reach(), core.marks(), 0);
                         action.within(node::inArea);
                         actions.put(key, action);
@@ -943,6 +1092,16 @@ public final class LaserNetworks {
             }
             node.showBeams(shown(pos, list));
         }
+    }
+
+    /** A collecting port (or controller) serving {@code channel}. */
+    private static java.util.function.Predicate<LaserNode> collectsOn(int channel) {
+        return node -> node.collects() && Channels.serves(node.channel(), channel);
+    }
+
+    /** A sending port (or controller) serving {@code channel}. */
+    private static java.util.function.Predicate<LaserNode> sendsOn(int channel) {
+        return node -> node.sends() && Channels.serves(node.channel(), channel);
     }
 
     /**
@@ -1063,12 +1222,56 @@ public final class LaserNetworks {
             List<BlockPos> down = downFor(node.nodePos());
             if (down.isEmpty()) continue;
             ItemStack offered = node.send(stack -> roomFor(down, stack), 64, true);
-            if (offered.isEmpty() || !payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) continue;
-            int room = offered.getCount() - simulateCollect(down, offered).getCount();
-            ItemStack sent = node.send(stack -> ItemStack.isSameItemSameComponents(stack, offered), room, false);
-            ItemStack left = collect(down, sent);
-            if (!left.isEmpty()) node.takeBack(left);
+            if (!offered.isEmpty() && payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) {
+                int room = offered.getCount() - simulateCollect(down, offered).getCount();
+                ItemStack sent = node.send(stack -> ItemStack.isSameItemSameComponents(stack, offered), room, false);
+                ItemStack left = collect(down, sent);
+                if (!left.isEmpty()) node.takeBack(left);
+            }
+            // A Laser Tank's fluids go the same way, a few buckets at a time, paid as a stack.
+            net.neoforged.neoforge.fluids.FluidStack poured = node.sendFluid(fluid -> collectFluid(down, fluid, true) > 0,
+                    LaserTuning.SHIP_FLUID_MB, true);
+            if (poured.isEmpty() || !payFrom(light.feeders(), LaserTuning.PICKUP_FE_PER_STACK)) continue;
+            int fits = collectFluid(down, poured, true);
+            net.neoforged.neoforge.fluids.FluidStack sent = node.sendFluid(fluid -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(fluid, poured),
+                    fits, false);
+            int took = collectFluid(down, sent, false);
+            if (took < sent.getAmount()) node.takeBackFluid(sent.copyWithAmount(sent.getAmount() - took));
         }
+    }
+
+    /** Gives {@code fluid} to the collecting Laser Tanks at {@code positions}, in order; how much they took between them. */
+    int collectFluid(List<BlockPos> positions, net.neoforged.neoforge.fluids.FluidStack fluid, boolean simulate) {
+        int took = 0;
+        for (BlockPos pos : positions) {
+            if (took >= fluid.getAmount()) break;
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.collects()) took += node.collectFluid(fluid.copyWithAmount(fluid.getAmount() - took), simulate);
+        }
+        return took;
+    }
+
+    /** Up to {@code max} mB of the first fluid {@code wants} accepts, from the sending Laser Tanks at {@code positions} in order. */
+    net.neoforged.neoforge.fluids.FluidStack takeFluid(List<BlockPos> positions, java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> wants,
+                                                       int max, boolean simulate) {
+        for (BlockPos pos : positions) {
+            LaserNode node = nodes.get(pos);
+            if (node == null || !node.sends()) continue;
+            net.neoforged.neoforge.fluids.FluidStack got = node.sendFluid(wants, max, simulate);
+            if (!got.isEmpty()) return got;
+        }
+        return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+    }
+
+    /** Puts back into the sending Laser Tanks at {@code positions} fluid one sent but couldn't be used; how much they took. */
+    int returnFluidTo(List<BlockPos> positions, net.neoforged.neoforge.fluids.FluidStack fluid) {
+        int took = 0;
+        for (BlockPos pos : positions) {
+            if (took >= fluid.getAmount()) break;
+            LaserNode node = nodes.get(pos);
+            if (node != null && node.sends()) took += node.takeBackFluid(fluid.copyWithAmount(fluid.getAmount() - took));
+        }
+        return took;
     }
 
     /** What the collecting Laser Ports at {@code positions} wouldn't take of {@code stack}, between them. */
@@ -1208,12 +1411,42 @@ public final class LaserNetworks {
      */
     @Nullable
     public static LogisticsController logisticsAt(Level level, BlockPos pos) {
+        return logisticsAt(level, pos, Channels.ALL);
+    }
+
+    /** As {@link #logisticsAt(Level, BlockPos)}, of the controllers on {@code channel} (either on All). */
+    @Nullable
+    public static LogisticsController logisticsAt(Level level, BlockPos pos, int channel) {
         if (!(level instanceof ServerLevel server)) return null;
         LaserNetworks networks = LEVELS.get(server);
         if (networks == null) return null;
         Light light = networks.lights.get(pos);
-        if (light == null || light.logistics().size() != 1) return null;
-        return networks.nodes.get(light.logistics().iterator().next()) instanceof LogisticsController controller ? controller : null;
+        if (light == null) return null;
+        LogisticsController found = null;
+        for (var feed : light.logistics().entrySet()) {
+            if (!Channels.serves(channel, feed.getValue()) || !(networks.nodes.get(feed.getKey()) instanceof LogisticsController controller)) continue;
+            if (found != null) return null;
+            // A controller on All runs a network for each channel: the one on this (channel 0's, asked on All).
+            found = controller.network(channel == Channels.ALL ? 0 : channel);
+        }
+        return found;
+    }
+
+    /** Every Logistics Controller whose light reaches the node at {@code pos}, on any channel. */
+    public static List<LogisticsController> logisticsAllAt(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return List.of();
+        LaserNetworks networks = LEVELS.get(server);
+        if (networks == null) return List.of();
+        Light light = networks.lights.get(pos);
+        if (light == null) return List.of();
+        List<LogisticsController> found = new ArrayList<>();
+        List<BlockPos> at = new ArrayList<>(light.logistics().keySet());
+        at.sort(java.util.Comparator.comparingLong(BlockPos::asLong));
+        // Each controller's every network: on All, one for each channel with receptacles.
+        for (BlockPos pos2 : at) {
+            if (networks.nodes.get(pos2) instanceof LogisticsController controller) found.addAll(controller.networks());
+        }
+        return found;
     }
 
     /** Pays {@code fe} from what the sources at {@code feeders} have left this tick, by what each has; nothing if they haven't enough. */
@@ -1533,7 +1766,7 @@ public final class LaserNetworks {
             if (at != null && at.area() != null && here != null && !visit.path().isEmpty()) {
                 for (Light.Stream stream : here.acting()) {
                     if (!stream.payers().contains(source.nodePos())) continue;
-                    LensAction action = actions.get(new LensAction.Key(visit.node(), -1, stream.action()));
+                    LensAction action = actions.get(new LensAction.Key(visit.node(), -1, stream.action(), stream.channel()));
                     if (action != null) route(sinks, action.key(), null, Direction.UP, null, action, source.nodePos(), index, visit.path(), visit.efficiency());
                 }
             }
@@ -1555,7 +1788,7 @@ public final class LaserNetworks {
                     if (light.phantom()) streams.add(new Light.Stream(Lens.PHANTOM, 0, light.feeders()));
                     for (Light.Stream stream : streams) {
                         if (!stream.payers().contains(source.nodePos())) continue;
-                        LensAction action = actions.get(new LensAction.Key(visit.node(), i, stream.action()));
+                        LensAction action = actions.get(new LensAction.Key(visit.node(), i, stream.action(), stream.channel()));
                         if (action != null) {
                             route(sinks, action.key(), beam.hit(), beam.arriving(), null, action, source.nodePos(), index, path, through.efficiency());
                         }

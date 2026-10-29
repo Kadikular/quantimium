@@ -96,6 +96,7 @@ public final class SidesPage extends Page {
     private final Direction facing;
     private final SideAutomationProfile profile;
     private final boolean slotMasks;
+    private final boolean fluidOutputTanks;
     private final SideMode[] itemModes = new SideMode[6];
     private final int[] itemInputMasks = new int[6];
     private final int[] itemOutputMasks = new int[6];
@@ -111,7 +112,14 @@ public final class SidesPage extends Page {
     private Face selected = Face.FRONT;
 
     public SidesPage(Supplier<Rect2i> panel, Rail rail, BlockPos pos, List<SideConfig> configs, SideAutomationProfile profile, boolean slotMasks) {
+        this(panel, rail, pos, configs, profile, slotMasks, true);
+    }
+
+    /** {@code fluidOutputTanks} false: fluids leave by a face or don't, with no tanks of their own to pick (a Crafter's). */
+    public SidesPage(Supplier<Rect2i> panel, Rail rail, BlockPos pos, List<SideConfig> configs, SideAutomationProfile profile, boolean slotMasks,
+                     boolean fluidOutputTanks) {
         super(panel, rail, Component.translatable("gui.quantimium.sides"));
+        this.fluidOutputTanks = fluidOutputTanks;
         this.pos = pos;
         this.facing = readFacing(pos);
         this.profile = profile;
@@ -159,6 +167,11 @@ public final class SidesPage extends Page {
 
     private boolean items() {
         return kind == Kind.ITEMS;
+    }
+
+    /** Whether a face picks which slots or tanks it empties. */
+    private boolean outputTanks() {
+        return items() || fluidOutputTanks;
     }
 
     private boolean bothKinds() {
@@ -270,11 +283,13 @@ public final class SidesPage extends Page {
             int bits = maskBits();
             int x = left + MASK_X;
             graphics.text(font, Component.translatable("gui.quantimium.sides.mode.input"), x, top + INSERT_Y - 10, rail.textDim(), false);
-            graphics.text(font, Component.translatable("gui.quantimium.sides.mode.output"), x, top + EXTRACT_Y - 10, rail.textDim(), false);
             QuantumWidgets.maskGrid(graphics, x, top + INSERT_Y, inputMask(selected), bits, QuantumUiColours.CHIP_IN);
-            QuantumWidgets.maskGrid(graphics, x, top + EXTRACT_Y, outputMask(selected), bits, QuantumUiColours.CHIP_OUT);
             int bit = QuantumWidgets.maskBitAt(x, top + INSERT_Y, bits, mouseX, mouseY);
-            if (bit < 0) bit = QuantumWidgets.maskBitAt(x, top + EXTRACT_Y, bits, mouseX, mouseY);
+            if (outputTanks()) {
+                graphics.text(font, Component.translatable("gui.quantimium.sides.mode.output"), x, top + EXTRACT_Y - 10, rail.textDim(), false);
+                QuantumWidgets.maskGrid(graphics, x, top + EXTRACT_Y, outputMask(selected), bits, QuantumUiColours.CHIP_OUT);
+                if (bit < 0) bit = QuantumWidgets.maskBitAt(x, top + EXTRACT_Y, bits, mouseX, mouseY);
+            }
             if (bit >= 0) {
                 tooltip = List.of(Component.translatable(items() ? "gui.quantimium.sides.slot" : "gui.quantimium.sides.tank", bit + 1));
             }
@@ -396,7 +411,7 @@ public final class SidesPage extends Page {
                 send();
                 return;
             }
-            int outputBit = QuantumWidgets.maskBitAt(left + MASK_X, top + EXTRACT_Y, bits, mouseX, mouseY);
+            int outputBit = outputTanks() ? QuantumWidgets.maskBitAt(left + MASK_X, top + EXTRACT_Y, bits, mouseX, mouseY) : -1;
             if (outputBit >= 0) {
                 click();
                 if (items()) itemOutputMasks[id] ^= 1 << outputBit;

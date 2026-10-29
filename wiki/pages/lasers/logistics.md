@@ -23,7 +23,7 @@ A logistics network moves items between inventories by laser. A Logistics Contro
 [[mechanic:laser.logistics.lenses]] **Lenses past the controller use the network.** Up the laser from a lens, the controller stands for the whole network, after any Laser Port nearer the lens.
 
 - What a Pickup or Extract Lens brings back goes into the network (to requesters listing it, then storage), so they work as active providers.
-- What an Insert, Placement or Interact Lens uses comes from the network (providers, then storage), but only through an Item Filter Lens, so they work as active requesters. Unfiltered, they take nothing from the network (a Laser Port up the laser still feeds them).
+- What an Insert, Placement or Interact Lens uses comes from the network (providers, then storage), but only through an Filter Lens, so they work as active requesters. Unfiltered, they take nothing from the network (a Laser Port up the laser still feeds them).
 - A stream from one side of a join reaches back up its own side. Put the controller before the lenses, or on their side of the join.
 
 ## Logistics Receptacle
@@ -53,6 +53,16 @@ A [[item:logistics_receptacle]] is an attachment for a [[item:laser_focus]]. It 
 
 A laser from a controller is drawn a deeper blue, and always as if at work.
 
+### Fluids
+
+[[mechanic:laser.logistics.fluids]] A network moves fluids as it moves items. A receptacle on a tank (a [[block:laser_tank]], or any mod's) puts the tank on the network in its role.
+
+- A receptacle's filter lists fluids too: right-click an entry with a bucket, or drag a fluid in from JEI. Fluid entries only match fluids. With no fluid listed, storage and providers take or give any fluid.
+- An active receptacle moves up to 2,000 mB a second, four times as much for each Speed Lens, at the same cost per move as items.
+- With **Keep stocked** on, a fluid entry's count is in buckets.
+- A collecting Laser Tank on the network is a passive provider, as a Laser Port is.
+- An Extract Lens past the controller pours into the network. Insert and Interact Lenses take fluid from it only through a Filter Lens that lists a fluid.
+
 ## Logistics Terminal
 
 [[mechanic:laser.logistics.terminal]] A [[block:logistics_terminal]] where a controller's laser ends shows everything the network's storage holds and its providers offer, searchable and sorted by count or name, like an ME terminal. Sort and view are tabs on its left.
@@ -62,6 +72,10 @@ A laser from a controller is drawn a deeper blue, and always as if at work.
 - Click the grid holding something to put it away into storage (right-click: one), or shift-click it in your inventory.
 - What is stored comes out first. If any is, that is all you get, and only when none is left does a machine make more.
 - Each take or put costs the controller as a move does.
+- Fluids show with their amounts (mB under a bucket, then B, kB, MB), sorted as a bucket to an item.
+- Click a fluid with nothing in hand for a bucket of it, the bucket taken from the network (or made); shift-click puts it in your inventory. Click it holding a container to fill that.
+- Right-click the grid with a filled bucket to pour it into storage: a receptacle on a tank set to storage.
+- [[mechanic:laser.logistics.make]] **Middle-click** something that can be made to make some and keep it in storage, whether or not some is stored already. Pick how many, up to what can be made (fluids in buckets). It's made a stack (or a bucket) at a time, each only if storage has room for it.
 
 A [[block:logistics_lectern]] is the same terminal on a stand, its screen tilted over the focus the laser comes in to. Craft one from the other.
 
@@ -89,6 +103,9 @@ The crafting table tab shows a 3×3 grid under a shorter item grid, as an ME cra
 - Click it to choose what it offers: stored and craftable items (the default), stored items, or craftable items.
 - A provider Receptacle on another network's Materializer brings that network's offers into its own, stored as stored and craftable as craftable.
 - A receptacle of the same network on its Materializer is ignored: it would read the network into itself.
+- Its fluids too, through a fluid handler on every face: pipes drain what storage and providers hold
+  and fill storage. A Tesseract in a [[block:quantum_crafter]] bound to it lets the crafter make from the network's
+  fluids, and what it then offers the network is made from them.
 
 ## Reactor Logistics Port
 

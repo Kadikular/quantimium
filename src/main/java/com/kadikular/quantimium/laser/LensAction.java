@@ -32,7 +32,12 @@ import java.util.List;
 public final class LensAction {
 
     /** Which: its node, which of the node's beams, and which action. */
-    public record Key(BlockPos node, int beam, Lens action) {}
+    /** One action on one beam (-1: a prism's area), on its channel. */
+    public record Key(BlockPos node, int beam, Lens action, int channel) {
+        public Key(BlockPos node, int beam, Lens action) {
+            this(node, beam, action, 0);
+        }
+    }
 
     private final Key key;
     private LaserBeam beam;
@@ -121,6 +126,12 @@ public final class LensAction {
         this.reach = reach;
         this.marks = marks;
         this.solids = solids;
+        // Ending somewhere new (a chest put down where it ended on nothing), Insert and Extract look again at once.
+        BlockPos was = this.beam == null ? null : this.beam.hit();
+        if ((key.action() == Lens.INSERT || key.action() == Lens.EXTRACT) && this.beam != null && beam != null && !java.util.Objects.equals(was, beam.hit())) {
+            placeCooldown = 0;
+            wait = Math.max(1, LaserTuning.PLACE_COOLDOWN / stream.pace());
+        }
         this.beam = beam;
         this.stream = stream;
         this.collectors = List.copyOf(collectors);
@@ -203,6 +214,11 @@ public final class LensAction {
 
     /** Once a tick, before blocks are charged: work done at once pays first, and a cut asks for its next share. */
     void act(ServerLevel level, LaserNetworks networks) {
+        // A Logistics Controller on All up the beam works with the network on this action's channel.
+        Channels.actingOn(key.channel(), () -> actOnChannel(level, networks));
+    }
+
+    private void actOnChannel(ServerLevel level, LaserNetworks networks) {
         sightLevel = level;
         now = level.getGameTime();
         keepCursor(level);
@@ -606,6 +622,19 @@ public final class LensAction {
             extras = List.copyOf(hand.getInventory().getNonEquipmentItems());
             hand.getInventory().clearContent();
         } while (!done && !sent.isEmpty() && !stream.hits() && tried.size() < LaserTuning.INTERACT_TRIES);
+        // Nothing it was sent was used: a bucket of what a sending Laser Tank holds, then.
+        if (!done && !stream.hits() && useFluid(level, networks, hand)) {
+            networks.pay(this, LaserTuning.PLACE_FE);
+            networks.workDone(this);
+            placeCooldown = LaserTuning.PLACE_COOLDOWN / stream.pace();
+            wait = Math.max(1, placeCooldown);
+            if (area == null) {
+                placed = beam.hit();
+                LaserNetworks.changed(level, key.node());
+            }
+            lastWorked = now;
+            return;
+        }
         // Nothing took it: it looks again in a while, longer the longer it's idle. An area rests after a sweep instead.
         if (!done) {
             if (area == null) placeCooldown = nextWait(false);
@@ -627,6 +656,38 @@ public final class LensAction {
         lastWorked = now;
         // A door opened, a block changed: the beam may reach on, or not. An area's beams don't change.
         if (area == null) LaserNetworks.changed(level, key.node());
+    }
+
+    /**
+     * The senders fluid may come from: a logistics network only through a Filter Lens listing a fluid, so a lens
+     * filtering items doesn't drain the network's tanks.
+     */
+    private List<BlockPos> fluidSenders(LaserNetworks networks) {
+        LensFilter filter = stream.filter();
+        if (filter != null && filter.listsFluids()) return senders;
+        return senders.stream().filter(pos -> networks.controllerAt(pos) == null).toList();
+    }
+
+    /**
+     * Uses a bucket of the first fluid a sending Laser Tank holds a bucket's worth of (and has a bucket for), as a player
+     * would: pours it into a cauldron, or out into the world. Only if the bucket was emptied is the fluid drained from the
+     * tank; the bucket itself is only borrowed. Whether it was used.
+     */
+    private boolean useFluid(ServerLevel level, LaserNetworks networks, LaserHand hand) {
+        List<BlockPos> senders = fluidSenders(networks);
+        if (senders.isEmpty()) return false;
+        int bucket = net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME;
+        net.neoforged.neoforge.fluids.FluidStack fluid = networks.takeFluid(senders, each -> each.getAmount() >= bucket && lets(each)
+                && each.getFluid().getBucket() != Items.AIR, bucket, true);
+        if (fluid.getAmount() < bucket) return false;
+        ItemStack filled = new ItemStack(fluid.getFluid().getBucket());
+        hand.hold(filled.copy());
+        boolean used = use(level, hand, filled, stream.targets());
+        ItemStack after = hand.letGo();
+        hand.getInventory().clearContent();
+        if (!used || ItemStack.matches(after, filled)) return false;
+        networks.takeFluid(senders, each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, fluid), bucket, false);
+        return true;
     }
 
     /**
@@ -851,34 +912,94 @@ public final class LensAction {
             return;
         }
         BlockPos at;
-        net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> found;
+        net.minecraft.core.Direction side;
         if (area == null) {
-            // Looked up once: what the beam ends on, if it's an inventory.
-            if (beam == null || beam.hit() == null || beam.end() == LaserBeam.End.OPEN) return;
+            if (beam == null) return;
+            // Extract with nothing to take from pumps a fluid source on the light's way: the light runs on through water.
+            if (beam.hit() == null || beam.end() == LaserBeam.End.OPEN) {
+                if (!in) pumped(networks, pump(level, networks), beam.hit());
+                return;
+            }
+            // Looked up once: what the beam ends on, if it holds items or fluids.
             at = beam.hit();
-            found = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, beam.arriving().getOpposite());
+            side = beam.arriving().getOpposite();
         } else {
             at = nextAreaInventory(level);
             if (at == null) return;
-            found = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, null);
+            side = null;
         }
-        net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(found);
-        if (handler == null) return;
+        net.neoforged.neoforge.items.IItemHandler handler = com.kadikular.quantimium.util.LegacyItems.legacy(
+                level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, at, side));
+        net.neoforged.neoforge.fluids.capability.IFluidHandler fluids = com.kadikular.quantimium.util.LegacyFluids.legacy(
+                level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, at, side));
+        if (handler == null && fluids == null) {
+            if (!in && area == null) pumped(networks, pump(level, networks), at);
+            return;
+        }
         // What crushing and smelting on the way cost, or -1 for nothing moved.
         // What can go neither in nor back falls out by the inventory: before it, on a beam; on top of it, in an area.
         BlockPos spill = area == null ? beam.before() : at.above();
-        long processing = in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
-        // Nothing to move (nothing it may take, or no room): it looks again in a while, longer the longer it's idle.
+        long processing = handler == null ? -1 : in ? insertInto(level, networks, handler, spill) : extractFrom(level, networks, handler, spill);
+        // No items to move: fluids, if it holds them.
+        if (processing < 0 && fluids != null) processing = in ? pourInto(networks, fluids) : drainFrom(networks, fluids);
+        moved(networks, processing, at);
+    }
+
+    /**
+     * After a move by Insert or Extract that cost {@code processing} on the way, or -1 for none: paid for, and paced.
+     * Idle, it looks again in a while, longer the longer it's idle; busy, each move in a row halves the wait, down to
+     * its own pace.
+     */
+    private void moved(LaserNetworks networks, long processing, @Nullable BlockPos at) {
         if (processing < 0) {
             placeCooldown = nextWait(false);
             return;
         }
         networks.pay(this, LaserTuning.PICKUP_FE_PER_STACK + processing);
         networks.workDone(this);
-        // Busy, it speeds up: each move in a row halves the wait, down to its own pace.
         placeCooldown = nextWait(true);
-        placed = at;
+        if (at != null) placed = at;
         lastWorked = now;
+    }
+
+    /**
+     * After a pump: paid for and paced as a move, but with no fluid source on its way at all (it ends on stone, or on
+     * nothing), it isn't idle, only pointed at nothing: it looks again next tick, as it always has, so a chest put down
+     * there is used at once.
+     */
+    private void pumped(LaserNetworks networks, long processing, @Nullable BlockPos at) {
+        if (processing == NOTHING_THERE) return;
+        moved(networks, processing, at);
+    }
+
+    /** What {@link #pump} gives back when there's no fluid source on the light's way. */
+    private static final long NOTHING_THERE = -2;
+
+    /**
+     * Takes the first fluid source on the light's way (or the block it ends on) up to the collecting Laser Tanks, as a
+     * bucket would: a whole bucket's worth, only if they have room for it. With a Void lens listing it, it goes anyway.
+     * 0 for taken, -1 for none it could take, {@link #NOTHING_THERE} for no source at all.
+     */
+    private long pump(ServerLevel level, LaserNetworks networks) {
+        if (collectors.isEmpty() && stream.voids() == null) return NOTHING_THERE;
+        List<BlockPos> along = new ArrayList<>(beam.path());
+        if (beam.hit() != null) along.add(beam.hit());
+        boolean found = false;
+        for (BlockPos at : along) {
+            BlockState there = level.getBlockState(at);
+            net.minecraft.world.level.material.FluidState source = there.getFluidState();
+            if (!source.isSource() || !(there.getBlock() instanceof net.minecraft.world.level.block.BucketPickup pickup)) continue;
+            found = true;
+            net.neoforged.neoforge.fluids.FluidStack taken = new net.neoforged.neoforge.fluids.FluidStack(source.getType(),
+                    net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME);
+            if (!lets(taken)) continue;
+            boolean voids = stream.voids() != null && stream.voids(taken);
+            if (!voids && networks.collectFluid(collectors, taken, true) < taken.getAmount()) continue;
+            if (pickup.pickupBlock(null, level, at, there).isEmpty()) continue;
+            if (!stream.voidsAll()) networks.collectFluid(collectors, taken, false);
+            return 0;
+        }
+        return found ? -1 : NOTHING_THERE;
     }
 
     /**
@@ -944,6 +1065,67 @@ public final class LensAction {
         return -1;
     }
 
+    /**
+     * Into the fluid handler: what a sending Laser Tank holds, as much as fits, up to {@link #moveMostFluid}. 0 for
+     * moved, -1 for none. With a Void lens, what its list lets goes whether it fits or not.
+     */
+    @SuppressWarnings("deprecation")
+    private long pourInto(LaserNetworks networks, net.neoforged.neoforge.fluids.capability.IFluidHandler into) {
+        int most = moveMostFluid();
+        List<BlockPos> senders = fluidSenders(networks);
+        var simulate = net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
+        net.neoforged.neoforge.fluids.FluidStack offered = networks.takeFluid(senders, fluid -> lets(fluid)
+                && (stream.voids(fluid) || into.fill(fluid.copyWithAmount(Math.min(most, fluid.getAmount())), simulate) > 0), most, true);
+        if (offered.isEmpty()) return -1;
+        boolean voids = stream.voids(offered);
+        int fits = voids ? offered.getAmount() : into.fill(offered, simulate);
+        if (fits <= 0) return -1;
+        net.neoforged.neoforge.fluids.FluidStack taken = networks.takeFluid(senders,
+                fluid -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(fluid, offered), fits, false);
+        if (taken.isEmpty()) return -1;
+        int filled = into.fill(taken, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        if (filled < taken.getAmount() && !voids) networks.returnFluidTo(senders, taken.copyWithAmount(taken.getAmount() - filled));
+        return 0;
+    }
+
+    /**
+     * Out of the fluid handler, up to a collecting Laser Tank: as much as the tanks take, up to {@link #moveMostFluid}.
+     * 0 for moved, -1 for none. With a Void lens and a list, what it lists is drained whether a tank has room or not.
+     */
+    @SuppressWarnings("deprecation")
+    private long drainFrom(LaserNetworks networks, net.neoforged.neoforge.fluids.capability.IFluidHandler from) {
+        int most = moveMostFluid();
+        var simulate = net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
+        for (int tank = 0; tank < from.getTanks(); tank++) {
+            net.neoforged.neoforge.fluids.FluidStack there = from.getFluidInTank(tank);
+            if (there.isEmpty() || !lets(there)) continue;
+            net.neoforged.neoforge.fluids.FluidStack offered = from.drain(there.copyWithAmount(Math.min(most, there.getAmount())), simulate);
+            if (offered.isEmpty()) continue;
+            boolean voids = stream.voids() != null && stream.voids(offered);
+            int room = voids ? offered.getAmount() : networks.collectFluid(collectors, offered, true);
+            if (room <= 0) continue;
+            net.neoforged.neoforge.fluids.FluidStack taken = from.drain(offered.copyWithAmount(room),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            if (taken.isEmpty()) continue;
+            if (stream.voidsAll()) return 0;
+            int took = networks.collectFluid(collectors, taken, false);
+            // What none of the tanks took after all goes back where it came from; a Void lens destroys it.
+            if (took < taken.getAmount() && !voids) from.fill(taken.copyWithAmount(taken.getAmount() - took),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            return 0;
+        }
+        return -1;
+    }
+
+    private boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return stream.filter() == null || stream.filter().lets(fluid);
+    }
+
+    /** The most fluid Insert or Extract moves at once: {@link LaserTuning#MOVE_FLUID_MB}, doubled for each Speed lens. */
+    private int moveMostFluid() {
+        return LaserTuning.MOVE_FLUID_MB << stream.speed();
+    }
+
     /** The most Insert or Extract moves at once: {@link LaserTuning#MOVE_ITEMS}, doubled for each Speed lens. */
     private int moveMost() {
         return LaserTuning.MOVE_ITEMS << stream.speed();
@@ -972,7 +1154,8 @@ public final class LensAction {
             BlockPos pos = areaPos(cursor);
             cursor = (cursor + 1) % areaVolume();
             if (within.test(pos) && level.isLoaded(pos) && level.getBlockEntity(pos) != null
-                    && level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, pos, null) != null && inSight(level, pos)) {
+                    && (level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, pos, null) != null
+                        || level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, pos, null) != null) && inSight(level, pos)) {
                 missed = 0;
                 return pos;
             }
@@ -1826,5 +2009,9 @@ public final class LensAction {
 
     List<BlockPos> collectors() {
         return collectors;
+    }
+
+    List<BlockPos> senders() {
+        return senders;
     }
 }

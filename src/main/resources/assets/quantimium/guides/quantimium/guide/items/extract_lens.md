@@ -18,6 +18,8 @@ Extract Lens adds the Extract action to a laser. The laser takes items from the 
 
 - Moves up to 8 items every 0.5 s, as many as the ports have room for. Each <ItemLink id="quantimium:speed_lens" /> doubles that, up to 64.
 - Through an <ItemLink id="quantimium:area_prism" />, from each inventory in the area in turn.
+- Fluids too. With no items to take, it drains the fluid handler it ends on into the collecting <ItemLink id="quantimium:laser_tank" />s up the laser. It moves 1,000 mB at a time, doubled for each Speed Lens.
+- With nothing to take from, it pumps: the first fluid source on its way (the laser runs on through water) goes up to the collecting Laser Tanks, a bucket at a time, if they have room for it.
 - It does nothing in the mirror.
 
 ## Energy

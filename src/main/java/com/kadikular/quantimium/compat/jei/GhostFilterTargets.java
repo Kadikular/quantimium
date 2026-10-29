@@ -26,7 +26,14 @@ public final class GhostFilterTargets<S extends Screen & GhostFilterScreen> impl
     @Override
     public <I> List<Target<I>> getTargetsTyped(S screen, ITypedIngredient<I> ingredient, boolean doStart) {
         List<Target<I>> targets = new ArrayList<>();
-        if (ingredient.getItemStack().isEmpty()) return targets;
+        // An item, or on a filter that lists fluids, a fluid: sent as its entry.
+        net.minecraft.world.item.ItemStack dropped = ingredient.getItemStack().orElse(net.minecraft.world.item.ItemStack.EMPTY);
+        if (dropped.isEmpty() && screen.ghostFluids()) {
+            dropped = ingredient.getIngredient(mezz.jei.api.neoforge.NeoForgeTypes.FLUID_STACK)
+                    .map(com.kadikular.quantimium.recipe.FluidEntry::of).orElse(net.minecraft.world.item.ItemStack.EMPTY);
+        }
+        if (dropped.isEmpty()) return targets;
+        net.minecraft.world.item.ItemStack entry = dropped;
         List<Rect2i> areas = screen.ghostTargets();
         for (int i = 0; i < areas.size(); i++) {
             int index = i;
@@ -39,9 +46,8 @@ public final class GhostFilterTargets<S extends Screen & GhostFilterScreen> impl
 
                 @Override
                 public void accept(I value) {
-                    if (!(value instanceof ItemStack stack)) return;
                     ClientPacketDistributor.sendToServer(new SetGhostFilterPayload(screen.ghostContainerId(),
-                            screen.ghostOffset() + index, stack));
+                            screen.ghostOffset() + index, entry));
                 }
             });
         }

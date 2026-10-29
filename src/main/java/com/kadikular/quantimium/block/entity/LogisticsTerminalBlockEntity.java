@@ -78,6 +78,7 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput out) {
         super.saveAdditional(out);
+        out.putInt("Channel", channel);
         out.store("CraftGrid", ItemStack.OPTIONAL_CODEC.listOf(), List.copyOf(craftItems));
         out.store("CraftGhosts", ItemStack.OPTIONAL_CODEC.listOf(), List.of(craftGhosts));
     }
@@ -85,6 +86,7 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
     @Override
     protected void loadAdditional(net.minecraft.world.level.storage.ValueInput in) {
         super.loadAdditional(in);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
         List<ItemStack> grid = in.read("CraftGrid", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         List<ItemStack> ghosts = in.read("CraftGhosts", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
         for (int i = 0; i < 9; i++) {
@@ -99,10 +101,22 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         if (level != null) net.minecraft.world.Containers.dropContents(level, pos, craftItems);
     }
 
-    /** The controller whose light reaches it, or null. Server side. */
+    /** Which network it shows: the controller on this channel whose light reaches it. 0 unless set. */
+    private int channel;
+
+    public int channel() {
+        return channel;
+    }
+
+    public void setChannel(int channel) {
+        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        setChanged();
+    }
+
+    /** The controller on its channel whose light reaches it, or null. Server side. */
     @Nullable
     public LogisticsController controller() {
-        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);
+        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition, channel);
     }
 
     private List<LogisticsMember> members() {
@@ -183,6 +197,52 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         }
     }
 
+    /**
+     * Makes up to {@code count} of {@code item} (mB for a fluid), at most what the network says it can make, and keeps
+     * it in storage: a stack (a bucket's worth) at a time, each made only if storage has room for it. How many it made.
+     */
+    public long make(ItemResource item, long count) {
+        LogisticsController controller = controller();
+        if (controller == null || count <= 0) return 0;
+        count = Math.min(count, controller.offers().craftable(item));
+        List<LogisticsMember> members = controller.members();
+        net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(item.toStack(1));
+        long made = 0;
+        if (!fluid.isEmpty()) {
+            while (made < count) {
+                int chunk = (int) Math.min(count - made, net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME);
+                var wanted = fluid.copyWithAmount(chunk);
+                if (Logistics.insertFluid(members, wanted, true, false) < chunk || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) break;
+                var got = Logistics.makeFluid(members, wanted, chunk, false);
+                if (got.isEmpty()) break;
+                int stored = Logistics.insertFluid(members, got, false, false);
+                made += got.getAmount();
+                // Storage took less than it said: what's over goes back where it can.
+                if (stored < got.getAmount()) Logistics.insertFluid(members, got.copyWithAmount(got.getAmount() - stored), false, true);
+            }
+        } else {
+            int stack = item.toStack(1).getMaxStackSize();
+            var spots = controller.spots();
+            while (made < count) {
+                int chunk = (int) Math.min(count - made, stack);
+                if (!Logistics.insert(members, item.toStack(chunk), true, false).isEmpty() || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) break;
+                ItemStack got = Logistics.take(spots, item, chunk, false, false, true);
+                if (got.isEmpty()) {
+                    var again = controller.spotsAgain();
+                    if (again != null) got = Logistics.take(spots = again, item, chunk, false, false, true);
+                }
+                if (got.isEmpty()) break;
+                made += got.getCount();
+                ItemStack over = Logistics.insert(members, got, false, false);
+                if (!over.isEmpty()) over = Logistics.insert(members, over, false, true);
+                if (!over.isEmpty() && level != null) net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1, worldPosition.getZ() + 0.5, over);
+            }
+        }
+        if (made > 0) controller.stockMoved();
+        else makeReady(controller, item);
+        return made;
+    }
+
     /** Takes up to {@code count} of {@code item} from what the network stores, making nothing; what it got. */
     public ItemStack takeStored(ItemResource item, int count) {
         LogisticsController controller = controller();
@@ -210,6 +270,29 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
         }
         controller.stockMoved();
         return Logistics.insert(members, stack, false, false);
+    }
+
+    /** Takes up to {@code max} mB of {@code fluid} from the network, if the controller pays; what it got. */
+    public net.neoforged.neoforge.fluids.FluidStack takeFluid(net.neoforged.neoforge.fluids.FluidStack fluid, int max) {
+        LogisticsController controller = controller();
+        if (controller == null || max <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+        java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> same = each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, fluid);
+        List<LogisticsMember> members = controller.members();
+        if (Logistics.takeFluid(members, same, max, true).isEmpty() || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) {
+            return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+        }
+        controller.stockMoved();
+        return Logistics.takeFluid(members, same, max, false);
+    }
+
+    /** Pours {@code fluid} into the network's storage, if the controller pays; how much it took. */
+    public int insertFluid(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        LogisticsController controller = controller();
+        if (controller == null || fluid.isEmpty()) return 0;
+        List<LogisticsMember> members = controller.members();
+        if (Logistics.insertFluid(members, fluid, true, false) <= 0 || !controller.pay(LaserTuning.LOGISTICS_FE_PER_MOVE)) return 0;
+        controller.stockMoved();
+        return Logistics.insertFluid(members, fluid, false, false);
     }
 
     // ---- the network: light ends here ----

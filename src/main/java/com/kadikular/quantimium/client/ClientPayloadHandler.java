@@ -92,6 +92,10 @@ public final class ClientPayloadHandler {
         com.kadikular.quantimium.client.screen.LogisticsTerminalScreen.setView(payload);
     }
 
+    public static void handleSpectroscope(com.kadikular.quantimium.network.SpectroscopePayload payload) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new com.kadikular.quantimium.client.screen.SpectroscopeScreen(payload.reading()));
+    }
+
     public static void handleHorizonView(com.kadikular.quantimium.network.HorizonViewPayload payload) {
         com.kadikular.quantimium.client.screen.HorizonCoreScreen.setView(payload);
     }

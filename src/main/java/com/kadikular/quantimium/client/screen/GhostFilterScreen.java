@@ -15,4 +15,9 @@ public interface GhostFilterScreen {
 
     /** The open menu's id, which the drop is sent with. */
     int ghostContainerId();
+
+    /** Whether a fluid dragged from a recipe viewer can be listed (as a fluid entry). */
+    default boolean ghostFluids() {
+        return false;
+    }
 }

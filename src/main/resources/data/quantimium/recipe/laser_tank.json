@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "B": "minecraft:bucket",
+    "M": "quantimium:laser_focus",
+    "G": "minecraft:glass_pane"
+  },
+  "pattern": [
+    "IBI",
+    "GMG",
+    "III"
+  ],
+  "result": {
+    "id": "quantimium:laser_tank",
+    "count": 1
+  }
+}

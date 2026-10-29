@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
-public class QuantumCrafterMenu extends AbstractContainerMenu {
+public class QuantumCrafterMenu extends AbstractContainerMenu implements GhostFilterMenu {
 
     private static final int DATA_COUNT = 18;
     private static final int MENU_CATALYST_SLOT = 9;
@@ -168,8 +168,74 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
      */
     public static final int TAKE = 100_000, BATCH = 1, HALF = 2, ONE = 3, TO_INVENTORY = 4;
 
+    /** A bucket on the cursor clicked on an input tank (this + its index). */
+    public static final int BUTTON_TANK = 50_000;
+    /**
+     * A fluid in the grid clicked holding a container: this plus the preview making it ({@link QuantumCrafterBlockEntity#GHOST_BASE}
+     * on), or plus the output tank holding it.
+     */
+    public static final int BUTTON_FLUID = 60_000;
+    /** Pins or unpins what's in output tank this + i. */
+    public static final int BUTTON_PIN_TANK = 70_000;
+    /** Unpins pin this + i. */
+    public static final int BUTTON_UNPIN = 80_000;
+    /** {@code PIN * TAKE + slot}: pins or unpins what an output slot or preview shows. */
+    public static final int PIN = 5;
+
+    @org.jetbrains.annotations.Nullable
+    private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> cursorFluids(Player player) {
+        if (getCarried().isEmpty()) return null;
+        return net.neoforged.neoforge.transfer.access.ItemAccess.forPlayerCursor(player, this).oneByOne()
+                .getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.ITEM);
+    }
+
+    /** Dropped from a recipe viewer on its output grid: pins it, if it isn't already. */
+    @Override
+    public void setGhost(int index, ItemStack stack) {
+        if (stack.isEmpty() || blockEntity.isBasic()) return;
+        var pin = net.neoforged.neoforge.transfer.item.ItemResource.of(stack);
+        if (!blockEntity.pins().contains(pin)) blockEntity.togglePin(pin);
+    }
+
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (id >= BUTTON_PIN_TANK && id < BUTTON_PIN_TANK + QuantumCrafterBlockEntity.OUTPUT_TANKS) {
+            var fluid = blockEntity.outputTanks().get(id - BUTTON_PIN_TANK);
+            if (fluid.isEmpty()) return false;
+            blockEntity.togglePin(com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(fluid)));
+            return true;
+        }
+        if (id >= BUTTON_UNPIN && id < BUTTON_UNPIN + QuantumCrafterBlockEntity.MAX_PINS) {
+            int at = id - BUTTON_UNPIN;
+            if (at >= blockEntity.pins().size()) return false;
+            blockEntity.togglePin(blockEntity.pins().get(at));
+            return true;
+        }
+        if (id / TAKE == PIN) {
+            int local = id % TAKE;
+            ItemStack shown = local < QuantumCrafterBlockEntity.OUTPUT_SLOTS
+                    ? blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + local)
+                    : local >= QuantumCrafterBlockEntity.GHOST_BASE ? blockEntity.getGhost(local) : ItemStack.EMPTY;
+            if (shown.isEmpty()) return false;
+            blockEntity.togglePin(net.neoforged.neoforge.transfer.item.ItemResource.of(shown));
+            return true;
+        }
+        if (id >= BUTTON_TANK && id < BUTTON_TANK + QuantumCrafterBlockEntity.INPUT_TANKS) {
+            var held = cursorFluids(player);
+            if (held == null || !blockEntity.pour(held, id - BUTTON_TANK)) return false;
+            broadcastChanges();
+            return true;
+        }
+        if (id >= BUTTON_FLUID && id < TAKE) {
+            int at = id - BUTTON_FLUID;
+            net.neoforged.neoforge.fluids.FluidStack fluid = at >= QuantumCrafterBlockEntity.GHOST_BASE
+                    ? com.kadikular.quantimium.recipe.FluidEntry.fluidOf(blockEntity.getGhost(at))
+                    : blockEntity.outputTanks().get(at);
+            var held = cursorFluids(player);
+            if (fluid.isEmpty() || held == null || !blockEntity.fillFrom(held, fluid, at)) return false;
+            broadcastChanges();
+            return true;
+        }
         int mode = id / TAKE;
         int local = id % TAKE;
         if (mode < BATCH || mode > TO_INVENTORY) return false;
@@ -181,7 +247,8 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
         } else {
             return false;
         }
-        if (shown.isEmpty()) return false;
+        // A fluid is taken in a bucket (BUTTON_FLUID), never as an item.
+        if (shown.isEmpty() || com.kadikular.quantimium.recipe.FluidEntry.is(shown)) return false;
         boolean toInventory = mode == TO_INVENTORY;
         ItemStack carried = getCarried();
         if (!toInventory && !carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, shown)) return false;

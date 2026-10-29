@@ -138,10 +138,34 @@ public record LensFilter(int parts, List<ItemStack> items, boolean itemsAllow, L
         return !stack.isEmpty() && entries.stream().anyMatch(entry -> FilterEntry.matches(entry, stack));
     }
 
-    /** Whether it lets an action carry, place, put in or take out this item. */
+    /** Whether it lets an action carry, place, put in or take out this item. Fluid entries are for fluids only. */
     public boolean lets(ItemStack stack) {
-        if (!any(items)) return true;
-        return listed(items, stack) == itemsAllow;
+        if (items.stream().noneMatch(entry -> !entry.isEmpty() && fluidOf(entry).isEmpty())) return true;
+        return items.stream().anyMatch(entry -> fluidOf(entry).isEmpty() && FilterEntry.matches(entry, stack)) == itemsAllow;
+    }
+
+    /** Whether it lets Insert or Extract move this fluid: listed as a fluid entry, or no fluid listed. */
+    public boolean lets(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        boolean any = false;
+        boolean listed = false;
+        for (ItemStack entry : items) {
+            net.neoforged.neoforge.fluids.FluidStack held = fluidOf(entry);
+            if (held.isEmpty()) continue;
+            any = true;
+            if (held.getFluid().isSame(fluid.getFluid())) listed = true;
+        }
+        return !any || listed == itemsAllow;
+    }
+
+    /** Whether it lists any fluid: only then does a lens take fluid from a logistics network. */
+    public boolean listsFluids() {
+        for (ItemStack entry : items) if (!fluidOf(entry).isEmpty()) return true;
+        return false;
+    }
+
+    /** The fluid a filter entry stands for: a fluid entry's (a right-click with a bucket); empty for an item. */
+    private static net.neoforged.neoforge.fluids.FluidStack fluidOf(ItemStack entry) {
+        return com.kadikular.quantimium.recipe.FluidEntry.fluidOf(entry);
     }
 
     /** Whether it lets a Placement beam place this item: the item, and as a block, the block it places. */

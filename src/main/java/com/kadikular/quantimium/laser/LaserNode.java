@@ -223,6 +223,11 @@ public interface LaserNode {
         return false;
     }
 
+    /** The channel it serves ({@link Channels}): a Laser Port, Tank or Logistics Controller works only with actions on it. */
+    default int channel() {
+        return 0;
+    }
+
     /** Whether this sends items down the beam, from its slots: a sending Laser Port. */
     default boolean sends() {
         return false;
@@ -254,6 +259,22 @@ public interface LaserNode {
     /** Takes what it can of {@code stack}, a collecting Laser Port (or with {@code simulate}, says what it would); what's left. */
     default net.minecraft.world.item.ItemStack collect(net.minecraft.world.item.ItemStack stack, boolean simulate) {
         return stack;
+    }
+
+    /** Takes what it can of {@code fluid}, a collecting Laser Tank (or with {@code simulate}, says what it would); how much. */
+    default int collectFluid(net.neoforged.neoforge.fluids.FluidStack fluid, boolean simulate) {
+        return 0;
+    }
+
+    /** Up to {@code max} mB of the first fluid {@code wants} accepts, from a sending Laser Tank (or with {@code simulate}, what it would). */
+    default net.neoforged.neoforge.fluids.FluidStack sendFluid(java.util.function.Predicate<net.neoforged.neoforge.fluids.FluidStack> wants,
+                                                               int max, boolean simulate) {
+        return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+    }
+
+    /** Puts back what a sending Laser Tank sent but couldn't be used; how much it took. */
+    default int takeBackFluid(net.neoforged.neoforge.fluids.FluidStack fluid) {
+        return 0;
     }
 
     /** What it does on a logistics network (a Logistics Receptacle, a Laser Port), or null when it takes no part. */

@@ -333,7 +333,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
 
         long pendingIn() {
             long total = 0;
-            for (Op op : ops) total += op.in();
+            for (Op op : ops) total += com.kadikular.quantimium.reactor.ReactorLedger.weight(op.item(), op.in());
             return total;
         }
 
@@ -439,7 +439,8 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
             HorizonCoreBlockEntity horizon = visibleCore();
             if (!storing || stack.isEmpty() || horizon == null || !horizon.accepts()) return stack;
-            int fits = (int) Math.min(stack.getCount(), horizon.room() - promises.pendingIn());
+            int fits = (int) Math.min(stack.getCount(), com.kadikular.quantimium.reactor.ReactorLedger.fits(ItemResource.of(stack),
+                    horizon.room() - promises.pendingIn()));
             if (fits <= 0) return stack;
             if (!simulate) {
                 if (Transaction.getLifecycle() == Transaction.Lifecycle.OPEN) {
@@ -505,6 +506,139 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         return core() == null ? null : offered;
     }
 
+    /** The Reactor's fluids to the network: what it holds or passes on of each, and room for more while it stores. */
+    @Override
+    @Nullable
+    public net.neoforged.neoforge.fluids.capability.IFluidHandler fluids() {
+        return core() == null ? null : fluidView;
+    }
+
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler fluidView = new net.neoforged.neoforge.fluids.capability.IFluidHandler() {
+        /** Its offers of fluids, in order; held only, not what would be made. */
+        private List<Offer> fluidOffers() {
+            List<Offer> out = new ArrayList<>();
+            for (Offer offer : offers()) if (com.kadikular.quantimium.recipe.FluidEntry.is(offer.item()) && offer.held() + offer.passed() > 0) out.add(offer);
+            return out;
+        }
+
+        @Override
+        public int getTanks() {
+            return fluidOffers().size() + 1;
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack getFluidInTank(int tank) {
+            List<Offer> list = fluidOffers();
+            if (tank < 0 || tank >= list.size()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            Offer offer = list.get(tank);
+            return com.kadikular.quantimium.recipe.FluidEntry.fluid(offer.item()).toStack((int) Math.min(Integer.MAX_VALUE, offer.held() + offer.passed()));
+        }
+
+        @Override
+        public int getTankCapacity(int tank) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isFluidValid(int tank, net.neoforged.neoforge.fluids.FluidStack stack) {
+            return storing;
+        }
+
+        @Override
+        public int fill(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+            if (resource.isEmpty()) return 0;
+            ItemStack entry = com.kadikular.quantimium.recipe.FluidEntry.of(resource).copyWithCount(resource.getAmount());
+            return resource.getAmount() - offered.insertItem(0, entry, action.simulate()).getCount();
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack drain(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+            if (resource.isEmpty() || !catchUp()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            Offer offer = offerMap.get(com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(resource)));
+            if (offer == null) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            // Held and passed on only: a fluid isn't made to order for a pipe.
+            int most = (int) Math.min(resource.getAmount(), offer.held() + offer.passed());
+            if (most <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            Offer real = new Offer(offer.item(), offer.held(), offer.passed(), 0);
+            ItemStack got = action.execute() && Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
+                    ? promises.out(real, most) : give(real, most, action.simulate());
+            return got.isEmpty() ? net.neoforged.neoforge.fluids.FluidStack.EMPTY : resource.copyWithAmount(got.getCount());
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack drain(int maxDrain, FluidAction action) {
+            List<Offer> list = fluidOffers();
+            if (list.isEmpty() || maxDrain <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            return drain(com.kadikular.quantimium.recipe.FluidEntry.fluid(list.getFirst().item()).toStack(maxDrain), action);
+        }
+    };
+
+    /** The fluids the Reactor would make, to a network taking them: made as they're drained. */
+    @Override
+    @Nullable
+    public net.neoforged.neoforge.fluids.capability.IFluidHandler madeFluids() {
+        return core() == null || !offersCraftable() ? null : madeView;
+    }
+
+    private final net.neoforged.neoforge.fluids.capability.IFluidHandler madeView = new net.neoforged.neoforge.fluids.capability.IFluidHandler() {
+        /** Its offers of fluids it could make, in order: all of each, held, passed on, and made. */
+        private List<Offer> made() {
+            List<Offer> out = new ArrayList<>();
+            for (Offer offer : offers()) if (com.kadikular.quantimium.recipe.FluidEntry.is(offer.item()) && offer.craftable() > 0) out.add(offer);
+            return out;
+        }
+
+        private static long all(Offer offer) {
+            return offer.held() + offer.passed() + offer.craftable();
+        }
+
+        @Override
+        public int getTanks() {
+            return made().size();
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack getFluidInTank(int tank) {
+            List<Offer> list = made();
+            if (tank < 0 || tank >= list.size()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            return com.kadikular.quantimium.recipe.FluidEntry.fluid(list.get(tank).item()).toStack((int) Math.min(Integer.MAX_VALUE, all(list.get(tank))));
+        }
+
+        @Override
+        public int getTankCapacity(int tank) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public boolean isFluidValid(int tank, net.neoforged.neoforge.fluids.FluidStack stack) {
+            return false;
+        }
+
+        @Override
+        public int fill(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+            return 0;
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack drain(net.neoforged.neoforge.fluids.FluidStack resource, FluidAction action) {
+            if (resource.isEmpty() || !catchUp()) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            Offer offer = offerMap.get(com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(resource)));
+            if (offer == null) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            int most = (int) Math.min(resource.getAmount(), all(offer));
+            if (most <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            ItemStack got = action.execute() && Transaction.getLifecycle() == Transaction.Lifecycle.OPEN
+                    ? promises.out(offer, most) : give(offer, most, action.simulate());
+            return got.isEmpty() ? net.neoforged.neoforge.fluids.FluidStack.EMPTY : resource.copyWithAmount(got.getCount());
+        }
+
+        @Override
+        public net.neoforged.neoforge.fluids.FluidStack drain(int maxDrain, FluidAction action) {
+            List<Offer> list = made();
+            if (list.isEmpty() || maxDrain <= 0) return net.neoforged.neoforge.fluids.FluidStack.EMPTY;
+            return drain(com.kadikular.quantimium.recipe.FluidEntry.fluid(list.getFirst().item()).toStack(maxDrain), action);
+        }
+    };
+
     @Override
     public BlockPos inventoryPos() {
         return worldPosition;
@@ -520,7 +654,8 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     /** By item, as a network takes from it: what a slot showing it would give. */
     @Override
     public ItemStack takeListed(ItemResource item, int max, boolean simulate) {
-        if (!catchUp()) return ItemStack.EMPTY;
+        // A fluid goes through its fluid handler, never as an item.
+        if (!catchUp() || com.kadikular.quantimium.recipe.FluidEntry.is(item)) return ItemStack.EMPTY;
         Offer offer = offerMap.get(item);
         if (offer == null || max <= 0) return ItemStack.EMPTY;
         // Inside a transaction (a Logistics Materialiser's move, which may yet be undone), only promised.
@@ -534,7 +669,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
 
     @Nullable
     private LogisticsController controller() {
-        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition);
+        return level == null ? null : LaserNetworks.logisticsAt(level, worldPosition, channel);
     }
 
     /** The network's members, never a Reactor Logistics Port: the Reactor is never shown itself. */
@@ -557,6 +692,8 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         if (networkStockTick == tick) return networkStock;
         networkStockTick = tick;
         Map<ItemResource, Long> stock = new HashMap<>();
+        // The network's fluids too, as their entries in mB: the Reactor plans with them as with what it holds.
+        Logistics.fluids(networkMembers()).forEach((fluid, amount) -> stock.merge(com.kadikular.quantimium.recipe.FluidEntry.key(fluid), amount, Long::sum));
         for (LogisticsMember member : networkMembers()) {
             if (member.role() == Role.REQUESTER) continue;
             IItemHandler inventory = member.inventory();
@@ -576,6 +713,14 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         if (simulate) return Math.min(amount, stock().getOrDefault(item, 0L));
         List<LogisticsMember> members = networkMembers();
         long got = 0;
+        if (com.kadikular.quantimium.recipe.FluidEntry.is(item)) {
+            // A fluid from the network's tanks.
+            var wanted = com.kadikular.quantimium.recipe.FluidEntry.fluid(item).toStack(1);
+            got = Logistics.takeFluid(members, each -> net.neoforged.neoforge.fluids.FluidStack.isSameFluidSameComponents(each, wanted),
+                    (int) Math.min(Integer.MAX_VALUE, amount), false).getAmount();
+            networkStockTick = Long.MIN_VALUE;
+            return got;
+        }
         while (got < amount) {
             ItemStack more = Logistics.take(members, stack -> ItemResource.of(stack).equals(item), (int) Math.min(Integer.MAX_VALUE, amount - got), false);
             if (more.isEmpty()) break;
@@ -660,10 +805,31 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         return new com.kadikular.quantimium.menu.ReactorLogisticsPortMenu(containerId, inventory, this);
     }
 
+    /** The channel it serves ({@link com.kadikular.quantimium.laser.Channels}): 0 unless set. */
+    private int channel;
+
+    @Override
+    public int channel() {
+        return channel;
+    }
+
+    /** Sets its channel: the network works itself out again. */
+    public void setChannel(int channel) {
+        // One network's, as a receptacle is: not on All.
+        int to = com.kadikular.quantimium.laser.Channels.of(channel);
+        this.channel = to == com.kadikular.quantimium.laser.Channels.ALL ? 0 : to;
+        setChanged();
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            com.kadikular.quantimium.laser.LaserNetworks.changed(level);
+        }
+    }
+
     @Override
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         out.putInt("Priority", priority);
+        out.putInt("Channel", channel);
         out.putBoolean("Storing", storing);
         out.putBoolean("Sharing", sharing);
         out.putBoolean("Allow", allow);
@@ -676,6 +842,8 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     protected void loadAdditional(ValueInput in) {
         super.loadAdditional(in);
         priority = in.getIntOr("Priority", 0);
+        channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
+        if (channel == com.kadikular.quantimium.laser.Channels.ALL) channel = 0;
         storing = in.getBooleanOr("Storing", true);
         sharing = in.getBooleanOr("Sharing", true);
         allow = in.getBooleanOr("Allow", true);

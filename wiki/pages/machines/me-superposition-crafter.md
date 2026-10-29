@@ -43,6 +43,9 @@ smelting recipe; a Modern Industrialization macerator every macerator recipe; a 
 chamber every enriching recipe. The patterns are made in code: each lists the recipe's ingredients,
 with every item a tag allows as an alternative ("any raw iron"), and its guaranteed outputs.
 
+[[mechanic:ae2.superposition.fluids]] Recipes with fluids are offered too, their fluids as AE2 fluids: an Energized Power
+Fluid Freezer makes ice from a bucket's worth of the network's water, and a Stone Liquefier's lava goes to a fluid cell.
+
 Left out, as the Quantum Crafter leaves them out:
 
 - recipes with fluid inputs;
