@@ -264,9 +264,10 @@ public class HorizonCoreScreen extends QuantumMachineScreen<HorizonCoreMenu> {
         if (activeOverlay() == null && event.button() == 0) {
             HorizonViewPayload.Entry cell = cellAt(shown(), mouseX, mouseY);
             if (cell != null) {
-                // A fluid by the bucket.
-                int each = com.kadikular.quantimium.recipe.FluidEntry.is(cell.item()) ? net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : 1;
-                int count = (event.hasShiftDown() ? cell.item().toStack(1).getMaxStackSize() : 1) * each;
+                // A fluid by the bucket: one, or sixteen with shift.
+                boolean fluid = com.kadikular.quantimium.recipe.FluidEntry.is(cell.item());
+                int stack = fluid ? 16 : cell.item().toStack(1).getMaxStackSize();
+                int count = (event.hasShiftDown() ? stack : 1) * (fluid ? net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME : 1);
                 ClientPacketDistributor.sendToServer(new HorizonRequestPayload(menu.getBlockEntity().getBlockPos(),
                         cell.item(), count));
                 click();
