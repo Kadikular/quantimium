@@ -102,6 +102,40 @@ public enum Lens {
     }
 
     /**
+     * Where its line sits in a Spectroscope's spectrum, in nm: near its colour's wavelength, UV in the ultraviolet and
+     * Phantom (passing through blocks) in the infrared. Pinks and other colours no single wavelength makes sit in the
+     * deep red.
+     */
+    public int wavelength() {
+        return switch (this) {
+            case UV -> 365;
+            case VOID -> 395;
+            case UNREALISE -> 410;
+            case INSERT -> 455;
+            case RANGE -> 465;
+            case PRECISION -> 478;
+            case FREEZE -> 486;
+            case PLACE -> 497;
+            case ACCELERATE -> 507;
+            case PICKUP -> 525;
+            case INTERACT -> 550;
+            case FILTER -> 568;
+            case AMPLIFY -> 580;
+            case EXTRACT -> 591;
+            case HARVEST -> 603;
+            case SMELT -> 616;
+            case CRUSH -> 630;
+            case DAMAGE -> 648;
+            case REDSTONE -> 662;
+            case ISOLATE -> 676;
+            case HEAL -> 692;
+            case SPEED -> 712;
+            case HARMONIC -> 732;
+            case PHANTOM -> 850;
+        };
+    }
+
+    /**
      * The beam's tint: its actions' colours mixed, or with none its first modifier's, or 0 for the usual
      * azure.
      */

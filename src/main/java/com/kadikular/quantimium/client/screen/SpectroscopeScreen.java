@@ -8,33 +8,39 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeSet;
 
 /**
- * What a Spectroscope read off a laser. Above, its spectrum: a line for each action at that lens's place (ordered by its
- * colour, red to violet), as tall as its Amplify lenses make it and as wide as its Speed lenses, a notch for a Filter, a
- * dot for Pickup; logistics a band at the end, a tick for each port. Then the channels it carries, to look at one; and a
- * table of its actions and the ports they use.
+ * What a Spectroscope read off a laser. Above, its spectrum by wavelength, shortest on the left: a line for each lens
+ * the laser carries at its {@link Lens#wavelength()}, and the bands of power and logistics, each over its range in the
+ * colours of its wavelengths. Then the channels it carries, to look at one; and below, what's going on: each action with
+ * the lenses changing it, and each port with the actions using it, as icons.
  */
 public class SpectroscopeScreen extends Screen {
 
     private static final int WIDTH = 280;
-    private static final int HEIGHT = 216;
+    private static final int HEIGHT = 236;
     private static final int SPECTRUM_X = 12;
-    private static final int SPECTRUM_Y = 30;
+    private static final int SPECTRUM_Y = 26;
     private static final int SPECTRUM_W = 256;
     private static final int SPECTRUM_H = 64;
-    /** Where the band of logistics starts, after the actions' places. */
-    private static final int BAND_W = 34;
-    private static final int CHIPS_Y = SPECTRUM_Y + SPECTRUM_H + 8;
+    /** The wavelengths across the spectrum, nm. */
+    private static final int NM_FROM = 340;
+    private static final int NM_TO = 870;
+    /** The bands: power (the plain laser's azure) and logistics (its deeper blue). */
+    private static final int POWER_FROM = 478, POWER_TO = 512;
+    private static final int LOGISTICS_FROM = 428, LOGISTICS_TO = 462;
+    private static final int CHIPS_Y = SPECTRUM_Y + SPECTRUM_H + 14;
     private static final int TABLE_Y = CHIPS_Y + 16;
-    private static final int ROW = 10;
+    private static final int ROW = 18;
 
     private static final int PANEL = 0xF0090B16;
     private static final int INNER = 0xFF05060D;
@@ -42,10 +48,6 @@ public class SpectroscopeScreen extends Screen {
     private static final int TEXT = 0xFFDDE6FA;
     private static final int DIM = 0xFF8595B8;
     private static final int FAINT = 0xFF3A4668;
-    private static final int LOGISTICS = 0xFF3F6FD8;
-
-    /** The lenses that are lines of a spectrum, ordered by their colour's hue: what places them. */
-    private static final List<Lens> PLACES = places();
 
     private final SpectroscopeReading reading;
     /** The channel looked at, or {@link Channels#ALL} for every one. */
@@ -59,24 +61,6 @@ public class SpectroscopeScreen extends Screen {
         this.reading = reading;
     }
 
-    private static List<Lens> places() {
-        List<Lens> lenses = new ArrayList<>();
-        for (Lens lens : Lens.values()) {
-            if (lens.action || lens == Lens.PICKUP || lens == Lens.SMELT || lens == Lens.CRUSH || lens == Lens.PHANTOM) lenses.add(lens);
-        }
-        lenses.sort(java.util.Comparator.comparingDouble(lens -> hue(lens.colour)));
-        return lenses;
-    }
-
-    /** A colour's hue, 0 (red) to 1. */
-    private static double hue(int colour) {
-        double r = (colour >> 16 & 0xFF) / 255.0, g = (colour >> 8 & 0xFF) / 255.0, b = (colour & 0xFF) / 255.0;
-        double max = Math.max(r, Math.max(g, b)), min = Math.min(r, Math.min(g, b)), span = max - min;
-        if (span == 0) return 0;
-        double hue = max == r ? (g - b) / span : max == g ? 2 + (b - r) / span : 4 + (r - g) / span;
-        return (hue / 6 + 1) % 1;
-    }
-
     @Override
     protected void init() {
         left = (width - WIDTH) / 2;
@@ -88,12 +72,38 @@ public class SpectroscopeScreen extends Screen {
         return false;
     }
 
+    // ---- what's shown ----
+
+    private boolean onChannel(int carried) {
+        return channel == Channels.ALL || Channels.serves(channel, carried);
+    }
+
     private List<SpectroscopeReading.Line> shown() {
-        return reading.lines().stream().filter(line -> channel == Channels.ALL || Channels.serves(channel, line.channel())).toList();
+        return reading.lines().stream().filter(line -> onChannel(line.channel())).toList();
     }
 
     private List<SpectroscopeReading.Port> shownPorts() {
-        return reading.ports().stream().filter(port -> channel == Channels.ALL || Channels.serves(port.channel(), channel)).toList();
+        return reading.ports().stream().filter(port -> onChannel(port.channel())).toList();
+    }
+
+    /** Every lens the laser carries on the channel looked at, and the channels each is on. */
+    private Map<Lens, TreeSet<Integer>> lenses() {
+        Map<Lens, TreeSet<Integer>> lenses = new EnumMap<>(Lens.class);
+        for (SpectroscopeReading.Line line : shown()) {
+            lenses.computeIfAbsent(line.lens(), k -> new TreeSet<>()).add(line.channel());
+            for (Lens lens : Lens.values()) {
+                if (lens != line.lens() && line.has(lens)) lenses.computeIfAbsent(lens, k -> new TreeSet<>()).add(line.channel());
+            }
+        }
+        // What changes the laser itself, on every channel.
+        if (reading.boosts() > 0) lenses.computeIfAbsent(Lens.RANGE, k -> new TreeSet<>()).add(Channels.ALL);
+        if (reading.uv()) lenses.computeIfAbsent(Lens.UV, k -> new TreeSet<>()).add(Channels.ALL);
+        if (reading.phantom()) lenses.computeIfAbsent(Lens.PHANTOM, k -> new TreeSet<>()).add(Channels.ALL);
+        return lenses;
+    }
+
+    private boolean logistics() {
+        return reading.logistics().stream().anyMatch(this::onChannel);
     }
 
     /** The channels it carries anything on: actions, and logistics. */
@@ -139,11 +149,41 @@ public class SpectroscopeScreen extends Screen {
         graphics.fill(x + w - 1, y, x + w, y + h, colour);
     }
 
-    /** Where {@code lens}'s place is across the spectrum. */
-    private int placeX(Lens lens) {
-        int index = PLACES.indexOf(lens);
-        int span = SPECTRUM_W - BAND_W - 16;
-        return left + SPECTRUM_X + 8 + (index < 0 ? 0 : index * span / Math.max(1, PLACES.size() - 1));
+    /** Where {@code nm} is across the spectrum. */
+    private int nmX(double nm) {
+        return left + SPECTRUM_X + 2 + (int) Math.round((nm - NM_FROM) * (SPECTRUM_W - 4) / (double) (NM_TO - NM_FROM));
+    }
+
+    /** The wavelength at column {@code x}. */
+    private double xNm(int x) {
+        return NM_FROM + (x - left - SPECTRUM_X - 2) * (NM_TO - NM_FROM) / (double) (SPECTRUM_W - 4);
+    }
+
+    /**
+     * The colour light of {@code nm} looks: the visible range as a rainbow, fading to a dim violet into the ultraviolet
+     * and a dim red into the infrared.
+     */
+    static int nmColour(double nm) {
+        double r, g, b;
+        if (nm < 380) {
+            r = 0.35; g = 0.0; b = 0.55;
+        } else if (nm < 440) {
+            r = -(nm - 440) / 60; g = 0; b = 1;
+        } else if (nm < 490) {
+            r = 0; g = (nm - 440) / 50; b = 1;
+        } else if (nm < 510) {
+            r = 0; g = 1; b = -(nm - 510) / 20;
+        } else if (nm < 580) {
+            r = (nm - 510) / 70; g = 1; b = 0;
+        } else if (nm < 645) {
+            r = 1; g = -(nm - 645) / 65; b = 0;
+        } else {
+            r = 1; g = 0; b = 0;
+        }
+        // Dimmer at the ends, as an eye sees them.
+        double fall = nm < 420 ? 0.3 + 0.7 * Math.max(0, nm - 380) / 40 : nm > 700 ? 0.3 + 0.7 * Math.max(0, 780 - nm) / 80 : 1.0;
+        if (nm < 380 || nm > 780) fall = 0.3;
+        return 0xFF000000 | (int) (r * fall * 255) << 16 | (int) (g * fall * 255) << 8 | (int) (b * fall * 255);
     }
 
     /** The spectrum; what's under the mouse, as a tooltip. */
@@ -152,89 +192,73 @@ public class SpectroscopeScreen extends Screen {
         int x0 = left + SPECTRUM_X, y0 = top + SPECTRUM_Y;
         graphics.fill(x0, y0, x0 + SPECTRUM_W, y0 + SPECTRUM_H, INNER);
         outline(graphics, x0, y0, SPECTRUM_W, SPECTRUM_H, FAINT);
-        int base = y0 + SPECTRUM_H - 6;
-        // The axis: each place a faint tick in its colour, so where an action would show is known.
-        for (Lens lens : PLACES) graphics.fill(placeX(lens), base + 1, placeX(lens) + 1, base + 4, dim(lens.colour, 0x60));
-        if (reading.lines().isEmpty()) {
-            Component plain = Component.translatable("gui.quantimium.spectroscope.plain");
-            graphics.text(font, plain, x0 + (SPECTRUM_W - BAND_W - font.width(plain)) / 2, y0 + SPECTRUM_H / 2 - 4, DIM, false);
+        int base = y0 + SPECTRUM_H - 5;
+        // The axis: the wavelengths' own colours, dim, along the foot.
+        for (int x = x0 + 2; x < x0 + SPECTRUM_W - 2; x++) graphics.fill(x, base + 1, x + 1, base + 4, dim(nmColour(xNm(x)), 0x70));
+        for (int nm = 400; nm <= 800; nm += 100) {
+            int x = nmX(nm);
+            graphics.fill(x, base - 2, x + 1, base + 1, FAINT);
+            drawSmall(graphics, Integer.toString(nm), x, y0 + SPECTRUM_H + 2, DIM);
         }
+        drawSmall(graphics, "UV", nmX(358), y0 + SPECTRUM_H + 2, DIM);
+        drawSmall(graphics, "IR", nmX(842), y0 + SPECTRUM_H + 2, DIM);
         List<Component> tip = null;
-        // Lines of one action on several channels sit side by side, a channel's number over each.
-        java.util.Map<Lens, Integer> seen = new java.util.EnumMap<>(Lens.class);
-        for (SpectroscopeReading.Line line : shown()) {
-            Lens lens = line.lens();
-            int offset = seen.merge(lens, 1, Integer::sum) - 1;
-            int x = placeX(lens) + offset * 4;
-            int height = Math.min(SPECTRUM_H - 14, 22 + line.amps() * 9);
-            int half = line.speed();
-            int top = base - height;
+
+        // Bands: power, while it carries any; logistics, while it's a network's. Low, in their wavelengths' colours.
+        if (!reading.unpowered() && reading.flow() >= 0) tip = band(graphics, POWER_FROM, POWER_TO, base, 16, "gui.quantimium.spectroscope.power", mouseX, mouseY, tip);
+        if (logistics()) tip = band(graphics, LOGISTICS_FROM, LOGISTICS_TO, base, 24, "gui.quantimium.spectroscope.logistics", mouseX, mouseY, tip);
+
+        // A line for each lens it carries, at its wavelength.
+        Map<Lens, TreeSet<Integer>> lenses = lenses();
+        if (lenses.isEmpty() && !logistics()) {
+            Component plain = Component.translatable("gui.quantimium.spectroscope.plain");
+            graphics.text(font, plain, x0 + (SPECTRUM_W - font.width(plain)) / 2, y0 + 10, DIM, false);
+        }
+        for (Map.Entry<Lens, TreeSet<Integer>> entry : lenses.entrySet()) {
+            Lens lens = entry.getKey();
+            int x = nmX(lens.wavelength());
             int colour = lens.colour | 0xFF000000;
-            // Range lenses: a faint line beside it for each.
-            for (int r = 1; r <= reading.boosts(); r++) graphics.fill(x + half + 1 + r * 2, top + 6, x + half + 2 + r * 2, base, dim(colour, 0x50));
-            if (line.has(Lens.HARMONIC)) {
-                graphics.fill(x - half - 3, top + 10, x - half - 2, base, dim(colour, 0x80));
-                graphics.fill(x + half + 3, top + 10, x + half + 4, base, dim(colour, 0x80));
+            int height = lens.action ? SPECTRUM_H - 14 : SPECTRUM_H - 26;
+            graphics.fill(x - 1, base - height, x + 2, base, dim(colour, 0x50));
+            graphics.fill(x, base - height, x + 1, base, colour);
+            if (mouseX >= x - 2 && mouseX <= x + 3 && mouseY >= base - height && mouseY <= base) {
+                List<Component> lines = new ArrayList<>();
+                lines.add(Component.translatable(lens.itemKey()).withColor(lens.colour & 0xFFFFFF));
+                lines.add(Component.translatable("gui.quantimium.spectroscope.nm", lens.wavelength()).withStyle(ChatFormatting.GRAY));
+                lines.add(Component.translatable("gui.quantimium.spectroscope.on", channelList(entry.getValue())).withStyle(ChatFormatting.GRAY));
+                tip = lines;
             }
-            graphics.fill(x - half, top, x + half + 1, base, colour);
-            // A glow at its foot, as a line in a real spectrum blooms.
-            graphics.fill(x - half - 1, base - 3, x + half + 2, base, dim(colour, 0x70));
-            if (line.has(Lens.VOID)) graphics.fill(x, top + 2, x + 1, base, 0xFF000000);
-            if (line.has(Lens.FILTER)) graphics.fill(x - half, top + height / 3, x + half + 1, top + height / 3 + 2, INNER);
-            if (line.has(Lens.PICKUP) && lens != Lens.PICKUP) graphics.fill(x - 1, top - 4, x + 2, top - 1, 0xFF5BE38A);
-            if (channel == Channels.ALL && channels().size() > 2) {
-                String label = Channels.label(line.channel()).getString();
-                drawSmall(graphics, label, x + 1, top - (line.has(Lens.PICKUP) ? 10 : 6), DIM);
-            }
-            if (mouseX >= x - half - 2 && mouseX <= x + half + 2 && mouseY >= top - 4 && mouseY <= base) tip = lineTip(line);
-        }
-        // Logistics: a band at the end, a tick for each port its actions use.
-        int bandX = x0 + SPECTRUM_W - BAND_W;
-        graphics.fill(bandX, y0 + 1, bandX + 1, y0 + SPECTRUM_H - 1, FAINT);
-        boolean logistics = !reading.logistics().isEmpty()
-                && (channel == Channels.ALL || reading.logistics().stream().anyMatch(each -> Channels.serves(channel, each)));
-        if (logistics) graphics.fill(bandX + 4, y0 + 12, bandX + BAND_W - 4, base, dim(LOGISTICS, 0x90));
-        List<SpectroscopeReading.Port> ports = shownPorts();
-        for (int i = 0; i < ports.size() && i < 12; i++) {
-            int px = bandX + 5 + i * 2;
-            graphics.fill(px, y0 + 6, px + 1, y0 + 11, 0xFFE4DCFF);
-        }
-        if (mouseX >= bandX && mouseX < x0 + SPECTRUM_W && mouseY >= y0 && mouseY < y0 + SPECTRUM_H) {
-            List<Component> band = new ArrayList<>();
-            band.add(Component.translatable(logistics ? "gui.quantimium.spectroscope.logistics" : "gui.quantimium.spectroscope.no_logistics"));
-            band.add(Component.translatable("gui.quantimium.spectroscope.ports", ports.size()).withStyle(ChatFormatting.GRAY));
-            tip = band;
         }
         return tip;
     }
 
-    private List<Component> lineTip(SpectroscopeReading.Line line) {
-        List<Component> tip = new ArrayList<>();
-        tip.add(Component.translatable(line.lens().itemKey()).withColor(line.lens().colour & 0xFFFFFF));
-        tip.add(Component.translatable("gui.quantimium.channel", Channels.label(line.channel())).withStyle(ChatFormatting.GRAY));
-        MutableComponent modifiers = modifiers(line);
-        if (!modifiers.getString().isEmpty()) tip.add(modifiers.withStyle(ChatFormatting.GRAY));
-        if (line.ports() > 0) tip.add(Component.translatable("gui.quantimium.spectroscope.ports", line.ports()).withStyle(ChatFormatting.GRAY));
-        line.said().ifPresent(said -> tip.add(said.copy().withStyle(ChatFormatting.DARK_GRAY)));
+    /** A band over {@code from}-{@code to} nm, {@code height} high; its tooltip if the mouse is over it. */
+    @Nullable
+    private List<Component> band(GuiGraphicsExtractor graphics, int from, int to, int base, int height, String key, int mouseX, int mouseY,
+                                 @Nullable List<Component> tip) {
+        int x1 = nmX(from), x2 = nmX(to);
+        for (int x = x1; x <= x2; x++) {
+            // Softer towards its edges, as a band of light is.
+            double edge = Math.min(x - x1, x2 - x) / (double) Math.max(1, (x2 - x1) / 2);
+            int h = (int) Math.round(height * (0.45 + 0.55 * Math.sqrt(Math.max(0, edge))));
+            graphics.fill(x, base - h, x + 1, base, dim(nmColour(xNm(x)), 0xA0));
+        }
+        if (mouseX >= x1 && mouseX <= x2 && mouseY >= base - height && mouseY <= base) {
+            return List.of(Component.translatable(key), Component.translatable("gui.quantimium.spectroscope.nm_range", from, to).withStyle(ChatFormatting.GRAY));
+        }
         return tip;
     }
 
-    /** A line's modifiers, by name: "Pickup, Amplify ×2, Speed". */
-    private static MutableComponent modifiers(SpectroscopeReading.Line line) {
-        MutableComponent text = Component.empty();
-        boolean first = true;
-        for (Lens lens : Lens.values()) {
-            if (lens.action || lens == line.lens() || !line.has(lens)) continue;
-            if (!first) text.append(", ");
-            first = false;
-            text.append(Component.translatable(lens.itemKey()));
-            int times = lens == Lens.AMPLIFY ? line.amps() : lens == Lens.SPEED ? line.speed() : 1;
-            if (times > 1) text.append(" ×" + times);
+    private static Component channelList(TreeSet<Integer> channels) {
+        StringBuilder text = new StringBuilder();
+        for (int each : channels) {
+            if (!text.isEmpty()) text.append(", ");
+            text.append(Channels.label(each).getString());
         }
-        return text;
+        return Component.literal(text.toString());
     }
 
-    /** A number in half-size text, centred on {@code x}. */
+    /** Text at half size, centred on {@code x}. */
     private void drawSmall(GuiGraphicsExtractor graphics, String text, int x, int y, int colour) {
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, y);
@@ -250,17 +274,16 @@ public class SpectroscopeScreen extends Screen {
     // ---- channels ----
 
     private int chipX(int index) {
-        return left + SPECTRUM_X + index * 20;
+        return left + SPECTRUM_X + font.width(Component.translatable("gui.quantimium.spectroscope.channels")) + 6 + index * 20;
     }
 
     @Nullable
     private List<Component> chips(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         List<Integer> channels = channels();
-        graphics.text(font, Component.translatable("gui.quantimium.spectroscope.channels"), left + SPECTRUM_X, top + CHIPS_Y - 1, DIM, false);
-        int labelW = font.width(Component.translatable("gui.quantimium.spectroscope.channels")) + 6;
+        graphics.text(font, Component.translatable("gui.quantimium.spectroscope.channels"), left + SPECTRUM_X, top + CHIPS_Y, DIM, false);
         List<Component> tip = null;
         for (int i = 0; i < channels.size(); i++) {
-            int x = chipX(i) + labelW;
+            int x = chipX(i);
             int y = top + CHIPS_Y - 2;
             boolean on = channels.get(i) == channel;
             boolean over = mouseX >= x && mouseX < x + 18 && mouseY >= y && mouseY < y + 11;
@@ -277,9 +300,8 @@ public class SpectroscopeScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         List<Integer> channels = channels();
-        int labelW = font.width(Component.translatable("gui.quantimium.spectroscope.channels")) + 6;
         for (int i = 0; i < channels.size(); i++) {
-            int x = chipX(i) + labelW;
+            int x = chipX(i);
             int y = top + CHIPS_Y - 2;
             if (event.x() >= x && event.x() < x + 18 && event.y() >= y && event.y() < y + 11) {
                 channel = channels.get(i);
@@ -298,33 +320,56 @@ public class SpectroscopeScreen extends Screen {
         return true;
     }
 
-    // ---- the table ----
+    // ---- what's going on: the table ----
 
     private int tableRows() {
-        return (HEIGHT - TABLE_Y - 22) / ROW;
+        return (HEIGHT - TABLE_Y - 20) / ROW;
     }
 
-    /** One row of the table: its swatch colour (0 for none), its text, and its tooltip. */
-    private record Row(int colour, Component text, Component channel, @Nullable List<Component> tip) {}
+    /** An icon in a row: the item drawn, how many (Amplify ×2), and its name on hover. */
+    private record Icon(ItemStack stack, int times, List<Component> tip) {}
+
+    /** One row: what it's about (an action lens, a port), what changes or uses it, its channel. */
+    private record Row(Icon main, List<Icon> by, int channel) {}
+
+    private static Icon lensIcon(Lens lens, int times, @Nullable Component more) {
+        ItemStack stack = lensStack(lens);
+        List<Component> tip = new ArrayList<>();
+        tip.add(Component.translatable(lens.itemKey()).withColor(lens.colour & 0xFFFFFF));
+        if (more != null) tip.add(more.copy().withStyle(ChatFormatting.DARK_GRAY));
+        return new Icon(stack, times, tip);
+    }
+
+    /** The item of {@code lens}: its icon. */
+    private static ItemStack lensStack(Lens lens) {
+        String key = lens.itemKey();
+        var id = net.minecraft.resources.Identifier.tryParse(key.replaceFirst("^item\\.", "").replaceFirst("\\.", ":"));
+        var item = id == null ? null : net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(id);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
+    }
 
     private List<Row> rows() {
         List<Row> rows = new ArrayList<>();
         for (SpectroscopeReading.Line line : shown()) {
-            MutableComponent text = Component.translatable(line.lens().itemKey());
-            MutableComponent modifiers = modifiers(line);
-            if (!modifiers.getString().isEmpty()) text.append(Component.literal(" + ").withStyle(ChatFormatting.DARK_GRAY)).append(modifiers.withStyle(ChatFormatting.GRAY));
-            rows.add(new Row(line.lens().colour, text, Channels.label(line.channel()), lineTip(line)));
+            List<Icon> by = new ArrayList<>();
+            for (Lens lens : Lens.values()) {
+                if (lens.action || lens == line.lens() || !line.has(lens)) continue;
+                by.add(lensIcon(lens, lens == Lens.AMPLIFY ? line.amps() : lens == Lens.SPEED ? line.speed() : 1, null));
+            }
+            rows.add(new Row(lensIcon(line.lens(), 1, line.said().orElse(null)), by, line.channel()));
         }
         for (SpectroscopeReading.Port port : shownPorts()) {
-            String role = switch (port.role()) {
+            List<Component> tip = new ArrayList<>();
+            tip.add(port.icon().getHoverName());
+            tip.add(Component.translatable("gui.quantimium.spectroscope.port." + switch (port.role()) {
                 case 1 -> "collects";
                 case 2 -> "sends";
                 default -> "both";
-            };
-            MutableComponent text = port.name().copy().append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY))
-                    .append(Component.translatable("gui.quantimium.spectroscope.port." + role).withStyle(ChatFormatting.GRAY));
-            rows.add(new Row(0, text, Channels.label(port.channel()), List.of(port.name(),
-                    Component.literal(port.pos().toShortString()).withStyle(ChatFormatting.DARK_GRAY))));
+            }).withStyle(ChatFormatting.GRAY));
+            tip.add(Component.literal(port.pos().toShortString()).withStyle(ChatFormatting.DARK_GRAY));
+            List<Icon> by = new ArrayList<>();
+            for (int action : port.actions()) by.add(lensIcon(Lens.values()[Math.clamp(action, 0, Lens.values().length - 1)], 1, null));
+            rows.add(new Row(new Icon(port.icon(), 1, tip), by, port.channel()));
         }
         return rows;
     }
@@ -332,37 +377,45 @@ public class SpectroscopeScreen extends Screen {
     @Nullable
     private List<Component> table(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int x = left + SPECTRUM_X, y = top + TABLE_Y;
-        graphics.text(font, Component.translatable("gui.quantimium.spectroscope.what"), x + 8, y, DIM, false);
-        Component ch = Component.translatable("gui.quantimium.spectroscope.channel");
-        graphics.text(font, ch, x + SPECTRUM_W - font.width(ch), y, DIM, false);
-        graphics.fill(x, y + 9, x + SPECTRUM_W, y + 10, FAINT);
+        graphics.fill(x, y - 2, x + SPECTRUM_W, y - 1, FAINT);
         List<Row> rows = rows();
         scroll = Math.min(scroll, Math.max(0, rows.size() - tableRows()));
         List<Component> tip = null;
         for (int i = 0; i < tableRows() && scroll + i < rows.size(); i++) {
             Row row = rows.get(scroll + i);
-            int ry = y + 12 + i * ROW;
-            if (row.colour() != 0) graphics.fill(x, ry + 1, x + 5, ry + 7, row.colour() | 0xFF000000);
-            else graphics.fill(x + 1, ry + 3, x + 4, ry + 5, 0xFFE4DCFF);
-            graphics.text(font, font.substrByWidth(row.text(), SPECTRUM_W - 40).getString(), x + 8, ry, TEXT, false);
-            String label = row.channel().getString();
-            graphics.text(font, label, x + SPECTRUM_W - font.width(label), ry, TEXT, false);
-            if (mouseX >= x && mouseX < x + SPECTRUM_W && mouseY >= ry - 1 && mouseY < ry + ROW - 1) tip = row.tip();
+            int ry = y + 1 + i * ROW;
+            tip = icon(graphics, row.main(), x, ry, mouseX, mouseY, tip);
+            // A gap, then what changes it (or, for a port, the actions using it).
+            graphics.fill(x + 21, ry + 3, x + 22, ry + 13, FAINT);
+            for (int j = 0; j < row.by().size(); j++) tip = icon(graphics, row.by().get(j), x + 26 + j * 18, ry, mouseX, mouseY, tip);
+            String label = Channels.label(row.channel()).getString();
+            graphics.text(font, label, x + SPECTRUM_W - font.width(label) - 2, ry + 4, TEXT, false);
+            if (mouseX >= x + SPECTRUM_W - 22 && mouseX < x + SPECTRUM_W && mouseY >= ry && mouseY < ry + 16) {
+                tip = List.of(Component.translatable("gui.quantimium.channel", Channels.label(row.channel())));
+            }
         }
-        if (rows.isEmpty()) graphics.text(font, Component.translatable("gui.quantimium.spectroscope.nothing"), x + 8, y + 12, DIM, false);
+        if (rows.isEmpty()) graphics.text(font, Component.translatable("gui.quantimium.spectroscope.nothing"), x + 4, y + 5, DIM, false);
         if (rows.size() > tableRows()) {
             String more = (scroll + 1) + "–" + Math.min(rows.size(), scroll + tableRows()) + " / " + rows.size();
-            drawSmall(graphics, more, x + SPECTRUM_W / 2, y + 12 + tableRows() * ROW, DIM);
+            drawSmall(graphics, more, x + SPECTRUM_W / 2, y + 2 + tableRows() * ROW, DIM);
         }
         return tip;
     }
 
+    @Nullable
+    private List<Component> icon(GuiGraphicsExtractor graphics, Icon icon, int x, int y, int mouseX, int mouseY, @Nullable List<Component> tip) {
+        if (!icon.stack().isEmpty()) graphics.item(icon.stack(), x, y);
+        if (icon.times() > 1) {
+            graphics.nextStratum();
+            graphics.text(font, "×" + icon.times(), x + 17 - font.width("×" + icon.times()), y + 9, TEXT, true);
+        }
+        return mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16 ? icon.tip() : tip;
+    }
+
     /** Reach, sources, power, and what the laser is besides. */
     private void footer(GuiGraphicsExtractor graphics) {
-        MutableComponent line = Component.translatable("gui.quantimium.spectroscope.footer", reading.reach(), reading.sources(),
+        var line = Component.translatable("gui.quantimium.spectroscope.footer", reading.reach(), reading.sources(),
                 String.format(Locale.ROOT, "%,d", reading.flow()));
-        if (reading.uv()) line.append(" · ").append(Component.translatable("item.quantimium.uv_lens"));
-        if (reading.phantom()) line.append(" · ").append(Component.translatable("item.quantimium.phantom_lens"));
         if (reading.mirrored()) line.append(" · ").append(Component.translatable("gui.quantimium.spectroscope.mirrored"));
         if (reading.unpowered()) line.append(" · ").append(Component.translatable("gui.quantimium.spectroscope.unpowered"));
         graphics.fill(left + 8, top + HEIGHT - 16, left + WIDTH - 8, top + HEIGHT - 15, FAINT);

@@ -38,18 +38,17 @@ A run of laser reaches as far as its source's range. Mirrors, relays, prisms and
 ## Reading a laser
 
 The <ItemLink id="quantimium:spectroscope" /> splits a laser into its lines. Use it on any laser block to read the
-laser leaving it, or aim it at a laser in the air (up to 16 blocks off) to read that laser.
+laser leaving it, or aim it at a laser in the air (up to 16 blocks off, not through walls) to read that laser. Lasers laid
+over each other where you aim, like two joined at a Laser Splitter, are read together.
 
-- **The spectrum.** Each action is a line at its own place, ordered by its lens's color from red to violet. Amplify
-  makes a line taller and Speed wider; a Filter cuts a notch in it, Pickup puts a dot over it, Harmonic adds a line
-  each side, Void darkens its core, and each Range lens adds a faint line beside it. Logistics is a band at the end,
-  with a tick for each port the laser's actions use.
-- **Channels.** Pick All, or one channel the laser carries, to see only what's on it. On All, each line shows its
-  channel over it.
-- **The table.** Each action with its modifiers and channel, then each Laser Port, Tank or Controller its actions use,
-  whether it collects or sends, and its channel. Hover over a line or row for more; scroll for the rest.
-- At the bottom: how far a run reaches, from how many sources, the power it carries, and whether it's UV, Phantom,
-  in the mirror or unpowered.
+- **The spectrum.** Each lens the laser carries is a line at its own wavelength, from the ultraviolet on the left (the
+  UV Lens) to the infrared on the right (the Phantom Lens). Power and logistics are low bands over their own
+  wavelengths. Hover over a line for its lens, wavelength and channels.
+- **Channels.** Pick All, or one channel the laser carries, to see only what's on it.
+- **Below**, what's going on: each action's lens, then the lenses changing it (×2 for two), and its channel; then each
+  Laser Port, Tank or Controller the actions use, with the actions using it. Hover over an icon for its name.
+- At the bottom: how far a run reaches, from how many sources, the power it carries, and whether it's in the mirror
+  or unpowered.
 
 ## Looking into a laser
 

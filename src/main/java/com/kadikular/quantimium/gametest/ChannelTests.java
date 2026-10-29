@@ -177,8 +177,10 @@ public final class ChannelTests {
             helper.assertTrue(reading.ports().stream().anyMatch(p -> p.channel() == 3 && (p.role() & 1) != 0), "the port on 3, collecting");
             // Looking across the beam, a block past the mount, from the side.
             var over = helper.absolutePos(new BlockPos(8, Y, 8)).getCenter();
-            var aim = networks.aimedAt(over.add(0, 0, -3), over.add(0, 0, 3));
-            helper.assertTrue(aim != null && aim.pos().equals(at), "aimed across its beam, the mount's: " + aim);
+            var aims = networks.aimedAt(helper.getLevel(), null, over.add(0, 0.6, -3), new net.minecraft.world.phys.Vec3(0, -0.2, 1), 16);
+            helper.assertTrue(!aims.isEmpty() && aims.getFirst().pos().equals(at), "looking down across its laser, the mount's: " + aims);
+            helper.assertTrue(networks.aimedAt(helper.getLevel(), null, over.add(0, 0.6, -20), new net.minecraft.world.phys.Vec3(0, -0.03, 1), 16).isEmpty(),
+                    "not from further than it reaches");
             TestSupport.finishLasers(helper);
             helper.succeed();
         });

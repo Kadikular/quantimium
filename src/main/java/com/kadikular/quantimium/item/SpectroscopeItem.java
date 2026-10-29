@@ -42,10 +42,12 @@ public class SpectroscopeItem extends Item {
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
-        var eye = player.getEyePosition();
-        var aim = LaserNetworks.of(server).aimedAt(eye, eye.add(player.getLookAngle().scale(REACH)));
-        if (aim == null) return InteractionResult.PASS;
-        return show(server, player, aim.pos(), aim.beam()) ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        var networks = LaserNetworks.of(server);
+        var aims = networks.aimedAt(server, player, player.getEyePosition(), player.getLookAngle(), REACH);
+        var reading = networks.read(server, aims);
+        if (reading == null) return InteractionResult.PASS;
+        send(server, player, aims.getFirst().pos(), reading);
+        return InteractionResult.SUCCESS;
     }
 
     /** How far off a laser in the air can be read. */
@@ -55,11 +57,16 @@ public class SpectroscopeItem extends Item {
     private static boolean show(ServerLevel level, @org.jspecify.annotations.Nullable Player player, net.minecraft.core.BlockPos pos, int beam) {
         var reading = LaserNetworks.of(level).read(level, pos, beam);
         if (reading == null) return false;
+        send(level, player, pos, reading);
+        return true;
+    }
+
+    private static void send(ServerLevel level, @org.jspecify.annotations.Nullable Player player, net.minecraft.core.BlockPos pos,
+                             com.kadikular.quantimium.laser.SpectroscopeReading reading) {
         if (player instanceof net.minecraft.server.level.ServerPlayer server) {
             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(server, new com.kadikular.quantimium.network.SpectroscopePayload(reading));
         }
         level.playSound(null, pos, SoundEvents.SPYGLASS_USE, SoundSource.PLAYERS, 0.8f, 1.2f);
-        return true;
     }
 
     @Override

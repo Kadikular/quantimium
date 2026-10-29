@@ -39,8 +39,11 @@ public record SpectroscopeReading(Component where, int reach, int sources, int m
         }
     }
 
-    /** A port its actions use: its name, where, its channel, and whether it collects, sends, or both (1, 2, 3). */
-    public record Port(Component name, BlockPos pos, int channel, int role) {}
+    /**
+     * A port its actions use: as an item (its icon and name), where, its channel, whether it collects, sends, or both
+     * (1, 2, 3), and the actions using it (ordinals of {@link Lens}).
+     */
+    public record Port(net.minecraft.world.item.ItemStack icon, BlockPos pos, int channel, int role, List<Integer> actions) {}
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Line> LINE = StreamCodec.of(
             (buf, line) -> {
@@ -57,12 +60,14 @@ public record SpectroscopeReading(Component where, int reach, int sources, int m
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Port> PORT = StreamCodec.of(
             (buf, port) -> {
-                ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buf, port.name);
+                net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, port.icon);
                 buf.writeBlockPos(port.pos);
                 buf.writeVarInt(port.channel);
                 buf.writeVarInt(port.role);
+                ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)).encode(buf, port.actions);
             },
-            buf -> new Port(ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buf), buf.readBlockPos(), buf.readVarInt(), buf.readVarInt()));
+            buf -> new Port(net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.decode(buf), buf.readBlockPos(), buf.readVarInt(), buf.readVarInt(),
+                    new ArrayList<>(ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)).decode(buf))));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SpectroscopeReading> STREAM_CODEC = StreamCodec.of(
             (buf, reading) -> {
@@ -81,6 +86,22 @@ public record SpectroscopeReading(Component where, int reach, int sources, int m
                     new ArrayList<>(LINE.apply(ByteBufCodecs.list(256)).decode(buf)),
                     new ArrayList<>(PORT.apply(ByteBufCodecs.list(256)).decode(buf)),
                     new ArrayList<>(ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)).decode(buf))));
+
+    /** This and {@code other} as one laser: lasers met where a Spectroscope was aimed (joined, or laid one over another). */
+    public SpectroscopeReading with(SpectroscopeReading other) {
+        java.util.Map<List<Integer>, Line> merged = new java.util.LinkedHashMap<>();
+        for (Line line : lines) merged.put(List.of(line.action, line.channel), line);
+        for (Line line : other.lines) {
+            merged.merge(List.of(line.action, line.channel), line, (a, b) -> new Line(a.action, a.channel, a.modifiers | b.modifiers,
+                    Math.max(a.amps, b.amps), Math.max(a.speed, b.speed), Math.max(a.ports, b.ports), a.said.isPresent() ? a.said : b.said));
+        }
+        List<Port> ports = new ArrayList<>(this.ports);
+        for (Port port : other.ports) if (ports.stream().noneMatch(p -> p.pos.equals(port.pos))) ports.add(port);
+        List<Integer> logistics = new ArrayList<>(this.logistics);
+        for (int channel : other.logistics) if (!logistics.contains(channel)) logistics.add(channel);
+        return new SpectroscopeReading(where, Math.max(reach, other.reach), sources + other.sources, marks | other.marks,
+                Math.max(boosts, other.boosts), Math.max(flow, other.flow), new ArrayList<>(merged.values()), ports, logistics);
+    }
 
     public boolean uv() {
         return (marks & Light.UV) != 0;

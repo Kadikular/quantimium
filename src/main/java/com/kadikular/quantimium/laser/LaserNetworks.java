@@ -281,43 +281,66 @@ public final class LaserNetworks {
     public record Aim(BlockPos pos, int beam) {}
 
     /**
-     * The beam the look from {@code eye} to {@code to} passes nearest (within half a block), nearest the eye: what a
-     * Spectroscope used in mid-air reads. Null for none.
+     * The lasers a look from {@code eye} along {@code look} meets first, within {@code reach} and short of the first solid
+     * block: every one passing within half a block of the first point along it that any does (lasers joined, or one laid
+     * over another, are read together). Empty for none.
      */
-    @Nullable
-    public Aim aimedAt(net.minecraft.world.phys.Vec3 eye, net.minecraft.world.phys.Vec3 to) {
-        Aim best = null;
-        double nearest = Double.MAX_VALUE;
+    public List<Aim> aimedAt(net.minecraft.world.level.Level level, @Nullable net.minecraft.world.entity.Entity looker,
+                             net.minecraft.world.phys.Vec3 eye, net.minecraft.world.phys.Vec3 look, double reach) {
+        net.minecraft.world.phys.Vec3 end = eye.add(look.normalize().scale(reach));
+        // Not through walls: only as far as the look goes before a block stops it.
+        var hit = level.clip(looker != null
+                ? new net.minecraft.world.level.ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE, looker)
+                : new net.minecraft.world.level.ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE, net.minecraft.world.phys.shapes.CollisionContext.empty()));
+        double far = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? reach : hit.getLocation().distanceTo(eye) + 0.3;
+        net.minecraft.world.phys.Vec3 step = look.normalize().scale(0.2);
+        // The beams' segments near the look, found once.
+        List<Object[]> near = new ArrayList<>();
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(eye, eye.add(look.normalize().scale(far))).inflate(1.0);
         for (Map.Entry<BlockPos, List<LaserBeam>> entry : beams.entrySet()) {
             List<LaserBeam> list = entry.getValue();
             for (int i = 0; i < list.size(); i++) {
                 List<net.minecraft.world.phys.Vec3> points = list.get(i).points();
                 for (int p = 0; p + 1 < points.size(); p++) {
-                    double[] along = closest(eye, to, points.get(p), points.get(p + 1));
-                    if (along == null || along[1] > 0.25 || along[0] >= nearest) continue;
-                    nearest = along[0];
-                    best = new Aim(entry.getKey(), i);
+                    var a = points.get(p);
+                    var b = points.get(p + 1);
+                    if (!box.intersects(new net.minecraft.world.phys.AABB(a, b).inflate(0.5))) continue;
+                    near.add(new Object[] {new Aim(entry.getKey(), i), a, b});
                 }
             }
         }
-        return best;
+        if (near.isEmpty()) return List.of();
+        net.minecraft.world.phys.Vec3 at = eye;
+        for (double gone = 0; gone <= far; gone += 0.2, at = at.add(step)) {
+            List<Aim> found = new ArrayList<>();
+            for (Object[] segment : near) {
+                Aim aim = (Aim) segment[0];
+                if (!found.contains(aim) && distanceSqr(at, (net.minecraft.world.phys.Vec3) segment[1], (net.minecraft.world.phys.Vec3) segment[2]) <= 0.25) found.add(aim);
+            }
+            if (!found.isEmpty()) return found;
+        }
+        return List.of();
     }
 
-    /**
-     * Where the look segment {@code a}-{@code b} passes closest to the beam segment {@code c}-{@code d}: how far along the
-     * look, and the squared distance between them there. Null if they're parallel.
-     */
+    /** The squared distance from {@code p} to the segment {@code a}-{@code b}. */
+    private static double distanceSqr(net.minecraft.world.phys.Vec3 p, net.minecraft.world.phys.Vec3 a, net.minecraft.world.phys.Vec3 b) {
+        net.minecraft.world.phys.Vec3 ab = b.subtract(a);
+        double length = ab.dot(ab);
+        double t = length == 0 ? 0 : Math.clamp(p.subtract(a).dot(ab) / length, 0.0, 1.0);
+        return p.distanceToSqr(a.add(ab.scale(t)));
+    }
+
+    /** For the Spectroscope: the lasers at {@code aims}, read as one (null if none reads). */
     @Nullable
-    private static double[] closest(net.minecraft.world.phys.Vec3 a, net.minecraft.world.phys.Vec3 b,
-                                    net.minecraft.world.phys.Vec3 c, net.minecraft.world.phys.Vec3 d) {
-        net.minecraft.world.phys.Vec3 u = b.subtract(a), v = d.subtract(c), w = a.subtract(c);
-        double uu = u.dot(u), uv = u.dot(v), vv = v.dot(v), uw = u.dot(w), vw = v.dot(w);
-        double denom = uu * vv - uv * uv;
-        if (denom < 1.0E-9) return null;
-        double s = Math.clamp((uv * vw - vv * uw) / denom, 0.0, 1.0);
-        double t = Math.clamp((uu * vw - uv * uw) / denom, 0.0, 1.0);
-        net.minecraft.world.phys.Vec3 gap = w.add(u.scale(s)).subtract(v.scale(t));
-        return new double[] {s * Math.sqrt(uu), gap.dot(gap)};
+    public SpectroscopeReading read(net.minecraft.world.level.Level level, List<Aim> aims) {
+        SpectroscopeReading merged = null;
+        for (Aim aim : aims) {
+            SpectroscopeReading one = read(level, aim.pos(), aim.beam());
+            merged = merged == null ? one : one == null ? merged : merged.with(one);
+        }
+        return merged;
     }
 
     /**
@@ -332,11 +355,11 @@ public final class LaserNetworks {
         LaserBeam one = beam >= 0 && beam < out.size() ? out.get(beam) : null;
         Light light = one != null ? lightOf(pos, one) : lights.get(pos);
         net.minecraft.network.chat.MutableComponent where = level.getBlockState(pos).getBlock().getName().copy();
-        if (one != null) where.append(" · ").append(net.minecraft.network.chat.Component.translatable("gui.quantimium.spectroscope.face." + one.face().getSerializedName()));
         long flow = one != null ? one.flow() : throughput(pos);
         if (light == null) return new SpectroscopeReading(where, 0, 0, 0, 0, flow, List.of(), List.of(), List.of());
         List<SpectroscopeReading.Line> lines = new ArrayList<>();
         Map<BlockPos, int[]> ports = new LinkedHashMap<>();
+        Map<BlockPos, java.util.Set<Integer>> using = new HashMap<>();
         for (Light.Stream stream : light.acting()) {
             Set<BlockPos> used = new HashSet<>();
             java.util.Optional<net.minecraft.network.chat.Component> said = java.util.Optional.empty();
@@ -347,10 +370,12 @@ public final class LaserNetworks {
                 for (BlockPos at : action.collectors()) {
                     used.add(at);
                     ports.computeIfAbsent(at, k -> new int[1])[0] |= 1;
+                    using.computeIfAbsent(at, k -> new java.util.LinkedHashSet<>()).add(stream.action().ordinal());
                 }
                 for (BlockPos at : action.senders()) {
                     used.add(at);
                     ports.computeIfAbsent(at, k -> new int[1])[0] |= 2;
+                    using.computeIfAbsent(at, k -> new java.util.LinkedHashSet<>()).add(stream.action().ordinal());
                 }
                 if (said.isEmpty() && action.said() != null) said = java.util.Optional.of(action.said());
             }
@@ -360,7 +385,8 @@ public final class LaserNetworks {
         List<SpectroscopeReading.Port> found = new ArrayList<>();
         ports.forEach((at, role) -> {
             LaserNode port = nodes.get(at);
-            found.add(new SpectroscopeReading.Port(level.getBlockState(at).getBlock().getName(), at, port == null ? 0 : port.channel(), role[0]));
+            found.add(new SpectroscopeReading.Port(level.getBlockState(at).getBlock().asItem().getDefaultInstance(), at,
+                    port == null ? 0 : port.channel(), role[0], List.copyOf(using.getOrDefault(at, java.util.Set.of()))));
         });
         return new SpectroscopeReading(where, light.reach(), light.feeders().size(), light.marks(), light.boosts(), flow, lines, found,
                 List.copyOf(light.logistics().values()));
