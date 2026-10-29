@@ -50,6 +50,8 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
     private static final int TANK_H = 50;
     /** A grid cell for what's in output tank {@code i}: this plus i. */
     private static final int TANK_CELL = 90_000;
+    /** A grid cell for pin {@code i} with none there or to be made: this plus i. */
+    private static final int PIN_CELL = 95_000;
     private static final int COHERENCE_X = 72;
     private static final int COHERENCE_Y = 60;
     private static final int COHERENCE_WIDTH = 32;
@@ -70,7 +72,15 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
      * One item shown: where it's shown (an output slot, 0 to 53, or a preview, from GHOST_BASE), how many are in its
      * outputs, how many more it can make, and the preview that can make the most of it (-1 for none).
      */
-    private record Cell(int slot, ItemStack stack, long stored, long craftable, int previewSlot) {
+    private record Cell(int slot, ItemStack stack, long stored, long craftable, int previewSlot, boolean pinned) {
+        Cell(int slot, ItemStack stack, long stored, long craftable, int previewSlot) {
+            this(slot, stack, stored, craftable, previewSlot, false);
+        }
+
+        Cell pin() {
+            return new Cell(slot, stack, stored, craftable, previewSlot, true);
+        }
+
         long count() {
             return stored + craftable;
         }
@@ -244,6 +254,26 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         java.util.Comparator<Cell> byCount = java.util.Comparator.comparingLong(
                 (Cell c) -> com.kadikular.quantimium.recipe.FluidEntry.is(c.stack()) ? c.count() / 1_000 : c.count()).reversed();
         latest.sort(byName ? name : byCount.thenComparing(name));
+        // What's pinned first, in the order it was pinned, there or not.
+        List<net.neoforged.neoforge.transfer.item.ItemResource> pins = be.pins();
+        if (!pins.isEmpty()) {
+            List<Cell> pinned = new ArrayList<>();
+            for (int i = 0; i < pins.size(); i++) {
+                var pin = pins.get(i);
+                Cell found = null;
+                for (int j = 0; j < latest.size() && found == null; j++) {
+                    if (pin.matches(latest.get(j).stack())) found = latest.remove(j);
+                }
+                if (found == null) {
+                    ItemStack stack = pin.toStack(1);
+                    if (!query.isEmpty() && !stack.getHoverName().getString().toLowerCase(Locale.ROOT).contains(query)) continue;
+                    found = new Cell(PIN_CELL + i, stack, 0, 0, -1);
+                }
+                pinned.add(found.pin());
+            }
+            pinned.addAll(latest);
+            latest = pinned;
+        }
         if (minecraft == null || !minecraft.hasShiftDown()) {
             shown = latest;
             return latest;
@@ -299,11 +329,6 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         return -1;
     }
 
-    /** A fluid's amount for a small count: mB under a bucket, then buckets as items count (B, kB, MB). */
-    private static String fluidCount(long mb) {
-        return mb >= 1_000 ? HorizonCoreScreen.slotCount(mb / 1_000) + "B" : mb + "mB";
-    }
-
     @Override
     protected void renderMachineBg(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         for (int i = 0; i < QuantumCrafterBlockEntity.INPUT_TANKS; i++) {
@@ -332,13 +357,26 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
                 int x = leftPos + GRID_X + col * CELL;
                 int y = topPos + GRID_Y + row * CELL;
                 if (cell == hovered) graphics.fill(x, y, x + CELL - 2, y + CELL - 2, QuantumUiColours.ROW_HOVER);
+                // Pinned: a mark in the top left corner; with none there or to be made, a 0.
+                if (cell.pinned()) {
+                    graphics.fill(x - 1, y - 1, x + 2, y + 2, QuantumUiColours.ACCENT);
+                    if (cell.count() == 0) {
+                        net.neoforged.neoforge.fluids.FluidStack none = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(cell.stack());
+                        if (none.isEmpty()) graphics.item(cell.stack(), x, y);
+                        else com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics, none.copyWithAmount(1_000), x, y);
+                        graphics.nextStratum();
+                        graphics.fill(x, y, x + 16, y + 16, 0x80000000);
+                        smallCount(graphics, "0", x, y, 11, 0xFFAAAAAA);
+                        continue;
+                    }
+                }
                 net.neoforged.neoforge.fluids.FluidStack fluid = com.kadikular.quantimium.recipe.FluidEntry.fluidOf(cell.stack());
                 if (!fluid.isEmpty()) {
                     // A fluid, as a terminal shows it: what's in the output tanks, and in violet under it what can be made too.
                     com.kadikular.quantimium.client.screen.ui.FluidSprites.tile(graphics, fluid, x, y);
                     boolean makes = cell.craftable() > 0;
-                    if (makes && cell.stored() > 0) smallCount(graphics, fluidCount(cell.stored()), x, y, 0, 0xFFFFFFFF);
-                    smallCount(graphics, fluidCount(cell.count()), x, y, 11, makes ? 0xFFB49CFF : 0xFFFFFFFF);
+                    if (makes && cell.stored() > 0) smallCount(graphics, HorizonCoreScreen.fluidCount(cell.stored()), x, y, 0, 0xFFFFFFFF);
+                    smallCount(graphics, HorizonCoreScreen.fluidCount(cell.count()), x, y, 11, makes ? 0xFFB49CFF : 0xFFFFFFFF);
                     continue;
                 }
                 graphics.item(cell.stack().copyWithCount(1), x, y);
@@ -390,6 +428,7 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
         Cell cell = cellAt(shown, mouseX, mouseY);
         if (cell == null) return;
         List<Component> lines = new ArrayList<>(getTooltipFromContainerItem(cell.stack()));
+        if (cell.pinned()) lines.add(Component.translatable("gui.quantimium.quantum_crafter.pinned").withStyle(ChatFormatting.AQUA));
         if (com.kadikular.quantimium.recipe.FluidEntry.is(cell.stack())) {
             if (cell.stored() > 0) {
                 lines.add(Component.translatable("gui.quantimium.quantum_crafter.stored_fluid", String.format(Locale.ROOT, "%,d", cell.stored()))
@@ -459,8 +498,22 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
             scrollRow = bar.press(event.y(), topPos, maxScroll(shown));
             return true;
         }
+        if (onGrid(event.x(), event.y()) && event.button() == 2 && !menu.isBasic()) {
+            // Middle-click pins it, or unpins it.
+            Cell cell = cellAt(shown, event.x(), event.y());
+            if (cell != null) {
+                int pin = indexOfPin(cell.stack());
+                if (pin >= 0) press(QuantumCrafterMenu.BUTTON_UNPIN + pin);
+                else if (cell.slot() >= TANK_CELL) press(QuantumCrafterMenu.BUTTON_PIN_TANK + cell.slot() - TANK_CELL);
+                else press(QuantumCrafterMenu.PIN * QuantumCrafterMenu.TAKE + (cell.previewSlot() >= 0 ? cell.previewSlot() : cell.slot()));
+            }
+            swallowRelease = event.button();
+            return true;
+        }
         if (onGrid(event.x(), event.y()) && (event.button() == 0 || event.button() == 1)) {
             Cell cell = cellAt(shown, event.x(), event.y());
+            // A pin with none there or to be made: nothing to take.
+            if (cell != null && cell.slot() >= PIN_CELL) cell = null;
             if (cell != null && com.kadikular.quantimium.recipe.FluidEntry.is(cell.stack())) {
                 // A fluid fills what's in hand: from the output tanks, then made.
                 if (!menu.getCarried().isEmpty()) {
@@ -480,6 +533,12 @@ public class QuantumCrafterScreen extends QuantumMachineScreen<QuantumCrafterMen
             return true;
         }
         return super.mouseClicked(event, doubleClick);
+    }
+
+    private int indexOfPin(ItemStack stack) {
+        List<net.neoforged.neoforge.transfer.item.ItemResource> pins = menu.getBlockEntity().pins();
+        for (int i = 0; i < pins.size(); i++) if (pins.get(i).matches(stack)) return i;
+        return -1;
     }
 
     @Override

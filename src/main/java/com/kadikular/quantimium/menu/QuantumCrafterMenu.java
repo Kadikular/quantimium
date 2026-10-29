@@ -175,6 +175,12 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
      * on), or plus the output tank holding it.
      */
     public static final int BUTTON_FLUID = 60_000;
+    /** Pins or unpins what's in output tank this + i. */
+    public static final int BUTTON_PIN_TANK = 70_000;
+    /** Unpins pin this + i. */
+    public static final int BUTTON_UNPIN = 80_000;
+    /** {@code PIN * TAKE + slot}: pins or unpins what an output slot or preview shows. */
+    public static final int PIN = 5;
 
     @org.jetbrains.annotations.Nullable
     private net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> cursorFluids(Player player) {
@@ -185,6 +191,27 @@ public class QuantumCrafterMenu extends AbstractContainerMenu {
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (id >= BUTTON_PIN_TANK && id < BUTTON_PIN_TANK + QuantumCrafterBlockEntity.OUTPUT_TANKS) {
+            var fluid = blockEntity.outputTanks().get(id - BUTTON_PIN_TANK);
+            if (fluid.isEmpty()) return false;
+            blockEntity.togglePin(com.kadikular.quantimium.recipe.FluidEntry.key(net.neoforged.neoforge.transfer.fluid.FluidResource.of(fluid)));
+            return true;
+        }
+        if (id >= BUTTON_UNPIN && id < BUTTON_UNPIN + QuantumCrafterBlockEntity.MAX_PINS) {
+            int at = id - BUTTON_UNPIN;
+            if (at >= blockEntity.pins().size()) return false;
+            blockEntity.togglePin(blockEntity.pins().get(at));
+            return true;
+        }
+        if (id / TAKE == PIN) {
+            int local = id % TAKE;
+            ItemStack shown = local < QuantumCrafterBlockEntity.OUTPUT_SLOTS
+                    ? blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.OUTPUT_START + local)
+                    : local >= QuantumCrafterBlockEntity.GHOST_BASE ? blockEntity.getGhost(local) : ItemStack.EMPTY;
+            if (shown.isEmpty()) return false;
+            blockEntity.togglePin(net.neoforged.neoforge.transfer.item.ItemResource.of(shown));
+            return true;
+        }
         if (id >= BUTTON_TANK && id < BUTTON_TANK + QuantumCrafterBlockEntity.INPUT_TANKS) {
             var held = cursorFluids(player);
             if (held == null || !blockEntity.pour(held, id - BUTTON_TANK)) return false;

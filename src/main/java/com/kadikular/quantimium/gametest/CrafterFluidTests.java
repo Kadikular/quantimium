@@ -141,7 +141,7 @@ public final class CrafterFluidTests {
                 "100 mB of lava in its output tank");
 
         // A pipe fills its input tanks and drains its output tanks.
-        var pipe = net.neoforged.neoforge.fluids.capability.IFluidHandler.of(crafter.fluidAutomation());
+        var pipe = net.neoforged.neoforge.fluids.capability.IFluidHandler.of(crafter.fluidAutomation(net.minecraft.core.Direction.UP));
         helper.assertValueEqual(pipe.fill(new FluidStack(Fluids.WATER, 500), net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE),
                 500, "a pipe fills the input tanks");
         helper.assertValueEqual(crafter.inputTanks().get(0).getAmount(), 1_250, "into the water's tank");

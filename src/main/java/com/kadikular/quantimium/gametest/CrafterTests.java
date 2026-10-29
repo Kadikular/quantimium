@@ -349,23 +349,39 @@ public final class CrafterTests {
         });
     }
 
-    // covers: crafter.preferred
-    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_lock", timeoutTicks = 60)
-    public static void theLockKeepsThePreviewToTheLastRecipe(GameTestHelper helper) {
+    // covers: crafter.pins
+    @GameTest(template = TestSupport.FLOOR_9, batch = "crafter_lock", timeoutTicks = 120)
+    public static void lockedItMakesOnlyWhatsPinnedEachInTurn(GameTestHelper helper) {
         QuantumCrafterBlockEntity crafter = crafter(helper, CRAFTER, Items.CRAFTING_TABLE);
-        grid(crafter, new ItemStack(Items.OAK_PLANKS, 32));
+        grid(crafter, new ItemStack(Items.OAK_PLANKS, 64));
+        ChestBlockEntity chest = chest(helper, CRAFTER.east(), ItemStack.EMPTY);
         helper.runAfterDelay(5, () -> {
-            helper.assertTrue(crafter.getPreview().size() > 1, "planks should offer several crafts");
-            crafter.pullHandler().extractItem(ghostSlot(crafter, Items.STICK), 4, false);
+            helper.assertTrue(crafter.getPreview().size() > 2, "planks should offer several crafts");
+            crafter.togglePin(net.neoforged.neoforge.transfer.item.ItemResource.of(Items.STICK));
+            crafter.togglePin(net.neoforged.neoforge.transfer.item.ItemResource.of(Items.OAK_SLAB));
             crafter.setRecipeLocked(true);
+            crafter.applySideConfigs(with(crafter.getSideConfigs(), new SideConfig(Direction.EAST, SideMode.BOTH,
+                    SideConfig.ALL_ITEM_INPUTS, SideConfig.ALL_ITEM_OUTPUTS, false, true,
+                    SideMode.DISABLED, SideConfig.ALL_FLUID_INPUTS, SideConfig.ALL_FLUID_OUTPUTS, false, false)));
         });
-        helper.runAfterDelay(10, () -> {
-            List<ResolvedCraft> preview = crafter.getPreview();
-            helper.assertTrue(!preview.isEmpty(), "the locked recipe should still be offered");
-            for (ResolvedCraft craft : preview) {
-                helper.assertTrue(craft.primaryOutput().is(Items.STICK),
-                        "locked, only the last recipe taken should be shown, found " + craft.primaryOutput());
+        helper.runAfterDelay(15, () -> {
+            for (ResolvedCraft craft : crafter.getPreview()) {
+                helper.assertTrue(craft.primaryOutput().is(Items.STICK) || craft.primaryOutput().is(Items.OAK_SLAB),
+                        "locked, only what's pinned should be shown, found " + craft.primaryOutput());
             }
+        });
+        helper.runAfterDelay(110, () -> {
+            int sticks = 0, slabs = 0, other = 0;
+            for (int slot = 0; slot < chest.getContainerSize(); slot++) {
+                ItemStack stack = chest.getItem(slot);
+                if (stack.is(Items.STICK)) sticks += stack.getCount();
+                else if (stack.is(Items.OAK_SLAB)) slabs += stack.getCount();
+                else if (!stack.isEmpty()) other += stack.getCount();
+            }
+            helper.assertTrue(sticks > 0 && slabs > 0, "both pins pushed out in turn: " + sticks + " sticks, " + slabs + " slabs");
+            helper.assertValueEqual(other, 0, "nothing unpinned pushed");
+            crafter.togglePin(net.neoforged.neoforge.transfer.item.ItemResource.of(Items.STICK));
+            helper.assertValueEqual(crafter.pins().size(), 1, "a pin taken off");
             helper.succeed();
         });
     }

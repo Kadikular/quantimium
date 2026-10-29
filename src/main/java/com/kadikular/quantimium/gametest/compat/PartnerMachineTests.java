@@ -88,6 +88,54 @@ public final class PartnerMachineTests {
         });
     }
 
+    // covers: crafter.fluid_sides
+    @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_fluid_pulls", timeoutTicks = 60)
+    public static void aPipeTakesTheFluidAPreviewMakes(GameTestHelper helper) {
+        if (skip(helper, "energizedpower")) return;
+        var liquefier = fluidCrafter(helper, 2, "energizedpower:stone_liquefier");
+        com.kadikular.quantimium.gametest.CrafterTests.grid(liquefier, new ItemStack(net.minecraft.world.item.Items.ANDESITE, 4));
+        helper.runAfterDelay(10, () -> {
+            var level = helper.getLevel();
+            var down = net.minecraft.core.Direction.DOWN;
+            var pipe = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, liquefier.getBlockPos(), down);
+            var lava = net.neoforged.neoforge.transfer.fluid.FluidResource.of(net.minecraft.world.level.material.Fluids.LAVA);
+            helper.assertTrue(pipe != null && net.neoforged.neoforge.transfer.ResourceHandlerUtil.contains(pipe, lava), "the lava it would make shows on its face");
+            // Asked and called off: nothing made.
+            try (var asked = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertTrue(pipe.extract(lava, 100, asked) == 100, "100 mB would come out");
+            }
+            helper.assertValueEqual(andesite(liquefier), 4, "no andesite used by asking");
+            try (var taken = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertValueEqual(pipe.extract(lava, 100, taken), 100, "100 mB taken");
+                taken.commit();
+            }
+            helper.assertTrue(andesite(liquefier) < 4, "andesite melted for it");
+
+            // A face set to take in only gives nothing out; a face with fluids off has no tanks.
+            var configs = new java.util.ArrayList<>(liquefier.getSideConfigs());
+            configs.set(down.get3DDataValue(), configs.get(down.get3DDataValue()).withFluidMode(com.kadikular.quantimium.block.entity.simulation.SideMode.INPUT));
+            liquefier.applySideConfigs(configs);
+            var input = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, liquefier.getBlockPos(), down);
+            try (var none = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+                helper.assertValueEqual(input.extract(lava, 100, none), 0, "nothing out of an input face");
+            }
+            configs.set(down.get3DDataValue(), configs.get(down.get3DDataValue()).withFluidMode(com.kadikular.quantimium.block.entity.simulation.SideMode.DISABLED));
+            liquefier.applySideConfigs(configs);
+            helper.assertTrue(level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.Fluid.BLOCK, liquefier.getBlockPos(), down) == null,
+                    "no tanks on a face with fluids off");
+            helper.succeed();
+        });
+    }
+
+    private static int andesite(com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity crafter) {
+        int count = 0;
+        for (int slot = 0; slot < com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity.INPUT_SLOTS; slot++) {
+            ItemStack stack = crafter.getInventory().getStackInSlot(slot);
+            if (stack.is(net.minecraft.world.item.Items.ANDESITE)) count += stack.getCount();
+        }
+        return count;
+    }
+
     // covers: crafter.fluids
     @GameTest(template = TestSupport.FLOOR_17, templateNamespace = NS, batch = "partner_energizedpower_linked_fluids", timeoutTicks = 60)
     public static void aStoneSolidifierDrawsOnLinkedTanks(GameTestHelper helper) {

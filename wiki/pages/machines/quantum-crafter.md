@@ -8,7 +8,7 @@
 <tr><th>Energy buffer</th><td>{{c:QuantumCrafterBlockEntity.ENERGY_CAPACITY}} FE</td></tr>
 <tr><th>Max input</th><td>{{c:QuantumCrafterBlockEntity.ENERGY_MAX_RECEIVE}} FE/t</td></tr>
 <tr><th>Slots</th><td>{{c:QuantumCrafterBlockEntity.INPUT_SLOTS}} input, {{c:QuantumCrafterBlockEntity.OUTPUT_SLOTS}} output, 1 catalyst</td></tr>
-<tr><th>Automation</th><td>Items, all six faces</td></tr>
+<tr><th>Automation</th><td>Items and fluids, all six faces</td></tr>
 <tr><th>Emits</th><td>1 flux per {{c:QuantumFlux.FE_PER_FLUX}} FE spent</td></tr>
 </table>
 </div>
@@ -128,9 +128,14 @@ taken, the ghost becomes the real items, and the preview is worked out again fro
   product of a two-output craft, or the rest of a run when a hopper takes less than one run makes.
   If the grid has no room for it, the take is refused.
 
-[[mechanic:crafter.preferred]] The last recipe you took becomes the **preferred** recipe and is listed
-first. The **recipe lock** shows only that recipe whenever it can be made, which stops a shared grid,
-or auto output, from making something else. When it can't be made, the full preview comes back.
+The last recipe you took is listed first.
+
+[[mechanic:crafter.pins]] **Middle-click** an output to **pin** it. Pinned outputs come first, in the
+order you pinned them, and stay shown with a 0 when none can be made. Middle-click one again to unpin
+it. Up to {{c:QuantumCrafterBlockEntity.MAX_PINS}} can be pinned.
+
+With the **lock** on (the padlock tab), the crafter makes only what's pinned: its preview, pipes, networks
+and auto output all see the pinned outputs alone. That stops a shared grid from making something else.
 
 ## Batch size
 
@@ -211,13 +216,14 @@ toward Medium.
 
 ## Automation
 
-[[mechanic:crafter.automation]] Items only; the crafter has no fluid ports.
+[[mechanic:crafter.automation]] Faces move items and fluids, each set apart.
 
 **Quantum Crafter.** The [side configuration](../concepts/side-configuration.md) (the Sides tab) sets each face to
 Off, In, Out or Both, and which grid slots and output slots it reaches. Every face starts
 as Both. With **auto input**, a face pulls from the block beside it once a second; with **auto
 output**, it commits and pushes a craft into it, sized to the room the neighbor has. Auto output
-uses the preferred recipe when it is available, otherwise the first one in the preview.
+uses the last recipe taken when it is available, otherwise the first one in the preview. Locked, it makes
+each pinned output in turn.
 
 **Basic Quantum Crafter.** Every face is both an input and an output, with no configuration and no
 auto push or pull. Hoppers and pipes do the moving.
@@ -238,7 +244,11 @@ network sees each ghost as a slot after the outputs, on any face that lets somet
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
   bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
   as you fill from it.
-- Pipes on any face fill the input tanks and drain the output tanks. A bucket used on the crafter
+- [[mechanic:crafter.fluid_sides]] Each face has its own fluid mode in the Sides tab, every face Both to
+  start. Pipes fill the input tanks and drain the output tanks, and take what a recipe making only
+  fluids shows, made as they take it. Auto input and output move up to {{c:QuantumCrafterBlockEntity.TANK_CAPACITY}} mB
+  a second; locked, auto output makes pinned fluids too.
+- A bucket used on the crafter
   fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
   bucket to fill or empty it.
 

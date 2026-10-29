@@ -17,7 +17,7 @@ navigation:
 | **Energy buffer** | 100,000,000 FE |
 | **Max input** | 10,000,000 FE/t |
 | **Slots** | 9 input, 54 output, 1 catalyst |
-| **Automation** | Items, all six faces |
+| **Automation** | Items and fluids, all six faces |
 | **Emits** | 1 flux per 1,000 FE spent |
 
 The Quantum Crafter does what another machine does, **instantly**, for extra energy. Put a machine
@@ -133,9 +133,14 @@ taken, the ghost becomes the real items, and the preview is worked out again fro
   product of a two-output craft, or the rest of a run when a hopper takes less than one run makes.
   If the grid has no room for it, the take is refused.
 
-The last recipe you took becomes the **preferred** recipe and is listed
-first. The **recipe lock** shows only that recipe whenever it can be made, which stops a shared grid,
-or auto output, from making something else. When it can't be made, the full preview comes back.
+The last recipe you took is listed first.
+
+**Middle-click** an output to **pin** it. Pinned outputs come first, in the
+order you pinned them, and stay shown with a 0 when none can be made. Middle-click one again to unpin
+it. Up to 27 can be pinned.
+
+With the **lock** on (the padlock tab), the crafter makes only what's pinned: its preview, pipes, networks
+and auto output all see the pinned outputs alone. That stops a shared grid from making something else.
 
 ## Batch size
 
@@ -216,13 +221,14 @@ toward Medium.
 
 ## Automation
 
-Items only; the crafter has no fluid ports.
+Faces move items and fluids, each set apart.
 
 **Quantum Crafter.** The [side configuration](../concepts/side-configuration.md) (the Sides tab) sets each face to
 Off, In, Out or Both, and which grid slots and output slots it reaches. Every face starts
 as Both. With **auto input**, a face pulls from the block beside it once a second; with **auto
 output**, it commits and pushes a craft into it, sized to the room the neighbor has. Auto output
-uses the preferred recipe when it is available, otherwise the first one in the preview.
+uses the last recipe taken when it is available, otherwise the first one in the preview. Locked, it makes
+each pinned output in turn.
 
 **Basic Quantum Crafter.** Every face is both an input and an output, with no configuration and no
 auto push or pull. Hoppers and pipes do the moving.
@@ -243,7 +249,11 @@ The crafter has 3 input tanks, right of the catalyst, and
 - Fluids show in the output grid with their amounts, as a terminal shows them. Click one holding a
   bucket (or any fluid container) to fill it. A recipe making only fluids shows there too, and is made
   as you fill from it.
-- Pipes on any face fill the input tanks and drain the output tanks. A bucket used on the crafter
+- Each face has its own fluid mode in the Sides tab, every face Both to
+  start. Pipes fill the input tanks and drain the output tanks, and take what a recipe making only
+  fluids shows, made as they take it. Auto input and output move up to 16,000 mB
+  a second; locked, auto output makes pinned fluids too.
+- A bucket used on the crafter
   fills its input tanks, or empty, fills from its output tanks. Click an input tank on its screen with a
   bucket to fill or empty it.
 

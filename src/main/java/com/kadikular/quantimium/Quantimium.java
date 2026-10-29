@@ -324,7 +324,7 @@ public class Quantimium {
         event.registerBlockEntity(
                 Capabilities.Fluid.BLOCK,
                 ModBlockEntities.QUANTUM_CRAFTER_BE.get(),
-                (be, context) -> be.fluidAutomation()
+                (be, context) -> be.fluidAutomation(context)
         );
 
         event.registerBlockEntity(
