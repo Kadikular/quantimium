@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0-alpha: Fluids and channels
 
 ### Fluids
 
