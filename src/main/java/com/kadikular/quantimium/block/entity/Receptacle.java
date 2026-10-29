@@ -205,7 +205,9 @@ public final class Receptacle implements LogisticsMember {
     }
 
     public void setChannel(int channel) {
-        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        // One network's: not on All.
+        int to = com.kadikular.quantimium.laser.Channels.of(channel);
+        this.channel = to == com.kadikular.quantimium.laser.Channels.ALL ? 0 : to;
         changed();
     }
 
@@ -477,6 +479,7 @@ public final class Receptacle implements LogisticsMember {
         requestsMade = in.getBooleanOr("RequestsMade", true);
         priority = in.getIntOr("Priority", 0);
         channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
+        if (channel == com.kadikular.quantimium.laser.Channels.ALL) channel = 0;
         allow = in.getBooleanOr("Allow", true);
         keep = in.getBooleanOr("Keep", false);
         int[] counts = in.getIntArray("KeepCounts").orElse(new int[0]);

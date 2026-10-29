@@ -156,4 +156,9 @@ public class LogisticsReceptacleMenu extends AbstractContainerMenu implements Gh
     public void setChannel(int channel) {
         receptacle.setChannel(channel);
     }
+
+    @Override
+    public boolean allowsAll() {
+        return false;
+    }
 }

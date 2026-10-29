@@ -673,7 +673,10 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu implements Chan
 
     @Override
     public void setChannel(int channel) {
-        // Which network it shows: the controller on that channel.
-        if (terminal != null) terminal.setChannel(channel);
+        // Which network it shows: the controller on that channel, shown at once (its offers worked out first in line).
+        if (terminal == null) return;
+        terminal.setChannel(channel);
+        if (terminal.controller() != null) terminal.controller().watched();
+        refresh();
     }
 }

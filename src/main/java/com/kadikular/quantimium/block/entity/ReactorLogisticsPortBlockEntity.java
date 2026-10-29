@@ -749,7 +749,9 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
 
     /** Sets its channel: the network works itself out again. */
     public void setChannel(int channel) {
-        this.channel = com.kadikular.quantimium.laser.Channels.of(channel);
+        // One network's, as a receptacle is: not on All.
+        int to = com.kadikular.quantimium.laser.Channels.of(channel);
+        this.channel = to == com.kadikular.quantimium.laser.Channels.ALL ? 0 : to;
         setChanged();
         if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
@@ -775,6 +777,7 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
         super.loadAdditional(in);
         priority = in.getIntOr("Priority", 0);
         channel = com.kadikular.quantimium.laser.Channels.of(in.getIntOr("Channel", 0));
+        if (channel == com.kadikular.quantimium.laser.Channels.ALL) channel = 0;
         storing = in.getBooleanOr("Storing", true);
         sharing = in.getBooleanOr("Sharing", true);
         allow = in.getBooleanOr("Allow", true);

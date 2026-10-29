@@ -34,8 +34,8 @@ A <ItemLink id="quantimium:laser_port" /> or <ItemLink id="quantimium:laser_tank
 screen. Insert, Extract, Pickup and the rest use only the ports and tanks on their own channel up the laser. A port on
 **All** serves every channel.
 
-A Logistics Receptacle joins a Logistics Controller only on the same channel (or
-either on **All**). Two controllers on different channels can share mirrors and Focuses, each with its own
+A Logistics Receptacle joins a Logistics Controller only on the same channel, or a
+controller on **All**. A receptacle belongs to one network, so it can't be on All itself. Two controllers on different channels can share mirrors and Focuses, each with its own
 receptacles. Set a Receptacle's channel on its screen, and a controller's on its own screen.
 
 - A <ItemLink id="quantimium:logistics_terminal" /> shows the network on its channel, set on a tab of its screen.

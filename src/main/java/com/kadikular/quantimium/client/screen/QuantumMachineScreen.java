@@ -351,6 +351,8 @@ public abstract class QuantumMachineScreen<T extends AbstractContainerMenu> exte
     protected final Tab channelTab(com.kadikular.quantimium.menu.ChannelMenu channels) {
         java.util.function.IntConsumer step = by -> {
             int next = com.kadikular.quantimium.laser.Channels.cycle(channels.channel(), by < 0);
+            // Past 15 to 0 (or back), for what can't be on All.
+            if (next == com.kadikular.quantimium.laser.Channels.ALL && !channels.allowsAll()) next = com.kadikular.quantimium.laser.Channels.cycle(next, by < 0);
             ClientPacketDistributor.sendToServer(new com.kadikular.quantimium.network.SetChannelPayload(menu.containerId, next));
         };
         return Tab.of(() -> com.kadikular.quantimium.laser.Channels.label(channels.channel()), () -> step.accept(1),

@@ -133,4 +133,9 @@ public class ReactorLogisticsPortMenu extends AbstractContainerMenu implements G
     public void setChannel(int channel) {
         port.setChannel(channel);
     }
+
+    @Override
+    public boolean allowsAll() {
+        return false;
+    }
 }

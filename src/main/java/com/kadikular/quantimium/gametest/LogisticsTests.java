@@ -233,18 +233,25 @@ public final class LogisticsTests {
     }
 
     // covers: laser.channels.logistics
-    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels", timeoutTicks = 100)
+    @GameTest(template = TestSupport.FLOOR_17, batch = "logistics_channels", timeoutTicks = 120)
     public static void aReceptacleJoinsAControllerOnItsChannel(GameTestHelper helper) {
-        // A controller on channel 3: the receptacle on 3 and the one on All join it; the one on 0 doesn't.
-        controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true).setChannel(3);
+        // A controller on channel 3: the receptacle on 3 joins it, the one on 0 doesn't. A receptacle can't be on All (it
+        // belongs to one network); set so, it stays on 0. On All, the controller takes in both.
+        var controller = controller(helper, new BlockPos(2, Y, 8), Direction.EAST, true);
+        controller.setChannel(3);
         Receptacle on0 = onChest(helper, 4, LogisticsMember.Role.STORAGE, false);
         Receptacle on3 = onChest(helper, 6, LogisticsMember.Role.STORAGE, false);
-        Receptacle onAll = onChest(helper, 8, LogisticsMember.Role.STORAGE, false);
         on3.setChannel(3);
-        onAll.setChannel(com.kadikular.quantimium.laser.Channels.ALL);
-        helper.succeedWhen(() -> {
-            helper.assertTrue(on3.isConnected() && onAll.isConnected(), "on channel 3 and on All: on the network");
+        on0.setChannel(com.kadikular.quantimium.laser.Channels.ALL);
+        helper.assertValueEqual(on0.channel(), 0, "a receptacle isn't put on All");
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(on3.isConnected(), "on channel 3: on the network");
             helper.assertFalse(on0.isConnected(), "on channel 0: not");
+            controller.setChannel(com.kadikular.quantimium.laser.Channels.ALL);
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(on0.isConnected() && on3.isConnected(), "a controller on All takes in both");
+            helper.succeed();
         });
     }
 

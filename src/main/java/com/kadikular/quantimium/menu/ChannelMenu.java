@@ -11,6 +11,14 @@ public interface ChannelMenu {
     /** Sets its channel (on the server). */
     void setChannel(int channel);
 
+    /**
+     * Whether it can be on All: not a receptacle, which belongs to one network (on All, two controllers reaching it would
+     * clash).
+     */
+    default boolean allowsAll() {
+        return true;
+    }
+
     /** The data slot that keeps {@link #channel} in step: reads {@code server} there, keeps what it's sent here. */
     final class ChannelSlot extends net.minecraft.world.inventory.DataSlot {
         private final java.util.function.IntSupplier server;

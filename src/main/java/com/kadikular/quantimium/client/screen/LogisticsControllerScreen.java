@@ -16,7 +16,8 @@ import java.util.Locale;
 public class LogisticsControllerScreen extends QuantumMachineScreen<LogisticsControllerMenu> {
 
     private static final Identifier PANEL = Identifier.fromNamespaceAndPath(Quantimium.MODID, "textures/gui/container/logistics_controller.png");
-    private static final int TEXT_X = 10;
+    /** Clear of the power bar on the left. */
+    private static final int TEXT_X = 16;
     private static final int TEXT_Y = 22;
     private static final int LINE = 11;
 
