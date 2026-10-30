@@ -2,7 +2,7 @@
 navigation:
   title: Prisms
   parent: lasers/index.md
-  position: 23
+  position: 24
 ---
 
 # Prisms

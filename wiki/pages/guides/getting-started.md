@@ -2,6 +2,8 @@
 
 The first hour of Quantimium, from the first strange ore to your first crafter.
 
+For the whole climb, and what to do when you're stuck, see [Progression](progression.md).
+
 ## 1. Unrealized Ore
 
 [[block:unrealised_ore]] looks like ordinary stone or deepslate ore until you mine it. It drops [[item:unrealised_matter]]. Fortune gives more. Silk Touch keeps the ore itself, which machines take as Matter too.
@@ -28,6 +30,8 @@ From here machines run on FE. Every craft adds [flux](../concepts/flux-and-anoma
 - **[Field control](../field-control/overview.md):** the stronger versions, for later.
 
 ## 5. What comes next
+
+[Progression](progression.md) walks through each step after this, what unlocks the next, and where players get stuck.
 
 - The [[block:quantum_crafter]] and [[block:quantum_simulator]] take over your crafting.
 - [Anomalite](../mirror/anomalite.md) crystals start growing on your machines once anomaly runs Medium (a few; more at High). They are a hazard and a resource.

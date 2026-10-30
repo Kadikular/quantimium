@@ -2,7 +2,7 @@
 navigation:
   title: For pack makers
   parent: guides/index.md
-  position: 1
+  position: 2
 ---
 
 # For pack makers

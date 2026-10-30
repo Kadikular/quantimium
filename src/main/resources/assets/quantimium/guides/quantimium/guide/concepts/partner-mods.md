@@ -2,7 +2,7 @@
 navigation:
   title: Partner mods
   parent: concepts/index.md
-  position: 5
+  position: 6
 ---
 
 # Partner mods

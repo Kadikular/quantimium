@@ -2,7 +2,7 @@
 navigation:
   title: Isolators
   parent: lasers/index.md
-  position: 22
+  position: 23
 ---
 
 # Isolators

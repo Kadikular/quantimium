@@ -16,6 +16,8 @@ every craft stirs that field up. Push it far enough and the world starts to tear
 
 - **[Getting started](guides/getting-started.md)**: the first hour, from the first strange ore to your
   first crafter.
+- **[Progression](guides/progression.md)**: each step of the climb, what unlocks the next, and what to do when
+  you're stuck.
 - **[Flux and anomaly](concepts/flux-and-anomaly.md)**: the two meters every chunk carries, and why
   they matter.
 - **[The mirror phase](mirror/mirror-phase.md)**: the other side of the world, and how you get there.

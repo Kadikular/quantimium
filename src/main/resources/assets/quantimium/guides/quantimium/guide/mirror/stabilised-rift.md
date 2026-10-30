@@ -2,7 +2,7 @@
 navigation:
   title: Stabilized rift
   parent: mirror/index.md
-  position: 39
+  position: 40
 item_ids:
 - quantimium:rift_anchor
 - quantimium:rift_stabiliser

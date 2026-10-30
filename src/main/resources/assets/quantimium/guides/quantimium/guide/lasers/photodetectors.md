@@ -2,7 +2,7 @@
 navigation:
   title: Photodetectors
   parent: lasers/index.md
-  position: 25
+  position: 26
 ---
 
 # Photodetectors

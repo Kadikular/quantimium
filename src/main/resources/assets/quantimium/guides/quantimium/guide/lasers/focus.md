@@ -2,7 +2,7 @@
 navigation:
   title: Laser Focus
   parent: lasers/index.md
-  position: 21
+  position: 22
 ---
 
 # Laser Focus

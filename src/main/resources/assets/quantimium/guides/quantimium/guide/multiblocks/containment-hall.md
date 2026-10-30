@@ -2,7 +2,7 @@
 navigation:
   title: Anomaly Containment Hall
   parent: multiblocks/index.md
-  position: 14
+  position: 15
 item_ids:
 - quantimium:anomaly_containment_hall
 ---

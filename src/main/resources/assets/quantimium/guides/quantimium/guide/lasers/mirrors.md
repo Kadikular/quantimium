@@ -2,7 +2,7 @@
 navigation:
   title: Mirrors and splitters
   parent: lasers/index.md
-  position: 20
+  position: 21
 ---
 
 # Mirrors and splitters

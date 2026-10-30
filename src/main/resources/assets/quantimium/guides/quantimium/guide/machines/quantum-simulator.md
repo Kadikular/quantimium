@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Simulator
   parent: machines/index.md
-  position: 7
+  position: 8
   icon: quantimium:quantum_simulator
 ---
 
