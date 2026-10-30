@@ -124,7 +124,7 @@ anomaly, and a [stabilized rift](../mirror/stabilised-rift.md) for a steady supp
 | The Foundry waits | It needs a flux band, flux in its chunk, power and enough arms | Read its status line |
 | A Crafter ignores its catalyst | Some catalysts need a hotter band | The Crafter's screen says which band |
 
-## 6. The Veiled
+## 6. The Veiled 
 
 The worst rifts let something through: [the Veiled](../mirror/veiled.md). It can't be killed, only driven off and
 held. Held in a Containment Hall, it gives up <ItemLink id="quantimium:veil_thread" />.
@@ -142,7 +142,7 @@ held. Held in a Containment Hall, it gives up <ItemLink id="quantimium:veil_thre
 | No Veiled | Only a stage 4 wild rift at Critical flux releases one | Let a rift grow uncontained in a Critical field |
 | It got away | The hall had no residue, or was out of reach | Stock the hall, and fight it close by |
 
-## 7. The Reactor
+## 7. The Reactor 
 
 Veil Thread builds the <ItemLink id="quantimium:laser_emitter_3" /> and the <ItemLink id="quantimium:ring_emitter" />s. The
 [Quantimium Reactor](../multiblocks/reactor.md) holds everything in one horizon and makes anything its catalysts can.

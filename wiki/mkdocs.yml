@@ -41,6 +41,9 @@ theme:
 extra_css:
   - stylesheets/quantimium.css
 
+extra_javascript:
+  - javascripts/spoilers.js
+
 markdown_extensions:
   - admonition
   - attr_list

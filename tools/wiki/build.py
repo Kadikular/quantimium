@@ -26,6 +26,8 @@ Hand-written pages can use:
   [[render:scene]]         an isometric render from tools/block_preview.py (a scene name)
   [[structure:name]]       a multiblock in 3D, in the in-game guide only (GuideStructures exports it)
   [[recipes:ns:type]]      every recipe of one type, drawn
+  ||text|| ||6:text||      a spoiler, blacked out until clicked; a group name shows with its spoiler block
+                           (<div class="spoiler-block" data-spoiler="6" markdown>); the in-game guide shows it plainly
 A page in wiki/pages/blocks/<id>.md or wiki/pages/items/<id>.md is merged into that generated page.
 """
 
@@ -502,6 +504,10 @@ def _expand(site: Site, text: str, here: str) -> str:
     text = re.sub(MECHANIC.pattern + r" ?", mechanic, text)
     text = re.sub(r"\[\[(item|block):([a-z0-9_]+)\]\]",
                   lambda m: site.link("quantimium:" + m.group(2), here), text)
+    # ||A spoiler||, as on Discord: blacked out until clicked. ||6:A spoiler|| joins chapter 6's group, shown with it.
+    text = re.sub(r"\|\|(?:(\w+):)?(.+?)\|\|",
+                  lambda m: f'<span class="spoiler"{f" data-spoiler={chr(34)}{m.group(1)}{chr(34)}" if m.group(1) else ""} '
+                            f'title="Spoiler: click to show">{m.group(2)}</span>', text)
 
     def scene(match: re.Match) -> str:
         path = render_scene(match.group(1))

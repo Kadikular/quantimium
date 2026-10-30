@@ -165,6 +165,9 @@ class Guide:
         text = re.sub(r"\[\[structure:([a-z_]+)\]\]", lambda m: structure_scene(m.group(1), here), text)
         text = re.sub(r"\[\[(?:render|recipes):[a-z_:]+\]\]", "", text)
         text = re.sub(r"\{ ?\.[a-z-]+ ?\}", "", text)
+        text = re.sub(r'\{ ?data-toc-label="[^"]*" ?\}', "", text)
+        # Spoilers: GuideME can't hide text, so the guide shows it plainly.
+        text = re.sub(r"\|\|(?:\w+:)?(.+?)\|\|", r"\1", text)
         text = re.sub(r'<span class="[^"]*">(.*?)</span>', r"\1", text)
         text = re.sub(r'<a [^>]*href="([^"]+)"[^>]*>(.*?)</a>', lambda m: f"[{m.group(2)}]({m.group(1)})", text)
 

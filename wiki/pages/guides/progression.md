@@ -14,8 +14,8 @@ lists every machine by tier.
 | [3. The Mirror](#3-the-mirror) | Step into the mirror and harvest what grows on your machines | [[item:anomalite_shard]] |
 | [4. Rifts](#4-rifts) | Grow a rift, then close it from the mirror | [[item:rift_residue]] |
 | [5. The Foundry](#5-the-foundry) | Build the multiblocks, and run a base hot | [[item:tesseract]] |
-| [6. The Veiled](#6-the-veiled) | Take the thing that comes through, and hold it | [[item:veil_thread]] |
-| [7. The Reactor](#7-the-reactor) | Hold everything in one horizon | |
+| [6. ||6:The Veiled||](#6-the-veiled) | ||6:Take the thing that comes through, and hold it|| | ||6:[[item:veil_thread]]|| |
+| [7. ||7:The Reactor||](#7-the-reactor) | ||7:Hold everything in one horizon|| | |
 
 [Lasers](#lasers-alongside) run alongside from chapter 1.
 
@@ -117,7 +117,9 @@ anomaly, and a [stabilized rift](../mirror/stabilised-rift.md) for a steady supp
 | The Foundry waits | It needs a flux band, flux in its chunk, power and enough arms | Read its status line |
 | A Crafter ignores its catalyst | Some catalysts need a hotter band | The Crafter's screen says which band |
 
-## 6. The Veiled
+## 6. ||6:The Veiled|| { data-toc-label="6. Spoiler" }
+
+<div class="spoiler-block" data-spoiler="6" markdown>
 
 The worst rifts let something through: [the Veiled](../mirror/veiled.md). It can't be killed, only driven off and
 held. Held in a Containment Hall, it gives up [[item:veil_thread]].
@@ -135,7 +137,11 @@ held. Held in a Containment Hall, it gives up [[item:veil_thread]].
 | No Veiled | Only a stage 4 wild rift at Critical flux releases one | Let a rift grow uncontained in a Critical field |
 | It got away | The hall had no residue, or was out of reach | Stock the hall, and fight it close by |
 
-## 7. The Reactor
+</div>
+
+## 7. ||7:The Reactor|| { data-toc-label="7. Spoiler" }
+
+<div class="spoiler-block" data-spoiler="7" markdown>
 
 Veil Thread builds the [[block:laser_emitter_3]] and the [[block:ring_emitter]]s. The
 [Quantimium Reactor](../multiblocks/reactor.md) holds everything in one horizon and makes anything its catalysts can.
@@ -148,6 +154,8 @@ Ring Emitters makes its horizon bigger.
 - Form a Reactor.
 - Light a ring.
 
+</div>
+
 ## Lasers alongside
 
 [Lasers](../lasers/overview.md) start in chapter 1 and grow with you:
@@ -157,4 +165,4 @@ Ring Emitters makes its horizon bigger.
 - **Chapter 3:** shards build the [[block:laser_emitter_1]], the [[block:lens_mount]] and lenses that mine, fight
   and move items.
 - **Chapter 5:** the [[block:laser_emitter_2]].
-- **Chapter 7:** the [[block:laser_emitter_3]].
+- **Chapter 7:** ||7:the [[block:laser_emitter_3]].||
