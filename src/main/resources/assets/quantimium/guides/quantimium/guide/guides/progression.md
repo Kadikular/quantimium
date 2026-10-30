@@ -142,7 +142,7 @@ held. Held in a Containment Hall, it gives up <ItemLink id="quantimium:veil_thre
 | No Veiled | Only a stage 4 wild rift at Critical flux releases one | Let a rift grow uncontained in a Critical field |
 | It got away | The hall had no residue, or was out of reach | Stock the hall, and fight it close by |
 
-## 7. The Reactor 
+## 7. The Reactor
 
 Veil Thread builds the <ItemLink id="quantimium:laser_emitter_3" /> and the <ItemLink id="quantimium:ring_emitter" />s. The
 [Quantimium Reactor](../multiblocks/reactor.md) holds everything in one horizon and makes anything its catalysts can.

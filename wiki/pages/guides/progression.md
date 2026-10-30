@@ -15,7 +15,7 @@ lists every machine by tier.
 | [4. Rifts](#4-rifts) | Grow a rift, then close it from the mirror | [[item:rift_residue]] |
 | [5. The Foundry](#5-the-foundry) | Build the multiblocks, and run a base hot | [[item:tesseract]] |
 | [6. ||6:The Veiled||](#6-the-veiled) | ||6:Take the thing that comes through, and hold it|| | ||6:[[item:veil_thread]]|| |
-| [7. ||7:The Reactor||](#7-the-reactor) | ||7:Hold everything in one horizon|| | |
+| [7. The Reactor](#7-the-reactor) | Hold everything in one horizon | |
 
 [Lasers](#lasers-alongside) run alongside from chapter 1.
 
@@ -139,11 +139,9 @@ held. Held in a Containment Hall, it gives up [[item:veil_thread]].
 
 </div>
 
-## 7. ||7:The Reactor|| { data-toc-label="7. Spoiler" }
+## 7. The Reactor
 
-<div class="spoiler-block" data-spoiler="7" markdown>
-
-Veil Thread builds the [[block:laser_emitter_3]] and the [[block:ring_emitter]]s. The
+||6:Veil Thread|| builds the [[block:laser_emitter_3]] and the [[block:ring_emitter]]s. The
 [Quantimium Reactor](../multiblocks/reactor.md) holds everything in one horizon and makes anything its catalysts can.
 It needs a Singularity, folded from a Tesseract in an empty Fold Chamber, and works without rings; each pair of
 Ring Emitters makes its horizon bigger.
@@ -154,8 +152,6 @@ Ring Emitters makes its horizon bigger.
 - Form a Reactor.
 - Light a ring.
 
-</div>
-
 ## Lasers alongside
 
 [Lasers](../lasers/overview.md) start in chapter 1 and grow with you:
@@ -165,4 +161,4 @@ Ring Emitters makes its horizon bigger.
 - **Chapter 3:** shards build the [[block:laser_emitter_1]], the [[block:lens_mount]] and lenses that mine, fight
   and move items.
 - **Chapter 5:** the [[block:laser_emitter_2]].
-- **Chapter 7:** ||7:the [[block:laser_emitter_3]].||
+- **Chapter 7:** the [[block:laser_emitter_3]].
