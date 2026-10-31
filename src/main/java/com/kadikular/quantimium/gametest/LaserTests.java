@@ -1504,14 +1504,17 @@ public final class LaserTests {
     // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
     public static void aLaserRelayBecomesALaserFocus(GameTestHelper helper) {
-        // On its west wall, emitters east and south, a lens in the south one: a Laser Focus with a Stand west, the same
-        // Emitters and the lens.
+        // On its west wall, emitters east and south, a lens in the south one on channel 3, that emitter set to its own
+        // redstone: a Laser Focus with a Stand west, the same Emitters, the lens on its channel and the redstone.
         BlockPos at = new BlockPos(5, Y, 8);
         helper.setBlock(at, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)
                 .setValue(com.kadikular.quantimium.block.LaserRelayBlock.MOUNT, Direction.WEST));
         var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
         relay.addEmitter(Direction.SOUTH);
         relay.setLens(Direction.SOUTH, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()));
+        relay.setChannel(Direction.SOUTH, 3);
+        relay.cycleMode(Direction.SOUTH);
+        var southMode = relay.modeOf(Direction.SOUTH);
         helper.succeedWhen(() -> {
             helper.assertBlockPresent(ModBlocks.LASER_FOCUS.get(), at);
             var focus = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
@@ -1519,6 +1522,8 @@ public final class LaserTests {
             helper.assertValueEqual(focus.part(Direction.WEST), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND, "stood on its wall");
             helper.assertTrue(focus.hasEmitter(Direction.EAST) && focus.hasEmitter(Direction.SOUTH), "its emitters");
             helper.assertTrue(focus.lens(Direction.SOUTH).is(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()), "and its lens");
+            helper.assertValueEqual(focus.channelOf(Direction.SOUTH), 3, "on its channel");
+            helper.assertValueEqual(focus.modeOf(Direction.SOUTH), southMode, "listening to redstone as it did");
             TestSupport.finishLasers(helper);
         });
     }
