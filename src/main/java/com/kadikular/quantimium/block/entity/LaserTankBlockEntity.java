@@ -312,8 +312,7 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
     @Override
     public void applySideConfigs(List<com.kadikular.quantimium.block.entity.simulation.SideConfig> configs) {
         sideConfigs = PROFILE.sanitize(configs);
-        setChanged();
-        invalidateCapabilities();
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
@@ -509,8 +508,7 @@ public class LaserTankBlockEntity extends BlockEntity implements LaserNode, Flux
     }
 
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64;
+        return MachineAccess.withinReach(this, player);
     }
 
     /** What it's set to, and how many tanks hold something. */

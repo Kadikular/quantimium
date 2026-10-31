@@ -6,15 +6,13 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
-public class QuantumFoundryMenu extends AbstractContainerMenu {
+public class QuantumFoundryMenu extends QuantumMenu {
     public static final int DATA_COUNT = 14;
     /** A diamond around the well, laid out the way the arms are: forward, right, back, left. */
     public static final int[][] INPUT_POSITIONS = {
@@ -60,15 +58,7 @@ public class QuantumFoundryMenu extends AbstractContainerMenu {
             }
         });
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInventory, col + row * 9 + 9,
-                        8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInventory, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInventory, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 
@@ -126,25 +116,14 @@ public class QuantumFoundryMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem()) return result;
-        ItemStack stack = slot.getItem();
-        result = stack.copy();
-        if (index < 5) {
-            if (!moveItemStackTo(stack, 5, slots.size(), true)) return ItemStack.EMPTY;
-        } else {
-            boolean moved = false;
-            for (int input = 0; input < 4 && !moved; input++) {
-                if ((getPillarMask() & 1 << input) != 0) {
-                    moved = moveItemStackTo(stack, input, input + 1, false);
-                }
+        return shiftClick(player, index, stack -> {
+            if (index < 5) return moveItemStackTo(stack, 5, slots.size(), true);
+            // Into the first input over a pillar that's there and takes it.
+            for (int input = 0; input < 4; input++) {
+                if ((getPillarMask() & 1 << input) != 0 && moveItemStackTo(stack, input, input + 1, false)) return true;
             }
-            if (!moved) return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+            return false;
+        });
     }
 
     @Override

@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/QuantumPanelColours.java
 package com.kadikular.quantimium.client;
 
 import java.util.Set;

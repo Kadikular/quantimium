@@ -7,15 +7,13 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /** No machine slots: the controller's settings are its tabs, sent as menu buttons. */
-public class ZenoFieldControllerMenu extends AbstractContainerMenu {
+public class ZenoFieldControllerMenu extends QuantumMenu {
 
     public static final int DATA_COUNT = 15;
 
@@ -34,14 +32,7 @@ public class ZenoFieldControllerMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         this.data = data;
         checkContainerDataCount(data, DATA_COUNT);
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 

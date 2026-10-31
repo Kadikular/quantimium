@@ -1,15 +1,13 @@
 package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.laser.LaserBeam;
 import com.kadikular.quantimium.laser.LaserNetworks;
-import com.kadikular.quantimium.laser.LaserNode;
+import com.kadikular.quantimium.laser.LaserEndpoint;
 import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.laser.Logistics;
 import com.kadikular.quantimium.laser.LogisticsController;
 import com.kadikular.quantimium.laser.LogisticsMember;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -18,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +29,7 @@ import java.util.Set;
  * storage holds and its providers offer, and takes from it or puts into it for the player, each move paid for by
  * the controller as its receptacles' are. Light ends at it.
  */
-public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNode, MenuProvider {
+public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserEndpoint, MenuProvider {
 
     public LogisticsTerminalBlockEntity(BlockPos pos, BlockState state) {
         this(ModBlockEntities.LOGISTICS_TERMINAL_BE.get(), pos, state);
@@ -301,30 +298,6 @@ public class LogisticsTerminalBlockEntity extends BlockEntity implements LaserNo
     public BlockPos nodePos() {
         return worldPosition;
     }
-
-    /** It passes nothing on; a relay only so the light reaching it is known. */
-    @Override
-    public Set<Direction> outputs() {
-        return Set.of();
-    }
-
-    @Override
-    public int range() {
-        return LaserTuning.RELAY_RANGE;
-    }
-
-    @Override
-    public boolean relays() {
-        return true;
-    }
-
-    @Override
-    public double tax() {
-        return 0;
-    }
-
-    @Override
-    public void showBeams(List<LaserBeam> beams) {}
 
     @Override
     public void onLoad() {

@@ -1,5 +1,6 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/simulation/VirtualMachineMirror.java
 package com.kadikular.quantimium.block.entity.simulation;
+
+import com.kadikular.quantimium.compat.energy.MachinePowerPorts;
 
 import com.kadikular.quantimium.util.LegacyFluids;
 import com.kadikular.quantimium.util.LegacyItems;

@@ -8,7 +8,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -16,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
  * One of a Laser Relay's emitters: the lens in it (only the light leaving by it goes through it), and how it
  * listens to the redstone reaching the block. Layout: tools/gui_panels.py relay_emitter.
  */
-public class RelayEmitterMenu extends AbstractContainerMenu implements ChannelMenu {
+public class RelayEmitterMenu extends QuantumMenu implements ChannelMenu {
 
     public static final int BUTTON_MODE = 0;
     /** The settings of the lens in it: an Interact lens's switches in place, a filter lens's open. */
@@ -51,10 +50,7 @@ public class RelayEmitterMenu extends AbstractContainerMenu implements ChannelMe
                 return 1;
             }
         });
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-        }
-        for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     public EmitterHolder getBlockEntity() {
@@ -86,18 +82,9 @@ public class RelayEmitterMenu extends AbstractContainerMenu implements ChannelMe
     /** Shift-click: a lens into the emitter if it's empty, or the emitter's lens out to the inventory. */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack before = stack.copy();
-        if (index == 0) {
-            if (!moveItemStackTo(stack, 1, slots.size(), true)) return ItemStack.EMPTY;
-        } else {
-            if (!(stack.getItem() instanceof LensItem) || !moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return before;
+        return shiftClick(player, index, stack -> index == 0
+                ? moveItemStackTo(stack, 1, slots.size(), true)
+                : stack.getItem() instanceof LensItem && moveItemStackTo(stack, 0, 1, false));
     }
 
     @Override

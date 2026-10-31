@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/renderer/TesseractShell.java
 package com.kadikular.quantimium.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;

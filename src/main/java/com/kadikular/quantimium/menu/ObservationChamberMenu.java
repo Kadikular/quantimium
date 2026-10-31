@@ -2,16 +2,13 @@ package com.kadikular.quantimium.menu;
 
 import com.kadikular.quantimium.block.entity.ObservationChamberBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
-import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -19,7 +16,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * Layout matches {@code tools/gui_panels.py} observation_chamber panel:
  * input (44, 35), Trace (80, 35), outputs 3×3 at (116, 18).
  */
-public class ObservationChamberMenu extends AbstractContainerMenu {
+public class ObservationChamberMenu extends QuantumMenu {
 
     public static final int INPUT_X = 44;
     public static final int INPUT_Y = 35;
@@ -77,14 +74,7 @@ public class ObservationChamberMenu extends AbstractContainerMenu {
             }
         }
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
 
         addDataSlots(data);
     }
@@ -112,25 +102,11 @@ public class ObservationChamberMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem()) return result;
-
-        ItemStack stack = slot.getItem();
-        result = stack.copy();
-        int machineSlots = 11;
-        if (index < machineSlots) {
-            if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return ItemStack.EMPTY;
-        } else {
-            if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
-                    || !moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
-                    ObservationChamberBlockEntity.INPUT_SLOT + 1, false)) {
-                return ItemStack.EMPTY;
-            }
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+        int machineSlots = ObservationChamberBlockEntity.TOTAL_SLOTS;
+        return shiftClick(player, index, stack -> index < machineSlots
+                ? moveItemStackTo(stack, machineSlots, slots.size(), true)
+                : com.kadikular.quantimium.unrealised.Matter.is(stack) && moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
+                        ObservationChamberBlockEntity.INPUT_SLOT + 1, false));
     }
 
     @Override

@@ -270,8 +270,7 @@ public class HorizonCoreBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getCenter()) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     @Override

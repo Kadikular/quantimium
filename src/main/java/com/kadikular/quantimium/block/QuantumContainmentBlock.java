@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/block/QuantumContainmentBlock.java
 package com.kadikular.quantimium.block;
 
 import net.minecraft.server.level.ServerLevel;

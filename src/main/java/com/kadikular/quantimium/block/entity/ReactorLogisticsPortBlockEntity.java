@@ -1,10 +1,8 @@
 package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.laser.LaserBeam;
 import com.kadikular.quantimium.laser.LaserNetworks;
-import com.kadikular.quantimium.laser.LaserNode;
-import com.kadikular.quantimium.laser.LaserTuning;
+import com.kadikular.quantimium.laser.LaserEndpoint;
 import com.kadikular.quantimium.laser.Logistics;
 import com.kadikular.quantimium.laser.LogisticsController;
 import com.kadikular.quantimium.laser.LogisticsMember;
@@ -57,7 +55,7 @@ import java.util.Set;
  * </ul>
  * Light ending on it powers the Reactor.
  */
-public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity implements LaserNode, LogisticsMember, ReactorNetwork, MenuProvider {
+public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity implements LaserEndpoint, LogisticsMember, ReactorNetwork, MenuProvider {
 
     public static final int FILTER_SLOTS = 9;
     public static final int MAX_PRIORITY = 999;
@@ -747,33 +745,9 @@ public class ReactorLogisticsPortBlockEntity extends ReactorPortBlockEntity impl
     }
 
     @Override
-    public Set<Direction> outputs() {
-        return Set.of();
-    }
-
-    @Override
-    public int range() {
-        return LaserTuning.RELAY_RANGE;
-    }
-
-    /** It passes nothing on; a relay only so the light reaching it is known. */
-    @Override
-    public boolean relays() {
-        return true;
-    }
-
-    @Override
-    public double tax() {
-        return 0;
-    }
-
-    @Override
     public boolean chargedByLight() {
         return true;
     }
-
-    @Override
-    public void showBeams(List<LaserBeam> beams) {}
 
     @Override
     public void onLoad() {

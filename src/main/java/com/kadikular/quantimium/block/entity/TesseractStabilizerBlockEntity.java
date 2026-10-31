@@ -286,9 +286,7 @@ public class TesseractStabilizerBlockEntity extends BlockEntity implements MenuP
     @Override
     public void applySideConfigs(List<SideConfig> configs) {
         sideConfigs = sideAutomationProfile().sanitize(configs);
-        setChanged();
-        invalidateCapabilities();
-        syncToClient();
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
@@ -298,10 +296,7 @@ public class TesseractStabilizerBlockEntity extends BlockEntity implements MenuP
 
     @Override
     public boolean isUsableBy(Player player) {
-        return level != null
-                && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5,
-                worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     @Override

@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/network/ToggleEngagePayload.java
 package com.kadikular.quantimium.network;
 
 import com.kadikular.quantimium.Quantimium;

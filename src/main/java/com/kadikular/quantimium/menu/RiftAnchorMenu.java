@@ -6,16 +6,14 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
 /** One slot, the residue the rift sheds, which can be taken but not put back; the rest is readout. */
-public class RiftAnchorMenu extends AbstractContainerMenu {
+public class RiftAnchorMenu extends QuantumMenu {
 
     public static final int DATA_COUNT = 9;
     /** Top right, as on the Containment Hall, with the time to the next one under it. */
@@ -45,14 +43,7 @@ public class RiftAnchorMenu extends AbstractContainerMenu {
                 return false;
             }
         });
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 
@@ -116,17 +107,7 @@ public class RiftAnchorMenu extends AbstractContainerMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         if (index >= PLAYER_START) return ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return original;
+        return shiftClick(player, index, stack -> moveItemStackTo(stack, PLAYER_START, PLAYER_END, true));
     }
 
     @Override

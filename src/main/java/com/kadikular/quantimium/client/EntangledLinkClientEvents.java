@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/EntangledLinkClientEvents.java
 package com.kadikular.quantimium.client;
 
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;

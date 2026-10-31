@@ -695,6 +695,24 @@ public final class LaserTests {
         helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
     }
 
+    // covers: laser.port
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void aPipeTakesWhatALaserPortCaught(GameTestHelper helper) {
+        // Collecting (as it starts), what it caught is there for pipes and hoppers, from any face.
+        BlockPos at = new BlockPos(5, Y, 8);
+        port(helper, at);
+        var port = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
+        helper.assertTrue(port.collects(), "a new port collects");
+        port.getItems().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 5));
+        var pipe = com.kadikular.quantimium.util.LegacyItems.legacy(helper.getLevel().getCapability(
+                net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(at), Direction.NORTH));
+        helper.assertTrue(pipe != null, "its side offers its slots");
+        helper.assertValueEqual(pipe.extractItem(0, 5, false).getCount(), 5, "cobblestone taken by a pipe");
+        helper.assertTrue(port.getItems().getStackInSlot(0).isEmpty(), "and gone from the port");
+        TestSupport.finishLasers(helper);
+        helper.succeed();
+    }
+
     // covers: laser.prism.split
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismSendsLightToEachBlockItsLinkedTo(GameTestHelper helper) {
@@ -1504,14 +1522,17 @@ public final class LaserTests {
     // covers: laser.focus
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 40)
     public static void aLaserRelayBecomesALaserFocus(GameTestHelper helper) {
-        // On its west wall, emitters east and south, a lens in the south one: a Laser Focus with a Stand west, the same
-        // Emitters and the lens.
+        // On its west wall, emitters east and south, a lens in the south one on channel 3, that emitter set to its own
+        // redstone: a Laser Focus with a Stand west, the same Emitters, the lens on its channel and the redstone.
         BlockPos at = new BlockPos(5, Y, 8);
         helper.setBlock(at, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)
                 .setValue(com.kadikular.quantimium.block.LaserRelayBlock.MOUNT, Direction.WEST));
         var relay = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
         relay.addEmitter(Direction.SOUTH);
         relay.setLens(Direction.SOUTH, new net.minecraft.world.item.ItemStack(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()));
+        relay.setChannel(Direction.SOUTH, 3);
+        relay.cycleMode(Direction.SOUTH);
+        var southMode = relay.modeOf(Direction.SOUTH);
         helper.succeedWhen(() -> {
             helper.assertBlockPresent(ModBlocks.LASER_FOCUS.get(), at);
             var focus = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.class);
@@ -1519,8 +1540,41 @@ public final class LaserTests {
             helper.assertValueEqual(focus.part(Direction.WEST), com.kadikular.quantimium.block.entity.LaserFocusBlockEntity.Part.STAND, "stood on its wall");
             helper.assertTrue(focus.hasEmitter(Direction.EAST) && focus.hasEmitter(Direction.SOUTH), "its emitters");
             helper.assertTrue(focus.lens(Direction.SOUTH).is(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()), "and its lens");
+            helper.assertValueEqual(focus.channelOf(Direction.SOUTH), 3, "on its channel");
+            helper.assertValueEqual(focus.modeOf(Direction.SOUTH), southMode, "listening to redstone as it did");
             TestSupport.finishLasers(helper);
         });
+    }
+
+    // covers: laser.focus
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void emittersKeepTheirLensesChannelsAndRedstoneThroughASave(GameTestHelper helper) {
+        // A Laser Focus and a Laser Relay (before it turns into a Focus), each with a lens on channel 5, the emitter set
+        // to its own redstone and the rest to the next shared way: all of it saved and loaded back.
+        var focus = TestSupport.relay(helper, new BlockPos(5, Y, 8), Direction.DOWN, Direction.EAST);
+        BlockPos relayAt = new BlockPos(9, Y, 8);
+        helper.setBlock(relayAt, ModBlocks.LASER_RELAY.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserRelayBlock.FACING, Direction.EAST)
+                .setValue(com.kadikular.quantimium.block.LaserRelayBlock.MOUNT, Direction.WEST));
+        var relay = helper.getBlockEntity(relayAt, com.kadikular.quantimium.block.entity.LaserRelayBlockEntity.class);
+        var registries = helper.getLevel().registryAccess();
+        for (net.minecraft.world.level.block.entity.BlockEntity be : java.util.List.of(focus, relay)) {
+            var emitters = (com.kadikular.quantimium.block.entity.EmitterHolder) be;
+            emitters.cycleMode();
+            emitters.setLens(Direction.EAST, new ItemStack(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()));
+            emitters.setChannel(Direction.EAST, 5);
+            emitters.cycleMode(Direction.EAST);
+            var loaded = (com.kadikular.quantimium.block.entity.EmitterHolder) net.minecraft.world.level.block.entity.BlockEntity.loadStatic(
+                    be.getBlockPos(), be.getBlockState(), be.saveWithFullMetadata(registries), registries);
+            String what = be.getClass().getSimpleName() + ": ";
+            helper.assertTrue(loaded != null && loaded.lens(Direction.EAST).is(com.kadikular.quantimium.init.ModItems.RANGE_LENS.get()), what + "its lens");
+            helper.assertValueEqual(loaded.channelOf(Direction.EAST), 5, what + "the lens's channel");
+            helper.assertValueEqual(loaded.modeOf(Direction.EAST), emitters.modeOf(Direction.EAST), what + "the emitter's own redstone");
+            helper.assertValueEqual(loaded.mode(), emitters.mode(), what + "the shared redstone");
+            helper.assertTrue(loaded.mode() != com.kadikular.quantimium.laser.RelayMode.IGNORED
+                    && loaded.modeOf(Direction.EAST) != loaded.mode(), what + "both set away from their defaults");
+        }
+        TestSupport.finishLasers(helper);
+        helper.succeed();
     }
 
     // covers: laser.splitter

@@ -59,6 +59,29 @@ public final class FoldTests {
 
     private FoldTests() {}
 
+    // covers: fold.core
+    @GameTest(template = TestSupport.FLOOR_9, batch = "fold_menu", timeoutTicks = 20)
+    public static void shiftClickingPutsATesseractInTheSocketAndNothingElse(GameTestHelper helper) {
+        BlockPos at = new BlockPos(4, 2, 4);
+        helper.setBlock(at, ModBlocks.FOLD_CORE.get());
+        FoldCoreBlockEntity core = helper.getBlockEntity(at, FoldCoreBlockEntity.class);
+        ServerPlayer player = TestSupport.player(helper, at.east(2));
+        player.getInventory().setItem(0, new ItemStack(ModItems.TESSERACT.get()));
+        player.getInventory().setItem(1, new ItemStack(Items.COBBLESTONE, 8));
+        var menu = (com.kadikular.quantimium.menu.FoldCoreMenu) core.createMenu(0, player.getInventory(), player);
+        int hotbarFirst = menu.slots.size() - 9;
+        menu.quickMoveStack(player, hotbarFirst + 1);
+        helper.assertTrue(core.getSocket().getStackInSlot(0).isEmpty(), "cobblestone stays out of the socket");
+        helper.assertValueEqual(player.getInventory().getItem(1).getCount(), 8, "and stays in the hotbar");
+        menu.quickMoveStack(player, hotbarFirst);
+        helper.assertTrue(core.getSocket().getStackInSlot(0).is(ModItems.TESSERACT.get()), "the Tesseract goes into the socket");
+        menu.quickMoveStack(player, 0);
+        helper.assertTrue(core.getSocket().getStackInSlot(0).isEmpty(), "and shifts back out");
+        helper.assertValueEqual(player.getInventory().countItem(ModItems.TESSERACT.get()), 1, "into the player's inventory");
+        TestSupport.removePlayer(helper, player);
+        helper.succeed();
+    }
+
     // covers: fold.chamber_frame
     @GameTest(template = TestSupport.FLOOR_17, batch = "fold", timeoutTicks = 40)
     public static void aWholeFrameIsFoundFromItsCore(GameTestHelper helper) {

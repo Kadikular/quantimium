@@ -7,7 +7,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -25,7 +24,7 @@ import java.util.Map;
  * network. Under the item grid, shown by a tab, a crafting grid that the network refills after each craft. Layout:
  * tools/gui_panels.py logistics_terminal and logistics_terminal_crafting.
  */
-public class LogisticsTerminalMenu extends AbstractContainerMenu implements ChannelMenu {
+public class LogisticsTerminalMenu extends QuantumMenu implements ChannelMenu {
 
     public static final int PLAYER_Y = 158;
     /** The crafting grid and its result, under the item grid when shown (tools/gui_panels.py logistics_terminal_crafting). */
@@ -104,14 +103,7 @@ public class LogisticsTerminalMenu extends AbstractContainerMenu implements Chan
         this.craftGrid = new TerminalCraftGrid(terminal == null ? net.minecraft.core.NonNullList.withSize(9, ItemStack.EMPTY) : terminal.craftItems(),
                 this::gridChanged);
         if (terminal != null) terminal.watch(this, true);
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, PLAYER_Y + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
-        }
+        addPlayerInventory(playerInv, PLAYER_Y);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 addSlot(new Slot(craftGrid, col + row * 3, CRAFT_GRID_X + col * 18, CRAFT_GRID_Y + row * 18) {

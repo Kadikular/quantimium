@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.recipe;
 
+import com.kadikular.quantimium.compat.hnn.HnnFabricatorFamily;
+import com.kadikular.quantimium.compat.mi.MiMachineFamily;
 import com.kadikular.quantimium.unrealised.MatterSteps;
 import com.kadikular.quantimium.flux.AnomalyEffects;
 import com.kadikular.quantimium.init.ModTags;

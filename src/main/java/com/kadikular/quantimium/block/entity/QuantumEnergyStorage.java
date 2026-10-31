@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/QuantumEnergyStorage.java
 package com.kadikular.quantimium.block.entity;
 
 import net.neoforged.neoforge.transfer.energy.SimpleEnergyHandler;

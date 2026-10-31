@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.compat.ae2;
 
+import com.kadikular.quantimium.menu.QuantumMenu;
 import com.kadikular.quantimium.menu.GhostFilterMenu;
 import com.kadikular.quantimium.menu.PriorityButton;
 import net.minecraft.network.FriendlyByteBuf;
@@ -7,7 +8,6 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
  * the Reactor, or its filter's 27 ghost slots, one list at a time, and the player's inventory. The
  * slots of whichever view is hidden stay out of reach. Layout: tools/gui_panels.py reactor_me_port.
  */
-public class ReactorMePortMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class ReactorMePortMenu extends QuantumMenu implements GhostFilterMenu {
 
     public static final int BUTTON_MODE_NEXT = 0;
     public static final int BUTTON_MODE_BACK = 1;
@@ -60,14 +60,7 @@ public class ReactorMePortMenu extends AbstractContainerMenu implements GhostFil
             addSlot(new GhostSlot(filter, i, FILTER_X + (spot % 9) * 18, FILTER_Y + (spot / 9) * 18,
                     i >= ReactorMePortBlockEntity.STORAGE_FILTER_START));
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 

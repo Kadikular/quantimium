@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/renderer/VoidWindow.java
 package com.kadikular.quantimium.client.renderer;
 
 import net.minecraft.client.renderer.rendertype.RenderTypes;

@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/simulation/MachineSlotInfo.java
 package com.kadikular.quantimium.block.entity.simulation;
 
 import net.minecraft.core.Direction;

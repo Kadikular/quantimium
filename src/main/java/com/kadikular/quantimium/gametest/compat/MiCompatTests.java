@@ -10,7 +10,7 @@ import com.kadikular.quantimium.block.entity.simulation.SimulatorFluidTanks;
 import com.kadikular.quantimium.gametest.CrafterTests;
 import com.kadikular.quantimium.gametest.TestSupport;
 import com.kadikular.quantimium.init.ModBlocks;
-import com.kadikular.quantimium.recipe.CraftEnergy;
+import com.kadikular.quantimium.compat.mi.ModernIndustrialization;
 import com.kadikular.quantimium.recipe.ResolvedCraft;
 import com.kadikular.quantimium.unrealised.Form;
 import com.kadikular.quantimium.unrealised.MatterHistory;
@@ -246,7 +246,7 @@ public final class MiCompatTests {
 
     /** What the crafter charges for an MI recipe: total EU, at MI's FE-per-EU, times the multiplier. */
     private static int euCost(int euPerTick, int ticks) {
-        return euPerTick * ticks * CraftEnergy.fePerEu() * Config.instantCraftMultiplier();
+        return euPerTick * ticks * ModernIndustrialization.fePerEu() * Config.instantCraftMultiplier();
     }
 
     private static QuantumSimulatorBlockEntity engaged(GameTestHelper helper, String machine) {

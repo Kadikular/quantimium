@@ -60,16 +60,20 @@ public final class TickTiming {
         TestSupport.clearField(helper);
         TickProfiler.Samples[] samples = new TickProfiler.Samples[1];
         helper.runAfterDelay(WARMUP_TICKS, () -> samples[0] = TickProfiler.watch(target, SAMPLE_TICKS));
-        helper.succeedWhen(() -> {
-            helper.assertTrue(samples[0] != null && samples[0].full(), "still measuring");
-            TickProfiler.unwatch(target);
-            double median = samples[0].quantileMicros(0.5);
-            record(scenario, samples[0], state.get());
-            cleanup.run();
-            TestSupport.clearField(helper);
-            helper.assertTrue(median <= scenario.budgetMicros(), String.format(
-                    "%s: median tick %.1f µs over its %.0f µs budget", scenario.id(), median, scenario.budgetMicros()));
-        });
+        // Waits for the samples, then reports and judges once: an assertion in succeedWhen is retried every tick, so a
+        // scenario over its budget would report (and, for some, work out costly state) every tick until the timeout.
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(samples[0] != null && samples[0].full(), "still measuring"))
+                .thenExecute(() -> {
+                    TickProfiler.unwatch(target);
+                    double median = samples[0].quantileMicros(0.5);
+                    record(scenario, samples[0], state.get());
+                    cleanup.run();
+                    TestSupport.clearField(helper);
+                    helper.assertTrue(median <= scenario.budgetMicros(), String.format(
+                            "%s: median tick %.1f µs over its %.0f µs budget", scenario.id(), median, scenario.budgetMicros()));
+                })
+                .thenSucceed();
     }
 
     private static synchronized void record(Scenario scenario, TickProfiler.Samples samples, String state) {

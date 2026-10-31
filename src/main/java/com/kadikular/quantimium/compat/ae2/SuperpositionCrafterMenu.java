@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.compat.ae2;
 
+import com.kadikular.quantimium.menu.QuantumMenu;
 import com.kadikular.quantimium.flux.FluxBand;
 import com.kadikular.quantimium.menu.GhostFilterMenu;
 import net.minecraft.network.FriendlyByteBuf;
@@ -7,7 +8,6 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -20,7 +20,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * The catalyst slot, 27 ghost filter slots, and the player's inventory. The screen shows either the
  * catalyst and its readout or the filter; the slots of whichever is hidden stay out of reach.
  */
-public class SuperpositionCrafterMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class SuperpositionCrafterMenu extends QuantumMenu implements GhostFilterMenu {
 
     public static final int DATA_COUNT = 17;
     public static final int BUTTON_MODE = 0;
@@ -69,14 +69,7 @@ public class SuperpositionCrafterMenu extends AbstractContainerMenu implements G
             addSlot(new GhostSlot(filter, i, FILTER_X + (spot % 9) * 18, FILTER_Y + (spot / 9) * 18,
                     i >= SuperpositionCrafterBlockEntity.INPUT_FILTER_START));
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 
@@ -211,18 +204,10 @@ public class SuperpositionCrafterMenu extends AbstractContainerMenu implements G
     /** Shift-click moves a catalyst in or out; ghost slots never hold anything to move. */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem() || (index >= FILTER_START && index < FILTER_END)) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (index == CATALYST_SLOT) {
-            if (!moveItemStackTo(stack, FILTER_END, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, CATALYST_SLOT, CATALYST_SLOT + 1, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return original;
+        if (index >= FILTER_START && index < FILTER_END) return ItemStack.EMPTY;
+        return shiftClick(player, index, stack -> index == CATALYST_SLOT
+                ? moveItemStackTo(stack, FILTER_END, slots.size(), true)
+                : moveItemStackTo(stack, CATALYST_SLOT, CATALYST_SLOT + 1, false));
     }
 
     @Override

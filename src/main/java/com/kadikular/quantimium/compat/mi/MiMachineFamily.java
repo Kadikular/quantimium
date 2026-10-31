@@ -1,5 +1,11 @@
-package com.kadikular.quantimium.recipe;
+package com.kadikular.quantimium.compat.mi;
 
+import com.kadikular.quantimium.recipe.ResolvedCraft;
+import com.kadikular.quantimium.recipe.IngredientPool;
+import com.kadikular.quantimium.recipe.RecipeShape;
+import com.kadikular.quantimium.recipe.CraftEnergy;
+import com.kadikular.quantimium.recipe.FluidParts;
+import com.kadikular.quantimium.recipe.RecipeCompat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;

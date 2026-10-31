@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/renderer/QuantumSimulatorBER.java
 package com.kadikular.quantimium.client.renderer;
 
 import net.minecraft.util.LightCoordsUtil;

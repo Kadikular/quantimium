@@ -20,7 +20,7 @@ import java.util.List;
  * <p>Outputs read from fields keep only what's guaranteed: a chance below one, or a percentage roll that can
  * miss, isn't counted ({@link GuaranteedOutputs}). Fluids are found by their fields' types, or read from
  * {@code fluid_input_fields} and {@code fluid_output_fields} where named. Gases and exotic energy units still need a
- * code family (see {@code MiMachineFamily}).
+ * code family (see {@code compat.mi.MiMachineFamily}).
  *
  * @param catalysts      machines that run these recipe types, for machines whose names don't say so
  *                       (EnderIO's Alloy Smelter runs {@code enderio:alloy_smelting})

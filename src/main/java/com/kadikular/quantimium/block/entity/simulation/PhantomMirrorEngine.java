@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/simulation/PhantomMirrorEngine.java
 package com.kadikular.quantimium.block.entity.simulation;
 
 import com.kadikular.quantimium.util.NbtCompat;

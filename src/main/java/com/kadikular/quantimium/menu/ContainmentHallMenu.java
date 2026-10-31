@@ -9,15 +9,13 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
-public class ContainmentHallMenu extends AbstractContainerMenu {
+public class ContainmentHallMenu extends QuantumMenu {
 
     private static final int DATA_COUNT = 19;
     /** Top right of the machine band, clear of the status plate and the readout lines. */
@@ -44,14 +42,7 @@ public class ContainmentHallMenu extends AbstractContainerMenu {
 
         this.addSlot(new SlotItemHandler(blockEntity.getResidue(), 0, RESIDUE_X, RESIDUE_Y));
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
 
         addDataSlots(data);
     }
@@ -142,23 +133,9 @@ public class ContainmentHallMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = this.slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (index < PLAYER_START) {
-            if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        } else if (stack.is(ModItems.RIFT_RESIDUE.get()) || EntangledLinks.isBound(stack)) {
-            if (!moveItemStackTo(stack, 0, PLAYER_START, false)) return ItemStack.EMPTY;
-        } else {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return original;
+        return shiftClick(player, index, stack -> index < PLAYER_START
+                ? moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)
+                : (stack.is(ModItems.RIFT_RESIDUE.get()) || EntangledLinks.isBound(stack)) && moveItemStackTo(stack, 0, PLAYER_START, false));
     }
 
     @Override

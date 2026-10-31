@@ -7,7 +7,7 @@ import com.kadikular.quantimium.Config;
 import com.kadikular.quantimium.block.entity.QuantumCrafterBlockEntity;
 import com.kadikular.quantimium.block.entity.QuantumSimulatorBlockEntity;
 import com.kadikular.quantimium.gametest.CrafterTests;
-import com.kadikular.quantimium.recipe.HnnFabricatorFamily;
+import com.kadikular.quantimium.compat.hnn.HnnFabricatorFamily;
 import com.kadikular.quantimium.recipe.ResolvedCraft;
 import com.kadikular.quantimium.gametest.TestSupport;
 import com.kadikular.quantimium.init.ModBlocks;

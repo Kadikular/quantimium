@@ -774,7 +774,7 @@ public class MaterialiserBlockEntity extends BlockEntity
                 int index = slot - TOTAL_SLOTS;
                 return config().itemMode().allowsOutput() && index < offered.size() ? make(offered.get(index), amount, simulate) : ItemStack.EMPTY;
             }
-            if (slot < OUTPUT_START || !config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
+            if (slot < OUTPUT_START || !config().allowsOutputSlot(slot, OUTPUT_START)) return ItemStack.EMPTY;
             return inventory.extractItem(slot, amount, simulate);
         }
 
@@ -809,9 +809,7 @@ public class MaterialiserBlockEntity extends BlockEntity
     @Override
     public void applySideConfigs(List<SideConfig> configs) {
         sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(configs);
-        setChanged();
-        invalidateCapabilities();
-        if (level != null) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
@@ -821,8 +819,7 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     @Override
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     // ---- readouts, menu and saving ----

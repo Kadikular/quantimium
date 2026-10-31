@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/ClientModEvents.java
 package com.kadikular.quantimium.client;
 
 import com.kadikular.quantimium.client.renderer.AnimatedItemModel;

@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.recipe;
 
+import com.kadikular.quantimium.compat.mi.ModernIndustrialization;
+
 import com.kadikular.quantimium.Config;
 
 /**
@@ -12,42 +14,17 @@ import com.kadikular.quantimium.Config;
  */
 public final class CraftEnergy {
 
-    /** MI's default {@code forgeEnergyPerEu}, used when MI is absent or its config is not loaded. */
-    public static final int DEFAULT_FE_PER_EU = 10;
-
     /** FE charged per tick of vanilla furnace burn time. */
     public static final int FE_PER_BURN_TICK = 10;
 
     /** No craft is ever free, however trivial. */
     public static final int MINIMUM_FE = 100;
 
-    private static final String MI_CONFIG = "aztech.modern_industrialization.config.MIServerConfig";
-
-    private static int cachedFePerEu = -1;
-
     private CraftEnergy() {}
-
-    /** FE value of one EU, read live from MI once its config is available. */
-    public static int fePerEu() {
-        if (cachedFePerEu > 0) return cachedFePerEu;
-        try {
-            Class<?> config = Class.forName(MI_CONFIG);
-            Object instance = config.getField("INSTANCE").get(null);
-            Object value = config.getField("forgeEnergyPerEu").get(instance);
-            int fePerEu = ((Number) value.getClass().getMethod("getAsInt").invoke(value)).intValue();
-            if (fePerEu > 0) {
-                cachedFePerEu = fePerEu;
-                return fePerEu;
-            }
-        } catch (Throwable ignored) {
-            // MI missing, or config not loaded yet — retry on a later call.
-        }
-        return DEFAULT_FE_PER_EU;
-    }
 
     /** Bills a Modern Industrialization recipe from its total EU draw. */
     public static int fromEu(long totalEu) {
-        return taxed(totalEu * fePerEu());
+        return taxed(totalEu * ModernIndustrialization.fePerEu());
     }
 
     /** Bills a recipe from how long a furnace would have burned for it. */

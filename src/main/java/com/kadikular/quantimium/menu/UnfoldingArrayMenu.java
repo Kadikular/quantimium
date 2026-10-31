@@ -6,11 +6,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -18,7 +16,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * The Unfolding Array: three reagent slots down the left, the Sophon out on the right. Layout:
  * tools/gui_panels.py unfolding_array.
  */
-public class UnfoldingArrayMenu extends AbstractContainerMenu {
+public class UnfoldingArrayMenu extends QuantumMenu {
 
     public static final int REAGENT_X = 26;
     public static final int REAGENT_Y = 17;
@@ -49,14 +47,7 @@ public class UnfoldingArrayMenu extends AbstractContainerMenu {
                 return false;
             }
         });
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 
@@ -102,18 +93,9 @@ public class UnfoldingArrayMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack result = stack.copy();
-        if (index < MACHINE_SLOTS) {
-            if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, 0, 3, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+        return shiftClick(player, index, stack -> index < MACHINE_SLOTS
+                ? moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)
+                : moveItemStackTo(stack, 0, 3, false));
     }
 
     @Override

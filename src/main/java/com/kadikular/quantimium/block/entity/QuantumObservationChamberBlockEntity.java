@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.block.entity;
 
+import com.kadikular.quantimium.util.GatedItems;
+
 import com.kadikular.quantimium.util.LegacyItems;
 import com.kadikular.quantimium.util.NbtCompat;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -20,7 +22,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
@@ -105,7 +106,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
     };
 
     private final IItemHandler[] sidedHandlers = new IItemHandler[6];
-    private final IItemHandler unsidedHandler = new SidedHandler(null);
+    private final IItemHandler unsidedHandler = sidedItems(null);
     private List<SideConfig> sideConfigs = defaultSideConfigs();
     private boolean voidExcessTrace = true;
     private int statusCode = STATUS_EMPTY;
@@ -143,7 +144,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
 
     public QuantumObservationChamberBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.QUANTUM_OBSERVATION_CHAMBER_BE.get(), pos, state);
-        for (Direction side : Direction.values()) sidedHandlers[side.get3DDataValue()] = new SidedHandler(side);
+        for (Direction side : Direction.values()) sidedHandlers[side.get3DDataValue()] = sidedItems(side);
     }
 
     /** Every face takes Matter in and hands results out; nothing moves by itself until a face is told to. */
@@ -332,7 +333,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
 
     private void push(IItemHandler into, SideConfig config) {
         for (int slot = OUTPUT_START; slot <= TRACE_SLOT; slot++) {
-            if (!config.allowsOutputSlot(slot)) continue;
+            if (!config.allowsOutputSlot(slot, OUTPUT_START)) continue;
             ItemStack stack = inventory.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
             int moved = stack.getCount() - ItemHandlerHelper.insertItem(into, stack.copy(), false).getCount();
@@ -356,50 +357,16 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
         return config.itemMode() == SideMode.DISABLED ? null : sidedHandlers[side.get3DDataValue()];
     }
 
-    private final class SidedHandler implements IItemHandler {
-        @Nullable
-        private final Direction side;
+    /** What pipes and hoppers on {@code side} see (null: every slot allowed): Matter into its inputs, results out, as its sides are set. */
+    private IItemHandler sidedItems(@Nullable Direction side) {
+        return new GatedItems(inventory, TOTAL_SLOTS,
+                slot -> slot < INPUT_SLOTS && itemConfig(side).allowsInputSlot(slot),
+                slot -> slot >= OUTPUT_START && itemConfig(side).allowsOutputSlot(slot, OUTPUT_START));
+    }
 
-        private SidedHandler(@Nullable Direction side) {
-            this.side = side;
-        }
-
-        /** The face's settings, or every slot allowed for the unsided view. */
-        private SideConfig config() {
-            return side == null ? ALL_SLOTS : sideConfigs.get(side.get3DDataValue());
-        }
-
-        @Override
-        public int getSlots() {
-            return TOTAL_SLOTS;
-        }
-
-        @Override
-        public ItemStack getStackInSlot(int slot) {
-            return inventory.getStackInSlot(slot);
-        }
-
-        @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (slot >= INPUT_SLOTS || !config().allowsInputSlot(slot)) return stack;
-            return inventory.insertItem(slot, stack, simulate);
-        }
-
-        @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            if (slot < OUTPUT_START || !config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
-            return inventory.extractItem(slot, amount, simulate);
-        }
-
-        @Override
-        public int getSlotLimit(int slot) {
-            return inventory.getSlotLimit(slot);
-        }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return slot < INPUT_SLOTS && config().allowsInputSlot(slot) && inventory.isItemValid(slot, stack);
-        }
+    /** The face's settings, or every slot allowed for the unsided view. */
+    private SideConfig itemConfig(@Nullable Direction side) {
+        return side == null ? ALL_SLOTS : sideConfigs.get(side.get3DDataValue());
     }
 
     // ---- side configuration ----
@@ -417,9 +384,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
     @Override
     public void applySideConfigs(List<SideConfig> configs) {
         sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(configs);
-        setChanged();
-        invalidateCapabilities();
-        if (level != null) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
@@ -429,8 +394,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
 
     @Override
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     // ---- readouts, menu and saving ----
