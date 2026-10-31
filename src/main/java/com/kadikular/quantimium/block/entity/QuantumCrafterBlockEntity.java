@@ -2675,7 +2675,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
 
     private void pushOneItem(IItemHandler neighbor, SideConfig config) {
         for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
-            if (!config.allowsOutputSlot(slot)) continue;
+            if (!config.allowsOutputSlot(slot, OUTPUT_START)) continue;
             ItemStack stack = inventory.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
             ItemStack leftover = ItemHandlerHelper.insertItem(neighbor, stack.copy(), false);
@@ -2735,7 +2735,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
                 return com.kadikular.quantimium.recipe.FluidEntry.is(shown) ? ItemStack.EMPTY : shown;
             }
             if (slot >= OUTPUT_START && slot <= OUTPUT_END) {
-                return config().allowsOutputSlot(slot) ? inventory.getStackInSlot(slot) : ItemStack.EMPTY;
+                return config().allowsOutputSlot(slot, OUTPUT_START) ? inventory.getStackInSlot(slot) : ItemStack.EMPTY;
             }
             ItemStack stack = inventory.getStackInSlot(slot);
             // A Tesseract in the grid is a link, not an ingredient or stock: networks and pipes don't list it.
@@ -2753,7 +2753,7 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
             int ghost = ghostOf(slot);
             if (ghost >= 0) return config().allowsOutputs() ? extractForAutomation(ghost, amount, simulate) : ItemStack.EMPTY;
-            if (!config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
+            if (!config().allowsOutputSlot(slot, OUTPUT_START)) return ItemStack.EMPTY;
             return inventory.extractItem(slot, amount, simulate);
         }
 

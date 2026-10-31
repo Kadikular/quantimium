@@ -22,14 +22,9 @@ public final class CraftEnergy {
 
     private CraftEnergy() {}
 
-    /** FE value of one EU: Modern Industrialization's own rate. */
-    public static int fePerEu() {
-        return ModernIndustrialization.fePerEu();
-    }
-
     /** Bills a Modern Industrialization recipe from its total EU draw. */
     public static int fromEu(long totalEu) {
-        return taxed(totalEu * fePerEu());
+        return taxed(totalEu * ModernIndustrialization.fePerEu());
     }
 
     /** Bills a recipe from how long a furnace would have burned for it. */

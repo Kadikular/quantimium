@@ -133,16 +133,9 @@ public class ContainmentHallMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return shiftClick(player, index, stack -> {
-            if (index < PLAYER_START) {
-                if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return false;
-            } else if (stack.is(ModItems.RIFT_RESIDUE.get()) || EntangledLinks.isBound(stack)) {
-                if (!moveItemStackTo(stack, 0, PLAYER_START, false)) return false;
-            } else {
-                return false;
-            }
-            return true;
-        });
+        return shiftClick(player, index, stack -> index < PLAYER_START
+                ? moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)
+                : (stack.is(ModItems.RIFT_RESIDUE.get()) || EntangledLinks.isBound(stack)) && moveItemStackTo(stack, 0, PLAYER_START, false));
     }
 
     @Override

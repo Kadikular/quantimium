@@ -176,19 +176,11 @@ public class MaterialiserMenu extends QuantumMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         return shiftClick(player, index, stack -> {
-            if (index < MACHINE_SLOTS) {
-                if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return false;
-            } else if (com.kadikular.quantimium.unrealised.Matter.is(stack)) {
-                if (!moveItemStackTo(stack, 0, 1, false)) return false;
-            } else if (com.kadikular.quantimium.unrealised.Materialising.pays(stack)) {
-                if (!moveItemStackTo(stack, 1, 2, false)) return false;
-            } else if (EntangledLinks.isBound(stack)) {
-                // A bound Tesseract feeds Matter first, then Anomalite Dust.
-                if (!moveItemStackTo(stack, 0, 2, false)) return false;
-            } else {
-                return false;
-            }
-            return true;
+            if (index < MACHINE_SLOTS) return moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true);
+            if (com.kadikular.quantimium.unrealised.Matter.is(stack)) return moveItemStackTo(stack, 0, 1, false);
+            if (com.kadikular.quantimium.unrealised.Materialising.pays(stack)) return moveItemStackTo(stack, 1, 2, false);
+            // A bound Tesseract feeds Matter first, then Anomalite Dust.
+            return EntangledLinks.isBound(stack) && moveItemStackTo(stack, 0, 2, false);
         });
     }
 

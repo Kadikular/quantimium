@@ -117,18 +117,12 @@ public class QuantumFoundryMenu extends QuantumMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         return shiftClick(player, index, stack -> {
-            if (index < 5) {
-                if (!moveItemStackTo(stack, 5, slots.size(), true)) return false;
-            } else {
-                boolean moved = false;
-                for (int input = 0; input < 4 && !moved; input++) {
-                    if ((getPillarMask() & 1 << input) != 0) {
-                        moved = moveItemStackTo(stack, input, input + 1, false);
-                    }
-                }
-                if (!moved) return false;
+            if (index < 5) return moveItemStackTo(stack, 5, slots.size(), true);
+            // Into the first input over a pillar that's there and takes it.
+            for (int input = 0; input < 4; input++) {
+                if ((getPillarMask() & 1 << input) != 0 && moveItemStackTo(stack, input, input + 1, false)) return true;
             }
-            return true;
+            return false;
         });
     }
 

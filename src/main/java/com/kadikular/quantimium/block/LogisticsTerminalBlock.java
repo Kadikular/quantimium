@@ -17,7 +17,6 @@ public class LogisticsTerminalBlock extends HorizontalMachineBlock implements co
 
     public LogisticsTerminalBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override

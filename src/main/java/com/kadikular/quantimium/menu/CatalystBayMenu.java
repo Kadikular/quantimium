@@ -142,14 +142,9 @@ public class CatalystBayMenu extends QuantumMenu implements GhostFilterMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         if (index >= FILTER_START && index < FILTER_END) return ItemStack.EMPTY;
-        return shiftClick(player, index, stack -> {
-            if (index < FILTER_START) {
-                if (!moveItemStackTo(stack, FILTER_END, slots.size(), true)) return false;
-            } else if (filterView || !moveItemStackTo(stack, CATALYST_START, FILTER_START, false)) {
-                return false;
-            }
-            return true;
-        });
+        return shiftClick(player, index, stack -> index < FILTER_START
+                ? moveItemStackTo(stack, FILTER_END, slots.size(), true)
+                : !filterView && moveItemStackTo(stack, CATALYST_START, FILTER_START, false));
     }
 
     @Override

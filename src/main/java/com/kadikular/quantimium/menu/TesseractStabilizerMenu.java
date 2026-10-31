@@ -55,16 +55,9 @@ public class TesseractStabilizerMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return shiftClick(player, index, stack -> {
-            if (index == 0) {
-                if (!moveItemStackTo(stack, 1, slots.size(), true)) return false;
-            } else {
-                if (!EntangledLinks.fitsStabilizer(stack) || !moveItemStackTo(stack, 0, 1, false)) {
-                    return false;
-                }
-            }
-            return true;
-        });
+        return shiftClick(player, index, stack -> index == 0
+                ? moveItemStackTo(stack, 1, slots.size(), true)
+                : EntangledLinks.fitsStabilizer(stack) && moveItemStackTo(stack, 0, 1, false));
     }
 
     @Override

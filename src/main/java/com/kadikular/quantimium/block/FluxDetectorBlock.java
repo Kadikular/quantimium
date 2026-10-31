@@ -57,8 +57,7 @@ public class FluxDetectorBlock extends HorizontalMachineBlock {
 
     public FluxDetectorBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any()
-                .setValue(FACING, Direction.NORTH)
+        registerDefaultState(defaultBlockState()
                 .setValue(POWERED, false)
                 .setValue(MODE, Mode.BOTH));
     }

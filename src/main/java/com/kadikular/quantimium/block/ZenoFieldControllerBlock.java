@@ -24,7 +24,7 @@ public class ZenoFieldControllerBlock extends HorizontalMachineBlock {
 
     public ZenoFieldControllerBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(ACTIVE, false).setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(ACTIVE, false));
     }
 
     @Override

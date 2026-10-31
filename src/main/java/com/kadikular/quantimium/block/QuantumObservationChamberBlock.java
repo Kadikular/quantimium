@@ -33,7 +33,7 @@ public class QuantumObservationChamberBlock extends HorizontalMachineBlock {
 
     public QuantumObservationChamberBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(LIT, false).setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(LIT, false));
     }
 
     @Override

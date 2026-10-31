@@ -217,7 +217,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
     private IItemHandler sidedItems(@Nullable Direction side) {
         return new GatedItems(inventory, OUTPUT_END + 1,
                 slot -> itemConfig(side).allowsInputSlot(slot) && !isInputSlotLocked(slot),
-                slot -> itemConfig(side).allowsOutputSlot(slot));
+                slot -> itemConfig(side).allowsOutputSlot(slot, OUTPUT_START));
     }
 
     private SideConfig itemConfig(@Nullable Direction side) {
@@ -734,7 +734,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
 
     private void pushOneStack(IItemHandler neighbor, SideConfig config) {
         for (int slot = OUTPUT_START; slot <= OUTPUT_END; slot++) {
-            if (!config.allowsOutputSlot(slot)) continue;
+            if (!config.allowsOutputSlot(slot, OUTPUT_START)) continue;
             ItemStack available = inventory.extractItem(slot, 64, true);
             if (available.isEmpty()) continue;
 

@@ -110,26 +110,12 @@ public class QuantumCrafterMenu extends QuantumMenu implements GhostFilterMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return shiftClick(player, index, stackInSlot -> {
-            if (index < MACHINE_MENU_SLOTS) {
-                if (!this.moveItemStackTo(stackInSlot, MACHINE_MENU_SLOTS, slots.size(), true)) {
-                    return false;
-                }
-            } else {
-                // Prefer catalyst if empty, else inputs.
-                ItemStack catalyst = blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.CATALYST_SLOT);
-                if (catalyst.isEmpty()) {
-                    if (!this.moveItemStackTo(stackInSlot, MENU_CATALYST_SLOT,
-                            MENU_CATALYST_SLOT + 1, false)) {
-                        if (!this.moveItemStackTo(stackInSlot, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false)) {
-                            return false;
-                        }
-                    }
-                } else if (!this.moveItemStackTo(stackInSlot, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false)) {
-                    return false;
-                }
-            }
-            return true;
+        return shiftClick(player, index, stack -> {
+            if (index < MACHINE_MENU_SLOTS) return moveItemStackTo(stack, MACHINE_MENU_SLOTS, slots.size(), true);
+            // Into the catalyst slot while it's empty; failing that, into the inputs.
+            boolean catalystEmpty = blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.CATALYST_SLOT).isEmpty();
+            return catalystEmpty && moveItemStackTo(stack, MENU_CATALYST_SLOT, MENU_CATALYST_SLOT + 1, false)
+                    || moveItemStackTo(stack, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false);
         });
     }
 

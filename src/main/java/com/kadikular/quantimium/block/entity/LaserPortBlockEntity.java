@@ -351,11 +351,11 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         return config.itemMode() == SideMode.DISABLED ? null : LegacyItems.of(sided[side.get3DDataValue()], items);
     }
 
-    /** What pipes and hoppers on {@code side} see: its slots, filled from outside only while it sends, as its sides are set. */
+    /** What pipes and hoppers on {@code side} see: its slots, filled from outside only while it sends and emptied only while it collects, as its sides are set. */
     private IItemHandler sidedItems(Direction side) {
         return new GatedItems(items, SLOTS,
                 slot -> takesFromOutside() && sideConfigs.get(side.get3DDataValue()).allowsInputSlot(slot),
-                slot -> sideConfigs.get(side.get3DDataValue()).allowsOutputPosition(slot));
+                slot -> collects() && sideConfigs.get(side.get3DDataValue()).allowsOutputSlot(slot, 0));
     }
 
     @Override

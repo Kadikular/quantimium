@@ -27,7 +27,7 @@ public class ObservationChamberBlock extends HorizontalMachineBlock {
 
     public ObservationChamberBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(LIT, false).setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(LIT, false));
     }
 
     @Override

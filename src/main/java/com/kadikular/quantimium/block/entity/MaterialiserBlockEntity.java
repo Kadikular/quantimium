@@ -774,7 +774,7 @@ public class MaterialiserBlockEntity extends BlockEntity
                 int index = slot - TOTAL_SLOTS;
                 return config().itemMode().allowsOutput() && index < offered.size() ? make(offered.get(index), amount, simulate) : ItemStack.EMPTY;
             }
-            if (slot < OUTPUT_START || !config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
+            if (slot < OUTPUT_START || !config().allowsOutputSlot(slot, OUTPUT_START)) return ItemStack.EMPTY;
             return inventory.extractItem(slot, amount, simulate);
         }
 

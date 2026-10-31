@@ -24,7 +24,7 @@ public class QuantumExciterBlock extends HorizontalMachineBlock {
 
     public QuantumExciterBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(ACTIVE, false).setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(ACTIVE, false));
     }
 
     /** A click switches what it aims for: Medium flux, or High. */

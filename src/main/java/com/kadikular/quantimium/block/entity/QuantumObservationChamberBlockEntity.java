@@ -333,7 +333,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
 
     private void push(IItemHandler into, SideConfig config) {
         for (int slot = OUTPUT_START; slot <= TRACE_SLOT; slot++) {
-            if (!config.allowsOutputSlot(slot)) continue;
+            if (!config.allowsOutputSlot(slot, OUTPUT_START)) continue;
             ItemStack stack = inventory.getStackInSlot(slot);
             if (stack.isEmpty()) continue;
             int moved = stack.getCount() - ItemHandlerHelper.insertItem(into, stack.copy(), false).getCount();
@@ -361,7 +361,7 @@ public class QuantumObservationChamberBlockEntity extends BlockEntity
     private IItemHandler sidedItems(@Nullable Direction side) {
         return new GatedItems(inventory, TOTAL_SLOTS,
                 slot -> slot < INPUT_SLOTS && itemConfig(side).allowsInputSlot(slot),
-                slot -> slot >= OUTPUT_START && itemConfig(side).allowsOutputSlot(slot));
+                slot -> slot >= OUTPUT_START && itemConfig(side).allowsOutputSlot(slot, OUTPUT_START));
     }
 
     /** The face's settings, or every slot allowed for the unsided view. */

@@ -102,19 +102,11 @@ public class ObservationChamberMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return shiftClick(player, index, stack -> {
-            int machineSlots = ObservationChamberBlockEntity.TOTAL_SLOTS;
-            if (index < machineSlots) {
-                if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return false;
-            } else {
-                if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
-                        || !moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
-                        ObservationChamberBlockEntity.INPUT_SLOT + 1, false)) {
-                    return false;
-                }
-            }
-            return true;
-        });
+        int machineSlots = ObservationChamberBlockEntity.TOTAL_SLOTS;
+        return shiftClick(player, index, stack -> index < machineSlots
+                ? moveItemStackTo(stack, machineSlots, slots.size(), true)
+                : com.kadikular.quantimium.unrealised.Matter.is(stack) && moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
+                        ObservationChamberBlockEntity.INPUT_SLOT + 1, false));
     }
 
     @Override

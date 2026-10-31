@@ -22,14 +22,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A machine that faces the player who placed it, turns and mirrors with a structure it's part of, and is drawn as its
  * model. Used with an empty hand, it opens its block entity's screen. A machine with more state adds its own
- * properties after this one's {@link #FACING}.
+ * properties after this one's {@link #FACING}, and sets their defaults on {@link #defaultBlockState()}.
  */
 public abstract class HorizontalMachineBlock extends BaseEntityBlock {
 
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
+    /** Facing north until placed; a subclass sets its own properties' defaults on top, from {@link #defaultBlockState()}. */
     protected HorizontalMachineBlock(Properties properties) {
         super(properties);
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override

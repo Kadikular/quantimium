@@ -86,14 +86,9 @@ public class LaserEmitterMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return shiftClick(player, index, stack -> {
-            if (index < machineSlots) {
-                if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return false;
-            } else if (machineSlots == 0 || !moveItemStackTo(stack, 0, machineSlots, false)) {
-                return false;
-            }
-            return true;
-        });
+        return shiftClick(player, index, stack -> index < machineSlots
+                ? moveItemStackTo(stack, machineSlots, slots.size(), true)
+                : machineSlots != 0 && moveItemStackTo(stack, 0, machineSlots, false));
     }
 
     @Override

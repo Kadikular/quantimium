@@ -59,15 +59,10 @@ public class LensMountMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return shiftClick(player, index, stack -> {
-            int lenses = LensMountBlockEntity.SLOTS;
-            if (index < lenses) {
-                if (!moveItemStackTo(stack, lenses, slots.size(), true)) return false;
-            } else if (!moveItemStackTo(stack, 0, lenses, false)) {
-                return false;
-            }
-            return true;
-        });
+        int lenses = LensMountBlockEntity.SLOTS;
+        return shiftClick(player, index, stack -> index < lenses
+                ? moveItemStackTo(stack, lenses, slots.size(), true)
+                : moveItemStackTo(stack, 0, lenses, false));
     }
 
     @Override
