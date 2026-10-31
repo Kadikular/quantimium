@@ -2,12 +2,10 @@ package com.kadikular.quantimium.menu;
 
 import com.kadikular.quantimium.block.entity.QuantumObservationChamberBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
-import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -19,7 +17,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * Layout matches {@code tools/gui_panels.py} quantum_observation_chamber: Matter in a column at
  * (26, 17), results 4×2 at (74, 26), Trace in its socket at (152, 35).
  */
-public class QuantumObservationChamberMenu extends AbstractContainerMenu {
+public class QuantumObservationChamberMenu extends QuantumMenu {
 
     public static final int INPUT_X = 26;
     public static final int INPUT_Y = 17;
@@ -63,14 +61,7 @@ public class QuantumObservationChamberMenu extends AbstractContainerMenu {
         }
         addSlot(takeOnly(QuantumObservationChamberBlockEntity.TRACE_SLOT, TRACE_X, TRACE_Y));
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 

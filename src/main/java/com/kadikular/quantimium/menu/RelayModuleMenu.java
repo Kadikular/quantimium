@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -20,7 +19,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * The Relay module's hold: six Tesseracts in two columns of three, each with its button (Recall or Send),
  * and the Sophon slot on the right. Layout: tools/gui_panels.py relay_module.
  */
-public class RelayModuleMenu extends AbstractContainerMenu {
+public class RelayModuleMenu extends QuantumMenu {
 
     public static final int[] LINK_X = {26, 84};
     public static final int LINK_Y = 17;
@@ -50,14 +49,7 @@ public class RelayModuleMenu extends AbstractContainerMenu {
             addSlot(new SlotItemHandler(blockEntity.getInventory(), slot, LINK_X[slot / 3], LINK_Y + (slot % 3) * 18));
         }
         addSlot(new SlotItemHandler(blockEntity.getInventory(), RelayModuleBlockEntity.SOPHON_SLOT, SOPHON_X, SOPHON_Y));
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 

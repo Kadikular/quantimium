@@ -6,7 +6,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
@@ -16,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
  * A Laser Tank: its four tanks (drawn by the screen from the block entity), or its filter's nine fluid entries, one view
  * at a time, and the player's inventory. A bucket clicked on a tank fills or empties it.
  */
-public class LaserTankMenu extends AbstractContainerMenu implements GhostFilterMenu, ChannelMenu {
+public class LaserTankMenu extends QuantumMenu implements GhostFilterMenu, ChannelMenu {
 
     /** Collect, send or both. */
     public static final int BUTTON_MODE = 0;
@@ -43,14 +42,7 @@ public class LaserTankMenu extends AbstractContainerMenu implements GhostFilterM
         for (int i = 0; i < LaserTankBlockEntity.FILTER_SLOTS; i++) {
             addSlot(new GhostSlot(tank.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     private final class GhostSlot extends Slot {

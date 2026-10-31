@@ -7,7 +7,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
@@ -17,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
  * A Laser Port: what it holds in a 3x3 grid, as a dispenser's, or its filter's nine ghost entries,
  * one view at a time, and the player's inventory. Layout: tools/gui_panels.py laser_port.
  */
-public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterMenu, ChannelMenu {
+public class LaserPortMenu extends QuantumMenu implements GhostFilterMenu, ChannelMenu {
 
     public static final int BUTTON_MODE = 0;
     /** Collect, send or both. */
@@ -54,14 +53,7 @@ public class LaserPortMenu extends AbstractContainerMenu implements GhostFilterM
         for (int i = 0; i < LaserPortBlockEntity.FILTER_SLOTS; i++) {
             addSlot(new GhostSlot(port.getFilter(), i, FILTER_X + i * 18, FILTER_Y));
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     private final class GhostSlot extends Slot {

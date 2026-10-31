@@ -7,14 +7,12 @@ import com.kadikular.quantimium.laser.LogisticsMember;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /** A Logistics Controller: its channel, its power, and what's on its network. Layout: tools/gui_panels.py logistics_controller. */
-public class LogisticsControllerMenu extends AbstractContainerMenu implements ChannelMenu {
+public class LogisticsControllerMenu extends QuantumMenu implements ChannelMenu {
 
     /** What it shows: its receptacles by role, whether another controller's light joins its own, and its power. */
     public static final int STORAGE = 0, PROVIDERS = 1, REQUESTERS = 2, CLASH = 3, ENERGY_LOW = 4, ENERGY_HIGH = 5, DATA = 6;
@@ -56,10 +54,7 @@ public class LogisticsControllerMenu extends AbstractContainerMenu implements Ch
         } : new SimpleContainerData(DATA);
         addDataSlots(data);
         addDataSlot(channelSlot = new ChannelMenu.ChannelSlot(server ? controller::channel : null));
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-        }
-        for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     private int count(LogisticsMember.Role role) {

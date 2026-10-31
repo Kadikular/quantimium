@@ -6,7 +6,6 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -18,7 +17,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * Layout matches {@code tools/gui_panels.py} observation_chamber panel:
  * input (44, 35), Trace (80, 35), outputs 3×3 at (116, 18).
  */
-public class ObservationChamberMenu extends AbstractContainerMenu {
+public class ObservationChamberMenu extends QuantumMenu {
 
     public static final int INPUT_X = 44;
     public static final int INPUT_Y = 35;
@@ -76,14 +75,7 @@ public class ObservationChamberMenu extends AbstractContainerMenu {
             }
         }
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
 
         addDataSlots(data);
     }

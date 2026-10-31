@@ -7,7 +7,6 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -19,7 +18,7 @@ import com.kadikular.quantimium.util.SlotItemHandler;
  * For all three field control blocks. The Siphon and Regulator have a take-only fragment slot at the
  * top right; the Maintainer has none. Layout: tools/gui_panels.py field_control(_fragments).
  */
-public class FieldControlMenu extends AbstractContainerMenu {
+public class FieldControlMenu extends QuantumMenu {
 
     public static final int FRAGMENT_X = 152;
     public static final int FRAGMENT_Y = 20;
@@ -48,14 +47,7 @@ public class FieldControlMenu extends AbstractContainerMenu {
             });
         }
         machineSlots = slots.size();
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
         addDataSlots(data);
     }
 

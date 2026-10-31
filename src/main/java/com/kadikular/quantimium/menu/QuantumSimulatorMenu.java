@@ -7,7 +7,6 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -16,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
-public class QuantumSimulatorMenu extends AbstractContainerMenu {
+public class QuantumSimulatorMenu extends QuantumMenu {
     /** The panel is taller than vanilla's, to fit the fluid tanks under the grids (tools/gui_panels.py). */
     public static final int PLAYER_Y = 104;
 
@@ -61,16 +60,7 @@ public class QuantumSimulatorMenu extends AbstractContainerMenu {
         });
 
         // Player Inventory
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, PLAYER_Y + row * 18));
-            }
-        }
-
-        // Player Hotbar
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
-        }
+        addPlayerInventory(playerInv, PLAYER_Y);
 
         addDataSlots(data);
     }

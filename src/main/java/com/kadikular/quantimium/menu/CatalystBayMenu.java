@@ -7,7 +7,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
@@ -18,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
  * 27 ghost slots, one list at a time, and the player's inventory. The slots of whichever view is hidden
  * stay out of reach. Layout: tools/gui_panels.py catalyst_bay.
  */
-public class CatalystBayMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class CatalystBayMenu extends QuantumMenu implements GhostFilterMenu {
 
     public static final int BUTTON_OUTPUT_MODE = 0;
     public static final int BUTTON_INPUT_MODE = 1;
@@ -59,14 +58,7 @@ public class CatalystBayMenu extends AbstractContainerMenu implements GhostFilte
             addSlot(new GhostSlot(bay.getFilter(), i, FILTER_X + (spot % 9) * 18, FILTER_Y + (spot / 9) * 18,
                     i >= CatalystBayBlockEntity.INPUT_FILTER_START));
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     private final class GhostSlot extends Slot {

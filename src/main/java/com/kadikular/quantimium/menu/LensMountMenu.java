@@ -6,13 +6,12 @@ import com.kadikular.quantimium.util.SlotItemHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /** A Lens Mount: its four lenses in a row, in the order light meets them. Layout: tools/gui_panels.py lens_mount. */
-public class LensMountMenu extends AbstractContainerMenu {
+public class LensMountMenu extends QuantumMenu {
 
     /** Each lens's slot, spaced along the line of light; its settings button under it. */
     public static final int[] SLOT_X = {32, 64, 96, 128};
@@ -37,14 +36,7 @@ public class LensMountMenu extends AbstractContainerMenu {
         for (int slot = 0; slot < LensMountBlockEntity.SLOTS; slot++) {
             addSlot(new SlotItemHandler(mount.getLensSlots(), slot, SLOT_X[slot], LENS_Y));
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     public LensMountBlockEntity getBlockEntity() {

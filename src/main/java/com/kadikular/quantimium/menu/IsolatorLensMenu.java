@@ -9,7 +9,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +22,7 @@ import java.util.function.Supplier;
  * nine ghost entries of lenses let through only, or stopped. Changes go straight onto the lens. Layout:
  * tools/gui_panels.py laser_port_filter, as a filter lens's.
  */
-public class IsolatorLensMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class IsolatorLensMenu extends QuantumMenu implements GhostFilterMenu {
 
     public static final int BUTTON_ALLOW = 0;
     public static final int BUTTON_LOGISTICS = 1;
@@ -62,18 +61,7 @@ public class IsolatorLensMenu extends AbstractContainerMenu implements GhostFilt
                 }
             });
         }
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142) {
-                // The lens being set, held, stays where it is.
-                @Override
-                public boolean mayPickup(Player who) {
-                    return getContainerSlot() != heldSlot;
-                }
-            });
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y, heldSlot);
         refresh();
     }
 

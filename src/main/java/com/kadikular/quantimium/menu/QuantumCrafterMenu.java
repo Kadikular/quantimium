@@ -6,7 +6,6 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
@@ -14,7 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
-public class QuantumCrafterMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class QuantumCrafterMenu extends QuantumMenu implements GhostFilterMenu {
 
     private static final int DATA_COUNT = 18;
     private static final int MENU_CATALYST_SLOT = 9;
@@ -48,14 +47,7 @@ public class QuantumCrafterMenu extends AbstractContainerMenu implements GhostFi
         // Catalyst (menu slot 9; backing slot follows all 54 outputs)
         this.addSlot(new SlotItemHandler(blockEntity.getInventory(), QuantumCrafterBlockEntity.CATALYST_SLOT, 80, 36));
 
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, PLAYER_Y + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
-        }
+        addPlayerInventory(playerInv, PLAYER_Y);
 
         // Its screen open on the server: the Crafter keeps up with what it draws on, for this player.
         if (!playerInv.player.level().isClientSide()) blockEntity.viewed(true);

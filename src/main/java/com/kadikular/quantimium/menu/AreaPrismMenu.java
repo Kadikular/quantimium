@@ -5,13 +5,11 @@ import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /** An Area Prism: its shape (the area picked, or a cube or sphere round it) and radius, on tabs. Layout: tools/gui_panels.py area_prism. */
-public class AreaPrismMenu extends AbstractContainerMenu {
+public class AreaPrismMenu extends QuantumMenu {
 
     public static final int BUTTON_SHAPE = 0;
     public static final int BUTTON_WIDER = 1;
@@ -30,10 +28,7 @@ public class AreaPrismMenu extends AbstractContainerMenu {
     public AreaPrismMenu(int containerId, Inventory playerInv, AreaPrismBlockEntity prism) {
         super(ModMenuTypes.AREA_PRISM_MENU.get(), containerId);
         this.prism = prism;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-        }
-        for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y);
     }
 
     public AreaPrismBlockEntity getBlockEntity() {

@@ -3,7 +3,6 @@ package com.kadikular.quantimium.menu;
 import com.kadikular.quantimium.block.entity.MaterialiserBlockEntity;
 import com.kadikular.quantimium.flux.FluxBand;
 import com.kadikular.quantimium.init.ModBlocks;
-import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import com.kadikular.quantimium.network.MaterialiserOptionsPayload;
 import com.kadikular.quantimium.recipe.EntangledLinks;
@@ -12,7 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -30,7 +28,7 @@ import java.util.Optional;
  * server it sends the player what the Materialiser could make of its Matter, and how many, twice a second while open
  * and at once after a take.
  */
-public class MaterialiserMenu extends AbstractContainerMenu {
+public class MaterialiserMenu extends QuantumMenu {
 
     public static final int MATTER_X = 26;
     public static final int MATTER_Y = 17;
@@ -71,14 +69,7 @@ public class MaterialiserMenu extends AbstractContainerMenu {
                 return com.kadikular.quantimium.unrealised.Materialising.pays(stack) || EntangledLinks.isBound(stack);
             }
         });
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, PLAYER_Y + row * 18));
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, PLAYER_Y + 58));
-        }
+        addPlayerInventory(playerInv, PLAYER_Y);
         addDataSlots(data);
     }
 

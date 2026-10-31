@@ -8,7 +8,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +19,7 @@ import java.util.function.Supplier;
  * A Redstone Lens in hand, in a mount or in an emitter: its mode, its signal's strength, strong or weak, and for a
  * count the item (a ghost entry) and how many. Changes go straight onto the lens. Layout: tools/gui_panels.py redstone_lens.
  */
-public class RedstoneLensMenu extends AbstractContainerMenu implements GhostFilterMenu {
+public class RedstoneLensMenu extends QuantumMenu implements GhostFilterMenu {
 
     public static final int BUTTON_MODE = 0;
     public static final int BUTTON_STRONGER = 1;
@@ -62,18 +61,7 @@ public class RedstoneLensMenu extends AbstractContainerMenu implements GhostFilt
                 return settings().mode().counts();
             }
         });
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
-        }
-        for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInv, col, 8 + col * 18, 142) {
-                // The lens being set, held, stays where it is.
-                @Override
-                public boolean mayPickup(Player who) {
-                    return getContainerSlot() != heldSlot;
-                }
-            });
-        }
+        addPlayerInventory(playerInv, PLAYER_INVENTORY_Y, heldSlot);
         refresh();
     }
 
