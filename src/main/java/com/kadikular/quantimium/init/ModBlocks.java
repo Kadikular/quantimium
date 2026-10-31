@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/init/ModBlocks.java
 package com.kadikular.quantimium.init;
 
 import net.minecraft.resources.ResourceKey;

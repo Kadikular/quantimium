@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/Quantimium.java
 package com.kadikular.quantimium;
 
 import com.kadikular.quantimium.util.LegacyFluids;

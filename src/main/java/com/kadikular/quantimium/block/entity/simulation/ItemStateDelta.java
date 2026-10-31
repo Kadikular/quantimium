@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/simulation/ItemStateDelta.java
 package com.kadikular.quantimium.block.entity.simulation;
 
 import com.mojang.serialization.Codec;

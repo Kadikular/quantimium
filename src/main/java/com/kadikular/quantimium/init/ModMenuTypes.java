@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/init/ModMenuTypes.java
 package com.kadikular.quantimium.init;
 
 import com.kadikular.quantimium.Quantimium;

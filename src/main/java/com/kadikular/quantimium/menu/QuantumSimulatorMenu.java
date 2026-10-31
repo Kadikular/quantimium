@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/menu/QuantumSimulatorMenu.java
 package com.kadikular.quantimium.menu;
 
 import com.kadikular.quantimium.block.entity.QuantumSimulatorBlockEntity;

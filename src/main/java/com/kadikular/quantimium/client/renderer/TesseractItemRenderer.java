@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/renderer/TesseractItemRenderer.java
 package com.kadikular.quantimium.client.renderer;
 
 import com.kadikular.quantimium.init.ModDataComponents;

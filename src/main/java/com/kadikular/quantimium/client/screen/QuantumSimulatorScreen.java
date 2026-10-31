@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/screen/QuantumSimulatorScreen.java
 package com.kadikular.quantimium.client.screen;
 
 import net.minecraft.client.Minecraft;

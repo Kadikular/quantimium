@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/QuantumSimulatorBlockEntity.java
 package com.kadikular.quantimium.block.entity;
 
 import net.minecraft.util.ProblemReporter;

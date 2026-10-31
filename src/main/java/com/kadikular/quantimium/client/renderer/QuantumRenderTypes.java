@@ -1,4 +1,3 @@
-// Path: src/main/java/com/kadikular/quantimium/client/renderer/QuantumRenderTypes.java
 package com.kadikular.quantimium.client.renderer;
 
 import com.kadikular.quantimium.Quantimium;
