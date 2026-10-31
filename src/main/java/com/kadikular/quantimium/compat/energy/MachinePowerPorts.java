@@ -1,5 +1,4 @@
-// Path: src/main/java/com/kadikular/quantimium/block/entity/simulation/MachinePowerPorts.java
-package com.kadikular.quantimium.block.entity.simulation;
+package com.kadikular.quantimium.compat.energy;
 
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.minecraft.core.BlockPos;

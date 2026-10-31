@@ -9,6 +9,7 @@ import com.kadikular.quantimium.util.NbtCompat;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import com.kadikular.quantimium.Config;
+import com.kadikular.quantimium.compat.productivebees.ProductiveBees;
 import com.kadikular.quantimium.Quantimium;
 import com.kadikular.quantimium.block.QuantumSimulatorBlock;
 import com.kadikular.quantimium.block.entity.simulation.FluidMapping;
@@ -323,17 +324,6 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
     public int getSimulationMode() { return simulationMode; }
     public BlockState getContainedBlockState() { return containedBlockState; }
 
-    /** Upgrades that keep a Productive Bees hive's bees inside: its Simulator Upgrade, or Productivity III or IV. */
-    private static final java.util.List<String> BEE_SIMULATION_UPGRADES = java.util.List.of(
-            "productivelib:upgrade_simulator", "productivelib:upgrade_productivity_3", "productivelib:upgrade_productivity_4");
-
-    /** Whether {@code state} is a Productive Bees hive whose bees would fly out of the field. */
-    static boolean beesWouldWander(BlockState state, CompoundTag nbt) {
-        net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (!id.getNamespace().equals("productivebees") || !id.getPath().contains("hive")) return false;
-        String saved = nbt.toString();
-        return BEE_SIMULATION_UPGRADES.stream().noneMatch(saved::contains);
-    }
     @Nullable
     public ContainedVisualization getContainedVisualization() { return containedVisualization; }
     /** The batch that runs: the one chosen, capped by the band here. */
@@ -396,7 +386,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
                 BlockEntity candidate = level.getBlockEntity(abovePos);
                 // A Productive Bees hive sends its bees out to a world it isn't in, where they get lost:
                 // it needs an upgrade that keeps them home.
-                if (candidate != null && beesWouldWander(aboveState, candidate.saveWithFullMetadata(level.registryAccess()))) {
+                if (candidate != null && ProductiveBees.beesWouldWander(aboveState, candidate.saveWithFullMetadata(level.registryAccess()))) {
                     if (player != null) player.sendOverlayMessage(Component.translatable(
                             "message.quantimium.simulator.bees_need_upgrade"));
                     return;

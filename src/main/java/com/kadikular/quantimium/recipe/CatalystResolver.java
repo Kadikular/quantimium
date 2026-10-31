@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.recipe;
 
+import com.kadikular.quantimium.compat.PartnerCatalysts;
+
 import com.kadikular.quantimium.Config;
 import com.kadikular.quantimium.flux.FluxBand;
 import com.kadikular.quantimium.fold.FoldedStructure;
@@ -146,13 +148,8 @@ public final class CatalystResolver {
         Identifier blockId = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
         String blockPath = blockId == null ? itemPath : blockId.getPath().toLowerCase();
 
-        addMekanismTypes(itemId, blockId, blockPath, itemPath, types);
-
-        // MI's electric furnace, and FTB Industrial Contraptions' powered and iron furnaces, do vanilla smelting.
-        if (blockPath.contains("furnace") && !blockPath.contains("blast")
-                && (itemId.getNamespace().equals("modern_industrialization") || itemId.getNamespace().equals("ftbic"))) {
-            types.add(RecipeType.SMELTING);
-        }
+        // Other mods' machines whose names don't say what they run.
+        PartnerCatalysts.addTypes(itemId, blockId, blockPath, itemPath, types);
 
         // By name: the machine's own mod's types, and vanilla's. Another mod's type that shares a word
         // (an Energized Power charger, an AE2 charger) isn't the machine's.
@@ -167,28 +164,6 @@ public final class CatalystResolver {
         }
 
         return List.copyOf(types);
-    }
-
-    /**
-     * Mekanism machine ids do not share a string with their recipe types ({@code enrichment_chamber}
-     * vs {@code enriching}). Factories do ({@code basic_enriching_factory}), but the basic blocks
-     * need an explicit map. Energized smelters also read vanilla smelting.
-     */
-    private static void addMekanismTypes(Identifier itemId, Identifier blockId,
-                                         String blockPath, String itemPath, Set<RecipeType<?>> types) {
-        if (!isMekanism(itemId) && !isMekanism(blockId)) return;
-        String path = blockPath + " " + itemPath;
-        if (path.contains("enrich")) addType(types, "mekanism:enriching");
-        if (path.contains("crush")) addType(types, "mekanism:crushing");
-        if (path.contains("combin")) addType(types, "mekanism:combining");
-        if (path.contains("energized_smelter") || path.contains("smelting")) {
-            types.add(RecipeType.SMELTING);
-            addType(types, "mekanism:smelting");
-        }
-    }
-
-    private static boolean isMekanism(Identifier id) {
-        return id != null && id.getNamespace().equals("mekanism");
     }
 
     private static void addType(Set<RecipeType<?>> types, String id) {

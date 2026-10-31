@@ -2,7 +2,7 @@ package com.kadikular.quantimium.flux;
 
 import com.kadikular.quantimium.block.entity.QuantumEnergyHost;
 import com.kadikular.quantimium.block.entity.QuantumEnergyStorage;
-import com.kadikular.quantimium.block.entity.simulation.MachinePowerPorts;
+import com.kadikular.quantimium.compat.energy.MachinePowerPorts;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
