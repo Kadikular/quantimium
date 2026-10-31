@@ -13,6 +13,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import com.kadikular.quantimium.compat.mi.ModernIndustrialization;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -67,7 +68,7 @@ public final class MachinePowerPorts {
      */
     private record LongEnergyCap(BlockCapability<?, Direction> capability, boolean modernIndustrialization) {
         long fePerUnit() {
-            return modernIndustrialization ? miFePerEu() : 1;
+            return modernIndustrialization ? ModernIndustrialization.fePerEu() : 1;
         }
     }
 
@@ -491,7 +492,7 @@ public final class MachinePowerPorts {
             Method readRoom = method(component.getClass(), "getRemainingCapacity");
             Method consume = method(component.getClass(), "consumeEu", long.class, simulationAct.getClass());
             if (insert == null || readEu == null || readRoom == null) return null;
-            return new MachineComponentPort(component, insert, consume, readEu, readRoom, simulationAct, miFePerEu());
+            return new MachineComponentPort(component, insert, consume, readEu, readRoom, simulationAct, ModernIndustrialization.fePerEu());
         }
 
         @Override
@@ -567,26 +568,6 @@ public final class MachinePowerPorts {
             return method;
         } catch (Throwable t) {
             return null;
-        }
-    }
-
-    private static long miFePerEuCache;
-
-    /** Read once the first time a Modern Industrialization buffer is actually seen. */
-    private static long miFePerEu() {
-        if (miFePerEuCache > 0) return miFePerEuCache;
-        return miFePerEuCache = readMiFePerEu();
-    }
-
-    private static long readMiFePerEu() {
-        try {
-            Class<?> configClass = Class.forName("aztech.modern_industrialization.config.MIServerConfig");
-            Object instance = configClass.getField("INSTANCE").get(null);
-            Object value = configClass.getField("forgeEnergyPerEu").get(instance);
-            Method getter = value.getClass().getMethod("getAsInt");
-            return Math.max(1, ((Number) getter.invoke(value)).longValue());
-        } catch (Throwable ignored) {
-            return 10;
         }
     }
 

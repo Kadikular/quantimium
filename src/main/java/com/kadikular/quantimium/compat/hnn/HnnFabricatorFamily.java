@@ -1,5 +1,8 @@
-package com.kadikular.quantimium.recipe;
+package com.kadikular.quantimium.compat.hnn;
 
+import com.kadikular.quantimium.recipe.ResolvedCraft;
+import com.kadikular.quantimium.recipe.IngredientPool;
+import com.kadikular.quantimium.recipe.CraftEnergy;
 import com.kadikular.quantimium.Quantimium;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;

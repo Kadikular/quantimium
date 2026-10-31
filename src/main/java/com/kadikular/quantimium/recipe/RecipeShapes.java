@@ -1,5 +1,6 @@
 package com.kadikular.quantimium.recipe;
 
+import com.kadikular.quantimium.compat.mi.MiMachineFamily;
 import com.kadikular.quantimium.recipe.adapter.ConfiguredRecipeFamily;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
