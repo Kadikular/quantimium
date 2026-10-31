@@ -81,6 +81,14 @@ public record SideConfig(
         return itemMode.allowsOutput() && itemOutputMask != 0;
     }
 
+    /**
+     * For a machine whose nine slots are the mask's nine places, taking and giving alike (a Laser Port): whether this
+     * face lets {@code slot} out. {@link #allowsOutputSlot} counts outputs from slot 9, after a Crafter's inputs.
+     */
+    public boolean allowsOutputPosition(int slot) {
+        return itemMode.allowsOutput() && slot >= 0 && slot < 9 && (itemOutputMask & (1 << slot)) != 0;
+    }
+
     public boolean allowsOutputSlot(int slot) {
         // Crafters repeat the nine-position mask across six catalog pages. Simulators only use
         // the first page, so this remains backwards compatible for both machines.

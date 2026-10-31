@@ -379,7 +379,7 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
 
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            if (!config().itemMode().allowsOutput() || !config().allowsOutputSlot(slot)) return ItemStack.EMPTY;
+            if (!config().allowsOutputPosition(slot)) return ItemStack.EMPTY;
             return items.extractItem(slot, amount, simulate);
         }
 

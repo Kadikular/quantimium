@@ -695,6 +695,24 @@ public final class LaserTests {
         helper.setBlock(pos, ModBlocks.LASER_PORT.get().defaultBlockState().setValue(com.kadikular.quantimium.block.LaserPortBlock.FACING, Direction.EAST));
     }
 
+    // covers: laser.port
+    @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 20)
+    public static void aPipeTakesWhatALaserPortCaught(GameTestHelper helper) {
+        // Collecting (as it starts), what it caught is there for pipes and hoppers, from any face.
+        BlockPos at = new BlockPos(5, Y, 8);
+        port(helper, at);
+        var port = helper.getBlockEntity(at, com.kadikular.quantimium.block.entity.LaserPortBlockEntity.class);
+        helper.assertTrue(port.collects(), "a new port collects");
+        port.getItems().setStackInSlot(0, new ItemStack(Items.COBBLESTONE, 5));
+        var pipe = com.kadikular.quantimium.util.LegacyItems.legacy(helper.getLevel().getCapability(
+                net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK, helper.absolutePos(at), Direction.NORTH));
+        helper.assertTrue(pipe != null, "its side offers its slots");
+        helper.assertValueEqual(pipe.extractItem(0, 5, false).getCount(), 5, "cobblestone taken by a pipe");
+        helper.assertTrue(port.getItems().getStackInSlot(0).isEmpty(), "and gone from the port");
+        TestSupport.finishLasers(helper);
+        helper.succeed();
+    }
+
     // covers: laser.prism.split
     @GameTest(template = TestSupport.FLOOR_17, batch = "lasers", timeoutTicks = 100)
     public static void aPrismSendsLightToEachBlockItsLinkedTo(GameTestHelper helper) {
