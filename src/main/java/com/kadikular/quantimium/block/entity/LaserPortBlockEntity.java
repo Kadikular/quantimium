@@ -402,14 +402,12 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
     @Override
     public void applySideConfigs(List<SideConfig> configs) {
         sideConfigs = PROFILE.sanitize(configs);
-        setChanged();
-        invalidateCapabilities();
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64;
+        return MachineAccess.withinReach(this, player);
     }
 
     @Override

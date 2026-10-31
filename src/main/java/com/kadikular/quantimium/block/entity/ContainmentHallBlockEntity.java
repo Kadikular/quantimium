@@ -541,9 +541,7 @@ public class ContainmentHallBlockEntity extends BlockEntity implements Multibloc
     }
 
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5,
-                worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     private void recordPowerUse(int amount) {

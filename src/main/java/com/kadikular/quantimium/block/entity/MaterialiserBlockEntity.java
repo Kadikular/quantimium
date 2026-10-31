@@ -809,9 +809,7 @@ public class MaterialiserBlockEntity extends BlockEntity
     @Override
     public void applySideConfigs(List<SideConfig> configs) {
         sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(configs);
-        setChanged();
-        invalidateCapabilities();
-        if (level != null) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
@@ -821,8 +819,7 @@ public class MaterialiserBlockEntity extends BlockEntity
 
     @Override
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     // ---- readouts, menu and saving ----

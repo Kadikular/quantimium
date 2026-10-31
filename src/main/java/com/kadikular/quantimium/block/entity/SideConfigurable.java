@@ -9,7 +9,11 @@ import java.util.List;
 /** Shared side-automation surface for simulator, crafter, stabilizer, and future machines. */
 public interface SideConfigurable {
     List<SideConfig> getSideConfigs();
+
+    /** Sanitize and store, then {@link MachineAccess#sidesChanged}. */
     void applySideConfigs(List<SideConfig> configs);
+
+    /** Normally {@link MachineAccess#withinReach}. */
     boolean isUsableBy(Player player);
     SideAutomationProfile sideAutomationProfile();
 }

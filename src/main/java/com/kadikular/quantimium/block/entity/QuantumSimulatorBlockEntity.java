@@ -565,11 +565,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
     public SideAutomationProfile sideAutomationProfile() { return SIDE_AUTOMATION_PROFILE; }
     public void applySideConfigs(List<SideConfig> configs) {
         this.sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(configs);
-        setChanged();
-        if (level != null) {
-            level.invalidateCapabilities(worldPosition);
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        MachineAccess.sidesChanged(this);
     }
     public QuantumEnergyStorage getEnergyStorage() { return energyStorage; }
 
@@ -1273,8 +1269,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
 
     /** Guards the configuration packets so a player cannot reconfigure a simulator across the map. */
     public boolean isUsableBy(Player player) {
-        if (level == null || player.level() != level) return false;
-        return player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     /** Slot list for the configuration pop-up. Empty when the target cannot be simulated. */

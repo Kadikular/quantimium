@@ -614,18 +614,12 @@ public class QuantumCrafterBlockEntity extends BlockEntity
         this.sideConfigs = SIDE_AUTOMATION_PROFILE.sanitize(configs);
         localDirty = true;
         contentRevision++;
-        setChanged();
-        if (level != null) {
-            // A face turned off or on: pipes holding on to what it offered ask again.
-            level.invalidateCapabilities(worldPosition);
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        MachineAccess.sidesChanged(this);
     }
 
     @Override
     public boolean isUsableBy(Player player) {
-        if (level == null || player.level() != level) return false;
-        return player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, QuantumCrafterBlockEntity be) {

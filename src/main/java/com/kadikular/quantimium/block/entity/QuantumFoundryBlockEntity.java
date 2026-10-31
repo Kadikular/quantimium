@@ -434,9 +434,7 @@ public class QuantumFoundryBlockEntity extends BlockEntity
     }
 
     public boolean isUsableBy(Player player) {
-        return level != null && level.getBlockEntity(worldPosition) == this
-                && player.distanceToSqr(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5,
-                worldPosition.getZ() + 0.5) <= 64.0;
+        return MachineAccess.withinReach(this, player);
     }
 
     private void setChangedAndSync() {
