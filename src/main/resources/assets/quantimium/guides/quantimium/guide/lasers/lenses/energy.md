@@ -2,7 +2,7 @@
 navigation:
   title: Lens energy
   parent: lasers/index.md
-  position: 30
+  position: 31
 ---
 
 # Lens energy

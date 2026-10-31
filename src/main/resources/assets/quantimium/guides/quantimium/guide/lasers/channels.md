@@ -2,7 +2,7 @@
 navigation:
   title: Channels
   parent: lasers/index.md
-  position: 33
+  position: 34
 ---
 
 # Channels

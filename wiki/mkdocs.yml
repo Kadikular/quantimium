@@ -41,6 +41,9 @@ theme:
 extra_css:
   - stylesheets/quantimium.css
 
+extra_javascript:
+  - javascripts/spoilers.js
+
 markdown_extensions:
   - admonition
   - attr_list
@@ -68,6 +71,7 @@ plugins:
 nav:
   - Home: index.md
   - Getting started: guides/getting-started.md
+  - Progression: guides/progression.md
   - For pack makers: guides/pack-makers.md
   - Concepts:
       - Flux and anomaly: concepts/flux-and-anomaly.md

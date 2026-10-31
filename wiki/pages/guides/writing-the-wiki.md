@@ -48,6 +48,7 @@ To add written content to a generated page, create `wiki/pages/blocks/<id>.md` o
 | `[[render:foundry]]` | An isometric render (the scenes in `tools/block_preview.py`) |
 | `[[structure:reactor]]` | A multiblock in 3D that players can turn, in the in-game guide only. The structures in `wiki/structures` are built by `GuideStructures` and saved with `./gradlew runGameTestServer -PexportStructures`; rerun it when a multiblock changes. |
 | `[[recipes:quantimium:quantum_foundry]]` | Every recipe of a type, drawn |
+| `||the Veiled||` | A spoiler, blacked out until clicked. `||6:the Veiled||` joins group 6: a `<div class="spoiler-block" data-spoiler="6" markdown>` block shows it as it's opened. The in-game guide shows spoilers plainly |
 | `[[mechanic:hall.residue.burn]]` | Declares a rule. Nothing shows inline; the page's collapsed **Tests** table at the bottom lists the rule and the test behind it |
 
 **Quote numbers with `{{c:…}}` whenever the code has them as a constant**, so a balance change

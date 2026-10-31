@@ -2,7 +2,7 @@
 navigation:
   title: Tesseract Stabilizer
   parent: machines/index.md
-  position: 9
+  position: 10
   icon: quantimium:tesseract_stabilizer
 ---
 

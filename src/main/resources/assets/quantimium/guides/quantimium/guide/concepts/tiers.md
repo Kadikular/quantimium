@@ -2,7 +2,7 @@
 navigation:
   title: Machine tiers
   parent: concepts/index.md
-  position: 3
+  position: 4
 ---
 
 # Machine tiers

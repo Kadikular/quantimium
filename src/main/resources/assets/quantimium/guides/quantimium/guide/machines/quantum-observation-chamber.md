@@ -2,7 +2,7 @@
 navigation:
   title: Quantum Observation Chamber
   parent: machines/index.md
-  position: 8
+  position: 9
   icon: quantimium:quantum_observation_chamber
 ---
 

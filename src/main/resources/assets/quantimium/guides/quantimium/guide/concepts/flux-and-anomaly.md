@@ -2,7 +2,7 @@
 navigation:
   title: Flux and anomaly
   parent: concepts/index.md
-  position: 2
+  position: 3
 ---
 
 # Flux and anomaly

@@ -2,7 +2,7 @@
 navigation:
   title: Optical cavities
   parent: lasers/index.md
-  position: 24
+  position: 25
 ---
 
 # Optical cavities

@@ -57,3 +57,14 @@ img.qgui {
   image-rendering: pixelated;
   border-radius: 4px;
 }
+
+/* Spoilers: blacked out until clicked, as on Discord (javascripts/spoilers.js). */
+.spoiler:not(.shown) { background: #202225; color: transparent; border-radius: 3px; cursor: pointer; }
+.spoiler:not(.shown) * { visibility: hidden; }
+.spoiler.shown { background: rgba(127, 127, 127, 0.15); border-radius: 3px; }
+.spoiler-block:not(.shown) { position: relative; cursor: pointer; border-radius: 6px; background: #202225; }
+.spoiler-block:not(.shown) > * { visibility: hidden; }
+.spoiler-block:not(.shown)::after {
+  content: "Spoiler: click to show"; position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; color: #b9bbbe; font-weight: 600; letter-spacing: 0.02em;
+}

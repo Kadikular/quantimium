@@ -2,7 +2,7 @@
 navigation:
   title: Superposition Pod
   parent: multiblocks/index.md
-  position: 16
+  position: 17
 item_ids:
 - quantimium:superposition_pod
 - quantimium:pod_cradle

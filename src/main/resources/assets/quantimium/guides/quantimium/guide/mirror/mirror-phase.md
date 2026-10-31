@@ -2,7 +2,7 @@
 navigation:
   title: The mirror phase
   parent: mirror/index.md
-  position: 35
+  position: 36
 ---
 
 # The mirror phase

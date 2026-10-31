@@ -2,7 +2,7 @@
 navigation:
   title: Networks and rules
   parent: lasers/index.md
-  position: 34
+  position: 35
 ---
 
 # Networks and rules
