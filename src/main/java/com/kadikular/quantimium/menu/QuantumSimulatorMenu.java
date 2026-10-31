@@ -113,10 +113,11 @@ public class QuantumSimulatorMenu extends AbstractContainerMenu {
             ItemStack stackInSlot = slot.getItem();
             itemstack = stackInSlot.copy();
 
-            if (index < 19) { // Container slots
-                if (!this.moveItemStackTo(stackInSlot, 19, 55, true)) return ItemStack.EMPTY;
+            int machineSlots = QuantumSimulatorBlockEntity.TOTAL_SLOTS;
+            if (index < machineSlots) { // Container slots
+                if (!this.moveItemStackTo(stackInSlot, machineSlots, slots.size(), true)) return ItemStack.EMPTY;
             } else { // Player inventory slots
-                if (!this.moveItemStackTo(stackInSlot, 0, 9, false)) return ItemStack.EMPTY;
+                if (!this.moveItemStackTo(stackInSlot, 0, QuantumSimulatorBlockEntity.INPUT_SLOTS, false)) return ItemStack.EMPTY;
             }
 
             if (stackInSlot.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);

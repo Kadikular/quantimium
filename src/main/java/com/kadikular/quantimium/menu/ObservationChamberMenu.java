@@ -2,7 +2,6 @@ package com.kadikular.quantimium.menu;
 
 import com.kadikular.quantimium.block.entity.ObservationChamberBlockEntity;
 import com.kadikular.quantimium.init.ModBlocks;
-import com.kadikular.quantimium.init.ModItems;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -118,7 +117,7 @@ public class ObservationChamberMenu extends AbstractContainerMenu {
 
         ItemStack stack = slot.getItem();
         result = stack.copy();
-        int machineSlots = 11;
+        int machineSlots = ObservationChamberBlockEntity.TOTAL_SLOTS;
         if (index < machineSlots) {
             if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return ItemStack.EMPTY;
         } else {

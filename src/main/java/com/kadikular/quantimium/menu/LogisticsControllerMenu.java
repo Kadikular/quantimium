@@ -1,6 +1,7 @@
 package com.kadikular.quantimium.menu;
 
 import com.kadikular.quantimium.block.entity.LogisticsControllerBlockEntity;
+import com.kadikular.quantimium.block.entity.MachineAccess;
 import com.kadikular.quantimium.init.ModMenuTypes;
 import com.kadikular.quantimium.laser.LogisticsMember;
 import net.minecraft.network.FriendlyByteBuf;
@@ -11,7 +12,6 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 
 /** A Logistics Controller: its channel, its power, and what's on its network. Layout: tools/gui_panels.py logistics_controller. */
 public class LogisticsControllerMenu extends AbstractContainerMenu implements ChannelMenu {
@@ -97,9 +97,6 @@ public class LogisticsControllerMenu extends AbstractContainerMenu implements Ch
 
     @Override
     public boolean stillValid(Player player) {
-        if (controller == null) return false;
-        Level level = controller.getLevel();
-        return level != null && level.getBlockEntity(controller.getBlockPos()) == controller
-                && player.distanceToSqr(controller.getBlockPos().getCenter()) <= 64.0;
+        return controller != null && MachineAccess.withinReach(controller, player);
     }
 }
