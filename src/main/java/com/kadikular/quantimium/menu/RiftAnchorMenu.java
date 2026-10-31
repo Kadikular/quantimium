@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -108,17 +107,7 @@ public class RiftAnchorMenu extends QuantumMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         if (index >= PLAYER_START) return ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return original;
+        return shiftClick(player, index, stack -> moveItemStackTo(stack, PLAYER_START, PLAYER_END, true));
     }
 
     @Override

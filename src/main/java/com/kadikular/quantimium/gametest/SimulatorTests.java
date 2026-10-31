@@ -57,6 +57,27 @@ public final class SimulatorTests {
         helper.succeed();
     }
 
+    @GameTest(template = TestSupport.FLOOR_9, batch = "simulator_menu", timeoutTicks = 20)
+    public static void shiftClickingMovesBetweenTheGridAndTheInventory(GameTestHelper helper) {
+        // From the player's inventory into the grid's inputs, never its outputs; from the grid back out.
+        QuantumSimulatorBlockEntity simulator = simulator(helper);
+        var player = TestSupport.player(helper, SIMULATOR.east(2));
+        player.getInventory().setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        var menu = (com.kadikular.quantimium.menu.QuantumSimulatorMenu) simulator.createMenu(0, player.getInventory(), player);
+        int hotbarFirst = menu.slots.size() - 9;
+        helper.assertTrue(menu.quickMoveStack(player, hotbarFirst).is(Items.COBBLESTONE), "the shift-click moved the stack");
+        helper.assertValueEqual(simulator.getInventory().getStackInSlot(0).getCount(), 20, "cobblestone in the grid's first input");
+        helper.assertTrue(player.getInventory().getItem(0).isEmpty(), "and gone from the hotbar");
+        for (int slot = QuantumSimulatorBlockEntity.OUTPUT_START; slot <= QuantumSimulatorBlockEntity.OUTPUT_END; slot++) {
+            helper.assertTrue(simulator.getInventory().getStackInSlot(slot).isEmpty(), "nothing put in the grid's outputs");
+        }
+        menu.quickMoveStack(player, 0);
+        helper.assertTrue(simulator.getInventory().getStackInSlot(0).isEmpty(), "shifted back out of the grid");
+        helper.assertValueEqual(player.getInventory().countItem(Items.COBBLESTONE), 20, "all of it in the player's inventory");
+        TestSupport.removePlayer(helper, player);
+        helper.succeed();
+    }
+
     // covers: simulator.engage
     @GameTest(template = TestSupport.FLOOR_9, batch = "simulator_bedrock", timeoutTicks = 40)
     public static void unbreakableBlocksCannotBeTaken(GameTestHelper helper) {

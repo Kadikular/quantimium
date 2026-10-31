@@ -8,7 +8,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import com.kadikular.quantimium.util.SlotItemHandler;
@@ -111,38 +110,27 @@ public class QuantumCrafterMenu extends QuantumMenu implements GhostFilterMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
-        if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
-
-        ItemStack stackInSlot = slot.getItem();
-        itemstack = stackInSlot.copy();
-
-        if (index < MACHINE_MENU_SLOTS) {
-            if (!this.moveItemStackTo(stackInSlot, MACHINE_MENU_SLOTS, slots.size(), true)) {
-                return ItemStack.EMPTY;
-            }
-        } else {
-            // Prefer catalyst if empty, else inputs.
-            ItemStack catalyst = blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.CATALYST_SLOT);
-            if (catalyst.isEmpty()) {
-                if (!this.moveItemStackTo(stackInSlot, MENU_CATALYST_SLOT,
-                        MENU_CATALYST_SLOT + 1, false)) {
-                    if (!this.moveItemStackTo(stackInSlot, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false)) {
-                        return ItemStack.EMPTY;
-                    }
+        return shiftClick(player, index, stackInSlot -> {
+            if (index < MACHINE_MENU_SLOTS) {
+                if (!this.moveItemStackTo(stackInSlot, MACHINE_MENU_SLOTS, slots.size(), true)) {
+                    return false;
                 }
-            } else if (!this.moveItemStackTo(stackInSlot, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false)) {
-                return ItemStack.EMPTY;
+            } else {
+                // Prefer catalyst if empty, else inputs.
+                ItemStack catalyst = blockEntity.getInventory().getStackInSlot(QuantumCrafterBlockEntity.CATALYST_SLOT);
+                if (catalyst.isEmpty()) {
+                    if (!this.moveItemStackTo(stackInSlot, MENU_CATALYST_SLOT,
+                            MENU_CATALYST_SLOT + 1, false)) {
+                        if (!this.moveItemStackTo(stackInSlot, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false)) {
+                            return false;
+                        }
+                    }
+                } else if (!this.moveItemStackTo(stackInSlot, 0, QuantumCrafterBlockEntity.INPUT_SLOTS, false)) {
+                    return false;
+                }
             }
-        }
-
-        if (stackInSlot.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-
-        if (stackInSlot.getCount() == itemstack.getCount()) return ItemStack.EMPTY;
-        slot.onTake(player, stackInSlot);
-        return itemstack;
+            return true;
+        });
     }
 
     /** Moves {@code stack} into the player's inventory; what didn't fit. */

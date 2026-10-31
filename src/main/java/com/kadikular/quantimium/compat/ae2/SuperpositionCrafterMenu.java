@@ -204,18 +204,10 @@ public class SuperpositionCrafterMenu extends QuantumMenu implements GhostFilter
     /** Shift-click moves a catalyst in or out; ghost slots never hold anything to move. */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem() || (index >= FILTER_START && index < FILTER_END)) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (index == CATALYST_SLOT) {
-            if (!moveItemStackTo(stack, FILTER_END, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, CATALYST_SLOT, CATALYST_SLOT + 1, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return original;
+        if (index >= FILTER_START && index < FILTER_END) return ItemStack.EMPTY;
+        return shiftClick(player, index, stack -> index == CATALYST_SLOT
+                ? moveItemStackTo(stack, FILTER_END, slots.size(), true)
+                : moveItemStackTo(stack, CATALYST_SLOT, CATALYST_SLOT + 1, false));
     }
 
     @Override

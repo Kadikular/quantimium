@@ -82,18 +82,14 @@ public class RelayEmitterMenu extends QuantumMenu implements ChannelMenu {
     /** Shift-click: a lens into the emitter if it's empty, or the emitter's lens out to the inventory. */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack before = stack.copy();
-        if (index == 0) {
-            if (!moveItemStackTo(stack, 1, slots.size(), true)) return ItemStack.EMPTY;
-        } else {
-            if (!(stack.getItem() instanceof LensItem) || !moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return before;
+        return shiftClick(player, index, stack -> {
+            if (index == 0) {
+                if (!moveItemStackTo(stack, 1, slots.size(), true)) return false;
+            } else {
+                if (!(stack.getItem() instanceof LensItem) || !moveItemStackTo(stack, 0, 1, false)) return false;
+            }
+            return true;
+        });
     }
 
     @Override

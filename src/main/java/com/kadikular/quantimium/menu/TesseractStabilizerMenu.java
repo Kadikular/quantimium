@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -56,22 +55,16 @@ public class TesseractStabilizerMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem()) return result;
-
-        ItemStack stack = slot.getItem();
-        result = stack.copy();
-        if (index == 0) {
-            if (!moveItemStackTo(stack, 1, slots.size(), true)) return ItemStack.EMPTY;
-        } else {
-            if (!EntangledLinks.fitsStabilizer(stack) || !moveItemStackTo(stack, 0, 1, false)) {
-                return ItemStack.EMPTY;
+        return shiftClick(player, index, stack -> {
+            if (index == 0) {
+                if (!moveItemStackTo(stack, 1, slots.size(), true)) return false;
+            } else {
+                if (!EntangledLinks.fitsStabilizer(stack) || !moveItemStackTo(stack, 0, 1, false)) {
+                    return false;
+                }
             }
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+            return true;
+        });
     }
 
     @Override

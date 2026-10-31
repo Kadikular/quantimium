@@ -95,27 +95,10 @@ public class QuantumSimulatorMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
-
-        if (slot != null && slot.hasItem()) {
-            ItemStack stackInSlot = slot.getItem();
-            itemstack = stackInSlot.copy();
-
-            int machineSlots = QuantumSimulatorBlockEntity.TOTAL_SLOTS;
-            if (index < machineSlots) { // Container slots
-                if (!this.moveItemStackTo(stackInSlot, machineSlots, slots.size(), true)) return ItemStack.EMPTY;
-            } else { // Player inventory slots
-                if (!this.moveItemStackTo(stackInSlot, 0, QuantumSimulatorBlockEntity.INPUT_SLOTS, false)) return ItemStack.EMPTY;
-            }
-
-            if (stackInSlot.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-            else slot.setChanged();
-
-            if (stackInSlot.getCount() == itemstack.getCount()) return ItemStack.EMPTY;
-            slot.onTake(player, stackInSlot);
-        }
-        return itemstack;
+        int machineSlots = QuantumSimulatorBlockEntity.TOTAL_SLOTS;
+        return shiftClick(player, index, stack -> index < machineSlots
+                ? moveItemStackTo(stack, machineSlots, slots.size(), true)
+                : moveItemStackTo(stack, 0, QuantumSimulatorBlockEntity.INPUT_SLOTS, false));
     }
     
     @Override

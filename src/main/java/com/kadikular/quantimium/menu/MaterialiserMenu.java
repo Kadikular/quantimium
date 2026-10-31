@@ -14,7 +14,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -176,25 +175,21 @@ public class MaterialiserMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack result = stack.copy();
-        if (index < MACHINE_SLOTS) {
-            if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (com.kadikular.quantimium.unrealised.Matter.is(stack)) {
-            if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
-        } else if (com.kadikular.quantimium.unrealised.Materialising.pays(stack)) {
-            if (!moveItemStackTo(stack, 1, 2, false)) return ItemStack.EMPTY;
-        } else if (EntangledLinks.isBound(stack)) {
-            // A bound Tesseract feeds Matter first, then Anomalite Dust.
-            if (!moveItemStackTo(stack, 0, 2, false)) return ItemStack.EMPTY;
-        } else {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+        return shiftClick(player, index, stack -> {
+            if (index < MACHINE_SLOTS) {
+                if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return false;
+            } else if (com.kadikular.quantimium.unrealised.Matter.is(stack)) {
+                if (!moveItemStackTo(stack, 0, 1, false)) return false;
+            } else if (com.kadikular.quantimium.unrealised.Materialising.pays(stack)) {
+                if (!moveItemStackTo(stack, 1, 2, false)) return false;
+            } else if (EntangledLinks.isBound(stack)) {
+                // A bound Tesseract feeds Matter first, then Anomalite Dust.
+                if (!moveItemStackTo(stack, 0, 2, false)) return false;
+            } else {
+                return false;
+            }
+            return true;
+        });
     }
 
     @Override

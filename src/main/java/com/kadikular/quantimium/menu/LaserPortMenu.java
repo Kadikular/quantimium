@@ -121,18 +121,15 @@ public class LaserPortMenu extends QuantumMenu implements GhostFilterMenu, Chann
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem() || (index >= FILTER_START && index < FILTER_END)) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (index < FILTER_START) {
-            if (!moveItemStackTo(stack, FILTER_END, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (filterView || !moveItemStackTo(stack, ITEMS_START, FILTER_START, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return original;
+        if (index >= FILTER_START && index < FILTER_END) return ItemStack.EMPTY;
+        return shiftClick(player, index, stack -> {
+            if (index < FILTER_START) {
+                if (!moveItemStackTo(stack, FILTER_END, slots.size(), true)) return false;
+            } else if (filterView || !moveItemStackTo(stack, ITEMS_START, FILTER_START, false)) {
+                return false;
+            }
+            return true;
+        });
     }
 
     @Override

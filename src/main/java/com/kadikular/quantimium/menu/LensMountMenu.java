@@ -7,7 +7,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /** A Lens Mount: its four lenses in a row, in the order light meets them. Layout: tools/gui_panels.py lens_mount. */
@@ -60,19 +59,15 @@ public class LensMountMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack result = stack.copy();
-        int lenses = LensMountBlockEntity.SLOTS;
-        if (index < lenses) {
-            if (!moveItemStackTo(stack, lenses, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(stack, 0, lenses, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+        return shiftClick(player, index, stack -> {
+            int lenses = LensMountBlockEntity.SLOTS;
+            if (index < lenses) {
+                if (!moveItemStackTo(stack, lenses, slots.size(), true)) return false;
+            } else if (!moveItemStackTo(stack, 0, lenses, false)) {
+                return false;
+            }
+            return true;
+        });
     }
 
     @Override

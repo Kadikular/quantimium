@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -103,25 +102,19 @@ public class ObservationChamberMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem()) return result;
-
-        ItemStack stack = slot.getItem();
-        result = stack.copy();
-        int machineSlots = ObservationChamberBlockEntity.TOTAL_SLOTS;
-        if (index < machineSlots) {
-            if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return ItemStack.EMPTY;
-        } else {
-            if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
-                    || !moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
-                    ObservationChamberBlockEntity.INPUT_SLOT + 1, false)) {
-                return ItemStack.EMPTY;
+        return shiftClick(player, index, stack -> {
+            int machineSlots = ObservationChamberBlockEntity.TOTAL_SLOTS;
+            if (index < machineSlots) {
+                if (!moveItemStackTo(stack, machineSlots, slots.size(), true)) return false;
+            } else {
+                if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
+                        || !moveItemStackTo(stack, ObservationChamberBlockEntity.INPUT_SLOT,
+                        ObservationChamberBlockEntity.INPUT_SLOT + 1, false)) {
+                    return false;
+                }
             }
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+            return true;
+        });
     }
 
     @Override

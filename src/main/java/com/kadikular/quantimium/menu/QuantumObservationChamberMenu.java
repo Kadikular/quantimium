@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -117,19 +116,15 @@ public class QuantumObservationChamberMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack result = stack.copy();
-        if (index < MACHINE_SLOTS) {
-            if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
-                || !moveItemStackTo(stack, 0, QuantumObservationChamberBlockEntity.INPUT_SLOTS, false)) {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-        else slot.setChanged();
-        return result;
+        return shiftClick(player, index, stack -> {
+            if (index < MACHINE_SLOTS) {
+                if (!moveItemStackTo(stack, MACHINE_SLOTS, slots.size(), true)) return false;
+            } else if (!com.kadikular.quantimium.unrealised.Matter.is(stack)
+                    || !moveItemStackTo(stack, 0, QuantumObservationChamberBlockEntity.INPUT_SLOTS, false)) {
+                return false;
+            }
+            return true;
+        });
     }
 
     @Override

@@ -12,7 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import com.kadikular.quantimium.util.SlotItemHandler;
 
@@ -134,23 +133,16 @@ public class ContainmentHallMenu extends QuantumMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Slot slot = this.slots.get(index);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
-        ItemStack stack = slot.getItem();
-        ItemStack original = stack.copy();
-        if (index < PLAYER_START) {
-            if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return ItemStack.EMPTY;
-        } else if (stack.is(ModItems.RIFT_RESIDUE.get()) || EntangledLinks.isBound(stack)) {
-            if (!moveItemStackTo(stack, 0, PLAYER_START, false)) return ItemStack.EMPTY;
-        } else {
-            return ItemStack.EMPTY;
-        }
-        if (stack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return original;
+        return shiftClick(player, index, stack -> {
+            if (index < PLAYER_START) {
+                if (!moveItemStackTo(stack, PLAYER_START, PLAYER_END, true)) return false;
+            } else if (stack.is(ModItems.RIFT_RESIDUE.get()) || EntangledLinks.isBound(stack)) {
+                if (!moveItemStackTo(stack, 0, PLAYER_START, false)) return false;
+            } else {
+                return false;
+            }
+            return true;
+        });
     }
 
     @Override

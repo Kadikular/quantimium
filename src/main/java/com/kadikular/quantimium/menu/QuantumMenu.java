@@ -5,7 +5,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
  * A Quantimium screen's menu: what all of them share. The player's inventory sits where the panels in
@@ -20,6 +23,24 @@ public abstract class QuantumMenu extends AbstractContainerMenu {
 
     protected QuantumMenu(@Nullable MenuType<?> type, int containerId) {
         super(type, containerId);
+    }
+
+    /**
+     * A shift-click on slot {@code index}: {@code route} moves the slot's stack where this menu sends it (with
+     * {@link #moveItemStackTo}) and says whether any of it went. The slot is then emptied or updated, and told it was
+     * taken from, as vanilla's menus do. What was in it, or empty if nothing moved, which ends a shift-click.
+     */
+    protected ItemStack shiftClick(Player player, int index, Predicate<ItemStack> route) {
+        Slot slot = slots.get(index);
+        if (!slot.hasItem()) return ItemStack.EMPTY;
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (!route.test(stack)) return ItemStack.EMPTY;
+        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
+        else slot.setChanged();
+        if (stack.getCount() == original.getCount()) return ItemStack.EMPTY;
+        slot.onTake(player, stack);
+        return original;
     }
 
     /** Adds the player's 27 inventory slots in three rows from {@code top}, then the hotbar's nine. */
