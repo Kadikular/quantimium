@@ -1,19 +1,16 @@
 package com.kadikular.quantimium.block.entity;
 
 import com.kadikular.quantimium.init.ModBlockEntities;
-import com.kadikular.quantimium.laser.LaserBeam;
 import com.kadikular.quantimium.laser.LaserNetworks;
-import com.kadikular.quantimium.laser.LaserNode;
+import com.kadikular.quantimium.laser.LaserEndpoint;
 import com.kadikular.quantimium.laser.LaserTuning;
 import com.kadikular.quantimium.laser.Logistics;
 import com.kadikular.quantimium.laser.LogisticsController;
 import com.kadikular.quantimium.laser.LogisticsMember;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
@@ -32,7 +29,7 @@ import java.util.Set;
  * storage holds or its providers offer, with how many; and one empty slot, where what's put in goes into storage.
  * Each transfer costs the controller a move. Light ends at it.
  */
-public class LogisticsMaterialiserBlockEntity extends BlockEntity implements LaserNode {
+public class LogisticsMaterialiserBlockEntity extends BlockEntity implements LaserEndpoint {
 
     /** One thing on offer, and how many. */
     private record Entry(ItemResource item, long amount) {}
@@ -491,30 +488,6 @@ public class LogisticsMaterialiserBlockEntity extends BlockEntity implements Las
     public BlockPos nodePos() {
         return worldPosition;
     }
-
-    @Override
-    public Set<Direction> outputs() {
-        return Set.of();
-    }
-
-    @Override
-    public int range() {
-        return LaserTuning.RELAY_RANGE;
-    }
-
-    /** It passes nothing on; a relay only so the light reaching it is known. */
-    @Override
-    public boolean relays() {
-        return true;
-    }
-
-    @Override
-    public double tax() {
-        return 0;
-    }
-
-    @Override
-    public void showBeams(List<LaserBeam> beams) {}
 
     @Override
     public void onLoad() {
