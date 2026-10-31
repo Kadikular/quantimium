@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.block.entity;
 
+import com.kadikular.quantimium.util.GatedItems;
+
 import com.kadikular.quantimium.block.LaserRelayBlock;
 import com.kadikular.quantimium.init.ModBlockEntities;
 import com.kadikular.quantimium.recipe.FilterEntry;
@@ -35,7 +37,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -105,7 +106,7 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
                 .map(config -> new SideConfig(config.side(), SideMode.BOTH, SideConfig.ALL_ITEM_INPUTS, SideConfig.ALL_ITEM_OUTPUTS,
                         false, false, SideMode.DISABLED, 0, 0, false, false))
                 .toList());
-        for (Direction side : Direction.values()) sided[side.get3DDataValue()] = new Sided(side);
+        for (Direction side : Direction.values()) sided[side.get3DDataValue()] = sidedItems(side);
     }
 
     public Mode mode() {
@@ -350,48 +351,11 @@ public class LaserPortBlockEntity extends BlockEntity implements LaserNode, Flux
         return config.itemMode() == SideMode.DISABLED ? null : LegacyItems.of(sided[side.get3DDataValue()], items);
     }
 
-    private final class Sided implements IItemHandler {
-        private final Direction side;
-
-        Sided(Direction side) {
-            this.side = side;
-        }
-
-        private SideConfig config() {
-            return sideConfigs.get(side.get3DDataValue());
-        }
-
-        @Override
-        public int getSlots() {
-            return SLOTS;
-        }
-
-        @Override
-        public ItemStack getStackInSlot(int slot) {
-            return items.getStackInSlot(slot);
-        }
-
-        @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (!takesFromOutside() || !config().itemMode().allowsInput() || !config().allowsInputSlot(slot)) return stack;
-            return items.insertItem(slot, stack, simulate);
-        }
-
-        @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            if (!config().allowsOutputPosition(slot)) return ItemStack.EMPTY;
-            return items.extractItem(slot, amount, simulate);
-        }
-
-        @Override
-        public int getSlotLimit(int slot) {
-            return items.getSlotLimit(slot);
-        }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return takesFromOutside() && config().itemMode().allowsInput() && items.isItemValid(slot, stack);
-        }
+    /** What pipes and hoppers on {@code side} see: its slots, filled from outside only while it sends, as its sides are set. */
+    private IItemHandler sidedItems(Direction side) {
+        return new GatedItems(items, SLOTS,
+                slot -> takesFromOutside() && sideConfigs.get(side.get3DDataValue()).allowsInputSlot(slot),
+                slot -> sideConfigs.get(side.get3DDataValue()).allowsOutputPosition(slot));
     }
 
     @Override

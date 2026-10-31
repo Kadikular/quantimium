@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.block.entity;
 
+import com.kadikular.quantimium.util.GatedItems;
+
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import com.kadikular.quantimium.util.LegacyItems;
@@ -89,7 +91,9 @@ public class QuantumFoundryBlockEntity extends BlockEntity
                 }
             };
 
-    private final IItemHandler automation = new FoundryAutomationHandler();
+    private final IItemHandler automation = new GatedItems(inventory, TOTAL_SLOTS,
+            // Each input over a pillar that's there; the result out.
+            slot -> slot < INPUT_SLOTS && hasPillar(slot), slot -> slot == OUTPUT_SLOT);
     private int pillarMask;
     private int progress;
     private int duration;
@@ -523,38 +527,7 @@ public class QuantumFoundryBlockEntity extends BlockEntity
         return new QuantumFoundryMenu(containerId, playerInventory, this, data);
     }
 
-    private final class FoundryAutomationHandler implements IItemHandler {
-        @Override
-        public int getSlots() {
-            return TOTAL_SLOTS;
-        }
 
-        @Override
-        public ItemStack getStackInSlot(int slot) {
-            return inventory.getStackInSlot(slot);
-        }
-
-        @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            return slot < INPUT_SLOTS && hasPillar(slot)
-                    ? inventory.insertItem(slot, stack, simulate) : stack;
-        }
-
-        @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot == OUTPUT_SLOT ? inventory.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
-        }
-
-        @Override
-        public int getSlotLimit(int slot) {
-            return inventory.getSlotLimit(slot);
-        }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return slot < INPUT_SLOTS && hasPillar(slot) && inventory.isItemValid(slot, stack);
-        }
-    }
 
     @Override
     public MutableComponent fluxMeterLine() {

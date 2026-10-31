@@ -1,5 +1,7 @@
 package com.kadikular.quantimium.block.entity;
 
+import com.kadikular.quantimium.util.GatedItems;
+
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import com.kadikular.quantimium.util.LegacyFluids;
@@ -38,7 +40,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.Packet;
@@ -196,7 +197,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
     private final IFluidHandler unsidedFluidHandler = fluidTanks.unsidedView();
 
     private final IItemHandler[] sidedItemHandlers = new IItemHandler[6];
-    private final IItemHandler unsidedItemHandler = new SidedAutomationHandler(null);
+    private final IItemHandler unsidedItemHandler = sidedItems(null);
 
     private void onFluidChanged() {
         setChanged();
@@ -212,45 +213,15 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
             Direction.UP, SideMode.BOTH, SideConfig.ALL_ITEM_INPUTS, SideConfig.ALL_ITEM_OUTPUTS, false, false,
             SideMode.DISABLED, SideConfig.ALL_FLUID_INPUTS, SideConfig.ALL_FLUID_OUTPUTS, false, false);
 
-    private final class SidedAutomationHandler implements IItemHandler {
-        @Nullable
-        private final Direction side;
+    /** What pipes and hoppers on {@code side} see (null: every slot, as a screen does): inputs in, outputs out, as its sides are set. */
+    private IItemHandler sidedItems(@Nullable Direction side) {
+        return new GatedItems(inventory, OUTPUT_END + 1,
+                slot -> itemConfig(side).allowsInputSlot(slot) && !isInputSlotLocked(slot),
+                slot -> itemConfig(side).allowsOutputSlot(slot));
+    }
 
-        private SidedAutomationHandler(@Nullable Direction side) {
-            this.side = side;
-        }
-
-        private SideConfig config() {
-            return side == null ? UNSIDED_ITEM_ACCESS : sideConfigs.get(side.get3DDataValue());
-        }
-
-        @Override
-        public int getSlots() { return OUTPUT_END + 1; }
-
-        @Override
-        public ItemStack getStackInSlot(int slot) { return inventory.getStackInSlot(slot); }
-
-        @Override
-        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (isItemValid(slot, stack)) return inventory.insertItem(slot, stack, simulate);
-            return stack;
-        }
-
-        @Override
-        public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            if (config().allowsOutputSlot(slot)) {
-                return inventory.extractItem(slot, amount, simulate);
-            }
-            return ItemStack.EMPTY;
-        }
-
-        @Override
-        public int getSlotLimit(int slot) { return inventory.getSlotLimit(slot); }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return config().allowsInputSlot(slot) && !isInputSlotLocked(slot);
-        }
+    private SideConfig itemConfig(@Nullable Direction side) {
+        return side == null ? UNSIDED_ITEM_ACCESS : sideConfigs.get(side.get3DDataValue());
     }
 
     public static final int ENERGY_CAPACITY = 10_000_000;
@@ -313,7 +284,7 @@ public class QuantumSimulatorBlockEntity extends BlockEntity
         super(ModBlockEntities.QUANTUM_SIMULATOR_BE.get(), pos, state);
         for (Direction side : Direction.values()) {
             int id = side.get3DDataValue();
-            sidedItemHandlers[id] = new SidedAutomationHandler(side);
+            sidedItemHandlers[id] = sidedItems(side);
             sidedFluidHandlers[id] = fluidTanks.sidedView(() -> sideConfigs.get(id));
         }
     }
